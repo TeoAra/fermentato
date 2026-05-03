@@ -530,7 +530,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
     if (nameStripPrefix?.trim()) updates.nameStripPrefix = nameStripPrefix;
     if (nameFindText?.trim()) updates.nameFindReplace = { find: nameFindText, replace: nameFindReplaceWith ?? "" };
     if (Object.keys(updates).length === 0) { toast({ title: "Nessun campo da aggiornare", description: "Compila almeno un campo prima di applicare", variant: "destructive" }); return; }
-    massEditMutation.mutate({ ids: [...selectedIds], updates });
+    massEditMutation.mutate({ ids: Array.from(selectedIds), updates });
   };
 
   const hasMassFields = Object.values(massFields).some(v => v !== "" && v !== undefined);
@@ -922,7 +922,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Annulla</AlertDialogCancel>
-            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => massDeleteMutation.mutate([...selectedIds])} disabled={massDeleteMutation.isPending}>
+            <AlertDialogAction className="bg-red-600 hover:bg-red-700" onClick={() => massDeleteMutation.mutate(Array.from(selectedIds))} disabled={massDeleteMutation.isPending}>
               {massDeleteMutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Eliminando...</> : <><Trash2 className="w-4 h-4 mr-2" />Elimina {selCount} elementi</>}
             </AlertDialogAction>
           </AlertDialogFooter>

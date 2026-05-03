@@ -3,8 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { Beer, ArrowLeft, Search, X, ChevronRight, SlidersHorizontal, Bookmark, Star, Map as MapIcon, Navigation, Dices, MapPin, Flame, Sparkles, Trophy } from "lucide-react";
-import { PubMap } from "@/components/pub-map";
+import { lazy, Suspense } from "react";
+const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m.PubMap })));
 import FindBeerSheet from "@/components/FindBeerSheet";
+import { EmptyState } from "@/components/empty-state";
 
 type ViewMode = "list" | "map";
 type StyleTab = "birre" | "dove";
@@ -268,7 +270,7 @@ export default function ExploreBeers() {
             <span className="text-sm font-bold text-foreground truncate">{filteredPubs.length} pub · {styleMeta?.label}</span>
           </div>
         </div>
-        <PubMap pins={mapPins} height="100%" />
+        <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={mapPins} height="100%" /></Suspense>
       </div>
     );
   }
@@ -308,7 +310,7 @@ export default function ExploreBeers() {
             </div>
             {/* Mini mappa — pin dei pub vicino a te */}
             <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[240px] lg:h-[260px] bg-stone-100 dark:bg-stone-800">
-              <PubMap pins={beerMapPins} height="100%" />
+              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={beerMapPins} height="100%" /></Suspense>
             </div>
           </div>
         </div>
@@ -774,7 +776,7 @@ function PubMiniCard({ pub }: { pub: any }) {
       <div className="flex-shrink-0 w-36 cursor-pointer">
         <div className="relative w-36 h-24 rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800 mb-1.5">
           {!imgErr && (pub.coverImageUrl || pub.logoUrl) ? (
-            <img src={pub.coverImageUrl || pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" onError={() => setImgErr(true)} />
+            <img src={pub.coverImageUrl || pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={() => setImgErr(true)} />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-950/40 dark:to-orange-950/40">
               <Beer className="w-6 h-6 text-amber-600/60" />
@@ -806,7 +808,7 @@ function PubListRow({ pub }: { pub: any }) {
       <div className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl p-3 border border-stone-100 dark:border-stone-800/60 shadow-sm active:scale-[0.98] transition-transform cursor-pointer">
         <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-stone-800 flex-shrink-0 overflow-hidden flex items-center justify-center">
           {!imgErr && (pub.coverImageUrl || pub.logoUrl) ? (
-            <img src={pub.coverImageUrl || pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" onError={() => setImgErr(true)} />
+            <img src={pub.coverImageUrl || pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={() => setImgErr(true)} />
           ) : (
             <Beer className="w-6 h-6 text-stone-400" />
           )}
@@ -855,17 +857,6 @@ function SearchResultsBlock({ beers, loading, query, onClear }: { beers: any[]; 
   );
 }
 
-function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
-  return (
-    <div className="text-center py-12 bg-white dark:bg-card rounded-3xl border border-stone-100 dark:border-stone-800/60">
-      <div className="w-14 h-14 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mx-auto mb-3">
-        {icon}
-      </div>
-      <h3 className="text-[15px] font-extrabold text-foreground">{title}</h3>
-      <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">{subtitle}</p>
-    </div>
-  );
-}
 
 function styleDescription(style: string): string {
   const s = style.toLowerCase();

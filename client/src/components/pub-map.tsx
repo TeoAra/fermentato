@@ -136,16 +136,15 @@ export function PubMap({ pins, height = "100%" }: PubMapProps) {
         const features = map.queryRenderedFeatures(e.point, { layers: ["clusters"] });
         if (!features.length) return;
         const clusterId = features[0].properties?.cluster_id;
-        (map.getSource("pins") as maplibregl.GeoJSONSource).getClusterExpansionZoom(
-          clusterId,
-          (err, zoom) => {
-            if (err) return;
+        const src = map.getSource("pins") as maplibregl.GeoJSONSource;
+        Promise.resolve(src.getClusterExpansionZoom(clusterId))
+          .then((zoom: any) => {
             map.easeTo({
               center: (features[0].geometry as GeoJSON.Point).coordinates as [number, number],
               zoom: zoom ?? 12,
             });
-          }
-        );
+          })
+          .catch(() => {});
       });
 
       map.on("click", "unclustered", (e) => {

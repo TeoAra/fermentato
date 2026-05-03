@@ -11,7 +11,8 @@ import {
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
-import HomepageMap from "@/components/homepage-map";
+import { lazy, Suspense } from "react";
+const HomepageMap = lazy(() => import("@/components/homepage-map"));
 
 function useCountUp(target: number, duration = 1400, startDelay = 300) {
   const [value, setValue] = useState(0);
@@ -418,13 +419,15 @@ export default function Landing() {
           </div>
 
           {locationStatus === 'granted' ? (
-            <HomepageMap
-              pubs={Array.isArray(pubs) ? pubs : []}
-              breweries={Array.isArray(breweriesForMap) && breweriesForMap.length > 0 ? breweriesForMap : (Array.isArray(breweriesFallback) ? breweriesFallback : [])}
-              userLocation={userLocation}
-              isLoading={pubsLoading || breweriesNearbyLoading}
-              onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
-            />
+            <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse rounded-2xl" />}>
+              <HomepageMap
+                pubs={Array.isArray(pubs) ? pubs : []}
+                breweries={Array.isArray(breweriesForMap) && breweriesForMap.length > 0 ? breweriesForMap : (Array.isArray(breweriesFallback) ? breweriesFallback : [])}
+                userLocation={userLocation}
+                isLoading={pubsLoading || breweriesNearbyLoading}
+                onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
+              />
+            </Suspense>
           ) : (
             <div className="rounded-3xl overflow-hidden border border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/50 h-80 flex flex-col items-center justify-center text-center gap-4 p-8">
               <div className="w-16 h-16 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">

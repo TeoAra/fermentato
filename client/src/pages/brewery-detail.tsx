@@ -593,7 +593,7 @@ export default function BreweryDetail() {
               }
             } : {}),
             ...((brewery as any)?.foundingYear ? { "foundingDate": String((brewery as any).foundingYear) } : {}),
-            ...(brewery?.website ? { "sameAs": [brewery.website] } : {}),
+            ...((brewery as any)?.websiteUrl ? { "sameAs": [(brewery as any).websiteUrl] } : {}),
             "additionalProperty": [
               ...((brewery as any)?.country ? [{ "@type": "PropertyValue", "name": "Paese", "value": (brewery as any).country }] : []),
             ].filter(p => p),
@@ -615,9 +615,9 @@ export default function BreweryDetail() {
         {/* Cover image container — overflow-hidden so blur doesn't bleed */}
         <div className="relative h-72 overflow-hidden">
           {brewery?.coverImageUrl ? (
-            <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" />
+            <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
           ) : brewery?.logoUrl ? (
-            <img src={brewery.logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-40" />
+            <img src={brewery.logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-40" loading="lazy" decoding="async" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
           )}
@@ -803,9 +803,9 @@ export default function BreweryDetail() {
       {/* ── HERO — desktop (kept compact, sidebar handles identity) ── */}
       <div className="relative h-80 overflow-hidden bg-stone-900 hidden lg:block">
         {brewery?.coverImageUrl ? (
-          <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" />
+          <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
         ) : brewery?.logoUrl ? (
-          <img src={brewery.logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-40" />
+          <img src={brewery.logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-40" loading="lazy" decoding="async" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
         )}
@@ -1201,7 +1201,7 @@ export default function BreweryDetail() {
                         <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
                           <div className="bg-white dark:bg-card rounded-2xl p-4 flex items-center gap-4 shadow-sm border border-stone-100 dark:border-stone-200 hover:border-primary/20 transition-all cursor-pointer group">
                             {pub.logo_url ? (
-                              <img src={pub.logo_url} alt={pub.name} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0 lightbox-img" />
+                              <img src={pub.logo_url} alt={pub.name} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0 lightbox-img" loading="lazy" decoding="async" />
                             ) : (
                               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-orange-400 to-primary flex items-center justify-center flex-shrink-0">
                                 <Store className="w-6 h-6 text-white" />
@@ -1242,8 +1242,8 @@ export default function BreweryDetail() {
                     {brewery?.location && (
                       <p className="text-xs text-stone-400 mt-0.5 truncate">{brewery.location}{brewery.region ? ` · ${brewery.region}` : ''}</p>
                     )}
-                    {brewery?.country && (
-                      <p className="text-xs text-stone-400 truncate">{brewery.country}</p>
+                    {(brewery as any)?.country && (
+                      <p className="text-xs text-stone-400 truncate">{(brewery as any).country}</p>
                     )}
                   </div>
                 </div>
@@ -1668,7 +1668,7 @@ export default function BreweryDetail() {
                         <button key={b.id} type="button"
                           onMouseDown={e => { e.preventDefault(); setBeerEditCollabBreweries([...beerEditCollabBreweries, { id: b.id, name: b.name }]); setBeerCollabQuery(''); setBeerCollabResults([]); setShowBeerCollabResults(false); }}
                           className="w-full px-3 py-2 text-left hover:bg-stone-50 dark:hover:bg-stone-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm text-foreground">
-                          {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-5 h-5 rounded-full object-cover" /> : <Building2 className="w-4 h-4 text-primary" />}
+                          {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-5 h-5 rounded-full object-cover" loading="lazy" decoding="async" /> : <Building2 className="w-4 h-4 text-primary" />}
                           <span>{b.name}</span>
                           <span className="text-xs text-muted-foreground ml-auto">{b.location}</span>
                         </button>

@@ -792,7 +792,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
   const [extraCategories, setExtraCategories] = useState<string[]>([]);
   const categories = useMemo(() => {
     const fromItems = food.map(i => i.category || "Altro");
-    const all = [...new Set([...fromItems, ...extraCategories])].filter(Boolean);
+    const all = Array.from(new Set([...fromItems, ...extraCategories])).filter(Boolean);
     return all.length > 0 ? all : [];
   }, [food, extraCategories]);
 
@@ -922,7 +922,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                 onKeyDown={e => {
                   if (e.key === "Enter" && newCategoryName.trim()) {
                     setExtraCategories(prev => [...prev, newCategoryName.trim()]);
-                    setExpandedCategories(prev => new Set([...prev, newCategoryName.trim()]));
+                    setExpandedCategories(prev => new Set([...Array.from(prev), newCategoryName.trim()]));
                     setNewCategoryName("");
                     setShowNewCategory(false);
                   }
@@ -933,7 +933,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                 onClick={() => {
                   if (newCategoryName.trim()) {
                     setExtraCategories(prev => [...prev, newCategoryName.trim()]);
-                    setExpandedCategories(prev => new Set([...prev, newCategoryName.trim()]));
+                    setExpandedCategories(prev => new Set([...Array.from(prev), newCategoryName.trim()]));
                     setNewCategoryName("");
                     setShowNewCategory(false);
                   }

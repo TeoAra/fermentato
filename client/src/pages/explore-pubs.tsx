@@ -3,7 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Link, useSearch } from "wouter";
 import { MapPin, Store, Map, Search, X, Star, ChevronRight, SlidersHorizontal, Navigation, Bookmark } from "lucide-react";
-import { PubMap } from "@/components/pub-map";
+import { lazy, Suspense } from "react";
+const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m.PubMap })));
+import { EmptyState } from "@/components/empty-state";
 
 type ViewMode = "list" | "map";
 type QuickFilter = "all" | "nearby" | "top" | "open";
@@ -130,7 +132,7 @@ export default function ExplorePubs() {
         {isLoading ? (
           <div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />
         ) : (
-          <PubMap pins={mapPins} height="100%" />
+          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={mapPins} height="100%" /></Suspense>
         )}
       </div>
     );
@@ -179,7 +181,7 @@ export default function ExplorePubs() {
 
           {/* Mini mappa — pin di tutti i pub (filtrati dalla ricerca/zona) */}
           <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[240px] lg:h-[260px] bg-stone-100 dark:bg-stone-800 mb-3">
-            <PubMap pins={(filtered.length > 0 ? filtered : pubsArr).map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude || ""), longitude: String(p.longitude || ""), logoUrl: p.logoUrl, type: "pub" as const }))} height="100%" />
+            <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={(filtered.length > 0 ? filtered : pubsArr).map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude || ""), longitude: String(p.longitude || ""), logoUrl: p.logoUrl, type: "pub" as const }))} height="100%" /></Suspense>
           </div>
 
           {/* Distance + filter chips */}
@@ -256,19 +258,14 @@ export default function ExplorePubs() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mx-auto mb-4">
-              <Store className="h-8 w-8 text-stone-400" />
-            </div>
-            <h3 className="text-lg font-bold text-foreground mb-1">Nessun locale trovato</h3>
-            <p className="text-sm text-muted-foreground">Prova con un'altra ricerca o rimuovi i filtri</p>
-            <button
-              onClick={() => { setSearch(""); setQuickFilter("all"); }}
-              className="mt-4 px-5 py-2 rounded-2xl bg-primary text-white text-sm font-bold tap-scale"
-            >
-              Rimuovi filtri
-            </button>
-          </div>
+          <EmptyState
+            icon={<Store className="h-8 w-8 text-stone-400" />}
+            title="Nessun locale trovato"
+            subtitle="Prova con un'altra ricerca o rimuovi i filtri attivi."
+            ctaLabel="Rimuovi filtri"
+            onCta={() => { setSearch(""); setQuickFilter("all"); }}
+            size="lg"
+          />
         ) : (
           <>
             {/* Popular horizontal scroll (only when no active filter) */}

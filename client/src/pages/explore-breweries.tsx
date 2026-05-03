@@ -2,7 +2,9 @@ import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { Link } from "wouter";
-import { PubMap } from "@/components/pub-map";
+import { lazy, Suspense } from "react";
+const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m.PubMap })));
+import { EmptyState } from "@/components/empty-state";
 import { Beer, Search, X, Star, ChevronRight, SlidersHorizontal, Globe, Navigation, Map, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -214,7 +216,7 @@ export default function ExploreBreweries() {
         {isLoading ? (
           <div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />
         ) : (
-          <PubMap pins={breweryMapPins} height="100%" />
+          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={breweryMapPins} height="100%" /></Suspense>
         )}
       </div>
     );
@@ -262,7 +264,7 @@ export default function ExploreBreweries() {
 
           {/* Mini mappa — pin dei birrifici geolocalizzati */}
           <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[240px] lg:h-[260px] bg-stone-100 dark:bg-stone-800 mb-3">
-            <PubMap pins={breweryMapPins} height="100%" />
+            <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={breweryMapPins} height="100%" /></Suspense>
           </div>
 
           {/* Quick filter chips */}
@@ -357,16 +359,14 @@ export default function ExploreBreweries() {
             ))}
           </div>
         ) : breweries.length === 0 ? (
-          <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mx-auto mb-4">
-              <Beer className="h-8 w-8 text-stone-400" />
-            </div>
-            <h3 className="text-lg font-bold text-foreground mb-1">Nessun birrificio trovato</h3>
-            <p className="text-sm text-muted-foreground">Prova con un nome diverso o un altro filtro</p>
-            <button onClick={clearFilters} className="mt-4 px-5 py-2 rounded-2xl bg-primary text-white text-sm font-bold tap-scale">
-              Rimuovi filtri
-            </button>
-          </div>
+          <EmptyState
+            icon={<Beer className="h-8 w-8 text-stone-400" />}
+            title="Nessun birrificio trovato"
+            subtitle="Prova con un nome diverso o cambia i filtri."
+            ctaLabel="Rimuovi filtri"
+            onCta={clearFilters}
+            size="lg"
+          />
         ) : (
           <>
             {/* Featured horizontal (only on first page, no filter, no search) */}

@@ -1387,7 +1387,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <ImageWithFallback
-                      src={item.beer.imageUrl || item.beer.logoUrl}
+                      src={(item.beer as any).imageUrl || item.beer.logoUrl}
                       alt={item.beer.name}
                       imageType="beer"
                       containerClassName="w-12 h-12 rounded-lg flex-shrink-0"

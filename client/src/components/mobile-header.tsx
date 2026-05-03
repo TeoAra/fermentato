@@ -7,8 +7,19 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { User as UserType } from "@shared/schema";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FindBeerSheet from "@/components/FindBeerSheet";
+
+function useScrolled(threshold = 12) {
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > threshold);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [threshold]);
+  return scrolled;
+}
 
 interface MobileHeaderProps {
   onMenuToggle: () => void;
@@ -41,6 +52,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const { isAuthenticated, user } = useAuth();
   const typedUser = user as UserType | undefined;
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const scrolled = useScrolled(12);
 
   const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
     queryKey: ["/api/auth/roles"],
@@ -125,10 +137,14 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     <>
       {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
       <header
-        className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#0F0F10]/95 backdrop-blur-xl border-b border-stone-100 dark:border-white/[0.05]"
+        className={`lg:hidden fixed top-0 left-0 right-0 z-50 backdrop-blur-xl transition-[background,box-shadow,border-color] duration-200 ${
+          scrolled
+            ? "bg-white/98 dark:bg-[#0F0F10]/98 border-b border-stone-200/70 dark:border-white/[0.08] shadow-sm"
+            : "bg-white/95 dark:bg-[#0F0F10]/95 border-b border-stone-100 dark:border-white/[0.05]"
+        }`}
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <div className="flex items-center justify-between px-4 h-14">
+        <div className={`flex items-center justify-between px-4 transition-[height] duration-200 ${scrolled ? "h-11" : "h-14"}`}>
 
           {/* Left: Avatar / Bell */}
           <div className="flex items-center gap-0.5">
@@ -162,9 +178,9 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
           {/* Logo — center */}
           <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-            <img src="/logo-full.png" alt="Fermenta.to" className="h-7 w-auto block dark:hidden"
+            <img src="/logo-full.png" alt="Fermenta.to" className={`w-auto block dark:hidden transition-[height] duration-200 ${scrolled ? "h-6" : "h-7"}`}
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="h-7 w-auto hidden dark:block"
+            <img src="/logo-dark-mode.png" alt="Fermenta.to" className={`w-auto hidden dark:block transition-[height] duration-200 ${scrolled ? "h-6" : "h-7"}`}
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
           </Link>
 

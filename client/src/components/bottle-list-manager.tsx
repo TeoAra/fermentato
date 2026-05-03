@@ -551,7 +551,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
               
               const safeBeer = {
                 name: safeItem.beer?.name || "Birra sconosciuta",
-                logoUrl: safeItem.beer?.imageUrl || safeItem.beer?.logoUrl,
+                logoUrl: (safeItem.beer as any)?.imageUrl || safeItem.beer?.logoUrl,
                 style: safeItem.beer?.style || "Stile sconosciuto",
                 abv: safeItem.beer?.abv || "0",
                 brewery: {

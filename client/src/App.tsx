@@ -247,7 +247,7 @@ function Router() {
           <Route path="/explore/breweries" component={ExploreBreweries} />
           <Route path="/explore/beers" component={ExploreBeers} />
           {/* Dashboard routes — activeRole is the source of truth */}
-          <Route path="/dashboard" component={
+          <Route path="/dashboard" component={(
             typedUser?.activeRole === 'pub_owner' ? SmartPubDashboard :
             typedUser?.activeRole === 'brewery_owner' ? BreweryDashboard :
             typedUser?.activeRole === 'admin' ? AdminDashboardNew :
@@ -256,7 +256,7 @@ function Router() {
             !typedUser?.activeRole && typedUser?.userType === 'pub_owner' ? SmartPubDashboard :
             !typedUser?.activeRole && typedUser?.userType === 'brewery_owner' ? BreweryDashboard :
             UserProfile
-          } />
+          ) as any} />
           {/* /profile always shows the user profile regardless of active role */}
           <Route path="/profile" component={UserProfile} />
           <Route path="/admin" component={AdminDashboardNew} />
@@ -276,7 +276,7 @@ function Router() {
           <Route path="/registra-pub" component={RegistraPub} />
           <Route path="/pub-registration" component={RegistraPub} />
           <Route path="/become-publican" component={BecomePublican} />
-          <Route path="/brewery-dashboard" component={BreweryDashboard} />
+          <Route path="/brewery-dashboard" component={BreweryDashboard as any} />
           <Route path="/onboarding" component={Onboarding} />
           <Route path="/tos" component={TermsOfService} />
           <Route path="/terms" component={TermsOfService} />

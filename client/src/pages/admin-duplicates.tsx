@@ -103,7 +103,7 @@ export default function AdminDuplicates() {
       apiRequest('/api/admin/breweries/merge', { method: 'POST' }, { keepId, mergeId }),
     onSuccess: (data: any, vars) => {
       const key = `${Math.min(vars.keepId, vars.mergeId)}_${Math.max(vars.keepId, vars.mergeId)}`;
-      setDismissed(prev => new Set([...prev, key]));
+      setDismissed(prev => new Set([...Array.from(prev), key]));
       setMergeOpen(false);
       setMergePair(null);
       setKeepId(null);
@@ -119,7 +119,7 @@ export default function AdminDuplicates() {
       const pairsWithId = pairs.filter(p => p.id1 === id || p.id2 === id);
       pairsWithId.forEach(p => {
         const key = `${Math.min(p.id1, p.id2)}_${Math.max(p.id1, p.id2)}`;
-        setDismissed(prev => new Set([...prev, key]));
+        setDismissed(prev => new Set([...Array.from(prev), key]));
       });
       setDeleteOpen(false);
       toast({ title: "Birrificio eliminato", description: deleteTarget?.name });

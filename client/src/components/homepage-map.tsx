@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { Map, Overlay } from "pigeon-maps";
 import { Capacitor } from "@capacitor/core";
 import { X, Plus, Minus } from "lucide-react";
+import Supercluster from "supercluster";
 
 const PUB_COLOR = "#F77104";
 const BREWERY_COLOR = "#9B4E10";
@@ -166,6 +167,40 @@ export default function HomepageMap({
   const breweryCount = geoFilteredBreweries.length;
   const isNative = Capacitor.isNativePlatform();
 
+  // ── Clustering with Supercluster ─────────────────────────────────────
+  const [bounds, setBounds] = useState<{ ne: [number, number]; sw: [number, number] } | null>(null);
+
+  const clusterIndex = useMemo(() => {
+    const idx = new Supercluster<{
+      kind: "pub" | "brewery";
+      data: any;
+    }>({ radius: 60, maxZoom: 16, minPoints: 3 });
+    const points = [
+      ...geoFilteredPubs.map(p => ({
+        type: "Feature" as const,
+        properties: { kind: "pub" as const, data: p },
+        geometry: { type: "Point" as const, coordinates: [parseFloat(p.longitude!), parseFloat(p.latitude!)] },
+      })),
+      ...geoFilteredBreweries.map(b => ({
+        type: "Feature" as const,
+        properties: { kind: "brewery" as const, data: b },
+        geometry: { type: "Point" as const, coordinates: [parseFloat(b.longitude!), parseFloat(b.latitude!)] },
+      })),
+    ];
+    idx.load(points);
+    return idx;
+  }, [geoFilteredPubs, geoFilteredBreweries]);
+
+  const clusters = useMemo(() => {
+    if (!bounds) return [];
+    const bbox: [number, number, number, number] = [bounds.sw[1], bounds.sw[0], bounds.ne[1], bounds.ne[0]];
+    try {
+      return clusterIndex.getClusters(bbox, Math.round(displayZoom));
+    } catch {
+      return [];
+    }
+  }, [clusterIndex, bounds, displayZoom]);
+
   return (
     <div
       ref={containerRef}
@@ -186,12 +221,12 @@ export default function HomepageMap({
           center={center}
           zoom={displayZoom}
           height={mapHeight}
-          onBoundsChanged={({ center: c, zoom: z }) => { setCenter(c); updateZoom(z); }}
+          onBoundsChanged={({ center: c, zoom: z, bounds: b }) => { setCenter(c); updateZoom(z); if (b) setBounds({ ne: b.ne as [number, number], sw: b.sw as [number, number] }); }}
           provider={cartoVoyager}
           dprs={[1, 2]}
           attribution={false}
           metaWheelZoom={true}
-          metaWheelZoomWarning={false}
+          metaWheelZoomWarning=""
           animate={!isNative}
           onClick={() => setSelected(null)}
         >
@@ -206,40 +241,68 @@ export default function HomepageMap({
             </Overlay>
           )}
 
-          {geoFilteredPubs.map(pub => {
-            const lat = parseFloat(pub.latitude!);
-            const lng = parseFloat(pub.longitude!);
-            const isSelected = selected?.type === "pub" && selected.id === pub.id;
-            return (
-              <Overlay key={`pub-${pub.id}`} anchor={[lat, lng]} offset={[18, 18]}>
-                <div style={{ position: "relative" }}>
-                  <MarkerPin
-                    type="pub"
-                    logoUrl={pub.logoUrl}
-                    isSelected={isSelected}
+          {clusters.map((c: any) => {
+            const [lng, lat] = c.geometry.coordinates;
+            if (c.properties.cluster) {
+              const count = c.properties.point_count as number;
+              const size = count < 10 ? 38 : count < 50 ? 46 : count < 200 ? 54 : 62;
+              return (
+                <Overlay key={`cluster-${c.id}`} anchor={[lat, lng]} offset={[size / 2, size / 2]}>
+                  <div
                     onClick={(e) => {
                       e.stopPropagation();
-                      if (isSelected) { setSelected(null); return; }
-                      setSelected({
-                        type: "pub", id: pub.id,
-                        name: pub.name,
-                        sub: pub.city || "",
-                        href: pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`,
-                        logoUrl: pub.logoUrl,
-                      });
+                      try {
+                        const expansion = clusterIndex.getClusterExpansionZoom(c.id as number);
+                        updateZoom(Math.min(expansion + 0.001, 18));
+                        setCenter([lat, lng]);
+                      } catch { /* noop */ }
                     }}
-                  />
-                  {isSelected && (
-                    <MapPopup selected={selected!} onClose={() => setSelected(null)} />
-                  )}
-                </div>
-              </Overlay>
-            );
-          })}
-
-          {geoFilteredBreweries.map(brewery => {
-            const lat = parseFloat(brewery.latitude!);
-            const lng = parseFloat(brewery.longitude!);
+                    style={{
+                      width: size, height: size, borderRadius: "50%",
+                      background: "linear-gradient(135deg,#F77104,#9B4E10)",
+                      border: "3px solid white",
+                      boxShadow: "0 4px 14px rgba(0,0,0,0.28)",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      color: "white", fontWeight: 800, fontSize: 13,
+                      cursor: "pointer", userSelect: "none",
+                    }}
+                  >
+                    {count}
+                  </div>
+                </Overlay>
+              );
+            }
+            const { kind, data } = c.properties;
+            if (kind === "pub") {
+              const pub = data;
+              const isSelected = selected?.type === "pub" && selected.id === pub.id;
+              return (
+                <Overlay key={`pub-${pub.id}`} anchor={[lat, lng]} offset={[18, 18]}>
+                  <div style={{ position: "relative" }}>
+                    <MarkerPin
+                      type="pub"
+                      logoUrl={pub.logoUrl}
+                      isSelected={isSelected}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (isSelected) { setSelected(null); return; }
+                        setSelected({
+                          type: "pub", id: pub.id,
+                          name: pub.name,
+                          sub: pub.city || "",
+                          href: pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`,
+                          logoUrl: pub.logoUrl,
+                        });
+                      }}
+                    />
+                    {isSelected && (
+                      <MapPopup selected={selected!} onClose={() => setSelected(null)} />
+                    )}
+                  </div>
+                </Overlay>
+              );
+            }
+            const brewery = data;
             const isSelected = selected?.type === "brewery" && selected.id === brewery.id;
             const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
             return (

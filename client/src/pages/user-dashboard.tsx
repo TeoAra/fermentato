@@ -49,7 +49,7 @@ export default function UserDashboard() {
   const [currentSection, setCurrentSection] = useState<DashboardSection>('overview');
 
   // Fetch user data
-  const { data: favorites = [] } = useQuery({
+  const { data: favorites = [] } = useQuery<any[]>({
     queryKey: ["/api/favorites"],
     enabled: isAuthenticated,
   });

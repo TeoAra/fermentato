@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
-import LuppolinoMenu from "@/components/luppolino-menu";
+const LuppolinoMenu = lazy(() => import("@/components/luppolino-menu"));
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -677,9 +677,9 @@ export default function PubDetail() {
         {/* Cover image container — overflow-hidden so blur doesn't bleed */}
         <div className="relative h-72 overflow-hidden">
           {(pub as any)?.coverImageUrl ? (
-            <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover" />
+            <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
           ) : (pub as any)?.logoUrl ? (
-            <img src={(pub as any).logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-50" />
+            <img src={(pub as any).logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-50" loading="lazy" decoding="async" />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
           )}
@@ -905,9 +905,9 @@ export default function PubDetail() {
       {/* ── HERO — desktop (kept compact, sidebar handles identity) ── */}
       <div className="relative h-80 overflow-hidden bg-stone-900 hidden lg:block">
         {(pub as any)?.coverImageUrl ? (
-          <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover" />
+          <img src={(pub as any).coverImageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
         ) : (pub as any)?.logoUrl ? (
-          <img src={(pub as any).logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-40" />
+          <img src={(pub as any).logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-40" loading="lazy" decoding="async" />
         ) : (
           <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
         )}
@@ -986,7 +986,7 @@ export default function PubDetail() {
                     />
                   )}
                   {pub && (pub as any).id && (
-                    <NextTapVoting pubId={(pub as any).id} isOwner={canManage} />
+                    <NextTapVoting pubId={(pub as any).id} isOwner={!!canManage} />
                   )}
                 </TabsContent>
 
@@ -1076,10 +1076,12 @@ export default function PubDetail() {
                       ))}
                     </div>
                   ) : (
-                    <LuppolinoMenu 
-                      menu={Array.isArray(menu) ? menu.filter((category: any) => category.isVisible !== false) : []} 
-                      menuInfoBox={(pub as any)?.menuInfoBox}
-                    />
+                    <Suspense fallback={<div className="space-y-3">{[...Array(3)].map((_, i) => (<div key={i} className="skeleton rounded-xl h-12" />))}</div>}>
+                      <LuppolinoMenu 
+                        menu={Array.isArray(menu) ? menu.filter((category: any) => category.isVisible !== false) : []} 
+                        menuInfoBox={(pub as any)?.menuInfoBox}
+                      />
+                    </Suspense>
                   )}
                 </TabsContent>
 
@@ -1392,9 +1394,9 @@ export default function PubDetail() {
               name: checkinBottle.name,
               style: checkinBottle.style,
               breweryName: checkinBottle.brewery?.name || checkinBottle.breweryName,
-              imageUrl: checkinBottle.imageUrl,
-            }}
-            pub={pub ?? null}
+              ...(checkinBottle.imageUrl ? { imageUrl: checkinBottle.imageUrl } : {}),
+            } as any}
+            pub={pub as any ?? null}
             tapType="bottiglia"
           />
         </Suspense>

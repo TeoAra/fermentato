@@ -196,7 +196,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
       return apiRequest(`/api/pubs/${pubId}/menu-categories/${id}/toggle-visibility`, { method: 'PATCH' });
     },
     onMutate: async ({ id }) => {
-      setPendingCategoryToggles(prev => new Set([...prev, id]));
+      setPendingCategoryToggles(prev => new Set([...Array.from(prev), id]));
       await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
       const prev = queryClient.getQueryData(["/api/pubs", String(pubId), "menu"]);
       queryClient.setQueryData(["/api/pubs", String(pubId), "menu"], (old: any) =>
@@ -844,10 +844,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                             variant="ghost"
                                             onClick={() => {
                                               const siblings = findAllByName(product.name, product.id);
-                                              const allCatIds = [...new Set([
+                                              const allCatIds = Array.from(new Set([
                                                 ...(product.categoryId ? [product.categoryId] : []),
                                                 ...siblings.map((s: any) => s.categoryId).filter(Boolean)
-                                              ])];
+                                              ]));
                                               setEditingProduct(product);
                                               setEditSiblingItems(siblings);
                                               setEditCategoryIds(allCatIds);
@@ -932,10 +932,10 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                           variant="ghost"
                                           onClick={() => {
                                             const siblings = findAllByName(product.name, product.id);
-                                            const allCatIds = [...new Set([
+                                            const allCatIds = Array.from(new Set([
                                               ...(product.categoryId ? [product.categoryId] : []),
                                               ...siblings.map((s: any) => s.categoryId).filter(Boolean)
-                                            ])];
+                                            ]));
                                             setEditingProduct(product);
                                             setEditSiblingItems(siblings);
                                             setEditCategoryIds(allCatIds);
