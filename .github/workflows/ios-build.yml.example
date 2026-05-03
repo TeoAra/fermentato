@@ -12,6 +12,9 @@
 #   APP_STORE_CONNECT_API_KEY   — chiave API App Store Connect (.p8) base64
 #   APP_STORE_CONNECT_KEY_ID    — Key ID della chiave (es. ABC1234DEF)
 #   APP_STORE_CONNECT_ISSUER_ID — Issuer UUID dell'account App Store Connect
+#   APPLE_TEAM_ID               — Team ID Apple Developer (10 caratteri alfanumerici,
+#                                 visibile in https://developer.apple.com/account →
+#                                 Membership Details)
 #   KEYCHAIN_PASSWORD           — password temporanea per il keychain CI (random)
 #
 # Procedura per generare i secret:
@@ -100,6 +103,8 @@ jobs:
 
       - name: Archive
         working-directory: ios/App
+        env:
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           xcodebuild -workspace App.xcworkspace \
             -scheme App \

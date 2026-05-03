@@ -104,6 +104,7 @@ attivarlo:
 | `APP_STORE_CONNECT_API_KEY` | Chiave API `.p8` in base64 | App Store Connect → Users → Keys → genera, ruolo "App Manager" |
 | `APP_STORE_CONNECT_KEY_ID` | Key ID (10 caratteri) | Visibile accanto alla chiave appena creata |
 | `APP_STORE_CONNECT_ISSUER_ID` | Issuer UUID dell'account | In testa alla pagina Keys |
+| `APPLE_TEAM_ID` | Team ID Apple Developer (10 caratteri) | [developer.apple.com/account](https://developer.apple.com/account) → Membership Details → Team ID |
 | `KEYCHAIN_PASSWORD` | Password random per keychain CI | Genera con `openssl rand -hex 16` |
 
 3. Esegui il workflow manualmente da Actions → "iOS Build" → Run workflow,
