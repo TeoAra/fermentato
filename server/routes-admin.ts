@@ -80,13 +80,37 @@ export function registerAdminRoutes(app: Express) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      // Mock growth data for now - in production this would come from time-series data
-      const growthData = [
-        { month: "2024-11", users: 245, pubs: 18 },
-        { month: "2024-12", users: 312, pubs: 23 },
-        { month: "2025-01", users: 389, pubs: 28 },
-      ];
-
+      // Real cumulative growth: total users/pubs/breweries/beers per month for the last 6 months.
+      const rows = await db.execute(sql`
+        WITH months AS (
+          SELECT generate_series(
+            date_trunc('month', NOW() - INTERVAL '5 months'),
+            date_trunc('month', NOW()),
+            INTERVAL '1 month'
+          )::date AS month
+        )
+        SELECT
+          to_char(m.month, 'YYYY-MM') AS month,
+          (SELECT COUNT(*)::int FROM users      WHERE created_at <= (m.month + INTERVAL '1 month'))      AS users,
+          (SELECT COUNT(*)::int FROM pubs       WHERE created_at <= (m.month + INTERVAL '1 month'))      AS pubs,
+          (SELECT COUNT(*)::int FROM breweries  WHERE created_at <= (m.month + INTERVAL '1 month'))      AS breweries,
+          (SELECT COUNT(*)::int FROM beers      WHERE created_at <= (m.month + INTERVAL '1 month'))      AS beers,
+          (SELECT COUNT(*)::int FROM users      WHERE created_at >  m.month AND created_at <= (m.month + INTERVAL '1 month')) AS newUsers,
+          (SELECT COUNT(*)::int FROM pubs       WHERE created_at >  m.month AND created_at <= (m.month + INTERVAL '1 month')) AS newPubs,
+          (SELECT COUNT(*)::int FROM beers      WHERE created_at >  m.month AND created_at <= (m.month + INTERVAL '1 month')) AS newBeers
+        FROM months m
+        ORDER BY m.month ASC
+      `);
+      const growthData = ((rows as any).rows ?? rows).map((r: any) => ({
+        month: r.month,
+        users: Number(r.users),
+        pubs: Number(r.pubs),
+        breweries: Number(r.breweries),
+        beers: Number(r.beers),
+        newUsers: Number(r.newusers),
+        newPubs: Number(r.newpubs),
+        newBeers: Number(r.newbeers),
+      }));
       res.json(growthData);
     } catch (error) {
       console.error("Error fetching growth analytics:", error);
@@ -100,23 +124,25 @@ export function registerAdminRoutes(app: Express) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      // Get most popular beers (mock for now since reviews table doesn't exist yet)
-      const popularBeers = await db
-        .select({
-          id: beers.id,
-          name: beers.name,
-          brewery: breweries.name,
-          style: beers.style,
-          avgRating: sql<number>`4.2`,
-          reviewCount: sql<number>`FLOOR(RANDOM() * 100 + 10)`,
-          availableAt: sql<number>`1`,
-        })
-        .from(beers)
-        .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-        .where(sql`${beers.name} IN ('Carlsberg', 'Heineken', 'Guinness', 'Stella Artois', 'Punk IPA', 'Super Baladin', 'L''Ippa', 'Open Baladin')`)
-        .limit(10);
-
-      res.json(popularBeers);
+      // Real popular beers: top by tasting count, with avg rating and pub availability count.
+      const popularBeers = await db.execute(sql`
+        SELECT
+          b.id,
+          b.name,
+          br.name AS brewery,
+          b.style,
+          ROUND(AVG(t.rating)::numeric, 1)::float AS "avgRating",
+          COUNT(t.id)::int                         AS "reviewCount",
+          (SELECT COUNT(DISTINCT pub_id)::int FROM tap_list WHERE beer_id = b.id AND is_active = true) AS "availableAt"
+        FROM beers b
+        LEFT JOIN breweries br ON br.id = b.brewery_id
+        INNER JOIN user_beer_tastings t ON t.beer_id = b.id AND t.rating IS NOT NULL
+        GROUP BY b.id, b.name, br.name, b.style
+        HAVING COUNT(t.id) > 0
+        ORDER BY COUNT(t.id) DESC, AVG(t.rating) DESC
+        LIMIT 10
+      `);
+      res.json((popularBeers as any).rows ?? popularBeers);
     } catch (error) {
       console.error("Error fetching popular beers:", error);
       res.status(500).json({ message: "Failed to fetch popular beers" });
@@ -465,37 +491,43 @@ export function registerAdminRoutes(app: Express) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      // Mock reviews data - in production this would come from reviews table
-      const allReviews = [
-        {
-          id: 1,
-          userId: '45370502',
-          beerId: 30114,
-          pubId: 7,
-          rating: 5,
-          comment: 'Ottima birra IPA, molto luppolata e fresca. Perfetta per l\'estate!',
-          status: 'approved',
-          createdAt: new Date('2024-01-18T15:30:00Z').toISOString(),
-          beer: { name: 'BrewDog Punk IPA', brewery: 'BrewDog' },
-          pub: { name: 'Luppolino Pub' },
-          user: { firstName: 'Matteo', lastName: 'Bettio', email: 'matteobettio94@gmail.com' }
-        },
-        {
-          id: 2,
-          userId: '45321347',
-          beerId: 3,
-          pubId: null,
-          rating: 4,
-          comment: 'Super Baladin sempre una garanzia. Birra artisanale italiana di qualità superiore.',
-          status: 'approved',
-          createdAt: new Date('2024-01-17T10:15:00Z').toISOString(),
-          beer: { name: 'Super Baladin', brewery: 'Baladin' },
-          pub: null,
-          user: { firstName: 'Mario', lastName: 'Admin', email: 'chromiumpd@gmail.com' }
-        }
-      ];
-
-      res.json(allReviews);
+      // Real reviews from user_beer_tastings (the canonical reviews table)
+      const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
+      const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
+      const status = (req.query.status as string) || 'all';
+      const allReviews = await db.execute(sql`
+        SELECT
+          t.id,
+          t.user_id  AS "userId",
+          t.beer_id  AS "beerId",
+          t.pub_id   AS "pubId",
+          t.rating::float AS rating,
+          t.personal_notes AS comment,
+          CASE WHEN t.owner_reply IS NOT NULL THEN 'replied' ELSE 'approved' END AS status,
+          t.created_at AS "createdAt",
+          t.tasted_at  AS "tastedAt",
+          json_build_object('name', b.name, 'brewery', br.name) AS beer,
+          CASE WHEN p.id IS NOT NULL
+            THEN json_build_object('name', p.name)
+            ELSE NULL END AS pub,
+          json_build_object(
+            'firstName', u.first_name,
+            'lastName',  u.last_name,
+            'nickname',  u.nickname,
+            'email',     u.email
+          ) AS "user"
+        FROM user_beer_tastings t
+        INNER JOIN beers b      ON b.id  = t.beer_id
+        LEFT  JOIN breweries br ON br.id = b.brewery_id
+        LEFT  JOIN pubs p       ON p.id  = t.pub_id
+        LEFT  JOIN users u      ON u.id  = t.user_id
+        WHERE t.rating IS NOT NULL
+          ${status === 'replied'  ? sql`AND t.owner_reply IS NOT NULL` : sql``}
+          ${status === 'unreplied'? sql`AND t.owner_reply IS NULL`     : sql``}
+        ORDER BY t.created_at DESC
+        LIMIT ${limit} OFFSET ${offset}
+      `);
+      res.json((allReviews as any).rows ?? allReviews);
     } catch (error) {
       console.error("Error fetching all reviews:", error);
       res.status(500).json({ message: "Failed to fetch reviews" });
@@ -508,9 +540,14 @@ export function registerAdminRoutes(app: Express) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const { id } = req.params;
-      
-      // Mock response - in production this would update the reviews table
+      // Reviews in user_beer_tastings are already user-published; "approve" simply
+      // ensures any associated report is resolved (no-op when there's none).
+      const id = parseInt(req.params.id);
+      try {
+        await db.update(reviewReports)
+          .set({ status: 'resolved', resolvedAt: new Date() })
+          .where(eq(reviewReports.reviewId, id));
+      } catch {}
       res.json({ message: "Review approved", reviewId: id });
     } catch (error) {
       console.error("Error approving review:", error);
@@ -524,9 +561,14 @@ export function registerAdminRoutes(app: Express) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
-      const { id } = req.params;
-      
-      // Mock response - in production this would update the reviews table
+      // Reject = delete the user_beer_tastings row and resolve any related report.
+      const id = parseInt(req.params.id);
+      try {
+        await db.update(reviewReports)
+          .set({ status: 'resolved', resolvedAt: new Date() })
+          .where(eq(reviewReports.reviewId, id));
+      } catch {}
+      await db.delete(userBeerTastings).where(eq(userBeerTastings.id, id));
       res.json({ message: "Review rejected", reviewId: id });
     } catch (error) {
       console.error("Error rejecting review:", error);

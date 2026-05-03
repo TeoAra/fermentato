@@ -1,9 +1,33 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
-  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Map
+  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Map, Clock, Shuffle, Loader2
 } from "lucide-react";
+
+const RECENT_KEY = "fermenta:recentSearches";
+const MAX_RECENTS = 6;
+
+type Recent = { q: string; ts: number };
+
+function loadRecents(): Recent[] {
+  try {
+    const raw = localStorage.getItem(RECENT_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    return Array.isArray(arr) ? arr.filter(r => r && typeof r.q === "string").slice(0, MAX_RECENTS) : [];
+  } catch { return []; }
+}
+
+function saveRecent(q: string) {
+  const term = q.trim();
+  if (term.length < 2) return;
+  try {
+    const list = loadRecents().filter(r => r.q.toLowerCase() !== term.toLowerCase());
+    list.unshift({ q: term, ts: Date.now() });
+    localStorage.setItem(RECENT_KEY, JSON.stringify(list.slice(0, MAX_RECENTS)));
+  } catch {}
+}
 
 interface FindBeerSheetProps {
   open: boolean;
@@ -24,11 +48,16 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
   const [query, setQuery] = useState("");
   const [activeStyle, setActiveStyle] = useState("");
   const [activeTab, setActiveTab] = useState<"birre" | "locali">("birre");
+  const [recents, setRecents] = useState<Recent[]>([]);
+  const [surpriseLoading, setSurpriseLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const sheetRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<number | null>(null);
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (open) {
+      setRecents(loadRecents());
       setTimeout(() => inputRef.current?.focus(), 320);
       document.body.style.overflow = "hidden";
     } else {
@@ -39,6 +68,39 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
     }
     return () => { document.body.style.overflow = ""; };
   }, [open]);
+
+  // Persist recent search after 1.2s of debounce on a meaningful query
+  useEffect(() => {
+    if (!open || activeStyle) return;
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    if (query.trim().length < 2) return;
+    debounceRef.current = window.setTimeout(() => {
+      saveRecent(query);
+      setRecents(loadRecents());
+    }, 1200);
+    return () => { if (debounceRef.current) window.clearTimeout(debounceRef.current); };
+  }, [query, open, activeStyle]);
+
+  const clearRecents = () => {
+    try { localStorage.removeItem(RECENT_KEY); } catch {}
+    setRecents([]);
+  };
+
+  const surpriseMe = async () => {
+    if (surpriseLoading) return;
+    setSurpriseLoading(true);
+    try {
+      const res = await fetch("/api/beers/random");
+      if (!res.ok) throw new Error("no beer");
+      const beer = await res.json();
+      if (beer?.id) {
+        onClose();
+        setLocation(`/beer/${beer.id}`);
+      }
+    } catch {} finally {
+      setSurpriseLoading(false);
+    }
+  };
 
   const { data: popularStyles } = useQuery<{ style: string; count: number }[]>({
     queryKey: ["/api/beers/popular-styles"],
@@ -130,6 +192,16 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
               )}
             </div>
             <button
+              onClick={surpriseMe}
+              disabled={surpriseLoading}
+              title="Sorprendimi: birra casuale"
+              className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-br from-primary to-orange-400 text-white flex items-center justify-center shadow-sm tap-scale disabled:opacity-60"
+            >
+              {surpriseLoading
+                ? <Loader2 className="w-4 h-4 animate-spin" />
+                : <Shuffle className="w-4 h-4" />}
+            </button>
+            <button
               onClick={onClose}
               className="flex-shrink-0 w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center"
             >
@@ -137,6 +209,28 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
             </button>
           </div>
         </div>
+
+        {!hasFilter && recents.length > 0 && (
+          <div className="px-4 pb-2 flex-shrink-0">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-stone-400 flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Ricerche recenti
+              </p>
+              <button onClick={clearRecents} className="text-[11px] font-semibold text-stone-400 hover:text-primary">Pulisci</button>
+            </div>
+            <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+              {recents.map(r => (
+                <button
+                  key={r.q + r.ts}
+                  onClick={() => { setQuery(r.q); setActiveStyle(""); setActiveTab("birre"); }}
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-50 dark:bg-stone-800/40 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 tap-scale"
+                >
+                  {r.q}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="px-4 pb-3 flex-shrink-0">
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">

@@ -920,6 +920,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Random beer ("Sorprendimi"). Must be declared BEFORE /api/beers/:id.
+  app.get("/api/beers/random", async (_req, res) => {
+    try {
+      const rows = await db.execute(sql`
+        SELECT b.id, b.name, b.style, b.abv, b.image_url AS "imageUrl",
+               br.name AS "breweryName", br.id AS "breweryId", br.logo_url AS "breweryLogoUrl"
+        FROM beers b
+        LEFT JOIN breweries br ON br.id = b.brewery_id
+        WHERE b.image_url IS NOT NULL
+        ORDER BY RANDOM()
+        LIMIT 1
+      `);
+      const row = ((rows as any).rows ?? rows)[0];
+      if (!row) { res.status(404).json({ message: "Nessuna birra disponibile" }); return; }
+      res.json(row);
+    } catch (err: any) {
+      console.error("Random beer error:", err.message);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
   // Get beer details by ID
   app.get("/api/beers/:id", async (req, res) => {
     try {
@@ -2998,17 +3019,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes
   app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const [reviewCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(userBeerTastings).where(sql`${userBeerTastings.rating} IS NOT NULL`);
-      const [tastingCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(userBeerTastings);
-      const [pubEventCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(pubEvents);
-      const [breweryEventCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(breweryEvents);
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
 
-      const [userCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(users);
-      const [pubCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(pubs);
-      const [breweryCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(breweries);
-      const [beerCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(beers);
-      const [festivalCountResult] = await db.select({ count: sql<number>`COUNT(*)` }).from(festivals);
+      const [
+        reviewCountResult, tastingCountResult, pubEventCountResult, breweryEventCountResult,
+        userCountResult, pubCountResult, breweryCountResult, beerCountResult, festivalCountResult,
+        avgRatingResult, activeUsersResult, newUsersResult, pendingPubsResult, pendingBreweriesResult,
+      ] = await Promise.all([
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`${userBeerTastings.rating} IS NOT NULL`),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(pubEvents),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(breweryEvents),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(festivals),
+        db.select({ avg: sql<number>`COALESCE(AVG(rating)::float, 0)` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
+        // Active users = users who tasted/added a beer view in last 30 days
+        db.execute(sql`
+          SELECT COUNT(DISTINCT user_id)::int AS count FROM (
+            SELECT user_id FROM user_beer_tastings WHERE created_at >= ${thirtyDaysAgo} AND user_id IS NOT NULL
+            UNION
+            SELECT user_id FROM beer_views          WHERE viewed_at >= ${thirtyDaysAgo} AND user_id IS NOT NULL
+          ) u
+        `),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(users).where(sql`created_at >= ${monthStart}`),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(publicanRequests).where(sql`status = 'pending'`),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(breweryRequests).where(sql`status = 'pending'`),
+      ]);
 
+      const activeUsers = Number(((activeUsersResult as any).rows ?? activeUsersResult)[0]?.count || 0);
       const stats = {
         totalUsers: Number(userCountResult?.count || 0),
         totalPubs: Number(pubCountResult?.count || 0),
@@ -3018,6 +3060,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalTastings: Number(tastingCountResult?.count || 0),
         totalEvents: Number(pubEventCountResult?.count || 0) + Number(breweryEventCountResult?.count || 0),
         totalFestivals: Number(festivalCountResult?.count || 0),
+        averageRating: Number((avgRatingResult[0]?.avg || 0).toFixed(2)),
+        activeUsers,
+        newUsersThisMonth: Number(newUsersResult[0]?.count || 0),
+        pendingPubRequests: Number(pendingPubsResult[0]?.count || 0),
+        pendingBreweryRequests: Number(pendingBreweriesResult[0]?.count || 0),
         lastUpdated: new Date().toISOString(),
       };
       res.json(stats);
@@ -7050,6 +7097,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.json({ ok: true });
     } catch { res.json({ ok: true }); }
+  });
+
+  // ─── Pub stats: extended metrics for owner dashboard ───────────────────────
+  app.get("/api/pubs/:id/stats-extended", isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const userId = req.user?.id;
+      const pub = await storage.getPub(pubId);
+      if (!pub) { res.status(404).json({ message: "Pub non trovato" }); return; }
+      const isOwner = pub.ownerId === userId;
+      const isAdminUser = req.user?.activeRole === "admin" || req.user?.userType === "admin";
+      if (!isOwner && !isAdminUser) { res.status(403).json({ message: "Non autorizzato" }); return; }
+
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+      const [taps, bottles, favs, ratingAgg, checkinsTotal, checkinsMonth, topBeerOnTapRows, topBeerCheckinRows] = await Promise.all([
+        // Active beers on tap
+        db.select({ n: sql<number>`COUNT(*)::int` }).from(tapList).where(and(eq(tapList.pubId, pubId), eq(tapList.isActive, true))),
+        // Active bottles
+        db.select({ n: sql<number>`COUNT(*)::int` }).from(bottleList).where(and(eq(bottleList.pubId, pubId), eq(bottleList.isActive, true))),
+        // Favorites count
+        db.select({ n: sql<number>`COUNT(*)::int` }).from(favorites).where(and(eq(favorites.itemType, 'pub'), eq(favorites.itemId, pubId))),
+        // Pub rating aggregate
+        db.select({ avg: sql<number>`COALESCE(AVG(rating)::float, 0)`, n: sql<number>`COUNT(*)::int` }).from(ratings).where(eq(ratings.pubId, pubId)),
+        // All-time checkins (tastings) at this pub
+        db.select({ n: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(eq(userBeerTastings.pubId, pubId)),
+        // Last 30d checkins
+        db.select({ n: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(and(eq(userBeerTastings.pubId, pubId), gte(userBeerTastings.createdAt, thirtyDaysAgo))),
+        // Top beer currently on tap (by checkins/tastings at this pub, last 90d)
+        db.execute(sql`
+          SELECT b.id, b.name, br.name AS brewery, b.style, b.image_url AS "imageUrl",
+                 COUNT(t.id)::int AS tastings,
+                 ROUND(COALESCE(AVG(t.rating)::numeric, 0), 1)::float AS "avgRating"
+          FROM tap_list tl
+          JOIN beers b      ON b.id = tl.beer_id
+          LEFT JOIN breweries br ON br.id = b.brewery_id
+          LEFT JOIN user_beer_tastings t ON t.beer_id = b.id AND t.pub_id = ${pubId}
+                AND t.created_at >= NOW() - INTERVAL '90 days'
+          WHERE tl.pub_id = ${pubId} AND tl.is_active = true
+          GROUP BY b.id, b.name, br.name, b.style, b.image_url
+          ORDER BY COUNT(t.id) DESC, b.name ASC
+          LIMIT 5
+        `),
+        // Top beer overall by checkins at this pub
+        db.execute(sql`
+          SELECT b.id, b.name, br.name AS brewery, b.style, b.image_url AS "imageUrl",
+                 COUNT(t.id)::int AS checkins,
+                 ROUND(COALESCE(AVG(t.rating)::numeric, 0), 1)::float AS "avgRating"
+          FROM user_beer_tastings t
+          JOIN beers b ON b.id = t.beer_id
+          LEFT JOIN breweries br ON br.id = b.brewery_id
+          WHERE t.pub_id = ${pubId}
+          GROUP BY b.id, b.name, br.name, b.style, b.image_url
+          ORDER BY COUNT(t.id) DESC
+          LIMIT 5
+        `),
+      ]);
+
+      res.json({
+        beersOnTap: taps[0]?.n ?? 0,
+        bottlesActive: bottles[0]?.n ?? 0,
+        favorites: favs[0]?.n ?? 0,
+        ratingAvg: Number((ratingAgg[0]?.avg ?? 0).toFixed(2)),
+        ratingCount: ratingAgg[0]?.n ?? 0,
+        checkinsTotal: checkinsTotal[0]?.n ?? 0,
+        checkinsMonth: checkinsMonth[0]?.n ?? 0,
+        topBeersOnTap: ((topBeerOnTapRows as any).rows ?? topBeerOnTapRows),
+        topBeersAllTime: ((topBeerCheckinRows as any).rows ?? topBeerCheckinRows),
+      });
+    } catch (err: any) {
+      console.error("Pub stats-extended error:", err.message);
+      res.status(500).json({ message: "Errore stats pub" });
+    }
   });
 
   // ─── Analytics: pub analytics for owner dashboard ───────────────────────────

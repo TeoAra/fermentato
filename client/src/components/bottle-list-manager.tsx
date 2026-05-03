@@ -373,9 +373,9 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
                         </div>
                         {searchResults?.beers && searchResults.beers.length > 0 && !formData.beerId && (
                           <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
-                            {searchResults.beers.map((beer: any) => (
+                            {searchResults.beers.map((beer: any, idx: number) => (
                               <div
-                                key={beer?.id || Math.random()}
+                                key={beer?.id ?? `result-${idx}`}
                                 className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors"
                                 onClick={() => {
                                   setFormData({ ...formData, beerId: beer?.id?.toString() || "" });

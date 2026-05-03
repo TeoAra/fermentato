@@ -91,3 +91,25 @@ Preferred communication style: Simple, everyday language.
 - **PDF Generation**: jsPDF.
 - **QR Code Generation**: qrcode.react.
 - **CAPTCHA**: Google reCAPTCHA.
+## Real Stats & Smart Search (May 2026)
+
+### Real Analytics (no mock data)
+- `GET /api/admin/stats` — extended with `averageRating` (avg of all `user_beer_tastings.rating`), `activeUsers` (distinct users with tastings or beer_views in last 30 days), `newUsersThisMonth` (users.created_at >= current month start), `pendingPubRequests`, `pendingBreweryRequests`. All counts via `Promise.all` parallel queries.
+- `GET /api/admin/analytics/growth` — real cumulative time-series for last 6 months from `generate_series`. Returns `{month, users, pubs, breweries, beers, newUsers, newPubs, newBeers}` per month.
+- `GET /api/admin/analytics/popular-beers` — real top 10 beers by tasting count, with `avgRating` (avg of ratings), `reviewCount`, `availableAt` (distinct active pubs in tap_list).
+- `GET /api/admin/reviews/all?limit&offset&status=all|replied|unreplied` — real reviews from `user_beer_tastings` joined with beers/breweries/pubs/users. Status replied = has owner_reply.
+- `POST /api/admin/reviews/:id/approve|reject` — real: approve resolves any open `review_reports`; reject also deletes the tasting.
+- `GET /api/pubs/:id/stats-extended` (owner/admin) — beersOnTap, bottlesActive, favorites, ratingAvg+count, checkinsTotal/checkinsMonth, topBeersOnTap (last 90d), topBeersAllTime.
+
+### Frontend admin-analytics overhaul
+- Removed all hardcoded fake content: "+12% questo mese", "Crescita costante", "+113 birre", "20+ paesi", "100% immagini autentiche", uptime 99.9%, fictional Carlsberg/Heineken updates.
+- Added real recharts `AreaChart` for 6-month growth (users/pubs/breweries with gradient fills).
+- Added "Birre più Recensite" card with real top-10 popular beers, ranked badges, rating stars, review/pub counts, click-through to beer detail.
+- "Pub Registrati" card now links to `/admin/publican-requests` when there are pending requests.
+
+### Smart Search (FindBeerSheet)
+- **Recent searches** persisted in `localStorage` (`fermenta:recentSearches`, max 6, debounced 1.2s after typing). Chips below the search input when no active filter; "Pulisci" to clear.
+- **"Sorprendimi"** — gradient orange Shuffle button next to search input → calls `GET /api/beers/random` → navigates to that beer's detail page. Endpoint is registered BEFORE `/api/beers/:id` to avoid route conflict and only returns beers that have an image.
+
+### Bug fixes
+- `bottle-list-manager.tsx` line 379: `Math.random()` as React key replaced with `beer?.id ?? \`result-${idx}\`` (no more re-mount + lost focus on each render).

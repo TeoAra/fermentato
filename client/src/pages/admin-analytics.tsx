@@ -29,6 +29,12 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { Link, useLocation } from "wouter";
+import {
+  ResponsiveContainer,
+  AreaChart, Area,
+  XAxis, YAxis,
+  CartesianGrid, Tooltip, Legend,
+} from "recharts";
 
 interface GlobalStats {
   totalBeers: number;
@@ -51,6 +57,32 @@ interface AdminStats {
   newUsersThisMonth: number;
   averageRating: number;
   totalReviews: number;
+  totalTastings: number;
+  totalEvents: number;
+  totalFestivals: number;
+  pendingPubRequests: number;
+  pendingBreweryRequests: number;
+}
+
+interface GrowthPoint {
+  month: string;
+  users: number;
+  pubs: number;
+  breweries: number;
+  beers: number;
+  newUsers: number;
+  newPubs: number;
+  newBeers: number;
+}
+
+interface PopularBeer {
+  id: number;
+  name: string;
+  brewery: string;
+  style: string;
+  avgRating: number;
+  reviewCount: number;
+  availableAt: number;
 }
 
 interface RecentActivity {
@@ -122,6 +154,16 @@ export default function AdminAnalytics() {
     enabled: isAuthenticated && (user as any)?.userType === 'admin',
   });
 
+  const { data: growthData = [] } = useQuery<GrowthPoint[]>({
+    queryKey: ["/api/admin/analytics/growth"],
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+  });
+
+  const { data: popularBeers = [] } = useQuery<PopularBeer[]>({
+    queryKey: ["/api/admin/analytics/popular-beers"],
+    enabled: isAuthenticated && (user as any)?.userType === 'admin',
+  });
+
   const { data: allActivityData = [], isFetching: activityLoading } = useQuery<RecentActivity[]>({
     queryKey: ["/api/admin/recent-activity"],
     queryFn: async () => {
@@ -180,11 +222,17 @@ export default function AdminAnalytics() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Utenti Attivi</p>
-                  <div className="text-2xl font-bold text-foreground">{adminStats?.activeUsers || adminStats?.totalUsers || 0}</div>
+                  <p className="text-sm font-medium text-muted-foreground">Utenti Attivi (30g)</p>
+                  <div className="text-2xl font-bold text-foreground">{(adminStats?.activeUsers ?? 0).toLocaleString()}</div>
                   <div className="flex items-center mt-2">
-                    <ArrowUp className="w-4 h-4 text-emerald-500 mr-1" />
-                    <span className="text-xs text-emerald-600 font-medium">+12% questo mese</span>
+                    {(adminStats?.newUsersThisMonth ?? 0) > 0 ? (
+                      <>
+                        <ArrowUp className="w-4 h-4 text-emerald-500 mr-1" />
+                        <span className="text-xs text-emerald-600 font-medium">+{adminStats?.newUsersThisMonth} nuovi questo mese</span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Su {(adminStats?.totalUsers ?? 0).toLocaleString()} totali</span>
+                    )}
                   </div>
                 </div>
                 <Users className="h-8 w-8 text-blue-500" />
@@ -212,10 +260,15 @@ export default function AdminAnalytics() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Pub Registrati</p>
-                  <div className="text-2xl font-bold text-foreground">{adminStats?.totalPubs || 1}</div>
+                  <div className="text-2xl font-bold text-foreground">{(adminStats?.totalPubs ?? 0).toLocaleString()}</div>
                   <div className="flex items-center mt-2">
-                    <ArrowUp className="w-4 h-4 text-emerald-500 mr-1" />
-                    <span className="text-xs text-emerald-600 font-medium">Crescita costante</span>
+                    {(adminStats?.pendingPubRequests ?? 0) > 0 ? (
+                      <Link href="/admin/publican-requests" className="text-xs text-amber-600 dark:text-amber-400 font-medium hover:underline">
+                        {adminStats?.pendingPubRequests} richieste in attesa
+                      </Link>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Nessuna richiesta in attesa</span>
+                    )}
                   </div>
                 </div>
                 <Store className="h-8 w-8 text-primary" />
@@ -410,111 +463,93 @@ export default function AdminAnalytics() {
           </Card>
         </div>
 
-        {/* Aggiornamenti Recenti e Insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Insights Rapidi */}
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-stone-100 dark:border-border">
+        {/* Crescita Piattaforma (real time-series) */}
+        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <CardHeader className="border-b border-stone-100 dark:border-border">
+            <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <TrendingUp className="w-5 h-5 text-primary" />
-                Insights Rapidi
+                Crescita ultimi 6 mesi
               </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-4">
-              <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50">
-                <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-400 mb-1">
-                  <ArrowUp className="w-4 h-4" />
-                  <span className="font-bold">Crescita Database</span>
-                </div>
-                <p className="text-sm text-emerald-600 dark:text-emerald-300">
-                  +113 nuove birre questa settimana da fonti verificate
-                </p>
+              <Badge variant="secondary" className="bg-stone-50 dark:bg-stone-900/20 text-primary font-medium">Cumulato</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {growthData.length === 0 ? (
+              <div className="h-[260px] flex items-center justify-center text-muted-foreground text-sm">
+                Nessun dato di crescita disponibile
               </div>
-              <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/50">
-                <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 mb-1">
-                  <Globe className="w-4 h-4" />
-                  <span className="font-bold">Copertura Globale</span>
-                </div>
-                <p className="text-sm text-blue-600 dark:text-blue-300">
-                  Database copre 20+ paesi con 293 stili unici
-                </p>
+            ) : (
+              <div className="h-[260px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={growthData} margin={{ top: 8, right: 16, left: -8, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gUsers"     x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(217,91%,60%)" stopOpacity={0.45}/><stop offset="100%" stopColor="hsl(217,91%,60%)" stopOpacity={0}/></linearGradient>
+                      <linearGradient id="gPubs"      x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(24,95%,53%)"  stopOpacity={0.45}/><stop offset="100%" stopColor="hsl(24,95%,53%)"  stopOpacity={0}/></linearGradient>
+                      <linearGradient id="gBreweries" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="hsl(160,84%,39%)" stopOpacity={0.45}/><stop offset="100%" stopColor="hsl(160,84%,39%)" stopOpacity={0}/></linearGradient>
+                    </defs>
+                    <CartesianGrid stroke="hsl(0,0%,80%,0.2)" vertical={false}/>
+                    <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(0,0%,55%)"/>
+                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(0,0%,55%)" allowDecimals={false}/>
+                    <Tooltip
+                      contentStyle={{ borderRadius: 12, border: '1px solid hsl(0,0%,85%)', background: 'hsl(0,0%,100%)', fontSize: 12 }}
+                      labelStyle={{ fontWeight: 700 }}
+                    />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }}/>
+                    <Area type="monotone" dataKey="users"     name="Utenti"    stroke="hsl(217,91%,60%)" strokeWidth={2} fill="url(#gUsers)"/>
+                    <Area type="monotone" dataKey="pubs"      name="Pub"       stroke="hsl(24,95%,53%)"  strokeWidth={2} fill="url(#gPubs)"/>
+                    <Area type="monotone" dataKey="breweries" name="Birrifici" stroke="hsl(160,84%,39%)" strokeWidth={2} fill="url(#gBreweries)"/>
+                  </AreaChart>
+                </ResponsiveContainer>
               </div>
-              <div className="p-3 rounded-xl bg-stone-50 dark:bg-stone-900/20 border border-stone-200 dark:border-stone-700/50">
-                <div className="flex items-center gap-2 text-primary dark:text-orange-400 mb-1">
-                  <Activity className="w-4 h-4" />
-                  <span className="font-bold">Qualità Dati</span>
-                </div>
-                <p className="text-sm text-primary dark:text-orange-400">
-                  100% birre con immagini autentiche e verificate
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Sistema Status */}
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-stone-100 dark:border-border">
-              <CardTitle className="flex items-center gap-2 font-bold text-foreground">
-                <Activity className="w-5 h-5 text-primary" />
-                Stato Sistema
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Database Server</span>
-                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900 font-bold">Online</Badge>
+        {/* Birre più recensite */}
+        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <CardHeader className="border-b border-stone-100 dark:border-border">
+            <CardTitle className="flex items-center gap-2 font-bold text-foreground">
+              <Beer className="w-5 h-5 text-primary" />
+              Birre più Recensite
+              <Badge variant="secondary" className="ml-1 bg-stone-50 text-primary dark:bg-stone-900/20">{popularBeers.length}</Badge>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-4">
+            {popularBeers.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground">
+                <Beer className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">Nessuna recensione ancora</p>
+                <p className="text-sm mt-1">Le birre più recensite appariranno qui appena gli utenti inizieranno a valutarle</p>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">API Response</span>
-                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900 font-bold">&lt; 500ms</Badge>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {popularBeers.map((b, i) => (
+                  <Link key={b.id} href={`/birre/${b.id}`}>
+                    <div className="flex items-center gap-3 p-3 rounded-xl border border-stone-100 dark:border-border hover:border-primary/40 hover:bg-stone-50/30 dark:hover:bg-stone-900/10 transition-all cursor-pointer">
+                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary to-orange-400 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                        #{i + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground truncate">{b.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{b.brewery} · {b.style}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <div className="flex items-center gap-1 text-sm font-bold text-foreground">
+                          <Star className="w-3.5 h-3.5 fill-yellow-500 text-yellow-500" />
+                          {b.avgRating?.toFixed(1) || '—'}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          {b.reviewCount} rec · {b.availableAt} pub
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Ultimo Backup</span>
-                <Badge variant="secondary" className="bg-stone-50 text-primary dark:bg-stone-900/20 font-bold">2 ore fa</Badge>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-foreground">Uptime</span>
-                <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900 font-bold">99.9%</Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Aggiornamenti Recenti */}
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
-            <CardHeader className="border-b border-stone-100 dark:border-border">
-              <CardTitle className="flex items-center gap-2 font-bold text-foreground">
-                <Calendar className="w-5 h-5 text-primary" />
-                Aggiornamenti Recenti
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-4">
-              <div className="text-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                  <span className="font-bold text-foreground">Database Espanso</span>
-                </div>
-                <p className="text-muted-foreground text-xs ml-4">Aggiunte birre Carlsberg, Heineken, Kingfisher</p>
-                <p className="text-muted-foreground/60 text-xs ml-4 font-medium">2 ore fa</p>
-              </div>
-              <div className="text-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="font-bold text-foreground">Copertura Immagini</span>
-                </div>
-                <p className="text-muted-foreground text-xs ml-4">100% birre con immagini appropriate</p>
-                <p className="text-muted-foreground/60 text-xs ml-4 font-medium">1 giorno fa</p>
-              </div>
-              <div className="text-sm">
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                  <span className="font-bold text-foreground">Analytics Aggiornate</span>
-                </div>
-                <p className="text-muted-foreground text-xs ml-4">Nuovi insights su stili e birrifici</p>
-                <p className="text-muted-foreground/60 text-xs ml-4 font-medium">2 giorni fa</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Database Global Overview */}
         <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
