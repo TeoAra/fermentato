@@ -823,7 +823,7 @@ export default function BreweryDetail() {
       </div>
 
         {/* ── MAIN CONTENT ── */}
-        <PageContainer as="main" variant="wide" noPadding className="pb-20 lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:pt-8 lg:items-start lg:min-h-0">
+        <PageContainer as="main" variant="wide" className="pb-20 lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:pt-8 lg:items-start lg:min-h-0">
           <div className="bg-white dark:bg-card min-h-0 lg:rounded-2xl lg:shadow-sm lg:border lg:border-stone-100 dark:lg:border-stone-800 lg:overflow-hidden">
 
 

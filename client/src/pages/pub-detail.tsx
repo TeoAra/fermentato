@@ -937,7 +937,7 @@ export default function PubDetail() {
         </div>
       </div>
 
-      <PageContainer as="main" variant="wide" noPadding className="pb-24">
+      <PageContainer as="main" variant="wide" className="pb-24">
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] lg:items-start lg:min-h-0">
           {/* Main Content */}
