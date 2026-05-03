@@ -252,6 +252,13 @@ export default function PubDetail() {
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [checkinBottle, setCheckinBottle] = useState<any>(null);
   const [fabOpen, setFabOpen] = useState(false);
+  const taplistRef = useRef<HTMLDivElement>(null);
+  const scrollToTaplist = () => {
+    setActiveTab('taplist');
+    setTimeout(() => {
+      taplistRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 50);
+  };
   const styleFilter = 'Tutti';
   const [descExpanded, setDescExpanded] = useState(false);
 
@@ -975,7 +982,7 @@ export default function PubDetail() {
                 </div>
 
                 {/* Taplist Tab */}
-                <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4">
+                <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4" ref={taplistRef}>
                   {tapLoading ? (
                     <div className="space-y-3">
                       {[...Array(3)].map((_, i) => (
@@ -1403,7 +1410,8 @@ export default function PubDetail() {
                       return;
                     }
                     setCheckinBottle(null);
-                    setActiveTab('taplist');
+                    scrollToTaplist();
+                    toast({ title: "Scegli una birra", description: "Tocca una birra dalla taplist per registrare la bevuta." });
                   }}
                   className="w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1C] border border-stone-200 dark:border-white/10 shadow-xl flex items-center justify-center tap-scale"
                 >
@@ -1422,7 +1430,8 @@ export default function PubDetail() {
                       setLocation(`/auth?redirect=${encodeURIComponent(`/pub/${id}`)}`);
                       return;
                     }
-                    setActiveTab('reviews');
+                    scrollToTaplist();
+                    toast({ title: "Scegli una birra", description: "Tocca una birra per recensirla con la tua valutazione." });
                   }}
                   className="w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1C] border border-stone-200 dark:border-white/10 shadow-xl flex items-center justify-center tap-scale"
                 >
