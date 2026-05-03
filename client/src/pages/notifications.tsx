@@ -11,28 +11,31 @@ import { useLocation } from "wouter";
 import type { Notification, NotificationPreference } from "@shared/schema";
 import { subscribeToPush, unsubscribeFromPush } from "@/components/pwa-prompt";
 
-const NOTIF_PAGE_SIZE = 10;
+const NOTIF_PAGE_SIZE = 20;
 
-// Matrice categorie × canale (push + in-app sono i due canali; email non usato per ora)
+// Matrice categorie × canale: ogni categoria ha 2 chiavi indipendenti
+// — `inAppKey` (es. tapChanges) e `pushKey` (es. tapChangesPush)
+type CatInAppKey = 'tapChanges' | 'events' | 'newPubs' |
+  'checkinLikes' | 'checkinComments' | 'newFollowers' |
+  'breweryReplies' | 'reportUpdates' | 'adminBroadcasts';
+type CatPushKey = `${CatInAppKey}Push`;
 const CATEGORIES: Array<{
-  key: keyof Pick<NotificationPreference,
-    'tapChanges' | 'events' | 'newPubs' |
-    'checkinLikes' | 'checkinComments' | 'newFollowers' |
-    'breweryReplies' | 'reportUpdates' | 'adminBroadcasts'>;
+  inAppKey: CatInAppKey;
+  pushKey: CatPushKey;
   label: string;
   description: string;
   icon: any;
   iconColor: string;
 }> = [
-  { key: 'tapChanges',     label: 'Nuove birre in spina',  description: 'Quando i tuoi locali aggiornano la taplist',     icon: Beer,         iconColor: 'text-orange-600' },
-  { key: 'events',         label: 'Eventi in zona',        description: 'Degustazioni, festival e serate birrai',         icon: Calendar,     iconColor: 'text-blue-600' },
-  { key: 'newPubs',        label: 'Nuovi locali',          description: 'Quando aprono nuovi pub vicino a te',            icon: MapPin,       iconColor: 'text-emerald-600' },
-  { key: 'checkinLikes',   label: 'Like sui tuoi check-in',description: 'Quando qualcuno mette mi piace alle tue birre',  icon: Heart,        iconColor: 'text-rose-600' },
-  { key: 'checkinComments',label: 'Commenti ai check-in',  description: 'Risposte e commenti sotto i tuoi check-in',      icon: MessageCircle,iconColor: 'text-violet-600' },
-  { key: 'newFollowers',   label: 'Nuovi follower e amici',description: 'Quando qualcuno ti segue o fa check-in',         icon: Users,        iconColor: 'text-sky-600' },
-  { key: 'breweryReplies', label: 'Risposte birrificio',   description: 'Quando un birrificio risponde a te',             icon: Factory,      iconColor: 'text-amber-600' },
-  { key: 'reportUpdates',  label: 'Esito segnalazioni',    description: 'Quando i moderatori gestiscono le tue segnalazioni', icon: Flag,    iconColor: 'text-red-500' },
-  { key: 'adminBroadcasts',label: 'Annunci Fermenta.to',   description: 'Comunicazioni ufficiali della redazione',        icon: Megaphone,    iconColor: 'text-primary' },
+  { inAppKey: 'tapChanges',     pushKey: 'tapChangesPush',     label: 'Nuove birre in spina',  description: 'Quando i tuoi locali aggiornano la taplist',         icon: Beer,         iconColor: 'text-orange-600' },
+  { inAppKey: 'events',         pushKey: 'eventsPush',         label: 'Eventi in zona',        description: 'Degustazioni, festival e serate birrai',             icon: Calendar,     iconColor: 'text-blue-600' },
+  { inAppKey: 'newPubs',        pushKey: 'newPubsPush',        label: 'Nuovi locali',          description: 'Quando aprono nuovi pub vicino a te',                icon: MapPin,       iconColor: 'text-emerald-600' },
+  { inAppKey: 'checkinLikes',   pushKey: 'checkinLikesPush',   label: 'Like sui tuoi check-in',description: 'Quando qualcuno mette mi piace alle tue birre',      icon: Heart,        iconColor: 'text-rose-600' },
+  { inAppKey: 'checkinComments',pushKey: 'checkinCommentsPush',label: 'Commenti ai check-in',  description: 'Risposte e commenti sotto i tuoi check-in',          icon: MessageCircle,iconColor: 'text-violet-600' },
+  { inAppKey: 'newFollowers',   pushKey: 'newFollowersPush',   label: 'Nuovi follower e amici',description: 'Quando qualcuno ti segue o fa check-in',             icon: Users,        iconColor: 'text-sky-600' },
+  { inAppKey: 'breweryReplies', pushKey: 'breweryRepliesPush', label: 'Risposte birrificio',   description: 'Quando un birrificio risponde a te',                 icon: Factory,      iconColor: 'text-amber-600' },
+  { inAppKey: 'reportUpdates',  pushKey: 'reportUpdatesPush',  label: 'Esito segnalazioni',    description: 'Quando i moderatori gestiscono le tue segnalazioni', icon: Flag,         iconColor: 'text-red-500' },
+  { inAppKey: 'adminBroadcasts',pushKey: 'adminBroadcastsPush',label: 'Annunci Fermenta.to',   description: 'Comunicazioni ufficiali della redazione',            icon: Megaphone,    iconColor: 'text-primary' },
 ];
 
 function getNotificationIcon(type: string) {
@@ -79,9 +82,13 @@ export default function Notifications() {
   const [, setLocation] = useLocation();
   const [notifPerm, setNotifPerm] = useState<NotificationPermission | 'unsupported'>('default');
   const [tab, setTab] = useState<'storia' | 'preferenze'>('storia');
-  const [showAll, setShowAll] = useState(false);
+  const [page, setPage] = useState(0);
+  const [accumulated, setAccumulated] = useState<Notification[]>([]);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [filter, setFilter] = useState<string>('all');
+
+  // Reset paginazione quando cambia il filtro
+  useEffect(() => { setPage(0); setAccumulated([]); }, [filter]);
 
   useEffect(() => {
     if ('Notification' in window) setNotifPerm(Notification.permission);
@@ -98,21 +105,38 @@ export default function Notifications() {
   const { data: pushStatus, refetch: refetchPush } = useQuery<{ subscribed: boolean; subscriptionCount: number }>({
     queryKey: ['/api/push/status'], enabled: isAuthenticated,
   });
-  const { data: notificationsList = [], isLoading: notifLoading } = useQuery<Notification[]>({
-    queryKey: ['/api/notifications', filter],
+  const { data: pageData = [], isLoading: notifLoading } = useQuery<Notification[]>({
+    queryKey: ['/api/notifications', filter, page],
     queryFn: async () => {
-      const url = filter === 'all' ? '/api/notifications' : `/api/notifications?type=${encodeURIComponent(filter)}`;
-      const r = await fetch(url, { credentials: 'include' });
+      const offset = page * NOTIF_PAGE_SIZE;
+      const params = new URLSearchParams({ limit: String(NOTIF_PAGE_SIZE), offset: String(offset) });
+      if (filter !== 'all') params.set('type', filter);
+      const r = await fetch(`/api/notifications?${params}`, { credentials: 'include' });
       if (!r.ok) throw new Error('Failed');
       return r.json();
     },
     enabled: isAuthenticated,
   });
+
+  // Accumula i risultati di pagine successive (modalità "Carica altre")
+  useEffect(() => {
+    if (page === 0) setAccumulated(pageData);
+    else if (pageData.length > 0) setAccumulated(prev => {
+      const seen = new Set(prev.map(n => n.id));
+      return [...prev, ...pageData.filter(n => !seen.has(n.id))];
+    });
+  }, [pageData, page]);
+  const notificationsList = accumulated;
+  const hasMore = pageData.length === NOTIF_PAGE_SIZE;
   const { data: preferences } = useQuery<NotificationPreference>({
     queryKey: ['/api/notification-preferences'], enabled: isAuthenticated,
   });
 
   const invalidateNotifs = () => {
+    // Reset paginazione + accumulatore dopo mutazioni (delete/mark-read),
+    // così la lista riflette sempre lo stato server senza voci stantie.
+    setPage(0);
+    setAccumulated([]);
     queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
     queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
   };
@@ -199,8 +223,7 @@ export default function Notifications() {
   };
 
   const unreadCount = useMemo(() => notificationsList.filter(n => !n.isRead).length, [notificationsList]);
-  const visible = showAll ? notificationsList : notificationsList.slice(0, NOTIF_PAGE_SIZE);
-  const hasMore = notificationsList.length > NOTIF_PAGE_SIZE && !showAll;
+  const visible = notificationsList;
 
   if (authLoading || (notifLoading && notificationsList.length === 0)) {
     return (
@@ -391,12 +414,13 @@ export default function Notifications() {
 
             {hasMore && (
               <button
-                onClick={() => setShowAll(true)}
+                onClick={() => setPage(p => p + 1)}
+                disabled={notifLoading}
                 className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-stone-200 transition-all"
                 data-testid="button-show-more"
               >
-                <ChevronDown className="h-4 w-4" />
-                Mostra di più ({notificationsList.length - NOTIF_PAGE_SIZE} altre)
+                {notifLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronDown className="h-4 w-4" />}
+                Carica altre
               </button>
             )}
 
@@ -488,10 +512,11 @@ export default function Notifications() {
             <div className="divide-y divide-stone-100 dark:divide-border">
               {CATEGORIES.map(cat => {
                 const Icon = cat.icon;
-                const inAppOn = (preferences as any)?.inAppEnabled !== false;
-                const catOn = (preferences as any)?.[cat.key] !== false;
+                const inAppMaster = (preferences as any)?.inAppEnabled !== false;
+                const inAppOn = (preferences as any)?.[cat.inAppKey] !== false;
+                const pushOn = (preferences as any)?.[cat.pushKey] !== false;
                 return (
-                  <div key={cat.key} className="px-5 py-4 flex items-center gap-3">
+                  <div key={cat.inAppKey} className="px-5 py-4 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-stone-50 dark:bg-stone-900/30 flex-shrink-0">
                       <Icon className={`h-4 w-4 ${cat.iconColor}`} />
                     </div>
@@ -500,21 +525,22 @@ export default function Notifications() {
                       <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{cat.description}</p>
                     </div>
                     <div className="flex items-center gap-4 flex-shrink-0">
-                      {/* In-app: la categoria stessa abilita anche l'in-app */}
+                      {/* In-app — controllo indipendente dal canale push */}
                       <div className="w-12 flex justify-center">
                         <Switch
-                          checked={catOn && inAppOn}
-                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.key]: v } as any)}
-                          disabled={!inAppOn}
-                          data-testid={`switch-${cat.key}-inapp`}
+                          checked={inAppOn && inAppMaster}
+                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.inAppKey]: v } as any)}
+                          disabled={!inAppMaster}
+                          data-testid={`switch-${cat.inAppKey}-inapp`}
                         />
                       </div>
+                      {/* Push — controllo indipendente dal canale in-app */}
                       <div className="w-12 flex justify-center">
                         <Switch
-                          checked={catOn && pushMaster}
-                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.key]: v } as any)}
+                          checked={pushOn && pushMaster}
+                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.pushKey]: v } as any)}
                           disabled={!pushMaster}
-                          data-testid={`switch-${cat.key}-push`}
+                          data-testid={`switch-${cat.inAppKey}-push`}
                         />
                       </div>
                     </div>

@@ -134,6 +134,16 @@ async function runSocialMigrations() {
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS quiet_hours_start VARCHAR(5);
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS quiet_hours_end VARCHAR(5);
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS quiet_hours_mode VARCHAR(10) DEFAULT 'queue';
+      -- Task #15 v2: canale push per categoria (controllo indipendente)
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS tap_changes_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS events_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS new_pubs_push BOOLEAN DEFAULT FALSE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS checkin_likes_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS checkin_comments_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS new_followers_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS brewery_replies_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS report_updates_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS admin_broadcasts_push BOOLEAN DEFAULT TRUE;
     `);
 
     // Backfill: copia review_reports → content_reports una sola volta

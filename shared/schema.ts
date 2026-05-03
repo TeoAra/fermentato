@@ -684,7 +684,7 @@ export const notifications = pgTable("notifications", {
 export const notificationPreferences = pgTable("notification_preferences", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull().unique(),
-  // Categorie (default true tranne newPubs/adminBroadcasts opt-in)
+  // Categorie — canale IN-APP (default true tranne newPubs)
   tapChanges: boolean("tap_changes").default(true),
   events: boolean("events").default(true),
   newPubs: boolean("new_pubs").default(false),
@@ -694,6 +694,16 @@ export const notificationPreferences = pgTable("notification_preferences", {
   breweryReplies: boolean("brewery_replies").default(true),
   reportUpdates: boolean("report_updates").default(true),
   adminBroadcasts: boolean("admin_broadcasts").default(true),
+  // Categorie — canale PUSH (controllo indipendente dall'in-app)
+  tapChangesPush: boolean("tap_changes_push").default(true),
+  eventsPush: boolean("events_push").default(true),
+  newPubsPush: boolean("new_pubs_push").default(false),
+  checkinLikesPush: boolean("checkin_likes_push").default(true),
+  checkinCommentsPush: boolean("checkin_comments_push").default(true),
+  newFollowersPush: boolean("new_followers_push").default(true),
+  breweryRepliesPush: boolean("brewery_replies_push").default(true),
+  reportUpdatesPush: boolean("report_updates_push").default(true),
+  adminBroadcastsPush: boolean("admin_broadcasts_push").default(true),
   // Canali master
   pushEnabled: boolean("push_enabled").default(true),
   inAppEnabled: boolean("in_app_enabled").default(true),

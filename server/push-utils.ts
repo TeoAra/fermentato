@@ -17,6 +17,9 @@ const THROTTLE_MS = 10000;
 // Batcher di aggregazione: raccoglie like/commenti per (userId,category,targetId)
 // in una finestra di 10 minuti e li riassume in "N persone hanno..."
 const BATCH_WINDOW_MS = 10 * 60 * 1000;
+// Soglia: i primi N eventi vengono inviati singoli; oltre N nella finestra
+// si emette un singolo riassunto a fine finestra.
+const BATCH_THRESHOLD = 3;
 type BatchEntry = {
   count: number;
   firstActorName?: string;
@@ -77,7 +80,8 @@ export async function shouldSendNotification(
     const prefs = await storage.getNotificationPreferences(userId);
     if (!prefs) return { allowed: true, deferMs: 0 };
     if (prefs.pushEnabled === false) return { allowed: false, deferMs: 0 };
-    if (category && (prefs as any)[category] === false) return { allowed: false, deferMs: 0 };
+    // Canale push per categoria: <cat>Push (independente da inAppEnabled / <cat>)
+    if (category && (prefs as any)[`${category}Push`] === false) return { allowed: false, deferMs: 0 };
     const remaining = quietWindowRemainingMs(prefs.quietHoursStart, prefs.quietHoursEnd);
     if (remaining > 0) {
       if (prefs.quietHoursMode === 'skip') return { allowed: false, deferMs: 0 };
@@ -153,7 +157,9 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     const { allowed, deferMs } = await shouldSendNotification(userId, payload.category);
     if (!allowed) return;
 
-    // Aggregazione: se batchKey presente, accumula nella finestra
+    // Aggregazione: se batchKey presente, accumula nella finestra.
+    // Regola: invia individualmente i primi BATCH_THRESHOLD eventi (≤3),
+    // dal 4° in poi sopprimi e a fine finestra invia UN solo aggregato.
     if (payload.batchKey && payload.category) {
       const bkey = `${userId}:${payload.category}:${payload.batchKey}`;
       const existing = batchQueue.get(bkey);
@@ -162,7 +168,17 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
         clearTimeout(existing.timer);
         existing.timer = setTimeout(() => flushBatch(userId, bkey), BATCH_WINDOW_MS);
         batchQueue.set(bkey, existing);
-        return; // l'aggregato verrà inviato al flush
+        if (existing.count <= BATCH_THRESHOLD) {
+          // ≤3: invia individualmente con tag univoco per non essere
+          // coalesciato dal throttle 10s di scheduleDelivery (stessa tastingId).
+          const indiv: PushPayload = {
+            ...payload,
+            tag: `${payload.tag || 'fermenta'}-${existing.count}-${Date.now()}`,
+          };
+          await scheduleDelivery(userId, indiv, deferMs);
+        }
+        // >3: silenzio fino al flush
+        return;
       }
       const entry: BatchEntry = {
         count: 1,
@@ -171,8 +187,12 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
         timer: setTimeout(() => flushBatch(userId, bkey), BATCH_WINDOW_MS),
       };
       batchQueue.set(bkey, entry);
-      // Invia subito il primo evento (no aggregazione finché count=1)
-      await scheduleDelivery(userId, payload, deferMs);
+      // Primo evento: tag univoco per evitare collisioni con eventi successivi
+      const first: PushPayload = {
+        ...payload,
+        tag: `${payload.tag || 'fermenta'}-1-${Date.now()}`,
+      };
+      await scheduleDelivery(userId, first, deferMs);
       return;
     }
 
@@ -186,8 +206,9 @@ async function flushBatch(userId: string, bkey: string) {
   const entry = batchQueue.get(bkey);
   if (!entry) return;
   batchQueue.delete(bkey);
-  // Se count=1 abbiamo già inviato il primo; nessun aggregato extra
-  if (entry.count <= 1) return;
+  // Aggregato solo se SUPERATA la soglia (count > 3): invia un unico
+  // riassunto degli eventi soppressi (i primi 3 sono già stati inviati singoli).
+  if (entry.count <= BATCH_THRESHOLD) return;
   // Ricalcola allowed/defer al momento del flush — le quiet hours
   // potrebbero essere cambiate (entrate o uscite) durante la finestra di 10min.
   const { allowed, deferMs } = await shouldSendNotification(userId, entry.payload.category);
@@ -212,7 +233,7 @@ export async function sendPushToUserImmediate(userId: string, payload: PushPaylo
     if (payload.category) {
       const prefs = await storage.getNotificationPreferences(userId);
       if (prefs && prefs.pushEnabled === false) return;
-      if (prefs && (prefs as any)[payload.category] === false) return;
+      if (prefs && (prefs as any)[`${payload.category}Push`] === false) return;
     }
     const tag = payload.tag || `fermenta-${payload.type || 'general'}`;
     const clean: any = { ...payload, tag };
