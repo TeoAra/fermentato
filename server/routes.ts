@@ -2975,25 +2975,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Admin-only middleware (legacy DB-backed check, kept for compatibility with routes below that rely on storage.getUser)
-  const isAdminDb = async (req: any, res: any, next: any) => {
-    const userId = (req.user as any)?.id;
-    if (!userId) {
-      return res.status(403).json({ message: "Admin access required" });
-    }
-    
-    try {
-      const user = await storage.getUser(userId);
-      const effectiveRole = user?.activeRole || user?.userType;
-      if (!user || effectiveRole !== 'admin') {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-      next();
-    } catch (error) {
-      return res.status(500).json({ message: "Error verifying admin status" });
-    }
-  };
-
   // Helper function to check if user is admin or pub owner
   const isAdminOrPubOwner = async (userId: string, pubId: number): Promise<boolean> => {
     try {
