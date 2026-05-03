@@ -162,6 +162,7 @@ export default function Notifications() {
   const updatePrefsMutation = useMutation({
     mutationFn: (prefs: Partial<NotificationPreference>) =>
       apiRequest('/api/notification-preferences', { method: 'PATCH' }, prefs),
+    // (definito sotto: setPref typed helper per evitare cast)
     onMutate: async (newPrefs) => {
       await queryClient.cancelQueries({ queryKey: ['/api/notification-preferences'] });
       const prev = queryClient.getQueryData<NotificationPreference>(['/api/notification-preferences']);
@@ -171,6 +172,10 @@ export default function Notifications() {
     onError: (_e, _v, ctx) => { if (ctx?.prev) queryClient.setQueryData(['/api/notification-preferences'], ctx.prev); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['/api/notification-preferences'] }),
   });
+  // Helper tipato: aggiorna una singola preferenza preservando keyof NotificationPreference.
+  const setPref = <K extends keyof NotificationPreference>(key: K, value: NotificationPreference[K]) => {
+    updatePrefsMutation.mutate({ [key]: value } as Partial<NotificationPreference>);
+  };
 
   const handleSubscribe = async () => {
     if (!('Notification' in window)) {
@@ -515,11 +520,11 @@ export default function Notifications() {
             <div className="divide-y divide-stone-100 dark:divide-border">
               {CATEGORIES.map(cat => {
                 const Icon = cat.icon;
-                const inAppMaster = (preferences as any)?.inAppEnabled !== false;
-                const emailMaster = (preferences as any)?.emailEnabled !== false;
-                const inAppOn = (preferences as any)?.[cat.inAppKey] !== false;
-                const pushOn = (preferences as any)?.[cat.pushKey] !== false;
-                const emailOn = (preferences as any)?.[cat.emailKey] === true;
+                const inAppMaster = preferences?.inAppEnabled !== false;
+                const emailMaster = preferences?.emailEnabled !== false;
+                const inAppOn = preferences?.[cat.inAppKey] !== false;
+                const pushOn = preferences?.[cat.pushKey] !== false;
+                const emailOn = preferences?.[cat.emailKey] === true;
                 return (
                   <div key={cat.inAppKey} className="px-5 py-4 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-stone-50 dark:bg-stone-900/30 flex-shrink-0">
@@ -533,7 +538,7 @@ export default function Notifications() {
                       <div className="w-12 flex justify-center">
                         <Switch
                           checked={inAppOn && inAppMaster}
-                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.inAppKey]: v } as any)}
+                          onCheckedChange={(v) => setPref(cat.inAppKey, v)}
                           disabled={!inAppMaster}
                           data-testid={`switch-${cat.inAppKey}-inapp`}
                         />
@@ -541,7 +546,7 @@ export default function Notifications() {
                       <div className="w-12 flex justify-center">
                         <Switch
                           checked={pushOn && pushMaster}
-                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.pushKey]: v } as any)}
+                          onCheckedChange={(v) => setPref(cat.pushKey, v)}
                           disabled={!pushMaster}
                           data-testid={`switch-${cat.inAppKey}-push`}
                         />
@@ -549,7 +554,7 @@ export default function Notifications() {
                       <div className="w-12 flex justify-center">
                         <Switch
                           checked={emailOn && emailMaster}
-                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.emailKey]: v } as any)}
+                          onCheckedChange={(v) => setPref(cat.emailKey, v)}
                           disabled={!emailMaster}
                           data-testid={`switch-${cat.inAppKey}-email`}
                         />
@@ -563,16 +568,16 @@ export default function Notifications() {
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground">Notifiche dentro l'app</p>
                 <Switch
-                  checked={(preferences as any)?.inAppEnabled !== false}
-                  onCheckedChange={(v) => updatePrefsMutation.mutate({ inAppEnabled: v } as any)}
+                  checked={preferences?.inAppEnabled !== false}
+                  onCheckedChange={(v) => setPref('inAppEnabled', v)}
                   data-testid="switch-inapp-master"
                 />
               </div>
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground">Email di sintesi</p>
                 <Switch
-                  checked={(preferences as any)?.emailEnabled !== false}
-                  onCheckedChange={(v) => updatePrefsMutation.mutate({ emailEnabled: v } as any)}
+                  checked={preferences?.emailEnabled !== false}
+                  onCheckedChange={(v) => setPref('emailEnabled', v)}
                   data-testid="switch-email-master"
                 />
               </div>
@@ -596,7 +601,7 @@ export default function Notifications() {
                 <input
                   type="time"
                   value={preferences?.quietHoursStart ?? ''}
-                  onChange={(e) => updatePrefsMutation.mutate({ quietHoursStart: e.target.value || null } as any)}
+                  onChange={(e) => setPref('quietHoursStart', e.target.value || null)}
                   className="mt-1 w-full rounded-xl border border-stone-200 dark:border-border bg-background px-3 py-2 text-sm font-semibold"
                   data-testid="input-quiet-start"
                 />
@@ -606,7 +611,7 @@ export default function Notifications() {
                 <input
                   type="time"
                   value={preferences?.quietHoursEnd ?? ''}
-                  onChange={(e) => updatePrefsMutation.mutate({ quietHoursEnd: e.target.value || null } as any)}
+                  onChange={(e) => setPref('quietHoursEnd', e.target.value || null)}
                   className="mt-1 w-full rounded-xl border border-stone-200 dark:border-border bg-background px-3 py-2 text-sm font-semibold"
                   data-testid="input-quiet-end"
                 />
@@ -614,14 +619,14 @@ export default function Notifications() {
             </div>
             <div className="mt-3 flex gap-2">
               <button
-                onClick={() => updatePrefsMutation.mutate({ quietHoursMode: 'queue' } as any)}
+                onClick={() => setPref('quietHoursMode', 'queue')}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${preferences?.quietHoursMode !== 'skip' ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-stone-900/20 text-muted-foreground'}`}
                 data-testid="button-mode-queue"
               >
                 Rimanda
               </button>
               <button
-                onClick={() => updatePrefsMutation.mutate({ quietHoursMode: 'skip' } as any)}
+                onClick={() => setPref('quietHoursMode', 'skip')}
                 className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${preferences?.quietHoursMode === 'skip' ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-stone-900/20 text-muted-foreground'}`}
                 data-testid="button-mode-skip"
               >
