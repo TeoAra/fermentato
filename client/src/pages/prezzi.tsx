@@ -6,6 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Check, X, Beer, Building2, Zap, Shield, Star, MessageCircle, BarChart3, Bell, QrCode, FileText, Tv2, Users, Map, Calendar, Image, RefreshCw, Lock, Crown, Sparkles, Mail, CheckCircle2, ArrowRight } from "lucide-react";
 import { SEO } from "@/components/seo";
 import Footer from "@/components/footer";
+import { PageContainer } from "@/components/layout/page-container";
 
 const YES = () => <span className="flex justify-center"><Check className="w-4 h-4 text-green-500 flex-shrink-0" /></span>;
 const NO = () => <span className="flex justify-center"><X className="w-4 h-4 text-stone-300 flex-shrink-0" /></span>;
@@ -38,7 +39,7 @@ export default function PrezziPage() {
         url="https://fermenta.to/prezzi"
       />
 
-      <div className="w-full max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+      <PageContainer variant="standard" className="pb-24">
 
         {/* Hero */}
         <div className="text-center mb-14 pt-6">
@@ -330,7 +331,7 @@ export default function PrezziPage() {
             </Button>
           </div>
         </div>
-      </div>
+      </PageContainer>
 
       <Footer />
     </div>

@@ -5,6 +5,7 @@ import { Link } from "wouter";
 import { lazy, Suspense } from "react";
 const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m.PubMap })));
 import { EmptyState } from "@/components/empty-state";
+import { PageContainer } from "@/components/layout/page-container";
 import { Beer, Search, X, Star, ChevronRight, SlidersHorizontal, Globe, Navigation, Map, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -275,7 +276,7 @@ export default function ExploreBreweries() {
 
       {/* ── Header (scorre con la pagina) ── */}
       <div className="bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2">
+        <PageContainer variant="standard" className="pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -399,20 +400,20 @@ export default function ExploreBreweries() {
               })}
             </div>
           )}
-        </div>
+        </PageContainer>
 
         {/* Result count */}
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-2">
+        <PageContainer variant="standard" className="pb-2">
           <p className="text-[11px] text-stone-400 dark:text-stone-500 font-medium">
             {isLoading ? "Caricamento…" : `${total.toLocaleString("it-IT")} birrifici trovati`}
             {quickFilter === "italian" ? " italiani" : quickFilter === "international" ? " internazionali" : ""}
             {quickFilter === "nearby" && userLocation ? ` · Ordina: Distanza` : ""}
           </p>
-        </div>
+        </PageContainer>
       </div>
 
       {/* ── Content ── */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-28 lg:pb-12">
+      <PageContainer as="main" variant="standard" className="pt-3 pb-28 lg:pb-12">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(8)].map((_, i) => (
@@ -490,7 +491,7 @@ export default function ExploreBreweries() {
             )}
           </>
         )}
-      </main>
+      </PageContainer>
 
     </div>
   );

@@ -6,6 +6,7 @@ import { MapPin, Store, Map, Search, X, Star, ChevronRight, SlidersHorizontal, N
 import { lazy, Suspense } from "react";
 const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m.PubMap })));
 import { EmptyState } from "@/components/empty-state";
+import { PageContainer } from "@/components/layout/page-container";
 
 type ViewMode = "list" | "map";
 type QuickFilter = "all" | "nearby" | "top" | "open";
@@ -219,7 +220,7 @@ export default function ExplorePubs() {
 
       {/* ── Header (scorre con la pagina) ── */}
       <div className="bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2">
+        <PageContainer variant="standard" className="pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -324,22 +325,22 @@ export default function ExplorePubs() {
               </button>
             ))}
           </div>
-        </div>
+        </PageContainer>
 
         {!isLoading && (
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-2">
+          <PageContainer variant="standard" className="pb-2">
             <p className="text-[11px] text-stone-400 dark:text-stone-500 font-medium">
               {search || quickFilter !== "all"
                 ? `${filtered.length} risultati`
                 : `${pubsArr.length} ${pubsArr.length === 1 ? 'locale' : 'locali'} in Italia`
               }
             </p>
-          </div>
+          </PageContainer>
         )}
       </div>
 
       {/* ── Content ── */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-28 lg:pb-12">
+      <PageContainer as="main" variant="standard" className="pt-3 pb-28 lg:pb-12">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(6)].map((_, i) => (
@@ -421,7 +422,7 @@ export default function ExplorePubs() {
             </div>
           </>
         )}
-      </main>
+      </PageContainer>
 
     </div>
   );

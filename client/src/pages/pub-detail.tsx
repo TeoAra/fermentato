@@ -52,6 +52,7 @@ import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
 import { NextTapVoting } from "@/components/NextTapVoting";
 import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
 import RouteCard from "@/components/route-card";
+import { PageContainer } from "@/components/layout/page-container";
 
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
@@ -548,7 +549,7 @@ export default function PubDetail() {
   if (pubLoading) {
     return (
       <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PageContainer variant="wide" className="py-8">
           <div className="space-y-8">
             {/* Hero Skeleton */}
             <div className="skeleton rounded-2xl h-80 md:h-96"></div>
@@ -563,7 +564,7 @@ export default function PubDetail() {
             {/* Content Skeleton */}
             <div className="skeleton rounded-2xl h-96"></div>
           </div>
-        </div>
+        </PageContainer>
       </div>
     );
   }
@@ -936,9 +937,9 @@ export default function PubDetail() {
         </div>
       </div>
 
-      <main className="max-w-7xl mx-auto pb-24">
+      <PageContainer as="main" variant="wide" noPadding className="pb-24">
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 lg:items-start">
           {/* Main Content */}
           <div className="lg:col-span-3">
             {/* ── TABS — underline style (mockup) ── */}
@@ -1392,7 +1393,7 @@ export default function PubDetail() {
             </div>
           </div>
         </div>
-      </main>
+      </PageContainer>
 
       <Footer />
 

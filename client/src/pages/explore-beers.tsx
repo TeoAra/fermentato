@@ -7,6 +7,7 @@ import { lazy, Suspense } from "react";
 const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m.PubMap })));
 import FindBeerSheet from "@/components/FindBeerSheet";
 import { EmptyState } from "@/components/empty-state";
+import { PageContainer } from "@/components/layout/page-container";
 
 type ViewMode = "list" | "map";
 type StyleTab = "birre" | "dove";
@@ -292,7 +293,7 @@ export default function ExploreBeers() {
         <>
         {/* Search bar + mini map — scorre con la pagina */}
         <div className="bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
-          <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 space-y-2.5">
+          <PageContainer variant="narrow" className="py-2.5 space-y-2.5">
             <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-2.5 border border-stone-100 dark:border-stone-800/60 shadow-sm">
               <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
               <input
@@ -312,10 +313,10 @@ export default function ExploreBeers() {
             <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[240px] lg:h-[260px] bg-stone-100 dark:bg-stone-800">
               <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={beerMapPins} height="100%" /></Suspense>
             </div>
-          </div>
+          </PageContainer>
         </div>
 
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-28 lg:pb-12">
+        <PageContainer as="main" variant="narrow" className="pt-4 pb-28 lg:pb-12">
           <header className="mb-4">
             <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Esplora Birre</h1>
             <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">Scopri nuovi stili e trova la tua prossima preferita</p>
@@ -412,13 +413,13 @@ export default function ExploreBeers() {
               </section>
             </>
           )}
-        </main>
+        </PageContainer>
         </>
       ) : (
         // ═══════════════════════════════════════════════════════════════
         // STYLE SELECTED VIEW — Hai selezionato X
         // ═══════════════════════════════════════════════════════════════
-        <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-28 lg:pb-12">
+        <PageContainer as="main" variant="narrow" className="pt-3 pb-28 lg:pb-12">
           {/* Back link */}
           <button
             onClick={clearAll}
@@ -483,7 +484,7 @@ export default function ExploreBeers() {
               onLocate={handleLocate}
             />
           )}
-        </main>
+        </PageContainer>
       )}
 
       <FindBeerSheet

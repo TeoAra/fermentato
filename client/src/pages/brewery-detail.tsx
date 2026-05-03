@@ -67,6 +67,7 @@ import AddressAutocomplete from "@/components/address-autocomplete";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import RouteCard from "@/components/route-card";
+import { PageContainer } from "@/components/layout/page-container";
 
 function getBeerStyleColor(style: string): { bg: string; text: string } {
   const s = style?.toLowerCase() || '';
@@ -508,7 +509,7 @@ export default function BreweryDetail() {
   if (breweryLoading) {
     return (
         <div className="min-h-screen bg-background">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <PageContainer variant="wide" className="py-8">
           <div className="space-y-8">
             <div className="skeleton rounded-2xl h-80 md:h-96"></div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -518,7 +519,7 @@ export default function BreweryDetail() {
             </div>
             <div className="skeleton rounded-2xl h-96"></div>
           </div>
-        </div>
+        </PageContainer>
       </div>
     );
   }
@@ -822,7 +823,7 @@ export default function BreweryDetail() {
       </div>
 
         {/* ── MAIN CONTENT ── */}
-        <main className="max-w-7xl mx-auto pb-20 lg:grid lg:grid-cols-3 lg:gap-8 lg:px-8 lg:pt-8 lg:items-start">
+        <PageContainer as="main" variant="wide" noPadding className="pb-20 lg:grid lg:grid-cols-3 lg:gap-8 lg:pt-8 lg:items-start">
           <div className="bg-white dark:bg-card lg:col-span-2 lg:rounded-2xl lg:shadow-sm lg:border lg:border-stone-100 dark:lg:border-stone-800 lg:overflow-hidden">
 
 
@@ -1371,7 +1372,7 @@ export default function BreweryDetail() {
             )}
           </aside>
 
-        </main>
+        </PageContainer>
 
       {/* Admin Edit Dialog - modal={false} allows Google Maps dropdown to receive clicks */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} modal={false}>

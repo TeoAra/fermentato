@@ -12,6 +12,7 @@ import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
 import FindBeerSheet from "@/components/FindBeerSheet";
+import { PageContainer } from "@/components/layout/page-container";
 
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
 
@@ -371,7 +372,7 @@ export default function Home() {
         </div>
       </div>
 
-      <main className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 pb-28">
+      <PageContainer as="main" variant="wide" className="pt-5 pb-28">
 
         {/* GPS denied banner */}
         {locationStatus === 'denied' && (
@@ -959,7 +960,7 @@ export default function Home() {
           </div>
         </section>
 
-      </main>
+      </PageContainer>
 
       <Footer />
 
