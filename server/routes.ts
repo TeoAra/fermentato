@@ -3111,6 +3111,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           url: `/pub/${pubId}`,
           type: 'tap_change',
           icon: pub.logoUrl || undefined,
+          category: 'tapChanges',
         });
       }
 
@@ -3141,6 +3142,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             url: `/pub/${pubId}`,
             type: 'new_beer',
             icon: pub.logoUrl || undefined,
+            category: 'tapChanges',
           });
         }
 
@@ -3173,6 +3175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               url: `/pub/${pubId}`,
               type: 'new_beer',
               icon: brewery?.logoUrl || undefined,
+              category: 'tapChanges',
             });
           }
         }
@@ -4554,6 +4557,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             url: `/user/${user.nickname}`,
             type: "checkin",
             tag: `checkin-${userId}`,
+            category: 'newFollowers',
           });
         }
       } catch (pushErr) {
@@ -5224,7 +5228,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.user as any).id;
       const notifs = await storage.getNotifications(userId);
-      res.json(notifs);
+      const filterType = typeof req.query.type === 'string' ? req.query.type : null;
+      const limit = Math.min(200, parseInt(String(req.query.limit ?? '100'), 10) || 100);
+      const offset = Math.max(0, parseInt(String(req.query.offset ?? '0'), 10) || 0);
+      let filtered = notifs;
+      if (filterType && filterType !== 'all') {
+        filtered = notifs.filter((n: any) => n.type === filterType);
+      }
+      const page = filtered.slice(offset, offset + limit);
+      res.json(page);
     } catch (error) {
       console.error("Error fetching notifications:", error);
       res.status(500).json({ message: "Failed to fetch notifications" });
@@ -5880,6 +5892,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body: `"${event.title}" - Non perderlo!`,
             url: `/pub/${pubId}`, type: 'event',
             icon: pub.logoUrl || undefined,
+            category: 'events',
           });
         }
       } catch (notifError) {
@@ -6040,6 +6053,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body: `"${event.title}" - Non perderlo!`,
             url: `/brewery/${breweryId}`, type: 'event',
             icon: brewery?.logoUrl || undefined,
+            category: 'events',
           });
         }
       } catch (notifError) {
@@ -6400,6 +6414,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body: `${event.pubName} ti aspetta adesso!`,
             url: `/pub/${event.pubId}`, type: 'event',
             icon: event.pubLogoUrl || undefined,
+            category: 'events',
           });
         }
         await storage.markPubEventStartSent(event.id);
@@ -6422,6 +6437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body: `${event.breweryName} ti aspetta adesso!`,
             url: `/brewery/${event.breweryId}`, type: 'event',
             icon: event.breweryLogoUrl || undefined,
+            category: 'events',
           });
         }
         await storage.markBreweryEventStartSent(event.id);
@@ -6934,6 +6950,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             body: `${submitterName} vuole aggiungere "${itemLabel}" al tuo birrificio`,
             url: '/admin/addition-requests',
             type: 'addition_request',
+            category: 'breweryReplies',
           });
         }
       }

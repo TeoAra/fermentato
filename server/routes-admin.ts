@@ -629,6 +629,7 @@ export function registerAdminRoutes(app: Express) {
       };
       sendPushToUser(authorId, {
         title: titles[action], body: bodies[action], url: "/feed", type: "moderation",
+        category: 'reportUpdates',
       });
     } catch {}
   }

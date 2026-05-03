@@ -1,11 +1,9 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown, Factory, Store, CalendarDays, Heart, X, BellOff, ArrowRight } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown, Factory, Store, CalendarDays, Heart, X, BellOff, ArrowRight, Moon, MessageCircle, Users, Megaphone, Flag } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -14,6 +12,28 @@ import type { Notification, NotificationPreference } from "@shared/schema";
 import { subscribeToPush, unsubscribeFromPush } from "@/components/pwa-prompt";
 
 const NOTIF_PAGE_SIZE = 10;
+
+// Matrice categorie × canale (push + in-app sono i due canali; email non usato per ora)
+const CATEGORIES: Array<{
+  key: keyof Pick<NotificationPreference,
+    'tapChanges' | 'events' | 'newPubs' |
+    'checkinLikes' | 'checkinComments' | 'newFollowers' |
+    'breweryReplies' | 'reportUpdates' | 'adminBroadcasts'>;
+  label: string;
+  description: string;
+  icon: any;
+  iconColor: string;
+}> = [
+  { key: 'tapChanges',     label: 'Nuove birre in spina',  description: 'Quando i tuoi locali aggiornano la taplist',     icon: Beer,         iconColor: 'text-orange-600' },
+  { key: 'events',         label: 'Eventi in zona',        description: 'Degustazioni, festival e serate birrai',         icon: Calendar,     iconColor: 'text-blue-600' },
+  { key: 'newPubs',        label: 'Nuovi locali',          description: 'Quando aprono nuovi pub vicino a te',            icon: MapPin,       iconColor: 'text-emerald-600' },
+  { key: 'checkinLikes',   label: 'Like sui tuoi check-in',description: 'Quando qualcuno mette mi piace alle tue birre',  icon: Heart,        iconColor: 'text-rose-600' },
+  { key: 'checkinComments',label: 'Commenti ai check-in',  description: 'Risposte e commenti sotto i tuoi check-in',      icon: MessageCircle,iconColor: 'text-violet-600' },
+  { key: 'newFollowers',   label: 'Nuovi follower e amici',description: 'Quando qualcuno ti segue o fa check-in',         icon: Users,        iconColor: 'text-sky-600' },
+  { key: 'breweryReplies', label: 'Risposte birrificio',   description: 'Quando un birrificio risponde a te',             icon: Factory,      iconColor: 'text-amber-600' },
+  { key: 'reportUpdates',  label: 'Esito segnalazioni',    description: 'Quando i moderatori gestiscono le tue segnalazioni', icon: Flag,    iconColor: 'text-red-500' },
+  { key: 'adminBroadcasts',label: 'Annunci Fermenta.to',   description: 'Comunicazioni ufficiali della redazione',        icon: Megaphone,    iconColor: 'text-primary' },
+];
 
 function getNotificationIcon(type: string) {
   const base = "h-5 w-5";
@@ -31,6 +51,8 @@ function getNotificationIcon(type: string) {
       return { icon: <Factory className={`${base} text-amber-600`} />, bg: 'bg-amber-50 dark:bg-amber-950/30' };
     case 'new_pub_request':
       return { icon: <Store className={`${base} text-amber-600`} />, bg: 'bg-amber-50 dark:bg-amber-950/30' };
+    case 'moderation':
+      return { icon: <Flag className={`${base} text-red-500`} />, bg: 'bg-red-50 dark:bg-red-950/30' };
     case 'festival':
     case 'festival_interest':
     case 'festival_update':
@@ -40,28 +62,26 @@ function getNotificationIcon(type: string) {
   }
 }
 
-function PrefRow({ label, description, checked, onChange, disabled }: {
-  label: string; description: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-4">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-foreground">{label}</p>
-        <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{description}</p>
-      </div>
-      <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
-    </div>
-  );
-}
+// Filtri disponibili nello storico
+const HISTORY_FILTERS: Array<{ value: string; label: string }> = [
+  { value: 'all', label: 'Tutte' },
+  { value: 'tap_change', label: 'Spine' },
+  { value: 'new_beer', label: 'Birre' },
+  { value: 'event', label: 'Eventi' },
+  { value: 'moderation', label: 'Segnalazioni' },
+  { value: 'new_pub_request', label: 'Richieste pub' },
+  { value: 'new_brewery_request', label: 'Richieste birrificio' },
+];
 
 export default function Notifications() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [, setLocation] = useLocation();
   const [notifPerm, setNotifPerm] = useState<NotificationPermission | 'unsupported'>('default');
-  const [showSettings, setShowSettings] = useState(false);
+  const [tab, setTab] = useState<'storia' | 'preferenze'>('storia');
   const [showAll, setShowAll] = useState(false);
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [filter, setFilter] = useState<string>('all');
 
   useEffect(() => {
     if ('Notification' in window) setNotifPerm(Notification.permission);
@@ -79,7 +99,14 @@ export default function Notifications() {
     queryKey: ['/api/push/status'], enabled: isAuthenticated,
   });
   const { data: notificationsList = [], isLoading: notifLoading } = useQuery<Notification[]>({
-    queryKey: ['/api/notifications'], enabled: isAuthenticated,
+    queryKey: ['/api/notifications', filter],
+    queryFn: async () => {
+      const url = filter === 'all' ? '/api/notifications' : `/api/notifications?type=${encodeURIComponent(filter)}`;
+      const r = await fetch(url, { credentials: 'include' });
+      if (!r.ok) throw new Error('Failed');
+      return r.json();
+    },
+    enabled: isAuthenticated,
   });
   const { data: preferences } = useQuery<NotificationPreference>({
     queryKey: ['/api/notification-preferences'], enabled: isAuthenticated,
@@ -109,7 +136,14 @@ export default function Notifications() {
   const updatePrefsMutation = useMutation({
     mutationFn: (prefs: Partial<NotificationPreference>) =>
       apiRequest('/api/notification-preferences', { method: 'PATCH' }, prefs),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['/api/notification-preferences'] }),
+    onMutate: async (newPrefs) => {
+      await queryClient.cancelQueries({ queryKey: ['/api/notification-preferences'] });
+      const prev = queryClient.getQueryData<NotificationPreference>(['/api/notification-preferences']);
+      if (prev) queryClient.setQueryData(['/api/notification-preferences'], { ...prev, ...newPrefs });
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => { if (ctx?.prev) queryClient.setQueryData(['/api/notification-preferences'], ctx.prev); },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['/api/notification-preferences'] }),
   });
 
   const handleSubscribe = async () => {
@@ -123,7 +157,7 @@ export default function Notifications() {
       setNotifPerm(Notification.permission);
       if (result.success) {
         refetchPush();
-        toast({ title: "Notifiche attivate!", description: "Riceverai notifiche quando ci sono novità nei tuoi preferiti." });
+        toast({ title: "Notifiche attivate!", description: "Riceverai notifiche quando ci sono novità." });
       } else {
         toast({ title: "Registrazione fallita", description: result.error || "Prova a ricaricare la pagina.", variant: "destructive" });
       }
@@ -139,7 +173,7 @@ export default function Notifications() {
     try {
       await unsubscribeFromPush();
       refetchPush();
-      toast({ title: "Push disattivate", description: "Non riceverai più notifiche push su questo dispositivo." });
+      toast({ title: "Push disattivate" });
     } catch {
       toast({ title: "Errore", description: "Impossibile disattivare le notifiche push.", variant: "destructive" });
     } finally {
@@ -164,7 +198,11 @@ export default function Notifications() {
     if (link) setLocation(link);
   };
 
-  if (authLoading || notifLoading) {
+  const unreadCount = useMemo(() => notificationsList.filter(n => !n.isRead).length, [notificationsList]);
+  const visible = showAll ? notificationsList : notificationsList.slice(0, NOTIF_PAGE_SIZE);
+  const hasMore = notificationsList.length > NOTIF_PAGE_SIZE && !showAll;
+
+  if (authLoading || (notifLoading && notificationsList.length === 0)) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 pb-24 space-y-4">
         {[...Array(4)].map((_, i) => (
@@ -173,12 +211,9 @@ export default function Notifications() {
       </div>
     );
   }
-
   if (!isAuthenticated) return null;
 
-  const unreadCount = notificationsList.filter(n => !n.isRead).length;
-  const visible = showAll ? notificationsList : notificationsList.slice(0, NOTIF_PAGE_SIZE);
-  const hasMore = notificationsList.length > NOTIF_PAGE_SIZE && !showAll;
+  const pushMaster = preferences?.pushEnabled !== false;
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-6 pb-24 space-y-4">
@@ -196,27 +231,38 @@ export default function Notifications() {
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {unreadCount > 0 && (
-            <button
-              onClick={() => markAllReadMutation.mutate()}
-              disabled={markAllReadMutation.isPending}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-50 dark:bg-stone-900/20 text-primary hover:bg-stone-100 transition-colors"
-            >
-              {markAllReadMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
-              Segna lette
-            </button>
-          )}
+        {tab === 'storia' && unreadCount > 0 && (
           <button
-            onClick={() => setShowSettings(s => !s)}
-            className={`p-2 rounded-xl transition-colors ${showSettings ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-stone-900/20 text-primary hover:bg-stone-100'}`}
+            onClick={() => markAllReadMutation.mutate()}
+            disabled={markAllReadMutation.isPending}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-50 dark:bg-stone-900/20 text-primary hover:bg-stone-100 transition-colors"
+            data-testid="button-mark-all-read"
           >
-            {showSettings ? <X className="h-4 w-4" /> : <Settings className="h-4 w-4" />}
+            {markAllReadMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
+            Segna lette
           </button>
-        </div>
+        )}
       </div>
 
-      {/* Push permission banner */}
+      {/* Tabs */}
+      <div className="flex bg-stone-50 dark:bg-stone-900/20 rounded-2xl p-1 gap-1">
+        <button
+          onClick={() => setTab('storia')}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === 'storia' ? 'bg-white dark:bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}
+          data-testid="tab-storia"
+        >
+          Storico
+        </button>
+        <button
+          onClick={() => setTab('preferenze')}
+          className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${tab === 'preferenze' ? 'bg-white dark:bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}
+          data-testid="tab-preferenze"
+        >
+          <Settings className="h-3.5 w-3.5" /> Preferenze
+        </button>
+      </div>
+
+      {/* Push permission banner — sempre visibile in alto se non concesse */}
       {notifPerm !== 'granted' && notifPerm !== 'unsupported' && (
         <div className={`rounded-2xl p-4 border flex items-start gap-3 ${notifPerm === 'denied' ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30' : 'bg-white dark:bg-card border-stone-100 dark:border-border'}`}>
           <div className={`p-2 rounded-xl flex-shrink-0 ${notifPerm === 'denied' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-stone-100 dark:bg-stone-800'}`}>
@@ -229,7 +275,7 @@ export default function Notifications() {
             <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
               {notifPerm === 'denied'
                 ? 'Sblocca le notifiche nelle impostazioni del browser per ricevere aggiornamenti.'
-                : 'Ricevi notifiche quando i tuoi pub preferiti aggiungono nuove birre alla spina.'}
+                : 'Ricevi avvisi quando ci sono novità sui tuoi locali, birre o amici.'}
             </p>
             {notifPerm !== 'denied' && (
               <button
@@ -237,6 +283,7 @@ export default function Notifications() {
                 disabled={isSubscribing}
                 className="mt-2.5 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-colors"
                 style={{ background: 'linear-gradient(135deg, #F77104 0%, #f5a623 100%)' }}
+                data-testid="button-subscribe-push"
               >
                 {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />}
                 Attiva notifiche push
@@ -246,197 +293,304 @@ export default function Notifications() {
         </div>
       )}
 
-      {notifPerm === 'granted' && pushStatus?.subscribed && (
-        <div className="rounded-2xl p-3 border border-emerald-100 dark:border-emerald-900/30 bg-emerald-50 dark:bg-emerald-950/20 flex items-center gap-3">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600 flex-shrink-0" />
-          <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300 flex-1">Notifiche push attive su questo dispositivo</p>
-        </div>
-      )}
-
-      {notifPerm === 'granted' && !pushStatus?.subscribed && (
-        <div className="rounded-2xl p-4 border border-stone-100 dark:border-border bg-white dark:bg-card flex items-center gap-3">
-          <AlertCircle className="h-4 w-4 text-primary flex-shrink-0" />
-          <p className="text-xs text-muted-foreground flex-1">Permesso concesso ma non registrato. Clicca per completare l'attivazione.</p>
-          <button onClick={handleSubscribe} disabled={isSubscribing} className="text-xs font-bold text-primary hover:underline">
-            {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Attiva'}
-          </button>
-        </div>
-      )}
-
-      {/* Settings panel */}
-      {showSettings && (
-        <div className="rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card shadow-[0_4px_20px_rgba(247,113,4,0.06)] overflow-hidden">
-          <div className="px-5 py-4 border-b border-stone-100 dark:border-border bg-background dark:bg-stone-900/10">
-            <h2 className="font-bold text-foreground text-sm">Preferenze notifiche</h2>
-          </div>
-          <div className="p-5 space-y-5">
-            <PrefRow
-              label="Nuove birre in spina"
-              description="Quando i tuoi locali preferiti aggiornano la taplist"
-              checked={preferences?.tapChanges ?? true}
-              onChange={(v) => updatePrefsMutation.mutate({ tapChanges: v })}
-              disabled={updatePrefsMutation.isPending}
-            />
-            <PrefRow
-              label="Eventi in zona"
-              description="Degustazioni, festival e serate birrai"
-              checked={preferences?.events ?? true}
-              onChange={(v) => updatePrefsMutation.mutate({ events: v })}
-              disabled={updatePrefsMutation.isPending}
-            />
-            <PrefRow
-              label="Nuovi locali"
-              description="Quando aprono nuovi pub nella tua zona"
-              checked={preferences?.newPubs ?? false}
-              onChange={(v) => updatePrefsMutation.mutate({ newPubs: v })}
-              disabled={updatePrefsMutation.isPending}
-            />
-
-            <div className="border-t border-stone-100 dark:border-border pt-4">
-              <div className="flex items-center gap-2 mb-1">
-                <CalendarDays className="h-4 w-4 text-violet-600" />
-                <span className="text-sm font-bold text-foreground">Festival</span>
-              </div>
-              <p className="text-xs text-muted-foreground mb-3 leading-snug">
-                Metti "Mi Piace" ai festival dalla sezione <strong>Attività</strong> per ricevere aggiornamenti.
-              </p>
-              <div className="flex gap-2">
-                <a href="/activity" className="flex-1">
-                  <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-violet-50 dark:bg-violet-950/20 text-violet-700 dark:text-violet-400 hover:bg-violet-100 transition-colors">
-                    <CalendarDays className="h-3.5 w-3.5" />Vedi festival
-                  </button>
-                </a>
-                <a href="/festival" className="flex-1">
-                  <button className="w-full flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 hover:bg-red-100 transition-colors">
-                    <Heart className="h-3.5 w-3.5" />Preferiti
-                  </button>
-                </a>
-              </div>
-            </div>
-
-            <div className="border-t border-stone-100 dark:border-border pt-4 flex flex-wrap gap-2">
-              {pushStatus?.subscribed && (
-                <button
-                  onClick={handleUnsubscribe}
-                  disabled={isSubscribing}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-50 dark:bg-red-950/20 text-red-600 hover:bg-red-100 transition-colors"
-                >
-                  {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellOff className="h-3.5 w-3.5" />}
-                  Disattiva push
-                </button>
-              )}
-              {notificationsList.length > 0 && (
-                <button
-                  onClick={() => deleteAllMutation.mutate()}
-                  disabled={deleteAllMutation.isPending}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-50 dark:bg-red-950/20 text-red-600 hover:bg-red-100 transition-colors"
-                >
-                  {deleteAllMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-                  Elimina tutte
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Notification list — Nuove / Meno recenti */}
-      <div className="space-y-1">
-        {(() => {
-          const newOnes = visible.filter(n => !n.isRead);
-          const oldOnes = visible.filter(n => n.isRead);
-          const renderCard = (n: any) => {
-            const { icon, bg } = getNotificationIcon(n.type);
-            const link = getLink(n);
-            return (
-              <div
-                key={n.id}
-                onClick={() => handleClick(n)}
-                className={`rounded-2xl border cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
-                  !n.isRead
-                    ? 'bg-white dark:bg-card border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
-                    : 'bg-white dark:bg-card border-stone-100 dark:border-border'
-                } hover:shadow-[0_4px_20px_rgba(247,113,4,0.1)]`}
+      {/* ─── TAB STORICO ─────────────────────────────────────────────────── */}
+      {tab === 'storia' && (
+        <>
+          {/* Filtro categoria */}
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
+            {HISTORY_FILTERS.map(f => (
+              <button
+                key={f.value}
+                onClick={() => setFilter(f.value)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
+                  filter === f.value
+                    ? 'bg-primary text-white'
+                    : 'bg-stone-50 dark:bg-stone-900/20 text-muted-foreground hover:bg-stone-100'
+                }`}
+                data-testid={`filter-${f.value}`}
               >
-                <div className="flex items-start gap-3 p-4">
-                  <div className={`w-10 h-10 rounded-2xl flex-shrink-0 flex items-center justify-center ${bg}`}>
-                    {icon}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start gap-2 justify-between">
+                {f.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-1">
+            {(() => {
+              const newOnes = visible.filter(n => !n.isRead);
+              const oldOnes = visible.filter(n => n.isRead);
+              const renderCard = (n: any) => {
+                const { icon, bg } = getNotificationIcon(n.type);
+                const link = getLink(n);
+                return (
+                  <div
+                    key={n.id}
+                    onClick={() => handleClick(n)}
+                    className={`rounded-2xl border cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
+                      !n.isRead
+                        ? 'bg-white dark:bg-card border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
+                        : 'bg-white dark:bg-card border-stone-100 dark:border-border'
+                    } hover:shadow-[0_4px_20px_rgba(247,113,4,0.1)]`}
+                    data-testid={`notif-card-${n.id}`}
+                  >
+                    <div className="flex items-start gap-3 p-4">
+                      <div className={`w-10 h-10 rounded-2xl flex-shrink-0 flex items-center justify-center ${bg}`}>
+                        {icon}
+                      </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-sm font-bold text-foreground leading-snug">{n.title}</span>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-2">{n.message}</p>
-                        <div className="flex items-center gap-3 mt-2">
-                          <span className="text-[10px] text-muted-foreground">
-                            {n.createdAt ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: it }) : ''}
-                          </span>
-                          {link && (
-                            <span className="text-xs font-extrabold text-primary inline-flex items-center gap-0.5 bg-primary/10 px-2.5 py-1.5 rounded-full">
-                              Apri <ArrowRight className="h-2.5 w-2.5" />
-                            </span>
-                          )}
+                        <div className="flex items-start gap-2 justify-between">
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-bold text-foreground leading-snug">{n.title}</span>
+                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug line-clamp-2">{n.message}</p>
+                            <div className="flex items-center gap-3 mt-2">
+                              <span className="text-[10px] text-muted-foreground">
+                                {n.createdAt ? formatDistanceToNow(new Date(n.createdAt), { addSuffix: true, locale: it }) : ''}
+                              </span>
+                              {link && (
+                                <span className="text-xs font-extrabold text-primary inline-flex items-center gap-0.5 bg-primary/10 px-2.5 py-1.5 rounded-full">
+                                  Apri <ArrowRight className="h-2.5 w-2.5" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(n.id); }}
+                            className="p-1.5 rounded-xl text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex-shrink-0"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
                         </div>
                       </div>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(n.id); }}
-                        className="p-1.5 rounded-xl text-muted-foreground hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex-shrink-0"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                    </div>
+                    {!n.isRead && (
+                      <div className="h-0.5 mx-4 mb-3 rounded-full" style={{ background: 'linear-gradient(90deg, #F77104, #f5a623)' }} />
+                    )}
+                  </div>
+                );
+              };
+              return (
+                <>
+                  {newOnes.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-[10px] font-black uppercase tracking-[0.08em] text-muted-foreground px-1 pb-0.5 pt-1">
+                        Nuove ({newOnes.length})
+                      </p>
+                      {newOnes.map(renderCard)}
+                    </div>
+                  )}
+                  {oldOnes.length > 0 && (
+                    <div className="space-y-2">
+                      <p className={`text-[10px] font-black uppercase tracking-[0.08em] text-muted-foreground px-1 pb-0.5 ${newOnes.length > 0 ? 'pt-4' : 'pt-1'}`}>
+                        Meno recenti
+                      </p>
+                      {oldOnes.map(renderCard)}
+                    </div>
+                  )}
+                </>
+              );
+            })()}
+
+            {hasMore && (
+              <button
+                onClick={() => setShowAll(true)}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-stone-200 transition-all"
+                data-testid="button-show-more"
+              >
+                <ChevronDown className="h-4 w-4" />
+                Mostra di più ({notificationsList.length - NOTIF_PAGE_SIZE} altre)
+              </button>
+            )}
+
+            {notificationsList.length === 0 && (
+              <div className="text-center py-16 rounded-2xl border-2 border-dashed border-stone-200 dark:border-stone-700/30">
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, rgba(247,113,4,0.1) 0%, rgba(245,166,35,0.1) 100%)' }}>
+                  <Bell className="h-8 w-8 text-primary/40" />
+                </div>
+                <h3 className="text-base font-bold text-foreground mb-1">Nessuna notifica</h3>
+                <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-snug">
+                  {filter === 'all'
+                    ? 'Quando ci saranno novità le vedrai qui.'
+                    : 'Nessuna notifica per questa categoria.'}
+                </p>
+              </div>
+            )}
+
+            {notificationsList.length > 0 && (
+              <button
+                onClick={() => deleteAllMutation.mutate()}
+                disabled={deleteAllMutation.isPending}
+                className="w-full mt-4 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-2xl text-xs font-bold bg-red-50 dark:bg-red-950/20 text-red-600 hover:bg-red-100 transition-colors"
+                data-testid="button-delete-all"
+              >
+                {deleteAllMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
+                Elimina tutte
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ─── TAB PREFERENZE ─────────────────────────────────────────────── */}
+      {tab === 'preferenze' && (
+        <div className="space-y-4">
+          {/* Master push toggle + status */}
+          <div className="rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card p-5">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-stone-100 dark:bg-stone-800 flex-shrink-0">
+                  <Bell className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-foreground">Notifiche push</p>
+                  <p className="text-xs text-muted-foreground">Master switch globale</p>
+                </div>
+              </div>
+              <Switch
+                checked={pushMaster}
+                onCheckedChange={(v) => updatePrefsMutation.mutate({ pushEnabled: v })}
+                data-testid="switch-push-master"
+              />
+            </div>
+            {notifPerm === 'granted' && pushStatus?.subscribed && (
+              <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Push attive su questo dispositivo
+              </div>
+            )}
+            {notifPerm === 'granted' && !pushStatus?.subscribed && (
+              <div className="mt-3 flex items-center justify-between gap-2 text-xs">
+                <span className="text-muted-foreground inline-flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5 text-primary" />Permesso concesso, registra il dispositivo</span>
+                <button onClick={handleSubscribe} disabled={isSubscribing} className="font-bold text-primary hover:underline">
+                  {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Attiva'}
+                </button>
+              </div>
+            )}
+            {notifPerm === 'granted' && pushStatus?.subscribed && (
+              <button
+                onClick={handleUnsubscribe}
+                disabled={isSubscribing}
+                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-50 dark:bg-red-950/20 text-red-600 hover:bg-red-100 transition-colors"
+              >
+                {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellOff className="h-3.5 w-3.5" />}
+                Disattiva push su questo dispositivo
+              </button>
+            )}
+          </div>
+
+          {/* Matrice categorie × canali */}
+          <div className="rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card overflow-hidden">
+            <div className="px-5 py-3 border-b border-stone-100 dark:border-border bg-background dark:bg-stone-900/10 flex items-center justify-between">
+              <h2 className="font-bold text-foreground text-sm">Categorie</h2>
+              <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
+                <span className="w-12 text-center">In-app</span>
+                <span className="w-12 text-center">Push</span>
+              </div>
+            </div>
+            <div className="divide-y divide-stone-100 dark:divide-border">
+              {CATEGORIES.map(cat => {
+                const Icon = cat.icon;
+                const inAppOn = (preferences as any)?.inAppEnabled !== false;
+                const catOn = (preferences as any)?.[cat.key] !== false;
+                return (
+                  <div key={cat.key} className="px-5 py-4 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-stone-50 dark:bg-stone-900/30 flex-shrink-0">
+                      <Icon className={`h-4 w-4 ${cat.iconColor}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground leading-tight">{cat.label}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{cat.description}</p>
+                    </div>
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      {/* In-app: la categoria stessa abilita anche l'in-app */}
+                      <div className="w-12 flex justify-center">
+                        <Switch
+                          checked={catOn && inAppOn}
+                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.key]: v } as any)}
+                          disabled={!inAppOn}
+                          data-testid={`switch-${cat.key}-inapp`}
+                        />
+                      </div>
+                      <div className="w-12 flex justify-center">
+                        <Switch
+                          checked={catOn && pushMaster}
+                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.key]: v } as any)}
+                          disabled={!pushMaster}
+                          data-testid={`switch-${cat.key}-push`}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-                {!n.isRead && (
-                  <div className="h-0.5 mx-4 mb-3 rounded-full" style={{ background: 'linear-gradient(90deg, #F77104, #f5a623)' }} />
-                )}
-              </div>
-            );
-          };
-          return (
-            <>
-              {newOnes.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-[0.08em] text-muted-foreground px-1 pb-0.5 pt-1">
-                    Nuove ({newOnes.length})
-                  </p>
-                  {newOnes.map(renderCard)}
-                </div>
-              )}
-              {oldOnes.length > 0 && (
-                <div className="space-y-2">
-                  <p className={`text-[10px] font-black uppercase tracking-[0.08em] text-muted-foreground px-1 pb-0.5 ${newOnes.length > 0 ? 'pt-4' : 'pt-1'}`}>
-                    Meno recenti
-                  </p>
-                  {oldOnes.map(renderCard)}
-                </div>
-              )}
-            </>
-          );
-        })()}
-
-        {hasMore && (
-          <button
-            onClick={() => setShowAll(true)}
-            className="w-full flex items-center justify-center gap-2 py-3 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card text-sm font-semibold text-muted-foreground hover:text-foreground hover:border-stone-200 transition-all"
-          >
-            <ChevronDown className="h-4 w-4" />
-            Mostra di più ({notificationsList.length - NOTIF_PAGE_SIZE} altre)
-          </button>
-        )}
-
-        {notificationsList.length === 0 && (
-          <div className="text-center py-16 rounded-2xl border-2 border-dashed border-stone-200 dark:border-stone-700/30">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, rgba(247,113,4,0.1) 0%, rgba(245,166,35,0.1) 100%)' }}>
-              <Bell className="h-8 w-8 text-primary/40" />
+                );
+              })}
             </div>
-            <h3 className="text-base font-bold text-foreground mb-1">Nessuna notifica</h3>
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto leading-snug">
-              Quando i tuoi locali preferiti aggiungeranno nuove birre o eventi, le notifiche appariranno qui.
+            <div className="px-5 py-3 border-t border-stone-100 dark:border-border bg-stone-50/50 dark:bg-stone-900/10">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">Notifiche dentro l'app</p>
+                <Switch
+                  checked={(preferences as any)?.inAppEnabled !== false}
+                  onCheckedChange={(v) => updatePrefsMutation.mutate({ inAppEnabled: v } as any)}
+                  data-testid="switch-inapp-master"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Quiet hours */}
+          <div className="rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card p-5">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-violet-50 dark:bg-violet-950/30">
+                <Moon className="h-4 w-4 text-violet-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-foreground">Ore di silenzio</p>
+                <p className="text-xs text-muted-foreground">Niente push in fascia notturna</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Inizio</span>
+                <input
+                  type="time"
+                  value={preferences?.quietHoursStart ?? ''}
+                  onChange={(e) => updatePrefsMutation.mutate({ quietHoursStart: e.target.value || null } as any)}
+                  className="mt-1 w-full rounded-xl border border-stone-200 dark:border-border bg-background px-3 py-2 text-sm font-semibold"
+                  data-testid="input-quiet-start"
+                />
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Fine</span>
+                <input
+                  type="time"
+                  value={preferences?.quietHoursEnd ?? ''}
+                  onChange={(e) => updatePrefsMutation.mutate({ quietHoursEnd: e.target.value || null } as any)}
+                  className="mt-1 w-full rounded-xl border border-stone-200 dark:border-border bg-background px-3 py-2 text-sm font-semibold"
+                  data-testid="input-quiet-end"
+                />
+              </label>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => updatePrefsMutation.mutate({ quietHoursMode: 'queue' } as any)}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${preferences?.quietHoursMode !== 'skip' ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-stone-900/20 text-muted-foreground'}`}
+                data-testid="button-mode-queue"
+              >
+                Rimanda
+              </button>
+              <button
+                onClick={() => updatePrefsMutation.mutate({ quietHoursMode: 'skip' } as any)}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${preferences?.quietHoursMode === 'skip' ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-stone-900/20 text-muted-foreground'}`}
+                data-testid="button-mode-skip"
+              >
+                Scarta
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2 leading-snug">
+              {preferences?.quietHoursMode === 'skip'
+                ? 'Le notifiche durante questa fascia non verranno inviate.'
+                : 'Le notifiche durante questa fascia verranno inviate alla fine del periodo.'}
             </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

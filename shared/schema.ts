@@ -684,9 +684,23 @@ export const notifications = pgTable("notifications", {
 export const notificationPreferences = pgTable("notification_preferences", {
   id: serial("id").primaryKey(),
   userId: varchar("user_id").references(() => users.id).notNull().unique(),
+  // Categorie (default true tranne newPubs/adminBroadcasts opt-in)
   tapChanges: boolean("tap_changes").default(true),
   events: boolean("events").default(true),
   newPubs: boolean("new_pubs").default(false),
+  checkinLikes: boolean("checkin_likes").default(true),
+  checkinComments: boolean("checkin_comments").default(true),
+  newFollowers: boolean("new_followers").default(true),
+  breweryReplies: boolean("brewery_replies").default(true),
+  reportUpdates: boolean("report_updates").default(true),
+  adminBroadcasts: boolean("admin_broadcasts").default(true),
+  // Canali master
+  pushEnabled: boolean("push_enabled").default(true),
+  inAppEnabled: boolean("in_app_enabled").default(true),
+  // Ore di silenzio (HH:MM, mode: 'queue' rimanda, 'skip' scarta)
+  quietHoursStart: varchar("quiet_hours_start", { length: 5 }),
+  quietHoursEnd: varchar("quiet_hours_end", { length: 5 }),
+  quietHoursMode: varchar("quiet_hours_mode", { length: 10 }).default("queue"),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

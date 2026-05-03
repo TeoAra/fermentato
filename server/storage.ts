@@ -1636,6 +1636,40 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
+    // Task #15: rispetta inAppEnabled + categoria nelle preferenze utente.
+    // Mapping notification.type → categoria pref (null = sempre consentita,
+    // es. richieste admin che non hanno opt-out per categoria).
+    const typeToCategory: Record<string, string | null> = {
+      tap_change: 'tapChanges',
+      new_beer: 'tapChanges',
+      beer_removed: 'tapChanges',
+      event: 'events',
+      festival: 'events',
+      festival_interest: 'events',
+      festival_update: 'events',
+      new_pub: 'newPubs',
+      moderation: 'reportUpdates',
+      admin_broadcast: 'adminBroadcasts',
+      new_pub_request: null,
+      new_brewery_request: null,
+    };
+    try {
+      const [prefs] = await db.select().from(notificationPreferences)
+        .where(eq(notificationPreferences.userId, notification.userId));
+      if (prefs) {
+        // Master switch in-app: vale per OGNI tipo (anche quelli non mappati a categoria)
+        if (prefs.inAppEnabled === false) {
+          return { ...(notification as any), id: 0, isRead: false, createdAt: new Date() } as Notification;
+        }
+        // Category filter: solo per type mappati esplicitamente
+        const cat = typeToCategory[notification.type];
+        if (cat && (prefs as any)[cat] === false) {
+          return { ...(notification as any), id: 0, isRead: false, createdAt: new Date() } as Notification;
+        }
+      }
+    } catch (e) {
+      // fail-open: in caso di errore lettura prefs, scrive comunque la notifica
+    }
     const [created] = await db.insert(notifications).values(notification).returning();
     return created;
   }

@@ -121,6 +121,19 @@ async function runSocialMigrations() {
       );
       CREATE INDEX IF NOT EXISTS idx_content_reports_status ON content_reports(status);
       CREATE INDEX IF NOT EXISTS idx_content_reports_target ON content_reports(target_type, target_id);
+
+      -- Task #15: notification_preferences (categorie + canali + quiet hours)
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS checkin_likes BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS checkin_comments BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS new_followers BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS brewery_replies BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS report_updates BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS admin_broadcasts BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS push_enabled BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS in_app_enabled BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS quiet_hours_start VARCHAR(5);
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS quiet_hours_end VARCHAR(5);
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS quiet_hours_mode VARCHAR(10) DEFAULT 'queue';
     `);
 
     // Backfill: copia review_reports → content_reports una sola volta
@@ -248,6 +261,12 @@ export async function registerSocialRoutes(app: Express) {
         body: "A qualcuno è piaciuto il tuo check-in!",
         url: "/feed",
         tag: `checkin-like-${tastingId}`,
+        category: 'checkinLikes',
+        batchKey: `checkin-like:${tastingId}`,
+        batchTemplate: (count) => ({
+          title: "💛 Nuovi like al tuo check-in",
+          body: `${count} persone hanno messo like al tuo check-in`,
+        }),
       });
     }
     res.json({ liked: true });
@@ -309,6 +328,12 @@ export async function registerSocialRoutes(app: Express) {
         body: "A qualcuno è piaciuto il tuo commento",
         url: "/feed",
         tag: `comment-like-${commentId}`,
+        category: 'checkinLikes',
+        batchKey: `comment-like:${commentId}`,
+        batchTemplate: (count) => ({
+          title: "💛 Nuovi like al tuo commento",
+          body: `${count} persone hanno messo like al tuo commento`,
+        }),
       });
     }
     res.json({ liked: true });
@@ -388,6 +413,12 @@ export async function registerSocialRoutes(app: Express) {
         body: content.slice(0, 80),
         url: "/feed",
         tag: `checkin-comment-${tastingId}`,
+        category: 'checkinComments',
+        batchKey: `checkin-comment:${tastingId}`,
+        batchTemplate: (count) => ({
+          title: "💬 Nuovi commenti al tuo check-in",
+          body: `${count} persone hanno commentato il tuo check-in`,
+        }),
       });
     }
     res.json(rows[0]);
@@ -559,6 +590,8 @@ export async function registerSocialRoutes(app: Express) {
           url: url || "/",
           image: imageUrl || undefined,
           tag: `admin-broadcast-${Date.now()}`,
+          category: 'adminBroadcasts',
+          type: 'admin_broadcast',
         });
         sent++;
       } catch {}
