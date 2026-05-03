@@ -416,7 +416,7 @@ export default function ExplorePubs() {
 
             <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
               {filtered.map((pub: any) => (
-                <PubListCard key={pub.id} pub={pub} showDist={quickFilter === "nearby" && userLocation != null} />
+                <PubListCard key={pub.id} pub={pub} showDist={quickFilter === "nearby" && userLocation != null} userLocation={userLocation} />
               ))}
             </div>
           </>
@@ -427,10 +427,28 @@ export default function ExplorePubs() {
   );
 }
 
-function PubListCard({ pub, showDist }: { pub: any; showDist: boolean }) {
+function PubListCard({ pub, showDist, userLocation }: { pub: any; showDist: boolean; userLocation: { lat: number; lng: number } | null }) {
   const open = isOpenNow(pub.openingHours);
   const hasHours = !!pub.openingHours;
   const [imgErr, setImgErr] = useState(false);
+  const [route, setRoute] = useState<{ km: number; durS: number; isStraight: boolean } | null>(null);
+  const [routeLoading, setRouteLoading] = useState(false);
+
+  const canRoute = !!userLocation && pub.latitude && pub.longitude && pub._distReal == null;
+  const calcRoute = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!userLocation || routeLoading) return;
+    setRouteLoading(true);
+    try {
+      const url = `/api/route?fromLat=${userLocation.lat}&fromLng=${userLocation.lng}&toLat=${parseFloat(pub.latitude)}&toLng=${parseFloat(pub.longitude)}&mode=driving`;
+      const r = await fetch(url);
+      if (r.ok) {
+        const j = await r.json();
+        setRoute({ km: j.distanceM / 1000, durS: j.durationS, isStraight: !!j.isStraightLine });
+      }
+    } catch {} finally { setRouteLoading(false); }
+  };
+  const fmtDur = (s: number) => s < 60 ? "<1 min" : s < 3600 ? `${Math.round(s / 60)} min` : `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`;
 
   return (
     <Link href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}>
@@ -469,6 +487,24 @@ function PubListCard({ pub, showDist }: { pub: any; showDist: boolean }) {
               <span className={`text-[11px] font-bold ${open ? 'text-green-500' : 'text-red-400'}`}>
                 {open ? "Aperto" : "Chiuso"}
               </span>
+            )}
+            {(route || pub._distReal != null) && (
+              <span className="text-[11px] font-semibold text-primary flex items-center gap-0.5">
+                <Navigation className="w-2.5 h-2.5" />
+                {route
+                  ? `${formatDist(route.km)} · ${fmtDur(route.durS)}${route.isStraight ? " (stima)" : ""}`
+                  : `${formatDist(pub._distReal)} su strada`}
+              </span>
+            )}
+            {showDist && canRoute && !route && (
+              <button
+                onClick={calcRoute}
+                disabled={routeLoading}
+                className="text-[10px] font-bold text-primary border border-primary/40 rounded-full px-2 py-0.5 tap-scale hover:bg-primary/10"
+                data-testid={`btn-calc-route-pub-${pub.id}`}
+              >
+                {routeLoading ? "..." : "Calcola percorso"}
+              </button>
             )}
           </div>
         </div>
