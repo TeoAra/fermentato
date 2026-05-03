@@ -1,10 +1,23 @@
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const STATIC_CACHE = `fermenta-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `fermenta-pages-${CACHE_VERSION}`;
 const IMAGE_CACHE = `fermenta-images-${CACHE_VERSION}`;
 const TILE_CACHE = `fermenta-tiles-${CACHE_VERSION}`;
-// API_CACHE rimosso: React Query gestisce la cache dati lato app.
-// Il SW non intercetta mai le chiamate API per evitare dati obsoleti.
+const API_SAFE_CACHE = `fermenta-api-safe-${CACHE_VERSION}`;
+// Whitelist STRETTA di endpoint API "safe" che possono usare stale-while-revalidate:
+// solo dati pubblici raramente modificati (stili, popular styles, mappa birrifici).
+// React Query gestisce comunque la cache lato app; il SW serve solo per
+// ridurre TTFB su cold-start e migliorare la UX in connessioni lente.
+const API_SAFE_WHITELIST = [
+  '/api/beers/styles',
+  '/api/beers/popular-styles',
+  '/api/breweries/map',
+];
+function isApiSafeRequest(url) {
+  // No query param utente / no auth — solo path puliti
+  if (url.search) return false;
+  return API_SAFE_WHITELIST.includes(url.pathname);
+}
 
 // Tile cache limits (map tiles can be numerous)
 const TILE_MAX_ENTRIES = 600;
@@ -32,7 +45,7 @@ self.addEventListener('install', (event) => {
 
 // ─── Activate: purge old caches ───────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
-  const CURRENT = [STATIC_CACHE, PAGE_CACHE, IMAGE_CACHE, TILE_CACHE];
+  const CURRENT = [STATIC_CACHE, PAGE_CACHE, IMAGE_CACHE, TILE_CACHE, API_SAFE_CACHE];
   event.waitUntil(
     // Elimina tutte le cache vecchie incluse le eventuali API cache dei SW precedenti
     caches.keys().then((keys) =>
@@ -55,10 +68,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 2. Chiamate API → SEMPRE rete, mai cache SW.
-  //    React Query gestisce la cache dati lato app con invalidazione precisa.
-  //    Caching qui causava dati obsoleti dopo ogni modifica.
-  if (url.pathname.startsWith('/api/')) return;
+  // 2. Chiamate API:
+  //    - whitelist sicura → stale-while-revalidate (riduce TTFB)
+  //    - tutto il resto → SEMPRE rete (React Query gestisce la cache app)
+  if (url.pathname.startsWith('/api/')) {
+    if (isApiSafeRequest(url)) {
+      event.respondWith(staleWhileRevalidate(event.request, API_SAFE_CACHE));
+    }
+    return;
+  }
 
   // 3. Font/CDN esterni: stale-while-revalidate
   if (!url.origin.includes(origin)) {
@@ -261,17 +279,47 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
+// pushsubscriptionchange: il browser rinnova la subscription; dobbiamo
+// ri-iscriverci e notificare il backend, gestendo il caso in cui
+// oldSubscription sia null (es. Safari iOS) recuperando le opzioni dal
+// VAPID key esposto via /api/push/vapid-key.
 self.addEventListener('pushsubscriptionchange', (event) => {
-  event.waitUntil(
-    self.registration.pushManager
-      .subscribe(event.oldSubscription.options)
-      .then((subscription) => {
-        const sub = subscription.toJSON();
-        return fetch('/api/push/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ endpoint: sub.endpoint, p256dh: sub.keys?.p256dh, auth: sub.keys?.auth }),
-        });
-      })
-  );
+  event.waitUntil((async () => {
+    try {
+      let options = event.oldSubscription?.options;
+      if (!options) {
+        // Recupera la VAPID public key dal server
+        const r = await fetch('/api/push/vapid-key', { credentials: 'include' });
+        if (!r.ok) return;
+        const { publicKey } = await r.json();
+        if (!publicKey) return;
+        options = { userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) };
+      }
+      const subscription = await self.registration.pushManager.subscribe(options);
+      const sub = subscription.toJSON();
+      // Segnala al server di sostituire la vecchia subscription se nota
+      await fetch('/api/push/subscribe', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          endpoint: sub.endpoint,
+          p256dh: sub.keys?.p256dh,
+          auth: sub.keys?.auth,
+          oldEndpoint: event.oldSubscription?.endpoint || null,
+        }),
+      });
+    } catch (e) {
+      // Non possiamo loggare lato utente; il prossimo refresh proverà di nuovo.
+    }
+  })());
 });
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const raw = atob(base64);
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; ++i) out[i] = raw.charCodeAt(i);
+  return out;
+}

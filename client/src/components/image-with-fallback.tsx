@@ -8,6 +8,7 @@ import {
   Store,
   UserCircle
 } from "lucide-react";
+import { cloudinaryUrl, cloudinarySrcSet } from "@/lib/cloudinary";
 
 export type ImageType = "beer" | "pub" | "brewery" | "user" | "food" | "bottle";
 
@@ -19,6 +20,10 @@ interface ImageWithFallbackProps {
   containerClassName?: string;
   iconSize?: "sm" | "md" | "lg" | "xl";
   iconClassName?: string;
+  /** Larghezza target in px per la trasformazione Cloudinary (default 320). */
+  width?: number;
+  /** Disabilita srcset (utile per loghi piccoli sempre uguali). */
+  noSrcSet?: boolean;
 }
 
 const getFallbackIcon = (type: ImageType, iconSize: string) => {
@@ -58,7 +63,9 @@ export default function ImageWithFallback({
   imageType,
   containerClassName = "",
   iconSize = "lg",
-  iconClassName = ""
+  iconClassName = "",
+  width = 320,
+  noSrcSet = false,
 }: ImageWithFallbackProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -74,10 +81,18 @@ export default function ImageWithFallback({
     );
   }
 
+  // Ottimizza URL Cloudinary; per loghi piccoli (sm/md) niente srcset
+  const optimized = cloudinaryUrl(src, width);
+  const srcSet = noSrcSet ? "" : cloudinarySrcSet(src);
+
   return (
     <div className={containerClassName}>
       <img
-        src={src}
+        src={optimized}
+        srcSet={srcSet || undefined}
+        sizes={srcSet ? "(max-width: 640px) 50vw, 320px" : undefined}
+        loading="lazy"
+        decoding="async"
         alt={alt}
         className={className}
         onError={() => {

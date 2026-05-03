@@ -467,6 +467,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })();
 
+  // ── Startup: indici performance per le rotte di lista più calde ──────────
+  // (CREATE INDEX IF NOT EXISTS è idempotente; sicuro a ogni avvio)
+  (async () => {
+    try {
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_brewery_id ON beers(brewery_id)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_style_lower ON beers((lower(style))) WHERE style IS NOT NULL`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_pubs_lat_lng ON pubs(latitude, longitude) WHERE latitude IS NOT NULL AND longitude IS NOT NULL`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_pubs_slug ON pubs(slug)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_breweries_slug ON breweries(slug)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_breweries_lat_lng ON breweries(latitude, longitude) WHERE latitude IS NOT NULL AND longitude IS NOT NULL`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_tap_list_pub_id ON tap_list(pub_id)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_tap_list_beer_id ON tap_list(beer_id)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_favorites_user_item ON favorites(user_id, item_type, item_id)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_beer_views_beer_date ON beer_views(beer_id, viewed_at)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_beer_tastings_user ON user_beer_tastings(user_id)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_beer_tastings_beer ON user_beer_tastings(beer_id)`);
+    } catch (e: any) {
+      // Su alcune tabelle (es. beer_views) potrebbero non esserci ancora;
+      // log soft, non blocca l'avvio.
+      console.warn("[indexes] migration soft-fail:", e?.message?.slice(0, 120));
+    }
+  })();
+
   // Startup: ensure pubs have slug column + auto-generate slugs
   (async () => {
     try {
@@ -682,9 +705,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get unique beer styles for dropdown (must be before beers/:id)
   app.get("/api/beers/styles", async (req, res) => {
     try {
-      const beers = await storage.getBeers();
-      const uniqueStyles = [...new Set(beers.map(beer => beer.style).filter(Boolean))];
-      const styles = uniqueStyles.map(style => ({ style }));
+      const styles = await memCached("beers:styles:v1", 10 * 60 * 1000, async () => {
+        const rows = await db.execute(sql`SELECT DISTINCT style FROM beers WHERE style IS NOT NULL AND style != '' ORDER BY style`);
+        return (rows as any).rows.map((r: any) => ({ style: r.style }));
+      });
+      res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
       res.json(styles);
     } catch (error) {
       console.error("Error fetching beer styles:", error);
@@ -718,7 +743,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const limit = Math.min(20, parseInt(req.query.limit as string) || 10);
       const days = Math.min(30, parseInt(req.query.days as string) || 7);
-      const results = await storage.getTrendingBeers(limit, days);
+      const results = await memCached(`beers:trending:${limit}:${days}`, 5 * 60 * 1000, () => storage.getTrendingBeers(limit, days));
+      res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
       res.json(results);
     } catch (error) {
       console.error("Error fetching trending beers:", error);
