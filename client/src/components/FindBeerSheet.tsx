@@ -127,6 +127,14 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
     enabled: !activeStyle && query.length < 2,
   });
 
+  // Ricerca pub per nome (indipendente dal GPS)
+  const { data: pubSearchResults, isLoading: pubSearchLoading } = useQuery<any[]>({
+    queryKey: ["/api/pubs/search", query],
+    queryFn: () => fetch(`/api/pubs/search?q=${encodeURIComponent(query)}`).then(r => r.json()),
+    enabled: activeTab === "locali" && query.trim().length > 1,
+    staleTime: 30 * 1000,
+  });
+
   const beers: any[] = activeStyle
     ? (styleBeers ?? [])
     : query.length > 1
@@ -392,49 +400,81 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                 <p className="text-sm text-stone-400 mt-1">Oppure seleziona uno stile qui sopra</p>
               </div>
             )
-          ) : (
-            nearbyPubs.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-xs font-semibold text-stone-400 mb-2.5 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-primary" />
-                  {nearbyPubs.length} locali nel raggio selezionato
-                </p>
-                {nearbyPubs.map((pub: any) => (
-                  <Link key={pub.id} href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`} onClick={onClose}>
-                    <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
-                      <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-stone-800 overflow-hidden flex items-center justify-center">
-                        {pub.logoUrl ? (
-                          <img src={pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <Store className="w-5 h-5 text-stone-300" />
-                        )}
+          ) : (() => {
+            const isSearching = query.trim().length > 1;
+            const pubsToShow: any[] = isSearching
+              ? (pubSearchResults ?? [])
+              : nearbyPubs;
+            const loading = isSearching && pubSearchLoading;
+
+            if (loading) {
+              return (
+                <div className="space-y-2.5">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-stone-800/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+                  ))}
+                </div>
+              );
+            }
+
+            if (pubsToShow.length > 0) {
+              return (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-stone-400 mb-2.5 flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-primary" />
+                    {isSearching
+                      ? `${pubsToShow.length} locali per "${query.trim()}"`
+                      : `${pubsToShow.length} locali nel raggio selezionato`}
+                  </p>
+                  {pubsToShow.map((pub: any) => (
+                    <Link key={pub.id} href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`} onClick={onClose}>
+                      <div data-testid={`pub-result-${pub.id}`} className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
+                        <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-stone-800 overflow-hidden flex items-center justify-center">
+                          {pub.logoUrl ? (
+                            <img src={pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <Store className="w-5 h-5 text-stone-300" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-[14px] text-foreground truncate">{pub.name}</p>
+                          <p className="text-xs text-stone-400 mt-0.5 truncate">
+                            {[
+                              pub.city,
+                              pub._distance != null
+                                ? pub._distance < 1
+                                  ? `${Math.round(pub._distance * 1000)} m`
+                                  : `${pub._distance.toFixed(1)} km`
+                                : null,
+                            ].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-bold text-[14px] text-foreground truncate">{pub.name}</p>
-                        <p className="text-xs text-stone-400 mt-0.5 truncate">
-                          {[
-                            pub.city,
-                            pub._distance != null
-                              ? pub._distance < 1
-                                ? `${Math.round(pub._distance * 1000)} m`
-                                : `${pub._distance.toFixed(1)} km`
-                              : null,
-                          ].filter(Boolean).join(" · ")}
-                        </p>
-                      </div>
-                      <ChevronRight className="w-4 h-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
+                    </Link>
+                  ))}
+                </div>
+              );
+            }
+
+            // Empty state — distinguishes "nessun risultato per ricerca" vs "no GPS"
+            if (isSearching) {
+              return (
+                <div className="text-center py-14">
+                  <Store className="w-12 h-12 mx-auto mb-3 text-stone-200 dark:text-stone-700" />
+                  <p className="font-bold text-stone-500 dark:text-stone-400 mb-1">Nessun locale per "{query.trim()}"</p>
+                  <p className="text-sm text-stone-400">Prova con un altro nome o città</p>
+                </div>
+              );
+            }
+            return (
               <div className="text-center py-14">
                 <MapPin className="w-12 h-12 mx-auto mb-3 text-stone-200 dark:text-stone-700" />
-                <p className="font-bold text-stone-500 dark:text-stone-400 mb-1">Nessun locale trovato</p>
-                <p className="text-sm text-stone-400">Attiva la posizione GPS per trovare pub vicino a te</p>
+                <p className="font-bold text-stone-500 dark:text-stone-400 mb-1">Nessun locale vicino</p>
+                <p className="text-sm text-stone-400">Cerca per nome o attiva il GPS per i pub vicino a te</p>
               </div>
-            )
-          )}
+            );
+          })()}
         </div>
       </div>
     </>
