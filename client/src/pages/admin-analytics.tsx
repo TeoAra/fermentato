@@ -29,6 +29,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { Link, useLocation } from "wouter";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   ResponsiveContainer,
   AreaChart, Area,
@@ -197,7 +198,7 @@ export default function AdminAnalytics() {
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-6 max-w-7xl space-y-6">
+      <PageContainer variant="wide" className="py-6 space-y-6">
         <div className="flex items-center gap-4 mb-2">
           <Link href="/admin">
             <Button variant="outline" size="sm" className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl">
@@ -592,7 +593,7 @@ export default function AdminAnalytics() {
             </div>
           </CardContent>
         </Card>
-      </div>
+      </PageContainer>
     </div>
   );
 }

@@ -23,6 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { format } from "date-fns";
+import { PageContainer } from "@/components/layout/page-container";
 import { it as itLocale } from "date-fns/locale";
 
 interface Suggestion {
@@ -338,7 +339,7 @@ export default function AdminSuggestions() {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-amber-50/20 dark:from-gray-950 dark:to-amber-950/10">
       {/* Header */}
       <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+        <PageContainer variant="standard" className="py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin">
               <Button variant="ghost" size="sm" className="gap-2">
@@ -357,10 +358,10 @@ export default function AdminSuggestions() {
               )}
             </div>
           </div>
-        </div>
+        </PageContainer>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+      <PageContainer variant="standard" className="py-6 space-y-5">
         {/* Status tabs */}
         <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
           {(["pending", "approved", "rejected"] as const).map((s) => (
@@ -417,7 +418,7 @@ export default function AdminSuggestions() {
             ))}
           </div>
         )}
-      </div>
+      </PageContainer>
     </div>
   );
 }

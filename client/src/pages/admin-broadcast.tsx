@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { PageContainer } from "@/components/layout/page-container";
 import { it } from "date-fns/locale";
 
 const AUDIENCES = [
@@ -65,14 +66,14 @@ export default function AdminBroadcast() {
     <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[hsl(220,5%,14%)] pb-24">
       <Helmet><title>Broadcast | Admin</title></Helmet>
 
-      <header className="bg-white dark:bg-[hsl(220,5%,18%)] border-b border-stone-100 dark:border-stone-800 px-4 py-5">
-        <div className="max-w-3xl mx-auto flex items-center gap-3">
+      <header className="bg-white dark:bg-[hsl(220,5%,18%)] border-b border-stone-100 dark:border-stone-800 py-5">
+        <PageContainer variant="narrow" className="flex items-center gap-3">
           <Megaphone className="w-6 h-6 text-primary" />
           <h1 className="text-xl font-black font-poppins">Push broadcast & News</h1>
-        </div>
+        </PageContainer>
       </header>
 
-      <main className="max-w-3xl mx-auto p-4 space-y-6">
+      <PageContainer variant="narrow" as="main" className="py-4 space-y-6">
 
         {/* ── Compose broadcast ────────────────────────────────────────── */}
         <section className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-5 space-y-4">
@@ -183,7 +184,7 @@ export default function AdminBroadcast() {
             </Button>
           </div>
         </section>
-      </main>
+      </PageContainer>
     </div>
   );
 }

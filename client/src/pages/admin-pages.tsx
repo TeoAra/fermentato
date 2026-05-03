@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { RichTextEditor } from "@/components/RichTextEditor";
 import { ArrowLeft, FileText, Edit, CheckCircle, Clock } from "lucide-react";
 import { Link } from "wouter";
+import { PageContainer } from "@/components/layout/page-container";
 import type { StaticPage } from "@shared/schema";
 
 const PAGE_META: Record<string, { label: string; desc: string }> = {
@@ -53,7 +54,7 @@ export default function AdminPages() {
     const meta = PAGE_META[editing.slug];
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-neutral-950">
-        <div className="max-w-4xl mx-auto px-4 py-8">
+        <PageContainer variant="standard" className="py-8">
           <div className="flex items-center gap-3 mb-6">
             <Button variant="outline" size="sm" onClick={() => setEditing(null)}>
               <ArrowLeft className="h-4 w-4 mr-1" /> Torna alla lista
@@ -102,14 +103,14 @@ export default function AdminPages() {
               </div>
             </div>
           </div>
-        </div>
+        </PageContainer>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-950">
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <PageContainer variant="narrow" className="py-8">
         <div className="flex items-center gap-3 mb-8">
           <Link href="/admin">
             <Button variant="outline" size="sm">
@@ -172,7 +173,7 @@ export default function AdminPages() {
         <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-sm text-blue-700 dark:text-blue-300">
           <strong>Suggerimento:</strong> Le pagine sono visibili a tutti nel footer del sito. Usa l'editor per aggiungere testo formattato, immagini e link.
         </div>
-      </div>
+      </PageContainer>
     </div>
   );
 }

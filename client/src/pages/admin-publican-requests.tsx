@@ -26,6 +26,7 @@ import {
 import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
 import { Link } from "wouter";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   Dialog,
   DialogContent,
@@ -508,7 +509,7 @@ export default function AdminPublicanRequests() {
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-8 max-w-5xl">
+      <PageContainer variant="standard" className="py-8">
         <div className="mb-6">
           <Link href="/admin">
             <Button variant="outline" size="sm" className="mb-4 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl" data-testid="button-back-admin">
@@ -692,7 +693,7 @@ export default function AdminPublicanRequests() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </div>
+      </PageContainer>
     </div>
   );
 }

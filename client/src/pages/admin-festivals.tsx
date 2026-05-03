@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { PageContainer } from "@/components/layout/page-container";
 import {
   QrCode, Search, Plus, Loader2, ArrowLeft, CheckCircle2, XCircle,
   CreditCard, Pencil, ExternalLink, Users, RefreshCw, UserCheck,
@@ -259,7 +260,7 @@ export default function AdminFestivals() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-5xl mx-auto px-4 py-6">
+      <PageContainer variant="standard" className="py-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6 bg-white dark:bg-card border-b border-stone-200 dark:border-border p-4 -mx-4 sm:mx-0 rounded-t-2xl">
           <Link href="/admin">
@@ -375,7 +376,7 @@ export default function AdminFestivals() {
             ))}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {/* Dialogs */}
       {transferFest && <TransferDialog festival={transferFest} onClose={() => setTransferFest(null)} />}

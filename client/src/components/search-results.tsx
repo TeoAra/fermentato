@@ -22,7 +22,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
 
   if (!query || query.length < 3) return null;
 
-  const container = "absolute top-full right-0 mt-2 z-50 w-[min(640px,calc(100vw-1rem))] max-h-[70vh] overflow-y-auto bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-neutral-700 overflow-hidden";
+  const container = "absolute top-full right-0 mt-2 z-50 w-[min(90vw,640px)] max-h-[70vh] overflow-y-auto bg-white dark:bg-neutral-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-neutral-700 overflow-hidden";
 
   if (isLoading) {
     return (

@@ -6,6 +6,7 @@ import AdminContentManager from "@/components/AdminContentManager";
 import { Link } from "wouter";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { PageContainer } from "@/components/layout/page-container";
 import { useQueryClient } from "@tanstack/react-query";
 
 function GeocodeBreweriesButton() {
@@ -73,7 +74,7 @@ function GeocodeBreweriesButton() {
 export default function AdminContent() {
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto p-6">
+      <PageContainer variant="wide" className="py-6">
         <div className="flex items-center gap-4 mb-6">
           <Link href="/admin">
             <Button variant="outline" size="sm" className="border-stone-200 hover:bg-stone-50 rounded-xl">
@@ -115,7 +116,7 @@ export default function AdminContent() {
             <AdminContentManager type="pubs" />
           </TabsContent>
         </Tabs>
-      </div>
+      </PageContainer>
     </div>
   );
 }

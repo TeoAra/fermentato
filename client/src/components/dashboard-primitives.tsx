@@ -15,7 +15,8 @@ interface DashboardContainerProps {
   className?: string;
 }
 export function DashboardContainer({ children, size = "default", className }: DashboardContainerProps) {
-  const max = { narrow: "max-w-4xl", default: "max-w-6xl", wide: "max-w-7xl" }[size];
+  // Allineato a PageContainer: narrow=3xl, default=5xl, wide=7xl (con hero=6xl disponibile via PageContainer)
+  const max = { narrow: "max-w-3xl", default: "max-w-5xl", wide: "max-w-7xl" }[size];
   return (
     <div className="min-h-screen bg-background pb-20 lg:pb-12">
       <div className={cn("mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6", max, className)}>

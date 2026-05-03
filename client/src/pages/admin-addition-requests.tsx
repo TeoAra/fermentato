@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { formatDistanceToNow } from "date-fns";
+import { PageContainer } from "@/components/layout/page-container";
 import { it } from "date-fns/locale";
 
 interface AdditionRequest {
@@ -89,7 +90,7 @@ export default function AdminAdditionRequests() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-white dark:bg-card border-b border-stone-100 dark:border-border shadow-sm">
-        <div className="flex items-center gap-3 px-4 py-3 max-w-3xl mx-auto">
+        <PageContainer variant="narrow" className="flex items-center gap-3 py-3">
           <Link href="/admin">
             <button className="p-2 rounded-full hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors">
               <ArrowLeft className="h-5 w-5 text-primary" />
@@ -109,10 +110,10 @@ export default function AdminAdditionRequests() {
               <SelectItem value="rejected">Rifiutate</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </PageContainer>
       </div>
 
-      <div className="px-4 py-4 max-w-3xl mx-auto">
+      <PageContainer variant="narrow" className="py-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -214,7 +215,7 @@ export default function AdminAdditionRequests() {
             })}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {/* Approve dialog */}
       <AlertDialog open={approveId !== null} onOpenChange={open => !open && setApproveId(null)}>

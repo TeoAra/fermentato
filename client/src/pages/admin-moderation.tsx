@@ -23,6 +23,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
+import { PageContainer } from "@/components/layout/page-container";
 import { it } from "date-fns/locale";
 
 interface ReviewReport {
@@ -113,7 +114,7 @@ export default function AdminModeration() {
 
   return (
     <div className="bg-background min-h-screen">
-      <div className="container mx-auto px-4 py-6 max-w-5xl space-y-6">
+      <PageContainer variant="standard" className="py-6 space-y-6">
         <div className="flex items-center gap-4 mb-2">
           <Link href="/admin">
             <Button variant="outline" size="sm" className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl">
@@ -312,7 +313,7 @@ export default function AdminModeration() {
             })}
           </div>
         )}
-      </div>
+      </PageContainer>
     </div>
   );
 }

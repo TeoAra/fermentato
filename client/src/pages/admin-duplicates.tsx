@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { PageContainer } from "@/components/layout/page-container";
 import { ArrowLeft, Search, GitMerge, Trash2, Beer, Loader2, RefreshCw, SlidersHorizontal, Check } from "lucide-react";
 
 interface DupePair {
@@ -168,7 +169,7 @@ export default function AdminDuplicates() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      <PageContainer variant="standard" className="py-6 space-y-6">
         {/* Search controls */}
         <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-5 space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -302,7 +303,7 @@ export default function AdminDuplicates() {
             })}
           </div>
         )}
-      </div>
+      </PageContainer>
 
       {/* Merge Dialog */}
       {mergePair && (
