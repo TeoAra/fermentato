@@ -14,6 +14,7 @@ import BreweryCard from "@/components/brewery-card";
 import { lazy, Suspense } from "react";
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
 import { PageContainer } from "@/components/layout/page-container";
+import NewsStrip from "@/components/news-strip";
 
 function useCountUp(target: number, duration = 1400, startDelay = 300) {
   const [value, setValue] = useState(0);
@@ -305,6 +306,11 @@ export default function Landing() {
               ))}
             </div>
           )}
+
+          {/* News strip dentro l'Hero */}
+          <div className="slide-up mt-10 max-w-4xl mx-auto" style={{ animationDelay: '420ms' }}>
+            <NewsStrip variant="hero" limit={6} />
+          </div>
         </PageContainer>
 
         {/* Smooth fade into next section */}

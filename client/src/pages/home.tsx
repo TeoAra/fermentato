@@ -12,6 +12,7 @@ import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
 import FindBeerSheet from "@/components/FindBeerSheet";
+import NewsStrip from "@/components/news-strip";
 import { PageContainer } from "@/components/layout/page-container";
 
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
@@ -369,10 +370,16 @@ export default function Home() {
               Attiva la posizione
             </button>
           )}
+
+          {/* News strip dentro l'Hero */}
+          <div className="mt-5">
+            <NewsStrip variant="hero" limit={6} />
+          </div>
         </div>
       </div>
 
       <PageContainer as="main" variant="wide" className="pt-5 pb-28">
+
 
         {/* GPS denied banner */}
         {locationStatus === 'denied' && (
