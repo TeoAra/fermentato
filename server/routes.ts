@@ -1767,7 +1767,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Protected routes - authentication required
 
   // Admin route for global beer scraping
-  app.post("/api/admin/scrape-beers", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/scrape-beers", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
@@ -1802,7 +1802,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin route for unifying duplicate breweries
-  app.post("/api/admin/unify-breweries", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/unify-breweries", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
@@ -2975,8 +2975,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
-  // Admin-only middleware
-  const isAdmin = async (req: any, res: any, next: any) => {
+  // Admin-only middleware (legacy DB-backed check, kept for compatibility with routes below that rely on storage.getUser)
+  const isAdminDb = async (req: any, res: any, next: any) => {
     const userId = (req.user as any)?.id;
     if (!userId) {
       return res.status(403).json({ message: "Admin access required" });
@@ -3125,6 +3125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin routes
   app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
+      const stats = await memCached('admin:stats', 60_000, async () => {
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
 
@@ -3173,6 +3174,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pendingBreweryRequests: Number(pendingBreweriesResult[0]?.count || 0),
         lastUpdated: new Date().toISOString(),
       };
+      return stats;
+      });
       res.json(stats);
     } catch (error) {
       console.error("Error fetching admin stats:", error);
@@ -4720,7 +4723,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Search beers for admin (global search - multi-word, includes brewery name)
-  app.get("/api/admin/beers/search", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/beers/search", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
@@ -4767,7 +4770,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Search breweries for admin (global search - multi-word)
-  app.get("/api/admin/breweries/search", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/breweries/search", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
@@ -4984,7 +4987,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new beer (admin)
-  app.post("/api/admin/beers", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/beers", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
@@ -5017,7 +5020,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new brewery (admin)
-  app.post("/api/admin/breweries", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/breweries", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
@@ -5036,7 +5039,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Create new pub (admin)
-  app.post("/api/admin/pubs", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/pubs", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);

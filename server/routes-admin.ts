@@ -6,6 +6,17 @@ import { isAuthenticated, isAdmin } from "./auth";
 import { sendPushToUser, sendPushToAdmins } from "./push-utils";
 import { storage } from "./storage";
 
+// In-memory TTL cache for read-heavy admin endpoints
+const _adminMemCache = new Map<string, { data: any; expires: number }>();
+async function adminMemCached<T>(key: string, ttlMs: number, fetcher: () => Promise<T>): Promise<T> {
+  const hit = _adminMemCache.get(key);
+  if (hit && hit.expires > Date.now()) return hit.data as T;
+  const data = await fetcher();
+  _adminMemCache.set(key, { data, expires: Date.now() + ttlMs });
+  return data;
+}
+
+
 export function registerAdminRoutes(app: Express) {
   // User management endpoints
   app.patch('/api/admin/users/:id/suspend', isAuthenticated, isAdmin, async (req, res) => {
@@ -25,11 +36,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/admin/users/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/admin/users/:id", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== "admin") {
-        return res.status(403).json({ message: "Forbidden" });
-      }
       const userId = req.params.id;
       if (userId === (req.user as any)?.id) {
         return res.status(400).json({ message: "Non puoi modificare te stesso da qui" });
@@ -48,12 +56,8 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Admin pub management actions
-  app.patch("/api/admin/pubs/:id/verify", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/admin/pubs/:id/verify", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       const pubId = parseInt(req.params.id);
       res.json({ message: "Pub verified successfully", pubId });
     } catch (error) {
@@ -61,12 +65,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/admin/pubs/:id/suspend", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/admin/pubs/:id/suspend", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       const pubId = parseInt(req.params.id);
       res.json({ message: "Pub suspended successfully", pubId });
     } catch (error) {
@@ -74,12 +74,9 @@ export function registerAdminRoutes(app: Express) {
     }
   });
   // Admin analytics endpoints
-  app.get("/api/admin/analytics/growth", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/analytics/growth", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
+      const growthData = await adminMemCached('admin:analytics:growth', 60_000, async () => {
       // Real cumulative growth: total users/pubs/breweries/beers per month for the last 6 months.
       const rows = await db.execute(sql`
         WITH months AS (
@@ -111,6 +108,8 @@ export function registerAdminRoutes(app: Express) {
         newPubs: Number(r.newpubs),
         newBeers: Number(r.newbeers),
       }));
+      return growthData;
+      });
       res.json(growthData);
     } catch (error) {
       console.error("Error fetching growth analytics:", error);
@@ -118,12 +117,9 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/analytics/popular-beers", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/analytics/popular-beers", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
+      const popular = await adminMemCached('admin:analytics:popular-beers', 60_000, async () => {
       // Real popular beers: top by tasting count, with avg rating and pub availability count.
       const popularBeers = await db.execute(sql`
         SELECT
@@ -142,7 +138,9 @@ export function registerAdminRoutes(app: Express) {
         ORDER BY COUNT(t.id) DESC, AVG(t.rating) DESC
         LIMIT 10
       `);
-      res.json((popularBeers as any).rows ?? popularBeers);
+      return (popularBeers as any).rows ?? popularBeers;
+      });
+      res.json(popular);
     } catch (error) {
       console.error("Error fetching popular beers:", error);
       res.status(500).json({ message: "Failed to fetch popular beers" });
@@ -150,12 +148,8 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Admin-only data endpoints
-  app.get("/api/admin/beers", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/beers", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       const { search, page = 1, limit = 20 } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
 
@@ -190,12 +184,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/breweries", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/breweries", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       const { search, page = 1, limit = 20 } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
 
@@ -252,12 +242,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/pubs", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/pubs", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       const { search, page = 1, limit = 20 } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
 
@@ -285,12 +271,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.get("/api/admin/users", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/users", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== "admin") {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       const { search, page = 1, limit = 50 } = req.query;
       const offset = (Number(page) - 1) * Number(limit);
 
@@ -422,12 +404,8 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Beer and brewery update endpoints
-  app.patch("/api/admin/beers/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/admin/beers/:id", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       const { id } = req.params;
       const updateData = req.body;
 
@@ -453,12 +431,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.patch("/api/admin/breweries/:id", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/admin/breweries/:id", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       const { id } = req.params;
       const updateData = req.body;
 
@@ -485,12 +459,8 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Review moderation endpoints (mock for now since reviews table doesn't exist)
-  app.get("/api/admin/reviews/all", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/reviews/all", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       // Real reviews from user_beer_tastings (the canonical reviews table)
       const limit = Math.min(parseInt(req.query.limit as string) || 50, 200);
       const offset = Math.max(parseInt(req.query.offset as string) || 0, 0);
@@ -534,12 +504,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/reviews/:id/approve", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/reviews/:id/approve", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       // Reviews in user_beer_tastings are already user-published; "approve" simply
       // ensures any associated report is resolved (no-op when there's none).
       const id = parseInt(req.params.id);
@@ -555,12 +521,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/reviews/:id/reject", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/reviews/:id/reject", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== 'admin') {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
       // Reject = delete the user_beer_tastings row and resolve any related report.
       const id = parseInt(req.params.id);
       try {
@@ -577,11 +539,8 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Reports endpoints (mock for now since we don't have reports table)
-  app.get("/api/admin/reports", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/reports", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== "admin") {
-        return res.status(403).json({ message: "Forbidden" });
-      }
       const statusFilter = req.query.status as string | undefined;
       const rows = await db
         .select({
@@ -617,11 +576,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/reports/:id/resolve", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/reports/:id/resolve", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== "admin") {
-        return res.status(403).json({ message: "Forbidden" });
-      }
       const id = parseInt(req.params.id);
       await db.update(reviewReports)
         .set({ status: 'resolved', resolvedAt: new Date() })
@@ -633,11 +589,8 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  app.post("/api/admin/reports/:id/dismiss", isAuthenticated, async (req: any, res) => {
+  app.post("/api/admin/reports/:id/dismiss", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      if ((req.user as any)?.userType !== "admin") {
-        return res.status(403).json({ message: "Forbidden" });
-      }
       const id = parseInt(req.params.id);
       await db.update(reviewReports)
         .set({ status: 'dismissed', resolvedAt: new Date() })
@@ -1354,7 +1307,7 @@ export function registerAdminRoutes(app: Express) {
   };
 
   // List all addition requests (admin sees all; brewery_owner sees only their brewery's beer requests)
-  app.get("/api/admin/addition-requests", isAuthenticated, async (req: any, res) => {
+  app.get("/api/admin/addition-requests", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub || req.user?.id;
       const userRecord = await db.select({ userType: users.userType, roles: users.roles, breweryId: users.breweryId })
@@ -1404,7 +1357,7 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Approve addition request → create beer or brewery in DB
-  app.patch("/api/admin/addition-requests/:id/approve", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/admin/addition-requests/:id/approve", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub || req.user?.id;
       const userRecord = await db.select({ userType: users.userType, roles: users.roles, breweryId: users.breweryId })
@@ -1481,7 +1434,7 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // Reject addition request
-  app.patch("/api/admin/addition-requests/:id/reject", isAuthenticated, async (req: any, res) => {
+  app.patch("/api/admin/addition-requests/:id/reject", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const userId = req.user?.claims?.sub || req.user?.id;
       const userRecord = await db.select({ userType: users.userType, roles: users.roles, breweryId: users.breweryId })
