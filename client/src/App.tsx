@@ -312,6 +312,7 @@ function Router() {
           <Route path="/microblog/nuovo" component={MicroblogNew} />
           <Route path="/news" component={NewsPage} />
           <Route path="/admin/broadcast" component={AdminBroadcast} />
+          <Route path="/admin/broadcasts" component={AdminBroadcast} />
           <Route component={NotFound} />
         </Switch>
         </div>

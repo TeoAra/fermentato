@@ -1,15 +1,27 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
-import { Send, Loader2, Megaphone, Users, Beer, Building2, Shield, Rss, Trash2, RefreshCw, Plus } from "lucide-react";
+import { Send, Loader2, Megaphone, Users, Beer, Building2, Shield, Rss, Trash2, RefreshCw, Plus, Image as ImageIcon, Eye, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow } from "date-fns";
 import { PageContainer } from "@/components/layout/page-container";
 import { it } from "date-fns/locale";
+import { Link } from "wouter";
 
 const AUDIENCES = [
   { value: "all", label: "Tutti", icon: Users },
@@ -18,28 +30,53 @@ const AUDIENCES = [
   { value: "admins", label: "Admin", icon: Shield },
 ];
 
+function audienceLabel(v: string) {
+  return AUDIENCES.find(a => a.value === v)?.label ?? v;
+}
+
 export default function AdminBroadcast() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user, isLoading: authLoading } = useAuth();
+  const roles = Array.isArray(user?.roles) ? (user.roles as string[]) : [];
+  const isAdmin =
+    user?.activeRole === "admin" ||
+    roles.includes("admin") ||
+    user?.userType === "admin";
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [url, setUrl] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [audience, setAudience] = useState("all");
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [newSourceName, setNewSourceName] = useState("");
   const [newSourceUrl, setNewSourceUrl] = useState("");
 
-  const { data: history = [] } = useQuery<any[]>({ queryKey: ["/api/admin/broadcasts"] });
-  const { data: sources = [] } = useQuery<any[]>({ queryKey: ["/api/admin/rss-sources"] });
+  const { data: history = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/broadcasts"],
+    enabled: isAdmin,
+  });
+  const { data: sources = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/rss-sources"],
+    enabled: isAdmin,
+  });
 
   const sendMutation = useMutation({
     mutationFn: () => apiRequest("/api/admin/broadcasts", { method: "POST" },
-      { title, body, url: url || undefined, audience }),
+      { title, body, url: url || undefined, imageUrl: imageUrl || undefined, audience }),
     onSuccess: (data: any) => {
-      toast({ title: `Inviato a ${data.sentCount}/${data.targetCount} utenti` });
-      setTitle(""); setBody(""); setUrl("");
+      const sent = data?.sent_count ?? data?.sentCount ?? 0;
+      const target = data?.targetCount ?? sent;
+      toast({ title: `Inviato a ${sent}/${target} utenti` });
+      setTitle(""); setBody(""); setUrl(""); setImageUrl("");
+      setConfirmOpen(false);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/broadcasts"] });
     },
-    onError: (e: any) => toast({ title: "Errore", description: e.message, variant: "destructive" }),
+    onError: (e: any) => {
+      setConfirmOpen(false);
+      toast({ title: "Errore", description: e.message, variant: "destructive" });
+    },
   });
 
   const addSourceMutation = useMutation({
@@ -60,7 +97,30 @@ export default function AdminBroadcast() {
     onSuccess: (d: any) => toast({ title: `Refresh OK · ${d.totalItems} articoli totali` }),
   });
 
-  const canSend = title.trim() && body.trim() && !sendMutation.isPending;
+  const canPreview = title.trim().length > 0 && body.trim().length > 0 && !sendMutation.isPending;
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-6 h-6 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[hsl(220,5%,14%)] flex items-center justify-center p-6">
+        <div className="text-center max-w-sm space-y-3">
+          <Lock className="w-10 h-10 text-stone-400 mx-auto" />
+          <h1 className="text-xl font-bold">Accesso riservato</h1>
+          <p className="text-sm text-stone-500">Questa pagina è disponibile solo agli amministratori.</p>
+          <Link href="/">
+            <Button variant="outline" className="rounded-xl">Torna alla home</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[hsl(220,5%,14%)] pb-24">
@@ -83,7 +143,7 @@ export default function AdminBroadcast() {
             <label className="text-xs font-semibold text-stone-500 mb-1.5 block">Pubblico</label>
             <div className="flex gap-2 flex-wrap">
               {AUDIENCES.map(a => (
-                <button key={a.value} onClick={() => setAudience(a.value)}
+                <button key={a.value} onClick={() => setAudience(a.value)} type="button"
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                     audience === a.value
                       ? "bg-primary text-white border-primary"
@@ -98,51 +158,113 @@ export default function AdminBroadcast() {
           <div>
             <label className="text-xs font-semibold text-stone-500 mb-1.5 block">Titolo</label>
             <Input value={title} onChange={e => setTitle(e.target.value.slice(0, 60))}
-              placeholder="🎉 Novità!" className="rounded-xl" />
+              placeholder="🎉 Novità!" className="rounded-xl" data-testid="input-broadcast-title" />
           </div>
 
           <div>
             <label className="text-xs font-semibold text-stone-500 mb-1.5 block">Testo</label>
             <Textarea value={body} onChange={e => setBody(e.target.value.slice(0, 200))}
               placeholder="Il messaggio che vedranno gli utenti…" rows={3}
-              className="rounded-xl resize-none" />
+              className="rounded-xl resize-none" data-testid="input-broadcast-body" />
             <p className="text-right text-[10px] text-stone-400 mt-1">{body.length}/200</p>
           </div>
 
           <div>
             <label className="text-xs font-semibold text-stone-500 mb-1.5 block">Link (opzionale)</label>
             <Input value={url} onChange={e => setUrl(e.target.value)}
-              placeholder="/news oppure https://…" className="rounded-xl" />
+              placeholder="/news oppure https://…" className="rounded-xl" data-testid="input-broadcast-url" />
           </div>
 
-          <Button onClick={() => sendMutation.mutate()} disabled={!canSend}
-            className="w-full rounded-xl h-11">
-            {sendMutation.isPending
-              ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Invio in corso…</>
-              : <><Send className="w-4 h-4 mr-2" /> Invia broadcast</>}
+          <div>
+            <label className="text-xs font-semibold text-stone-500 mb-1.5 block flex items-center gap-1.5">
+              <ImageIcon className="w-3.5 h-3.5" /> Immagine (opzionale)
+            </label>
+            <Input value={imageUrl} onChange={e => setImageUrl(e.target.value)}
+              placeholder="https://…/image.png" className="rounded-xl" data-testid="input-broadcast-image" />
+          </div>
+
+          <Button onClick={() => setConfirmOpen(true)} disabled={!canPreview}
+            className="w-full rounded-xl h-11" data-testid="button-broadcast-preview">
+            <Eye className="w-4 h-4 mr-2" /> Anteprima e invia
           </Button>
         </section>
 
+        {/* ── Confirm dialog with preview ────────────────────────────── */}
+        <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+          <AlertDialogContent className="max-w-md">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Conferma invio broadcast</AlertDialogTitle>
+              <AlertDialogDescription>
+                Stai per inviare una notifica push a <strong>{audienceLabel(audience)}</strong>.
+                Verifica l'anteprima prima di procedere.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+
+            <div className="rounded-xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900/50 p-3 my-2">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Megaphone className="w-4 h-4 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-stone-900 dark:text-stone-50 break-words">{title || "Titolo"}</p>
+                  <p className="text-xs text-stone-600 dark:text-stone-300 mt-0.5 break-words whitespace-pre-wrap">{body || "Corpo del messaggio"}</p>
+                  {url && <p className="text-[10px] text-primary mt-1.5 truncate">→ {url}</p>}
+                </div>
+              </div>
+              {imageUrl && (
+                <img src={imageUrl} alt="" className="mt-3 w-full rounded-lg object-cover max-h-40"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+              )}
+            </div>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={sendMutation.isPending} data-testid="button-broadcast-cancel">Annulla</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => { e.preventDefault(); sendMutation.mutate(); }}
+                disabled={sendMutation.isPending}
+                data-testid="button-broadcast-confirm"
+              >
+                {sendMutation.isPending
+                  ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Invio…</>
+                  : <><Send className="w-4 h-4 mr-2" /> Conferma e invia</>}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         {/* ── History ──────────────────────────────────────────────────── */}
-        {history.length > 0 && (
-          <section className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-5">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-stone-500 mb-3">Storico invii</h2>
-            <div className="space-y-2">
-              {history.slice(0, 10).map(b => (
-                <div key={b.id} className="border border-stone-100 dark:border-stone-700/50 rounded-xl p-3">
+        <section className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-5">
+          <h2 className="text-sm font-bold uppercase tracking-wider text-stone-500 mb-3">
+            Storico invii {history.length > 0 && <span className="text-stone-400">· {history.length}</span>}
+          </h2>
+          {history.length === 0 ? (
+            <p className="text-xs text-stone-400 text-center py-3">Nessun broadcast inviato</p>
+          ) : (
+            <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
+              {history.slice(0, 50).map(b => (
+                <div key={b.id} className="border border-stone-100 dark:border-stone-700/50 rounded-xl p-3" data-testid={`broadcast-history-${b.id}`}>
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-bold text-stone-900 dark:text-stone-50 flex-1">{b.title}</p>
-                    <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase">{b.audience}</span>
+                    <p className="text-sm font-bold text-stone-900 dark:text-stone-50 flex-1 break-words">{b.title}</p>
+                    <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase shrink-0">
+                      {audienceLabel(b.audience)}
+                    </span>
                   </div>
-                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">{b.body}</p>
-                  <p className="text-[10px] text-stone-400 mt-2">
-                    {b.sent_count} inviati · {formatDistanceToNow(new Date(b.created_at), { addSuffix: true, locale: it })}
-                  </p>
+                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 break-words whitespace-pre-wrap">{b.body}</p>
+                  {b.url && <p className="text-[10px] text-stone-400 mt-1 truncate">→ {b.url}</p>}
+                  <div className="flex items-center justify-between mt-2 gap-2">
+                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      {b.sent_count ?? 0} destinatari raggiunti
+                    </span>
+                    <span className="text-[10px] text-stone-400">
+                      {b.sent_by_username ? `@${b.sent_by_username} · ` : ""}
+                      {formatDistanceToNow(new Date(b.created_at), { addSuffix: true, locale: it })}
+                    </span>
+                  </div>
                 </div>
               ))}
             </div>
-          </section>
-        )}
+          )}
+        </section>
 
         {/* ── RSS Sources ──────────────────────────────────────────────── */}
         <section className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-5">
