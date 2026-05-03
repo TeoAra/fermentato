@@ -84,6 +84,13 @@ tarball, esegui `pod install` + `xcodebuild archive`.
 **Consiglio**: Scaleway con fatturazione oraria è perfetto per build
 sporadiche. ~3 € a build (1 ora pagata anche se la build dura 5 min).
 
+> **Nota sulla cartella `ios/`**: non è committata nel repo. Viene generata
+> on-demand sia dallo script VPS sia dalla pipeline GitHub Actions, in modo
+> che ogni build parta da uno stato pulito e i file Xcode binari non
+> sporchino la cronologia git. Tutta la configurazione personalizzata
+> (bundle id, permessi, icone) è preservata da `capacitor.config.ts`,
+> `ios-template/App/App/Info.plist` e `capacitor-resources/`.
+
 ### Opzione C — GitHub Actions (la più automatica)
 
 GitHub fornisce runner `macos-latest` (M1) **gratuiti** sui repo pubblici e
