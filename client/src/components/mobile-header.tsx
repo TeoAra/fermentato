@@ -314,7 +314,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
           </div>
 
           {/* ── Footer: theme + logout ── */}
-          <div className="px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5">
+          <div className="px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+4rem)]">
             <div className="flex items-center justify-between px-3 py-2">
               <span className="text-sm text-muted-foreground font-medium">Tema</span>
               <ThemeToggle />
