@@ -74,14 +74,23 @@ export default function MicroblogNew() {
       <div className="max-w-xl mx-auto px-4 pt-4 space-y-4">
         <Textarea
           value={content}
-          onChange={(e) => setContent(e.target.value.slice(0, 1000))}
-          placeholder="Cosa stai bevendo? Cosa pensi del mondo birrario oggi?"
+          onChange={(e) => {
+            // Troncamento grapheme-aware: Array.from rispetta gli emoji
+            // (code-point >U+FFFF) ed evita di spezzarli a metà come farebbe
+            // .slice() su una stringa UTF-16. Andate a capo e spazi sono
+            // preservati nativamente dalla textarea.
+            const chars = Array.from(e.target.value);
+            setContent(chars.length > 1000 ? chars.slice(0, 1000).join("") : e.target.value);
+          }}
+          placeholder="Cosa stai bevendo? Vai a capo, usa emoji 🍺🇮🇹, racconta la tua birra."
           rows={6}
-          className="rounded-2xl border-stone-200 dark:border-stone-700 text-base resize-none bg-white dark:bg-[hsl(220,5%,18%)]"
+          data-testid="textarea-microblog-content"
+          className="rounded-2xl border-stone-200 dark:border-stone-700 text-base resize-none bg-white dark:bg-[hsl(220,5%,18%)] whitespace-pre-wrap"
           autoFocus
         />
         <div className="flex items-center justify-between text-xs text-stone-400">
-          <span>{content.length}/1000</span>
+          <span>Emoji e a capo benvenuti</span>
+          <span>{Array.from(content).length}/1000</span>
         </div>
 
         <input ref={fileRef} type="file" accept="image/*" className="hidden"

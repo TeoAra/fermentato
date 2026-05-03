@@ -176,7 +176,7 @@ function CheckinCommentRow({ comment, tastingId, onReport }: { comment: any; tas
           <Link href={`/user/${comment.username}`}>
             <p className="text-[11px] font-bold text-stone-700 dark:text-stone-200">{comment.display_name ?? comment.username}</p>
           </Link>
-          <p className="text-xs text-stone-700 dark:text-stone-200 break-words">{comment.content}</p>
+          <p className="text-xs text-stone-700 dark:text-stone-200 break-words whitespace-pre-wrap">{comment.content}</p>
         </div>
         <div className="flex items-center gap-3 mt-0.5 px-2">
           <button
@@ -288,18 +288,31 @@ function CheckinSocialBar({ tastingId }: { tastingId: number }) {
             <CheckinCommentRow key={c.id} comment={c} tastingId={tastingId} onReport={setReportCommentId} />
           ))}
           {isAuthenticated && (
-            <div className="flex gap-2 items-center mt-2">
-              <Input
+            <div className="flex gap-2 items-end mt-2">
+              <Textarea
                 value={newComment}
-                onChange={e => setNewComment(e.target.value)}
-                placeholder="Scrivi un commento…"
-                className="rounded-full text-xs h-8"
-                onKeyDown={e => { if (e.key === "Enter" && newComment.trim()) commentMut.mutate(); }}
+                onChange={e => {
+                  // Grapheme-aware: 500 char includendo emoji multi-byte
+                  const chars = Array.from(e.target.value);
+                  setNewComment(chars.length > 500 ? chars.slice(0, 500).join("") : e.target.value);
+                }}
+                placeholder="Scrivi un commento… (Shift+Invio per andare a capo, emoji 🍺 ok)"
+                rows={1}
+                data-testid="textarea-checkin-comment"
+                className="rounded-2xl text-xs min-h-[2rem] py-1.5 resize-none whitespace-pre-wrap"
+                onKeyDown={e => {
+                  // Invio = invia, Shift+Invio = nuova riga
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    if (newComment.trim()) commentMut.mutate();
+                  }
+                }}
               />
               <button
                 onClick={() => newComment.trim() && commentMut.mutate()}
                 disabled={!newComment.trim() || commentMut.isPending}
-                className="text-primary disabled:text-stone-300 p-1.5"
+                className="text-primary disabled:text-stone-300 p-1.5 flex-shrink-0"
+                data-testid="button-send-comment"
               >
                 <Send className="w-4 h-4" />
               </button>
