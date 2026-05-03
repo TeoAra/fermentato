@@ -16,14 +16,15 @@ const THROTTLE_MS = 10000;
 
 // Batcher di aggregazione: raccoglie like/commenti per (userId,category,targetId)
 // in una finestra di 10 minuti.
-// Regola: "send immediately, then aggregate if threshold exceeded":
-//   - i primi BATCH_THRESHOLD (3) eventi sono inviati subito come push
-//     individuali (con tag univoco anti-throttle), così non c'è latenza
-//     percepita per gli scenari normali (1-3 like/commenti);
-//   - dal 4° in poi vengono soppressi e a fine finestra emessa 1 sola
-//     push aggregata "N persone hanno..." per riassumerli.
+// Regola "send-first then aggregate" (Task #22 acceptance criterion):
+//   - il PRIMO evento della finestra è inviato subito come push individuale
+//     (con tag univoco anti-throttle), così l'utente vede comunque feedback
+//     immediato sul primo like/commento;
+//   - dal 2° evento in poi vengono soppressi e a fine finestra emessa 1
+//     sola push aggregata "N persone hanno..." per riassumerli.
+//   Esempio: 3 like in 10min → 1 push immediato + 1 push aggregato.
 const BATCH_WINDOW_MS = 10 * 60 * 1000;
-const BATCH_THRESHOLD = 3;
+const BATCH_THRESHOLD = 1;
 type BatchEntry = {
   count: number;
   firstActorName?: string;
@@ -229,10 +230,13 @@ async function flushBatch(userId: string, bkey: string) {
   // potrebbero essere cambiate (entrate o uscite) durante la finestra di 10min.
   const { allowed, deferMs } = await shouldSendNotification(userId, entry.payload.category);
   if (!allowed) return;
-  // Sotto soglia: i primi 3 eventi sono già stati inviati individualmente
-  // al momento dell'arrivo, quindi nessun push extra al flush.
+  // Sotto/uguale soglia (BATCH_THRESHOLD=1): solo il 1° evento è stato
+  // inviato come push individuale al momento dell'arrivo; non c'è nulla
+  // da aggregare se non sono arrivati altri eventi.
   if (entry.count <= BATCH_THRESHOLD) return;
-  // Sopra soglia (>3): 1 sola push aggregata che riassume gli eventi soppressi.
+  // Sopra soglia (>1, cioè 2+ eventi): 1 sola push aggregata che riassume
+  // tutti gli eventi della finestra (incluso il primo già inviato), così
+  // l'utente vede sia il feedback immediato sia il riepilogo finale.
   const tpl = entry.payload.batchTemplate;
   const summary = tpl
     ? tpl(entry.count, entry.firstActorName)
