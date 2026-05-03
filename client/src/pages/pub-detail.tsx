@@ -33,6 +33,7 @@ import Footer from "@/components/footer";
 import TapList from "@/components/tap-list";
 const LuppolinoMenu = lazy(() => import("@/components/luppolino-menu"));
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -1288,6 +1289,16 @@ export default function PubDetail() {
                   </div>
                 </TabsContent>
               </Tabs>
+
+              {/* ── Community posts ── */}
+              {pubNumericId && (pub as any)?.name && (
+                <div className="px-4 lg:px-0 pb-4">
+                  <CommunityPostsSection
+                    entity={{ kind: "pub", id: pubNumericId, name: (pub as any).name }}
+                    title="Post della community su questo locale"
+                  />
+                </div>
+              )}
           </div>
 
           {/* Sidebar – desktop only */}

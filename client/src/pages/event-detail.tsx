@@ -14,6 +14,7 @@ import {
   EventInterestButton,
   EventShareButtons,
 } from "@/components/events-manager";
+import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 
 type EventDetail = {
   sourceType: "pub" | "brewery";
@@ -209,6 +210,12 @@ export default function EventDetailPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* ── Community posts ── */}
+        <CommunityPostsSection
+          entity={{ kind: "event", id: ev.id, sourceType: ev.sourceType, name: ev.title }}
+          title="Post della community su questo evento"
+        />
       </div>
     </div>
   );

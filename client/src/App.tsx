@@ -82,6 +82,7 @@ const Scan               = lazy(() => import("@/pages/scan"));
 const ScanHistory        = lazy(() => import("@/pages/scan-history"));
 const SocialFeed         = lazy(() => import("@/pages/social-feed"));
 const MicroblogNew       = lazy(() => import("@/pages/microblog-new"));
+const HashtagPage        = lazy(() => import("@/pages/hashtag"));
 const NewsPage           = lazy(() => import("@/pages/news"));
 const AdminBroadcast     = lazy(() => import("@/pages/admin-broadcast"));
 // ─────────────────────────────────────────────────────────────────────────────
@@ -310,6 +311,7 @@ function Router() {
           <Route path="/scan" component={Scan} />
           <Route path="/feed" component={SocialFeed} />
           <Route path="/microblog/nuovo" component={MicroblogNew} />
+          <Route path="/hashtag/:tag" component={HashtagPage} />
           <Route path="/news" component={NewsPage} />
           <Route path="/admin/broadcast" component={AdminBroadcast} />
           <Route path="/admin/broadcasts" component={AdminBroadcast} />

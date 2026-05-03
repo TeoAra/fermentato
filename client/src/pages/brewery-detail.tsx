@@ -65,6 +65,7 @@ import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import AddressAutocomplete from "@/components/address-autocomplete";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 import { Textarea } from "@/components/ui/textarea";
 import RouteCard from "@/components/route-card";
 import { PageContainer } from "@/components/layout/page-container";
@@ -1236,6 +1237,16 @@ export default function BreweryDetail() {
                 </TabsContent>
               </div>
             </Tabs>
+
+            {/* ── Community posts ── */}
+            {brewery?.id && brewery?.name && (
+              <div className="px-4 md:px-8 pb-6">
+                <CommunityPostsSection
+                  entity={{ kind: "brewery", id: brewery.id, name: brewery.name }}
+                  title="Post della community su questo birrificio"
+                />
+              </div>
+            )}
           </div>
 
           {/* ── DESKTOP SIDEBAR ── */}

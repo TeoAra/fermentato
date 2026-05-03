@@ -155,6 +155,16 @@ async function runSocialMigrations() {
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS report_updates_email BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS admin_broadcasts_email BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS email_enabled BOOLEAN DEFAULT TRUE;
+
+      -- Task #20: post tagging extension
+      ALTER TABLE microblog_posts ADD COLUMN IF NOT EXISTS event_id INTEGER;
+      ALTER TABLE microblog_posts ADD COLUMN IF NOT EXISTS event_source_type TEXT;
+      ALTER TABLE microblog_posts ADD COLUMN IF NOT EXISTS hashtags TEXT[] DEFAULT '{}';
+      CREATE INDEX IF NOT EXISTS idx_microblog_pub_id ON microblog_posts(pub_id) WHERE pub_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_microblog_brewery_id ON microblog_posts(brewery_id) WHERE brewery_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_microblog_beer_id ON microblog_posts(beer_id) WHERE beer_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_microblog_event ON microblog_posts(event_id, event_source_type) WHERE event_id IS NOT NULL;
+      CREATE INDEX IF NOT EXISTS idx_microblog_hashtags ON microblog_posts USING GIN (hashtags);
     `);
 
     // Backfill: copia review_reports → content_reports una sola volta
@@ -472,10 +482,23 @@ export async function registerSocialRoutes(app: Express) {
     const beerId = req.body?.beerId ?? null;
     const pubId = req.body?.pubId ?? null;
     const breweryId = req.body?.breweryId ?? null;
+    const eventId = req.body?.eventId ?? null;
+    const eventSourceType = req.body?.eventSourceType
+      && ["pub", "brewery"].includes(String(req.body.eventSourceType))
+      ? String(req.body.eventSourceType) : null;
+    // Extract hashtags (#parola): unicode-friendly, lowercased, deduped, capped
+    const hashtagSet = new Set<string>();
+    const re = /(?:^|[^A-Za-z0-9_#\u00C0-\u024F])#([A-Za-z0-9_\u00C0-\u024F]{2,30})/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(content)) !== null) {
+      hashtagSet.add(m[1].toLowerCase());
+      if (hashtagSet.size >= 10) break;
+    }
+    const hashtags = Array.from(hashtagSet);
     const { rows } = await pool.query(
-      `INSERT INTO microblog_posts (user_id, content, image_url, beer_id, pub_id, brewery_id)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [userId, content, imageUrl, beerId, pubId, breweryId],
+      `INSERT INTO microblog_posts (user_id, content, image_url, beer_id, pub_id, brewery_id, event_id, event_source_type, hashtags)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
+      [userId, content, imageUrl, beerId, pubId, breweryId, eventId, eventSourceType, hashtags],
     );
     res.json(rows[0]);
   });
@@ -510,6 +533,86 @@ export async function registerSocialRoutes(app: Express) {
       ORDER BY p.created_at DESC
       LIMIT 60
     `, [userId]);
+    res.json(rows);
+  });
+
+  // Posts filtered by tagged entity or hashtag (public)
+  // ?taggedEntity=pub:42 | brewery:7 | beer:9 | event:pub:55 | event:brewery:55
+  // ?hashtag=word
+  // ?limit=20&offset=0
+  app.get("/api/microblog/posts", async (req: any, res) => {
+    const limit = Math.min(parseInt((req.query.limit as string) || "20", 10), 50);
+    const offset = Math.max(parseInt((req.query.offset as string) || "0", 10), 0);
+    const taggedEntity = (req.query.taggedEntity as string) || "";
+    const hashtag = ((req.query.hashtag as string) || "").trim().toLowerCase().replace(/^#/, "");
+
+    const where: string[] = [];
+    const params: any[] = [];
+
+    if (taggedEntity) {
+      const parts = taggedEntity.split(":");
+      const kind = parts[0];
+      if (kind === "event" && parts.length === 3) {
+        const sourceType = parts[1];
+        const eid = parseInt(parts[2], 10);
+        if (!Number.isFinite(eid) || !["pub", "brewery"].includes(sourceType)) {
+          return res.status(400).json({ message: "taggedEntity non valido" });
+        }
+        params.push(eid, sourceType);
+        where.push(`p.event_id = $${params.length - 1} AND p.event_source_type = $${params.length}`);
+      } else if (parts.length === 2) {
+        const eid = parseInt(parts[1], 10);
+        if (!Number.isFinite(eid)) return res.status(400).json({ message: "taggedEntity non valido" });
+        const col = kind === "pub" ? "pub_id"
+                  : kind === "brewery" ? "brewery_id"
+                  : kind === "beer" ? "beer_id"
+                  : null;
+        if (!col) return res.status(400).json({ message: "taggedEntity non valido" });
+        params.push(eid);
+        where.push(`p.${col} = $${params.length}`);
+      } else {
+        return res.status(400).json({ message: "taggedEntity non valido" });
+      }
+    }
+
+    if (hashtag) {
+      params.push(hashtag);
+      where.push(`$${params.length} = ANY(p.hashtags)`);
+    }
+
+    if (where.length === 0) {
+      return res.status(400).json({ message: "Specificare taggedEntity o hashtag" });
+    }
+
+    const viewerId: string | null = req.user?.id ?? null;
+    const likedSelect = viewerId
+      ? `EXISTS(SELECT 1 FROM microblog_likes ml2 WHERE ml2.post_id = p.id AND ml2.user_id = $${params.length + 1}) AS liked`
+      : `FALSE AS liked`;
+    if (viewerId) params.push(viewerId);
+    params.push(limit, offset);
+
+    const sql = `
+      SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id,
+             p.event_id, p.event_source_type, p.hashtags, p.created_at,
+             u.id AS user_id, u.nickname AS username,
+             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             u.profile_image_url,
+             b.name AS beer_name, b.image_url AS beer_image,
+             pb.name AS pub_name, pb.city AS pub_city,
+             br.name AS brewery_name,
+             (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
+             (SELECT COUNT(*)::int FROM microblog_comments mc WHERE mc.post_id = p.id) AS comments_count,
+             ${likedSelect}
+      FROM microblog_posts p
+      JOIN users u ON u.id = p.user_id
+      LEFT JOIN beers b ON b.id = p.beer_id
+      LEFT JOIN pubs pb ON pb.id = p.pub_id
+      LEFT JOIN breweries br ON br.id = p.brewery_id
+      WHERE ${where.join(" AND ")}
+      ORDER BY p.created_at DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+    `;
+    const { rows } = await pool.query(sql, params);
     res.json(rows);
   });
 

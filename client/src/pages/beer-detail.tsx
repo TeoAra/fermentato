@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import Footer from "@/components/footer";
 import { Card, CardContent } from "@/components/ui/card";
+import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -1441,6 +1442,14 @@ export default function BeerDetail() {
                   </div>
                 )}
               </div>
+            )}
+
+            {/* ── Community posts ── */}
+            {beer?.id && beer?.name && (
+              <CommunityPostsSection
+                entity={{ kind: "beer", id: beer.id, name: beer.name }}
+                title="Post della community su questa birra"
+              />
             )}
           </div>
         </PageContainer>
