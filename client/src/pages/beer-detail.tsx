@@ -455,9 +455,14 @@ export default function BeerDetail() {
 
   const reportMutation = useMutation({
     mutationFn: async ({ tastingId, reason, description }: { tastingId: number; reason: string; description: string }) =>
-      apiRequest(`/api/reviews/${tastingId}/report`, { method: "POST" }, { reason, description }),
-    onSuccess: () => {
-      toast({ title: "Segnalazione inviata", description: "Grazie, la segnalazione è stata ricevuta." });
+      apiRequest(`/api/reports`, { method: "POST" }, {
+        targetType: "review", targetId: tastingId, reason, description: description || undefined,
+      }),
+    onSuccess: (data: any) => {
+      toast({
+        title: data?.duplicate ? "Già segnalata" : "Segnalazione inviata",
+        description: data?.duplicate ? "Avevi già segnalato questa recensione" : "Grazie, la segnalazione è stata ricevuta.",
+      });
       setReportDialogReviewId(null);
       setReportReason("inappropriato");
       setReportDescription("");
