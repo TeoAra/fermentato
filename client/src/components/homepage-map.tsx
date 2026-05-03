@@ -114,14 +114,27 @@ export default function HomepageMap({
     }
     const el = containerRef.current;
     if (!el) return;
+    const MAX_H = 800;
+    let raf = 0;
+    let lastH = 0;
     const update = () => {
-      const h = el.offsetHeight;
-      if (h > 0) setMapHeight(h);
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const parent = el.parentElement;
+        const parentH = parent?.clientHeight ?? 0;
+        const candidate = parentH > 0 ? parentH : el.offsetHeight;
+        const h = Math.min(Math.max(candidate, 0), MAX_H);
+        if (h > 0 && Math.abs(h - lastH) > 2) {
+          lastH = h;
+          setMapHeight(h);
+        }
+      });
     };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(el);
-    return () => ro.disconnect();
+    if (el.parentElement) ro.observe(el.parentElement);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   }, [fixedHeight]);
 
   useEffect(() => {

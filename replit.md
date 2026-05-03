@@ -136,3 +136,12 @@ Preferred communication style: Simple, everyday language.
   - `GET /api/festivals/:id/comments-all` — vista moderazione per dashboard.
 - UI `festival-public.tsx`: nello slider rating, bottone "Aggiungi un commento" che apre textarea + invio combinato. Componente `TapComments` mostra commenti+risposte dentro la card spina espansa; il manager vede inline il pulsante "Rispondi"/"Rimuovi risposta".
 - UI `festival-dashboard.tsx`: nuovo tab "Commenti" con `FestivalCommentsManager` (filtri Da rispondere/Risposti/Tutti, riga per commento con info utente+spina+birra, form di risposta).
+
+## Fix mappa hero infinita (Maggio 2026)
+
+### Bug
+Nella `landing.tsx` (home utenti non loggati), `HomepageMap` veniva renderizzato senza `fixedHeight` e senza wrapper a altezza fissa. Il ResizeObserver interno entrava in feedback loop con il layout (parent height auto + figlio height:100% + Map che setta height numerico) facendo crescere la pagina all'infinito.
+
+### Fix
+- **`client/src/pages/landing.tsx`**: wrappato `HomepageMap` in un container `h-[420px] overflow-hidden` con `fixedHeight={420}` esplicito.
+- **`client/src/components/homepage-map.tsx`**: ResizeObserver ora misura il `parentElement.clientHeight`, applica clamp a max 800px, ignora delta ≤2px, debounce via `requestAnimationFrame`. Previene loop futuri anche se il componente viene rimontato altrove senza fixedHeight.
