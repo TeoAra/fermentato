@@ -487,7 +487,7 @@ export default function ExploreBeers() {
       <FindBeerSheet
         open={findBeerOpen}
         onClose={() => setFindBeerOpen(false)}
-        nearbyPubs={pubs}
+        nearbyPubs={Array.isArray(allPubsForMap) ? allPubsForMap : []}
       />
     </div>
   );
