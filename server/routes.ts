@@ -5229,15 +5229,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
-      const notifs = await storage.getNotifications(userId);
       const filterType = typeof req.query.type === 'string' ? req.query.type : null;
       const limit = Math.min(200, parseInt(String(req.query.limit ?? '100'), 10) || 100);
       const offset = Math.max(0, parseInt(String(req.query.offset ?? '0'), 10) || 0);
-      let filtered = notifs;
-      if (filterType && filterType !== 'all') {
-        filtered = notifs.filter((n: any) => n.type === filterType);
-      }
-      const page = filtered.slice(offset, offset + limit);
+      // Filtro + paginazione DB-level (più efficienti su volumi grandi).
+      const page = await storage.getNotifications(userId, { type: filterType, limit, offset });
       res.json(page);
     } catch (error) {
       console.error("Error fetching notifications:", error);

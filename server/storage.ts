@@ -283,7 +283,7 @@ export interface IStorage {
   deleteBeerTasting(id: number): Promise<void>;
 
   // Notification operations
-  getNotifications(userId: string): Promise<Notification[]>;
+  getNotifications(userId: string, opts?: { type?: string | null; limit?: number; offset?: number }): Promise<Notification[]>;
   getUnreadNotificationCount(userId: string): Promise<number>;
   createNotification(notification: InsertNotification): Promise<Notification>;
   markNotificationRead(id: number, userId: string): Promise<void>;
@@ -1622,10 +1622,18 @@ export class DatabaseStorage implements IStorage {
     return tasting;
   }
 
-  async getNotifications(userId: string): Promise<Notification[]> {
+  async getNotifications(userId: string, opts: { type?: string | null; limit?: number; offset?: number } = {}): Promise<Notification[]> {
+    const conditions = [eq(notifications.userId, userId)];
+    if (opts.type && opts.type !== 'all') {
+      conditions.push(eq(notifications.type, opts.type));
+    }
+    const limit = Math.min(200, Math.max(1, opts.limit ?? 100));
+    const offset = Math.max(0, opts.offset ?? 0);
     return db.select().from(notifications)
-      .where(eq(notifications.userId, userId))
-      .orderBy(desc(notifications.createdAt));
+      .where(and(...conditions))
+      .orderBy(desc(notifications.createdAt))
+      .limit(limit)
+      .offset(offset);
   }
 
   async getUnreadNotificationCount(userId: string): Promise<number> {
@@ -1637,6 +1645,11 @@ export class DatabaseStorage implements IStorage {
 
   async createNotification(notification: InsertNotification): Promise<Notification> {
     // Task #15: rispetta inAppEnabled + categoria nelle preferenze utente.
+    // NB: se la notifica è soppressa dalle preferenze, ritorniamo un oggetto
+    // sintetico con id=0 (NON persistito a DB) per mantenere stabile la
+    // signature `Promise<Notification>` verso i ~13 call-site esistenti che
+    // ignorano comunque il return value (fire-and-forget). I caller che
+    // dovessero usare l'id devono controllare `result.id !== 0`.
     // Mapping notification.type → categoria pref (null = sempre consentita,
     // es. richieste admin che non hanno opt-out per categoria).
     const typeToCategory: Record<string, string | null> = {
@@ -2585,9 +2598,9 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async getNotifications(userId: string): Promise<Notification[]> {
+  async getNotifications(userId: string, opts?: { type?: string | null; limit?: number; offset?: number }): Promise<Notification[]> {
     return this.dbCall(
-      () => this.databaseStorage.getNotifications(userId),
+      () => this.databaseStorage.getNotifications(userId, opts),
       async () => []
     );
   }
