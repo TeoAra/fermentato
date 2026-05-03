@@ -56,6 +56,8 @@ const AttivaPub          = lazy(() => import("@/pages/attiva-pub"));
 const Onboarding         = lazy(() => import("@/pages/onboarding"));
 const Notifications      = lazy(() => import("@/pages/notifications"));
 const Activity           = lazy(() => import("@/pages/activity"));
+const Eventi             = lazy(() => import("@/pages/eventi"));
+const EventDetail        = lazy(() => import("@/pages/event-detail"));
 const UserPublicProfile  = lazy(() => import("@/pages/user-public-profile"));
 const UserDashboard      = lazy(() => import("@/pages/user-dashboard"));
 const Dashboard          = lazy(() => import("@/pages/dashboard-simple"));
@@ -285,6 +287,8 @@ function Router() {
           <Route path="/user/:nickname" component={UserPublicProfile} />
           <Route path="/search" component={SearchPage} />
           <Route path="/activity" component={Activity} />
+          <Route path="/eventi" component={Eventi} />
+          <Route path="/eventi/:type/:id" component={EventDetail} />
           <Route path="/my-cellar" component={MyCellar} />
           <Route path="/my-wishlist" component={MyWishlist} />
           <Route path="/my-stats" component={MyStats} />

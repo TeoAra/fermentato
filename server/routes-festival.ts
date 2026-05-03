@@ -182,13 +182,16 @@ export function registerFestivalRoutes(app: Express) {
     }
   });
 
-  // ── Public: rate a tap ───────────────────────────────────────────────────────
+  // ── Public: rate a tap (optional comment) ────────────────────────────────────
   app.post("/api/festivals/:slug/taps/:tapId/rate", isAuthenticated as any, async (req: any, res) => {
     try {
-      const { rating } = req.body;
+      const { rating, comment } = req.body;
       if (!Number.isInteger(rating) || rating < 1 || rating > 10) {
         return res.status(400).json({ message: "Voto deve essere tra 1 e 10" });
       }
+      const cleanComment = typeof comment === "string"
+        ? comment.trim().slice(0, 500) || null
+        : null;
       const tapId = parseInt(req.params.tapId);
       const [tap] = await db.select().from(festivalTaps).where(eq(festivalTaps.id, tapId)).limit(1);
       if (!tap) return res.status(404).json({ message: "Spina non trovata" });
@@ -198,10 +201,12 @@ export function registerFestivalRoutes(app: Express) {
         tapId,
         userId: req.user.id,
         rating,
+        comment: cleanComment,
       })
       .onConflictDoUpdate({
         target: [festivalRatings.tapId, festivalRatings.userId],
-        set: { rating },
+        // Re-rating clears any previous owner reply (the conversation has changed)
+        set: { rating, comment: cleanComment, ownerReply: null, ownerReplyAt: null },
       });
 
       const [agg] = await db.select({
@@ -213,6 +218,114 @@ export function registerFestivalRoutes(app: Express) {
     } catch (err) {
       console.error("Error rating tap:", err);
       res.status(500).json({ message: "Errore nel salvataggio del voto" });
+    }
+  });
+
+  // ── Public: list comments+replies for a tap ──────────────────────────────────
+  app.get("/api/festivals/:slug/taps/:tapId/comments", async (req, res) => {
+    try {
+      const tapId = parseInt(req.params.tapId);
+      const rows = await db.select({
+        id: festivalRatings.id,
+        rating: festivalRatings.rating,
+        comment: festivalRatings.comment,
+        ownerReply: festivalRatings.ownerReply,
+        ownerReplyAt: festivalRatings.ownerReplyAt,
+        createdAt: festivalRatings.createdAt,
+        userNickname: users.nickname,
+        userFirstName: users.firstName,
+        userImage: users.profileImageUrl,
+      })
+      .from(festivalRatings)
+      .leftJoin(users, eq(festivalRatings.userId, users.id))
+      .where(and(eq(festivalRatings.tapId, tapId), sql`${festivalRatings.comment} IS NOT NULL`))
+      .orderBy(desc(festivalRatings.createdAt))
+      .limit(50);
+      res.json(rows);
+    } catch (err) {
+      console.error("Error fetching comments:", err);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // ── Owner/Admin: reply to a rating ───────────────────────────────────────────
+  app.post("/api/festival-ratings/:id/reply", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const ratingId = parseInt(req.params.id);
+      if (Number.isNaN(ratingId)) return res.status(400).json({ message: "ID non valido" });
+      const reply = typeof req.body?.reply === "string" ? req.body.reply.trim() : "";
+      if (!reply) return res.status(400).json({ message: "Risposta vuota" });
+      if (reply.length > 500) return res.status(400).json({ message: "Risposta troppo lunga (max 500)" });
+
+      const [row] = await db.select({ festivalId: festivalRatings.festivalId })
+        .from(festivalRatings).where(eq(festivalRatings.id, ratingId)).limit(1);
+      if (!row) return res.status(404).json({ message: "Recensione non trovata" });
+
+      const [festival] = await db.select().from(festivals).where(eq(festivals.id, row.festivalId)).limit(1);
+      if (!festival) return res.status(404).json({ message: "Festival non trovato" });
+      if (!canManageFestival(req, festival)) return res.status(403).json({ message: "Non autorizzato" });
+
+      await db.update(festivalRatings)
+        .set({ ownerReply: reply, ownerReplyAt: new Date() })
+        .where(eq(festivalRatings.id, ratingId));
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Error replying:", err);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  app.delete("/api/festival-ratings/:id/reply", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const ratingId = parseInt(req.params.id);
+      if (Number.isNaN(ratingId)) return res.status(400).json({ message: "ID non valido" });
+      const [row] = await db.select({ festivalId: festivalRatings.festivalId })
+        .from(festivalRatings).where(eq(festivalRatings.id, ratingId)).limit(1);
+      if (!row) return res.status(404).json({ message: "Recensione non trovata" });
+      const [festival] = await db.select().from(festivals).where(eq(festivals.id, row.festivalId)).limit(1);
+      if (!festival || !canManageFestival(req, festival)) return res.status(403).json({ message: "Non autorizzato" });
+      await db.update(festivalRatings)
+        .set({ ownerReply: null, ownerReplyAt: null })
+        .where(eq(festivalRatings.id, ratingId));
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // ── Owner/Admin: list all comments for a festival (dashboard moderation view) ─
+  app.get("/api/festivals/:id/comments-all", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const festivalId = parseInt(req.params.id);
+      const [festival] = await db.select().from(festivals).where(eq(festivals.id, festivalId)).limit(1);
+      if (!festival) return res.status(404).json({ message: "Festival non trovato" });
+      if (!canManageFestival(req, festival)) return res.status(403).json({ message: "Non autorizzato" });
+
+      const rows = await db.select({
+        id: festivalRatings.id,
+        tapId: festivalRatings.tapId,
+        rating: festivalRatings.rating,
+        comment: festivalRatings.comment,
+        ownerReply: festivalRatings.ownerReply,
+        ownerReplyAt: festivalRatings.ownerReplyAt,
+        createdAt: festivalRatings.createdAt,
+        tapNumber: festivalTaps.tapNumber,
+        beerName: sql<string>`COALESCE(${beers.name}, ${festivalTaps.customBeerName}, 'Spina ' || ${festivalTaps.tapNumber})`,
+        userNickname: users.nickname,
+        userFirstName: users.firstName,
+        userImage: users.profileImageUrl,
+      })
+      .from(festivalRatings)
+      .leftJoin(festivalTaps, eq(festivalRatings.tapId, festivalTaps.id))
+      .leftJoin(beers, eq(festivalTaps.beerId, beers.id))
+      .leftJoin(users, eq(festivalRatings.userId, users.id))
+      .where(and(eq(festivalRatings.festivalId, festivalId), sql`${festivalRatings.comment} IS NOT NULL`))
+      .orderBy(desc(festivalRatings.createdAt))
+      .limit(200);
+      res.json(rows);
+    } catch (err) {
+      console.error("Error fetching all comments:", err);
+      res.status(500).json({ message: "Errore" });
     }
   });
 

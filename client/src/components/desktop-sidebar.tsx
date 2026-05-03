@@ -64,6 +64,7 @@ export function DesktopSidebar() {
     { icon: Home, label: "Home", href: "/" },
     { icon: Building2, label: "Birrifici", href: "/explore/breweries" },
     { icon: Store, label: "Pub", href: "/explore/pubs" },
+    { icon: CalendarDays, label: "Eventi", href: "/eventi" },
     { icon: CalendarDays, label: "Festival", href: "/festival" },
   ];
 

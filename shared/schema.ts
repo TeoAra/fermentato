@@ -988,6 +988,9 @@ export const festivalRatings = pgTable("festival_ratings", {
   tapId: integer("tap_id").references(() => festivalTaps.id, { onDelete: "cascade" }).notNull(),
   userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
   rating: integer("rating").notNull(),
+  comment: text("comment"),
+  ownerReply: text("owner_reply"),
+  ownerReplyAt: timestamp("owner_reply_at"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => [unique().on(t.tapId, t.userId)]);
 export type FestivalRating = typeof festivalRatings.$inferSelect;

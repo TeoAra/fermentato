@@ -299,6 +299,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
   cleanupExpiredInterests();
   setInterval(cleanupExpiredInterests, 60 * 60 * 1000);
 
+  // ── Event-start push notifications ──────────────────────────────────────────
+  // Periodically sends push to "interested" users when their event has just
+  // started (within the last hour) and the notification has not been sent yet.
+  async function sendEventStartNotifications() {
+    try {
+      // ── Pub events ──
+      const pubRes = await pool.query(`
+        SELECT e.id, e.title, e.event_date, e.image_url, e.pub_id,
+               p.name AS pub_name
+        FROM pub_events e
+        INNER JOIN pubs p ON p.id = e.pub_id
+        WHERE e.is_published = true
+          AND e.start_notification_sent = false
+          AND e.event_date <= NOW()
+          AND e.event_date >  NOW() - INTERVAL '2 hours'
+        LIMIT 50
+      `);
+      for (const row of pubRes.rows) {
+        // Mark sent FIRST (atomic guard) to prevent duplicate notifications
+        // on concurrent runs / restart-mid-loop. We then dispatch the (fire-and-forget) pushes.
+        const upd = await pool.query(
+          `UPDATE pub_events SET start_notification_sent = true
+             WHERE id = $1 AND start_notification_sent = false`,
+          [row.id]
+        );
+        if (upd.rowCount === 0) continue; // Another worker/run claimed it
+        const interestedRes = await pool.query(
+          `SELECT user_id FROM pub_event_interests WHERE event_id = $1`,
+          [row.id]
+        );
+        const userIds: string[] = interestedRes.rows.map((r: any) => r.user_id);
+        for (const uid of userIds) {
+          sendPushToUser(uid, {
+            title: `🍺 ${row.title} è iniziato!`,
+            body: `Sta succedendo ora a ${row.pub_name}`,
+            url: `/eventi/pub/${row.id}`,
+            tag: `event-pub-${row.id}`,
+            icon: row.image_url || undefined,
+          });
+        }
+      }
+
+      // ── Brewery events ──
+      const brewRes = await pool.query(`
+        SELECT e.id, e.title, e.event_date, e.image_url, e.brewery_id,
+               br.name AS brewery_name
+        FROM brewery_events e
+        INNER JOIN breweries br ON br.id = e.brewery_id
+        WHERE e.is_published = true
+          AND e.start_notification_sent = false
+          AND e.event_date <= NOW()
+          AND e.event_date >  NOW() - INTERVAL '2 hours'
+        LIMIT 50
+      `);
+      for (const row of brewRes.rows) {
+        // Mark sent FIRST (atomic guard) to prevent duplicate notifications.
+        const upd = await pool.query(
+          `UPDATE brewery_events SET start_notification_sent = true
+             WHERE id = $1 AND start_notification_sent = false`,
+          [row.id]
+        );
+        if (upd.rowCount === 0) continue;
+        const interestedRes = await pool.query(
+          `SELECT user_id FROM brewery_event_interests WHERE event_id = $1`,
+          [row.id]
+        );
+        const userIds: string[] = interestedRes.rows.map((r: any) => r.user_id);
+        for (const uid of userIds) {
+          sendPushToUser(uid, {
+            title: `🍺 ${row.title} è iniziato!`,
+            body: `Sta succedendo ora a ${row.brewery_name}`,
+            url: `/eventi/brewery/${row.id}`,
+            tag: `event-brewery-${row.id}`,
+            icon: row.image_url || undefined,
+          });
+        }
+      }
+
+      const total = pubRes.rowCount! + brewRes.rowCount!;
+      if (total > 0) {
+        console.log(`[event-notifs] Sent start notifications for ${total} events`);
+      }
+    } catch (err) {
+      console.error("[event-notifs] error:", err);
+    }
+  }
+  // Run after a short delay so the server is fully ready, then every 10 minutes.
+  setTimeout(sendEventStartNotifications, 30_000);
+  setInterval(sendEventStartNotifications, 10 * 60 * 1000);
+
   // Startup: ensure festival_food_items has allergens column
   (async () => {
     try {
@@ -349,6 +439,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await pool.query(`ALTER TABLE festivals ADD COLUMN IF NOT EXISTS schedule jsonb`);
     } catch (e) {
       console.error("[festivals] schedule migration error:", e);
+    }
+  })();
+
+  // Startup: ensure festival_ratings has owner_reply / comment columns
+  (async () => {
+    try {
+      await pool.query(`ALTER TABLE festival_ratings ADD COLUMN IF NOT EXISTS comment text`);
+      await pool.query(`ALTER TABLE festival_ratings ADD COLUMN IF NOT EXISTS owner_reply text`);
+      await pool.query(`ALTER TABLE festival_ratings ADD COLUMN IF NOT EXISTS owner_reply_at timestamp`);
+    } catch (e) {
+      console.error("[festival_ratings] reply migration error:", e);
     }
   })();
 
@@ -5511,6 +5612,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching upcoming events:", error);
       res.status(500).json({ message: "Failed to fetch upcoming events" });
+    }
+  });
+
+  // GET unified public events discovery (pub + brewery), with filters & pagination
+  app.get("/api/events/public", async (req, res) => {
+    try {
+      const q        = ((req.query.q as string)        || "").trim();
+      const category = ((req.query.category as string) || "").trim();
+      const city     = ((req.query.city as string)     || "").trim();
+      const source   = ((req.query.source as string)   || "all").trim(); // all|pub|brewery
+      const fromStr  = (req.query.from as string)      || "";
+      const toStr    = (req.query.to as string)        || "";
+      const limit    = Math.min(parseInt(req.query.limit as string)  || 30, 100);
+      const offset   = Math.max(parseInt(req.query.offset as string) || 0, 0);
+
+      // Default: from "now" forward (only upcoming/ongoing).
+      const fromDate = fromStr ? new Date(fromStr) : new Date();
+      const toDate   = toStr   ? new Date(toStr)   : null;
+
+      const qLike    = q     ? `%${q.toLowerCase()}%`    : null;
+      const cityLike = city  ? `%${city.toLowerCase()}%` : null;
+      const catVal   = category || null;
+      const includePub     = source === "all" || source === "pub";
+      const includeBrewery = source === "all" || source === "brewery";
+
+      const rows = await db.execute(sql`
+        WITH evts AS (
+          ${includePub ? sql`
+          SELECT
+            'pub'::text AS source_type,
+            e.id, e.title, e.description, e.category,
+            e.event_date AS "eventDate", e.end_date AS "endDate",
+            e.image_url  AS "imageUrl",  e.created_at AS "createdAt",
+            p.id   AS "venueId",
+            p.name AS "venueName",
+            p.slug AS "venueSlug",
+            p.city AS "venueCity",
+            p.logo_url AS "venueLogoUrl",
+            p.latitude AS "venueLatitude",
+            p.longitude AS "venueLongitude"
+          FROM pub_events e
+          INNER JOIN pubs p ON p.id = e.pub_id
+          WHERE e.is_published = true
+            AND COALESCE(e.end_date, e.event_date) >= ${fromDate}
+            ${toDate    ? sql`AND e.event_date <= ${toDate}`           : sql``}
+            ${qLike     ? sql`AND (LOWER(e.title) LIKE ${qLike} OR LOWER(COALESCE(e.description,'')) LIKE ${qLike} OR LOWER(p.name) LIKE ${qLike})` : sql``}
+            ${cityLike  ? sql`AND LOWER(COALESCE(p.city,'')) LIKE ${cityLike}` : sql``}
+            ${catVal    ? sql`AND e.category = ${catVal}`              : sql``}
+          ` : sql`SELECT NULL::text AS source_type, NULL::int AS id, NULL::text AS title, NULL::text AS description, NULL::text AS category, NULL::timestamp AS "eventDate", NULL::timestamp AS "endDate", NULL::text AS "imageUrl", NULL::timestamp AS "createdAt", NULL::int AS "venueId", NULL::text AS "venueName", NULL::text AS "venueSlug", NULL::text AS "venueCity", NULL::text AS "venueLogoUrl", NULL::numeric AS "venueLatitude", NULL::numeric AS "venueLongitude" WHERE false`}
+          UNION ALL
+          ${includeBrewery ? sql`
+          SELECT
+            'brewery'::text AS source_type,
+            e.id, e.title, e.description, e.category,
+            e.event_date AS "eventDate", e.end_date AS "endDate",
+            e.image_url  AS "imageUrl",  e.created_at AS "createdAt",
+            br.id   AS "venueId",
+            br.name AS "venueName",
+            NULL::text AS "venueSlug",
+            br.location AS "venueCity",
+            br.logo_url AS "venueLogoUrl",
+            NULL::numeric AS "venueLatitude",
+            NULL::numeric AS "venueLongitude"
+          FROM brewery_events e
+          INNER JOIN breweries br ON br.id = e.brewery_id
+          WHERE e.is_published = true
+            AND COALESCE(e.end_date, e.event_date) >= ${fromDate}
+            ${toDate    ? sql`AND e.event_date <= ${toDate}`           : sql``}
+            ${qLike     ? sql`AND (LOWER(e.title) LIKE ${qLike} OR LOWER(COALESCE(e.description,'')) LIKE ${qLike} OR LOWER(br.name) LIKE ${qLike})` : sql``}
+            ${cityLike  ? sql`AND LOWER(COALESCE(br.location,'')) LIKE ${cityLike}` : sql``}
+            ${catVal    ? sql`AND e.category = ${catVal}`              : sql``}
+          ` : sql`SELECT NULL::text AS source_type, NULL::int AS id, NULL::text AS title, NULL::text AS description, NULL::text AS category, NULL::timestamp AS "eventDate", NULL::timestamp AS "endDate", NULL::text AS "imageUrl", NULL::timestamp AS "createdAt", NULL::int AS "venueId", NULL::text AS "venueName", NULL::text AS "venueSlug", NULL::text AS "venueCity", NULL::text AS "venueLogoUrl", NULL::numeric AS "venueLatitude", NULL::numeric AS "venueLongitude" WHERE false`}
+        )
+        SELECT *,
+          (SELECT COUNT(*)::int FROM evts) AS total_count
+        FROM evts
+        ORDER BY "eventDate" ASC
+        LIMIT ${limit} OFFSET ${offset}
+      `);
+
+      const all = ((rows as any).rows ?? rows) as any[];
+      const totalCount = all.length > 0 ? Number(all[0].total_count) : 0;
+      const events = all.map(({ total_count, ...rest }) => ({
+        ...rest,
+        sourceType: rest.source_type,
+      }));
+      res.json({ events, totalCount, limit, offset });
+    } catch (err: any) {
+      console.error("Error fetching public events:", err.message);
+      res.status(500).json({ message: "Errore caricamento eventi" });
+    }
+  });
+
+  // GET single event (pub or brewery), unified, public
+  app.get("/api/events/:type/:id", async (req, res) => {
+    try {
+      const type = req.params.type;
+      const id = parseInt(req.params.id);
+      if (Number.isNaN(id) || (type !== "pub" && type !== "brewery")) {
+        return res.status(400).json({ message: "Parametri non validi" });
+      }
+      const rows = type === "pub"
+        ? await db.execute(sql`
+            SELECT 'pub'::text AS "sourceType",
+              e.id, e.title, e.description, e.category,
+              e.event_date AS "eventDate", e.end_date AS "endDate",
+              e.image_url AS "imageUrl", e.is_published AS "isPublished",
+              e.pub_id AS "venueId",
+              p.name  AS "venueName", p.slug AS "venueSlug",
+              p.address AS "venueAddress", p.city AS "venueCity",
+              p.logo_url AS "venueLogoUrl",
+              p.latitude AS "venueLatitude", p.longitude AS "venueLongitude"
+            FROM pub_events e
+            INNER JOIN pubs p ON p.id = e.pub_id
+            WHERE e.id = ${id} AND e.is_published = true
+            LIMIT 1
+          `)
+        : await db.execute(sql`
+            SELECT 'brewery'::text AS "sourceType",
+              e.id, e.title, e.description, e.category,
+              e.event_date AS "eventDate", e.end_date AS "endDate",
+              e.image_url AS "imageUrl", e.is_published AS "isPublished",
+              e.brewery_id AS "venueId",
+              br.name AS "venueName", NULL::text AS "venueSlug",
+              br.location AS "venueAddress", br.location AS "venueCity",
+              br.logo_url AS "venueLogoUrl",
+              NULL::numeric AS "venueLatitude", NULL::numeric AS "venueLongitude"
+            FROM brewery_events e
+            INNER JOIN breweries br ON br.id = e.brewery_id
+            WHERE e.id = ${id} AND e.is_published = true
+            LIMIT 1
+          `);
+      const row = ((rows as any).rows ?? rows)[0];
+      if (!row) return res.status(404).json({ message: "Evento non trovato" });
+      res.json(row);
+    } catch (err: any) {
+      console.error("Error fetching event:", err.message);
+      res.status(500).json({ message: "Errore" });
     }
   });
 

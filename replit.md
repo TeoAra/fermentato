@@ -113,3 +113,26 @@ Preferred communication style: Simple, everyday language.
 
 ### Bug fixes
 - `bottle-list-manager.tsx` line 379: `Math.random()` as React key replaced with `beer?.id ?? \`result-${idx}\`` (no more re-mount + lost focus on each render).
+
+## Eventi unificati & risposte festival (Maggio 2026)
+
+### Hub Eventi pubblico
+- Nuova pagina `/eventi` (`client/src/pages/eventi.tsx`): hero gradient, ricerca testuale, chip rapidi (Oggi/Domani/Settimana/Mese), filtri avanzati (città, categoria, pub vs birrificio), griglia raggruppata per giorno.
+- Nuova pagina dettaglio `/eventi/:type/:id` (`client/src/pages/event-detail.tsx`): cover, data/orario, pulsante "Mi interessa" con condivisione social, card del locale (link a `/pub/:id` o `/birrificio/:id`) + indicazioni Google Maps.
+- Endpoint backend (server/routes.ts):
+  - `GET /api/events/public` — discovery unificato pub+brewery con `q/category/city/source/from/to/limit/offset` (raw SQL su `pub_events` ∪ `brewery_events`).
+  - `GET /api/events/:type/:id` — dettaglio singolo con dati venue.
+- Link "Eventi" aggiunto al `desktop-sidebar` accanto a "Festival".
+
+### Notifiche push automatiche start-evento
+- Cron in `server/routes.ts` (linee 305-385): ogni 10 min controlla eventi pub+brewery iniziati nelle ultime 2 ore con `start_notification_sent=false`, invia push agli utenti che hanno espresso interesse, marca come inviato. Avvio dopo 30s dal boot.
+
+### Festival: commenti utenti & risposte proprietario
+- Schema esteso (`shared/schema.ts`): `festivalRatings.comment`, `ownerReply`, `ownerReplyAt`. Migrazioni ALTER TABLE auto-eseguite all'avvio.
+- Endpoint (`server/routes-festival.ts`):
+  - `POST /api/festivals/:slug/taps/:tapId/rate` ora accetta `comment` (max 500). Re-voto azzera la risposta del proprietario.
+  - `GET /api/festivals/:slug/taps/:tapId/comments` — lista commenti pubblici per spina (con utente).
+  - `POST/DELETE /api/festival-ratings/:id/reply` — solo manager/admin (canManageFestival).
+  - `GET /api/festivals/:id/comments-all` — vista moderazione per dashboard.
+- UI `festival-public.tsx`: nello slider rating, bottone "Aggiungi un commento" che apre textarea + invio combinato. Componente `TapComments` mostra commenti+risposte dentro la card spina espansa; il manager vede inline il pulsante "Rispondi"/"Rimuovi risposta".
+- UI `festival-dashboard.tsx`: nuovo tab "Commenti" con `FestivalCommentsManager` (filtri Da rispondere/Risposti/Tutti, riga per commento con info utente+spina+birra, form di risposta).

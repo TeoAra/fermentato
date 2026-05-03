@@ -6,14 +6,17 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Droplets, Search, Star, UtensilsCrossed, Beer, ChevronDown, ChevronUp,
   MapPin, CheckCircle2, XCircle, Loader2, Clock, Calendar, Trophy, Info,
-  Pencil, ExternalLink,
+  Pencil, ExternalLink, MessageSquare, Reply, Send,
 } from "lucide-react";
+import { format } from "date-fns";
+import { it } from "date-fns/locale";
 import { FestivalLikeButton } from "@/components/festival-like-button";
 import { ShareButton } from "@/components/share-button";
 import { Helmet } from "react-helmet-async";
@@ -64,17 +67,25 @@ function SliderRating({ tapId, slug, current, avg, count }: {
 }) {
   const [localValue, setLocalValue] = useState<number>(current ?? 5);
   const [isDragging, setIsDragging] = useState(false);
+  const [comment, setComment] = useState<string>("");
+  const [showCommentBox, setShowCommentBox] = useState<boolean>(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const hasVoted = current !== null;
 
   const rateMutation = useMutation({
-    mutationFn: (rating: number) =>
-      apiRequest(`/api/festivals/${slug}/taps/${tapId}/rate`, { method: "POST" }, { rating }),
+    mutationFn: (vars: { rating: number; comment?: string }) =>
+      apiRequest(`/api/festivals/${slug}/taps/${tapId}/rate`, { method: "POST" }, vars),
     onSuccess: (data: any) => {
       setLocalValue(data.userRating);
       queryClient.invalidateQueries({ queryKey: ["/api/festivals", slug] });
+      queryClient.invalidateQueries({ queryKey: ["/api/festivals", slug, "taps", String(tapId), "comments"] });
+      if (showCommentBox && comment.trim()) {
+        toast({ title: "Voto e commento salvati" });
+      }
+      setShowCommentBox(false);
+      setComment("");
     },
     onError: () => toast({ title: "Errore nel voto", variant: "destructive" }),
   });
@@ -86,7 +97,11 @@ function SliderRating({ tapId, slug, current, avg, count }: {
 
   const handleRelease = () => {
     setIsDragging(false);
-    rateMutation.mutate(localValue);
+    rateMutation.mutate({ rating: localValue });
+  };
+
+  const handleSubmitWithComment = () => {
+    rateMutation.mutate({ rating: localValue, comment: comment.trim() || undefined });
   };
 
   const displayVal = isDragging ? localValue : (current ?? localValue);
@@ -108,6 +123,37 @@ function SliderRating({ tapId, slug, current, avg, count }: {
       </div>
     );
   }
+
+  // Not yet voted: slider + optional comment
+  const commentBlock = showCommentBox ? (
+    <div className="mt-2 space-y-2">
+      <Textarea
+        value={comment}
+        onChange={e => setComment(e.target.value.slice(0, 500))}
+        rows={2}
+        placeholder="Aggiungi un commento (opzionale, max 500)…"
+        className="text-xs"
+        data-testid="textarea-festival-comment"
+      />
+      <div className="flex items-center gap-2 justify-end">
+        <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => { setShowCommentBox(false); setComment(""); }}>
+          Annulla
+        </Button>
+        <Button size="sm" className="h-7 text-xs gap-1" disabled={rateMutation.isPending} onClick={handleSubmitWithComment} data-testid="btn-festival-submit-comment">
+          <Send className="h-3 w-3" /> Invia voto + commento
+        </Button>
+      </div>
+    </div>
+  ) : (
+    <button
+      type="button"
+      onClick={() => setShowCommentBox(true)}
+      className="mt-2 inline-flex items-center gap-1 text-xs text-primary font-medium hover:underline"
+      data-testid="btn-festival-add-comment"
+    >
+      <MessageSquare className="h-3 w-3" /> Aggiungi un commento
+    </button>
+  );
 
   return (
     <div className="mt-3">
@@ -150,6 +196,152 @@ function SliderRating({ tapId, slug, current, avg, count }: {
           <span className="opacity-60">({count} vot{count === 1 ? "o" : "i"})</span>
         </div>
       )}
+      {commentBlock}
+    </div>
+  );
+}
+
+// ── Tap Comments ────────────────────────────────────────────────────────────
+type TapComment = {
+  id: number; rating: number; comment: string | null;
+  ownerReply: string | null; ownerReplyAt: string | null;
+  createdAt: string;
+  userNickname: string | null; userFirstName: string | null; userImage: string | null;
+};
+
+function TapComments({ tapId, slug, isManager }: { tapId: number; slug: string; isManager: boolean }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [replyOpenFor, setReplyOpenFor] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState<string>("");
+
+  const { data: comments = [], isLoading } = useQuery<TapComment[]>({
+    queryKey: ["/api/festivals", slug, "taps", String(tapId), "comments"],
+    queryFn: () => fetch(`/api/festivals/${slug}/taps/${tapId}/comments`).then(r => r.json()),
+  });
+
+  const replyMutation = useMutation({
+    mutationFn: (vars: { id: number; reply: string }) =>
+      apiRequest(`/api/festival-ratings/${vars.id}/reply`, { method: "POST" }, { reply: vars.reply }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/festivals", slug, "taps", String(tapId), "comments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/festivals", slug] });
+      setReplyOpenFor(null);
+      setReplyText("");
+      toast({ title: "Risposta pubblicata" });
+    },
+    onError: () => toast({ title: "Errore invio risposta", variant: "destructive" }),
+  });
+
+  const deleteReplyMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/festival-ratings/${id}/reply`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/festivals", slug, "taps", String(tapId), "comments"] });
+      toast({ title: "Risposta rimossa" });
+    },
+  });
+
+  if (isLoading) return null;
+  if (comments.length === 0) return null;
+
+  return (
+    <div className="mt-4 space-y-2.5">
+      <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground uppercase tracking-wide">
+        <MessageSquare className="h-3 w-3" />
+        Commenti ({comments.length})
+      </div>
+      {comments.map(c => {
+        const initials = (c.userNickname || c.userFirstName || "?")[0]?.toUpperCase();
+        const dateStr = c.createdAt ? format(new Date(c.createdAt), "d MMM yyyy", { locale: it }) : "";
+        return (
+          <div key={c.id} className="rounded-xl bg-stone-50 dark:bg-stone-900/30 border border-stone-100 dark:border-stone-800 p-3">
+            <div className="flex items-start gap-2">
+              {c.userImage ? (
+                <img src={c.userImage} alt={c.userNickname || ""} className="h-6 w-6 rounded-full object-cover" />
+              ) : (
+                <div className="h-6 w-6 rounded-full bg-primary/15 text-primary text-[11px] flex items-center justify-center font-bold">{initials}</div>
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-xs font-semibold text-foreground">
+                    {c.userNickname || c.userFirstName || "Utente"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">·</span>
+                  <span className="text-[10px] text-muted-foreground">{dateStr}</span>
+                  <span className="ml-auto inline-flex items-center gap-0.5 text-[11px] font-bold text-primary">
+                    <Star className="h-2.5 w-2.5 fill-current" /> {c.rating}/10
+                  </span>
+                </div>
+                {c.comment && (
+                  <p className="text-xs text-foreground/85 dark:text-stone-300 mt-1 whitespace-pre-line break-words">
+                    {c.comment}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Owner reply */}
+            {c.ownerReply ? (
+              <div className="mt-2 ml-8 rounded-lg bg-primary/10 border border-primary/20 p-2.5">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wide mb-1">
+                  <Reply className="h-3 w-3" />
+                  Risposta del festival
+                  {c.ownerReplyAt && (
+                    <span className="text-muted-foreground font-normal normal-case">
+                      · {format(new Date(c.ownerReplyAt), "d MMM yyyy", { locale: it })}
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-foreground/85 dark:text-stone-200 whitespace-pre-line break-words">{c.ownerReply}</p>
+                {isManager && (
+                  <button
+                    onClick={() => deleteReplyMutation.mutate(c.id)}
+                    className="text-[10px] text-destructive hover:underline mt-1.5"
+                    data-testid={`btn-delete-reply-${c.id}`}
+                  >
+                    Rimuovi risposta
+                  </button>
+                )}
+              </div>
+            ) : isManager ? (
+              <div className="mt-2 ml-8">
+                {replyOpenFor === c.id ? (
+                  <div className="space-y-1.5">
+                    <Textarea
+                      value={replyText}
+                      onChange={e => setReplyText(e.target.value.slice(0, 500))}
+                      rows={2}
+                      placeholder="Rispondi a questo commento…"
+                      className="text-xs"
+                      data-testid={`textarea-reply-${c.id}`}
+                    />
+                    <div className="flex items-center justify-end gap-1.5">
+                      <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => { setReplyOpenFor(null); setReplyText(""); }}>
+                        Annulla
+                      </Button>
+                      <Button size="sm" className="h-6 text-xs gap-1"
+                        disabled={!replyText.trim() || replyMutation.isPending}
+                        onClick={() => replyMutation.mutate({ id: c.id, reply: replyText.trim() })}
+                        data-testid={`btn-send-reply-${c.id}`}
+                      >
+                        <Send className="h-3 w-3" /> Invia
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => { setReplyOpenFor(c.id); setReplyText(""); }}
+                    className="inline-flex items-center gap-1 text-[11px] text-primary font-medium hover:underline"
+                    data-testid={`btn-open-reply-${c.id}`}
+                  >
+                    <Reply className="h-3 w-3" /> Rispondi
+                  </button>
+                )}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -327,6 +519,9 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
               </a>
             </div>
           )}
+
+          {/* Comments + owner replies */}
+          <TapComments tapId={tap.id} slug={slug} isManager={isManager} />
         </div>
       )}
     </div>

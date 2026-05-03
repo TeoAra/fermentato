@@ -22,8 +22,10 @@ import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
-  X, Search, ChevronDown, Clock, Monitor, Copy, Heart,
+  X, Search, ChevronDown, Clock, Monitor, Copy, Heart, MessageSquare, Reply, Send,
 } from "lucide-react";
+import { format } from "date-fns";
+import { it } from "date-fns/locale";
 import { useLocation } from "wouter";
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -778,6 +780,195 @@ function FestivalForm({
 }
 
 // ─── Festival food manager ───────────────────────────────────────────────────
+// ── Festival Comments Manager (owner moderation + replies) ───────────────────
+type FestivalAllComment = {
+  id: number; rating: number; comment: string | null;
+  ownerReply: string | null; ownerReplyAt: string | null;
+  createdAt: string;
+  tapId: number; tapNumber: number | null; beerName: string | null;
+  userNickname: string | null; userFirstName: string | null; userImage: string | null;
+};
+
+function FestivalCommentsManager({ festId }: { festId: number }) {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const [filter, setFilter] = useState<"all" | "unreplied" | "replied">("unreplied");
+  const [replyOpenFor, setReplyOpenFor] = useState<number | null>(null);
+  const [replyText, setReplyText] = useState("");
+
+  const { data: comments = [], isLoading } = useQuery<FestivalAllComment[]>({
+    queryKey: ["/api/festivals", festId, "comments-all"],
+    queryFn: () => fetch(`/api/festivals/${festId}/comments-all`).then(r => r.json()),
+  });
+
+  const replyMutation = useMutation({
+    mutationFn: (vars: { id: number; reply: string }) =>
+      apiRequest(`/api/festival-ratings/${vars.id}/reply`, { method: "POST" }, { reply: vars.reply }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/festivals", festId, "comments-all"] });
+      setReplyOpenFor(null);
+      setReplyText("");
+      toast({ title: "Risposta pubblicata" });
+    },
+    onError: () => toast({ title: "Errore invio risposta", variant: "destructive" }),
+  });
+
+  const deleteReplyMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/festival-ratings/${id}/reply`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/festivals", festId, "comments-all"] });
+      toast({ title: "Risposta rimossa" });
+    },
+  });
+
+  const filtered = comments.filter(c =>
+    filter === "all" ? true :
+    filter === "unreplied" ? !c.ownerReply :
+    !!c.ownerReply
+  );
+
+  const totalUnreplied = comments.filter(c => !c.ownerReply).length;
+
+  if (isLoading) {
+    return <div className="flex justify-center py-10"><Loader2 className="h-6 w-6 animate-spin text-amber-500" /></div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <Card>
+        <CardContent className="p-3 flex items-center gap-2 flex-wrap">
+          <p className="text-sm text-muted-foreground mr-auto">
+            <span className="font-bold text-foreground">{comments.length}</span> commenti totali
+            {totalUnreplied > 0 && <span className="ml-2 text-primary">· {totalUnreplied} in attesa di risposta</span>}
+          </p>
+          <div className="flex gap-1">
+            {([
+              { v: "unreplied", l: "Da rispondere" },
+              { v: "replied",   l: "Risposti" },
+              { v: "all",       l: "Tutti" },
+            ] as const).map(opt => (
+              <Button
+                key={opt.v}
+                size="sm"
+                variant={filter === opt.v ? "default" : "outline"}
+                className="h-7 text-xs"
+                onClick={() => setFilter(opt.v)}
+                data-testid={`filter-comments-${opt.v}`}
+              >
+                {opt.l}
+              </Button>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {filtered.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center text-muted-foreground space-y-2">
+            <MessageSquare className="h-8 w-8 mx-auto text-stone-300" />
+            <p className="font-medium">Nessun commento</p>
+            <p className="text-xs">
+              {filter === "unreplied" ? "Hai risposto a tutti i commenti, complimenti!" :
+               filter === "replied"   ? "Non hai ancora pubblicato risposte." :
+                                        "Nessun cliente ha ancora lasciato un commento."}
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map(c => {
+            const initials = (c.userNickname || c.userFirstName || "?")[0]?.toUpperCase();
+            const dateStr = c.createdAt ? format(new Date(c.createdAt), "d MMM yyyy 'alle' HH:mm", { locale: it }) : "";
+            return (
+              <Card key={c.id} data-testid={`comment-row-${c.id}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    {c.userImage ? (
+                      <img src={c.userImage} alt={c.userNickname || ""} className="h-9 w-9 rounded-full object-cover" />
+                    ) : (
+                      <div className="h-9 w-9 rounded-full bg-primary/15 text-primary text-sm flex items-center justify-center font-bold">
+                        {initials}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-bold text-foreground">{c.userNickname || c.userFirstName || "Utente"}</span>
+                        <Badge variant="secondary" className="text-[10px]">
+                          Spina #{c.tapNumber}{c.beerName ? ` · ${c.beerName}` : ""}
+                        </Badge>
+                        <span className="ml-auto inline-flex items-center gap-0.5 text-xs font-bold text-primary">
+                          <Star className="h-3 w-3 fill-current" /> {c.rating}/10
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5">{dateStr}</p>
+                      {c.comment && (
+                        <p className="text-sm text-foreground/85 mt-2 whitespace-pre-line break-words">{c.comment}</p>
+                      )}
+
+                      {/* Reply block */}
+                      {c.ownerReply ? (
+                        <div className="mt-3 rounded-lg bg-primary/10 border border-primary/20 p-3">
+                          <div className="flex items-center gap-1.5 text-[10px] font-bold text-primary uppercase tracking-wide mb-1">
+                            <Reply className="h-3 w-3" /> La tua risposta
+                            {c.ownerReplyAt && (
+                              <span className="text-muted-foreground font-normal normal-case">
+                                · {format(new Date(c.ownerReplyAt), "d MMM yyyy", { locale: it })}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-foreground/85 whitespace-pre-line break-words">{c.ownerReply}</p>
+                          <button
+                            onClick={() => deleteReplyMutation.mutate(c.id)}
+                            className="text-[11px] text-destructive hover:underline mt-2"
+                            data-testid={`btn-delete-reply-dash-${c.id}`}
+                          >
+                            <Trash2 className="h-3 w-3 inline mr-0.5" />Rimuovi risposta
+                          </button>
+                        </div>
+                      ) : replyOpenFor === c.id ? (
+                        <div className="mt-3 space-y-2">
+                          <Textarea
+                            value={replyText}
+                            onChange={e => setReplyText(e.target.value.slice(0, 500))}
+                            rows={2}
+                            placeholder="Rispondi al cliente…"
+                            className="text-sm"
+                            data-testid={`textarea-reply-dash-${c.id}`}
+                          />
+                          <div className="flex justify-end gap-2">
+                            <Button size="sm" variant="ghost" className="h-7" onClick={() => { setReplyOpenFor(null); setReplyText(""); }}>
+                              Annulla
+                            </Button>
+                            <Button size="sm" className="h-7 gap-1"
+                              disabled={!replyText.trim() || replyMutation.isPending}
+                              onClick={() => replyMutation.mutate({ id: c.id, reply: replyText.trim() })}
+                              data-testid={`btn-send-reply-dash-${c.id}`}
+                            >
+                              <Send className="h-3 w-3" /> Pubblica risposta
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Button
+                          size="sm" variant="outline" className="mt-3 h-7 text-xs gap-1"
+                          onClick={() => { setReplyOpenFor(c.id); setReplyText(""); }}
+                          data-testid={`btn-open-reply-dash-${c.id}`}
+                        >
+                          <Reply className="h-3 w-3" /> Rispondi
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function FestivalFoodManager({ festId }: { festId: number }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -1498,6 +1689,7 @@ export default function FestivalDashboard() {
                     <TabsTrigger value="taps" className="flex-1 gap-1"><Beer className="h-4 w-4" />Spine</TabsTrigger>
                     <TabsTrigger value="food" className="flex-1 gap-1"><UtensilsCrossed className="h-4 w-4" />Cibo</TabsTrigger>
                     <TabsTrigger value="stats" className="flex-1 gap-1"><BarChart3 className="h-4 w-4" />Classifiche</TabsTrigger>
+                    <TabsTrigger value="comments" className="flex-1 gap-1" data-testid="tab-comments"><MessageSquare className="h-4 w-4" />Commenti</TabsTrigger>
                     <TabsTrigger value="settings" className="flex-1 gap-1"><Settings className="h-4 w-4" />Info</TabsTrigger>
                   </TabsList>
 
@@ -1609,6 +1801,11 @@ export default function FestivalDashboard() {
                         </Card>
                       </>
                     )}
+                  </TabsContent>
+
+                  {/* COMMENTS tab */}
+                  <TabsContent value="comments" className="space-y-4">
+                    <FestivalCommentsManager festId={selectedFest.id} />
                   </TabsContent>
 
                   {/* SETTINGS tab */}
