@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { pool } from "./db";
 import { isAuthenticated, isAdmin } from "./auth";
 import { upload, uploadImage } from "./cloudinary";
-import { sendPushToUser } from "./push-utils";
+import { sendPushToUser, sendPushToAdmins } from "./push-utils";
 import Parser from "rss-parser";
 
 const rssParser = new Parser({
@@ -97,7 +97,47 @@ async function runSocialMigrations() {
         UNIQUE(source_id, guid)
       );
       CREATE INDEX IF NOT EXISTS idx_rss_items_published ON rss_items(published_at DESC);
+
+      CREATE TABLE IF NOT EXISTS checkin_comment_likes (
+        id SERIAL PRIMARY KEY,
+        comment_id INTEGER NOT NULL REFERENCES checkin_comments(id) ON DELETE CASCADE,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(comment_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_ccl_comment ON checkin_comment_likes(comment_id);
+
+      CREATE TABLE IF NOT EXISTS content_reports (
+        id SERIAL PRIMARY KEY,
+        target_type VARCHAR(30) NOT NULL,
+        target_id INTEGER NOT NULL,
+        reporter_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        reason VARCHAR(50) NOT NULL,
+        description TEXT,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        resolved_at TIMESTAMP,
+        resolved_by VARCHAR,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_content_reports_status ON content_reports(status);
+      CREATE INDEX IF NOT EXISTS idx_content_reports_target ON content_reports(target_type, target_id);
     `);
+
+    // Backfill: copia review_reports → content_reports una sola volta
+    try {
+      await pool.query(`
+        INSERT INTO content_reports (target_type, target_id, reporter_id, reason, description, status, resolved_at, created_at)
+        SELECT 'review', rr.review_id, rr.reporter_id, rr.reason, rr.description,
+               COALESCE(rr.status, 'pending'), rr.resolved_at, rr.created_at
+        FROM review_reports rr
+        WHERE NOT EXISTS (
+          SELECT 1 FROM content_reports cr
+          WHERE cr.target_type = 'review' AND cr.target_id = rr.review_id AND cr.reporter_id = rr.reporter_id
+        )
+      `);
+    } catch (e: any) {
+      console.warn("[social] review_reports backfill skipped:", e.message);
+    }
 
     // Seed default RSS sources (italian craft beer media) — idempotent
     const defaultSources = [
@@ -232,20 +272,104 @@ export async function registerSocialRoutes(app: Express) {
     res.json({ count: count.rows[0].c, liked: mine.rows.length > 0 });
   });
 
-  app.get("/api/checkin/:id/comments", async (req, res) => {
+  app.get("/api/checkin/:id/comments", async (req: any, res) => {
     const tastingId = parseInt(req.params.id, 10);
+    const me = req.user?.id ?? null;
     const { rows } = await pool.query(`
       SELECT c.id, c.content, c.created_at,
              u.id AS user_id, u.nickname AS username,
              COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
-             u.profile_image_url
+             u.profile_image_url,
+             (SELECT COUNT(*)::int FROM checkin_comment_likes ccl WHERE ccl.comment_id = c.id) AS likes_count,
+             ($2::varchar IS NOT NULL AND EXISTS(
+                SELECT 1 FROM checkin_comment_likes ccl2
+                WHERE ccl2.comment_id = c.id AND ccl2.user_id = $2
+             )) AS liked
       FROM checkin_comments c
       JOIN users u ON u.id = c.user_id
       WHERE c.tasting_id = $1
       ORDER BY c.created_at ASC
       LIMIT 100
-    `, [tastingId]);
+    `, [tastingId, me]);
     res.json(rows);
+  });
+
+  // Like/unlike singolo commento
+  app.post("/api/checkin-comments/:id/like", isAuthenticated, async (req: any, res) => {
+    const commentId = parseInt(req.params.id, 10);
+    if (Number.isNaN(commentId)) return res.status(400).json({ message: "ID non valido" });
+    await pool.query(
+      `INSERT INTO checkin_comment_likes (comment_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [commentId, req.user.id],
+    );
+    const owner = await pool.query(`SELECT user_id FROM checkin_comments WHERE id = $1`, [commentId]);
+    if (owner.rows[0] && owner.rows[0].user_id !== req.user.id) {
+      sendPushToUser(owner.rows[0].user_id, {
+        title: "💛 Like al tuo commento",
+        body: "A qualcuno è piaciuto il tuo commento",
+        url: "/feed",
+        tag: `comment-like-${commentId}`,
+      });
+    }
+    res.json({ liked: true });
+  });
+
+  app.delete("/api/checkin-comments/:id/like", isAuthenticated, async (req: any, res) => {
+    const commentId = parseInt(req.params.id, 10);
+    await pool.query(
+      `DELETE FROM checkin_comment_likes WHERE comment_id = $1 AND user_id = $2`,
+      [commentId, req.user.id],
+    );
+    res.json({ liked: false });
+  });
+
+  // ─── SEGNALAZIONI UNIFICATE ──────────────────────────────────────────────
+  // POST /api/reports  { targetType: 'review'|'checkin_comment', targetId, reason, description? }
+  app.post("/api/reports", isAuthenticated, async (req: any, res) => {
+    try {
+      const { targetType, targetId, reason, description } = req.body ?? {};
+      if (!["review", "checkin_comment"].includes(targetType)) {
+        return res.status(400).json({ message: "Tipo non valido" });
+      }
+      const tid = parseInt(targetId, 10);
+      if (Number.isNaN(tid)) return res.status(400).json({ message: "ID non valido" });
+      if (!reason || typeof reason !== "string") {
+        return res.status(400).json({ message: "Motivo obbligatorio" });
+      }
+      // Verifica esistenza del bersaglio
+      const exists = targetType === "review"
+        ? await pool.query(`SELECT 1 FROM user_beer_tastings WHERE id = $1`, [tid])
+        : await pool.query(`SELECT 1 FROM checkin_comments WHERE id = $1`, [tid]);
+      if (exists.rowCount === 0) return res.status(404).json({ message: "Contenuto non trovato" });
+
+      // De-duplica: stesso reporter, stesso target, status pending → idempotente
+      const dup = await pool.query(
+        `SELECT id FROM content_reports WHERE target_type = $1 AND target_id = $2 AND reporter_id = $3 AND status = 'pending'`,
+        [targetType, tid, req.user.id],
+      );
+      if (dup.rowCount && dup.rowCount > 0) {
+        return res.json({ message: "Segnalazione già inviata", reportId: dup.rows[0].id, duplicate: true });
+      }
+
+      const ins = await pool.query(
+        `INSERT INTO content_reports (target_type, target_id, reporter_id, reason, description)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id`,
+        [targetType, tid, req.user.id, reason.slice(0, 50), (description ?? null) ? String(description).slice(0, 500) : null],
+      );
+      // Notifica admin
+      try {
+        sendPushToAdmins({
+          title: "🚩 Nuova segnalazione",
+          body: targetType === "review" ? "Recensione segnalata dalla community" : "Commento segnalato dalla community",
+          url: "/admin/moderation",
+          type: "moderation",
+        });
+      } catch {}
+      res.json({ message: "Segnalazione inviata", reportId: ins.rows[0].id });
+    } catch (e: any) {
+      console.error("[reports] error:", e);
+      res.status(500).json({ message: "Errore nell'invio della segnalazione" });
+    }
   });
 
   app.post("/api/checkin/:id/comments", isAuthenticated, async (req: any, res) => {

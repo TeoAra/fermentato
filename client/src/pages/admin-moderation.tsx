@@ -28,7 +28,9 @@ import { it } from "date-fns/locale";
 
 interface ReviewReport {
   id: number;
-  reviewId: number;
+  targetType: "review" | "checkin_comment";
+  targetId: number;
+  reviewId: number; // alias di targetId per backward-compat UI
   reporterId: string;
   reason: string;
   description: string | null;
@@ -41,6 +43,12 @@ interface ReviewReport {
   reviewUserId: string | null;
   beerName: string | null;
   beerStyle: string | null;
+  // Comment-specific
+  commentText: string | null;
+  commentTastingId: number | null;
+  commentUserId: string | null;
+  commentBeerName: string | null;
+  commentBeerId: number | null;
   reporterNickname: string | null;
   reporterFirstName: string | null;
   reporterAvatar: string | null;
@@ -82,12 +90,15 @@ export default function AdminModeration() {
   });
 
   const reportActionMutation = useMutation({
-    mutationFn: async ({ reportId, action }: { reportId: number; action: "resolve" | "dismiss" }) =>
+    mutationFn: async ({ reportId, action }: { reportId: number; action: "resolve" | "dismiss" | "remove-content" }) =>
       apiRequest(`/api/admin/reports/${reportId}/${action}`, { method: "POST" }),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/reports"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reports/pending-count"] });
       toast({
-        title: vars.action === "resolve" ? "Segnalazione risolta" : "Segnalazione archiviata",
+        title: vars.action === "resolve" ? "Segnalazione risolta" :
+               vars.action === "dismiss" ? "Segnalazione archiviata" :
+               "Contenuto rimosso",
         description: "L'azione è stata completata con successo",
       });
     },
@@ -220,11 +231,13 @@ export default function AdminModeration() {
                             className={`text-xs rounded-full px-2.5 py-0.5 font-medium ${
                               report.status === "resolved" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400" :
                               report.status === "pending" ? "bg-stone-50 text-primary dark:bg-stone-900/20 dark:text-orange-400" :
+                              report.status === "escalated" ? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400" :
                               "bg-muted text-muted-foreground"
                             }`}
                           >
                             {report.status === "resolved" ? "Risolta" :
                              report.status === "pending" ? "In attesa" :
+                             report.status === "escalated" ? "Da titolare" :
                              "Archiviata"}
                           </Badge>
                           <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -233,31 +246,41 @@ export default function AdminModeration() {
                           </span>
                         </div>
 
-                        {report.reviewText || report.beerName ? (
-                          <div className="bg-stone-50 dark:bg-stone-900/20 border border-stone-200 dark:border-stone-700/50 rounded-xl p-3">
-                            <div className="flex items-center gap-2 mb-2">
-                              <BeerIcon className="w-3.5 h-3.5 text-primary" />
-                              <span className="text-xs font-medium text-primary dark:text-orange-400">
-                                {report.beerName || "Birra"}{report.beerStyle ? ` — ${report.beerStyle}` : ""}
-                              </span>
-                              {report.reviewRating != null && (
-                                <div className="flex items-center gap-0.5">
-                                  {[1,2,3,4,5].map(s => (
-                                    <Star key={s} className={`w-3 h-3 ${s <= report.reviewRating! ? "fill-primary text-primary" : "text-muted dark:text-orange-950"}`} />
-                                  ))}
-                                </div>
+                        {(() => {
+                          const isComment = report.targetType === "checkin_comment";
+                          const beerName = isComment ? report.commentBeerName : report.beerName;
+                          const beerId = isComment ? report.commentBeerId : report.reviewBeerId;
+                          const text = isComment ? report.commentText : report.reviewText;
+                          if (!text && !beerName) return null;
+                          return (
+                            <div className="bg-stone-50 dark:bg-stone-900/20 border border-stone-200 dark:border-stone-700/50 rounded-xl p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                {isComment ? <MessageSquare className="w-3.5 h-3.5 text-primary" /> : <BeerIcon className="w-3.5 h-3.5 text-primary" />}
+                                <Badge className="text-[10px] rounded-full bg-stone-100 dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-0 px-1.5 py-0">
+                                  {isComment ? "Commento check-in" : "Recensione"}
+                                </Badge>
+                                <span className="text-xs font-medium text-primary dark:text-orange-400">
+                                  {beerName || "Birra"}{!isComment && report.beerStyle ? ` — ${report.beerStyle}` : ""}
+                                </span>
+                                {!isComment && report.reviewRating != null && (
+                                  <div className="flex items-center gap-0.5">
+                                    {[1,2,3,4,5].map(s => (
+                                      <Star key={s} className={`w-3 h-3 ${s <= report.reviewRating! ? "fill-primary text-primary" : "text-muted dark:text-orange-950"}`} />
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              {text && (
+                                <p className="text-sm text-foreground italic">"{text}"</p>
+                              )}
+                              {beerId && (
+                                <Link href={`/beer/${beerId}`}>
+                                  <button className="text-xs text-primary hover:underline mt-1 font-medium">Vai alla birra →</button>
+                                </Link>
                               )}
                             </div>
-                            {report.reviewText && (
-                              <p className="text-sm text-foreground italic">"{report.reviewText}"</p>
-                            )}
-                            {report.reviewBeerId && (
-                              <Link href={`/beer/${report.reviewBeerId}`}>
-                                <button className="text-xs text-primary hover:underline mt-1 font-medium">Vai alla birra →</button>
-                              </Link>
-                            )}
-                          </div>
-                        ) : null}
+                          );
+                        })()}
 
                         {report.description && (
                           <p className="text-sm text-muted-foreground">
@@ -283,13 +306,14 @@ export default function AdminModeration() {
                         </div>
                       </div>
 
-                      {report.status === "pending" && (
+                      {(report.status === "pending" || report.status === "escalated") && (
                         <div className="flex flex-col gap-2 flex-shrink-0">
                           <Button
                             size="sm"
                             className="bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold gap-1.5"
                             disabled={reportActionMutation.isPending}
                             onClick={() => reportActionMutation.mutate({ reportId: report.id, action: "resolve" })}
+                            data-testid={`button-resolve-${report.id}`}
                           >
                             <CheckCircle className="w-3.5 h-3.5" />
                             Risolvi
@@ -297,9 +321,25 @@ export default function AdminModeration() {
                           <Button
                             size="sm"
                             variant="outline"
+                            className="border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl font-semibold gap-1.5 text-red-600 dark:text-red-400"
+                            disabled={reportActionMutation.isPending}
+                            onClick={() => {
+                              if (confirm("Eliminare definitivamente questo contenuto?")) {
+                                reportActionMutation.mutate({ reportId: report.id, action: "remove-content" });
+                              }
+                            }}
+                            data-testid={`button-remove-${report.id}`}
+                          >
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                            Rimuovi
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
                             className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl font-semibold gap-1.5 text-muted-foreground"
                             disabled={reportActionMutation.isPending}
                             onClick={() => reportActionMutation.mutate({ reportId: report.id, action: "dismiss" })}
+                            data-testid={`button-dismiss-${report.id}`}
                           >
                             <XCircle className="w-3.5 h-3.5" />
                             Archivia

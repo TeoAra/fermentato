@@ -33,6 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { BreweryEventsManager } from "@/components/events-manager";
+import { OwnerReportsSection } from "@/components/owner-reports";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
 import { StatsGrid } from "@/components/dashboard-primitives";
 
@@ -1111,6 +1112,9 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
           <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
         </div>
+
+        {/* Reports Section */}
+        <OwnerReportsSection ownerType="brewery" ownerId={brewery.id} />
 
         {/* Reviews Section */}
         {showReviewsSection && (

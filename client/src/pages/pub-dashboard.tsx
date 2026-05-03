@@ -17,6 +17,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
 import { MenuManager } from "@/components/menu-manager";
+import { OwnerReportsSection } from "@/components/owner-reports";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -542,6 +543,10 @@ export default function PubDashboard() {
               <PubAnalyticsTab pubId={selectedPub.id} />
             </TabsContent>
           </Tabs>
+
+          <div className="mt-6">
+            <OwnerReportsSection ownerType="pub" ownerId={selectedPub.id} />
+          </div>
         </div>
       )}
     </div>

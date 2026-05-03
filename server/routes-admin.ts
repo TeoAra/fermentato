@@ -538,12 +538,11 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
-  // Reports endpoints (mock for now since we don't have reports table)
-  // Pending count for badge (coerente con stats)
+  // ─── Reports unificati (review + checkin_comment) ──────────────────────────
   app.get("/api/admin/reports/pending-count", isAuthenticated, isAdmin, async (_req, res) => {
     try {
-      const [{ value }] = await db.select({ value: count() }).from(reviewReports).where(eq(reviewReports.status, 'pending'));
-      res.json({ count: Number(value) });
+      const r = await pool.query(`SELECT COUNT(*)::int AS c FROM content_reports WHERE status IN ('pending','escalated')`);
+      res.json({ count: r.rows[0]?.c ?? 0 });
     } catch {
       res.json({ count: 0 });
     }
@@ -552,33 +551,53 @@ export function registerAdminRoutes(app: Express) {
   app.get("/api/admin/reports", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const statusFilter = req.query.status as string | undefined;
-      const rows = await db
-        .select({
-          id: reviewReports.id,
-          reviewId: reviewReports.reviewId,
-          reporterId: reviewReports.reporterId,
-          reason: reviewReports.reason,
-          description: reviewReports.description,
-          status: reviewReports.status,
-          createdAt: reviewReports.createdAt,
-          resolvedAt: reviewReports.resolvedAt,
-          reviewRating: userBeerTastings.rating,
-          reviewText: userBeerTastings.personalNotes,
-          reviewBeerId: userBeerTastings.beerId,
-          reviewUserId: userBeerTastings.userId,
-          beerName: beers.name,
-          beerStyle: beers.style,
-          reporterNickname: users.nickname,
-          reporterFirstName: users.firstName,
-          reporterAvatar: users.profileImageUrl,
-        })
-        .from(reviewReports)
-        .leftJoin(userBeerTastings, eq(reviewReports.reviewId, userBeerTastings.id))
-        .leftJoin(beers, eq(userBeerTastings.beerId, beers.id))
-        .leftJoin(users, eq(reviewReports.reporterId, users.id))
-        .where(statusFilter && statusFilter !== 'all' ? eq(reviewReports.status, statusFilter) : sql`1=1`)
-        .orderBy(desc(reviewReports.createdAt))
-        .limit(100);
+      const targetType = req.query.targetType as string | undefined;
+      const params: any[] = [];
+      const conds: string[] = [];
+      if (statusFilter && statusFilter !== "all") {
+        params.push(statusFilter);
+        conds.push(`cr.status = $${params.length}`);
+      }
+      if (targetType && ["review", "checkin_comment"].includes(targetType)) {
+        params.push(targetType);
+        conds.push(`cr.target_type = $${params.length}`);
+      }
+      const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
+
+      const { rows } = await pool.query(`
+        SELECT
+          cr.id, cr.target_type AS "targetType", cr.target_id AS "targetId",
+          cr.target_id AS "reviewId",
+          cr.reporter_id AS "reporterId", cr.reason, cr.description, cr.status,
+          cr.created_at AS "createdAt", cr.resolved_at AS "resolvedAt",
+          -- Review (user_beer_tastings) data
+          ubt.rating         AS "reviewRating",
+          ubt.personal_notes AS "reviewText",
+          ubt.beer_id        AS "reviewBeerId",
+          ubt.user_id        AS "reviewUserId",
+          br.name            AS "beerName",
+          br.style           AS "beerStyle",
+          -- Comment data
+          cc.content         AS "commentText",
+          cc.tasting_id      AS "commentTastingId",
+          cc.user_id         AS "commentUserId",
+          cb.name            AS "commentBeerName",
+          cb.id              AS "commentBeerId",
+          -- Reporter
+          u.nickname           AS "reporterNickname",
+          u.first_name         AS "reporterFirstName",
+          u.profile_image_url  AS "reporterAvatar"
+        FROM content_reports cr
+        LEFT JOIN user_beer_tastings ubt ON cr.target_type = 'review' AND ubt.id = cr.target_id
+        LEFT JOIN beers br ON br.id = ubt.beer_id
+        LEFT JOIN checkin_comments cc ON cr.target_type = 'checkin_comment' AND cc.id = cr.target_id
+        LEFT JOIN user_beer_tastings ubt2 ON ubt2.id = cc.tasting_id
+        LEFT JOIN beers cb ON cb.id = ubt2.beer_id
+        LEFT JOIN users u ON u.id = cr.reporter_id
+        ${where}
+        ORDER BY cr.created_at DESC
+        LIMIT 200
+      `, params);
       res.json(rows);
     } catch (error) {
       console.error("Error fetching reports:", error);
@@ -586,12 +605,44 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
+  // Helper: notifica autore quando il suo contenuto viene rimosso/risolto
+  async function notifyAuthorOfReport(reportRow: any, action: "resolved" | "dismissed" | "removed") {
+    try {
+      let authorId: string | null = null;
+      if (reportRow.target_type === "review") {
+        const r = await pool.query(`SELECT user_id FROM user_beer_tastings WHERE id = $1`, [reportRow.target_id]);
+        authorId = r.rows[0]?.user_id ?? null;
+      } else if (reportRow.target_type === "checkin_comment") {
+        const r = await pool.query(`SELECT user_id FROM checkin_comments WHERE id = $1`, [reportRow.target_id]);
+        authorId = r.rows[0]?.user_id ?? null;
+      }
+      if (!authorId) return;
+      const titles = {
+        resolved: "✅ Segnalazione gestita",
+        dismissed: "📁 Segnalazione archiviata",
+        removed: "🗑️ Contenuto rimosso",
+      };
+      const bodies = {
+        resolved: "La segnalazione sul tuo contenuto è stata gestita dai moderatori",
+        dismissed: "La segnalazione sul tuo contenuto è stata archiviata",
+        removed: "Un tuo contenuto è stato rimosso a seguito di una segnalazione",
+      };
+      sendPushToUser(authorId, {
+        title: titles[action], body: bodies[action], url: "/feed", type: "moderation",
+      });
+    } catch {}
+  }
+
   app.post("/api/admin/reports/:id/resolve", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      await db.update(reviewReports)
-        .set({ status: 'resolved', resolvedAt: new Date() })
-        .where(eq(reviewReports.id, id));
+      const r = await pool.query(`SELECT * FROM content_reports WHERE id = $1`, [id]);
+      if (!r.rows[0]) return res.status(404).json({ message: "Report non trovato" });
+      await pool.query(
+        `UPDATE content_reports SET status = 'resolved', resolved_at = NOW(), resolved_by = $1 WHERE id = $2`,
+        [req.user.id, id],
+      );
+      notifyAuthorOfReport(r.rows[0], "resolved");
       res.json({ message: "Report risolto", reportId: id });
     } catch (error) {
       console.error("Error resolving report:", error);
@@ -602,13 +653,178 @@ export function registerAdminRoutes(app: Express) {
   app.post("/api/admin/reports/:id/dismiss", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const id = parseInt(req.params.id);
-      await db.update(reviewReports)
-        .set({ status: 'dismissed', resolvedAt: new Date() })
-        .where(eq(reviewReports.id, id));
+      const r = await pool.query(`SELECT * FROM content_reports WHERE id = $1`, [id]);
+      if (!r.rows[0]) return res.status(404).json({ message: "Report non trovato" });
+      await pool.query(
+        `UPDATE content_reports SET status = 'dismissed', resolved_at = NOW(), resolved_by = $1 WHERE id = $2`,
+        [req.user.id, id],
+      );
+      notifyAuthorOfReport(r.rows[0], "dismissed");
       res.json({ message: "Report archiviato", reportId: id });
     } catch (error) {
       console.error("Error dismissing report:", error);
       res.status(500).json({ message: "Failed to dismiss report" });
+    }
+  });
+
+  // Rimuove il contenuto segnalato e marca tutte le segnalazioni come risolte
+  app.post("/api/admin/reports/:id/remove-content", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const r = await pool.query(`SELECT * FROM content_reports WHERE id = $1`, [id]);
+      const row = r.rows[0];
+      if (!row) return res.status(404).json({ message: "Report non trovato" });
+      if (row.target_type === "review") {
+        await pool.query(`DELETE FROM user_beer_tastings WHERE id = $1`, [row.target_id]);
+      } else if (row.target_type === "checkin_comment") {
+        await pool.query(`DELETE FROM checkin_comments WHERE id = $1`, [row.target_id]);
+      }
+      await pool.query(
+        `UPDATE content_reports SET status = 'resolved', resolved_at = NOW(), resolved_by = $1
+         WHERE target_type = $2 AND target_id = $3 AND status IN ('pending','escalated')`,
+        [req.user.id, row.target_type, row.target_id],
+      );
+      notifyAuthorOfReport(row, "removed");
+      res.json({ message: "Contenuto rimosso", reportId: id });
+    } catch (error) {
+      console.error("Error removing content:", error);
+      res.status(500).json({ message: "Failed to remove content" });
+    }
+  });
+
+  // ─── Reports per OWNER (birrificio o pub) — read-only + escalate ──────────
+  // Mostra le segnalazioni che riguardano contenuti collegati alle birre del birrificio
+  app.get("/api/brewery/:breweryId/reports", isAuthenticated, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.breweryId, 10);
+      // Verifica ownership: admin o owner del birrificio
+      const isAdminUser = (req.user as any).userType === "admin" ||
+        (Array.isArray((req.user as any).roles) && (req.user as any).roles.includes("admin"));
+      if (!isAdminUser) {
+        const own = await pool.query(`SELECT 1 FROM breweries WHERE id = $1 AND owner_id = $2`, [breweryId, req.user.id]);
+        if (own.rowCount === 0) return res.status(403).json({ message: "Non autorizzato" });
+      }
+      const { rows } = await pool.query(`
+        SELECT cr.id, cr.target_type AS "targetType", cr.target_id AS "targetId",
+               cr.reason, cr.description, cr.status, cr.created_at AS "createdAt",
+               cr.resolved_at AS "resolvedAt",
+               ubt.rating AS "reviewRating", ubt.personal_notes AS "reviewText",
+               cc.content AS "commentText",
+               br.name AS "beerName", br.id AS "beerId"
+        FROM content_reports cr
+        LEFT JOIN user_beer_tastings ubt ON cr.target_type = 'review' AND ubt.id = cr.target_id
+        LEFT JOIN checkin_comments cc ON cr.target_type = 'checkin_comment' AND cc.id = cr.target_id
+        LEFT JOIN user_beer_tastings ubt2 ON ubt2.id = cc.tasting_id
+        LEFT JOIN beers br ON br.id = COALESCE(ubt.beer_id, ubt2.beer_id)
+        WHERE br.brewery_id = $1
+        ORDER BY cr.created_at DESC
+        LIMIT 100
+      `, [breweryId]);
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching brewery reports:", error);
+      res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  // Mostra le segnalazioni su check-in/commenti relativi al pub
+  app.get("/api/pub/:pubId/reports", isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.pubId, 10);
+      const isAdminUser = (req.user as any).userType === "admin" ||
+        (Array.isArray((req.user as any).roles) && (req.user as any).roles.includes("admin"));
+      if (!isAdminUser) {
+        const own = await pool.query(`SELECT 1 FROM pubs WHERE id = $1 AND owner_id = $2`, [pubId, req.user.id]);
+        if (own.rowCount === 0) return res.status(403).json({ message: "Non autorizzato" });
+      }
+      const { rows } = await pool.query(`
+        SELECT cr.id, cr.target_type AS "targetType", cr.target_id AS "targetId",
+               cr.reason, cr.description, cr.status, cr.created_at AS "createdAt",
+               cr.resolved_at AS "resolvedAt",
+               ubt.rating AS "reviewRating", ubt.personal_notes AS "reviewText",
+               cc.content AS "commentText",
+               br.name AS "beerName", br.id AS "beerId"
+        FROM content_reports cr
+        LEFT JOIN user_beer_tastings ubt ON cr.target_type = 'review' AND ubt.id = cr.target_id
+        LEFT JOIN checkin_comments cc ON cr.target_type = 'checkin_comment' AND cc.id = cr.target_id
+        LEFT JOIN user_beer_tastings ubt2 ON ubt2.id = cc.tasting_id
+        LEFT JOIN beers br ON br.id = COALESCE(ubt.beer_id, ubt2.beer_id)
+        WHERE COALESCE(ubt.pub_id, ubt2.pub_id) = $1
+        ORDER BY cr.created_at DESC
+        LIMIT 100
+      `, [pubId]);
+      res.json(rows);
+    } catch (error) {
+      console.error("Error fetching pub reports:", error);
+      res.status(500).json({ message: "Failed to fetch reports" });
+    }
+  });
+
+  // Owner può richiedere escalation di una segnalazione che lo riguarda
+  app.post("/api/reports/:id/escalate", isAuthenticated, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const r = await pool.query(`SELECT * FROM content_reports WHERE id = $1`, [id]);
+      const report = r.rows[0];
+      if (!report) return res.status(404).json({ message: "Report non trovato" });
+      // Verifica che l'utente sia owner del contenuto correlato (birrificio o pub)
+      let allowed = false;
+      const targetId = report.target_id;
+      if (report.target_type === "review") {
+        const c = await pool.query(`
+          SELECT b.brewery_id, ubt.pub_id FROM user_beer_tastings ubt
+          JOIN beers b ON b.id = ubt.beer_id WHERE ubt.id = $1
+        `, [targetId]);
+        const r0 = c.rows[0];
+        if (r0) {
+          const own = await pool.query(`
+            SELECT 1 FROM breweries WHERE id = $1 AND owner_id = $2
+            UNION ALL
+            SELECT 1 FROM pubs WHERE id = $3 AND owner_id = $2 LIMIT 1
+          `, [r0.brewery_id, req.user.id, r0.pub_id]);
+          allowed = (own.rowCount ?? 0) > 0;
+        }
+      } else if (report.target_type === "checkin_comment") {
+        const c = await pool.query(`
+          SELECT b.brewery_id, ubt.pub_id FROM checkin_comments cc
+          JOIN user_beer_tastings ubt ON ubt.id = cc.tasting_id
+          JOIN beers b ON b.id = ubt.beer_id WHERE cc.id = $1
+        `, [targetId]);
+        const r0 = c.rows[0];
+        if (r0) {
+          const own = await pool.query(`
+            SELECT 1 FROM breweries WHERE id = $1 AND owner_id = $2
+            UNION ALL
+            SELECT 1 FROM pubs WHERE id = $3 AND owner_id = $2 LIMIT 1
+          `, [r0.brewery_id, req.user.id, r0.pub_id]);
+          allowed = (own.rowCount ?? 0) > 0;
+        }
+      }
+      if (!allowed) return res.status(403).json({ message: "Non autorizzato" });
+      const upd = await pool.query(
+        `UPDATE content_reports SET status = 'escalated' WHERE id = $1 AND status = 'pending' RETURNING id`,
+        [id],
+      );
+      if (upd.rowCount === 0) {
+        return res.status(409).json({
+          message: report.status === "escalated"
+            ? "Segnalazione già inoltrata agli admin"
+            : "Segnalazione non più escalabile (già gestita)",
+          reportId: id,
+        });
+      }
+      try {
+        sendPushToAdmins({
+          title: "⚠️ Segnalazione escalata",
+          body: "Un titolare ha richiesto la rimozione di un contenuto",
+          url: "/admin/moderation",
+          type: "moderation",
+        });
+      } catch {}
+      res.json({ message: "Segnalazione inoltrata agli admin", reportId: id });
+    } catch (error) {
+      console.error("Error escalating report:", error);
+      res.status(500).json({ message: "Failed to escalate report" });
     }
   });
 

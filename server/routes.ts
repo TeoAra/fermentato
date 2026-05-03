@@ -4672,23 +4672,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  // Backward-compat: scrive nel nuovo content_reports
   app.post("/api/reviews/:tastingId/report", isAuthenticated, async (req: any, res) => {
     try {
       const reporterId = (req.user as any).id;
       const tastingId = parseInt(req.params.tastingId);
       const { reason, description } = req.body;
       if (!reason) return res.status(400).json({ message: "Motivo obbligatorio" });
-      const existing = await db.select({ id: reviewReports.id })
-        .from(reviewReports)
-        .where(eq(reviewReports.reviewId, tastingId))
-        .limit(1);
-      const alreadyReported = existing.some((r) => r.id);
-      await db.insert(reviewReports).values({
-        reviewId: tastingId,
-        reporterId,
-        reason,
-        description: description || null,
-      });
+      const dup = await pool.query(
+        `SELECT id FROM content_reports WHERE target_type = 'review' AND target_id = $1 AND reporter_id = $2 AND status = 'pending'`,
+        [tastingId, reporterId],
+      );
+      if (dup.rowCount && dup.rowCount > 0) {
+        return res.json({ message: "Segnalazione già inviata", duplicate: true });
+      }
+      await pool.query(
+        `INSERT INTO content_reports (target_type, target_id, reporter_id, reason, description)
+         VALUES ('review', $1, $2, $3, $4)`,
+        [tastingId, reporterId, String(reason).slice(0, 50), description ? String(description).slice(0, 500) : null],
+      );
       res.json({ message: "Segnalazione inviata con successo" });
     } catch (error) {
       console.error("Error reporting review:", error);

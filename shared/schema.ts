@@ -1120,6 +1120,30 @@ export const rssItems = pgTable("rss_items", {
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => [unique().on(t.sourceId, t.guid)]);
 
+// Like sui commenti dei check-in
+export const checkinCommentLikes = pgTable("checkin_comment_likes", {
+  id: serial("id").primaryKey(),
+  commentId: integer("comment_id").notNull().references(() => checkinComments.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [unique().on(t.commentId, t.userId)]);
+
+// ─── Segnalazioni unificate (recensioni + commenti check-in) ─────────────────
+export const contentReports = pgTable("content_reports", {
+  id: serial("id").primaryKey(),
+  targetType: varchar("target_type", { length: 30 }).notNull(), // 'review' | 'checkin_comment'
+  targetId: integer("target_id").notNull(),
+  reporterId: varchar("reporter_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  reason: varchar("reason", { length: 50 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 20 }).default("pending").notNull(), // pending | resolved | dismissed | escalated
+  resolvedAt: timestamp("resolved_at"),
+  resolvedBy: varchar("resolved_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export type ContentReport = typeof contentReports.$inferSelect;
+export type CheckinCommentLike = typeof checkinCommentLikes.$inferSelect;
+
 export type CheckinLike = typeof checkinLikes.$inferSelect;
 export type CheckinComment = typeof checkinComments.$inferSelect;
 export type MicroblogPost = typeof microblogPosts.$inferSelect;
