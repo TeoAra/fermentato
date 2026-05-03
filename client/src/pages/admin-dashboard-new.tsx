@@ -35,6 +35,7 @@ import {
   Megaphone
 } from "lucide-react";
 import { Link } from "wouter";
+import { DashboardContainer, DashboardHero, DashboardNavCard, StatsGrid } from "@/components/dashboard-primitives";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 
@@ -147,278 +148,43 @@ export default function AdminDashboardNew() {
   }
 
 
+  const adminName = (user as any)?.nickname || (user as any)?.firstName || 'Admin';
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-6 max-w-7xl space-y-8">
-        <div className="flex items-center gap-4 mb-2">
+    <DashboardContainer size="wide">
+        <div className="flex items-center justify-between gap-2">
           <Link href="/">
-            <Button variant="outline" size="sm" className="border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl">
+            <Button variant="outline" size="sm" className="rounded-xl" aria-label="Torna alla home">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Home
             </Button>
           </Link>
         </div>
 
-        <div className="bg-primary rounded-2xl p-8 text-white relative overflow-hidden shadow-sm">
-          <div className="absolute inset-0 bg-black/5"></div>
-          <div className="relative z-10">
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
-                <Crown className="w-10 h-10" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-2">Centro di Controllo Admin</h1>
-                <p className="text-white/90 text-lg">
-                  Benvenuto {(user as any)?.nickname || (user as any)?.firstName || 'Admin'} — Gestione completa sistema Fermenta.to
-                </p>
-                <div className="flex items-center gap-4 mt-3 flex-wrap">
-                  <Badge className="bg-white/20 border-white/30 text-white">
-                    {adminStats?.totalBeers?.toLocaleString() || globalStats?.totalBeers?.toLocaleString() || '...'} birre
-                  </Badge>
-                  <Badge className="bg-white/20 border-white/30 text-white">
-                    {adminStats?.totalBreweries?.toLocaleString() || globalStats?.totalBreweries?.toLocaleString() || '...'} birrifici
-                  </Badge>
-                  <Badge className="bg-white/20 border-white/30 text-white">
-                    {adminStats?.totalPubs?.toLocaleString() || '...'} pub
-                  </Badge>
-                  <Badge className="bg-white/20 border-white/30 text-white">
-                    {adminStats?.totalUsers?.toLocaleString() || '...'} utenti
-                  </Badge>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <DashboardHero
+          variant="primary"
+          icon={Crown}
+          title="Centro di Controllo Admin"
+          subtitle={<>Benvenuto <b>{adminName}</b> — Gestione completa Fermenta.to</>}
+          badges={[
+            { label: `${(adminStats?.totalBeers ?? globalStats?.totalBeers ?? 0).toLocaleString()} birre` },
+            { label: `${(adminStats?.totalBreweries ?? globalStats?.totalBreweries ?? 0).toLocaleString()} birrifici` },
+            { label: `${(adminStats?.totalPubs ?? 0).toLocaleString()} pub` },
+            { label: `${(adminStats?.totalUsers ?? 0).toLocaleString()} utenti` },
+          ]}
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link href="/admin/analytics">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-blue-600 group">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <BarChart3 className="w-8 h-8 text-blue-600" />
-                      <h3 className="text-lg font-semibold text-foreground">Analytics</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Statistiche dettagliate e insights
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-blue-600 transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/content">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Database className="w-8 h-8 text-primary" />
-                      <h3 className="text-lg font-semibold text-foreground">Gestione Contenuti</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Birre, birrifici e pub
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/moderation">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-orange-500 group">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Shield className="w-8 h-8 text-orange-500" />
-                      <h3 className="text-lg font-semibold text-foreground">Moderazione</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Recensioni e segnalazioni
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-orange-500 transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/suggestions">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-amber-500 group relative">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Lightbulb className="w-8 h-8 text-amber-500" />
-                      <h3 className="text-lg font-semibold text-foreground">Suggerimenti</h3>
-                      {suggestionsPendingCount && suggestionsPendingCount.count > 0 && (
-                        <Badge className="bg-amber-500 text-white animate-pulse">
-                          {suggestionsPendingCount.count}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Modifiche proposte dagli utenti
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-amber-500 transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/addition-requests">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-emerald-600 group relative">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <PlusCircle className="w-8 h-8 text-emerald-600" />
-                      <h3 className="text-lg font-semibold text-foreground">Aggiunte</h3>
-                      {additionsPendingCount && additionsPendingCount.count > 0 && (
-                        <Badge className="bg-emerald-600 text-white animate-pulse">
-                          {additionsPendingCount.count}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Birre e birrifici proposti dagli utenti
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-emerald-600 transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/users">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-purple-500 group">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Users className="w-8 h-8 text-purple-500" />
-                      <h3 className="text-lg font-semibold text-foreground">Utenti</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Gestione community
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-purple-500 transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/publican-requests">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group relative">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <FileText className="w-8 h-8 text-primary" />
-                      <h3 className="text-lg font-semibold text-foreground">Richieste</h3>
-                      {pendingCount && pendingCount.count > 0 && (
-                        <Badge className="bg-red-500 text-white animate-pulse">
-                          {pendingCount.count} pub
-                        </Badge>
-                      )}
-                      {breweryPendingCount && breweryPendingCount.count > 0 && (
-                        <Badge className="bg-primary text-white animate-pulse">
-                          {breweryPendingCount.count} birrifici
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Nuove registrazioni
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/pages">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-teal-500 group">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <FileText className="w-8 h-8 text-teal-500" />
-                      <h3 className="text-lg font-semibold text-foreground">Pagine del sito</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Contatti, Chi Siamo, Prezzi, Supporto
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-teal-500 transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/subscriptions">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-emerald-600 group">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <CreditCard className="w-8 h-8 text-emerald-600" />
-                      <h3 className="text-lg font-semibold text-foreground">Abbonamenti Pub</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Scadenze, prove gratuite e regali
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-emerald-600 transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/festivals">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <CalendarDays className="w-8 h-8 text-primary" />
-                      <h3 className="text-lg font-semibold text-foreground">Festival</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Gestione festival, taplist e iscrizioni
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/admin/broadcast">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Megaphone className="w-8 h-8 text-primary" />
-                      <h3 className="text-lg font-semibold text-foreground">Push & News</h3>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Notifiche broadcast e gestione fonti RSS
-                    </p>
-                  </div>
-                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+          <DashboardNavCard href="/admin/analytics" icon={BarChart3} title="Analytics" description="Statistiche e insights" accent="blue" />
+          <DashboardNavCard href="/admin/content" icon={Database} title="Gestione Contenuti" description="Birre, birrifici e pub" accent="primary" />
+          <DashboardNavCard href="/admin/moderation" icon={Shield} title="Moderazione" description="Recensioni e segnalazioni" accent="amber" />
+          <DashboardNavCard href="/admin/suggestions" icon={Lightbulb} title="Suggerimenti" description="Modifiche proposte dagli utenti" accent="amber" badge={suggestionsPendingCount?.count} />
+          <DashboardNavCard href="/admin/addition-requests" icon={PlusCircle} title="Aggiunte" description="Birre e birrifici proposti" accent="emerald" badge={additionsPendingCount?.count} />
+          <DashboardNavCard href="/admin/users" icon={Users} title="Utenti" description="Gestione community" accent="purple" />
+          <DashboardNavCard href="/admin/publican-requests" icon={FileText} title="Richieste" description="Pub e birrifici da approvare" accent="red" badge={(pendingCount?.count ?? 0) + (breweryPendingCount?.count ?? 0) || undefined} />
+          <DashboardNavCard href="/admin/pages" icon={FileText} title="Pagine del sito" description="Contatti, Chi siamo, Prezzi" accent="stone" />
+          <DashboardNavCard href="/admin/subscriptions" icon={CreditCard} title="Abbonamenti Pub" description="Scadenze, trial e regali" accent="emerald" />
+          <DashboardNavCard href="/admin/festivals" icon={CalendarDays} title="Festival" description="Taplist e iscrizioni" accent="primary" />
+          <DashboardNavCard href="/admin/broadcast" icon={Megaphone} title="Push & News" description="Notifiche broadcast e RSS" accent="primary" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -643,7 +409,6 @@ export default function AdminDashboardNew() {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
+    </DashboardContainer>
   );
 }

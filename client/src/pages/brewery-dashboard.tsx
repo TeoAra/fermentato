@@ -33,6 +33,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { BreweryEventsManager } from "@/components/events-manager";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
+import { StatsGrid } from "@/components/dashboard-primitives";
 
 function CollabBrewerySelector({ selected, onChange, excludeBreweryId }: { selected: { id: number; name: string }[]; onChange: (breweries: { id: number; name: string }[]) => void; excludeBreweryId?: number | null }) {
   const [query, setQuery] = useState("");
@@ -875,38 +876,17 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           </div>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
-          <BreweryStatsCard
-            icon={BeerIcon}
-            value={beers.length}
-            label="Birre"
-            colorClass="text-primary"
-          />
-          <BreweryStatsCard
-            icon={Eye}
-            value={stats?.viewsWeek ?? '—'}
-            label="Visite 7g"
-            colorClass="text-primary"
-          />
-          <BreweryStatsCard
-            icon={TrendingUp}
-            value={stats?.viewsAllTime ?? '—'}
-            label="Visite Totali"
-            colorClass="text-primary"
-          />
-          <BreweryStatsCard
-            icon={Star}
-            value={stats?.totalReviews ?? '—'}
-            label="Recensioni"
-            colorClass="text-primary"
-            onClick={() => setShowReviewsSection(v => !v)}
-          />
-          <BreweryStatsCard
-            icon={Heart}
-            value={stats?.totalFavorites ?? '—'}
-            label="Preferiti"
-            colorClass="text-primary"
+        {/* Stats Grid — uniformata su tutte le dashboard */}
+        <div className="mb-8">
+          <StatsGrid
+            cols={5}
+            items={[
+              { icon: BeerIcon,    label: "Birre",         value: beers.length,                 accent: "primary" },
+              { icon: Eye,         label: "Visite 7g",     value: stats?.viewsWeek ?? '—',      accent: "blue" },
+              { icon: TrendingUp,  label: "Visite Totali", value: stats?.viewsAllTime ?? '—',   accent: "emerald" },
+              { icon: Star,        label: "Recensioni",    value: stats?.totalReviews ?? '—',   accent: "amber",  onClick: () => setShowReviewsSection(v => !v) },
+              { icon: Heart,       label: "Preferiti",     value: stats?.totalFavorites ?? '—', accent: "red" },
+            ]}
           />
         </div>
 

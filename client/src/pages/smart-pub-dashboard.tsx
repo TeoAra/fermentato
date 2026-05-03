@@ -84,6 +84,7 @@ import { Cast, Share2, Link as LinkIcon, Tv, Info, QrCode } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
+import { StatsGrid } from "@/components/dashboard-primitives";
 
 const MenuPdfDownload = lazy(() =>
   import("@/components/menu-pdf-download").then(m => ({ default: m.MenuPdfDownload }))
@@ -681,45 +682,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </Badge>
       </div>
 
-      {/* KPI — 4 statistiche principali */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Alla spina</p>
-            <p className="text-2xl font-bold text-foreground">{typedTapList.length}</p>
-          </div>
-          <div className="p-2.5 bg-orange-50 dark:bg-orange-950/20 rounded-xl">
-            <Beer className="h-5 w-5 text-primary" />
-          </div>
-        </div>
-        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Bottiglie</p>
-            <p className="text-2xl font-bold text-foreground">{typedBottleList.length}</p>
-          </div>
-          <div className="p-2.5 bg-purple-50 dark:bg-purple-950/20 rounded-xl">
-            <Wine className="h-5 w-5 text-purple-600" />
-          </div>
-        </div>
-        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Prodotti menu</p>
-            <p className="text-2xl font-bold text-foreground">{totalMenuItems}</p>
-          </div>
-          <div className="p-2.5 bg-muted rounded-xl">
-            <Utensils className="h-5 w-5 text-foreground/60" />
-          </div>
-        </div>
-        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-xs text-muted-foreground mb-1">Preferiti</p>
-            <p className="text-2xl font-bold text-foreground">{favoritesCount}</p>
-          </div>
-          <div className="p-2.5 bg-red-50 dark:bg-red-950/20 rounded-xl">
-            <Star className="h-5 w-5 text-red-500" />
-          </div>
-        </div>
-      </div>
+      {/* KPI — uniformata su tutte le dashboard */}
+      <StatsGrid
+        cols={4}
+        items={[
+          { icon: Beer,     label: "Alla spina",    value: typedTapList.length,    accent: "primary" },
+          { icon: Wine,     label: "Bottiglie",     value: typedBottleList.length, accent: "purple" },
+          { icon: Utensils, label: "Prodotti menu", value: totalMenuItems,         accent: "stone" },
+          { icon: Star,     label: "Preferiti",     value: favoritesCount,         accent: "red" },
+        ]}
+      />
 
       {/* Strumenti — azioni rapide */}
       <div>

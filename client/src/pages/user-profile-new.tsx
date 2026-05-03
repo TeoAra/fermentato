@@ -52,6 +52,8 @@ import { ShareButton } from "@/components/share-button";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
 import { getBadgeForCount, getNextBadge, getProgressToNextBadge } from "@/lib/badges";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
+import { StatsGrid } from "@/components/dashboard-primitives";
+import { Star as StarIcon, Heart as HeartIcon, Award as AwardIcon } from "lucide-react";
 
 function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
   current: string[];
@@ -567,26 +569,14 @@ export default function UserProfile() {
               const nextBadge = getNextBadge(reviewCount);
               const progress = getProgressToNextBadge(reviewCount);
               return (
-                <div className="grid grid-cols-3 gap-3">
-                  <Card className="border-0 shadow-md bg-gradient-to-br bg-stone-50 dark:bg-stone-900/20">
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{reviewCount}</div>
-                      <div className="text-xs text-muted-foreground dark:text-stone-400 mt-0.5 font-medium">Recensioni</div>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-0 shadow-md bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20">
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl font-bold text-red-500 dark:text-red-400">{Array.isArray(enrichedFavorites) ? enrichedFavorites.length : 0}</div>
-                      <div className="text-xs text-muted-foreground dark:text-stone-400 mt-0.5 font-medium">Preferiti</div>
-                    </CardContent>
-                  </Card>
-                  <Card className="border-0 shadow-md bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20">
-                    <CardContent className="p-4 text-center">
-                      <div className="text-2xl">{badge.emoji}</div>
-                      <div className="text-xs text-muted-foreground dark:text-stone-400 mt-0.5 font-medium truncate">{badge.name}</div>
-                    </CardContent>
-                  </Card>
-                </div>
+                <StatsGrid
+                  cols={3}
+                  items={[
+                    { icon: StarIcon,  label: "Recensioni", value: reviewCount, accent: "amber" },
+                    { icon: HeartIcon, label: "Preferiti",  value: Array.isArray(enrichedFavorites) ? enrichedFavorites.length : 0, accent: "red" },
+                    { icon: AwardIcon, label: badge.name,   value: <span className="text-xl">{badge.emoji}</span>, accent: "purple" },
+                  ]}
+                />
               );
             })()}
 
