@@ -483,10 +483,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_beer_views_beer_date ON beer_views(beer_id, viewed_at)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_beer_tastings_user ON user_beer_tastings(user_id)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_beer_tastings_beer ON user_beer_tastings(beer_id)`);
-    } catch (e: any) {
+    } catch (e) {
       // Su alcune tabelle (es. beer_views) potrebbero non esserci ancora;
       // log soft, non blocca l'avvio.
-      console.warn("[indexes] migration soft-fail:", e?.message?.slice(0, 120));
+      const msg = e instanceof Error ? e.message : String(e);
+      console.warn("[indexes] migration soft-fail:", msg.slice(0, 120));
     }
   })();
 
@@ -706,8 +707,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/beers/styles", async (req, res) => {
     try {
       const styles = await memCached("beers:styles:v1", 10 * 60 * 1000, async () => {
-        const rows = await db.execute(sql`SELECT DISTINCT style FROM beers WHERE style IS NOT NULL AND style != '' ORDER BY style`);
-        return (rows as any).rows.map((r: any) => ({ style: r.style }));
+        const rows = await db
+          .selectDistinct({ style: beers.style })
+          .from(beers)
+          .where(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`)
+          .orderBy(beers.style);
+        return rows as Array<{ style: string }>;
       });
       res.setHeader('Cache-Control', 'public, max-age=300, stale-while-revalidate=600');
       res.json(styles);
