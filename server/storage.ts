@@ -547,8 +547,22 @@ export class DatabaseStorage implements IStorage {
   async exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string): Promise<{ breweries: any[]; total: number }> {
     const conditions: any[] = [];
     if (q && q.length >= 2) conditions.push(ilike(breweries.name, `%${q}%`));
-    if (country) conditions.push(ilike(breweries.country, country));
-    if (excludeCountry) conditions.push(sql`LOWER(${breweries.country}) != LOWER(${excludeCountry})`);
+    if (country) {
+      const cl = country.toLowerCase();
+      if (cl === 'italy' || cl === 'italia') {
+        conditions.push(sql`LOWER(${breweries.country}) IN ('italy', 'italia')`);
+      } else {
+        conditions.push(ilike(breweries.country, country));
+      }
+    }
+    if (excludeCountry) {
+      const ecl = excludeCountry.toLowerCase();
+      if (ecl === 'italy' || ecl === 'italia') {
+        conditions.push(sql`LOWER(${breweries.country}) NOT IN ('italy', 'italia')`);
+      } else {
+        conditions.push(sql`LOWER(${breweries.country}) != LOWER(${excludeCountry})`);
+      }
+    }
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
     const offset = (page - 1) * limit;
 

@@ -30,7 +30,7 @@ const cartoVoyager = (x: number, y: number, z: number, dpr?: number) => {
   const s = "abcd"[Math.abs(x + y) % 4];
   const retina = dpr && dpr >= 2 ? "@2x" : "";
   const dark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
-  const style = dark ? "dark_matter_lite" : "light_all";
+  const style = dark ? "dark_all" : "light_all";
   return `https://${s}.basemaps.cartocdn.com/${style}/${z}/${x}/${y}${retina}.png`;
 };
 
