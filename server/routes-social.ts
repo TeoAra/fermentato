@@ -1,0 +1,496 @@
+import type { Express } from "express";
+import { pool } from "./db";
+import { isAuthenticated, isAdmin } from "./auth";
+import { upload, uploadImage } from "./cloudinary";
+import { sendPushToUser } from "./push-utils";
+import Parser from "rss-parser";
+
+const rssParser = new Parser({
+  timeout: 15000,
+  headers: { "User-Agent": "Fermenta.to RSS Aggregator/1.0" },
+});
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Migrations (idempotenti, eseguite all'avvio)
+// ──────────────────────────────────────────────────────────────────────────────
+async function runSocialMigrations() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS checkin_likes (
+        id SERIAL PRIMARY KEY,
+        tasting_id INTEGER NOT NULL,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(tasting_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_checkin_likes_tasting ON checkin_likes(tasting_id);
+
+      CREATE TABLE IF NOT EXISTS checkin_comments (
+        id SERIAL PRIMARY KEY,
+        tasting_id INTEGER NOT NULL,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_checkin_comments_tasting ON checkin_comments(tasting_id);
+
+      CREATE TABLE IF NOT EXISTS microblog_posts (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        image_url TEXT,
+        beer_id INTEGER,
+        pub_id INTEGER,
+        brewery_id INTEGER,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+      CREATE INDEX IF NOT EXISTS idx_microblog_user ON microblog_posts(user_id);
+      CREATE INDEX IF NOT EXISTS idx_microblog_created ON microblog_posts(created_at DESC);
+
+      CREATE TABLE IF NOT EXISTS microblog_likes (
+        id SERIAL PRIMARY KEY,
+        post_id INTEGER NOT NULL REFERENCES microblog_posts(id) ON DELETE CASCADE,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(post_id, user_id)
+      );
+
+      CREATE TABLE IF NOT EXISTS microblog_comments (
+        id SERIAL PRIMARY KEY,
+        post_id INTEGER NOT NULL REFERENCES microblog_posts(id) ON DELETE CASCADE,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        content TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS admin_broadcasts (
+        id SERIAL PRIMARY KEY,
+        title TEXT NOT NULL,
+        body TEXT NOT NULL,
+        url TEXT,
+        image_url TEXT,
+        audience TEXT NOT NULL DEFAULT 'all',
+        sent_by VARCHAR REFERENCES users(id) ON DELETE SET NULL,
+        sent_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS rss_sources (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        url TEXT NOT NULL UNIQUE,
+        enabled BOOLEAN DEFAULT TRUE,
+        last_fetched_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS rss_items (
+        id SERIAL PRIMARY KEY,
+        source_id INTEGER NOT NULL REFERENCES rss_sources(id) ON DELETE CASCADE,
+        guid TEXT NOT NULL,
+        title TEXT NOT NULL,
+        link TEXT NOT NULL,
+        summary TEXT,
+        image_url TEXT,
+        published_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(source_id, guid)
+      );
+      CREATE INDEX IF NOT EXISTS idx_rss_items_published ON rss_items(published_at DESC);
+    `);
+
+    // Seed default RSS sources (italian craft beer media) — idempotent
+    const defaultSources = [
+      { name: "Cronache di Birra",        url: "https://www.cronachedibirra.it/feed/" },
+      { name: "MoBI",                     url: "https://www.movimentobirra.it/feed/" },
+      { name: "Microbirrifici.org",       url: "https://www.microbirrifici.org/feed/" },
+      { name: "Reservoir Birra",          url: "https://www.reservoirbirra.it/feed/" },
+    ];
+    for (const s of defaultSources) {
+      await pool.query(
+        `INSERT INTO rss_sources (name, url) VALUES ($1, $2) ON CONFLICT (url) DO NOTHING`,
+        [s.name, s.url],
+      );
+    }
+
+    console.log("[social] migrations ok");
+  } catch (err) {
+    console.error("[social] migration error:", err);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// RSS fetcher (cron interno)
+// ──────────────────────────────────────────────────────────────────────────────
+function pickImage(item: any): string | null {
+  if (item.enclosure?.url) return item.enclosure.url;
+  if (item["media:thumbnail"]?.$?.url) return item["media:thumbnail"].$.url;
+  if (item["media:content"]?.$?.url) return item["media:content"].$.url;
+  const html = item["content:encoded"] || item.content || item.summary || "";
+  const m = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  return m ? m[1] : null;
+}
+
+function stripHtml(html: string): string {
+  return html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim().slice(0, 280);
+}
+
+async function fetchRssFeeds() {
+  try {
+    const { rows: sources } = await pool.query(
+      `SELECT id, url FROM rss_sources WHERE enabled = TRUE`,
+    );
+    let inserted = 0;
+    for (const src of sources) {
+      try {
+        const feed = await rssParser.parseURL(src.url);
+        for (const item of feed.items.slice(0, 30)) {
+          const guid = item.guid || item.link || item.title;
+          if (!guid || !item.title || !item.link) continue;
+          const summary = stripHtml(item.contentSnippet || item.summary || item.content || "");
+          const imageUrl = pickImage(item);
+          const publishedAt = item.isoDate ? new Date(item.isoDate) : (item.pubDate ? new Date(item.pubDate) : null);
+          const r = await pool.query(
+            `INSERT INTO rss_items (source_id, guid, title, link, summary, image_url, published_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)
+             ON CONFLICT (source_id, guid) DO NOTHING`,
+            [src.id, guid, item.title, item.link, summary, imageUrl, publishedAt],
+          );
+          inserted += r.rowCount || 0;
+        }
+        await pool.query(`UPDATE rss_sources SET last_fetched_at = NOW() WHERE id = $1`, [src.id]);
+      } catch (e: any) {
+        console.warn(`[rss] feed ${src.url} failed:`, e.message);
+      }
+    }
+    if (inserted > 0) console.log(`[rss] fetched ${inserted} new items from ${sources.length} sources`);
+  } catch (err) {
+    console.error("[rss] cron error:", err);
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Routes
+// ──────────────────────────────────────────────────────────────────────────────
+export async function registerSocialRoutes(app: Express) {
+  await runSocialMigrations();
+
+  // Initial RSS fetch + cron every 30 min
+  setTimeout(() => { fetchRssFeeds(); }, 30_000);
+  setInterval(fetchRssFeeds, 30 * 60 * 1000);
+
+  // ─── CHECK-IN: photo upload (alone, returns URL) ──────────────────────────
+  app.post("/api/checkin/upload-photo", isAuthenticated, upload.single("photo"), async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "Nessun file" });
+      const url = await uploadImage(req.file.buffer, "checkin-photos");
+      res.json({ url });
+    } catch (e: any) {
+      console.error("[checkin] photo upload error:", e);
+      res.status(500).json({ message: "Upload fallito" });
+    }
+  });
+
+  // ─── CHECK-IN: likes & comments ───────────────────────────────────────────
+  app.post("/api/checkin/:id/like", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const tastingId = parseInt(req.params.id, 10);
+    if (Number.isNaN(tastingId)) return res.status(400).json({ message: "ID non valido" });
+    await pool.query(
+      `INSERT INTO checkin_likes (tasting_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [tastingId, userId],
+    );
+    // notify owner if different
+    const { rows } = await pool.query(`SELECT user_id FROM user_beer_tastings WHERE id = $1`, [tastingId]);
+    if (rows[0] && rows[0].user_id !== userId) {
+      sendPushToUser(rows[0].user_id, {
+        title: "💛 Hai un nuovo like",
+        body: "A qualcuno è piaciuto il tuo check-in!",
+        url: "/feed",
+        tag: `checkin-like-${tastingId}`,
+      });
+    }
+    res.json({ liked: true });
+  });
+
+  app.delete("/api/checkin/:id/like", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const tastingId = parseInt(req.params.id, 10);
+    await pool.query(`DELETE FROM checkin_likes WHERE tasting_id = $1 AND user_id = $2`, [tastingId, userId]);
+    res.json({ liked: false });
+  });
+
+  app.get("/api/checkin/:id/likes", async (req, res) => {
+    const tastingId = parseInt(req.params.id, 10);
+    const userId = (req as any).user?.id ?? null;
+    const [count, mine] = await Promise.all([
+      pool.query(`SELECT COUNT(*)::int AS c FROM checkin_likes WHERE tasting_id = $1`, [tastingId]),
+      userId
+        ? pool.query(`SELECT 1 FROM checkin_likes WHERE tasting_id = $1 AND user_id = $2`, [tastingId, userId])
+        : Promise.resolve({ rows: [] } as any),
+    ]);
+    res.json({ count: count.rows[0].c, liked: mine.rows.length > 0 });
+  });
+
+  app.get("/api/checkin/:id/comments", async (req, res) => {
+    const tastingId = parseInt(req.params.id, 10);
+    const { rows } = await pool.query(`
+      SELECT c.id, c.content, c.created_at,
+             u.id AS user_id, u.nickname AS username,
+             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             u.profile_image_url
+      FROM checkin_comments c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.tasting_id = $1
+      ORDER BY c.created_at ASC
+      LIMIT 100
+    `, [tastingId]);
+    res.json(rows);
+  });
+
+  app.post("/api/checkin/:id/comments", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const tastingId = parseInt(req.params.id, 10);
+    const content = String(req.body?.content ?? "").trim().slice(0, 500);
+    if (!content) return res.status(400).json({ message: "Commento vuoto" });
+    const { rows } = await pool.query(
+      `INSERT INTO checkin_comments (tasting_id, user_id, content) VALUES ($1, $2, $3) RETURNING id, content, created_at`,
+      [tastingId, userId, content],
+    );
+    const owner = await pool.query(`SELECT user_id FROM user_beer_tastings WHERE id = $1`, [tastingId]);
+    if (owner.rows[0] && owner.rows[0].user_id !== userId) {
+      sendPushToUser(owner.rows[0].user_id, {
+        title: "💬 Nuovo commento",
+        body: content.slice(0, 80),
+        url: "/feed",
+        tag: `checkin-comment-${tastingId}`,
+      });
+    }
+    res.json(rows[0]);
+  });
+
+  app.delete("/api/checkin/comments/:commentId", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const commentId = parseInt(req.params.commentId, 10);
+    await pool.query(`DELETE FROM checkin_comments WHERE id = $1 AND user_id = $2`, [commentId, userId]);
+    res.json({ deleted: true });
+  });
+
+  // ─── MICROBLOG ────────────────────────────────────────────────────────────
+  app.post("/api/microblog/upload-image", isAuthenticated, upload.single("image"), async (req: any, res) => {
+    try {
+      if (!req.file) return res.status(400).json({ message: "Nessun file" });
+      const url = await uploadImage(req.file.buffer, "microblog");
+      res.json({ url });
+    } catch (e: any) {
+      console.error("[microblog] upload error:", e);
+      res.status(500).json({ message: "Upload fallito" });
+    }
+  });
+
+  app.post("/api/microblog/posts", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const content = String(req.body?.content ?? "").trim().slice(0, 1000);
+    if (!content) return res.status(400).json({ message: "Contenuto obbligatorio" });
+    const imageUrl = req.body?.imageUrl ?? null;
+    const beerId = req.body?.beerId ?? null;
+    const pubId = req.body?.pubId ?? null;
+    const breweryId = req.body?.breweryId ?? null;
+    const { rows } = await pool.query(
+      `INSERT INTO microblog_posts (user_id, content, image_url, beer_id, pub_id, brewery_id)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+      [userId, content, imageUrl, beerId, pubId, breweryId],
+    );
+    res.json(rows[0]);
+  });
+
+  app.delete("/api/microblog/posts/:id", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.id, 10);
+    await pool.query(`DELETE FROM microblog_posts WHERE id = $1 AND user_id = $2`, [postId, userId]);
+    res.json({ deleted: true });
+  });
+
+  // Public feed: posts from people I follow + my own
+  app.get("/api/microblog/feed", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const { rows } = await pool.query(`
+      SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id, p.created_at,
+             u.id AS user_id, u.nickname AS username,
+             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             u.profile_image_url,
+             b.name AS beer_name, b.image_url AS beer_image,
+             pb.name AS pub_name, pb.city AS pub_city,
+             br.name AS brewery_name,
+             (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
+             (SELECT COUNT(*)::int FROM microblog_comments mc WHERE mc.post_id = p.id) AS comments_count,
+             EXISTS(SELECT 1 FROM microblog_likes ml2 WHERE ml2.post_id = p.id AND ml2.user_id = $1) AS liked
+      FROM microblog_posts p
+      JOIN users u ON u.id = p.user_id
+      LEFT JOIN beers b ON b.id = p.beer_id
+      LEFT JOIN pubs pb ON pb.id = p.pub_id
+      LEFT JOIN breweries br ON br.id = p.brewery_id
+      WHERE p.user_id = $1 OR p.user_id IN (SELECT following_id FROM user_follows WHERE follower_id = $1)
+      ORDER BY p.created_at DESC
+      LIMIT 60
+    `, [userId]);
+    res.json(rows);
+  });
+
+  app.get("/api/microblog/discover", async (_req, res) => {
+    const { rows } = await pool.query(`
+      SELECT p.id, p.content, p.image_url, p.created_at,
+             u.id AS user_id, u.nickname AS username,
+             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             u.profile_image_url,
+             (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
+             (SELECT COUNT(*)::int FROM microblog_comments mc WHERE mc.post_id = p.id) AS comments_count
+      FROM microblog_posts p
+      JOIN users u ON u.id = p.user_id
+      ORDER BY p.created_at DESC
+      LIMIT 50
+    `);
+    res.json(rows);
+  });
+
+  app.post("/api/microblog/posts/:id/like", isAuthenticated, async (req: any, res) => {
+    const postId = parseInt(req.params.id, 10);
+    await pool.query(
+      `INSERT INTO microblog_likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [postId, req.user.id],
+    );
+    res.json({ liked: true });
+  });
+
+  app.delete("/api/microblog/posts/:id/like", isAuthenticated, async (req: any, res) => {
+    const postId = parseInt(req.params.id, 10);
+    await pool.query(`DELETE FROM microblog_likes WHERE post_id = $1 AND user_id = $2`, [postId, req.user.id]);
+    res.json({ liked: false });
+  });
+
+  app.get("/api/microblog/posts/:id/comments", async (req, res) => {
+    const postId = parseInt(req.params.id, 10);
+    const { rows } = await pool.query(`
+      SELECT c.id, c.content, c.created_at,
+             u.id AS user_id, u.nickname AS username,
+             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             u.profile_image_url
+      FROM microblog_comments c
+      JOIN users u ON u.id = c.user_id
+      WHERE c.post_id = $1
+      ORDER BY c.created_at ASC
+      LIMIT 100
+    `, [postId]);
+    res.json(rows);
+  });
+
+  app.post("/api/microblog/posts/:id/comments", isAuthenticated, async (req: any, res) => {
+    const postId = parseInt(req.params.id, 10);
+    const content = String(req.body?.content ?? "").trim().slice(0, 500);
+    if (!content) return res.status(400).json({ message: "Commento vuoto" });
+    const { rows } = await pool.query(
+      `INSERT INTO microblog_comments (post_id, user_id, content) VALUES ($1, $2, $3) RETURNING id, content, created_at`,
+      [postId, req.user.id, content],
+    );
+    res.json(rows[0]);
+  });
+
+  // ─── ADMIN BROADCAST ──────────────────────────────────────────────────────
+  app.get("/api/admin/broadcasts", isAuthenticated, isAdmin, async (_req, res) => {
+    const { rows } = await pool.query(
+      `SELECT b.*, u.nickname AS sent_by_username
+       FROM admin_broadcasts b
+       LEFT JOIN users u ON u.id = b.sent_by
+       ORDER BY b.created_at DESC LIMIT 50`,
+    );
+    res.json(rows);
+  });
+
+  app.post("/api/admin/broadcasts", isAuthenticated, isAdmin, async (req: any, res) => {
+    const { title, body, url, imageUrl, audience } = req.body ?? {};
+    if (!title || !body) return res.status(400).json({ message: "Titolo e testo obbligatori" });
+    const aud = ["all", "publicans", "brewers", "admins"].includes(audience) ? audience : "all";
+
+    let userIds: string[] = [];
+    try {
+      let q = `SELECT DISTINCT user_id AS id FROM push_subscriptions`;
+      if (aud === "publicans")
+        q = `SELECT DISTINCT ps.user_id AS id FROM push_subscriptions ps WHERE EXISTS (SELECT 1 FROM pubs p WHERE p.owner_id = ps.user_id)`;
+      else if (aud === "brewers")
+        q = `SELECT DISTINCT ps.user_id AS id FROM push_subscriptions ps WHERE EXISTS (SELECT 1 FROM breweries b WHERE b.owner_id = ps.user_id)`;
+      else if (aud === "admins")
+        q = `SELECT DISTINCT ps.user_id AS id FROM push_subscriptions ps JOIN users u ON u.id = ps.user_id WHERE 'admin' = ANY(COALESCE(u.roles, ARRAY[]::text[])) OR u.active_role = 'admin'`;
+      const { rows } = await pool.query(q);
+      userIds = rows.map((r: any) => r.id);
+    } catch (e) {
+      const { rows } = await pool.query(`SELECT DISTINCT user_id AS id FROM push_subscriptions`);
+      userIds = rows.map((r: any) => r.id);
+    }
+
+    let sent = 0;
+    for (const uid of userIds) {
+      try {
+        await sendPushToUser(uid, {
+          title, body,
+          url: url || "/",
+          image: imageUrl || undefined,
+          tag: `admin-broadcast-${Date.now()}`,
+        });
+        sent++;
+      } catch {}
+    }
+
+    const ins = await pool.query(
+      `INSERT INTO admin_broadcasts (title, body, url, image_url, audience, sent_by, sent_count)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+      [title, body, url || null, imageUrl || null, aud, req.user.id, sent],
+    );
+    res.json({ ...ins.rows[0], targetCount: userIds.length });
+  });
+
+  // ─── RSS NEWS (public) ────────────────────────────────────────────────────
+  app.get("/api/news", async (req, res) => {
+    const limit = Math.min(parseInt((req.query.limit as string) || "30", 10), 100);
+    const { rows } = await pool.query(`
+      SELECT i.id, i.title, i.link, i.summary, i.image_url, i.published_at,
+             s.name AS source_name
+      FROM rss_items i
+      JOIN rss_sources s ON s.id = i.source_id
+      ORDER BY i.published_at DESC NULLS LAST, i.created_at DESC
+      LIMIT $1
+    `, [limit]);
+    res.json(rows);
+  });
+
+  app.get("/api/admin/rss-sources", isAuthenticated, isAdmin, async (_req, res) => {
+    const { rows } = await pool.query(`SELECT * FROM rss_sources ORDER BY name`);
+    res.json(rows);
+  });
+
+  app.post("/api/admin/rss-sources", isAuthenticated, isAdmin, async (req, res) => {
+    const { name, url } = req.body ?? {};
+    if (!name || !url) return res.status(400).json({ message: "Nome e URL obbligatori" });
+    try {
+      const { rows } = await pool.query(
+        `INSERT INTO rss_sources (name, url) VALUES ($1, $2) RETURNING *`,
+        [name, url],
+      );
+      res.json(rows[0]);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.delete("/api/admin/rss-sources/:id", isAuthenticated, isAdmin, async (req, res) => {
+    await pool.query(`DELETE FROM rss_sources WHERE id = $1`, [parseInt(req.params.id, 10)]);
+    res.json({ deleted: true });
+  });
+
+  app.post("/api/admin/rss-sources/refresh", isAuthenticated, isAdmin, async (_req, res) => {
+    await fetchRssFeeds();
+    const { rows } = await pool.query(`SELECT COUNT(*)::int AS c FROM rss_items`);
+    res.json({ ok: true, totalItems: rows[0].c });
+  });
+
+  console.log("[social] routes registered");
+}

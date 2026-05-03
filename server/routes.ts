@@ -256,6 +256,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerFestivalRoutes(app);
   runFestivalMigrations();
 
+  // Register social/microblog/news/broadcast routes
+  const { registerSocialRoutes } = await import("./routes-social");
+  await registerSocialRoutes(app);
+
   // ── Cleanup expired event/festival interests ──────────────────────────────
   async function cleanupExpiredInterests() {
     let pubCount = 0, brewCount = 0, festCount = 0;

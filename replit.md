@@ -145,3 +145,28 @@ Nella `landing.tsx` (home utenti non loggati), `HomepageMap` veniva renderizzato
 ### Fix
 - **`client/src/pages/landing.tsx`**: wrappato `HomepageMap` in un container `h-[420px] overflow-hidden` con `fixedHeight={420}` esplicito.
 - **`client/src/components/homepage-map.tsx`**: ResizeObserver ora misura il `parentElement.clientHeight`, applica clamp a max 800px, ignora delta ≤2px, debounce via `requestAnimationFrame`. Previene loop futuri anche se il componente viene rimontato altrove senza fixedHeight.
+
+## 2026-05-03 — Sociale, microblog, news RSS, push broadcast
+### Schema (`shared/schema.ts`)
+- Aggiunte tabelle: `checkin_likes`, `checkin_comments`, `microblog_posts/likes/comments`, `admin_broadcasts`, `rss_sources`, `rss_items`. Insert schemas + types via drizzle-zod.
+
+### Server
+- **`server/routes-social.ts`** (nuovo): migrazioni idempotenti raw SQL al boot, seed 4 fonti RSS italiane (Cronache di Birra, MoBI, Microbirrifici, Reservoir), cron RSS ogni 30 min via `rss-parser`, endpoint:
+  - `POST /api/checkin/upload-photo` (multer→Cloudinary)
+  - `GET/POST/DELETE /api/checkin/:id/likes|comments`
+  - `GET/POST /api/microblog/posts`, `/feed` (followed users), `/discover`, `/posts/:id/like|comments`, `/upload-image`
+  - `GET/POST /api/admin/broadcasts` (filtro audience: all|publicans|brewers|admins via push_subscriptions+pubs.owner_id/breweries.owner_id/users.roles)
+  - `GET /api/news` (ultimi articoli)
+  - `GET/POST/DELETE /api/admin/rss-sources`, `POST /api/admin/rss-sources/refresh`
+- Registrato in `server/routes.ts` via dynamic import dopo registerFestivalRoutes.
+
+### Frontend
+- **Check-in foto Untappd-style**: `checkin-modal.tsx` con upload diretto Cloudinary + anteprima.
+- **Pagine nuove**: `microblog-new.tsx`, `news.tsx`, `admin-broadcast.tsx`. Route in `App.tsx`: `/feed`, `/microblog/nuovo`, `/news`, `/admin/broadcast`.
+- **`social-feed.tsx`**: timeline unificata check-in + microblog + strip news, like/comment bar inline su check-in, compose CTA in cima. Componenti `CheckinSocialBar` e `MicroblogPostCard`.
+- **Bottom-nav**: tab "Sociale" → `/feed` (rimpiazza Attività).
+- **Desktop sidebar**: aggiunte voci Sociale e News (rimosso Festival).
+- **Admin dashboard**: card "Push & News" → `/admin/broadcast`.
+
+### Pacchetti
+- `rss-parser` installato per cron RSS.

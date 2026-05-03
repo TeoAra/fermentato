@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
-import { Users, Package, MapPin, Search, UserPlus, UserMinus, BarChart3, Award, Flame, TrendingUp, Star } from "lucide-react";
+import { Users, Package, MapPin, Search, UserPlus, UserMinus, BarChart3, Award, Flame, TrendingUp, Star, Heart, MessageCircle, Send, PenSquare, Newspaper, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -92,6 +92,154 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
   );
 }
 
+// ─── Likes & Comments bar for check-ins ─────────────────────────────────────
+function CheckinSocialBar({ tastingId }: { tastingId: number }) {
+  const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+  const [showComments, setShowComments] = useState(false);
+  const [newComment, setNewComment] = useState("");
+
+  const { data: likes } = useQuery<{ count: number; liked: boolean }>({
+    queryKey: ["/api/checkin", tastingId, "likes"],
+    queryFn: () => fetch(`/api/checkin/${tastingId}/likes`, { credentials: "include" }).then(r => r.json()),
+  });
+  const { data: comments = [] } = useQuery<any[]>({
+    queryKey: ["/api/checkin", tastingId, "comments"],
+    queryFn: () => fetch(`/api/checkin/${tastingId}/comments`).then(r => r.json()),
+    enabled: showComments,
+  });
+
+  const likeMut = useMutation({
+    mutationFn: () => apiRequest(`/api/checkin/${tastingId}/like`, { method: likes?.liked ? "DELETE" : "POST" }),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ["/api/checkin", tastingId, "likes"] });
+      const prev = queryClient.getQueryData<any>(["/api/checkin", tastingId, "likes"]);
+      queryClient.setQueryData(["/api/checkin", tastingId, "likes"], {
+        count: (prev?.count ?? 0) + (prev?.liked ? -1 : 1),
+        liked: !prev?.liked,
+      });
+      return { prev };
+    },
+    onError: (_e, _v, ctx) => ctx?.prev && queryClient.setQueryData(["/api/checkin", tastingId, "likes"], ctx.prev),
+  });
+
+  const commentMut = useMutation({
+    mutationFn: () => apiRequest(`/api/checkin/${tastingId}/comments`, { method: "POST" }, { content: newComment }),
+    onSuccess: () => {
+      setNewComment("");
+      queryClient.invalidateQueries({ queryKey: ["/api/checkin", tastingId, "comments"] });
+    },
+  });
+
+  return (
+    <div className="mt-3 pt-3 border-t border-stone-100 dark:border-stone-700/40">
+      <div className="flex items-center gap-4">
+        <button
+          onClick={() => isAuthenticated && likeMut.mutate()}
+          disabled={!isAuthenticated}
+          className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${
+            likes?.liked ? "text-red-500" : "text-stone-500 hover:text-red-500"
+          }`}
+        >
+          <Heart className="w-4 h-4" fill={likes?.liked ? "currentColor" : "none"} />
+          {likes?.count ?? 0}
+        </button>
+        <button
+          onClick={() => setShowComments(v => !v)}
+          className="flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-primary transition-colors"
+        >
+          <MessageCircle className="w-4 h-4" />
+          {comments.length || ""}
+          <span className="ml-0.5">Commenti</span>
+        </button>
+      </div>
+
+      {showComments && (
+        <div className="mt-3 space-y-2">
+          {comments.map((c: any) => (
+            <div key={c.id} className="flex gap-2 items-start">
+              <UserAvatar user={c} size={6} />
+              <div className="flex-1 min-w-0 bg-stone-50 dark:bg-stone-800 rounded-2xl px-3 py-1.5">
+                <Link href={`/user/${c.username}`}>
+                  <p className="text-[11px] font-bold text-stone-700 dark:text-stone-200">{c.display_name ?? c.username}</p>
+                </Link>
+                <p className="text-xs text-stone-700 dark:text-stone-200">{c.content}</p>
+              </div>
+            </div>
+          ))}
+          {isAuthenticated && (
+            <div className="flex gap-2 items-center mt-2">
+              <Input
+                value={newComment}
+                onChange={e => setNewComment(e.target.value)}
+                placeholder="Scrivi un commento…"
+                className="rounded-full text-xs h-8"
+                onKeyDown={e => { if (e.key === "Enter" && newComment.trim()) commentMut.mutate(); }}
+              />
+              <button
+                onClick={() => newComment.trim() && commentMut.mutate()}
+                disabled={!newComment.trim() || commentMut.isPending}
+                className="text-primary disabled:text-stone-300 p-1.5"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Microblog post card ────────────────────────────────────────────────────
+function MicroblogPostCard({ post }: { post: any }) {
+  const queryClient = useQueryClient();
+  const likeMut = useMutation({
+    mutationFn: () => apiRequest(`/api/microblog/posts/${post.id}/like`, { method: post.liked ? "DELETE" : "POST" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
+    },
+  });
+  return (
+    <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-4">
+      <div className="flex items-center gap-2 mb-2">
+        <UserAvatar user={post} size={8} />
+        <div className="flex-1 min-w-0">
+          <Link href={`/user/${post.username}`}>
+            <p className="text-sm font-semibold text-stone-800 dark:text-stone-200">{post.display_name ?? post.username}</p>
+          </Link>
+          <p className="text-[10px] text-stone-400">
+            {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: it })} · 📝 microblog
+          </p>
+        </div>
+      </div>
+      <p className="text-sm text-stone-800 dark:text-stone-100 whitespace-pre-wrap leading-relaxed">{post.content}</p>
+      {post.image_url && (
+        <img src={post.image_url} alt="" className="mt-3 rounded-xl w-full max-h-96 object-cover" />
+      )}
+      {(post.beer_name || post.pub_name || post.brewery_name) && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {post.beer_name && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">🍺 {post.beer_name}</span>}
+          {post.pub_name && <span className="text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full">📍 {post.pub_name}</span>}
+          {post.brewery_name && <span className="text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full">🏭 {post.brewery_name}</span>}
+        </div>
+      )}
+      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-stone-700/40 flex items-center gap-4">
+        <button onClick={() => likeMut.mutate()}
+          className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${post.liked ? "text-red-500" : "text-stone-500 hover:text-red-500"}`}>
+          <Heart className="w-4 h-4" fill={post.liked ? "currentColor" : "none"} />
+          {post.likes_count ?? 0}
+        </button>
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-stone-500">
+          <MessageCircle className="w-4 h-4" />
+          {post.comments_count ?? 0}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ─── Main component ─────────────────────────────────────────────────────────
 export default function SocialFeed() {
   const { isAuthenticated } = useAuth();
@@ -110,6 +258,22 @@ export default function SocialFeed() {
     queryKey: ["/api/user/feed"],
     enabled: isAuthenticated,
   });
+
+  const { data: microblogFeed = [] } = useQuery<any[]>({
+    queryKey: ["/api/microblog/feed"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: news = [] } = useQuery<any[]>({
+    queryKey: ["/api/news", "feed"],
+    queryFn: () => fetch("/api/news?limit=5").then(r => r.json()),
+  });
+
+  // Merged timeline: check-ins + microblog posts, sorted by date
+  const timeline = [
+    ...feed.map((it: any) => ({ kind: "checkin" as const, sortAt: new Date(it.tasted_at).getTime(), data: it })),
+    ...microblogFeed.map((p: any) => ({ kind: "post" as const, sortAt: new Date(p.created_at).getTime(), data: p })),
+  ].sort((a, b) => b.sortAt - a.sortAt);
 
   const { data: following = [], isLoading: followingLoading } = useQuery<any[]>({
     queryKey: ["/api/user/following"],
@@ -190,7 +354,7 @@ export default function SocialFeed() {
               <div className="p-4 space-y-3">
                 {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-28 rounded-2xl" />)}
               </div>
-            ) : feed.length === 0 ? (
+            ) : timeline.length === 0 ? (
               <div className="flex flex-col items-center justify-center pt-16 px-6 text-center gap-4">
                 <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[hsl(220,5%,18%)] flex items-center justify-center shadow-sm">
                   <Users className="w-9 h-9 text-stone-300" />
@@ -201,52 +365,94 @@ export default function SocialFeed() {
                 <p className="text-sm text-stone-400">
                   {following.length === 0
                     ? "Cerca appassionati nella scheda Amici"
-                    : "I tuoi amici non hanno fatto check-in di recente"}
+                    : "I tuoi amici non hanno fatto check-in né scritto post di recente"}
                 </p>
+                <Link href="/microblog/nuovo">
+                  <Button className="rounded-full mt-2"><PenSquare className="w-4 h-4 mr-2" />Scrivi un post</Button>
+                </Link>
               </div>
             ) : (
               <div className="p-4 space-y-3">
-                {feed.map((item: any) => (
-                  <div key={item.id} className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-4">
+                {/* Compose CTA + News strip */}
+                <div className="flex items-center gap-2 bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-3">
+                  <UserAvatar user={user as any} size={9} />
+                  <Link href="/microblog/nuovo" className="flex-1">
+                    <button className="w-full text-left text-sm text-stone-400 bg-stone-50 dark:bg-stone-800 rounded-full px-4 py-2.5 hover:bg-stone-100 dark:hover:bg-stone-700 transition">
+                      Cosa stai bevendo, {(user as any)?.firstName ?? "appassionato"}?
+                    </button>
+                  </Link>
+                  <Link href="/microblog/nuovo">
+                    <button className="bg-primary text-white rounded-full p-2 hover:bg-primary/90"><PenSquare className="w-4 h-4" /></button>
+                  </Link>
+                </div>
+
+                {news.length > 0 && (
+                  <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
+                        <Newspaper className="w-3 h-3" /> News birra
+                      </p>
+                      <Link href="/news"><span className="text-[11px] text-primary font-bold">Vedi tutte</span></Link>
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
+                      {news.slice(0, 5).map((n: any) => (
+                        <a key={n.id} href={n.link} target="_blank" rel="noopener noreferrer"
+                          className="flex-shrink-0 w-44 bg-stone-50 dark:bg-stone-800 rounded-xl overflow-hidden hover:shadow-md transition">
+                          {n.image_url && <img src={n.image_url} alt="" loading="lazy" className="w-full h-20 object-cover" />}
+                          <div className="p-2">
+                            <p className="text-[9px] font-bold uppercase text-primary truncate">{n.source_name}</p>
+                            <p className="text-[11px] font-semibold text-stone-800 dark:text-stone-200 line-clamp-2 leading-snug mt-0.5">{n.title}</p>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {timeline.map((entry) => entry.kind === "post" ? (
+                  <MicroblogPostCard key={`p-${entry.data.id}`} post={entry.data} />
+                ) : (
+                  <div key={`c-${entry.data.id}`} className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-4">
                     <div className="flex items-center gap-2 mb-3">
-                      <UserAvatar user={{ profile_image_url: item.profile_image_url, display_name: item.display_name ?? item.username, nickname: item.username }} size={8} />
+                      <UserAvatar user={{ profile_image_url: entry.data.profile_image_url, display_name: entry.data.display_name ?? entry.data.username, nickname: entry.data.username }} size={8} />
                       <div className="flex-1 min-w-0">
-                        <Link href={`/user/${item.username}`}>
-                          <span className="text-sm font-semibold text-stone-800 dark:text-stone-200">{item.display_name ?? item.username}</span>
+                        <Link href={`/user/${entry.data.username}`}>
+                          <span className="text-sm font-semibold text-stone-800 dark:text-stone-200">{entry.data.display_name ?? entry.data.username}</span>
                         </Link>
                         <p className="text-xs text-stone-400">
-                          {formatDistanceToNow(new Date(item.tasted_at), { addSuffix: true, locale: it })}
+                          {entry.data.tasted_at ? `${formatDistanceToNow(new Date(entry.data.tasted_at), { addSuffix: true, locale: it })} · ` : ""}🍺 check-in
                         </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
-                      {item.beer_image ? (
-                        <img src={item.beer_image} alt={item.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[hsl(220,5%,22%)] flex-shrink-0" />
+                      {entry.data.beer_image ? (
+                        <img src={entry.data.beer_image} alt={entry.data.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[hsl(220,5%,22%)] flex-shrink-0" />
                       ) : (
                         <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[hsl(220,5%,22%)] flex items-center justify-center flex-shrink-0">
                           <Package className="w-5 h-5 text-stone-300" />
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
-                        <Link href={`/beer/${item.beer_id}`}>
-                          <p className="font-semibold text-stone-900 dark:text-stone-50 text-sm">{item.beer_name}</p>
+                        <Link href={`/beer/${entry.data.beer_id}`}>
+                          <p className="font-semibold text-stone-900 dark:text-stone-50 text-sm">{entry.data.beer_name}</p>
                         </Link>
-                        <p className="text-xs text-stone-400 mt-0.5">{item.brewery_name}</p>
-                        {item.pub_id && item.pub_name && (
-                          <Link href={`/pub/${item.pub_id}`}>
+                        <p className="text-xs text-stone-400 mt-0.5">{entry.data.brewery_name}</p>
+                        {entry.data.pub_id && entry.data.pub_name && (
+                          <Link href={`/pub/${entry.data.pub_id}`}>
                             <p className="text-xs text-primary font-medium mt-1 flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
-                              {item.pub_name}{item.pub_city ? `, ${item.pub_city}` : ""}
+                              {entry.data.pub_name}{entry.data.pub_city ? `, ${entry.data.pub_city}` : ""}
                             </p>
                           </Link>
                         )}
-                        {item.rating && <div className="mt-1"><RatingStars rating={item.rating} /></div>}
-                        {item.notes && <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2 italic">"{item.notes}"</p>}
-                        {item.photo_url && (
-                          <img src={item.photo_url} alt="Foto assaggio" className="mt-2 rounded-xl w-full max-h-40 object-cover" />
+                        {entry.data.rating && <div className="mt-1"><RatingStars rating={entry.data.rating} /></div>}
+                        {entry.data.notes && <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 line-clamp-2 italic">"{entry.data.notes}"</p>}
+                        {entry.data.photo_url && (
+                          <img src={entry.data.photo_url} alt="Foto assaggio" className="mt-2 rounded-xl w-full max-h-72 object-cover" />
                         )}
                       </div>
                     </div>
+                    <CheckinSocialBar tastingId={entry.data.id} />
                   </div>
                 ))}
               </div>

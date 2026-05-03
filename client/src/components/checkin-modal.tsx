@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { Beer, MapPin, CheckCircle2, Search, X, ChevronRight } from "lucide-react";
+import { Beer, MapPin, CheckCircle2, Search, X, ChevronRight, Camera, Loader2 } from "lucide-react";
 
 // ─── Rating labels (same scale as BeerTastingForm) ─────────────────────────
 const RATING_LABELS: Record<number, string> = {
@@ -113,6 +113,9 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
   const [note, setNote]         = useState("");
   const [format, setFormat]     = useState(() => tapTypeToFormat(tapType));
   const [done, setDone]         = useState(false);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // Pub search state
   const [selectedPub, setSelectedPub]     = useState<PubResult | null>(initialPub ?? null);
@@ -137,6 +140,8 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
       setPubQuery("");
       setPubResults([]);
       setDone(false);
+      setPhotoUrl(null);
+      setUploading(false);
     }
   }, [open, initialPub, tapType]);
 
@@ -159,6 +164,25 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [pubQuery]);
 
+  const handlePhotoSelect = async (file: File) => {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Foto troppo grande", description: "Max 5MB", variant: "destructive" });
+      return;
+    }
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("photo", file);
+      const res = await apiRequest("/api/checkin/upload-photo", { method: "POST" }, fd);
+      setPhotoUrl(res.url);
+    } catch (e: any) {
+      toast({ title: "Upload fallito", description: e.message ?? "Riprova", variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const checkinMutation = useMutation({
     mutationFn: () =>
       apiRequest("/api/user/beer-tastings", {
@@ -169,12 +193,14 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
           personalNotes: note.trim() || null,
           pubId: selectedPub?.id ?? null,
           format: format || null,
+          photoUrl: photoUrl ?? null,
         }),
       }),
     onSuccess: () => {
       setDone(true);
       queryClient.invalidateQueries({ queryKey: ["/api/user/beer-tastings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/user/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
       setTimeout(() => { setDone(false); onClose(); }, 1600);
     },
     onError: () => {
@@ -319,6 +345,30 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
                     {!pubQuery && <p className="px-4 py-3 text-xs text-stone-400">Digita per cercare un locale…</p>}
                   </div>
                 </div>
+              )}
+            </div>
+
+            {/* Photo */}
+            <div>
+              <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-2">
+                Foto (opzionale)
+              </p>
+              <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelect(f); e.target.value = ""; }} />
+              {photoUrl ? (
+                <div className="relative inline-block">
+                  <img src={photoUrl} alt="anteprima" className="rounded-xl w-28 h-28 object-cover" />
+                  <button type="button" onClick={() => setPhotoUrl(null)}
+                    className="absolute -top-1.5 -right-1.5 bg-stone-900/80 text-white rounded-full p-1">
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => photoInputRef.current?.click()} disabled={uploading}
+                  className="flex items-center gap-2 rounded-xl border border-dashed border-stone-300 dark:border-stone-600 px-4 py-2.5 text-sm text-stone-500 dark:text-stone-400 hover:border-primary hover:text-primary transition-colors">
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Camera className="w-4 h-4" />}
+                  {uploading ? "Caricamento…" : "Aggiungi foto"}
+                </button>
               )}
             </div>
 

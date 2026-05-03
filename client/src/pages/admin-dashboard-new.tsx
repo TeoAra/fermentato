@@ -31,7 +31,8 @@ import {
   SkipForward,
   Lightbulb,
   PlusCircle,
-  CreditCard
+  CreditCard,
+  Megaphone
 } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -392,6 +393,25 @@ export default function AdminDashboardNew() {
                     </div>
                     <p className="text-sm text-muted-foreground">
                       Gestione festival, taplist e iscrizioni
+                    </p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link href="/admin/broadcast">
+            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer border-l-4 border-l-primary group">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-3 mb-2">
+                      <Megaphone className="w-8 h-8 text-primary" />
+                      <h3 className="text-lg font-semibold text-foreground">Push & News</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Notifiche broadcast e gestione fonti RSS
                     </p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-primary transition-colors" />

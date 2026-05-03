@@ -1,4 +1,4 @@
-import { Search, User, Home, Bell, Activity } from "lucide-react";
+import { Search, User, Home, Bell, Users } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, type ReactNode } from "react";
@@ -29,7 +29,7 @@ export function BottomNavigation() {
 
   const homeActive     = isActive("/");
   const notifActive    = isActive("/notifications");
-  const attivitaActive = isActive("/activity");
+  const attivitaActive = isActive("/feed");
   const cercaActive    = searchOpen;
   const accountActive  = isActive("/profile") || isActive("/login") || isActive("/auth");
 
@@ -111,13 +111,18 @@ export function BottomNavigation() {
             </Tab>
           </button>
 
-          {/* Attività */}
-          <Link href="/activity" className="flex-1 flex">
+          {/* Sociale */}
+          <Link href="/feed" className="flex-1 flex">
             <Tab active={attivitaActive}>
               <span className="nav-icon">
-                <Activity className="h-[22px] w-[22px]" strokeWidth={attivitaActive ? 2.5 : 1.8} />
+                <Users
+                  className="h-[22px] w-[22px]"
+                  strokeWidth={attivitaActive ? 2.5 : 1.8}
+                  fill={attivitaActive ? "currentColor" : "none"}
+                  style={attivitaActive ? { fillOpacity: 0.12 } : {}}
+                />
               </span>
-              <span className="nav-label">Attività</span>
+              <span className="nav-label">Sociale</span>
             </Tab>
           </Link>
 

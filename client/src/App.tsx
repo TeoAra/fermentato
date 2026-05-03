@@ -80,6 +80,10 @@ const MyWishlist         = lazy(() => import("@/pages/my-wishlist"));
 const MyStats            = lazy(() => import("@/pages/my-stats"));
 const Scan               = lazy(() => import("@/pages/scan"));
 const ScanHistory        = lazy(() => import("@/pages/scan-history"));
+const SocialFeed         = lazy(() => import("@/pages/social-feed"));
+const MicroblogNew       = lazy(() => import("@/pages/microblog-new"));
+const NewsPage           = lazy(() => import("@/pages/news"));
+const AdminBroadcast     = lazy(() => import("@/pages/admin-broadcast"));
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PageSkeleton = () => (
@@ -304,6 +308,10 @@ function Router() {
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/scan/history" component={ScanHistory} />
           <Route path="/scan" component={Scan} />
+          <Route path="/feed" component={SocialFeed} />
+          <Route path="/microblog/nuovo" component={MicroblogNew} />
+          <Route path="/news" component={NewsPage} />
+          <Route path="/admin/broadcast" component={AdminBroadcast} />
           <Route component={NotFound} />
         </Switch>
         </div>

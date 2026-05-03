@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Building2, Store, CalendarDays, Search, Bell, User, Beer, LogOut, Activity, Shield } from "lucide-react";
+import { Home, Building2, Store, CalendarDays, Search, Bell, User, Beer, LogOut, Activity, Shield, Users as UsersIcon, Newspaper } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -62,10 +62,11 @@ export function DesktopSidebar() {
 
   const navItems = [
     { icon: Home, label: "Home", href: "/" },
+    { icon: UsersIcon, label: "Sociale", href: "/feed" },
+    { icon: Newspaper, label: "News", href: "/news" },
     { icon: Building2, label: "Birrifici", href: "/explore/breweries" },
     { icon: Store, label: "Pub", href: "/explore/pubs" },
     { icon: CalendarDays, label: "Eventi", href: "/eventi" },
-    { icon: CalendarDays, label: "Festival", href: "/festival" },
   ];
 
   const unread = unreadData?.count ?? 0;

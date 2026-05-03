@@ -1045,6 +1045,93 @@ export const userFollows = pgTable("user_follows", {
 }, (t) => [unique().on(t.followerId, t.followingId)]);
 export type UserFollow = typeof userFollows.$inferSelect;
 
+// ─── SOCIAL: Likes & Comments su check-in (user_beer_tastings) ────────────────
+export const checkinLikes = pgTable("checkin_likes", {
+  id: serial("id").primaryKey(),
+  tastingId: integer("tasting_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [unique().on(t.tastingId, t.userId)]);
+
+export const checkinComments = pgTable("checkin_comments", {
+  id: serial("id").primaryKey(),
+  tastingId: integer("tasting_id").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ─── MICROBLOG: post liberi (testo + immagine opzionale) ─────────────────────
+export const microblogPosts = pgTable("microblog_posts", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  imageUrl: text("image_url"),
+  beerId: integer("beer_id"),
+  pubId: integer("pub_id"),
+  breweryId: integer("brewery_id"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export const microblogLikes = pgTable("microblog_likes", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => microblogPosts.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [unique().on(t.postId, t.userId)]);
+export const microblogComments = pgTable("microblog_comments", {
+  id: serial("id").primaryKey(),
+  postId: integer("post_id").notNull().references(() => microblogPosts.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ─── ADMIN: Broadcast push notifications + News ──────────────────────────────
+export const adminBroadcasts = pgTable("admin_broadcasts", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  url: text("url"),
+  imageUrl: text("image_url"),
+  audience: text("audience").notNull().default("all"), // all | publicans | brewers | admins
+  sentBy: varchar("sent_by").references(() => users.id, { onDelete: "set null" }),
+  sentCount: integer("sent_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// ─── RSS: News birra (aggregati da fonti esterne) ────────────────────────────
+export const rssSources = pgTable("rss_sources", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  url: text("url").notNull().unique(),
+  enabled: boolean("enabled").default(true),
+  lastFetchedAt: timestamp("last_fetched_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+export const rssItems = pgTable("rss_items", {
+  id: serial("id").primaryKey(),
+  sourceId: integer("source_id").notNull().references(() => rssSources.id, { onDelete: "cascade" }),
+  guid: text("guid").notNull(),
+  title: text("title").notNull(),
+  link: text("link").notNull(),
+  summary: text("summary"),
+  imageUrl: text("image_url"),
+  publishedAt: timestamp("published_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [unique().on(t.sourceId, t.guid)]);
+
+export type CheckinLike = typeof checkinLikes.$inferSelect;
+export type CheckinComment = typeof checkinComments.$inferSelect;
+export type MicroblogPost = typeof microblogPosts.$inferSelect;
+export type AdminBroadcast = typeof adminBroadcasts.$inferSelect;
+export type RssSource = typeof rssSources.$inferSelect;
+export type RssItem = typeof rssItems.$inferSelect;
+
+export const insertMicroblogPostSchema = createInsertSchema(microblogPosts).omit({ id: true, createdAt: true, userId: true });
+export const insertCheckinCommentSchema = createInsertSchema(checkinComments).omit({ id: true, createdAt: true, userId: true });
+export const insertAdminBroadcastSchema = createInsertSchema(adminBroadcasts).omit({ id: true, createdAt: true, sentBy: true, sentCount: true });
+export const insertRssSourceSchema = createInsertSchema(rssSources).omit({ id: true, createdAt: true, lastFetchedAt: true });
+
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),
   businessName: z.string().min(1, "Ragione sociale è obbligatoria"),
