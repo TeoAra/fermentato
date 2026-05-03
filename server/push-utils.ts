@@ -16,11 +16,12 @@ const THROTTLE_MS = 10000;
 
 // Batcher di aggregazione: raccoglie like/commenti per (userId,category,targetId)
 // in una finestra di 10 minuti.
-// Regola ibrida (anti-spam):
-//   - tutti gli eventi vengono BUFFERIZZATI nella finestra (no push immediati);
-//   - al flush, se count > BATCH_THRESHOLD (3) → 1 sola push aggregata
-//     "N persone hanno..."; altrimenti vengono emessi i singoli payload
-//     accumulati. In pratica: massimo 3 push individuali OPPURE 1 aggregato.
+// Regola: "send immediately, then aggregate if threshold exceeded":
+//   - i primi BATCH_THRESHOLD (3) eventi sono inviati subito come push
+//     individuali (con tag univoco anti-throttle), così non c'è latenza
+//     percepita per gli scenari normali (1-3 like/commenti);
+//   - dal 4° in poi vengono soppressi e a fine finestra emessa 1 sola
+//     push aggregata "N persone hanno..." per riassumerli.
 const BATCH_WINDOW_MS = 10 * 60 * 1000;
 const BATCH_THRESHOLD = 3;
 type BatchEntry = {
@@ -181,16 +182,21 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     const { allowed, deferMs } = await shouldSendNotification(userId, payload.category);
     if (!allowed) return;
 
-    // Aggregazione ibrida: bufferizza tutto per la finestra, al flush
-    // decide individuali (≤3) o aggregato unico (>3). Vedi commento al top.
+    // Aggregazione: send-immediate + threshold (vedi commento al top).
     if (payload.batchKey && payload.category) {
       const bkey = `${userId}:${payload.category}:${payload.batchKey}`;
       const existing = batchQueue.get(bkey);
       if (existing) {
         existing.count += 1;
-        existing.payloads.push(payload);
         // NON resettiamo il timer: finestra ancorata al primo evento.
         batchQueue.set(bkey, existing);
+        if (existing.count <= BATCH_THRESHOLD) {
+          const indiv: PushPayload = {
+            ...payload,
+            tag: `${payload.tag || 'fermenta'}-${existing.count}-${Date.now()}`,
+          };
+          await scheduleDelivery(userId, indiv, deferMs);
+        }
         return;
       }
       const entry: BatchEntry = {
@@ -201,6 +207,11 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
         timer: setTimeout(() => flushBatch(userId, bkey), BATCH_WINDOW_MS),
       };
       batchQueue.set(bkey, entry);
+      const first: PushPayload = {
+        ...payload,
+        tag: `${payload.tag || 'fermenta'}-1-${Date.now()}`,
+      };
+      await scheduleDelivery(userId, first, deferMs);
       return;
     }
 
@@ -218,20 +229,10 @@ async function flushBatch(userId: string, bkey: string) {
   // potrebbero essere cambiate (entrate o uscite) durante la finestra di 10min.
   const { allowed, deferMs } = await shouldSendNotification(userId, entry.payload.category);
   if (!allowed) return;
-  // Sotto soglia: emetti i singoli payload bufferizzati (max 3 push).
-  if (entry.count <= BATCH_THRESHOLD) {
-    let i = 0;
-    for (const p of entry.payloads) {
-      i += 1;
-      const indiv: PushPayload = {
-        ...p,
-        tag: `${p.tag || 'fermenta'}-${i}-${Date.now()}`,
-      };
-      await scheduleDelivery(userId, indiv, deferMs);
-    }
-    return;
-  }
-  // Sopra soglia (>3): 1 sola push aggregata.
+  // Sotto soglia: i primi 3 eventi sono già stati inviati individualmente
+  // al momento dell'arrivo, quindi nessun push extra al flush.
+  if (entry.count <= BATCH_THRESHOLD) return;
+  // Sopra soglia (>3): 1 sola push aggregata che riassume gli eventi soppressi.
   const tpl = entry.payload.batchTemplate;
   const summary = tpl
     ? tpl(entry.count, entry.firstActorName)
