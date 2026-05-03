@@ -1653,16 +1653,42 @@ export class DatabaseStorage implements IStorage {
     // Mapping notification.type → categoria pref (null = sempre consentita,
     // es. richieste admin che non hanno opt-out per categoria).
     const typeToCategory: Record<string, string | null> = {
+      // Cambi taplist / disponibilità birra
       tap_change: 'tapChanges',
       new_beer: 'tapChanges',
       beer_removed: 'tapChanges',
+      // Eventi e festival
       event: 'events',
       festival: 'events',
       festival_interest: 'events',
       festival_update: 'events',
+      // Nuovi locali
       new_pub: 'newPubs',
+      // Social: like / commenti / nuovi follower (qualora vengano scritte
+      // notifiche in-app per queste interazioni in futuro)
+      checkin: 'newFollowers',
+      checkin_like: 'checkinLikes',
+      checkin_comment: 'checkinComments',
+      comment_like: 'checkinLikes',
+      follow: 'newFollowers',
+      // Risposte birrificio + suggerimenti / addition requests destinati
+      // all'utente o all'owner (interazioni con birrifici)
+      brewery_verified: 'breweryReplies',
+      brewery_request_approved: 'breweryReplies',
+      brewery_request_rejected: 'breweryReplies',
+      suggestion: 'breweryReplies',
+      suggestion_approved: 'breweryReplies',
+      suggestion_rejected: 'breweryReplies',
+      addition_request: 'breweryReplies',
+      addition_approved: 'breweryReplies',
+      addition_rejected: 'breweryReplies',
+      brewery_reply: 'breweryReplies',
+      // Esito moderazione segnalazioni
       moderation: 'reportUpdates',
+      // Comunicazioni ufficiali
       admin_broadcast: 'adminBroadcasts',
+      system: 'adminBroadcasts',
+      // Notifiche operative admin (sempre consentite, no opt-out per categoria)
       new_pub_request: null,
       new_brewery_request: null,
     };
