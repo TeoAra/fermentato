@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useMemo, useEffect, useRef } from "react";
+import React, { lazy, Suspense, useState, useMemo, useEffect } from "react";
 import { Helmet } from "react-helmet-async";
 import { useParams, Link, useLocation } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
@@ -27,8 +27,6 @@ import {
   ArrowLeft,
   MoreHorizontal,
   Plus,
-  Star,
-  X as XIcon,
   Beer as BeerIcon,
 } from "lucide-react";
 import Footer from "@/components/footer";
@@ -251,14 +249,6 @@ export default function PubDetail() {
   const [showOpeningHours, setShowOpeningHours] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [checkinBottle, setCheckinBottle] = useState<any>(null);
-  const [fabOpen, setFabOpen] = useState(false);
-  const taplistRef = useRef<HTMLDivElement>(null);
-  const scrollToTaplist = () => {
-    setActiveTab('taplist');
-    setTimeout(() => {
-      taplistRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 50);
-  };
   const styleFilter = 'Tutti';
   const [descExpanded, setDescExpanded] = useState(false);
 
@@ -982,7 +972,7 @@ export default function PubDetail() {
                 </div>
 
                 {/* Taplist Tab */}
-                <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4" ref={taplistRef}>
+                <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4">
                   {tapLoading ? (
                     <div className="space-y-3">
                       {[...Array(3)].map((_, i) => (
@@ -1390,71 +1380,6 @@ export default function PubDetail() {
       </main>
 
       <Footer />
-
-      {/* ── FAB: floating action button (mobile only) — always present ── */}
-      {(
-        <div className="fixed bottom-24 right-4 z-40 lg:hidden flex flex-col items-end gap-3">
-          {/* Expanded items */}
-          {fabOpen && (
-            <>
-              <div className="flex items-center gap-3 fab-item-enter" style={{ animationDelay: '40ms' }}>
-                <span className="bg-black/75 dark:bg-white/15 backdrop-blur-md text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md whitespace-nowrap">
-                  Segna bevuta
-                </span>
-                <button
-                  onClick={() => {
-                    setFabOpen(false);
-                    if (!isAuthenticated) {
-                      toast({ title: "Accedi per registrare una bevuta", description: "Effettua il login per continuare." });
-                      setLocation(`/auth?redirect=${encodeURIComponent(`/pub/${id}`)}`);
-                      return;
-                    }
-                    setCheckinBottle(null);
-                    scrollToTaplist();
-                    toast({ title: "Scegli una birra", description: "Tocca una birra dalla taplist per registrare la bevuta." });
-                  }}
-                  className="w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1C] border border-stone-200 dark:border-white/10 shadow-xl flex items-center justify-center tap-scale"
-                >
-                  <BeerIcon className="h-5 w-5 text-primary" />
-                </button>
-              </div>
-              <div className="flex items-center gap-3 fab-item-enter" style={{ animationDelay: '0ms' }}>
-                <span className="bg-black/75 dark:bg-white/15 backdrop-blur-md text-white text-xs font-semibold px-3 py-1.5 rounded-full shadow-md whitespace-nowrap">
-                  Recensisci
-                </span>
-                <button
-                  onClick={() => {
-                    setFabOpen(false);
-                    if (!isAuthenticated) {
-                      toast({ title: "Accedi per recensire", description: "Effettua il login per lasciare una recensione." });
-                      setLocation(`/auth?redirect=${encodeURIComponent(`/pub/${id}`)}`);
-                      return;
-                    }
-                    scrollToTaplist();
-                    toast({ title: "Scegli una birra", description: "Tocca una birra per recensirla con la tua valutazione." });
-                  }}
-                  className="w-12 h-12 rounded-full bg-white dark:bg-[#1A1A1C] border border-stone-200 dark:border-white/10 shadow-xl flex items-center justify-center tap-scale"
-                >
-                  <Star className="h-5 w-5 text-amber-500" />
-                </button>
-              </div>
-            </>
-          )}
-          {/* Main + button */}
-          <button
-            onClick={() => setFabOpen(v => !v)}
-            className={`w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-200 tap-scale btn-orange-glow ${
-              fabOpen ? 'bg-stone-800 dark:bg-stone-700 rotate-45' : 'bg-primary'
-            }`}
-            aria-label={fabOpen ? 'Chiudi' : 'Azioni rapide'}
-          >
-            {fabOpen
-              ? <XIcon className="h-6 w-6 text-white" />
-              : <Plus className="h-6 w-6 text-white" />
-            }
-          </button>
-        </div>
-      )}
 
       {/* Cantina Check-in Modal */}
       {checkinBottle && (
