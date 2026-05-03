@@ -237,15 +237,19 @@ async function flushBatch(userId: string, bkey: string) {
 export async function sendPushToUserImmediate(userId: string, payload: PushPayload) {
   if (!vapidConfigured) return;
   try {
-    // Bypass throttle/batching; rispetta solo allowed (non quiet hours)
-    if (payload.category) {
-      const prefs = await storage.getNotificationPreferences(userId);
-      if (prefs && prefs.pushEnabled === false) return;
-      if (prefs && (prefs as any)[`${payload.category}Push`] === false) return;
-    }
+    // Rispetta SEMPRE le quiet hours + categoria + master pushEnabled.
+    // Bypassa solo throttle/batching (per push critiche tipo segnalazioni
+    // moderate, dove vogliamo consegna senza dedup ma comunque non in
+    // ore di silenzio "skip" — in modalità "queue" verrà comunque rinviata).
+    const { allowed, deferMs } = await shouldSendNotification(userId, payload.category);
+    if (!allowed) return;
     const tag = payload.tag || `fermenta-${payload.type || 'general'}`;
     const clean: any = { ...payload, tag };
     delete clean.category; delete clean.batchKey; delete clean.batchActorName; delete clean.batchTemplate;
+    if (deferMs > 0) {
+      setTimeout(() => { deliverPush(userId, clean).catch(e => console.error('deferred immediate push:', e)); }, deferMs);
+      return;
+    }
     await deliverPush(userId, clean);
   } catch (e) {
     console.error('Error sending immediate push to user:', e);
