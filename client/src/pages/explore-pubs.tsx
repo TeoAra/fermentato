@@ -456,7 +456,7 @@ function PubListCard({ pub, showDist }: { pub: any; showDist: boolean }) {
           <p className="font-bold text-[14px] text-foreground truncate">{pub.name}</p>
           <p className="text-[12px] text-stone-400 dark:text-stone-500 truncate mt-0.5">
             {[pub.city, pub.region].filter(Boolean).join(", ")}
-            {showDist && pub._dist != null ? ` · ${formatDist(pub._dist)}` : ""}
+            {showDist && pub._dist != null ? ` · ${formatDist(pub._dist)}${pub._distReal != null && pub._distAir != null ? ` su strada · ${formatDist(pub._distAir)} in linea d'aria` : ""}` : ""}
           </p>
           <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {parseFloat(pub.rating) > 0 && (

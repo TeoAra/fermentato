@@ -166,6 +166,12 @@ export async function getRouteDistance(
     return fb;
   }
 
+  // Se richiediamo walking/cycling ma non abbiamo un OSRM custom con quei
+  // profili installati, NON dobbiamo restituire un percorso "driving"
+  // mascherato da quello richiesto: fallback Haversine con velocità coerente.
+  if ((mode === 'walking' || mode === 'cycling') && !process.env.OSRM_BASE_URL) {
+    return haversineFallback(from, to, mode, 'mode-not-supported');
+  }
   const profile = osrmProfile(mode);
   const url = `${OSRM_BASE}/route/v1/${profile}/${from.lng},${from.lat};${to.lng},${to.lat}` +
     `?overview=simplified&geometries=geojson&alternatives=false&steps=false`;

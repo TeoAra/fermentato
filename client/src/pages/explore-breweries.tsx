@@ -99,6 +99,10 @@ export default function ExploreBreweries() {
   });
   const [distanceKm, setDistanceKm] = useState(10);
   const [showDistPicker, setShowDistPicker] = useState(false);
+  // Toggle: distanza in linea d'aria (default) vs percorso reale via OSRM.
+  const [useRealRoute, setUseRealRoute] = useState(false);
+  const [realDistances, setRealDistances] = useState<Record<number, number>>({});
+  const requestedIdsRef = useRef<Set<number>>(new Set());
 
   useEffect(() => {
     const t = setTimeout(() => { setDebouncedQ(searchInput); setPage(1); }, 350);
@@ -139,10 +143,50 @@ export default function ExploreBreweries() {
 
   const breweries = useMemo(() => {
     if (quickFilter === "nearby" && nearbyBreweries) {
-      return nearbyBreweries.filter((b: any) => !distanceKm || (b._distance ?? 999) <= distanceKm);
+      return nearbyBreweries
+        .map((b: any) => {
+          const air = b._distance;
+          const real = useRealRoute ? realDistances[b.id] : undefined;
+          return { ...b, _distAir: air, _distReal: real, _distance: real != null ? real : air };
+        })
+        .filter((b: any) => !distanceKm || (b._distance ?? 999) <= distanceKm);
     }
     return data?.breweries || [];
-  }, [data, quickFilter, nearbyBreweries, distanceKm]);
+  }, [data, quickFilter, nearbyBreweries, distanceKm, useRealRoute, realDistances]);
+
+  useEffect(() => {
+    requestedIdsRef.current = new Set();
+    if (!useRealRoute) setRealDistances({});
+  }, [useRealRoute, userLocation?.lat, userLocation?.lng]);
+
+  useEffect(() => {
+    if (!useRealRoute || !userLocation || quickFilter !== "nearby" || !nearbyBreweries) return;
+    const candidates = nearbyBreweries
+      .filter((b: any) => b.latitude && b.longitude && !requestedIdsRef.current.has(b.id))
+      .slice(0, 15)
+      .map((b: any) => ({ id: b.id as number, lat: parseFloat(b.latitude), lng: parseFloat(b.longitude) }));
+    if (candidates.length === 0) return;
+    candidates.forEach((c) => requestedIdsRef.current.add(c.id));
+    const ctrl = new AbortController();
+    (async () => {
+      for (const c of candidates) {
+        if (ctrl.signal.aborted) return;
+        try {
+          const url = `/api/route?fromLat=${userLocation.lat}&fromLng=${userLocation.lng}&toLat=${c.lat}&toLng=${c.lng}&mode=driving`;
+          const r = await fetch(url, { signal: ctrl.signal });
+          if (!r.ok) continue;
+          const j = await r.json();
+          if (typeof j.distanceM === "number") {
+            setRealDistances((prev) => ({ ...prev, [c.id]: j.distanceM / 1000 }));
+          }
+        } catch (e) {
+          if ((e as any)?.name === "AbortError") return;
+        }
+      }
+    })();
+    return () => ctrl.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useRealRoute, userLocation?.lat, userLocation?.lng, quickFilter, nearbyBreweries?.length]);
 
   const total = quickFilter === "nearby" ? breweries.length : (data?.total || 0);
   const totalPages = quickFilter === "nearby" ? 1 : Math.ceil(total / PAGE_SIZE);
@@ -295,6 +339,23 @@ export default function ExploreBreweries() {
                   </>
                 )}
               </div>
+            )}
+
+            {/* Toggle linea d'aria / percorso reale */}
+            {quickFilter === "nearby" && userLocation && (
+              <button
+                onClick={() => setUseRealRoute(v => !v)}
+                title={useRealRoute ? "Distanza calcolata sul percorso stradale reale" : "Distanza in linea d'aria"}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
+                  useRealRoute
+                    ? "bg-primary text-white border-primary shadow-sm"
+                    : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700"
+                }`}
+                data-testid="toggle-real-route-breweries"
+              >
+                <Navigation className="w-3 h-3" />
+                {useRealRoute ? "Percorso reale" : "Linea d'aria"}
+              </button>
             )}
 
             {QUICK_FILTERS.filter(f => f.key !== "all" || quickFilter === "all").map(f => (
@@ -529,7 +590,7 @@ function BreweryListCard({ brewery, showDist }: { brewery: any; showDist: boolea
         <p className="text-[12px] text-stone-400 dark:text-stone-500 truncate mt-0.5">
           {flag} {italianCountry}
           {brewery.location && brewery.location !== brewery.country ? ` · ${brewery.location}` : ""}
-          {showDist && dist != null ? ` · ${formatDist(dist)}` : ""}
+          {showDist && dist != null ? ` · ${formatDist(dist)}${brewery._distReal != null && brewery._distAir != null ? ` su strada · ${formatDist(brewery._distAir)} in linea d'aria` : ""}` : ""}
         </p>
         <div className="flex items-center gap-2 mt-1">
           {Number(brewery.beerCount) > 0 && (
