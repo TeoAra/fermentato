@@ -1117,6 +1117,7 @@ export function registerAdminRoutes(app: Express) {
           title: 'Richiesta birrificio approvata!',
           body: `Il tuo birrificio "${request.breweryName}" è stato approvato. Puoi iniziare a gestirlo!`,
           url: '/brewery-dashboard',
+          category: 'breweryReplies',
         });
       } catch (notifErr) {
         console.error('Error sending approval notification:', notifErr);
@@ -1144,6 +1145,7 @@ export function registerAdminRoutes(app: Express) {
               url: `/brewery/${assignedBreweryId}`,
               type: 'brewery_verified',
               tag: `brewery_verified_${assignedBreweryId}`,
+              category: 'breweryReplies',
             }).catch(() => {})
           );
         await Promise.allSettled(notifyPromises);
@@ -1203,6 +1205,7 @@ export function registerAdminRoutes(app: Express) {
         await sendPushToUser(request.userId, {
           title: 'Richiesta birrificio rifiutata',
           body: `La tua richiesta per "${request.breweryName}" è stata rifiutata.`,
+          category: 'breweryReplies',
         });
       } catch (notifErr) {
         console.error('Error sending rejection notification:', notifErr);
@@ -1382,6 +1385,7 @@ export function registerAdminRoutes(app: Express) {
             body: `${submitterName} ha suggerito modifiche al tuo birrificio`,
             url: `/brewery/${itemId}`,
             type: 'suggestion',
+            category: 'breweryReplies',
           });
         }
       }
@@ -1480,6 +1484,7 @@ export function registerAdminRoutes(app: Express) {
         body: `Il tuo suggerimento per ${suggestion.type === 'beer' ? 'la birra' : 'il birrificio'} è stato approvato!`,
         url: `/${suggestion.type === 'beer' ? 'beer' : 'brewery'}/${suggestion.itemId}`,
         type: 'suggestion_approved',
+        category: 'breweryReplies',
       });
 
       res.json({ message: "Suggerimento approvato e modifiche applicate" });
@@ -1513,6 +1518,7 @@ export function registerAdminRoutes(app: Express) {
         body: `Il tuo suggerimento per ${suggestion.type === 'beer' ? 'la birra' : 'il birrificio'} non è stato accettato${adminNotes ? ': ' + adminNotes : '.'}`,
         url: `/${suggestion.type === 'beer' ? 'beer' : 'brewery'}/${suggestion.itemId}`,
         type: 'suggestion_rejected',
+        category: 'breweryReplies',
       });
 
       res.json({ message: "Suggerimento rifiutato" });
@@ -1651,6 +1657,7 @@ export function registerAdminRoutes(app: Express) {
         body: `La tua richiesta di aggiungere "${name}" è stata approvata!`,
         url: createdId ? `/${request.type === 'beer' ? 'beer' : 'brewery'}/${createdId}` : '/scan',
         type: 'addition_approved',
+        category: 'breweryReplies',
       });
 
       res.json({ message: `${typeLabel} aggiunt${request.type === 'beer' ? 'a' : 'o'} con successo`, id: createdId });
@@ -1693,6 +1700,7 @@ export function registerAdminRoutes(app: Express) {
         body: `La richiesta di aggiungere "${name}" non è stata accettata${adminNotes ? ': ' + adminNotes : '.'}`,
         url: '/scan',
         type: 'addition_rejected',
+        category: 'breweryReplies',
       });
 
       res.json({ message: "Richiesta rifiutata" });

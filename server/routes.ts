@@ -342,6 +342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             url: `/eventi/pub/${row.id}`,
             tag: `event-pub-${row.id}`,
             icon: row.image_url || undefined,
+            category: 'events',
           });
         }
       }
@@ -378,6 +379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             url: `/eventi/brewery/${row.id}`,
             tag: `event-brewery-${row.id}`,
             icon: row.image_url || undefined,
+            category: 'events',
           });
         }
       }
@@ -5649,6 +5651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         body: "Le notifiche push funzionano correttamente! Riceverai avvisi quando i tuoi pub preferiti aggiornano le spine.",
         url: "/dashboard",
         type: "test",
+        category: 'adminBroadcasts',
       });
       res.json({ success: true, subscriptions: subs.length });
     } catch (error) {
