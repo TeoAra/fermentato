@@ -1027,11 +1027,9 @@ export const isAdmin: RequestHandler = (req, res, next) => {
   }
 
   const user = req.user as User;
-  const effectiveRole = (user as any)?.activeRole || (user as any)?.userType;
-  if (
-    effectiveRole === 'admin' ||
-    (user as any)?.roles?.includes?.('admin')
-  ) {
+  const effectiveRole = user.activeRole || user.userType;
+  const roles = user.roles ?? [];
+  if (effectiveRole === 'admin' || roles.includes('admin')) {
     return next();
   }
 
@@ -1043,9 +1041,9 @@ export const isAdminOrBreweryOwner: RequestHandler = (req, res, next) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: 'Non autenticato' });
   }
-  const user = req.user as any;
-  const effectiveRole = user?.activeRole || user?.userType;
-  const roles: string[] = user?.roles || [];
+  const user = req.user as User;
+  const effectiveRole = user.activeRole || user.userType;
+  const roles = user.roles ?? [];
   if (
     effectiveRole === 'admin' || roles.includes('admin') ||
     effectiveRole === 'brewery_owner' || roles.includes('brewery_owner')
