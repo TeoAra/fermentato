@@ -17,10 +17,11 @@ interface RouteCardProps {
   destinationAddress?: string;
 }
 
-const MODES: Array<{ value: RouteMode; label: string; icon: typeof Car }> = [
+const HAS_CUSTOM_OSRM = !!(import.meta as any).env?.VITE_OSRM_BASE_URL;
+const MODES: Array<{ value: RouteMode; label: string; icon: typeof Car; estimateOnly?: boolean }> = [
   { value: "driving", label: "Auto", icon: Car },
-  { value: "walking", label: "A piedi", icon: Footprints },
-  { value: "cycling", label: "Bici", icon: Bike },
+  { value: "walking", label: HAS_CUSTOM_OSRM ? "A piedi" : "A piedi (stima)", icon: Footprints, estimateOnly: !HAS_CUSTOM_OSRM },
+  { value: "cycling", label: HAS_CUSTOM_OSRM ? "Bici" : "Bici (stima)", icon: Bike, estimateOnly: !HAS_CUSTOM_OSRM },
 ];
 
 /**

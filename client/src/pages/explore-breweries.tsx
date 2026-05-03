@@ -186,7 +186,7 @@ export default function ExploreBreweries() {
     })();
     return () => ctrl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useRealRoute, userLocation?.lat, userLocation?.lng, quickFilter, nearbyBreweries?.length]);
+  }, [useRealRoute, userLocation?.lat, userLocation?.lng, quickFilter, (nearbyBreweries || []).map((b: any) => b.id).join(",")]);
 
   const total = quickFilter === "nearby" ? breweries.length : (data?.total || 0);
   const totalPages = quickFilter === "nearby" ? 1 : Math.ceil(total / PAGE_SIZE);
