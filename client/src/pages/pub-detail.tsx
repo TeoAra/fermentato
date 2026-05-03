@@ -51,6 +51,7 @@ import { getMapNavigationUrl } from "@/lib/utils";
 import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
 import { NextTapVoting } from "@/components/NextTapVoting";
 import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
+import RouteCard from "@/components/route-card";
 
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
@@ -1194,6 +1195,18 @@ export default function PubDetail() {
                           </a>
                         </div>
                       </div>
+                    )}
+
+                    {/* Pannello "Come arrivare" con percorso reale (OSRM) */}
+                    {(pub as any)?.latitude && (pub as any)?.longitude && (
+                      <RouteCard
+                        destination={{
+                          lat: parseFloat((pub as any).latitude),
+                          lng: parseFloat((pub as any).longitude),
+                        }}
+                        destinationName={(pub as any).name}
+                        destinationAddress={(pub as any).address}
+                      />
                     )}
 
                     {/* Hours */}

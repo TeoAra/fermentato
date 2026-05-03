@@ -743,6 +743,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ── Routing reale via OSRM ────────────────────────────────────────────────
+  // GET /api/route?fromLat&fromLng&toLat&toLng&mode=driving|walking|cycling
+  // Ritorna distanza/durata reali su strada con cache 24h e fallback Haversine.
+  app.get("/api/route", async (req, res) => {
+    try {
+      const fromLat = parseFloat(req.query.fromLat as string);
+      const fromLng = parseFloat(req.query.fromLng as string);
+      const toLat = parseFloat(req.query.toLat as string);
+      const toLng = parseFloat(req.query.toLng as string);
+      const modeRaw = (req.query.mode as string) || "driving";
+      const mode = (modeRaw === "walking" || modeRaw === "cycling") ? modeRaw : "driving";
+
+      if (![fromLat, fromLng, toLat, toLng].every(Number.isFinite)) {
+        return res.status(400).json({ message: "fromLat, fromLng, toLat, toLng sono obbligatori" });
+      }
+
+      // IP hardening: ci fidiamo di req.ip (Express applica trust proxy se
+      // configurato). Evitiamo di leggere x-forwarded-for grezzo per non
+      // permettere spoof dell'header e bypass del rate-limit.
+      const ip = req.ip || "anon";
+      const { getRouteDistance, tryConsumeToken } = await import("./routing");
+      if (!tryConsumeToken(ip)) {
+        // Rate-limit per IP: forziamo il fallback Haversine senza toccare OSRM.
+        console.warn(`[routing] rate-limit per IP ${ip}`);
+        const r = await getRouteDistance(
+          { lat: fromLat, lng: fromLng },
+          { lat: toLat, lng: toLng },
+          mode as "driving" | "walking" | "cycling",
+          { forceFallback: true },
+        );
+        res.setHeader("X-Rate-Limited", "1");
+        res.setHeader("Cache-Control", "public, max-age=60");
+        return res.json(r);
+      }
+      const r = await getRouteDistance(
+        { lat: fromLat, lng: fromLng },
+        { lat: toLat, lng: toLng },
+        mode as "driving" | "walking" | "cycling",
+      );
+      // Cache HTTP breve (CDN/browser); il backend ha già la sua cache 24h.
+      res.setHeader("Cache-Control", "public, max-age=3600, stale-while-revalidate=7200");
+      res.json(r);
+    } catch (error) {
+      console.error("Error computing route:", error);
+      res.status(500).json({ message: "Failed to compute route" });
+    }
+  });
+
   // Trending beers (most viewed in last N days)
   app.get("/api/beers/trending", async (req, res) => {
     try {

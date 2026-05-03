@@ -56,6 +56,12 @@ export default function ExplorePubs() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
     try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
   });
+  // Toggle: distanza in linea d'aria (default) vs percorso reale via OSRM.
+  const [useRealRoute, setUseRealRoute] = useState(false);
+  const [realDistances, setRealDistances] = useState<Record<number, number>>({});
+  // IDs già richiesti (in-flight o completati) — evita di rilanciare l'effetto
+  // quando arrivano i risultati e di duplicare le richieste.
+  const requestedIdsRef = useRef<Set<number>>(new Set());
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -69,10 +75,76 @@ export default function ExplorePubs() {
   const pubsWithDist = useMemo(() => pubsArr.map((p: any) => {
     if (userLocation && p.latitude && p.longitude) {
       const dist = haversineDist(userLocation.lat, userLocation.lng, parseFloat(p.latitude), parseFloat(p.longitude));
-      return { ...p, _dist: dist };
+      const real = useRealRoute ? realDistances[p.id] : undefined;
+      return { ...p, _dist: real != null ? real : dist, _distAir: dist, _distReal: real };
     }
     return { ...p, _dist: null };
-  }), [pubsArr, userLocation]);
+  }), [pubsArr, userLocation, useRealRoute, realDistances]);
+
+  // Reset requestedIds quando cambiano i parametri "input" (toggle off,
+  // location o filtri rilevanti) — evitiamo di rifare le stesse fetch quando
+  // la lista pubs cambia per ragioni non semantiche.
+  useEffect(() => {
+    requestedIdsRef.current = new Set();
+    if (!useRealRoute) setRealDistances({});
+  }, [useRealRoute, userLocation?.lat, userLocation?.lng]);
+
+  // Quando il toggle "percorso reale" è attivo + nearby + userLocation, calcola
+  // i percorsi reali via OSRM per le prime 15 entità più vicine in linea
+  // d'aria. Usa AbortController e un set di ID già richiesti per evitare
+  // race condition / duplicate request quando lo state si aggiorna.
+  useEffect(() => {
+    if (!useRealRoute || !userLocation || quickFilter !== "nearby" || pubsArr.length === 0) return;
+    const candidates = pubsArr
+      .filter((p: any) => p.latitude && p.longitude)
+      .map((p: any) => ({
+        id: p.id as number,
+        lat: parseFloat(p.latitude),
+        lng: parseFloat(p.longitude),
+        d: haversineDist(userLocation.lat, userLocation.lng, parseFloat(p.latitude), parseFloat(p.longitude)),
+      }))
+      .filter((c) => c.d <= distanceKm * 1.5)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 15)
+      .filter((c) => !requestedIdsRef.current.has(c.id));
+    if (candidates.length === 0) return;
+    candidates.forEach((c) => requestedIdsRef.current.add(c.id));
+
+    const ctrl = new AbortController();
+    (async () => {
+      const batch: Record<number, number> = {};
+      let pending = 0;
+      const flush = () => {
+        if (pending > 0) {
+          const snapshot = { ...batch };
+          for (const k of Object.keys(snapshot)) delete batch[Number(k)];
+          pending = 0;
+          setRealDistances((prev) => ({ ...prev, ...snapshot }));
+        }
+      };
+      for (const c of candidates) {
+        if (ctrl.signal.aborted) return;
+        try {
+          const url = `/api/route?fromLat=${userLocation.lat}&fromLng=${userLocation.lng}&toLat=${c.lat}&toLng=${c.lng}&mode=driving`;
+          const r = await fetch(url, { signal: ctrl.signal });
+          if (!r.ok) continue;
+          const j = await r.json();
+          if (typeof j.distanceM === "number") {
+            batch[c.id] = j.distanceM / 1000;
+            pending++;
+            if (pending >= 5) flush();
+          }
+        } catch (e) {
+          if ((e as any)?.name === "AbortError") return;
+        }
+      }
+      flush();
+    })();
+    return () => ctrl.abort();
+    // Dipendiamo solo dagli "input" semantici: NON da realDistances, così
+    // l'effetto non si rilancia ad ogni risposta.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useRealRoute, userLocation?.lat, userLocation?.lng, quickFilter, distanceKm, pubsArr.length]);
 
   const filtered = useMemo(() => {
     let arr = pubsWithDist;
@@ -215,6 +287,23 @@ export default function ExplorePubs() {
                 </>
               )}
             </div>
+
+            {/* Toggle linea d'aria / percorso reale */}
+            {quickFilter === "nearby" && userLocation && (
+              <button
+                onClick={() => setUseRealRoute(v => !v)}
+                title={useRealRoute ? "Distanza calcolata sul percorso stradale reale" : "Distanza in linea d'aria"}
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
+                  useRealRoute
+                    ? "bg-primary text-white border-primary shadow-sm"
+                    : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700"
+                }`}
+                data-testid="toggle-real-route"
+              >
+                <Navigation className="w-3 h-3" />
+                {useRealRoute ? "Percorso reale" : "Linea d'aria"}
+              </button>
+            )}
 
             {[
               { key: "nearby" as QuickFilter, label: "Vicino a te", icon: <Navigation className="w-3 h-3" /> },

@@ -66,6 +66,7 @@ import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import AddressAutocomplete from "@/components/address-autocomplete";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import RouteCard from "@/components/route-card";
 
 function getBeerStyleColor(style: string): { bg: string; text: string } {
   const s = style?.toLowerCase() || '';
@@ -1099,6 +1100,16 @@ export default function BreweryDetail() {
 
                     <div className="space-y-4">
                       <h3 className="font-bold text-foreground">Posizione</h3>
+                      {(brewery as any)?.latitude && (brewery as any)?.longitude && brewery?.name && (
+                        <RouteCard
+                          destination={{
+                            lat: parseFloat((brewery as any).latitude),
+                            lng: parseFloat((brewery as any).longitude),
+                          }}
+                          destinationName={brewery.name}
+                          destinationAddress={brewery.location}
+                        />
+                      )}
                       {brewery?.location && (
                         <a
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brewery.name + ' ' + brewery.location)}`}
