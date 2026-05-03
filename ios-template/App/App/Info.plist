@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  Fermenta.to — Info.plist template
+  Permessi tradotti in italiano. Copiato in ios/App/App/Info.plist
+  dallo script scripts/build-ios-prep.sh
+-->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>it_IT</string>
+	<key>CFBundleDisplayName</key>
+	<string>Fermenta.to</string>
+	<key>CFBundleExecutable</key>
+	<string>$(EXECUTABLE_NAME)</string>
+	<key>CFBundleIdentifier</key>
+	<string>to.fermenta.app</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleName</key>
+	<string>$(PRODUCT_NAME)</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+
+	<!-- Localizzazione di default in italiano -->
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>it</string>
+		<string>en</string>
+	</array>
+
+	<!-- Permessi user-facing (italiano) -->
+	<key>NSCameraUsageDescription</key>
+	<string>Fermenta.to usa la fotocamera per scansionare codici a barre delle birre e scattare foto da condividere.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Fermenta.to ha bisogno di accedere alle foto per allegare immagini a recensioni e tasting note.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Fermenta.to vuole salvare nella tua libreria le foto delle birre che hai assaggiato.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Fermenta.to usa la tua posizione per mostrarti pub e birrifici vicini e calcolare i percorsi.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Fermenta.to usa la tua posizione per notificarti pub e birrifici nelle vicinanze.</string>
+	<key>NSUserTrackingUsageDescription</key>
+	<string>Usiamo l'identificatore solo per misurare in forma anonima l'uso dell'app e migliorarla.</string>
+
+	<!-- Capacitor / WebView -->
+	<key>UILaunchStoryboardName</key>
+	<string>LaunchScreen</string>
+	<key>UIMainStoryboardFile</key>
+	<string>Main</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<array>
+		<string>armv7</string>
+	</array>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+	</array>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<true/>
+
+	<!-- App Transport Security: produzione carica da fermenta.to (HTTPS) -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
+
+	<!-- Push notifications: il modo Apple di dichiarare le capability è via entitlements,
+	     ma serve anche dichiarare i background modes -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- Schemi URL custom (utile per deep link OAuth/Stripe return) -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>to.fermenta.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>fermenta</string>
+			</array>
+		</dict>
+	</array>
+</dict>
+</plist>
