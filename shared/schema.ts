@@ -704,9 +704,20 @@ export const notificationPreferences = pgTable("notification_preferences", {
   breweryRepliesPush: boolean("brewery_replies_push").default(true),
   reportUpdatesPush: boolean("report_updates_push").default(true),
   adminBroadcastsPush: boolean("admin_broadcasts_push").default(true),
+  // Categorie — canale EMAIL (default off per non-critiche; on per critiche)
+  tapChangesEmail: boolean("tap_changes_email").default(false),
+  eventsEmail: boolean("events_email").default(false),
+  newPubsEmail: boolean("new_pubs_email").default(false),
+  checkinLikesEmail: boolean("checkin_likes_email").default(false),
+  checkinCommentsEmail: boolean("checkin_comments_email").default(false),
+  newFollowersEmail: boolean("new_followers_email").default(false),
+  breweryRepliesEmail: boolean("brewery_replies_email").default(true),
+  reportUpdatesEmail: boolean("report_updates_email").default(true),
+  adminBroadcastsEmail: boolean("admin_broadcasts_email").default(true),
   // Canali master
   pushEnabled: boolean("push_enabled").default(true),
   inAppEnabled: boolean("in_app_enabled").default(true),
+  emailEnabled: boolean("email_enabled").default(true),
   // Ore di silenzio (HH:MM, mode: 'queue' rimanda, 'skip' scarta)
   quietHoursStart: varchar("quiet_hours_start", { length: 5 }),
   quietHoursEnd: varchar("quiet_hours_end", { length: 5 }),

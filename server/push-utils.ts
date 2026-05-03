@@ -17,9 +17,6 @@ const THROTTLE_MS = 10000;
 // Batcher di aggregazione: raccoglie like/commenti per (userId,category,targetId)
 // in una finestra di 10 minuti e li riassume in "N persone hanno..."
 const BATCH_WINDOW_MS = 10 * 60 * 1000;
-// Soglia: i primi N eventi vengono inviati singoli; oltre N nella finestra
-// si emette un singolo riassunto a fine finestra.
-const BATCH_THRESHOLD = 3;
 type BatchEntry = {
   count: number;
   firstActorName?: string;
@@ -72,6 +69,26 @@ export function quietWindowRemainingMs(start?: string | null, end?: string | nul
  * Helper centrale: dato un utente e una categoria, decide se inviare la push.
  * Restituisce { allowed, deferMs } — se deferMs > 0 e mode='queue', il caller deve ritardare.
  */
+/**
+ * Helper email: dato un utente e una categoria, decide se inviare email.
+ * Usato dai sender email (digest/transazionali) per rispettare il master
+ * emailEnabled e il toggle <category>Email indipendente.
+ */
+export async function shouldSendEmailNotification(
+  userId: string,
+  category: NotifCategory | undefined,
+): Promise<boolean> {
+  try {
+    const prefs = await storage.getNotificationPreferences(userId);
+    if (!prefs) return true;
+    if ((prefs as any).emailEnabled === false) return false;
+    if (category && (prefs as any)[`${category}Email`] === false) return false;
+    return true;
+  } catch {
+    return true;
+  }
+}
+
 export async function shouldSendNotification(
   userId: string,
   category: NotifCategory | undefined,
@@ -157,28 +174,19 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
     const { allowed, deferMs } = await shouldSendNotification(userId, payload.category);
     if (!allowed) return;
 
-    // Aggregazione: se batchKey presente, accumula nella finestra.
-    // Regola: invia individualmente i primi BATCH_THRESHOLD eventi (≤3),
-    // dal 4° in poi sopprimi e a fine finestra invia UN solo aggregato.
+    // Aggregazione: se batchKey presente, BUFFERIZZA tutti gli eventi
+    // nella finestra (10min) e a fine finestra invia UN solo push:
+    // - count == 1 → push individuale (l'evento originale)
+    // - count >  1 → push aggregato ("N persone hanno...")
     if (payload.batchKey && payload.category) {
       const bkey = `${userId}:${payload.category}:${payload.batchKey}`;
       const existing = batchQueue.get(bkey);
       if (existing) {
         existing.count += 1;
-        clearTimeout(existing.timer);
-        existing.timer = setTimeout(() => flushBatch(userId, bkey), BATCH_WINDOW_MS);
+        // NON resettare il timer: la finestra resta ancorata al primo evento
+        // così l'aggregato arriva entro 10 minuti dal primo trigger.
         batchQueue.set(bkey, existing);
-        if (existing.count <= BATCH_THRESHOLD) {
-          // ≤3: invia individualmente con tag univoco per non essere
-          // coalesciato dal throttle 10s di scheduleDelivery (stessa tastingId).
-          const indiv: PushPayload = {
-            ...payload,
-            tag: `${payload.tag || 'fermenta'}-${existing.count}-${Date.now()}`,
-          };
-          await scheduleDelivery(userId, indiv, deferMs);
-        }
-        // >3: silenzio fino al flush
-        return;
+        return; // silenzio fino al flush
       }
       const entry: BatchEntry = {
         count: 1,
@@ -187,13 +195,7 @@ export async function sendPushToUser(userId: string, payload: PushPayload) {
         timer: setTimeout(() => flushBatch(userId, bkey), BATCH_WINDOW_MS),
       };
       batchQueue.set(bkey, entry);
-      // Primo evento: tag univoco per evitare collisioni con eventi successivi
-      const first: PushPayload = {
-        ...payload,
-        tag: `${payload.tag || 'fermenta'}-1-${Date.now()}`,
-      };
-      await scheduleDelivery(userId, first, deferMs);
-      return;
+      return; // niente push immediato: si attende la finestra
     }
 
     await scheduleDelivery(userId, payload, deferMs);
@@ -206,13 +208,16 @@ async function flushBatch(userId: string, bkey: string) {
   const entry = batchQueue.get(bkey);
   if (!entry) return;
   batchQueue.delete(bkey);
-  // Aggregato solo se SUPERATA la soglia (count > 3): invia un unico
-  // riassunto degli eventi soppressi (i primi 3 sono già stati inviati singoli).
-  if (entry.count <= BATCH_THRESHOLD) return;
   // Ricalcola allowed/defer al momento del flush — le quiet hours
   // potrebbero essere cambiate (entrate o uscite) durante la finestra di 10min.
   const { allowed, deferMs } = await shouldSendNotification(userId, entry.payload.category);
   if (!allowed) return;
+  // Singolo evento isolato: invia il payload originale così com'è.
+  if (entry.count === 1) {
+    await scheduleDelivery(userId, entry.payload, deferMs);
+    return;
+  }
+  // 2+ eventi: emetti UN solo riassunto aggregato.
   const tpl = entry.payload.batchTemplate;
   const summary = tpl
     ? tpl(entry.count, entry.firstActorName)
@@ -221,7 +226,7 @@ async function flushBatch(userId: string, bkey: string) {
     ...entry.payload,
     title: summary.title,
     body: summary.body,
-    tag: `${entry.payload.tag || 'fermenta'}-agg`,
+    tag: `${entry.payload.tag || 'fermenta'}-agg-${Date.now()}`,
   };
   await scheduleDelivery(userId, aggPayload, deferMs);
 }

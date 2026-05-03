@@ -144,6 +144,17 @@ async function runSocialMigrations() {
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS brewery_replies_push BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS report_updates_push BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS admin_broadcasts_push BOOLEAN DEFAULT TRUE;
+      -- Task #15 v3: canale email per categoria + master
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS tap_changes_email BOOLEAN DEFAULT FALSE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS events_email BOOLEAN DEFAULT FALSE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS new_pubs_email BOOLEAN DEFAULT FALSE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS checkin_likes_email BOOLEAN DEFAULT FALSE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS checkin_comments_email BOOLEAN DEFAULT FALSE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS new_followers_email BOOLEAN DEFAULT FALSE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS brewery_replies_email BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS report_updates_email BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS admin_broadcasts_email BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS email_enabled BOOLEAN DEFAULT TRUE;
     `);
 
     // Backfill: copia review_reports → content_reports una sola volta

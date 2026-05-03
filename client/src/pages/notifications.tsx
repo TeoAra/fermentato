@@ -19,23 +19,25 @@ type CatInAppKey = 'tapChanges' | 'events' | 'newPubs' |
   'checkinLikes' | 'checkinComments' | 'newFollowers' |
   'breweryReplies' | 'reportUpdates' | 'adminBroadcasts';
 type CatPushKey = `${CatInAppKey}Push`;
+type CatEmailKey = `${CatInAppKey}Email`;
 const CATEGORIES: Array<{
   inAppKey: CatInAppKey;
   pushKey: CatPushKey;
+  emailKey: CatEmailKey;
   label: string;
   description: string;
   icon: any;
   iconColor: string;
 }> = [
-  { inAppKey: 'tapChanges',     pushKey: 'tapChangesPush',     label: 'Nuove birre in spina',  description: 'Quando i tuoi locali aggiornano la taplist',         icon: Beer,         iconColor: 'text-orange-600' },
-  { inAppKey: 'events',         pushKey: 'eventsPush',         label: 'Eventi in zona',        description: 'Degustazioni, festival e serate birrai',             icon: Calendar,     iconColor: 'text-blue-600' },
-  { inAppKey: 'newPubs',        pushKey: 'newPubsPush',        label: 'Nuovi locali',          description: 'Quando aprono nuovi pub vicino a te',                icon: MapPin,       iconColor: 'text-emerald-600' },
-  { inAppKey: 'checkinLikes',   pushKey: 'checkinLikesPush',   label: 'Like sui tuoi check-in',description: 'Quando qualcuno mette mi piace alle tue birre',      icon: Heart,        iconColor: 'text-rose-600' },
-  { inAppKey: 'checkinComments',pushKey: 'checkinCommentsPush',label: 'Commenti ai check-in',  description: 'Risposte e commenti sotto i tuoi check-in',          icon: MessageCircle,iconColor: 'text-violet-600' },
-  { inAppKey: 'newFollowers',   pushKey: 'newFollowersPush',   label: 'Nuovi follower e amici',description: 'Quando qualcuno ti segue o fa check-in',             icon: Users,        iconColor: 'text-sky-600' },
-  { inAppKey: 'breweryReplies', pushKey: 'breweryRepliesPush', label: 'Risposte birrificio',   description: 'Quando un birrificio risponde a te',                 icon: Factory,      iconColor: 'text-amber-600' },
-  { inAppKey: 'reportUpdates',  pushKey: 'reportUpdatesPush',  label: 'Esito segnalazioni',    description: 'Quando i moderatori gestiscono le tue segnalazioni', icon: Flag,         iconColor: 'text-red-500' },
-  { inAppKey: 'adminBroadcasts',pushKey: 'adminBroadcastsPush',label: 'Annunci Fermenta.to',   description: 'Comunicazioni ufficiali della redazione',            icon: Megaphone,    iconColor: 'text-primary' },
+  { inAppKey: 'tapChanges',     pushKey: 'tapChangesPush',     emailKey: 'tapChangesEmail',     label: 'Nuove birre in spina',  description: 'Quando i tuoi locali aggiornano la taplist',         icon: Beer,         iconColor: 'text-orange-600' },
+  { inAppKey: 'events',         pushKey: 'eventsPush',         emailKey: 'eventsEmail',         label: 'Eventi in zona',        description: 'Degustazioni, festival e serate birrai',             icon: Calendar,     iconColor: 'text-blue-600' },
+  { inAppKey: 'newPubs',        pushKey: 'newPubsPush',        emailKey: 'newPubsEmail',        label: 'Nuovi locali',          description: 'Quando aprono nuovi pub vicino a te',                icon: MapPin,       iconColor: 'text-emerald-600' },
+  { inAppKey: 'checkinLikes',   pushKey: 'checkinLikesPush',   emailKey: 'checkinLikesEmail',   label: 'Like sui tuoi check-in',description: 'Quando qualcuno mette mi piace alle tue birre',      icon: Heart,        iconColor: 'text-rose-600' },
+  { inAppKey: 'checkinComments',pushKey: 'checkinCommentsPush',emailKey: 'checkinCommentsEmail',label: 'Commenti ai check-in',  description: 'Risposte e commenti sotto i tuoi check-in',          icon: MessageCircle,iconColor: 'text-violet-600' },
+  { inAppKey: 'newFollowers',   pushKey: 'newFollowersPush',   emailKey: 'newFollowersEmail',   label: 'Nuovi follower e amici',description: 'Quando qualcuno ti segue o fa check-in',             icon: Users,        iconColor: 'text-sky-600' },
+  { inAppKey: 'breweryReplies', pushKey: 'breweryRepliesPush', emailKey: 'breweryRepliesEmail', label: 'Risposte birrificio',   description: 'Quando un birrificio risponde a te',                 icon: Factory,      iconColor: 'text-amber-600' },
+  { inAppKey: 'reportUpdates',  pushKey: 'reportUpdatesPush',  emailKey: 'reportUpdatesEmail',  label: 'Esito segnalazioni',    description: 'Quando i moderatori gestiscono le tue segnalazioni', icon: Flag,         iconColor: 'text-red-500' },
+  { inAppKey: 'adminBroadcasts',pushKey: 'adminBroadcastsPush',emailKey: 'adminBroadcastsEmail',label: 'Annunci Fermenta.to',   description: 'Comunicazioni ufficiali della redazione',            icon: Megaphone,    iconColor: 'text-primary' },
 ];
 
 function getNotificationIcon(type: string) {
@@ -507,14 +509,17 @@ export default function Notifications() {
               <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                 <span className="w-12 text-center">In-app</span>
                 <span className="w-12 text-center">Push</span>
+                <span className="w-12 text-center">Email</span>
               </div>
             </div>
             <div className="divide-y divide-stone-100 dark:divide-border">
               {CATEGORIES.map(cat => {
                 const Icon = cat.icon;
                 const inAppMaster = (preferences as any)?.inAppEnabled !== false;
+                const emailMaster = (preferences as any)?.emailEnabled !== false;
                 const inAppOn = (preferences as any)?.[cat.inAppKey] !== false;
                 const pushOn = (preferences as any)?.[cat.pushKey] !== false;
+                const emailOn = (preferences as any)?.[cat.emailKey] === true;
                 return (
                   <div key={cat.inAppKey} className="px-5 py-4 flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-stone-50 dark:bg-stone-900/30 flex-shrink-0">
@@ -525,7 +530,6 @@ export default function Notifications() {
                       <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{cat.description}</p>
                     </div>
                     <div className="flex items-center gap-4 flex-shrink-0">
-                      {/* In-app — controllo indipendente dal canale push */}
                       <div className="w-12 flex justify-center">
                         <Switch
                           checked={inAppOn && inAppMaster}
@@ -534,7 +538,6 @@ export default function Notifications() {
                           data-testid={`switch-${cat.inAppKey}-inapp`}
                         />
                       </div>
-                      {/* Push — controllo indipendente dal canale in-app */}
                       <div className="w-12 flex justify-center">
                         <Switch
                           checked={pushOn && pushMaster}
@@ -543,18 +546,34 @@ export default function Notifications() {
                           data-testid={`switch-${cat.inAppKey}-push`}
                         />
                       </div>
+                      <div className="w-12 flex justify-center">
+                        <Switch
+                          checked={emailOn && emailMaster}
+                          onCheckedChange={(v) => updatePrefsMutation.mutate({ [cat.emailKey]: v } as any)}
+                          disabled={!emailMaster}
+                          data-testid={`switch-${cat.inAppKey}-email`}
+                        />
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
-            <div className="px-5 py-3 border-t border-stone-100 dark:border-border bg-stone-50/50 dark:bg-stone-900/10">
+            <div className="px-5 py-3 border-t border-stone-100 dark:border-border bg-stone-50/50 dark:bg-stone-900/10 space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground">Notifiche dentro l'app</p>
                 <Switch
                   checked={(preferences as any)?.inAppEnabled !== false}
                   onCheckedChange={(v) => updatePrefsMutation.mutate({ inAppEnabled: v } as any)}
                   data-testid="switch-inapp-master"
+                />
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">Email di sintesi</p>
+                <Switch
+                  checked={(preferences as any)?.emailEnabled !== false}
+                  onCheckedChange={(v) => updatePrefsMutation.mutate({ emailEnabled: v } as any)}
+                  data-testid="switch-email-master"
                 />
               </div>
             </div>
