@@ -1020,16 +1020,38 @@ export const isAuthenticated: RequestHandler = (req, res, next) => {
 };
 
 // Middleware to check if user is admin
+// effectiveRole = activeRole || userType, also honors roles[] membership
 export const isAdmin: RequestHandler = (req, res, next) => {
   if (!req.isAuthenticated()) {
     return res.status(401).json({ message: 'Non autenticato' });
   }
-  
+
   const user = req.user as User;
-  if (user.roles?.includes('admin') || user.activeRole === 'admin') {
+  const effectiveRole = (user as any)?.activeRole || (user as any)?.userType;
+  if (
+    effectiveRole === 'admin' ||
+    (user as any)?.roles?.includes?.('admin')
+  ) {
     return next();
   }
-  
+
+  res.status(403).json({ message: 'Accesso non autorizzato' });
+};
+
+// Middleware: admin OR brewery_owner (for endpoints that delegate fine-grained ownership checks inside the handler)
+export const isAdminOrBreweryOwner: RequestHandler = (req, res, next) => {
+  if (!req.isAuthenticated()) {
+    return res.status(401).json({ message: 'Non autenticato' });
+  }
+  const user = req.user as any;
+  const effectiveRole = user?.activeRole || user?.userType;
+  const roles: string[] = user?.roles || [];
+  if (
+    effectiveRole === 'admin' || roles.includes('admin') ||
+    effectiveRole === 'brewery_owner' || roles.includes('brewery_owner')
+  ) {
+    return next();
+  }
   res.status(403).json({ message: 'Accesso non autorizzato' });
 };
 
