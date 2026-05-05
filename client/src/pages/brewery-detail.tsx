@@ -227,7 +227,7 @@ export default function BreweryDetail() {
   const [isDeletingBeer, setIsDeletingBeer] = useState(false);
   const [beerEditForm, setBeerEditForm] = useState({
     name: '', style: '', abv: '', ibu: '', color: '', description: '',
-    imageUrl: '', bottleImageUrl: '', logoUrl: '',
+    imageUrl: '', logoUrl: '',
     isGlutenFree: false, isAlcoholFree: false, isCollaboration: false,
   });
   const [beerEditCollabBreweries, setBeerEditCollabBreweries] = useState<{ id: number; name: string }[]>([]);
@@ -262,7 +262,7 @@ export default function BreweryDetail() {
       color: (beer as any).color || '',
       description: (beer as any).description || '',
       imageUrl: (beer as any).imageUrl || '',
-      bottleImageUrl: (beer as any).bottleImageUrl || '',
+
       logoUrl: (beer as any).logoUrl || '',
       isGlutenFree: !!(beer as any).isGlutenFree,
       isAlcoholFree: !!(beer as any).isAlcoholFree,
@@ -290,7 +290,7 @@ export default function BreweryDetail() {
       color: beerEditForm.color || null,
       logoUrl: beerEditForm.logoUrl || null,
       imageUrl: beerEditForm.imageUrl || null,
-      bottleImageUrl: beerEditForm.bottleImageUrl || null,
+
       isGlutenFree: beerEditForm.isGlutenFree,
       isAlcoholFree: beerEditForm.isAlcoholFree,
       collaborationBreweryIds: collabIds,
@@ -1713,16 +1713,6 @@ export default function BreweryDetail() {
                   aspectRatio="square"
                   maxSize={5}
                   recommendedDimensions="400x400px"
-                />
-                <ImageUpload
-                  label="Immagine Bottiglia"
-                  description="Foto della bottiglia"
-                  currentImageUrl={beerEditForm.bottleImageUrl || undefined}
-                  onImageChange={url => setBeerEditForm(f => ({ ...f, bottleImageUrl: url ?? '' }))}
-                  folder="beer-bottles"
-                  aspectRatio="portrait"
-                  maxSize={5}
-                  recommendedDimensions="300x450px"
                 />
               </div>
               <div className="space-y-1.5">

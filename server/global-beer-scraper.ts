@@ -224,7 +224,6 @@ async function addWorldFamousBeers(): Promise<number> {
             ibu: beerData.ibu,
             description: `Famous ${beerData.style} from ${beerData.country}. Known worldwide for its exceptional quality and authentic taste.`,
             imageUrl: styleImage,
-            bottleImageUrl: styleImage,
             logoUrl: styleImage,
             isBottled: true
           });

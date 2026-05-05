@@ -627,11 +627,7 @@ export class DatabaseStorage implements IStorage {
       await db.execute(sql`UPDATE beers SET image_url = NULL WHERE id = ${id}`);
       delete rest.imageUrl;
     }
-    if ('bottleImageUrl' in rest && rest.bottleImageUrl === null) {
-      console.log(`[updateBeer] clearing bottle_image_url for beer ${id}`);
-      await db.execute(sql`UPDATE beers SET bottle_image_url = NULL WHERE id = ${id}`);
-      delete rest.bottleImageUrl;
-    }
+
     if ('logoUrl' in rest && rest.logoUrl === null) {
       await db.execute(sql`UPDATE beers SET logo_url = NULL WHERE id = ${id}`);
       delete rest.logoUrl;
@@ -856,7 +852,7 @@ export class DatabaseStorage implements IStorage {
         beerDescription: beers.description,
         beerImageUrl: beers.imageUrl,
         beerLogoUrl: beers.logoUrl,
-        beerBottleImageUrl: beers.bottleImageUrl,
+
         beerIsGlutenFree: beers.isGlutenFree,
         beerIsAlcoholFree: beers.isAlcoholFree,
         breweryId: breweries.id,
@@ -878,7 +874,7 @@ export class DatabaseStorage implements IStorage {
       beer_description: row.beerDescription,
       beer_image_url: row.beerImageUrl,
       beer_logo_url: row.beerLogoUrl,
-      beer_bottle_image_url: row.beerBottleImageUrl,
+
       beerIsGlutenFree: row.beerIsGlutenFree,
       beerIsAlcoholFree: row.beerIsAlcoholFree,
       brewery_id: row.breweryId,

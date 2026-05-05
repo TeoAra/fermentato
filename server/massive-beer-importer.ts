@@ -231,7 +231,6 @@ async function massiveImport() {
             ibu: Math.round(beerData.ibu),
             description: `Authentic ${beerData.style} from ${beerData.country}. A renowned beer that represents the finest brewing traditions of ${beerData.state || beerData.country}.`,
             imageUrl: styleImage,
-            bottleImageUrl: styleImage,
             logoUrl: styleImage,
             isBottled: true
           });

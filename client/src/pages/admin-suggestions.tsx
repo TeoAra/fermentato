@@ -57,7 +57,7 @@ const FIELD_LABELS: Record<string, string> = {
   color: "Colore",
   logoUrl: "Logo",
   imageUrl: "Immagine",
-  bottleImageUrl: "Immagine Bottiglia",
+
   coverImageUrl: "Immagine di Copertina",
   isGlutenFree: "Gluten Free",
   isAlcoholFree: "Analcolica",

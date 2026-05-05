@@ -222,7 +222,6 @@ async function continuousBeerImport() {
             ibu: beerData.ibu,
             description: `Premium ${beerData.style} from ${beerData.country}. This beer represents the finest brewing traditions and is highly regarded worldwide for its authentic taste and quality.`,
             imageUrl: styleImage,
-            bottleImageUrl: styleImage,
             logoUrl: styleImage,
             isBottled: true
           });

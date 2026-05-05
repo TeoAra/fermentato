@@ -21,7 +21,7 @@ interface BeerData {
   color?: string | null;
   logoUrl?: string | null;
   imageUrl?: string | null;
-  bottleImageUrl?: string | null;
+
   isGlutenFree?: boolean;
   isAlcoholFree?: boolean;
 }
@@ -76,7 +76,6 @@ export default function SuggestChangeDialog({ open, onOpenChange, type, itemId, 
     color: beerCurrent.color || "",
     logoUrl: beerCurrent.logoUrl || "",
     imageUrl: beerCurrent.imageUrl || "",
-    bottleImageUrl: beerCurrent.bottleImageUrl || "",
     isGlutenFree: beerCurrent.isGlutenFree || false,
     isAlcoholFree: beerCurrent.isAlcoholFree || false,
   });
@@ -106,7 +105,6 @@ export default function SuggestChangeDialog({ open, onOpenChange, type, itemId, 
             color: beerCurrent.color || "",
             logoUrl: beerCurrent.logoUrl || "",
             imageUrl: beerCurrent.imageUrl || "",
-            bottleImageUrl: beerCurrent.bottleImageUrl || "",
             isGlutenFree: beerCurrent.isGlutenFree || false,
             isAlcoholFree: beerCurrent.isAlcoholFree || false,
           }
@@ -225,16 +223,6 @@ export default function SuggestChangeDialog({ open, onOpenChange, type, itemId, 
                   aspectRatio="square"
                   maxSize={5}
                   recommendedDimensions="400x400px"
-                />
-                <ImageUpload
-                  label="Immagine Bottiglia"
-                  description="Foto della bottiglia"
-                  currentImageUrl={beerForm.bottleImageUrl || undefined}
-                  onImageChange={(url) => setBeerForm({ ...beerForm, bottleImageUrl: url || "" })}
-                  folder="beer-bottles"
-                  aspectRatio="portrait"
-                  maxSize={5}
-                  recommendedDimensions="300x450px"
                 />
               </div>
             </>

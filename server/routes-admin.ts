@@ -163,7 +163,7 @@ export function registerAdminRoutes(app: Express) {
           ibu: beers.ibu,
           description: beers.description,
           imageUrl: beers.imageUrl,
-          bottleImageUrl: beers.bottleImageUrl,
+
         })
         .from(beers)
         .leftJoin(breweries, eq(beers.breweryId, breweries.id));

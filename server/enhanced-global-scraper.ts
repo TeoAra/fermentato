@@ -218,7 +218,6 @@ async function addExpandedWorldBeers(): Promise<number> {
             ibu: beerData.ibu,
             description: `Renowned ${beerData.style} from ${beerData.country}. A world-famous beer celebrated for its distinctive flavor profile and brewing excellence.`,
             imageUrl: styleImage,
-            bottleImageUrl: styleImage,
             logoUrl: styleImage,
             isBottled: true
           });

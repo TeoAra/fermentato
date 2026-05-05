@@ -86,7 +86,7 @@ interface Beer {
   description?: string;
   logoUrl?: string;
   imageUrl?: string;
-  bottleImageUrl?: string;
+
   color?: string;
   isBottled?: boolean;
   isGlutenFree?: boolean | null;
@@ -201,7 +201,7 @@ export default function BeerDetail() {
     color: '',
     logoUrl: '',
     imageUrl: '',
-    bottleImageUrl: '',
+
     isGlutenFree: false,
     isAlcoholFree: false,
     isCollaboration: false,
@@ -273,7 +273,7 @@ export default function BeerDetail() {
         color: beer.color || '',
         logoUrl: beer.logoUrl || '',
         imageUrl: beer.imageUrl || '',
-        bottleImageUrl: beer.bottleImageUrl || '',
+
         isGlutenFree: beer.isGlutenFree || false,
         isAlcoholFree: beer.isAlcoholFree || false,
         isCollaboration: (beer as any).isCollaboration || false,
@@ -304,11 +304,11 @@ export default function BeerDetail() {
       color: editForm.color || null,
       logoUrl: editForm.logoUrl || null,
       imageUrl: editForm.imageUrl || null,
-      bottleImageUrl: editForm.bottleImageUrl || null,
+
       isGlutenFree: editForm.isGlutenFree,
       isAlcoholFree: editForm.isAlcoholFree,
     };
-    console.log('[BeerEdit] saving updates — imageUrl:', JSON.stringify(updates.imageUrl), 'bottleImageUrl:', JSON.stringify(updates.bottleImageUrl));
+    console.log('[BeerEdit] saving updates — imageUrl:', JSON.stringify(updates.imageUrl));
     if (editForm.ibu) {
       updates.ibu = parseInt(editForm.ibu);
     }
@@ -632,7 +632,7 @@ export default function BeerDetail() {
     : beer?.name
     ? `Scopri ${beer.name}${beer.style ? `, una ${beer.style}` : ""} di ${(beer as any)?.brewery?.name ?? "birrificio artigianale"} su Fermenta.to.`
     : "Fermenta.to — La piattaforma per gli amanti della birra artigianale.";
-  const seoImage = beer?.logoUrl || beer?.imageUrl || (beer as any)?.bottleImageUrl;
+  const seoImage = beer?.logoUrl || beer?.imageUrl;
   const seoUrl = `https://fermenta.to/beer/${id}`;
 
   return (
@@ -733,20 +733,20 @@ export default function BeerDetail() {
          ═══════════════════════════════════════════════════════════ */}
       <div className="relative">
         {/* Cover image container — overflow-hidden so blur doesn't bleed outside */}
-        {/* Priority: logoUrl (etichetta) → imageUrl → bottleImageUrl — stessa
-            gerarchia del cerchio avatar, così cover e logo mostrano sempre
-            la stessa immagine anche dopo "Re-cerca img". */}
+        {/* Priority: logoUrl (etichetta) → imageUrl — stessa gerarchia del
+            cerchio avatar, così cover e logo mostrano sempre la stessa immagine
+            anche dopo "Re-cerca img". */}
         <div className="relative w-full h-72 lg:h-80 bg-stone-900 overflow-hidden">
-          {(beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl) ? (
+          {(beer?.logoUrl || beer?.imageUrl) ? (
             <>
-              <img src={beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl} alt=""
+              <img src={beer?.logoUrl || beer?.imageUrl} alt=""
                 className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-50" />
               <button
-                onClick={() => { const s = beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
+                onClick={() => { const s = beer?.logoUrl || beer?.imageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
                 className="absolute inset-0 w-full h-full"
                 aria-label="Espandi immagine"
               >
-                <img src={beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl} alt={beer?.name}
+                <img src={beer?.logoUrl || beer?.imageUrl} alt={beer?.name}
                   className="w-full h-full object-contain" />
               </button>
             </>
@@ -791,7 +791,7 @@ export default function BeerDetail() {
         <PageContainer variant="narrow">
           <div className="flex items-end justify-between -mt-4 relative z-10">
           <button
-            onClick={() => { const s = beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
+            onClick={() => { const s = beer?.logoUrl || beer?.imageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
             className="h-[88px] w-[88px] rounded-full overflow-hidden border-4 border-background bg-white shadow-xl flex-shrink-0 tap-scale"
             aria-label="Logo birra"
           >
@@ -1008,13 +1008,13 @@ export default function BeerDetail() {
                 </div>
               )}
 
-              {((!beer?.logoUrl && !beer?.imageUrl && !beer?.bottleImageUrl) || isAdmin) && (
+              {((!beer?.logoUrl && !beer?.imageUrl) || isAdmin) && (
                 <button
                   onClick={handleFindWebImage}
                   disabled={isSearchingImage}
                   className={`${isAdmin ? '' : 'ml-auto'} text-[11px] text-primary font-bold disabled:opacity-50 px-2 h-9 tap-scale`}
                 >
-                  {isSearchingImage ? 'Cerco…' : (beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl) ? 'Re-cerca img' : 'Cerca img'}
+                  {isSearchingImage ? 'Cerco…' : (beer?.logoUrl || beer?.imageUrl) ? 'Re-cerca img' : 'Cerca img'}
                 </button>
               )}
             </div>
@@ -1618,16 +1618,6 @@ export default function BeerDetail() {
                   recommendedDimensions="400x400px"
                 />
               </div>
-              <ImageUpload
-                label="Immagine Bottiglia"
-                description="Foto della bottiglia"
-                currentImageUrl={editForm.bottleImageUrl || undefined}
-                onImageChange={(url) => setEditForm(prev => ({ ...prev, bottleImageUrl: url ?? '' }))}
-                folder="beer-bottles"
-                aspectRatio="portrait"
-                maxSize={5}
-                recommendedDimensions="300x450px"
-              />
             </div>
             <div className="flex justify-end gap-3 pt-4">
               <Button
@@ -1755,7 +1745,7 @@ export default function BeerDetail() {
             color: beer.color ?? null,
             logoUrl: beer.logoUrl ?? null,
             imageUrl: beer.imageUrl ?? null,
-            bottleImageUrl: beer.bottleImageUrl ?? null,
+
             isGlutenFree: beer.isGlutenFree ?? false,
             isAlcoholFree: beer.isAlcoholFree ?? false,
           }}

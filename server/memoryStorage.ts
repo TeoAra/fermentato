@@ -71,9 +71,14 @@ export class MemoryStorage {
       description: "Una IPA demo per testing",
       imageUrl: null,
       logoUrl: null,
-      bottleImageUrl: null,
       color: null,
       isBottled: null,
+      isGlutenFree: false,
+      isAlcoholFree: false,
+      isCollaboration: false,
+      isHidden: false,
+      barcode: null,
+      awards: null,
       createdAt: new Date()
     };
     
@@ -87,9 +92,14 @@ export class MemoryStorage {
       description: "Una Lager demo per testing",
       imageUrl: null,
       logoUrl: null,
-      bottleImageUrl: null,
       color: null,
       isBottled: null,
+      isGlutenFree: false,
+      isAlcoholFree: false,
+      isCollaboration: false,
+      isHidden: false,
+      barcode: null,
+      awards: null,
       createdAt: new Date()
     };
     
@@ -273,9 +283,14 @@ export class MemoryStorage {
       description: beer.description || null,
       logoUrl: beer.logoUrl || null,
       imageUrl: beer.imageUrl || null,
-      bottleImageUrl: beer.bottleImageUrl || null,
       color: beer.color || null,
       isBottled: beer.isBottled || null,
+      isGlutenFree: beer.isGlutenFree ?? false,
+      isAlcoholFree: beer.isAlcoholFree ?? false,
+      isCollaboration: beer.isCollaboration ?? false,
+      isHidden: beer.isHidden ?? false,
+      barcode: beer.barcode || null,
+      awards: beer.awards || null,
       createdAt: new Date()
     };
     this.beers.set(id, newBeer);

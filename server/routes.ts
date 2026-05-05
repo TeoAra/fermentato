@@ -3951,9 +3951,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const beerId = parseInt(req.params.id);
       // Extract collab fields before passing to updateBeer to avoid schema column issues
       const { collaborationBreweryIds, isCollaboration, ...updates } = req.body;
-      console.log(`[admin/beers PATCH] beer=${beerId} imageUrl=${JSON.stringify(updates.imageUrl)} bottleImageUrl=${JSON.stringify(updates.bottleImageUrl)}`);
+      console.log(`[admin/beers PATCH] beer=${beerId} imageUrl=${JSON.stringify(updates.imageUrl)}`);
       const beer = await storage.updateBeer(beerId, updates);
-      console.log(`[admin/beers PATCH] after update: imageUrl=${JSON.stringify((beer as any).imageUrl)} bottleImageUrl=${JSON.stringify((beer as any).bottleImageUrl)}`);
+      console.log(`[admin/beers PATCH] after update: imageUrl=${JSON.stringify((beer as any).imageUrl)}`);
       if (updates.logoUrl || updates.imageUrl || updates.logo_url || updates.image_url) {
         clipIndexBeer(beerId, updates.logoUrl || updates.logo_url || updates.imageUrl || updates.image_url);
       }
