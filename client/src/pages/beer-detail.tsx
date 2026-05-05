@@ -632,7 +632,7 @@ export default function BeerDetail() {
     : beer?.name
     ? `Scopri ${beer.name}${beer.style ? `, una ${beer.style}` : ""} di ${(beer as any)?.brewery?.name ?? "birrificio artigianale"} su Fermenta.to.`
     : "Fermenta.to — La piattaforma per gli amanti della birra artigianale.";
-  const seoImage = beer?.imageUrl || (beer as any)?.bottleImageUrl;
+  const seoImage = beer?.logoUrl || beer?.imageUrl || (beer as any)?.bottleImageUrl;
   const seoUrl = `https://fermenta.to/beer/${id}`;
 
   return (
@@ -733,17 +733,20 @@ export default function BeerDetail() {
          ═══════════════════════════════════════════════════════════ */}
       <div className="relative">
         {/* Cover image container — overflow-hidden so blur doesn't bleed outside */}
+        {/* Priority: logoUrl (etichetta) → imageUrl → bottleImageUrl — stessa
+            gerarchia del cerchio avatar, così cover e logo mostrano sempre
+            la stessa immagine anche dopo "Re-cerca img". */}
         <div className="relative w-full h-72 lg:h-80 bg-stone-900 overflow-hidden">
-          {(beer?.imageUrl || beer?.bottleImageUrl) ? (
+          {(beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl) ? (
             <>
-              <img src={beer?.imageUrl || beer?.bottleImageUrl} alt=""
+              <img src={beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl} alt=""
                 className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-50" />
               <button
-                onClick={() => { const s = beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
+                onClick={() => { const s = beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
                 className="absolute inset-0 w-full h-full"
                 aria-label="Espandi immagine"
               >
-                <img src={beer?.imageUrl || beer?.bottleImageUrl} alt={beer?.name}
+                <img src={beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl} alt={beer?.name}
                   className="w-full h-full object-contain" />
               </button>
             </>
@@ -1005,13 +1008,13 @@ export default function BeerDetail() {
                 </div>
               )}
 
-              {((!beer?.imageUrl && !beer?.bottleImageUrl) || isAdmin) && (
+              {((!beer?.logoUrl && !beer?.imageUrl && !beer?.bottleImageUrl) || isAdmin) && (
                 <button
                   onClick={handleFindWebImage}
                   disabled={isSearchingImage}
                   className={`${isAdmin ? '' : 'ml-auto'} text-[11px] text-primary font-bold disabled:opacity-50 px-2 h-9 tap-scale`}
                 >
-                  {isSearchingImage ? 'Cerco…' : (beer?.imageUrl || beer?.bottleImageUrl) ? 'Re-cerca img' : 'Cerca img'}
+                  {isSearchingImage ? 'Cerco…' : (beer?.logoUrl || beer?.imageUrl || beer?.bottleImageUrl) ? 'Re-cerca img' : 'Cerca img'}
                 </button>
               )}
             </div>
