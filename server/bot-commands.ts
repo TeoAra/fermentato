@@ -23,8 +23,10 @@ export type BotAction =
   | { type: "remove"; beer: string }
   | { type: "add"; beer: string; brewery?: string }
   | { type: "price"; beer: string; prices: Record<string, number> }
-  | { type: "taplist" }   // birre in spillatura
-  | { type: "menu" }      // menu cibo con categorie e piatti
+  | { type: "taplist" }
+  | { type: "menu" }
+  | { type: "ingredient_remove"; ingredient: string; items: "all" | string[] }
+  | { type: "ingredient_add"; ingredient: string; items: string[] }
   | { type: "help" }
   | { type: "unknown"; reason: string };
 
@@ -69,6 +71,15 @@ Vedere le birre in spillatura ("birre", "taplist", "cosa ho in spina", ecc.):
 
 Vedere il menu cibo con categorie e piatti ("menu", "carta", "cosa mangiamo", ecc.):
 {"type":"menu"}
+
+Rimuovere un ingrediente dalla descrizione di TUTTI i piatti che lo contengono:
+{"type":"ingredient_remove","ingredient":"INGREDIENTE","items":"all"}
+
+Rimuovere un ingrediente dalla descrizione di piatti SPECIFICI nominati:
+{"type":"ingredient_remove","ingredient":"INGREDIENTE","items":["PIATTO 1","PIATTO 2"]}
+
+Aggiungere un ingrediente alla descrizione di piatti specifici:
+{"type":"ingredient_add","ingredient":"INGREDIENTE","items":["PIATTO 1","PIATTO 2"]}
 
 Chiedere aiuto:
 {"type":"help"}
@@ -156,6 +167,21 @@ async function findBeerInCatalog(beerName: string, brewery?: string) {
   return rows[0];
 }
 
+// ── Helper: tutti gli items del menu cibo di un pub ──────────────────────────
+
+async function getAllFoodItems(pubId: number) {
+  return db
+    .select({
+      id: menuItems.id,
+      name: menuItems.name,
+      description: menuItems.description,
+      categoryId: menuItems.categoryId,
+    })
+    .from(menuItems)
+    .innerJoin(menuCategories, eq(menuItems.categoryId, menuCategories.id))
+    .where(eq(menuCategories.pubId, pubId));
+}
+
 // ── Helpers menu cibo ─────────────────────────────────────────────────────────
 
 async function getFoodMenu(pubId: number) {
@@ -224,14 +250,20 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
       return {
         ok: true,
         message: `🤖 *Comandi disponibili:*
-• *cambia* Birra A *con* Birra B (di Birrificio) — sostituisce mantenendo i prezzi
-• *nascondi* Nome Birra — nasconde temporaneamente
-• *mostra* Nome Birra — riabilita birra nascosta
-• *rimuovi* Nome Birra — elimina dalla spillatura
-• *aggiungi* Nome Birra (di Birrificio) — cerca e aggiunge
-• *prezzo* Nome: piccola 3.5 media 5.0 — aggiorna prezzi
-• *birre* — vedi le birre in spillatura
-• *menu* — vedi il menu cibo con categorie
+
+🍺 *Spillatura:*
+• *cambia* Birra A *con* Birra B (di Birrificio)
+• *nascondi* / *mostra* Nome Birra
+• *rimuovi* / *aggiungi* Nome Birra (di Birrificio)
+• *prezzo* Nome: piccola 3.5 media 5.0
+• *birre* — vedi taplist
+
+🍽️ *Menu cibo:*
+• *menu* — vedi menu con categorie
+• *togli* cipolle caramellate *da tutti i prodotti*
+• *togli* pancetta *da* Burger, Club Sandwich
+• *aggiungi* rucola *a* Tagliere, Bruschetta
+
 • *aiuto* — mostra questo messaggio`,
       };
     }
@@ -300,6 +332,93 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
       await db.update(tapList).set(updates).where(eq(tapList.id, item.id));
       const lines = Object.entries(action.prices).map(([k, v]) => `${k}: €${v}`).join(", ");
       return { ok: true, message: `💰 Prezzi aggiornati per *${item.beerName}*: ${lines}` };
+    }
+
+    case "ingredient_remove": {
+      const allItems = await getAllFoodItems(pubId);
+      const ing = action.ingredient.toLowerCase().trim();
+
+      // Determina quali items modificare
+      let targets: typeof allItems;
+      if (action.items === "all") {
+        targets = allItems.filter(i =>
+          i.name?.toLowerCase().includes(ing) ||
+          i.description?.toLowerCase().includes(ing)
+        );
+      } else {
+        targets = allItems.filter(item =>
+          (action.items as string[]).some(q =>
+            item.name?.toLowerCase().includes(q.toLowerCase().trim())
+          )
+        );
+      }
+
+      if (!targets.length) {
+        return {
+          ok: false,
+          message: `❌ Nessun piatto trovato con "${action.ingredient}" nella descrizione.`,
+        };
+      }
+
+      // Rimozione case-insensitive: crea regex che matcha l'ingrediente
+      // con eventuali separatori attorno (virgola, spazio, "con", "e")
+      const re = new RegExp(
+        `(,\\s*|\\s+con\\s+|\\s+e\\s+|\\s+)?${action.ingredient.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s*,|\\s+e\\s+|\\s+con\\s+)?`,
+        "gi"
+      );
+
+      const updated: string[] = [];
+      for (const item of targets) {
+        const newDesc = (item.description ?? "").replace(re, " ").replace(/\s{2,}/g, " ").trim();
+        const newName = item.name.replace(re, " ").replace(/\s{2,}/g, " ").trim();
+        await db
+          .update(menuItems)
+          .set({ description: newDesc || null, name: newName })
+          .where(eq(menuItems.id, item.id));
+        updated.push(item.name);
+      }
+
+      return {
+        ok: true,
+        message: `✅ *"${action.ingredient}"* rimosso da ${updated.length} piatt${updated.length === 1 ? "o" : "i"}:\n${updated.map(n => `• ${n}`).join("\n")}`,
+      };
+    }
+
+    case "ingredient_add": {
+      const allItems = await getAllFoodItems(pubId);
+
+      const targets = allItems.filter(item =>
+        action.items.some(q =>
+          item.name?.toLowerCase().includes(q.toLowerCase().trim())
+        )
+      );
+
+      if (!targets.length) {
+        return {
+          ok: false,
+          message: `❌ Nessun piatto trovato tra: ${action.items.join(", ")}`,
+        };
+      }
+
+      const updated: string[] = [];
+      for (const item of targets) {
+        // Evita duplicati
+        const already = (item.description ?? "").toLowerCase().includes(action.ingredient.toLowerCase());
+        if (already) { updated.push(`${item.name} (già presente)`); continue; }
+        const newDesc = item.description
+          ? `${item.description}, ${action.ingredient}`
+          : action.ingredient;
+        await db
+          .update(menuItems)
+          .set({ description: newDesc })
+          .where(eq(menuItems.id, item.id));
+        updated.push(item.name);
+      }
+
+      return {
+        ok: true,
+        message: `✅ *"${action.ingredient}"* aggiunto a ${targets.length} piatt${targets.length === 1 ? "o" : "i"}:\n${updated.map(n => `• ${n}`).join("\n")}`,
+      };
     }
 
     case "unknown":

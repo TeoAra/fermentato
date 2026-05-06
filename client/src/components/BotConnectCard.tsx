@@ -286,11 +286,12 @@ export default function BotConnectCard({ pubId }: Props) {
         <div className="space-y-1 text-xs text-stone-500 font-mono">
           {[
             "cambia Weizen con Hazy IPA di Birrificio X",
-            "aggiungi Pale Ale di CRAK Brewery",
             "nascondi Pilsner",
             "prezzo Pale Ale: piccola 3.5 media 5",
-            "birre  →  vedi spillatura",
-            "menu  →  vedi menu cibo",
+            "togli cipolle caramellate da tutti i prodotti",
+            "togli pancetta da Burger, Club Sandwich",
+            "aggiungi rucola a Tagliere, Bruschetta",
+            "birre  →  taplist  |  menu  →  menu cibo",
           ].map(ex => (
             <p key={ex} className="text-[11px] text-stone-400">→ <span className="text-stone-600 dark:text-stone-300">{ex}</span></p>
           ))}
