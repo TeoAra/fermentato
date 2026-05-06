@@ -163,7 +163,30 @@ function fuzzyFind(name: string, items: { beerName: string | null }[]) {
   );
 }
 
-// ── Ricerca birra nel catalogo (ritorna TUTTI i match per disambiguare) ───────
+// ── Ricerca birra nel catalogo ────────────────────────────────────────────────
+
+/** Punteggio di rilevanza: più alto = match migliore */
+function scoreBeer(beer: BeerCandidate, beerName: string, brewery?: string): number {
+  let score = 0;
+  const bn = beerName.toLowerCase().trim();
+  const name = beer.name.toLowerCase();
+  const brew = (beer.breweryName ?? "").toLowerCase();
+
+  // Qualità match sul nome birra
+  if (name === bn)              score += 200;
+  else if (name.startsWith(bn)) score += 100;
+  else if (name.includes(bn))   score += 50;
+
+  // Qualità match sul birrificio (se specificato)
+  if (brewery) {
+    const bq = brewery.toLowerCase().trim();
+    if (brew === bq)              score += 200;
+    else if (brew.startsWith(bq)) score += 100;
+    else if (brew.includes(bq))   score += 50;
+  }
+
+  return score;
+}
 
 async function findBeersInCatalog(beerName: string, brewery?: string): Promise<BeerCandidate[]> {
   const rows = await db
@@ -174,20 +197,50 @@ async function findBeersInCatalog(beerName: string, brewery?: string): Promise<B
 
   if (!rows.length) return [];
 
+  // Filtra e ordina per score
+  let results = rows.map(r => ({ ...r, _score: scoreBeer(r, beerName, brewery) }));
+
   if (brewery) {
     const bq = brewery.toLowerCase().trim();
-    const exact = rows.filter(r => r.breweryName?.toLowerCase().includes(bq));
-    if (exact.length) return exact;   // birrificio specificato e matchato → filtra
+    const withBrewery = results.filter(r => (r.breweryName ?? "").toLowerCase().includes(bq));
+    // Se il birrificio è stato specificato e matcha qualcosa, usa solo quelli
+    if (withBrewery.length) results = withBrewery;
   }
 
-  return rows;
+  // Ordina per score decrescente
+  results.sort((a, b) => b._score - a._score);
+
+  // Se il primo ha score nettamente superiore al secondo (≥100 punti), proponi solo lui
+  // → evita ambiguità quando il match è chiaramente uno solo
+  if (results.length > 1 && results[0]._score - results[1]._score >= 100) {
+    return [results[0]];
+  }
+
+  return results.map(({ _score, ...r }) => r);
 }
 
-// Formatta lista candidati numerata per Telegram/WhatsApp
+// Formatta lista candidati raggruppata per birrificio
 function formatCandidates(candidates: BeerCandidate[]): string {
-  return candidates
-    .map((c, i) => `  ${i + 1}. *${c.name}*${c.breweryName ? ` — _${c.breweryName}_` : ""}`)
-    .join("\n");
+  const uniqueBreweries = [...new Set(candidates.map(c => c.breweryName ?? ""))];
+
+  if (uniqueBreweries.length === 1) {
+    // Tutti dallo stesso birrificio — mostra solo i nomi delle birre
+    const brew = uniqueBreweries[0];
+    const header = brew ? `_${brew}:_\n` : "";
+    return header + candidates.map((c, i) => `  ${i + 1}. *${c.name}*`).join("\n");
+  }
+
+  // Più birrifici → raggruppa per birrificio con numerazione globale
+  const lines: string[] = [];
+  let idx = 1;
+  for (const brew of uniqueBreweries) {
+    lines.push(`\n_${brew || "Birrificio sconosciuto"}:_`);
+    for (const c of candidates.filter(x => (x.breweryName ?? "") === brew)) {
+      lines.push(`  ${idx}. *${c.name}*`);
+      idx++;
+    }
+  }
+  return lines.join("\n").trim();
 }
 
 // ── Helpers menu cibo ─────────────────────────────────────────────────────────
