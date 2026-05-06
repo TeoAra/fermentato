@@ -266,8 +266,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   registerBotRoutes(app);
 
   // Register Telegram webhook on startup
+  // Usa APP_DOMAIN su VPS, REPLIT_DOMAINS su Replit
   if (process.env.TELEGRAM_BOT_TOKEN) {
-    const domain = process.env.REPLIT_DOMAINS?.split(",")[0];
+    const domain = process.env.APP_DOMAIN
+      || process.env.REPLIT_DOMAINS?.split(",")[0];
     if (domain) {
       import("./telegram-bot").then(({ registerTelegramWebhook }) => {
         registerTelegramWebhook(`https://${domain}`).catch(() => {});
