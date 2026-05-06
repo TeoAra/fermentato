@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import {
-  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Map, Clock, Shuffle, Loader2
+  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Map, Clock, Shuffle, Loader2, Factory
 } from "lucide-react";
 
 const RECENT_KEY = "fermenta:recentSearches";
@@ -140,6 +140,10 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
     : query.length > 1
       ? (searchResults?.beers ?? [])
       : (trendingBeers ?? []);
+
+  const breweries: any[] = (!activeStyle && query.length > 1)
+    ? ((searchResults as any)?.breweries ?? [])
+    : [];
 
   const isLoading = activeStyle
     ? styleBeerLoading
@@ -328,9 +332,9 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                   <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-stone-800/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
                 ))}
               </div>
-            ) : beers.length > 0 ? (
+            ) : (beers.length > 0 || breweries.length > 0) ? (
               <>
-                {(activeStyle || query.length > 1) && (
+                {(activeStyle || query.length > 1) && beers.length > 0 && (
                   <p className="text-xs font-semibold text-stone-400 mb-2.5">
                     {beers.length} birre {activeStyle ? `· stile ${activeStyle.split(" - ")[0]}` : ""}
                   </p>
@@ -342,6 +346,46 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                   </p>
                 )}
                 <div className="space-y-2">
+                  {/* Sezione birrifici — solo durante ricerca testuale */}
+                  {breweries.length > 0 && (
+                    <>
+                      <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-1.5 flex items-center gap-1.5 pt-1">
+                        <Factory className="w-3.5 h-3.5 text-primary" />
+                        Birrifici
+                      </p>
+                      {breweries.slice(0, 5).map((brewery: any) => (
+                        <Link key={brewery.id} href={`/brewery/${brewery.id}`} onClick={onClose}>
+                          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
+                            <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-stone-800 overflow-hidden flex items-center justify-center">
+                              {brewery.logoUrl ? (
+                                <img src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <Factory className="w-5 h-5 text-stone-300" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-[14px] text-foreground truncate">{brewery.name}</p>
+                              <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">
+                                {[brewery.location || brewery.city, brewery.region].filter(Boolean).join(" · ")}
+                              </p>
+                            </div>
+                            <div className="flex-shrink-0">
+                              <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold px-2.5 py-1.5 rounded-xl">
+                                <Factory className="w-3 h-3" />
+                                Birrificio
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                      {beers.length > 0 && (
+                        <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-1.5 mt-3 flex items-center gap-1.5">
+                          <Beer className="w-3.5 h-3.5 text-primary" />
+                          Birre
+                        </p>
+                      )}
+                    </>
+                  )}
                   {beers.slice(0, 40).map((beer: any) => (
                     <Link key={beer.id} href={`/beer/${beer.id}`} onClick={onClose}>
                       <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
