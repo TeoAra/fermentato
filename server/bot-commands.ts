@@ -1,6 +1,7 @@
 /**
  * Bot Commands — parser Gemini + esecutore per Telegram e WhatsApp.
  * Gestisce taplist e menu cibo di un pub via messaggi in italiano naturale.
+ * Supporta conferma interattiva quando una ricerca restituisce più candidati.
  */
 import { db } from "./db";
 import {
@@ -14,10 +15,9 @@ const GEMINI_API_KEY = () => process.env.GEMINI_API_KEY ?? "";
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
-// ── Tipi azioni ──────────────────────────────────────────────────────────────
+// ── Tipi ─────────────────────────────────────────────────────────────────────
 
 export type BotAction =
-  // ── Taplist (birre) ──
   | { type: "swap"; from: string; to: string; brewery?: string }
   | { type: "hide"; beer: string }
   | { type: "show"; beer: string }
@@ -25,7 +25,6 @@ export type BotAction =
   | { type: "add"; beer: string; brewery?: string }
   | { type: "price"; beer: string; prices: Record<string, number> }
   | { type: "taplist" }
-  // ── Menu cibo — prodotti ──
   | { type: "item_hide"; item: string }
   | { type: "item_show"; item: string }
   | { type: "item_unavailable"; item: string }
@@ -35,13 +34,23 @@ export type BotAction =
   | { type: "item_rename"; item: string; newName: string }
   | { type: "ingredient_remove"; ingredient: string; items: "all" | string[] }
   | { type: "ingredient_add"; ingredient: string; items: string[] }
-  // ── Menu cibo — categorie ──
   | { type: "category_hide"; category: string }
   | { type: "category_show"; category: string }
-  // ── Generali ──
   | { type: "menu" }
   | { type: "help" }
   | { type: "unknown"; reason: string };
+
+export type BeerCandidate = { id: number; name: string; breweryName: string | null };
+
+export type PendingConfirmation = {
+  originalAction: BotAction;
+  role: "to" | "beer";   // quale campo della action sostituire con il candidato scelto
+  candidates: BeerCandidate[];
+};
+
+export type CommandResult =
+  | { ok: boolean; message: string }
+  | { ok: "choose"; message: string; pending: PendingConfirmation };
 
 // ── Parser Gemini ─────────────────────────────────────────────────────────────
 
@@ -50,7 +59,7 @@ export async function parseCommand(message: string, taplistContext: string): Pro
   if (!key) return { type: "unknown", reason: "Gemini non configurato" };
 
   const prompt = `Sei l'assistente di gestione menu per un pub italiano su Fermenta.to.
-Il titolare ti ha inviato questo messaggio. Analizza il comando e restituisci UN'azione in JSON.
+Il titolare ti ha inviato questo messaggio. Analizza e restituisci UN'azione in JSON.
 
 Birre attualmente in spillatura:
 ${taplistContext || "(nessuna birra in spina)"}
@@ -60,72 +69,43 @@ Messaggio: "${message}"
 Rispondi SOLO con un JSON valido (nessun testo aggiuntivo):
 
 ━━ SPILLATURA (BIRRE) ━━
-
-Sostituire una birra in spina (i prezzi rimangono):
+Sostituire una birra in spina (prezzi mantenuti):
 {"type":"swap","from":"BIRRA_ATTUALE","to":"NUOVA_BIRRA","brewery":"BIRRIFICIO_OPZIONALE"}
-
-Nascondere/mostrare una birra dalla spillatura:
+Nascondere/mostrare dalla spillatura:
 {"type":"hide","beer":"NOME"} oppure {"type":"show","beer":"NOME"}
-
-Rimuovere/aggiungere una birra dalla spillatura:
+Rimuovere/aggiungere dalla spillatura:
 {"type":"remove","beer":"NOME"} oppure {"type":"add","beer":"NOME","brewery":"BIRRIFICIO_OPZIONALE"}
-
-Aggiornare prezzo birra (piccola/media/grande):
+Aggiornare prezzo birra:
 {"type":"price","beer":"NOME","prices":{"piccola":3.50,"media":5.00}}
-
 Vedere le birre in spillatura:
 {"type":"taplist"}
 
 ━━ MENU CIBO — PRODOTTI ━━
-
-Nascondere un prodotto dal menu (non visibile ai clienti):
-{"type":"item_hide","item":"NOME_PRODOTTO"}
-
-Rendere di nuovo visibile un prodotto nascosto:
-{"type":"item_show","item":"NOME_PRODOTTO"}
-
-Segnare un prodotto come esaurito/non disponibile (visibile ma non ordinabile):
-{"type":"item_unavailable","item":"NOME_PRODOTTO"}
-
-Segnare un prodotto come di nuovo disponibile:
-{"type":"item_available","item":"NOME_PRODOTTO"}
-
-Cambiare il prezzo di un prodotto:
-{"type":"item_price","item":"NOME_PRODOTTO","price":12.50}
-
-Rimuovere definitivamente un prodotto dal menu:
-{"type":"item_remove","item":"NOME_PRODOTTO"}
-
+Nascondere/mostrare un prodotto:
+{"type":"item_hide","item":"NOME"} oppure {"type":"item_show","item":"NOME"}
+Esaurito / di nuovo disponibile:
+{"type":"item_unavailable","item":"NOME"} oppure {"type":"item_available","item":"NOME"}
+Cambiare prezzo prodotto:
+{"type":"item_price","item":"NOME","price":12.50}
+Rimuovere definitivamente un prodotto:
+{"type":"item_remove","item":"NOME"}
 Rinominare un prodotto:
 {"type":"item_rename","item":"NOME_ATTUALE","newName":"NUOVO_NOME"}
-
-Aggiungere un ingrediente alla descrizione di prodotti specifici:
+Aggiungere ingrediente a prodotti specifici:
 {"type":"ingredient_add","ingredient":"INGREDIENTE","items":["PRODOTTO 1","PRODOTTO 2"]}
-
-Rimuovere un ingrediente da TUTTI i prodotti che lo contengono:
+Rimuovere ingrediente da tutti i prodotti che lo contengono:
 {"type":"ingredient_remove","ingredient":"INGREDIENTE","items":"all"}
-
-Rimuovere un ingrediente da prodotti specifici:
+Rimuovere ingrediente da prodotti specifici:
 {"type":"ingredient_remove","ingredient":"INGREDIENTE","items":["PRODOTTO 1","PRODOTTO 2"]}
 
 ━━ MENU CIBO — CATEGORIE ━━
-
-Nascondere un'intera categoria (es. "Chiudiamo i dolci"):
-{"type":"category_hide","category":"NOME_CATEGORIA"}
-
-Rendere di nuovo visibile una categoria:
-{"type":"category_show","category":"NOME_CATEGORIA"}
+Nascondere/mostrare un'intera categoria:
+{"type":"category_hide","category":"NOME"} oppure {"type":"category_show","category":"NOME"}
 
 ━━ GENERALI ━━
-
-Vedere il menu cibo completo ("menu", "carta", ecc.):
-{"type":"menu"}
-
-Chiedere aiuto:
-{"type":"help"}
-
-Non capisci:
-{"type":"unknown","reason":"MOTIVO_BREVE"}`;
+Vedere il menu cibo: {"type":"menu"}
+Aiuto: {"type":"help"}
+Non capisci: {"type":"unknown","reason":"MOTIVO_BREVE"}`;
 
   try {
     const resp = await fetch(`${GEMINI_API_URL}?key=${key}`, {
@@ -137,17 +117,16 @@ Non capisci:
       }),
     });
     const json = await resp.json();
-    const text = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
-    const cleaned = text.replace(/```json|```/g, "").trim();
-    return JSON.parse(cleaned) as BotAction;
-  } catch (e) {
+    const raw = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
+    return JSON.parse(raw.replace(/```json|```/g, "").trim()) as BotAction;
+  } catch {
     return { type: "unknown", reason: "Errore nel parsing del comando" };
   }
 }
 
 // ── Helpers taplist ───────────────────────────────────────────────────────────
 
-async function getPubTaplistWithBeerNames(pubId: number) {
+async function getPubTaplist(pubId: number) {
   return db
     .select({
       id: tapList.id,
@@ -168,7 +147,7 @@ async function getPubTaplistWithBeerNames(pubId: number) {
     .where(and(eq(tapList.pubId, pubId), eq(tapList.isActive, true)));
 }
 
-function buildTaplistContext(items: Awaited<ReturnType<typeof getPubTaplistWithBeerNames>>) {
+function buildTaplistContext(items: Awaited<ReturnType<typeof getPubTaplist>>) {
   if (!items.length) return "(nessuna birra in spina)";
   return items
     .map(i =>
@@ -180,29 +159,35 @@ function buildTaplistContext(items: Awaited<ReturnType<typeof getPubTaplistWithB
 function fuzzyFind(name: string, items: { beerName: string | null }[]) {
   const q = name.toLowerCase().trim();
   return items.find(i =>
-    i.beerName?.toLowerCase().includes(q) ||
-    q.includes((i.beerName ?? "").toLowerCase())
+    i.beerName?.toLowerCase().includes(q) || q.includes((i.beerName ?? "").toLowerCase())
   );
 }
 
-// Cerca una birra nel catalogo per nome (+ birrificio opzionale)
-async function findBeerInCatalog(beerName: string, brewery?: string) {
+// ── Ricerca birra nel catalogo (ritorna TUTTI i match per disambiguare) ───────
+
+async function findBeersInCatalog(beerName: string, brewery?: string): Promise<BeerCandidate[]> {
   const rows = await db
     .select({ id: beers.id, name: beers.name, breweryName: breweries.name })
     .from(beers)
     .leftJoin(breweries, eq(beers.breweryId, breweries.id))
     .where(ilike(beers.name, `%${beerName}%`));
 
-  if (!rows.length) return null;
+  if (!rows.length) return [];
 
   if (brewery) {
     const bq = brewery.toLowerCase().trim();
-    const match = rows.find(r => r.breweryName?.toLowerCase().includes(bq));
-    if (match) return match;
-    return { ...rows[0], breweryMismatch: true };
+    const exact = rows.filter(r => r.breweryName?.toLowerCase().includes(bq));
+    if (exact.length) return exact;   // birrificio specificato e matchato → filtra
   }
 
-  return rows[0];
+  return rows;
+}
+
+// Formatta lista candidati numerata per Telegram/WhatsApp
+function formatCandidates(candidates: BeerCandidate[]): string {
+  return candidates
+    .map((c, i) => `  ${i + 1}. *${c.name}*${c.breweryName ? ` — _${c.breweryName}_` : ""}`)
+    .join("\n");
 }
 
 // ── Helpers menu cibo ─────────────────────────────────────────────────────────
@@ -282,16 +267,17 @@ function formatFoodMenu(menu: Awaited<ReturnType<typeof getFoodMenu>>): string {
   return lines.join("\n");
 }
 
-// ── Esecutore comandi ─────────────────────────────────────────────────────────
+// ── Esecutore — azione risolta (candidato già scelto) ────────────────────────
 
-export type CommandResult = { ok: boolean; message: string };
-
-export async function executeCommand(action: BotAction, pubId: number): Promise<CommandResult> {
-  const tap = await getPubTaplistWithBeerNames(pubId);
+async function executeResolved(
+  action: BotAction,
+  pubId: number,
+  tap: Awaited<ReturnType<typeof getPubTaplist>>
+): Promise<CommandResult> {
 
   switch (action.type) {
 
-    // ─── GENERALI ──────────────────────────────────────────────────────────────
+    // ── Generali ─────────────────────────────────────────────────────────────
 
     case "taplist": {
       if (!tap.length) return { ok: true, message: "🍺 Nessuna birra in spillatura al momento." };
@@ -308,7 +294,7 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
       return { ok: true, message: formatFoodMenu(food) };
     }
 
-    case "help": {
+    case "help":
       return {
         ok: true,
         message: `🤖 *Comandi disponibili:*
@@ -321,27 +307,23 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
 • *birre* — vedi taplist
 
 🍽️ *Prodotti menu cibo:*
-• *nascondi* Burger — togli dalla vista clienti
-• *mostra* Burger — rimetti visibile
-• *esaurito* Burger — visibile ma non ordinabile
-• *disponibile* Burger — torna ordinabile
-• *prezzo* Burger *a* 12.50€
-• *rinomina* Burger *in* Smash Burger
-• *rimuovi* Burger — elimina definitivamente
+• *nascondi* / *mostra* Prodotto
+• *esaurito* / *disponibile* Prodotto
+• *prezzo* Prodotto *a* 12.50€
+• *rinomina* Prodotto *in* Nuovo Nome
+• *rimuovi* Prodotto — elimina definitivamente
 • *togli* cipolle *da tutti i prodotti*
 • *togli* pancetta *da* Burger, Club Sandwich
 • *aggiungi* rucola *a* Tagliere, Bruschetta
 
 📂 *Categorie:*
-• *nascondi categoria* Dolci
-• *mostra categoria* Dolci
+• *nascondi categoria* Dolci / *mostra categoria* Dolci
 
 • *menu* — vedi menu completo
 • *aiuto* — mostra questo messaggio`,
       };
-    }
 
-    // ─── TAPLIST (BIRRE) ───────────────────────────────────────────────────────
+    // ── Taplist ───────────────────────────────────────────────────────────────
 
     case "hide": {
       const item = fuzzyFind(action.beer, tap);
@@ -365,13 +347,21 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
     }
 
     case "add": {
-      const found = await findBeerInCatalog(action.beer, action.brewery);
-      if (!found) {
+      const candidates = await findBeersInCatalog(action.beer, action.brewery);
+      if (!candidates.length) {
         const hint = action.brewery
-          ? `Nessuna birra "${action.beer}" di "${action.brewery}" trovata nel catalogo.`
-          : `Nessuna birra "${action.beer}" trovata. Riprova specificando anche il birrificio: _aggiungi NomeBirra di NomeBirrificio_`;
+          ? `"${action.beer}" di "${action.brewery}" non trovata nel catalogo.`
+          : `"${action.beer}" non trovata. Riprova specificando anche il birrificio: _aggiungi NomeBirra di NomeBirrificio_`;
         return { ok: false, message: `❌ ${hint}` };
       }
+      if (candidates.length > 1) {
+        return {
+          ok: "choose",
+          message: `🔍 Ho trovato ${candidates.length} birre con "${action.beer}". Quale intendi?\n\n${formatCandidates(candidates)}\n\nRispondi con il numero.`,
+          pending: { originalAction: action, role: "beer", candidates },
+        };
+      }
+      const found = candidates[0];
       const already = tap.find(i => i.beerId === found.id);
       if (already) return { ok: true, message: `ℹ️ *${found.name}* è già in spillatura.` };
       await db.insert(tapList).values({ pubId, beerId: found.id, isActive: true, isVisible: true });
@@ -380,18 +370,27 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
     }
 
     case "swap": {
-      const item = fuzzyFind(action.from, tap);
-      if (!item) return { ok: false, message: `❌ Birra non trovata in spillatura: "${action.from}"` };
-      const newBeer = await findBeerInCatalog(action.to, action.brewery);
-      if (!newBeer) {
+      const fromItem = fuzzyFind(action.from, tap);
+      if (!fromItem) return { ok: false, message: `❌ Birra non trovata in spillatura: "${action.from}"` };
+
+      const candidates = await findBeersInCatalog(action.to, action.brewery);
+      if (!candidates.length) {
         const hint = action.brewery
-          ? `Nessuna birra "${action.to}" di "${action.brewery}" trovata nel catalogo.`
-          : `Nessuna birra "${action.to}" trovata. Riprova specificando il birrificio: _cambia X con Y di Birrificio_`;
+          ? `"${action.to}" di "${action.brewery}" non trovata nel catalogo.`
+          : `"${action.to}" non trovata. Riprova specificando il birrificio: _cambia X con Y di Birrificio_`;
         return { ok: false, message: `❌ ${hint}` };
       }
-      await db.update(tapList).set({ beerId: newBeer.id }).where(eq(tapList.id, item.id));
+      if (candidates.length > 1) {
+        return {
+          ok: "choose",
+          message: `🔍 Ho trovato ${candidates.length} birre con "${action.to}". Quale vuoi mettere al posto di *${fromItem.beerName}*?\n\n${formatCandidates(candidates)}\n\nRispondi con il numero.`,
+          pending: { originalAction: action, role: "to", candidates },
+        };
+      }
+      const newBeer = candidates[0];
+      await db.update(tapList).set({ beerId: newBeer.id }).where(eq(tapList.id, fromItem.id));
       const brewInfo = newBeer.breweryName ? ` di *${newBeer.breweryName}*` : "";
-      return { ok: true, message: `🔄 *${item.beerName}* sostituita con *${newBeer.name}*${brewInfo} (prezzi mantenuti).` };
+      return { ok: true, message: `🔄 *${fromItem.beerName}* sostituita con *${newBeer.name}*${brewInfo} (prezzi mantenuti).` };
     }
 
     case "price": {
@@ -409,7 +408,7 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
       return { ok: true, message: `💰 Prezzi aggiornati per *${item.beerName}*: ${lines}` };
     }
 
-    // ─── PRODOTTI MENU CIBO ────────────────────────────────────────────────────
+    // ── Prodotti menu cibo ────────────────────────────────────────────────────
 
     case "item_hide": {
       const all = await getAllFoodItems(pubId);
@@ -447,9 +446,8 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
       const all = await getAllFoodItems(pubId);
       const found = fuzzyFindItem(action.item, all);
       if (!found) return { ok: false, message: `❌ Prodotto non trovato: "${action.item}"` };
-      const newPrice = String(action.price.toFixed(2));
       const oldPrice = found.price ? ` (era €${parseFloat(found.price).toFixed(2)})` : "";
-      await db.update(menuItems).set({ price: newPrice }).where(eq(menuItems.id, found.id));
+      await db.update(menuItems).set({ price: String(action.price.toFixed(2)) }).where(eq(menuItems.id, found.id));
       return { ok: true, message: `💰 *${found.name}* aggiornato a €${action.price.toFixed(2)}${oldPrice}.` };
     }
 
@@ -469,89 +467,57 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
       return { ok: true, message: `✏️ *${found.name}* rinominato in *${action.newName}*.` };
     }
 
-    // ─── INGREDIENTI ───────────────────────────────────────────────────────────
+    // ── Ingredienti ───────────────────────────────────────────────────────────
 
     case "ingredient_remove": {
       const allItems = await getAllFoodItems(pubId);
       const ing = action.ingredient.toLowerCase().trim();
+      const targets = action.items === "all"
+        ? allItems.filter(i => i.name?.toLowerCase().includes(ing) || i.description?.toLowerCase().includes(ing))
+        : allItems.filter(item => (action.items as string[]).some(q => item.name?.toLowerCase().includes(q.toLowerCase().trim())));
 
-      let targets: typeof allItems;
-      if (action.items === "all") {
-        targets = allItems.filter(i =>
-          i.name?.toLowerCase().includes(ing) ||
-          i.description?.toLowerCase().includes(ing)
-        );
-      } else {
-        targets = allItems.filter(item =>
-          (action.items as string[]).some(q =>
-            item.name?.toLowerCase().includes(q.toLowerCase().trim())
-          )
-        );
-      }
-
-      if (!targets.length) {
-        return { ok: false, message: `❌ Nessun prodotto contiene "${action.ingredient}".` };
-      }
+      if (!targets.length) return { ok: false, message: `❌ Nessun prodotto contiene "${action.ingredient}".` };
 
       const re = new RegExp(
         `(,\\s*|\\s+con\\s+|\\s+e\\s+|\\s+)?${action.ingredient.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(\\s*,|\\s+e\\s+|\\s+con\\s+)?`,
         "gi"
       );
-
       const updated: string[] = [];
       for (const item of targets) {
         const newDesc = (item.description ?? "").replace(re, " ").replace(/\s{2,}/g, " ").trim();
         const newName = item.name.replace(re, " ").replace(/\s{2,}/g, " ").trim();
-        await db.update(menuItems)
-          .set({ description: newDesc || null, name: newName })
-          .where(eq(menuItems.id, item.id));
+        await db.update(menuItems).set({ description: newDesc || null, name: newName }).where(eq(menuItems.id, item.id));
         updated.push(item.name);
       }
-
-      return {
-        ok: true,
-        message: `✅ *"${action.ingredient}"* rimosso da ${updated.length} prodott${updated.length === 1 ? "o" : "i"}:\n${updated.map(n => `• ${n}`).join("\n")}`,
-      };
+      return { ok: true, message: `✅ *"${action.ingredient}"* rimosso da ${updated.length} prodott${updated.length === 1 ? "o" : "i"}:\n${updated.map(n => `• ${n}`).join("\n")}` };
     }
 
     case "ingredient_add": {
       const allItems = await getAllFoodItems(pubId);
-
       const targets = allItems.filter(item =>
-        action.items.some(q =>
-          item.name?.toLowerCase().includes(q.toLowerCase().trim())
-        )
+        action.items.some(q => item.name?.toLowerCase().includes(q.toLowerCase().trim()))
       );
-
-      if (!targets.length) {
-        return { ok: false, message: `❌ Nessun prodotto trovato tra: ${action.items.join(", ")}` };
-      }
+      if (!targets.length) return { ok: false, message: `❌ Nessun prodotto trovato tra: ${action.items.join(", ")}` };
 
       const updated: string[] = [];
       for (const item of targets) {
         const already = (item.description ?? "").toLowerCase().includes(action.ingredient.toLowerCase());
         if (already) { updated.push(`${item.name} (già presente)`); continue; }
-        const newDesc = item.description
-          ? `${item.description}, ${action.ingredient}`
-          : action.ingredient;
+        const newDesc = item.description ? `${item.description}, ${action.ingredient}` : action.ingredient;
         await db.update(menuItems).set({ description: newDesc }).where(eq(menuItems.id, item.id));
         updated.push(item.name);
       }
-
-      return {
-        ok: true,
-        message: `✅ *"${action.ingredient}"* aggiunto a ${targets.length} prodott${targets.length === 1 ? "o" : "i"}:\n${updated.map(n => `• ${n}`).join("\n")}`,
-      };
+      return { ok: true, message: `✅ *"${action.ingredient}"* aggiunto a ${targets.length} prodott${targets.length === 1 ? "o" : "i"}:\n${updated.map(n => `• ${n}`).join("\n")}` };
     }
 
-    // ─── CATEGORIE ─────────────────────────────────────────────────────────────
+    // ── Categorie ─────────────────────────────────────────────────────────────
 
     case "category_hide": {
       const cats = await getPubCategories(pubId);
       const cat = fuzzyFindCategory(action.category, cats);
       if (!cat) return { ok: false, message: `❌ Categoria non trovata: "${action.category}"` };
       await db.update(menuCategories).set({ isVisible: false }).where(eq(menuCategories.id, cat.id));
-      return { ok: true, message: `🙈 Categoria *${cat.name}* nascosta (i prodotti restano ma non sono visibili ai clienti).` };
+      return { ok: true, message: `🙈 Categoria *${cat.name}* nascosta (i prodotti non sono visibili ai clienti).` };
     }
 
     case "category_show": {
@@ -562,8 +528,6 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
       return { ok: true, message: `✅ Categoria *${cat.name}* di nuovo visibile nel menu.` };
     }
 
-    // ─── DEFAULT ────────────────────────────────────────────────────────────────
-
     case "unknown":
     default:
       return {
@@ -571,6 +535,41 @@ export async function executeCommand(action: BotAction, pubId: number): Promise<
         message: `🤷 Non ho capito il comando. ${(action as any).reason ?? ""}\nDigita *aiuto* per vedere tutti i comandi disponibili.`,
       };
   }
+}
+
+// ── Risoluzione conferma interattiva (utente ha risposto con un numero) ───────
+
+async function resolveConfirmation(
+  pending: PendingConfirmation,
+  choiceIndex: number,
+  pubId: number,
+  tap: Awaited<ReturnType<typeof getPubTaplist>>
+): Promise<CommandResult> {
+  const chosen = pending.candidates[choiceIndex];
+  if (!chosen) {
+    return { ok: false, message: `❌ Numero non valido. Scegli tra 1 e ${pending.candidates.length}.` };
+  }
+
+  // Ricrea l'azione con il candidato scelto incorporato
+  const action = pending.originalAction;
+
+  if (action.type === "add") {
+    const already = tap.find(i => i.beerId === chosen.id);
+    if (already) return { ok: true, message: `ℹ️ *${chosen.name}* è già in spillatura.` };
+    await db.insert(tapList).values({ pubId, beerId: chosen.id, isActive: true, isVisible: true });
+    const brewInfo = chosen.breweryName ? ` di *${chosen.breweryName}*` : "";
+    return { ok: true, message: `✅ *${chosen.name}*${brewInfo} aggiunta alla spillatura.` };
+  }
+
+  if (action.type === "swap") {
+    const fromItem = fuzzyFind(action.from, tap);
+    if (!fromItem) return { ok: false, message: `❌ Birra da sostituire non trovata: "${action.from}"` };
+    await db.update(tapList).set({ beerId: chosen.id }).where(eq(tapList.id, fromItem.id));
+    const brewInfo = chosen.breweryName ? ` di *${chosen.breweryName}*` : "";
+    return { ok: true, message: `🔄 *${fromItem.beerName}* sostituita con *${chosen.name}*${brewInfo} (prezzi mantenuti).` };
+  }
+
+  return { ok: false, message: "❌ Azione non riconosciuta nella conferma." };
 }
 
 // ── Processo messaggio completo ───────────────────────────────────────────────
@@ -593,10 +592,41 @@ export async function processBotMessage(chatId: string, platform: string, text: 
     return "✅ Sei già collegato! Digita *aiuto* per vedere i comandi disponibili.";
   }
 
-  const tap = await getPubTaplistWithBeerNames(conn.pubId);
+  const tap = await getPubTaplist(conn.pubId);
+
+  // ── Gestione risposta numerica a una scelta pendente ──────────────────────
+  const trimmed = text.trim();
+  const numMatch = /^(\d+)$/.test(trimmed);
+  if (numMatch && conn.pendingAction) {
+    const pending = conn.pendingAction as PendingConfirmation;
+    const idx = parseInt(trimmed, 10) - 1;
+    const result = await resolveConfirmation(pending, idx, conn.pubId, tap);
+    // Cancella il pending indipendentemente dal risultato
+    await db.update(botConnections)
+      .set({ pendingAction: null })
+      .where(eq(botConnections.id, conn.id));
+    return result.message;
+  }
+
+  // ── Se arriva un comando normale, annulla eventuale pending esistente ─────
+  if (conn.pendingAction && !numMatch) {
+    await db.update(botConnections)
+      .set({ pendingAction: null })
+      .where(eq(botConnections.id, conn.id));
+  }
+
+  // ── Processo normale ──────────────────────────────────────────────────────
   const context = buildTaplistContext(tap);
   const action = await parseCommand(text, context);
-  const result = await executeCommand(action, conn.pubId);
+  const result = await executeResolved(action, conn.pubId, tap);
+
+  if (result.ok === "choose") {
+    // Salva il pending e chiedi all'utente
+    await db.update(botConnections)
+      .set({ pendingAction: result.pending as any })
+      .where(eq(botConnections.id, conn.id));
+  }
+
   return result.message;
 }
 

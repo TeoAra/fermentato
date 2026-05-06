@@ -1200,6 +1200,7 @@ export const botConnections = pgTable("bot_connections", {
   chatId: varchar("chat_id", { length: 100 }).notNull(),   // Telegram chat_id or WhatsApp phone
   displayName: varchar("display_name"),
   isActive: boolean("is_active").default(true),
+  pendingAction: jsonb("pending_action"),                   // conferma interattiva in corso
   createdAt: timestamp("created_at").defaultNow(),
 }, (t) => [unique().on(t.platform, t.chatId)]);
 

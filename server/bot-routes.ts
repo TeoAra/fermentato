@@ -37,6 +37,10 @@ export async function runBotMigrations(): Promise<void> {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `);
+    // Colonna aggiunta successivamente — safe su DB esistenti
+    await pool.query(`
+      ALTER TABLE bot_connections ADD COLUMN IF NOT EXISTS pending_action JSONB
+    `);
     console.log("[bot] migrations ok");
   } catch (e: any) {
     console.error("[bot] migration error:", e.message);
