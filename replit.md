@@ -45,6 +45,7 @@ Preferred communication style: Simple, everyday language.
 - **Admin Tools**: Duplicate brewery finder with fuzzy matching, mass content editing, and real-time activity monitoring.
 - **Push Notifications**: Throttled and batched push notifications for various events (suggestions, event starts, broadcasts).
 - **Internationalization**: Support for multiple countries in data processing and content.
+- **Bot Manager (Telegram + WhatsApp)**: Titolari collegano il bot dal dashboard (token monouso 15 min). Comandi in italiano parsati da Gemini: cambia/nascondi/mostra/rimuovi/aggiungi birra, aggiorna prezzi, lista menu. Schema: `bot_connections`, `bot_link_tokens`. Route: `server/bot-routes.ts`. Handler: `server/telegram-bot.ts`, `server/whatsapp-bot.ts`. Env: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`.
 
 ## External Dependencies
 

@@ -79,7 +79,8 @@ import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
 import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
-import { Cast, Share2, Link as LinkIcon, Tv, Info, QrCode } from "lucide-react";
+import { Cast, Share2, Link as LinkIcon, Tv, Info, QrCode, Bot } from "lucide-react";
+import BotConnectCard from "@/components/BotConnectCard";
 
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
@@ -271,7 +272,7 @@ function SpecialDaysEditor({ specialDays, onChange }: { specialDays: any[]; onCh
   );
 }
 
-type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile';
+type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile' | 'bot';
 
 interface SmartPubDashboardProps {
   adminPubId?: number;
@@ -818,6 +819,20 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             <div className="min-w-0">
               <p className="font-semibold text-sm text-foreground leading-tight">Pagina Pub</p>
               <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Anteprima pubblica</p>
+            </div>
+          </div>
+
+          {/* Bot Manager */}
+          <div
+            className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all"
+            onClick={() => setCurrentSection('bot')}
+          >
+            <div className="p-2.5 bg-violet-50 dark:bg-violet-950/20 rounded-xl shrink-0">
+              <Bot className="h-5 w-5 text-violet-600" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-foreground leading-tight">Bot Manager</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Telegram & WhatsApp</p>
             </div>
           </div>
 
@@ -1716,6 +1731,34 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     </div>
   );
 
+  // Bot Manager Section
+  const renderBot = () => (
+    <div className="space-y-6">
+      <div className="flex items-center gap-3">
+        <Button variant="ghost" size="sm" onClick={() => setCurrentSection('overview')} className="text-primary rounded-xl">
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h2 className="text-2xl font-bold text-foreground dark:text-white">Bot Manager</h2>
+          <p className="text-muted-foreground dark:text-muted-foreground">Gestisci il menu via Telegram e WhatsApp</p>
+        </div>
+      </div>
+
+      <Card className="p-6">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="p-2.5 bg-violet-50 dark:bg-violet-950/20 rounded-xl">
+            <Bot className="h-5 w-5 text-violet-600" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-foreground">Collega un Bot</h3>
+            <p className="text-xs text-muted-foreground">Scrivi messaggi in italiano e il bot aggiorna il menu automaticamente</p>
+          </div>
+        </div>
+        <BotConnectCard pubId={currentPub?.id} />
+      </Card>
+    </div>
+  );
+
   // Profile Section
   const renderProfile = () => (
     <div className="space-y-6">
@@ -1931,7 +1974,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 {currentSection === 'analytics' && renderAnalytics()}
                 {currentSection === 'settings' && renderSettings()}
                 {currentSection === 'profile' && renderProfile()}
-                {!['overview', 'taplist', 'bottles', 'menu', 'events', 'hours', 'analytics', 'settings', 'profile'].includes(currentSection) && (
+                {currentSection === 'bot' && renderBot()}
+                {!['overview', 'taplist', 'bottles', 'menu', 'events', 'hours', 'analytics', 'settings', 'profile', 'bot'].includes(currentSection) && (
                   <div className="text-center py-16">
                     <div className="space-y-4">
                       <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient} mx-auto flex items-center justify-center`}>

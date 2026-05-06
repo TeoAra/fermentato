@@ -1191,6 +1191,31 @@ export const insertCheckinCommentSchema = createInsertSchema(checkinComments).om
 export const insertAdminBroadcastSchema = createInsertSchema(adminBroadcasts).omit({ id: true, createdAt: true, sentBy: true, sentCount: true });
 export const insertRssSourceSchema = createInsertSchema(rssSources).omit({ id: true, createdAt: true, lastFetchedAt: true });
 
+// ─── Bot Connections ──────────────────────────────────────────────────────────
+export const botConnections = pgTable("bot_connections", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  pubId: integer("pub_id").notNull().references(() => pubs.id, { onDelete: "cascade" }),
+  platform: varchar("platform", { length: 20 }).notNull(), // 'telegram' | 'whatsapp'
+  chatId: varchar("chat_id", { length: 100 }).notNull(),   // Telegram chat_id or WhatsApp phone
+  displayName: varchar("display_name"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [unique().on(t.platform, t.chatId)]);
+
+export const botLinkTokens = pgTable("bot_link_tokens", {
+  id: serial("id").primaryKey(),
+  token: varchar("token", { length: 64 }).unique().notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  pubId: integer("pub_id").notNull().references(() => pubs.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type BotConnection = typeof botConnections.$inferSelect;
+export type BotLinkToken = typeof botLinkTokens.$inferSelect;
+
 export const pubRegistrationSchema = insertPubSchema.extend({
   vatNumber: z.string().min(11, "P.IVA deve essere di almeno 11 caratteri"),
   businessName: z.string().min(1, "Ragione sociale è obbligatoria"),

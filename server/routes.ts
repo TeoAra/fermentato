@@ -261,6 +261,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { registerSocialRoutes } = await import("./routes-social");
   await registerSocialRoutes(app);
 
+  // Register bot routes (Telegram + WhatsApp)
+  const { registerBotRoutes } = await import("./bot-routes");
+  registerBotRoutes(app);
+
+  // Register Telegram webhook on startup
+  if (process.env.TELEGRAM_BOT_TOKEN) {
+    const domain = process.env.REPLIT_DOMAINS?.split(",")[0];
+    if (domain) {
+      import("./telegram-bot").then(({ registerTelegramWebhook }) => {
+        registerTelegramWebhook(`https://${domain}`).catch(() => {});
+      });
+    }
+  }
+
   // ── Cleanup expired event/festival interests ──────────────────────────────
   async function cleanupExpiredInterests() {
     let pubCount = 0, brewCount = 0, festCount = 0;

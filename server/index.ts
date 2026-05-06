@@ -47,6 +47,21 @@ app.post(
   }
 );
 
+// Webhook WhatsApp — raw body per verifica firma HMAC (deve stare prima di express.json)
+app.post(
+  "/api/bot/whatsapp/webhook",
+  express.raw({ type: "application/json" }),
+  async (req: Request, res: Response) => {
+    try {
+      const { handleWhatsAppWebhook } = await import("./whatsapp-bot");
+      await handleWhatsAppWebhook(req, res);
+    } catch (error: any) {
+      console.error("WhatsApp webhook error:", error.message);
+      res.status(200).json({ received: true }); // Sempre 200 a Meta
+    }
+  }
+);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
