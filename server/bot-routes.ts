@@ -3,12 +3,45 @@
  * Registra anche i webhook e il processo di collegamento account.
  */
 import type { Express, Request, Response } from "express";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { botConnections, botLinkTokens, pubs } from "@shared/schema";
 import { eq, and } from "drizzle-orm";
 import { generateLinkToken } from "./bot-commands";
 import { handleTelegramWebhook } from "./telegram-bot";
 import { handleWhatsAppVerify } from "./whatsapp-bot";
+
+// ── Migrazione automatica — crea le tabelle bot se non esistono ───────────────
+export async function runBotMigrations(): Promise<void> {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bot_connections (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        pub_id INTEGER NOT NULL REFERENCES pubs(id) ON DELETE CASCADE,
+        platform VARCHAR(20) NOT NULL,
+        chat_id VARCHAR(100) NOT NULL,
+        display_name VARCHAR,
+        is_active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        CONSTRAINT bot_connections_platform_chat_id_unique UNIQUE (platform, chat_id)
+      )
+    `);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS bot_link_tokens (
+        id SERIAL PRIMARY KEY,
+        token VARCHAR(64) UNIQUE NOT NULL,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        pub_id INTEGER NOT NULL REFERENCES pubs(id) ON DELETE CASCADE,
+        expires_at TIMESTAMP NOT NULL,
+        used_at TIMESTAMP,
+        created_at TIMESTAMP DEFAULT NOW()
+      )
+    `);
+    console.log("[bot] migrations ok");
+  } catch (e: any) {
+    console.error("[bot] migration error:", e.message);
+  }
+}
 
 function isAuthenticated(req: any, res: Response, next: Function) {
   if (!req.isAuthenticated?.() || !req.user) {

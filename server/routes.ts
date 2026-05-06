@@ -261,9 +261,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { registerSocialRoutes } = await import("./routes-social");
   await registerSocialRoutes(app);
 
-  // Register bot routes (Telegram + WhatsApp)
-  const { registerBotRoutes } = await import("./bot-routes");
+  // Register bot routes (Telegram + WhatsApp) + run migrations
+  const { registerBotRoutes, runBotMigrations } = await import("./bot-routes");
   registerBotRoutes(app);
+  runBotMigrations();
 
   // Register Telegram webhook on startup
   // Usa APP_DOMAIN su VPS, REPLIT_DOMAINS su Replit
