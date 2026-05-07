@@ -124,6 +124,12 @@ Non capisci: {"type":"unknown","reason":"MOTIVO_BREVE"}`;
   }
 }
 
+// ── Normalizzazione stringhe (case + spazi extra) ────────────────────────────
+
+function norm(s: string | null | undefined): string {
+  return (s ?? "").toLowerCase().trim().replace(/\s+/g, " ");
+}
+
 // ── Helpers taplist ───────────────────────────────────────────────────────────
 
 async function getPubTaplist(pubId: number) {
@@ -157,10 +163,8 @@ function buildTaplistContext(items: Awaited<ReturnType<typeof getPubTaplist>>) {
 }
 
 function fuzzyFind(name: string, items: { beerName: string | null }[]) {
-  const q = name.toLowerCase().trim();
-  return items.find(i =>
-    i.beerName?.toLowerCase().includes(q) || q.includes((i.beerName ?? "").toLowerCase())
-  );
+  const q = norm(name);
+  return items.find(i => norm(i.beerName).includes(q) || q.includes(norm(i.beerName)));
 }
 
 // ── Ricerca birra nel catalogo ────────────────────────────────────────────────
@@ -168,18 +172,16 @@ function fuzzyFind(name: string, items: { beerName: string | null }[]) {
 /** Punteggio di rilevanza: più alto = match migliore */
 function scoreBeer(beer: BeerCandidate, beerName: string, brewery?: string): number {
   let score = 0;
-  const bn = beerName.toLowerCase().trim();
-  const name = beer.name.toLowerCase();
-  const brew = (beer.breweryName ?? "").toLowerCase();
+  const bn   = norm(beerName);
+  const name = norm(beer.name);
+  const brew = norm(beer.breweryName);
 
-  // Qualità match sul nome birra
   if (name === bn)              score += 200;
   else if (name.startsWith(bn)) score += 100;
   else if (name.includes(bn))   score += 50;
 
-  // Qualità match sul birrificio (se specificato)
   if (brewery) {
-    const bq = brewery.toLowerCase().trim();
+    const bq = norm(brewery);
     if (brew === bq)              score += 200;
     else if (brew.startsWith(bq)) score += 100;
     else if (brew.includes(bq))   score += 50;
@@ -193,17 +195,15 @@ async function findBeersInCatalog(beerName: string, brewery?: string): Promise<B
     .select({ id: beers.id, name: beers.name, breweryName: breweries.name })
     .from(beers)
     .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-    .where(ilike(beers.name, `%${beerName}%`));
+    .where(ilike(beers.name, `%${norm(beerName)}%`));
 
   if (!rows.length) return [];
 
-  // Filtra e ordina per score
   let results = rows.map(r => ({ ...r, _score: scoreBeer(r, beerName, brewery) }));
 
   if (brewery) {
-    const bq = brewery.toLowerCase().trim();
-    const withBrewery = results.filter(r => (r.breweryName ?? "").toLowerCase().includes(bq));
-    // Se il birrificio è stato specificato e matcha qualcosa, usa solo quelli
+    const bq = norm(brewery);
+    const withBrewery = results.filter(r => norm(r.breweryName).includes(bq));
     if (withBrewery.length) results = withBrewery;
   }
 
@@ -262,10 +262,8 @@ async function getAllFoodItems(pubId: number) {
 }
 
 function fuzzyFindItem(name: string, items: { name: string }[]) {
-  const q = name.toLowerCase().trim();
-  return items.find(i =>
-    i.name.toLowerCase().includes(q) || q.includes(i.name.toLowerCase())
-  );
+  const q = norm(name);
+  return items.find(i => norm(i.name).includes(q) || q.includes(norm(i.name)));
 }
 
 async function getPubCategories(pubId: number) {
@@ -277,10 +275,8 @@ async function getPubCategories(pubId: number) {
 }
 
 function fuzzyFindCategory(name: string, cats: { name: string }[]) {
-  const q = name.toLowerCase().trim();
-  return cats.find(c =>
-    c.name.toLowerCase().includes(q) || q.includes(c.name.toLowerCase())
-  );
+  const q = norm(name);
+  return cats.find(c => norm(c.name).includes(q) || q.includes(norm(c.name)));
 }
 
 async function getFoodMenu(pubId: number) {
@@ -524,10 +520,10 @@ async function executeResolved(
 
     case "ingredient_remove": {
       const allItems = await getAllFoodItems(pubId);
-      const ing = action.ingredient.toLowerCase().trim();
+      const ing = norm(action.ingredient);
       const targets = action.items === "all"
-        ? allItems.filter(i => i.name?.toLowerCase().includes(ing) || i.description?.toLowerCase().includes(ing))
-        : allItems.filter(item => (action.items as string[]).some(q => item.name?.toLowerCase().includes(q.toLowerCase().trim())));
+        ? allItems.filter(i => norm(i.name).includes(ing) || norm(i.description).includes(ing))
+        : allItems.filter(item => (action.items as string[]).some(q => norm(item.name).includes(norm(q))));
 
       if (!targets.length) return { ok: false, message: `❌ Nessun prodotto contiene "${action.ingredient}".` };
 
@@ -548,13 +544,13 @@ async function executeResolved(
     case "ingredient_add": {
       const allItems = await getAllFoodItems(pubId);
       const targets = allItems.filter(item =>
-        action.items.some(q => item.name?.toLowerCase().includes(q.toLowerCase().trim()))
+        action.items.some(q => norm(item.name).includes(norm(q)))
       );
       if (!targets.length) return { ok: false, message: `❌ Nessun prodotto trovato tra: ${action.items.join(", ")}` };
 
       const updated: string[] = [];
       for (const item of targets) {
-        const already = (item.description ?? "").toLowerCase().includes(action.ingredient.toLowerCase());
+        const already = norm(item.description).includes(norm(action.ingredient));
         if (already) { updated.push(`${item.name} (già presente)`); continue; }
         const newDesc = item.description ? `${item.description}, ${action.ingredient}` : action.ingredient;
         await db.update(menuItems).set({ description: newDesc }).where(eq(menuItems.id, item.id));
