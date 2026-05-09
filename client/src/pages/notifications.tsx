@@ -78,6 +78,11 @@ const HISTORY_FILTERS: Array<{ value: string; label: string }> = [
   { value: 'new_brewery_request', label: 'Richieste birrificio' },
 ];
 
+function isIosDevice() { return /iPad|iPhone|iPod/.test(navigator.userAgent); }
+function isStandaloneMode() {
+  return window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
+}
+
 export default function Notifications() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading: authLoading } = useAuth();
@@ -88,6 +93,8 @@ export default function Notifications() {
   const [accumulated, setAccumulated] = useState<Notification[]>([]);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [filter, setFilter] = useState<string>('all');
+
+  const iosNotStandalone = isIosDevice() && !isStandaloneMode();
 
   // Reset paginazione quando cambia il filtro
   useEffect(() => { setPage(0); setAccumulated([]); }, [filter]);
@@ -293,7 +300,22 @@ export default function Notifications() {
       </div>
 
       {/* Push permission banner — sempre visibile in alto se non concesse */}
-      {notifPerm !== 'granted' && notifPerm !== 'unsupported' && (
+      {iosNotStandalone ? (
+        <div className="rounded-2xl p-4 border border-amber-200 dark:border-amber-800/50 bg-amber-50 dark:bg-amber-950/20 flex items-start gap-3">
+          <div className="p-2 rounded-xl flex-shrink-0 bg-amber-100 dark:bg-amber-900/30">
+            <Bell className="h-4 w-4 text-amber-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground">Notifiche push su iPhone</p>
+            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+              Su iPhone le notifiche push richiedono iOS 16.4+ e l'app installata dalla schermata home.
+            </p>
+            <p className="text-xs text-amber-700 dark:text-amber-400 mt-1.5 leading-snug font-medium">
+              In Safari: Condividi → "Aggiungi a schermata Home" → apri l'app installata
+            </p>
+          </div>
+        </div>
+      ) : notifPerm !== 'granted' && notifPerm !== 'unsupported' && (
         <div className={`rounded-2xl p-4 border flex items-start gap-3 ${notifPerm === 'denied' ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30' : 'bg-white dark:bg-card border-stone-100 dark:border-border'}`}>
           <div className={`p-2 rounded-xl flex-shrink-0 ${notifPerm === 'denied' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-stone-100 dark:bg-stone-800'}`}>
             <BellOff className={`h-4 w-4 ${notifPerm === 'denied' ? 'text-red-600' : 'text-stone-500'}`} />
@@ -478,32 +500,42 @@ export default function Notifications() {
               <Switch
                 checked={pushMaster}
                 onCheckedChange={(v) => updatePrefsMutation.mutate({ pushEnabled: v })}
+                disabled={iosNotStandalone}
                 data-testid="switch-push-master"
               />
             </div>
-            {notifPerm === 'granted' && pushStatus?.subscribed && (
-              <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
-                <CheckCircle2 className="h-3.5 w-3.5" />
-                Push attive su questo dispositivo
+            {iosNotStandalone ? (
+              <div className="mt-3 flex items-center gap-2 text-xs text-amber-700 dark:text-amber-400">
+                <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                <span>Richiede l'app installata dalla schermata home (Safari → Condividi → Aggiungi a schermata Home)</span>
               </div>
-            )}
-            {notifPerm === 'granted' && !pushStatus?.subscribed && (
-              <div className="mt-3 flex items-center justify-between gap-2 text-xs">
-                <span className="text-muted-foreground inline-flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5 text-primary" />Permesso concesso, registra il dispositivo</span>
-                <button onClick={handleSubscribe} disabled={isSubscribing} className="font-bold text-primary hover:underline">
-                  {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Attiva'}
-                </button>
-              </div>
-            )}
-            {notifPerm === 'granted' && pushStatus?.subscribed && (
-              <button
-                onClick={handleUnsubscribe}
-                disabled={isSubscribing}
-                className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-50 dark:bg-red-950/20 text-red-600 hover:bg-red-100 transition-colors"
-              >
-                {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellOff className="h-3.5 w-3.5" />}
-                Disattiva push su questo dispositivo
-              </button>
+            ) : (
+              <>
+                {notifPerm === 'granted' && pushStatus?.subscribed && (
+                  <div className="mt-3 flex items-center gap-2 text-xs text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    Push attive su questo dispositivo
+                  </div>
+                )}
+                {notifPerm === 'granted' && !pushStatus?.subscribed && (
+                  <div className="mt-3 flex items-center justify-between gap-2 text-xs">
+                    <span className="text-muted-foreground inline-flex items-center gap-1.5"><AlertCircle className="h-3.5 w-3.5 text-primary" />Permesso concesso, registra il dispositivo</span>
+                    <button onClick={handleSubscribe} disabled={isSubscribing} className="font-bold text-primary hover:underline">
+                      {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Attiva'}
+                    </button>
+                  </div>
+                )}
+                {notifPerm === 'granted' && pushStatus?.subscribed && (
+                  <button
+                    onClick={handleUnsubscribe}
+                    disabled={isSubscribing}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-red-50 dark:bg-red-950/20 text-red-600 hover:bg-red-100 transition-colors"
+                  >
+                    {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BellOff className="h-3.5 w-3.5" />}
+                    Disattiva push su questo dispositivo
+                  </button>
+                )}
+              </>
             )}
           </div>
 

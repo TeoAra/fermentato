@@ -34,14 +34,18 @@ function isInSafari(): boolean {
 
 export async function subscribeToPush(): Promise<{ success: boolean; error?: string }> {
   try {
+    const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent);
     if (!('serviceWorker' in navigator)) {
-      return { success: false, error: 'Il tuo browser non supporta i Service Worker. Prova ad installare l\'app dalla schermata home.' };
+      return { success: false, error: isIos ? 'Aggiungi Fermenta.to alla schermata home in Safari per attivare le notifiche.' : 'Il tuo browser non supporta i Service Worker.' };
     }
     if (!('PushManager' in window)) {
-      return { success: false, error: 'Il tuo browser non supporta le notifiche push. Prova con Chrome o Firefox.' };
+      return { success: false, error: isIos ? 'Su iPhone le notifiche push richiedono iOS 16.4+ e l\'app aggiunta alla schermata home in Safari.' : 'Il tuo browser non supporta le notifiche push. Prova con Chrome o Firefox.' };
     }
     if (!('Notification' in window)) {
       return { success: false, error: 'Le notifiche non sono supportate su questo dispositivo.' };
+    }
+    if (isIos && !isStandalone()) {
+      return { success: false, error: 'Su iPhone le notifiche push funzionano solo con l\'app installata. Apri in Safari → Condividi → "Aggiungi a schermata Home".' };
     }
 
     const permission = await Notification.requestPermission();

@@ -316,6 +316,7 @@
   button, a, [role="button"] {
     touch-action: manipulation;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
   }
 
   input, textarea, select {
