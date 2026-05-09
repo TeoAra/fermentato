@@ -39,13 +39,14 @@ export function RoleSwitcherBanner({ currentView }: RoleSwitcherBannerProps) {
 
   const currentConfig = ROLE_CONFIG[currentView];
 
-  async function switchTo(view: CurrentView) {
+  function switchTo(view: CurrentView) {
     const config = ROLE_CONFIG[view];
-    try {
-      await apiRequest("/api/auth/switch-role", { method: "POST" }, { role: config.role });
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-    } catch { /* ignore */ }
+    // Navigate immediately — critical for iOS Safari which feels laggy with async-before-navigate.
+    // The role switch is fire-and-forget; the cache invalidation will refresh user data shortly after.
     navigate(config.href);
+    apiRequest("/api/auth/switch-role", { method: "POST" }, { role: config.role })
+      .then(() => queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] }))
+      .catch(() => {});
   }
 
   const bgClass = {
@@ -82,7 +83,7 @@ export function RoleSwitcherBanner({ currentView }: RoleSwitcherBannerProps) {
             <button
               key={view}
               onClick={() => switchTo(view)}
-              className={`flex items-center gap-1.5 text-sm font-semibold transition-colors ${linkClass}`}
+              className={`flex items-center gap-1.5 text-sm font-semibold transition-colors px-2 py-1.5 -my-1 rounded-lg active:opacity-70 ${linkClass}`}
             >
               <Icon className="h-4 w-4" />
               {cfg.label} →

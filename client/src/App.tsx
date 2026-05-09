@@ -253,15 +253,17 @@ function Router() {
           <Route path="/explore/pubs" component={ExplorePubs} />
           <Route path="/explore/breweries" component={ExploreBreweries} />
           <Route path="/explore/beers" component={ExploreBeers} />
-          {/* Dashboard routes — activeRole is the source of truth */}
+          {/* Dashboard routes — activeRole is the source of truth.
+              Fallback checks roles[] + userType to handle the brief transitional window
+              when the user navigates before the role-switch API response arrives. */}
           <Route path="/dashboard" component={(
             typedUser?.activeRole === 'pub_owner' ? SmartPubDashboard :
             typedUser?.activeRole === 'brewery_owner' ? BreweryDashboard :
             typedUser?.activeRole === 'admin' ? AdminDashboardNew :
-            typedUser?.activeRole === 'customer' ? UserProfile :
-            // Fallback for legacy accounts with no activeRole set
-            !typedUser?.activeRole && typedUser?.userType === 'pub_owner' ? SmartPubDashboard :
-            !typedUser?.activeRole && typedUser?.userType === 'brewery_owner' ? BreweryDashboard :
+            // activeRole is customer/null — check roles array and userType as fallback
+            (typedUser?.roles || []).includes('pub_owner') || typedUser?.userType === 'pub_owner' ? SmartPubDashboard :
+            (typedUser?.roles || []).includes('brewery_owner') || typedUser?.userType === 'brewery_owner' ? BreweryDashboard :
+            (typedUser?.roles || []).includes('admin') || typedUser?.userType === 'admin' ? AdminDashboardNew :
             UserProfile
           ) as any} />
           {/* /profile always shows the user profile regardless of active role */}
