@@ -2044,6 +2044,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get pubs owned by current user  
+  app.get("/api/my-pub/pending-request", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const [req_] = await db.select({
+        status: publicanRequests.status,
+        pubName: publicanRequests.pubName,
+      }).from(publicanRequests).where(eq(publicanRequests.userId, userId));
+      res.json(req_ ?? null);
+    } catch (error) {
+      res.json(null);
+    }
+  });
+
   app.get("/api/my-pubs", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
@@ -3477,6 +3490,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching publican requests:", error);
       res.status(500).json({ message: "Failed to fetch publican requests" });
+    }
+  });
+
+  app.post('/api/admin/publican-requests/:id/approve', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { adminNotes } = req.body;
+      const adminId = (req.user as any).id;
+
+      const [pubReq] = await db.select().from(publicanRequests).where(eq(publicanRequests.id, id));
+      if (!pubReq) return res.status(404).json({ message: "Richiesta non trovata" });
+      if (pubReq.status === 'approved') return res.status(400).json({ message: "Già approvata" });
+
+      // Create the pub from request data
+      const trialEndsAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000);
+      const [newPub] = await db.insert(pubs).values({
+        name: pubReq.pubName,
+        address: pubReq.pubAddress,
+        city: pubReq.pubCity,
+        region: pubReq.pubRegion || pubReq.pubCity,
+        phone: pubReq.phone || null,
+        email: pubReq.email || null,
+        description: pubReq.description || null,
+        vatNumber: pubReq.vatNumber || null,
+        ownerId: pubReq.userId,
+        isVerified: true,
+        subscriptionStatus: 'trial',
+        trialEndsAt,
+        isActive: true,
+      }).returning();
+
+      // Update request status
+      await db.update(publicanRequests).set({
+        status: 'approved',
+        adminNotes: adminNotes || null,
+        reviewedAt: new Date(),
+        reviewedBy: adminId,
+      }).where(eq(publicanRequests.id, id));
+
+      // Promote user to pub_owner, preserving existing roles
+      const [existingUser] = await db.select({ roles: users.roles, userType: users.userType }).from(users).where(eq(users.id, pubReq.userId));
+      const currentRoles: string[] = existingUser?.roles || ['customer'];
+      const newRoles = currentRoles.includes('pub_owner') ? currentRoles : [...currentRoles, 'pub_owner'];
+
+      await db.update(users).set({
+        roles: newRoles,
+        userType: 'pub_owner',
+        activeRole: 'pub_owner',
+        updatedAt: new Date(),
+      }).where(eq(users.id, pubReq.userId));
+
+      // Notify user
+      try {
+        await db.insert(notifications).values({
+          userId: pubReq.userId,
+          type: 'system',
+          title: '🎉 Pub approvato!',
+          message: `Il tuo locale "${pubReq.pubName}" è stato verificato. Accedi alla dashboard per gestire taplist e menu.`,
+          isRead: false,
+        });
+      } catch {}
+
+      res.json({ success: true, pubId: newPub.id });
+    } catch (error) {
+      console.error("Error approving publican request:", error);
+      res.status(500).json({ message: "Failed to approve publican request" });
     }
   });
 

@@ -284,12 +284,15 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
                 <SectionLabel>Account</SectionLabel>
                 <MenuItem href="/dashboard" icon={User} label="Il mio profilo" />
-                <MenuItem href="/activity" icon={Activity} label="Attività" />
-                <MenuItem href="/notifications" icon={Bell} label="Notifiche"
-                  badge={(unreadData?.count ?? 0) > 0 ? unreadData?.count : undefined} />
+                {((user as any)?.activeRole === 'pub_owner' || (user as any)?.userType === 'pub_owner') && (
+                  <MenuItem href="/dashboard" icon={Store} label="Gestione Pub" desc="Taplist, menu, eventi" />
+                )}
                 {((user as any)?.activeRole === 'admin' || (!(user as any)?.activeRole && (user as any)?.userType === 'admin')) && (
                   <MenuItem href="/admin" icon={Shield} label="Admin Panel" />
                 )}
+                <MenuItem href="/activity" icon={Activity} label="Attività" />
+                <MenuItem href="/notifications" icon={Bell} label="Notifiche"
+                  badge={(unreadData?.count ?? 0) > 0 ? unreadData?.count : undefined} />
               </>
             )}
 

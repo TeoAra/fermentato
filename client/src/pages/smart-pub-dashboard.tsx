@@ -361,9 +361,17 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   });
 
   // Fetch pub data - either from admin mode or owner mode
+  // Check both userType and activeRole so newly-approved publican sessions work
+  const isPubOwnerContext = (user as any)?.userType === 'pub_owner' || (user as any)?.activeRole === 'pub_owner' || (user as any)?.userType === 'admin';
   const { data: userPubs, isLoading: pubsLoading } = useQuery({
     queryKey: isAdminMode ? ["/api/pubs", String(adminPubId)] : ["/api/my-pubs"],
-    enabled: isAuthenticated && (isAdminMode || (user as any)?.userType === 'pub_owner' || (user as any)?.userType === 'admin'),
+    enabled: isAuthenticated && (isAdminMode || isPubOwnerContext),
+  });
+
+  // If no pub found, check if there's a pending request so we can show the right state
+  const { data: pendingRequest } = useQuery<{ status: string; pubName: string } | null>({
+    queryKey: ["/api/my-pub/pending-request"],
+    enabled: isAuthenticated && !isAdminMode && isPubOwnerContext,
   });
 
   // In admin mode, userPubs is a single pub object; in owner mode it's an array
@@ -1908,19 +1916,41 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   }
 
   if (!currentPub) {
+    const isPending = pendingRequest?.status === 'pending';
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
-        <div className="text-center space-y-4">
-          <Store className="w-16 h-16 text-muted-foreground mx-auto" />
-          <h2 className="text-2xl font-bold text-foreground dark:text-white">Nessun pub trovato</h2>
-          <p className="text-muted-foreground dark:text-muted-foreground">
-            Non hai ancora registrato un pub. Registrane uno per accedere alla dashboard.
-          </p>
-          <Link href="/registra-pub">
-            <Button className="mt-4">
-              Registra un Pub
-            </Button>
-          </Link>
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950 px-6">
+        <div className="text-center space-y-4 max-w-sm">
+          {isPending ? (
+            <>
+              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-amber-50 dark:bg-amber-900/20 mx-auto">
+                <Clock className="w-10 h-10 text-amber-500" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground dark:text-white">Richiesta in attesa</h2>
+              <p className="text-muted-foreground">
+                La tua richiesta per <strong className="text-foreground">{pendingRequest?.pubName}</strong> è in fase di revisione. Riceverai una notifica non appena sarà approvata.
+              </p>
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 text-sm font-medium">
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+                In attesa di approvazione
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-stone-100 dark:bg-stone-800 mx-auto">
+                <Store className="w-10 h-10 text-muted-foreground" />
+              </div>
+              <h2 className="text-2xl font-bold text-foreground dark:text-white">Nessun pub trovato</h2>
+              <p className="text-muted-foreground">
+                Non hai ancora registrato un pub. Registrane uno per accedere alla dashboard.
+              </p>
+              <Link href="/become-publican">
+                <Button className="mt-2 bg-primary hover:bg-primary/90 text-white rounded-xl">
+                  <Store className="w-4 h-4 mr-2" />
+                  Registra il tuo locale
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
       </div>
     );
