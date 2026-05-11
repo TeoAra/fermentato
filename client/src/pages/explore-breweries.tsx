@@ -92,7 +92,7 @@ const PAGE_SIZE = 30;
 export default function ExploreBreweries() {
   const [searchInput, setSearchInput] = useState("");
   const [debouncedQ, setDebouncedQ] = useState("");
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>("italian");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [mapVisible, setMapVisible] = useState(true);
   const [page, setPage] = useState(1);
@@ -312,7 +312,7 @@ export default function ExploreBreweries() {
           {mapVisible && (
             <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-stone-800 mb-3">
               <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
-                <PubMap pins={breweryMapPins} height="100%" onError={() => setMapVisible(false)} />
+                <PubMap pins={breweryMapPins} height="100%" onError={() => setMapVisible(false)} label="birrifici" />
               </Suspense>
             </div>
           )}

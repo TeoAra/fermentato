@@ -17,12 +17,13 @@ interface PubMapProps {
   pins: MapPin[];
   height?: string;
   onError?: () => void;
+  label?: string;
 }
 
 const ITALY_CENTER: [number, number] = [12.4964, 41.9028];
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
-export function PubMap({ pins, height = "100%", onError }: PubMapProps) {
+export function PubMap({ pins, height = "100%", onError, label }: PubMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
@@ -240,7 +241,7 @@ export function PubMap({ pins, height = "100%", onError }: PubMapProps) {
           <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">Il tuo browser non supporta la visualizzazione 3D richiesta dalla mappa</p>
         </div>
         <p className="text-xs text-stone-400 dark:text-stone-600">
-          {validPins.length} {validPins.length === 1 ? "locale" : "locali"} disponibili
+          {validPins.length} {label ?? (validPins.length === 1 ? "locale" : "locali")} disponibili
         </p>
       </div>
     );
@@ -253,7 +254,7 @@ export function PubMap({ pins, height = "100%", onError }: PubMapProps) {
       {/* Info badge */}
       <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/90 dark:bg-black/70 backdrop-blur-sm shadow text-foreground">
         <span className="w-2 h-2 rounded-full bg-primary inline-block" />
-        {pinsWithCoords} {pinsWithCoords === 1 ? "locale" : "locali"} su mappa
+        {pinsWithCoords} {label ?? (pinsWithCoords === 1 ? "locale" : "locali")} su mappa
         {pinsWithCoords < pinsTotal && (
           <span className="text-muted-foreground font-normal">/ {pinsTotal} totali</span>
         )}

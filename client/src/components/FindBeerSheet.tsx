@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import {
-  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Map, Clock, Shuffle, Loader2, Factory
+  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Clock, Shuffle, Loader2, Factory
 } from "lucide-react";
 
 const RECENT_KEY = "fermenta:recentSearches";
@@ -47,7 +47,7 @@ const SHORTCUTS = [
 export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBeerSheetProps) {
   const [query, setQuery] = useState("");
   const [activeStyle, setActiveStyle] = useState("");
-  const [activeTab, setActiveTab] = useState<"birre" | "locali">("birre");
+  const [activeTab, setActiveTab] = useState<"birre" | "birrifici" | "locali">("birre");
   const [recents, setRecents] = useState<Recent[]>([]);
   const [surpriseLoading, setSurpriseLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -299,33 +299,88 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
         })()}
 
         <div className="px-4 pb-3 flex-shrink-0">
-          <div className="flex items-center gap-2">
-            <div className="flex bg-stone-100 dark:bg-stone-800/60 rounded-2xl p-1 gap-1 flex-1">
-              {(["birre", "locali"] as const).map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
-                    activeTab === tab
-                      ? "bg-white dark:bg-stone-700 text-foreground shadow-sm"
-                      : "text-stone-400 dark:text-stone-500"
-                  }`}
-                >
-                  {tab === "birre" ? "🍺 Birre" : "🏠 Locali"}
-                </button>
-              ))}
-            </div>
-            <Link href="/explore/pubs?view=map" onClick={onClose}>
-              <button className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2.5 rounded-2xl bg-stone-100 dark:bg-stone-800/60 text-stone-600 dark:text-stone-300 text-sm font-bold border border-stone-200 dark:border-stone-700 tap-scale">
-                <Map className="w-4 h-4 text-primary" />
-                Mappa
+          <div className="flex bg-stone-100 dark:bg-stone-800/60 rounded-2xl p-1 gap-1">
+            {(["birre", "birrifici", "locali"] as const).map(tab => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                  activeTab === tab
+                    ? "bg-white dark:bg-stone-700 text-foreground shadow-sm"
+                    : "text-stone-400 dark:text-stone-500"
+                }`}
+              >
+                {tab === "birre" ? "🍺 Birre" : tab === "birrifici" ? "🏭 Birrifici" : "🏠 Locali"}
               </button>
-            </Link>
+            ))}
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto px-4 pb-6 min-h-0">
-          {activeTab === "birre" ? (
+          {activeTab === "birrifici" ? (
+            query.length > 1 ? (
+              isLoading ? (
+                <div className="space-y-2.5">
+                  {[...Array(4)].map((_, i) => (
+                    <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-stone-800/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+                  ))}
+                </div>
+              ) : breweries.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-xs font-semibold text-stone-400 mb-2.5 flex items-center gap-1.5">
+                    <Factory className="w-3.5 h-3.5 text-primary" />
+                    {breweries.length} birrifici per "{query.trim()}"
+                  </p>
+                  {breweries.slice(0, 15).map((brewery: any) => (
+                    <Link key={brewery.id} href={`/brewery/${brewery.id}`} onClick={onClose}>
+                      <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
+                        <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-stone-800 overflow-hidden flex items-center justify-center">
+                          {brewery.logoUrl ? (
+                            <img src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <Factory className="w-5 h-5 text-stone-300" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-[14px] text-foreground truncate">{brewery.name}</p>
+                          <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">
+                            {[brewery.location || brewery.city, brewery.country].filter(Boolean).join(" · ")}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-4 h-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />
+                      </div>
+                    </Link>
+                  ))}
+                  <Link href={`/explore/breweries?q=${encodeURIComponent(query)}`} onClick={onClose}>
+                    <button className="w-full text-center py-3 text-sm font-bold text-primary">
+                      Vedi tutti i risultati →
+                    </button>
+                  </Link>
+                </div>
+              ) : (
+                <div className="text-center py-14">
+                  <Factory className="w-12 h-12 mx-auto mb-3 text-stone-200 dark:text-stone-700" />
+                  <p className="font-bold text-stone-500 dark:text-stone-400 mb-1">Nessun birrificio per "{query.trim()}"</p>
+                  <p className="text-sm text-stone-400">Prova con un altro nome o città</p>
+                </div>
+              )
+            ) : (
+              <div className="flex flex-col items-center gap-4 py-10 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
+                  <Factory className="w-7 h-7 text-primary" />
+                </div>
+                <div>
+                  <p className="font-semibold text-stone-600 dark:text-stone-400">Cerca un birrificio</p>
+                  <p className="text-sm text-stone-400 mt-1">Digita il nome o la città qui sopra</p>
+                </div>
+                <Link href="/explore/breweries" onClick={onClose}>
+                  <button className="px-5 py-2.5 rounded-2xl bg-primary text-white text-sm font-bold tap-scale">
+                    Esplora tutti i birrifici →
+                  </button>
+                </Link>
+              </div>
+            )
+          ) : activeTab === "birre" ? (
             isLoading ? (
               <div className="space-y-2.5">
                 {[...Array(5)].map((_, i) => (

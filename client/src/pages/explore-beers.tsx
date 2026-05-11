@@ -104,7 +104,6 @@ export default function ExploreBeers() {
   const [pubFilter, setPubFilter] = useState<"all" | "open">("all");
   const [stylesView, setStylesView] = useState<null | "popular" | "discover">(null);
   const [findBeerOpen, setFindBeerOpen] = useState(false);
-  const [mapVisible, setMapVisible] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
     try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
   });
@@ -145,18 +144,6 @@ export default function ExploreBeers() {
     return sorted.slice(0, 40);
   }, [popularStyles, stylesView]);
 
-  // Pubs per la mini-mappa sotto la barra di ricerca
-  const { data: allPubsForMap } = useQuery<any[]>({
-    queryKey: ["/api/pubs/all"],
-    staleTime: 5 * 60 * 1000,
-  });
-  const beerMapPins = useMemo(() => {
-    const arr: any[] = Array.isArray(allPubsForMap) ? allPubsForMap : [];
-    return arr
-      .filter(p => p.latitude && p.longitude)
-      .slice(0, 500)
-      .map(p => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude), longitude: String(p.longitude), logoUrl: p.logoUrl, type: "pub" as const }));
-  }, [allPubsForMap]);
 
   const { data: styleBeers, isLoading: styleLoading } = useQuery<any[]>({
     queryKey: ["/api/beers/by-style", activeStyle],
@@ -292,7 +279,7 @@ export default function ExploreBeers() {
         // MAIN VIEW — Esplora Birre
         // ═══════════════════════════════════════════════════════════════
         <>
-        {/* Search bar + mini map — sticky sotto header */}
+        {/* Search bar + filtri stile — sticky sotto header */}
         <div className="sticky top-14 lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
           <PageContainer variant="narrow" className="py-2.5 space-y-2.5">
             <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-2.5 border border-stone-100 dark:border-stone-800/60 shadow-sm">
@@ -310,14 +297,30 @@ export default function ExploreBeers() {
                 <SlidersHorizontal className="h-4 w-4 text-stone-400" />
               )}
             </div>
-            {/* Mini mappa — si nasconde se WebGL non è disponibile */}
-            {mapVisible && (
-              <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-stone-800">
-                <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
-                  <PubMap pins={beerMapPins} height="100%" onError={() => setMapVisible(false)} />
-                </Suspense>
-              </div>
-            )}
+            {/* Quick-filter stili */}
+            <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-0.5 px-0.5 pb-0.5">
+              {[
+                { label: "IPA",     emoji: "🌿", api: "IPA" },
+                { label: "Stout",   emoji: "🖤", api: "Stout - Imperial" },
+                { label: "Sour",    emoji: "🍒", api: "Sour / Wild Beer" },
+                { label: "Weizen",  emoji: "🌾", api: "Weissbier - Hefeweizen" },
+                { label: "Pilsner", emoji: "🍺", api: "Pilsener / Pils / Pilsner" },
+                { label: "Saison",  emoji: "🌻", api: "Saison / Farmhouse / Grisette" },
+                { label: "Porter",  emoji: "☕", api: "Porter" },
+                { label: "Amber",   emoji: "🟧", api: "Red Ale / International Amber Ale" },
+                { label: "Hazy",    emoji: "☁️", api: "IPA - Hazy (NEIPA)" },
+                { label: "DIPA",    emoji: "💪", api: "IIPA DIPA - Imperial / Double IPA" },
+              ].map(s => (
+                <button
+                  key={s.label}
+                  onClick={() => selectStyle(s.api)}
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-white dark:bg-card border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-200 tap-scale hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-colors shadow-sm"
+                >
+                  <span className="text-sm leading-none">{s.emoji}</span>
+                  {s.label}
+                </button>
+              ))}
+            </div>
           </PageContainer>
         </div>
 
@@ -495,7 +498,7 @@ export default function ExploreBeers() {
       <FindBeerSheet
         open={findBeerOpen}
         onClose={() => setFindBeerOpen(false)}
-        nearbyPubs={Array.isArray(allPubsForMap) ? allPubsForMap : []}
+        nearbyPubs={[]}
       />
     </div>
   );
