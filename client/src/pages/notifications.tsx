@@ -109,12 +109,13 @@ export default function Notifications() {
       toast({ title: "Accesso richiesto", description: "Effettua l'accesso per vedere le notifiche.", variant: "destructive" });
       setTimeout(() => { setLocation('/login'); }, 500);
     }
-  }, [isAuthenticated, authLoading, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, authLoading]);
 
   const { data: pushStatus, refetch: refetchPush } = useQuery<{ subscribed: boolean; subscriptionCount: number }>({
     queryKey: ['/api/push/status'], enabled: isAuthenticated,
   });
-  const { data: pageData = [], isLoading: notifLoading } = useQuery<Notification[]>({
+  const { data: pageData, isLoading: notifLoading } = useQuery<Notification[]>({
     queryKey: ['/api/notifications', filter, page],
     queryFn: async () => {
       const offset = page * NOTIF_PAGE_SIZE;
@@ -128,7 +129,10 @@ export default function Notifications() {
   });
 
   // Accumula i risultati di pagine successive (modalità "Carica altre")
+  // NOTE: pageData must NOT use a default `= []` in destructuring — a new [] on every
+  // render would make this effect loop infinitely (new reference → setState → re-render).
   useEffect(() => {
+    if (!pageData) return;
     if (page === 0) setAccumulated(pageData);
     else if (pageData.length > 0) setAccumulated(prev => {
       const seen = new Set(prev.map(n => n.id));
@@ -136,7 +140,7 @@ export default function Notifications() {
     });
   }, [pageData, page]);
   const notificationsList = accumulated;
-  const hasMore = pageData.length === NOTIF_PAGE_SIZE;
+  const hasMore = (pageData?.length ?? 0) === NOTIF_PAGE_SIZE;
   const { data: preferences } = useQuery<NotificationPreference>({
     queryKey: ['/api/notification-preferences'], enabled: isAuthenticated,
   });

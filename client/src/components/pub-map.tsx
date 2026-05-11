@@ -26,6 +26,7 @@ export function PubMap({ pins, height = "100%" }: PubMapProps) {
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
   const [locating, setLocating] = useState(false);
+  const [mapError, setMapError] = useState(false);
   const geoCtrlRef = useRef<maplibregl.GeolocateControl | null>(null);
 
   const validPins = pins.filter(
@@ -37,13 +38,19 @@ export function PubMap({ pins, height = "100%" }: PubMapProps) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
 
-    const map = new maplibregl.Map({
-      container: containerRef.current,
-      style: MAP_STYLE,
-      center: ITALY_CENTER,
-      zoom: 5.5,
-      attributionControl: false,
-    });
+    let map: maplibregl.Map;
+    try {
+      map = new maplibregl.Map({
+        container: containerRef.current,
+        style: MAP_STYLE,
+        center: ITALY_CENTER,
+        zoom: 5.5,
+        attributionControl: false,
+      });
+    } catch {
+      setMapError(true);
+      return;
+    }
 
     map.addControl(new maplibregl.AttributionControl({ compact: true }), "bottom-right");
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), "top-right");
@@ -219,6 +226,23 @@ export function PubMap({ pins, height = "100%" }: PubMapProps) {
 
   const pinsWithCoords = validPins.length;
   const pinsTotal = pins.length;
+
+  if (mapError) {
+    return (
+      <div className="relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border bg-stone-50 dark:bg-stone-900/30 flex flex-col items-center justify-center gap-3 text-center px-6" style={{ height }}>
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-stone-300 dark:text-stone-600">
+          <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+        </svg>
+        <div>
+          <p className="text-sm font-semibold text-stone-500 dark:text-stone-400">Mappa non disponibile</p>
+          <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">Il tuo browser non supporta la visualizzazione 3D richiesta dalla mappa</p>
+        </div>
+        <p className="text-xs text-stone-400 dark:text-stone-600">
+          {validPins.length} {validPins.length === 1 ? "locale" : "locali"} disponibili
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div data-no-pull="true" className="relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border" style={{ height }}>

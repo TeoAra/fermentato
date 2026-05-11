@@ -295,6 +295,7 @@ function Router() {
           <Route path="/search" component={SearchPage} />
           <Route path="/activity" component={Activity} />
           <Route path="/eventi" component={Eventi} />
+          <Route path="/events">{() => { window.location.replace("/eventi"); return null; }}</Route>
           <Route path="/eventi/:type/:id" component={EventDetail} />
           <Route path="/my-cellar" component={MyCellar} />
           <Route path="/my-wishlist" component={MyWishlist} />
