@@ -16,12 +16,13 @@ export interface MapPin {
 interface PubMapProps {
   pins: MapPin[];
   height?: string;
+  onError?: () => void;
 }
 
 const ITALY_CENTER: [number, number] = [12.4964, 41.9028];
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
-export function PubMap({ pins, height = "100%" }: PubMapProps) {
+export function PubMap({ pins, height = "100%", onError }: PubMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
@@ -49,6 +50,7 @@ export function PubMap({ pins, height = "100%" }: PubMapProps) {
       });
     } catch {
       setMapError(true);
+      onError?.();
       return;
     }
 

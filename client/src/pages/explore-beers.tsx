@@ -104,6 +104,7 @@ export default function ExploreBeers() {
   const [pubFilter, setPubFilter] = useState<"all" | "open">("all");
   const [stylesView, setStylesView] = useState<null | "popular" | "discover">(null);
   const [findBeerOpen, setFindBeerOpen] = useState(false);
+  const [mapVisible, setMapVisible] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
     try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
   });
@@ -291,8 +292,8 @@ export default function ExploreBeers() {
         // MAIN VIEW — Esplora Birre
         // ═══════════════════════════════════════════════════════════════
         <>
-        {/* Search bar + mini map — scorre con la pagina */}
-        <div className="bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
+        {/* Search bar + mini map — sticky sotto header */}
+        <div className="sticky top-14 lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800/60">
           <PageContainer variant="narrow" className="py-2.5 space-y-2.5">
             <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-2.5 border border-stone-100 dark:border-stone-800/60 shadow-sm">
               <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
@@ -309,10 +310,14 @@ export default function ExploreBeers() {
                 <SlidersHorizontal className="h-4 w-4 text-stone-400" />
               )}
             </div>
-            {/* Mini mappa — pin dei pub vicino a te */}
-            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[240px] lg:h-[260px] bg-stone-100 dark:bg-stone-800">
-              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={beerMapPins} height="100%" /></Suspense>
-            </div>
+            {/* Mini mappa — si nasconde se WebGL non è disponibile */}
+            {mapVisible && (
+              <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-stone-800">
+                <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
+                  <PubMap pins={beerMapPins} height="100%" onError={() => setMapVisible(false)} />
+                </Suspense>
+              </div>
+            )}
           </PageContainer>
         </div>
 

@@ -50,6 +50,7 @@ export default function ExplorePubs() {
   const initialView: ViewMode = params.get("view") === "map" ? "map" : "list";
 
   const [viewMode, setViewMode] = useState<ViewMode>(initialView);
+  const [mapVisible, setMapVisible] = useState(true);
   const [search, setSearch] = useState("");
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
   const [distanceKm, setDistanceKm] = useState(10);
@@ -252,10 +253,18 @@ export default function ExplorePubs() {
             }
           </div>
 
-          {/* Mini mappa — pin di tutti i pub (filtrati dalla ricerca/zona) */}
-          <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[240px] lg:h-[260px] bg-stone-100 dark:bg-stone-800 mb-3">
-            <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={(filtered.length > 0 ? filtered : pubsArr).map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude || ""), longitude: String(p.longitude || ""), logoUrl: p.logoUrl, type: "pub" as const }))} height="100%" /></Suspense>
-          </div>
+          {/* Mini mappa — si nasconde se WebGL non è disponibile */}
+          {mapVisible && (
+            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-stone-800 mb-3">
+              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
+                <PubMap
+                  pins={(filtered.length > 0 ? filtered : pubsArr).map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude || ""), longitude: String(p.longitude || ""), logoUrl: p.logoUrl, type: "pub" as const }))}
+                  height="100%"
+                  onError={() => setMapVisible(false)}
+                />
+              </Suspense>
+            </div>
+          )}
 
           {/* Distance + filter chips */}
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 lg:-mx-6 lg:px-6">
