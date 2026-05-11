@@ -1018,8 +1018,8 @@ export default function PubDetail() {
                   ) : filteredBottles.length > 0 ? (
                     <div className="divide-y divide-stone-100 dark:divide-stone-800 tab-enter">
                       {filteredBottles.map((bottle: any) => (
-                        <div key={bottle.id} className="flex items-center gap-3 px-4 py-3 tap-scale active:bg-stone-50 dark:active:bg-white/[0.03]">
-                          <Link href={`/beer/${bottle.beer?.id}`} className="flex-shrink-0">
+                        <Link key={bottle.id} href={`/beer/${bottle.beer?.id}`} className="flex items-center gap-3 px-4 py-3 tap-scale active:bg-stone-50 dark:active:bg-white/[0.03]">
+                          <div className="flex-shrink-0">
                             <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-50 dark:bg-stone-900 border border-stone-100 dark:border-stone-800">
                               <ImageWithFallback
                                 src={bottle.beer?.imageUrl || bottle.beer?.logoUrl}
@@ -1030,11 +1030,9 @@ export default function PubDetail() {
                                 iconSize="sm"
                               />
                             </div>
-                          </Link>
+                          </div>
                           <div className="flex-1 min-w-0">
-                            <Link href={`/beer/${bottle.beer?.id}`}>
-                              <div className="font-semibold text-sm text-foreground leading-snug line-clamp-1 hover:text-primary transition-colors">{bottle.beer?.name}</div>
-                            </Link>
+                            <div className="font-semibold text-sm text-foreground leading-snug line-clamp-1">{bottle.beer?.name}</div>
                             <div className="text-xs text-muted-foreground mt-0.5 truncate">
                               {bottle.beer?.brewery?.name || bottle.beer?.breweryName}
                               {bottle.beer?.style && ` · ${bottle.beer.style}`}
@@ -1053,11 +1051,15 @@ export default function PubDetail() {
                               ))}
                             </div>
                           )}
-                          <button onClick={(e) => { e.stopPropagation(); if (isAuthenticated) setCheckinBottle(bottle.beer); }}
-                            className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 dark:bg-primary/15 text-primary flex items-center justify-center tap-scale">
-                            <Plus className="h-4 w-4" />
-                          </button>
-                        </div>
+                          {isAuthenticated && (
+                            <button
+                              onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCheckinBottle(bottle.beer); }}
+                              className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 dark:bg-primary/15 text-primary flex items-center justify-center tap-scale"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </button>
+                          )}
+                        </Link>
                       ))}
                     </div>
                   ) : (
