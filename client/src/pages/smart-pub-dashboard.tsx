@@ -278,6 +278,8 @@ interface SmartPubDashboardProps {
   adminPubId?: number;
 }
 
+const isIosDevice = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+
 export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps = {}) {
   const { user, isAuthenticated } = useAuth();
   const isAdminMode = !!adminPubId;
@@ -772,6 +774,21 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </code>
                   <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
+                {/* iOS: step-by-step AirPlay / Screen Mirroring guide */}
+                {isIosDevice && (
+                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-2">
+                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
+                      <Tv className="h-4 w-4 flex-shrink-0" /> Trasmetti su Apple TV
+                    </p>
+                    <ol className="text-xs text-blue-600 dark:text-blue-400 space-y-1.5 list-decimal list-inside">
+                      <li>Tocca <strong>"Apri Taplist TV"</strong> qui sotto</li>
+                      <li>Scorri dall'<strong>angolo in alto a destra</strong> dello schermo</li>
+                      <li>Tocca <strong>Duplica Schermo</strong> (o Schermo)</li>
+                      <li>Seleziona il tuo <strong>Apple TV</strong> o AirPlay receiver</li>
+                    </ol>
+                  </div>
+                )}
+
                 <Button
                   className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base"
                   onClick={async () => {
@@ -779,14 +796,23 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
                     const castFramework = w.cast?.framework;
 
-                    // iOS / mobile Safari: use native share sheet (AirPlay, etc.)
-                    if (!castFramework && navigator.share) {
+                    // iOS: open TV page + try AirPlay picker + guide user to Screen Mirroring
+                    if (isIosDevice) {
+                      window.open(tvUrl, '_blank');
                       try {
-                        await navigator.share({ title: "Taplist Live", url: tvUrl });
-                      } catch (err: any) {
-                        if (err?.name === "AbortError") return;
-                        window.open(tvUrl, "_blank");
-                      }
+                        const video = document.createElement('video');
+                        video.setAttribute('x-webkit-airplay', 'allow');
+                        video.muted = true;
+                        (video as any).playsInline = true;
+                        document.body.appendChild(video);
+                        setTimeout(() => {
+                          if ((video as any).webkitShowPlaybackTargetPicker) {
+                            (video as any).webkitShowPlaybackTargetPicker();
+                          }
+                          setTimeout(() => { if (document.body.contains(video)) document.body.removeChild(video); }, 10000);
+                        }, 400);
+                      } catch {}
+                      toast({ title: "Taplist aperta!", description: "Centro di Controllo → Duplica Schermo → Apple TV" });
                       return;
                     }
 
@@ -816,7 +842,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   }}
                 >
                   <Cast className="h-5 w-5" />
-                  Trasmetti Taplist su TV
+                  {isIosDevice ? "Apri Taplist TV" : "Trasmetti Taplist su TV"}
                 </Button>
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1 gap-2 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl" onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}>

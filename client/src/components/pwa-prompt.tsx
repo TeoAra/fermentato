@@ -173,7 +173,7 @@ export function AutoPushSubscriber() {
   return null;
 }
 
-function IosInstallGuide({ onClose }: { onClose: () => void }) {
+export function IosInstallGuide({ onClose }: { onClose: () => void }) {
   const [step, setStep] = useState(0);
   const inSafari = isInSafari();
 

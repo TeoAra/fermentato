@@ -1,4 +1,4 @@
-import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Bell, Activity, QrCode, Building2, Zap, Star, MapPin, ChevronRight, Home, PlusCircle, MessageSquare, ArrowLeft } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Bell, Activity, QrCode, Building2, Zap, Star, MapPin, ChevronRight, Home, PlusCircle, MessageSquare, ArrowLeft, Download } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -9,6 +9,7 @@ import type { User as UserType } from "@shared/schema";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useState, useEffect } from "react";
 import FindBeerSheet from "@/components/FindBeerSheet";
+import { IosInstallGuide } from "@/components/pwa-prompt";
 
 function useScrolled(threshold = 12) {
   const [scrolled, setScrolled] = useState(false);
@@ -63,7 +64,14 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const { isAuthenticated, user } = useAuth();
   const typedUser = user as UserType | undefined;
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [showIosInstallGuide, setShowIosInstallGuide] = useState(false);
   const scrolled = useScrolled(12);
+
+  const isIosBrowser = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isStandaloneMode = typeof window !== 'undefined' && (
+    window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true
+  );
+  const showIosInstallEntry = isIosBrowser && !isStandaloneMode;
 
   const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
     queryKey: ["/api/auth/roles"],
@@ -351,6 +359,27 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
               </>
             )}
 
+            {/* iOS PWA Install — sempre visibile su iOS Safari non-standalone */}
+            {showIosInstallEntry && (
+              <>
+                <SectionLabel>App</SectionLabel>
+                <button
+                  onClick={() => { setShowIosInstallGuide(true); }}
+                  className="flex items-center gap-3 mx-2 px-3 py-2.5 rounded-xl hover:bg-orange-50 dark:hover:bg-primary/10 transition-colors tap-scale w-full text-left"
+                >
+                  <div className="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white relative">
+                    <Download className="h-[18px] w-[18px]" />
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-[#0F0F10]" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-semibold text-foreground leading-snug">Installa l'app</div>
+                    <div className="text-xs text-muted-foreground truncate mt-0.5">Aggiungi alla schermata Home</div>
+                  </div>
+                  <ChevronRight className="h-3.5 w-3.5 text-stone-300 dark:text-stone-600 flex-shrink-0" />
+                </button>
+              </>
+            )}
+
           </div>
 
           {/* ── Footer: theme + logout ── */}
@@ -386,6 +415,9 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       </Sheet>
 
       <FindBeerSheet open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      {showIosInstallGuide && (
+        <IosInstallGuide onClose={() => setShowIosInstallGuide(false)} />
+      )}
     </>
   );
 }
