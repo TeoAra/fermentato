@@ -31,7 +31,7 @@ function WebUpdateBanner({ onDismiss }: { onDismiss: () => void }) {
   }, []);
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-50 max-w-sm mx-auto">
+    <div className="fixed bottom-nav-above left-4 right-4 z-50 max-w-sm mx-auto">
       <div className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3 shadow-2xl flex items-center gap-3">
         <div className="p-1.5 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex-shrink-0">
           <RefreshCw className="w-4 h-4 text-white" />

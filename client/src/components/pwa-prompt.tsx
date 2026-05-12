@@ -351,7 +351,7 @@ export function PwaInstallPrompt() {
     <>
       {showIosGuide && <IosInstallGuide onClose={() => { setShowIosGuide(false); handleDismiss(); }} />}
 
-      <div className="fixed bottom-20 lg:bottom-4 left-4 right-4 lg:left-auto lg:right-4 lg:w-96 z-50 animate-in slide-in-from-bottom-5">
+      <div className="fixed bottom-nav-above left-4 right-4 lg:left-auto lg:right-4 lg:w-96 z-50 animate-in slide-in-from-bottom-5">
         <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">
@@ -530,7 +530,7 @@ export function CapacitorPushPrompt() {
   if (!isNative || !show || dismissed) return null;
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-50">
+    <div className="fixed bottom-nav-above left-4 right-4 z-50">
       <div className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
         <div className="flex items-start gap-3">
           <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">
@@ -607,7 +607,7 @@ export function PushNotificationPrompt() {
   if (!show || dismissed) return null;
 
   return (
-    <div className="fixed bottom-20 lg:bottom-4 left-4 right-4 lg:left-auto lg:right-4 lg:w-96 z-50 animate-in slide-in-from-bottom-5">
+    <div className="fixed bottom-nav-above left-4 right-4 lg:left-auto lg:right-4 lg:w-96 z-50 animate-in slide-in-from-bottom-5">
       <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
         <div className="flex items-start gap-3">
           <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">
