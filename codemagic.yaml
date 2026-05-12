@@ -1,37 +1,37 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# Codemagic CI/CD — Fermenta.to iOS IPA
+# Codemagic CI/CD — Fermenta.to iOS IPA (firma automatica, senza Mac fisico)
 #
-# Setup (una tantum su codemagic.io):
-#   1. Crea account su https://codemagic.io (gratis, 500 min macOS/mese)
-#   2. Collega il repo GitHub
-#   3. In "Team settings" → "Code signing identities":
-#      - Carica il tuo certificato iOS (.p12) e la passphrase
-#      - Carica il provisioning profile (.mobileprovision)
-#   4. In questo workflow imposta le variabili d'ambiente:
-#      - APP_STORE_CONNECT_ISSUER_ID   (per firma automatica, opzionale)
-#      - APP_STORE_CONNECT_KEY_ID
-#      - APP_STORE_CONNECT_PRIVATE_KEY
+# SETUP UNA TANTUM (tutto da browser, no Mac):
 #
-# Senza il programma Apple ($99/anno):
-#   - distribution_type: development
-#   - IPA valida 7 giorni, installabile via AltStore o Sideloadly
-#   - NON pubblicabile sull'App Store
+# 1. Acquista Apple Developer Program → https://developer.apple.com ($99/anno)
+#
+# 2. Crea App Store Connect API Key:
+#    → https://appstoreconnect.apple.com → Utenti e accesso → Chiavi API
+#    → Nuova chiave, ruolo "App Manager"
+#    → Scarica il file .p8 (solo una volta!)
+#    → Annota: Issuer ID (in cima alla pagina) e Key ID (nella lista)
+#
+# 3. Aggiungi 3 variabili su Codemagic → apri il team → Team settings →
+#    Environment variables (spunta "Secure"):
+#    - APP_STORE_CONNECT_ISSUER_ID   → l'Issuer ID copiato sopra
+#    - APP_STORE_CONNECT_KEY_ID      → il Key ID copiato sopra
+#    - APP_STORE_CONNECT_PRIVATE_KEY → il contenuto del file .p8
+#      (apri il file con un editor di testo, copia tutto incluso BEGIN/END)
+#
+# 4. Registra il bundle ID su Apple Developer:
+#    → https://developer.apple.com/account → Certificates, IDs & Profiles
+#    → Identifiers → + → App IDs → bundle ID: to.fermenta.app
+#
+# Codemagic gestisce tutto il resto: crea certificati, profili, firma e
+# carica su TestFlight automaticamente. Zero Mac fisico richiesto.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 workflows:
 
-  # ─── Build senza firma (verifica che il codice compili — nessun certificato richiesto) ─
-  # Per ottenere un IPA firmato installabile via AltStore/Sideloadly:
-  #   1. Su Mac: Xcode → Preferences → Accounts → aggiungi il tuo Apple ID gratuito
-  #   2. Crea un progetto fittizio con bundle ID "to.fermenta.app" → lascia che Xcode
-  #      generi automaticamente certificato e provisioning profile
-  #   3. Esporta il certificato da Keychain Access (.p12) e copia il profilo da
-  #      ~/Library/MobileDevice/Provisioning\ Profiles/ (.mobileprovision)
-  #   4. Su codemagic.io → apri il team → Code signing identities → carica .p12 + .mobileprovision
-  #   5. Decommenta il blocco ios_signing qui sotto e commenta il build senza firma
+  # ─── Build IPA firmato → TestFlight (firma automatica via App Store Connect API) ──
   ios-development:
-    name: iOS Build (no signing — compile check)
-    max_build_duration: 60
+    name: iOS IPA → TestFlight
+    max_build_duration: 90
     instance_type: mac_mini_m1
 
     triggering:
@@ -45,10 +45,13 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
-      # ── Decommenta quando hai caricato certificato + provisioning profile su Codemagic ──
-      # ios_signing:
-      #   distribution_type: development
-      #   bundle_identifier: to.fermenta.app
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: to.fermenta.app
+      vars:
+        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
+        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
 
     cache:
       cache_paths:
@@ -65,51 +68,48 @@ workflows:
 
       - name: Add iOS platform + fix deployment target + pod install
         script: |
-          # cap add ios esegue pod install internamente come ultimo step.
-          # Se il deployment target è troppo basso, pod install fallisce ma il
-          # progetto Xcode + Podfile vengono comunque creati → ignoriamo l'errore.
           if [ ! -d "ios" ]; then
             npx cap add ios || true
           fi
-          # Verifica che il Podfile esista prima di modificarlo
           if [ ! -f "ios/App/Podfile" ]; then
             echo "ERRORE: Podfile non trovato dopo cap add ios"
             exit 1
           fi
-          # Capacitor 8 + tutti i plugin richiedono iOS 15+ (usiamo 16.0 per sicurezza)
+          # Capacitor 8 richiede iOS 16.0+
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
-          echo "Podfile aggiornato:"
           grep "platform :ios" ios/App/Podfile
-          # Ora eseguiamo pod install con il target corretto
           cd ios/App && pod install
 
       - name: Copia web assets nel progetto iOS
-        script: |
-          # cap copy copia solo gli asset web, senza toccare pod install
-          npx cap copy ios
+        script: npx cap copy ios
 
-      - name: Build app (senza firma — solo verifica compilazione)
+      - name: Imposta versione app
         script: |
-          xcodebuild build \
-            -workspace ios/App/App.xcworkspace \
-            -scheme App \
-            -configuration Debug \
-            -sdk iphonesimulator \
-            CODE_SIGNING_ALLOWED=NO \
-            CODE_SIGNING_REQUIRED=NO \
-            | xcpretty
-      # ── Decommenta il blocco seguente (e commenta quello sopra) dopo aver caricato i certificati ──
-      # - name: Build IPA firmato (richiede certificato su Codemagic)
-      #   script: |
-      #     xcode-project use-profiles
-      #     xcode-project build-ipa \
-      #       --workspace ios/App/App.xcworkspace \
-      #       --scheme App
+          # Legge la versione da package.json e la imposta nell'Info.plist
+          VERSION=$(node -p "require('./package.json').version")
+          BUILD=$GITHUB_RUN_NUMBER
+          xcrun agvtool new-marketing-version "$VERSION"
+          xcrun agvtool new-version -all "${BUILD:-1}"
+
+      - name: Build IPA firmato
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App \
+            --config Release
 
     artifacts:
+      - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
 
     publishing:
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        submit_to_testflight: true
+        submit_to_app_store: false
       email:
         recipients:
           - info@fermenta.to
