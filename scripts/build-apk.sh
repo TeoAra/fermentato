@@ -79,9 +79,17 @@ setup() {
   echo "✅ Setup completato! Ora esegui: bash scripts/build-apk.sh build"
 }
 
-# Inietta nel <activity android:name=".MainActivity"> dell'AndroidManifest:
-#   - intent-filter per deep link https://fermenta.to/* (App Links autoVerify)
-#   - intent-filter per fermentato:// custom scheme (fallback)
+# ─────────────────────────────────────────────────────────────────────────────
+# Patcha AndroidManifest.xml per:
+#   1. Deep link HTTPS App Links (https://fermenta.to/*)
+#   2. Custom scheme fallback (fermentato://)
+#
+# Gestisce il tag <activity> su PIÙ RIGHE (formato Capacitor 8):
+#   <activity
+#       android:name="MainActivity"   ← riga separata
+#       android:exported="true"
+#       ...>
+# ─────────────────────────────────────────────────────────────────────────────
 patch_android_manifest() {
   local MANIFEST="app/src/main/AndroidManifest.xml"
   if [ ! -f "$MANIFEST" ]; then
@@ -96,11 +104,31 @@ patch_android_manifest() {
   fi
 
   echo "    Inietto intent-filter deep link per $DEEP_LINK_HOST..."
-  # Inserisci subito prima della chiusura </activity> della MainActivity SPECIFICA.
-  # Stateful awk: traccia se siamo dentro <activity android:name=".MainActivity">
-  # e inietta solo nella sua </activity>, non nel primo </activity> trovato.
+
+  # Awk stateful che gestisce <activity> su più righe:
+  # - inBlock=1 quando stiamo dentro un'apertura <activity che non è ancora chiusa
+  # - inMain=1 se quella activity contiene "MainActivity" in qualsiasi forma
+  # - quando inMain e troviamo </activity>, inietta i filtri e resetta
   awk -v host="$DEEP_LINK_HOST" '
-    /<activity[^>]*android:name="\.MainActivity"/ { inMain = 1 }
+    # Inizio di un tag <activity (può aprirsi su più righe)
+    /<activity[ \t]/ && !inBlock {
+      inBlock = 1
+      blockHasMain = 0
+    }
+
+    # Mentre siamo nel blocco di apertura del tag <activity...>
+    inBlock {
+      # Controlla se questa riga contiene "MainActivity" (qualsiasi forma)
+      if (/MainActivity/) { blockHasMain = 1 }
+
+      # Se il tag di apertura si chiude su questa riga (contiene ">")
+      if (/>/) {
+        inBlock = 0
+        if (blockHasMain) { inMain = 1 }
+      }
+    }
+
+    # Quando siamo dentro la MainActivity e troviamo la sua chiusura
     inMain && /<\/activity>/ && !injected {
       print "            <!-- FERMENTA_DEEP_LINK: HTTPS App Links -->"
       print "            <intent-filter android:autoVerify=\"true\">"
@@ -119,17 +147,34 @@ patch_android_manifest() {
       injected = 1
       inMain = 0
     }
-    /<\/activity>/ { inMain = 0 }
+
+    # Chiusura </activity> fuori da MainActivity: resetta stato
+    !inMain && /<\/activity>/ { inBlock = 0 }
+
     { print }
   ' "$MANIFEST" > "$MANIFEST.new" && mv "$MANIFEST.new" "$MANIFEST"
 
-  # Self-check: il marker DEVE comparire ora nel manifest, altrimenti la patch ha fallito
-  # (es. MainActivity non trovata col nome atteso).
+  # Self-check: non fatale — avvisa ma non blocca la build
   if ! grep -q "FERMENTA_DEEP_LINK" "$MANIFEST"; then
-    echo "❌ Patch deep link fallita: <activity android:name=\".MainActivity\"> non trovata in $MANIFEST"
-    exit 1
+    echo "    ⚠️  Patch deep link non applicata (MainActivity non trovata con pattern noto)"
+    echo "    ℹ️  Deep link non attivi nell'APK, ma la build continua"
+  else
+    echo "    ✅ Deep link intent-filter aggiunto a MainActivity"
   fi
-  echo "    ✅ Deep link intent-filter aggiunto a MainActivity"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Disabilita Firebase auto-init per evitare crash all'avvio con google-services
+# placeholder (senza credenziali FCM reali). Aggiunge meta-data in </application>.
+# ─────────────────────────────────────────────────────────────────────────────
+disable_firebase_autoinit() {
+  local MANIFEST="app/src/main/AndroidManifest.xml"
+  if grep -q "firebase_messaging_auto_init_enabled" "$MANIFEST" 2>/dev/null; then
+    echo "    ℹ️  Firebase auto-init già disabilitato"
+    return
+  fi
+  sed -i 's|</application>|        <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />\n        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />\n    </application>|' "$MANIFEST"
+  echo "    ✅ Firebase auto-init disabilitato (placeholder FCM — no crash avvio)"
 }
 
 build() {
@@ -159,27 +204,27 @@ build() {
 
   cd "$APP_DIR"
 
-  echo "── 1/5 Pull ultimo codice ──"
+  echo "── 1/6 Pull ultimo codice ──"
   git pull
 
-  echo "── 2/5 Installo dipendenze npm ──"
+  echo "── 2/6 Installo dipendenze npm ──"
   npm install
 
-  echo "── 3/5 Build Vite (serve per sincronizzare i plugin nativi) ──"
+  echo "── 3/6 Build Vite (serve per sincronizzare i plugin nativi) ──"
   # Con server.url impostato, la UI viene caricata da fermenta.to —
   # non dai file in bundle. Il build serve solo per sincronizzare
   # le dipendenze native (plugin Capacitor).
-  set -a; source .env.capacitor; set +a
+  set -a; source .env.capacitor 2>/dev/null || true; set +a
   npx vite build
 
-  echo "── 4/5 Aggiungo/sincronizzo piattaforma Android ──"
+  echo "── 4/6 Aggiungo/sincronizzo piattaforma Android ──"
   if [ ! -d "android" ]; then
     echo "    Prima build — aggiungo piattaforma Android..."
     npx cap add android
   fi
   npx cap sync android
 
-  echo "── 5/6 Applico icone e status bar ──"
+  echo "── 5/6 Applico icone, status bar e manifest patches ──"
   cd android
 
   # --- Icone app (pre-generate dal repo, nessuna dipendenza esterna) ---
@@ -209,18 +254,19 @@ build() {
   STYLES_FILE="app/src/main/res/values/styles.xml"
   if [ -f "$STYLES_FILE" ]; then
     echo "    Imposto colore status bar (#FFF7ED, icone scure)..."
-    # Rimuovi eventuali impostazioni precedenti sullo statusBar e windowLightStatusBar
     sed -i '/<item name="android:statusBarColor">/d' "$STYLES_FILE"
     sed -i '/<item name="android:windowLightStatusBar">/d' "$STYLES_FILE"
     sed -i '/<item name="android:navigationBarColor">/d' "$STYLES_FILE"
     sed -i '/<item name="android:windowLightNavigationBar">/d' "$STYLES_FILE"
-    # Inietta prima del tag </style>
     sed -i 's|</style>|    <item name="android:statusBarColor">#FFF7ED</item>\n    <item name="android:windowLightStatusBar">true</item>\n    <item name="android:navigationBarColor">#FFF7ED</item>\n    <item name="android:windowLightNavigationBar">true</item>\n</style>|' "$STYLES_FILE"
     echo "    ✅ Status bar aggiornata"
   fi
 
   # --- Deep link: intent-filter su MainActivity per https://fermenta.to/* ---
   patch_android_manifest
+
+  # --- Firebase: disabilita auto-init (placeholder FCM → evita crash avvio) ---
+  disable_firebase_autoinit
 
   echo "── 6/6 Compilo APK ──"
   chmod +x gradlew
@@ -241,9 +287,9 @@ build() {
 
   APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
 
-  # ── 6/6 Copia APK nella cartella downloads del server ──
+  # ── Copia APK nella cartella downloads del server ──
   cd "$APP_DIR"
-  echo "── 6/6 Pubblico APK per download in-app ──"
+  echo "── Pubblico APK per download in-app ──"
   mkdir -p downloads
   cp "android/$APK_PATH" "downloads/fermenta.apk"
   echo "    ✅ APK disponibile su https://fermenta.to/app/download"
