@@ -162,19 +162,20 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
 
   return (
     <>
+      {/* Backdrop + centering wrapper — usa flex per centrare senza transform */}
       <div
-        className="fixed inset-0 z-[60] bg-black/70"
+        className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4"
         onClick={onClose}
         style={{ animation: "fadeIn 200ms ease" }}
-      />
-
+      >
       <div
         ref={sheetRef}
-        className="fixed z-[61] bg-background dark:bg-[#0F0F10] shadow-2xl flex flex-col
-                   inset-x-0 bottom-0 max-h-[88dvh]
-                   rounded-t-3xl border-t border-x border-stone-200 dark:border-stone-800
-                   md:max-w-2xl md:mx-auto md:max-h-[86vh]"
+        className="relative z-[61] bg-background dark:bg-[#0F0F10] shadow-2xl flex flex-col
+                   w-full max-w-md max-h-[88dvh]
+                   rounded-3xl border border-stone-200 dark:border-stone-800
+                   md:max-w-2xl md:max-h-[86vh]"
         style={{ animation: "findBeerCardIn 260ms cubic-bezier(0.16,1,0.3,1)" }}
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Top padding (no drag handle since it's a floating card now) */}
         <div className="h-4 flex-shrink-0" />
@@ -574,8 +575,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
             );
           })()}
         </div>
-        {/* Safe area spacer for home indicator on iOS/Android */}
-        <div className="flex-shrink-0 safe-area-pb" />
+      </div>
       </div>
     </>
   );
