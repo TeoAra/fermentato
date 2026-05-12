@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { AllergenSelector, AllergenDisplay } from "@/components/allergen-selector";
 import { PriceFormatManager } from "@/components/price-format-manager";
@@ -771,8 +772,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </Link>
 
           {/* TV Mode */}
-          <Dialog>
-            <DialogTrigger asChild>
+          <Sheet>
+            <SheetTrigger asChild>
               <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all">
                 <div className="p-2.5 bg-stone-100 dark:bg-stone-800/60 rounded-xl shrink-0">
                   <Cast className="h-5 w-5 text-foreground" />
@@ -782,14 +783,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Taplist su Smart TV</p>
                 </div>
               </div>
-            </DialogTrigger>
-            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md max-h-[85dvh] overflow-y-auto rounded-2xl">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
+            </SheetTrigger>
+            <SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-2xl safe-area-pb">
+              <SheetHeader className="text-left">
+                <SheetTitle className="flex items-center gap-2">
                   <Cast className="h-5 w-5" />
                   Taplist su TV
-                </DialogTitle>
-              </DialogHeader>
+                </SheetTitle>
+              </SheetHeader>
               {(() => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
 
@@ -903,8 +904,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     </div>
                   );
                 })()}
-            </DialogContent>
-          </Dialog>
+            </SheetContent>
+          </Sheet>
 
           {/* Pagina Pub */}
           <div
