@@ -171,10 +171,9 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
       <div
         ref={sheetRef}
         className="fixed z-[61] bg-background dark:bg-[#0F0F10] shadow-2xl flex flex-col
-                   left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2
-                   w-[calc(100vw-1.5rem)] max-w-md max-h-[88dvh]
-                   rounded-3xl border border-stone-200 dark:border-stone-800
-                   md:max-w-2xl md:max-h-[86vh]"
+                   inset-x-0 bottom-0 max-h-[88dvh]
+                   rounded-t-3xl border-t border-x border-stone-200 dark:border-stone-800
+                   md:max-w-2xl md:mx-auto md:max-h-[86vh]"
         style={{ animation: "findBeerCardIn 260ms cubic-bezier(0.16,1,0.3,1)" }}
       >
         {/* Top padding (no drag handle since it's a floating card now) */}
@@ -575,6 +574,8 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
             );
           })()}
         </div>
+        {/* Safe area spacer for home indicator on iOS/Android */}
+        <div className="flex-shrink-0 safe-area-pb" />
       </div>
     </>
   );
