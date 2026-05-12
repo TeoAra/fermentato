@@ -774,18 +774,30 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </code>
                   <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
-                {/* iOS: step-by-step AirPlay / Screen Mirroring guide */}
+                {/* iOS: step-by-step AirPlay guide */}
                 {isIosDevice && (
                   <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-2">
                     <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
                       <Tv className="h-4 w-4 flex-shrink-0" /> Trasmetti su Apple TV
                     </p>
                     <ol className="text-xs text-blue-600 dark:text-blue-400 space-y-1.5 list-decimal list-inside">
+                      <li>Assicurati che iPhone e Apple TV siano sulla <strong>stessa rete WiFi</strong></li>
                       <li>Tocca <strong>"Apri Taplist TV"</strong> qui sotto</li>
                       <li>Scorri dall'<strong>angolo in alto a destra</strong> dello schermo</li>
-                      <li>Tocca <strong>Duplica Schermo</strong> (o Schermo)</li>
-                      <li>Seleziona il tuo <strong>Apple TV</strong> o AirPlay receiver</li>
+                      <li>Tocca <strong>Duplica Schermo</strong> → seleziona il tuo <strong>Apple TV</strong></li>
                     </ol>
+                  </div>
+                )}
+
+                {/* Android: Chromecast guide */}
+                {!isIosDevice && /Android/i.test(navigator.userAgent) && (
+                  <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl p-4 space-y-2">
+                    <p className="text-sm font-semibold text-green-700 dark:text-green-300 flex items-center gap-2">
+                      <Tv className="h-4 w-4 flex-shrink-0" /> Trasmetti su Chromecast
+                    </p>
+                    <p className="text-xs text-green-600 dark:text-green-400">
+                      Assicurati che il Chromecast sia sulla <strong>stessa rete WiFi</strong>, poi tocca il pulsante qui sotto.
+                    </p>
                   </div>
                 )}
 
@@ -795,8 +807,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     const w = window as any;
                     const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
                     const castFramework = w.cast?.framework;
+                    const isAndroid = /Android/i.test(navigator.userAgent);
 
-                    // iOS: open TV page + try AirPlay picker + guide user to Screen Mirroring
+                    // iOS: open TV page + try AirPlay picker
                     if (isIosDevice) {
                       window.open(tvUrl, '_blank');
                       try {
@@ -816,29 +829,49 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       return;
                     }
 
-                    // Chrome desktop without Cast SDK loaded
-                    if (!castFramework) {
-                      window.open(tvUrl, "_blank");
-                      toast({ title: "Pagina TV aperta", description: "Usa il menu di Chrome per trasmettere" });
-                      return;
+                    // Android Chrome: use Presentation API for Chromecast
+                    if (isAndroid && 'PresentationRequest' in window) {
+                      try {
+                        const request = new (window as any).PresentationRequest([tvUrl]);
+                        const connection = await request.start();
+                        connection.onconnect = () => {
+                          toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
+                        };
+                        connection.onterminate = () => {
+                          toast({ title: "Trasmissione terminata" });
+                        };
+                        return;
+                      } catch (err: any) {
+                        if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') return;
+                      }
                     }
 
-                    // Google Cast SDK available
-                    try {
-                      const ctx = castFramework.CastContext.getInstance();
-                      ctx.setOptions({ receiverApplicationId: '6666EC62', autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? 'origin_scoped' });
-                      toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
-                      await ctx.requestSession();
-                      const session = ctx.getCurrentSession();
-                      if (!session) { toast({ title: "Sessione non creata", description: "Riprova", variant: "destructive" }); return; }
-                      toast({ title: "Connesso!", description: "Invio taplist live..." });
-                      await session.sendMessage('urn:x-cast:fermenta.to', { url: `https://fermenta.to/tv/${currentPub?.id}` });
-                      toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
-                    } catch (err: any) {
-                      if (err?.code === 'cancel' || err?.message === 'cancel') return;
-                      window.open(tvUrl, "_blank");
-                      toast({ title: "Pagina TV aperta", description: "Usa Cast di Chrome per trasmetterla" });
+                    // Google Cast SDK available (Chrome desktop)
+                    if (castFramework) {
+                      try {
+                        const ctx = castFramework.CastContext.getInstance();
+                        ctx.setOptions({ receiverApplicationId: '6666EC62', autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? 'origin_scoped' });
+                        toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
+                        await ctx.requestSession();
+                        const session = ctx.getCurrentSession();
+                        if (!session) { toast({ title: "Sessione non creata", description: "Riprova", variant: "destructive" }); return; }
+                        toast({ title: "Connesso!", description: "Invio taplist live..." });
+                        await session.sendMessage('urn:x-cast:fermenta.to', { url: `https://fermenta.to/tv/${currentPub?.id}` });
+                        toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
+                        return;
+                      } catch (err: any) {
+                        if (err?.code === 'cancel' || err?.message === 'cancel') return;
+                      }
                     }
+
+                    // Fallback: open page + suggest browser cast
+                    window.open(tvUrl, "_blank");
+                    toast({
+                      title: "Pagina TV aperta",
+                      description: isAndroid
+                        ? "Menu Chrome (⋮) → Trasmetti… per Chromecast"
+                        : "Usa il menu di Chrome per trasmettere"
+                    });
                   }}
                 >
                   <Cast className="h-5 w-5" />
