@@ -1,4 +1,4 @@
-import React, { useState, useEffect, lazy, Suspense } from "react";
+import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -304,6 +304,34 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       setLocation('/');
     }
   };
+  // ── AirPlay: video element persistente per webkitShowPlaybackTargetPicker ──
+  // Deve essere già nel DOM quando l'utente preme il pulsante, altrimenti
+  // iOS non permette di aprire il picker (fuori dal contesto del gesto utente).
+  const airplayVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [airplayAvailable, setAirplayAvailable] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!isIosDevice) return;
+    const video = document.createElement('video');
+    video.setAttribute('x-webkit-airplay', 'allow');
+    video.setAttribute('playsinline', '');
+    video.muted = true;
+    video.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
+    document.body.appendChild(video);
+    airplayVideoRef.current = video;
+
+    const onAvailability = (e: Event) => {
+      setAirplayAvailable((e as any).availability === 'available');
+    };
+    video.addEventListener('webkitplaybacktargetavailabilitychanged', onAvailability);
+
+    return () => {
+      video.removeEventListener('webkitplaybacktargetavailabilitychanged', onAvailability);
+      if (document.body.contains(video)) document.body.removeChild(video);
+      airplayVideoRef.current = null;
+    };
+  }, []);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('trial') === 'started') {
@@ -774,18 +802,37 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </code>
                   <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
                 </div>
-                {/* iOS: step-by-step AirPlay guide */}
+                {/* iOS: AirPlay nativo */}
                 {isIosDevice && (
-                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-4 space-y-2">
-                    <p className="text-sm font-semibold text-blue-700 dark:text-blue-300 flex items-center gap-2">
-                      <Tv className="h-4 w-4 flex-shrink-0" /> Trasmetti su Apple TV
-                    </p>
-                    <ol className="text-xs text-blue-600 dark:text-blue-400 space-y-1.5 list-decimal list-inside">
-                      <li>Assicurati che iPhone e Apple TV siano sulla <strong>stessa rete WiFi</strong></li>
-                      <li>Tocca <strong>"Apri Taplist TV"</strong> qui sotto</li>
-                      <li>Scorri dall'<strong>angolo in alto a destra</strong> dello schermo</li>
-                      <li>Tocca <strong>Duplica Schermo</strong> → seleziona il tuo <strong>Apple TV</strong></li>
-                    </ol>
+                  <div className="space-y-2">
+                    {/* Pulsante AirPlay diretto — chiama webkitShowPlaybackTargetPicker() subito,
+                        sincrono nel gesto utente, prima di qualsiasi operazione async */}
+                    <Button
+                      className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white py-5 text-base"
+                      onClick={() => {
+                        const video = airplayVideoRef.current;
+                        if (video && (video as any).webkitShowPlaybackTargetPicker) {
+                          // SINCRONO: deve stare qui, prima di qualsiasi await/setTimeout
+                          (video as any).webkitShowPlaybackTargetPicker();
+                        } else {
+                          toast({
+                            title: "AirPlay non disponibile",
+                            description: "Assicurati che iPhone e Apple TV siano sulla stessa rete WiFi.",
+                          });
+                        }
+                      }}
+                    >
+                      <Tv className="h-5 w-5" />
+                      {airplayAvailable ? "Seleziona Apple TV (AirPlay)" : "AirPlay"}
+                    </Button>
+
+                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-xl p-3">
+                      <p className="text-xs text-blue-600 dark:text-blue-400">
+                        {airplayAvailable
+                          ? "Apple TV rilevata sulla rete. Tocca il pulsante sopra per trasmettere."
+                          : "Assicurati che iPhone e Apple TV siano sulla stessa rete WiFi, poi tocca AirPlay sopra."}
+                      </p>
+                    </div>
                   </div>
                 )}
 
@@ -801,82 +848,65 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </div>
                 )}
 
-                <Button
-                  className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base"
-                  onClick={async () => {
-                    const w = window as any;
-                    const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                    const castFramework = w.cast?.framework;
-                    const isAndroid = /Android/i.test(navigator.userAgent);
+                {/* Desktop / Android: apri TV + Chromecast */}
+                {!isIosDevice && (
+                  <Button
+                    className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base"
+                    onClick={async () => {
+                      const w = window as any;
+                      const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
+                      const castFramework = w.cast?.framework;
+                      const isAndroid = /Android/i.test(navigator.userAgent);
 
-                    // iOS: open TV page + try AirPlay picker
-                    if (isIosDevice) {
-                      window.open(tvUrl, '_blank');
-                      try {
-                        const video = document.createElement('video');
-                        video.setAttribute('x-webkit-airplay', 'allow');
-                        video.muted = true;
-                        (video as any).playsInline = true;
-                        document.body.appendChild(video);
-                        setTimeout(() => {
-                          if ((video as any).webkitShowPlaybackTargetPicker) {
-                            (video as any).webkitShowPlaybackTargetPicker();
-                          }
-                          setTimeout(() => { if (document.body.contains(video)) document.body.removeChild(video); }, 10000);
-                        }, 400);
-                      } catch {}
-                      toast({ title: "Taplist aperta!", description: "Centro di Controllo → Duplica Schermo → Apple TV" });
-                      return;
-                    }
+                      // Android Chrome: use Presentation API for Chromecast
+                      if (isAndroid && 'PresentationRequest' in window) {
+                        try {
+                          const request = new (window as any).PresentationRequest([tvUrl]);
+                          const connection = await request.start();
+                          connection.onconnect = () => {
+                            toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
+                          };
+                          connection.onterminate = () => {
+                            toast({ title: "Trasmissione terminata" });
+                          };
+                          return;
+                        } catch (err: any) {
+                          if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') return;
+                        }
+                      }
 
-                    // Android Chrome: use Presentation API for Chromecast
-                    if (isAndroid && 'PresentationRequest' in window) {
-                      try {
-                        const request = new (window as any).PresentationRequest([tvUrl]);
-                        const connection = await request.start();
-                        connection.onconnect = () => {
+                      // Google Cast SDK available (Chrome desktop)
+                      if (castFramework) {
+                        try {
+                          const ctx = castFramework.CastContext.getInstance();
+                          ctx.setOptions({ receiverApplicationId: '6666EC62', autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? 'origin_scoped' });
+                          toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
+                          await ctx.requestSession();
+                          const session = ctx.getCurrentSession();
+                          if (!session) { toast({ title: "Sessione non creata", description: "Riprova", variant: "destructive" }); return; }
+                          toast({ title: "Connesso!", description: "Invio taplist live..." });
+                          await session.sendMessage('urn:x-cast:fermenta.to', { url: `https://fermenta.to/tv/${currentPub?.id}` });
                           toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
-                        };
-                        connection.onterminate = () => {
-                          toast({ title: "Trasmissione terminata" });
-                        };
-                        return;
-                      } catch (err: any) {
-                        if (err?.name === 'NotAllowedError' || err?.name === 'AbortError') return;
+                          return;
+                        } catch (err: any) {
+                          if (err?.code === 'cancel' || err?.message === 'cancel') return;
+                        }
                       }
-                    }
 
-                    // Google Cast SDK available (Chrome desktop)
-                    if (castFramework) {
-                      try {
-                        const ctx = castFramework.CastContext.getInstance();
-                        ctx.setOptions({ receiverApplicationId: '6666EC62', autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? 'origin_scoped' });
-                        toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
-                        await ctx.requestSession();
-                        const session = ctx.getCurrentSession();
-                        if (!session) { toast({ title: "Sessione non creata", description: "Riprova", variant: "destructive" }); return; }
-                        toast({ title: "Connesso!", description: "Invio taplist live..." });
-                        await session.sendMessage('urn:x-cast:fermenta.to', { url: `https://fermenta.to/tv/${currentPub?.id}` });
-                        toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
-                        return;
-                      } catch (err: any) {
-                        if (err?.code === 'cancel' || err?.message === 'cancel') return;
-                      }
-                    }
-
-                    // Fallback: open page + suggest browser cast
-                    window.open(tvUrl, "_blank");
-                    toast({
-                      title: "Pagina TV aperta",
-                      description: isAndroid
-                        ? "Menu Chrome (⋮) → Trasmetti… per Chromecast"
-                        : "Usa il menu di Chrome per trasmettere"
-                    });
-                  }}
-                >
-                  <Cast className="h-5 w-5" />
-                  {isIosDevice ? "Apri Taplist TV" : "Trasmetti Taplist su TV"}
-                </Button>
+                      // Fallback: open page + suggest browser cast
+                      window.open(tvUrl, "_blank");
+                      toast({
+                        title: "Pagina TV aperta",
+                        description: isAndroid
+                          ? "Menu Chrome (⋮) → Trasmetti… per Chromecast"
+                          : "Usa il menu di Chrome per trasmettere"
+                      });
+                    }}
+                  >
+                    <Cast className="h-5 w-5" />
+                    Trasmetti Taplist su TV
+                  </Button>
+                )}
                 <div className="flex gap-2">
                   <Button variant="outline" className="flex-1 gap-2 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl" onClick={() => window.open(`/tv/${currentPub?.id}`, '_blank')}>
                     <Eye className="h-4 w-4" />

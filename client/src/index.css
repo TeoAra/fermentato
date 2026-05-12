@@ -616,6 +616,29 @@
     }
   }
 
+  /* ── iOS PWA: prevent fixed-element glitch after back navigation ── */
+  /*
+   * Su Safari iOS in modalità standalone (PWA), dopo una navigazione "indietro"
+   * il browser ripristina la posizione di scroll PRIMA che il layout sia stabile.
+   * Questo causa uno "slittamento" temporaneo degli elementi position:fixed.
+   * Soluzione: forza GPU compositing (translateZ) su tutti gli elementi fixed
+   * nella PWA standalone. Il costo GPU è trascurabile ma risolve il bug.
+   */
+  .pwa-standalone .fixed,
+  .pwa-standalone [style*="position: fixed"],
+  .pwa-standalone [style*="position:fixed"] {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+  }
+
+  /* touch-action: manipulation → disabilita double-tap zoom su tutti i
+     pulsanti e link interattivi (preserva scroll e altri gesti) */
+  button, a, [role="button"] {
+    touch-action: manipulation;
+  }
+
   /* ── Floating banners: always above the bottom nav + iOS safe area ── */
   /* Mobile: 64px (nav tab) + safe-area-inset-bottom + 8px gap */
   /* Desktop (lg+): 1rem (same as lg:bottom-4) */

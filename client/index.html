@@ -2,7 +2,7 @@
 <html lang="it">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
 
     <!-- ─── PWA / App meta ─────────────────────────────────────────────── -->
     <meta name="application-name" content="Fermenta.to" />
@@ -153,6 +153,49 @@
   </head>
   <body>
     <div id="root"></div>
+
+    <!-- iOS PWA: previeni zoom doppio-tap e gesture. Deve stare PRIMA del bundle React. -->
+    <script>
+      (function() {
+        // Previeni zoom da pinch/gesture (Safari < iOS 13 rispetta questo)
+        document.addEventListener('gesturestart', function(e) { e.preventDefault(); }, { passive: false });
+        document.addEventListener('gesturechange', function(e) { e.preventDefault(); }, { passive: false });
+
+        // Previeni zoom da doppio-tap (touchend trick)
+        var lastTouch = 0;
+        document.addEventListener('touchend', function(e) {
+          var now = Date.now();
+          if (now - lastTouch < 300) { e.preventDefault(); }
+          lastTouch = now;
+        }, { passive: false });
+
+        // Previeni scroll/zoom su pinch durante touchmove
+        document.addEventListener('touchmove', function(e) {
+          if (e.touches && e.touches.length > 1) { e.preventDefault(); }
+        }, { passive: false });
+
+        // iOS PWA bfcache restore: dopo navigazione "indietro" forza un repaint
+        // per rimettere in posizione gli elementi position:fixed (bug Safari).
+        window.addEventListener('pageshow', function(e) {
+          if (e.persisted) {
+            // Tecnica più sicura: forza re-compositing senza nascondere il DOM
+            document.documentElement.style.webkitTransform = 'translateZ(0)';
+            requestAnimationFrame(function() {
+              document.documentElement.style.webkitTransform = '';
+            });
+          }
+        });
+
+        // Standalone PWA detection — aggiunge classe al <html> usabile dal CSS
+        if (
+          window.navigator.standalone === true ||
+          window.matchMedia('(display-mode: standalone)').matches
+        ) {
+          document.documentElement.classList.add('pwa-standalone');
+        }
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
     <script defer src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
     <script type="text/javascript">
