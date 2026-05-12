@@ -69,6 +69,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useChromecast } from "@/hooks/useChromecast";
+import { QRCodeSVG } from "qrcode.react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { useMemo } from "react";
@@ -790,152 +791,128 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   Taplist su TV
                 </DialogTitle>
               </DialogHeader>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Apri questo indirizzo nel browser della tua Smart TV:
-                </p>
-                <div
-                  className="bg-gray-100 dark:bg-card rounded-xl p-3 flex items-center justify-between gap-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  onClick={() => {
-                    navigator.clipboard?.writeText(`${window.location.origin}/tv/${currentPub?.id}`).catch(() => {});
-                    toast({ title: "Link copiato!" });
-                  }}
-                >
-                  <code className="text-sm font-mono font-bold text-primary dark:text-orange-400 break-all">
-                    {window.location.origin}/tv/{currentPub?.id}
-                  </code>
-                  <LinkIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                </div>
-                {/* ── Chromecast (Chrome su desktop/Android/iOS Chrome) ── */}
-                {(() => {
+              {(() => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
                   const isSafariIos = isIosDevice && !/CriOS/i.test(navigator.userAgent);
-                  const showChromecast = !isSafariIos; // Cast SDK non funziona in Safari iOS
 
                   return (
-                    <>
-                      {showChromecast && (
+                    <div className="space-y-4">
+
+                      {/* ── 1. CHROMECAST — pulsante principale (Chrome desktop/Android/iOS Chrome) ── */}
+                      {!isSafariIos && (
                         <div className="space-y-2">
-                          {/* Badge stato corrente */}
-                          {isConnected && (
-                            <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2">
-                              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
-                              <span className="text-sm font-medium text-green-700 dark:text-green-300 flex-1">
-                                In streaming su <strong>{deviceName}</strong>
-                              </span>
-                              <button
-                                onClick={stopCasting}
-                                className="text-xs text-red-500 hover:text-red-700 font-medium underline"
+                          {isConnected ? (
+                            <>
+                              <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2.5">
+                                <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+                                <span className="text-sm font-medium text-green-700 dark:text-green-300 flex-1">
+                                  Streaming su <strong>{deviceName}</strong>
+                                </span>
+                                <button
+                                  onClick={stopCasting}
+                                  className="text-xs text-red-500 hover:text-red-700 font-medium underline"
+                                >
+                                  Interrompi
+                                </button>
+                              </div>
+                              <Button
+                                className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base"
+                                onClick={async () => {
+                                  const ok = await castToTV(tvUrl, `Fermenta.to — ${currentPub?.name || "Taplist"}`);
+                                  if (ok) toast({ title: "Taplist aggiornata sulla TV!" });
+                                }}
                               >
-                                Interrompi
-                              </button>
-                            </div>
-                          )}
-
-                          {castState === "no_devices" && (
-                            <p className="text-xs text-muted-foreground text-center py-1">
-                              Nessun Chromecast trovato — assicurati di essere sulla stessa rete WiFi
-                            </p>
-                          )}
-
-                          {/* Pulsante cast principale */}
-                          {!isConnected && (
-                            <Button
-                              className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base disabled:opacity-60"
-                              disabled={castState === "connecting"}
-                              onClick={async () => {
-                                const ok = await castToTV(tvUrl, `Fermenta.to — ${currentPub?.name || "Taplist"}`);
-                                if (ok) {
-                                  toast({ title: `Taplist LIVE su ${deviceName || "TV"}!`, description: "Si aggiorna in tempo reale" });
-                                } else {
-                                  // SDK non disponibile o nessun dispositivo → apri la pagina e suggerisci Cast da Chrome
-                                  window.open(tvUrl, "_blank");
-                                  toast({ title: "Pagina TV aperta", description: "Usa il menu Cast di Chrome (⋮ → Trasmetti)" });
-                                }
-                              }}
-                            >
-                              <Cast className="h-5 w-5" />
-                              {castState === "connecting"
-                                ? "Connessione in corso…"
-                                : isAvailable
-                                ? "Trasmetti su Chromecast"
-                                : "Trasmetti su TV"}
-                            </Button>
-                          )}
-
-                          {isConnected && (
-                            <Button
-                              className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base"
-                              onClick={async () => {
-                                const ok = await castToTV(tvUrl, `Fermenta.to — ${currentPub?.name || "Taplist"}`);
-                                if (ok) toast({ title: "Taplist aggiornata sulla TV!" });
-                              }}
-                            >
-                              <Cast className="h-5 w-5" />
-                              Aggiorna taplist su {deviceName}
-                            </Button>
+                                <Cast className="h-5 w-5" />
+                                Aggiorna su {deviceName}
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              {castState === "no_devices" && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 text-center bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
+                                  Nessun Chromecast trovato sulla rete — verifica il WiFi
+                                </p>
+                              )}
+                              <Button
+                                className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base disabled:opacity-60"
+                                disabled={castState === "connecting"}
+                                onClick={async () => {
+                                  const ok = await castToTV(tvUrl, `Fermenta.to — ${currentPub?.name || "Taplist"}`);
+                                  if (ok) {
+                                    toast({ title: `Taplist LIVE su ${deviceName || "TV"}!`, description: "Si aggiorna in tempo reale" });
+                                  } else {
+                                    window.open(tvUrl, "_blank");
+                                    toast({ title: "Pagina TV aperta", description: "Usa il menu Cast di Chrome (⋮ → Trasmetti)" });
+                                  }
+                                }}
+                              >
+                                <Cast className="h-5 w-5" />
+                                {castState === "connecting"
+                                  ? "Connessione in corso…"
+                                  : isAvailable
+                                  ? "Trasmetti su Chromecast"
+                                  : "Trasmetti su TV"}
+                              </Button>
+                            </>
                           )}
                         </div>
                       )}
 
-                      {/* iOS Safari: Cast SDK non supportato → mostra AirPlay + nota Chrome */}
-                      {isSafariIos && (
-                        <div className="space-y-3">
-                          {/* AirPlay per Apple TV */}
-                          <Button
-                            className="w-full gap-2 bg-blue-600 hover:bg-blue-700 text-white py-5 text-base"
-                            onClick={() => {
-                              const video = airplayVideoRef.current;
-                              if (video && (video as any).webkitShowPlaybackTargetPicker) {
-                                (video as any).webkitShowPlaybackTargetPicker();
-                              } else {
-                                toast({ title: "AirPlay non disponibile", description: "Assicurati di essere sulla stessa rete WiFi dell'Apple TV." });
-                              }
-                            }}
-                          >
-                            <Tv className="h-5 w-5" />
-                            {airplayAvailable ? "Seleziona Apple TV (AirPlay)" : "AirPlay"}
-                          </Button>
-
-                          {/* Nota Chromecast su iOS */}
-                          <div className="bg-stone-50 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700 rounded-xl p-3">
-                            <p className="text-xs text-muted-foreground">
-                              <strong>Hai un Chromecast?</strong> Il Cast funziona solo in Chrome — apri{" "}
-                              <button
-                                className="text-primary underline font-medium"
-                                onClick={() => window.open(tvUrl, "_blank")}
-                              >
-                                questa pagina in Chrome
-                              </button>{" "}
-                              e usa il menu <strong>Trasmetti (⋮)</strong>.
-                            </p>
-                          </div>
+                      {/* ── 2. QR CODE — funziona su qualsiasi Smart TV con browser o telecomando ── */}
+                      <div className="flex flex-col items-center gap-3 bg-stone-50 dark:bg-stone-900/40 border border-stone-200 dark:border-stone-700 rounded-2xl p-4">
+                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          {isSafariIos ? "Scansiona con la Smart TV" : "o scansiona il QR dalla TV"}
+                        </p>
+                        <div className="bg-white p-3 rounded-xl shadow-sm">
+                          <QRCodeSVG value={tvUrl} size={140} level="M" />
                         </div>
-                      )}
-
-                      {/* Link + pulsanti utilità */}
-                      <div className="flex gap-2 pt-1">
-                        <Button
-                          variant="outline"
-                          className="flex-1 gap-2 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
-                          onClick={() => window.open(`/tv/${currentPub?.id}`, "_blank")}
+                        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                          {isSafariIos
+                            ? "Apri il browser della tua Smart TV, usa il telecomando per scansionare il QR, oppure digita l'indirizzo sotto"
+                            : "Inquadra con il telecomando della Smart TV o naviga all'indirizzo"}
+                        </p>
+                        <div
+                          className="w-full bg-white dark:bg-card rounded-xl px-3 py-2 flex items-center justify-between gap-2 cursor-pointer border border-stone-200 dark:border-border hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+                          onClick={() => {
+                            navigator.clipboard?.writeText(tvUrl).catch(() => {});
+                            toast({ title: "Link copiato!" });
+                          }}
                         >
-                          <Eye className="h-4 w-4" />
-                          Apri TV
-                        </Button>
-                        <Button
-                          variant="outline"
-                          className="flex-1 gap-2 border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
-                          onClick={() => { navigator.clipboard.writeText(tvUrl); toast({ title: "Link copiato!" }); }}
-                        >
-                          <LinkIcon className="h-4 w-4" />
-                          Copia Link
-                        </Button>
+                          <code className="text-xs font-mono font-bold text-primary dark:text-orange-400 break-all">
+                            {tvUrl}
+                          </code>
+                          <LinkIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                        </div>
                       </div>
-                    </>
+
+                      {/* ── 3. AIRPLAY — solo se Apple TV effettivamente rilevata sulla rete ── */}
+                      {isIosDevice && airplayAvailable && (
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400"
+                          onClick={() => {
+                            const video = airplayVideoRef.current;
+                            if (video && (video as any).webkitShowPlaybackTargetPicker) {
+                              (video as any).webkitShowPlaybackTargetPicker();
+                            }
+                          }}
+                        >
+                          <Tv className="h-4 w-4" />
+                          AirPlay su Apple TV
+                        </Button>
+                      )}
+
+                      {/* ── 4. iOS Safari + nessuna Apple TV → suggerisci Chrome per Cast ── */}
+                      {isSafariIos && !airplayAvailable && (
+                        <p className="text-xs text-muted-foreground text-center">
+                          Per Chromecast, apri questa pagina in <strong>Chrome</strong> e usa il menu{" "}
+                          <strong>Trasmetti (⋮)</strong>
+                        </p>
+                      )}
+
+                    </div>
                   );
                 })()}
-              </div>
             </DialogContent>
           </Dialog>
 
