@@ -1,0 +1,172 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Codemagic CI/CD — Fermenta.to iOS IPA
+#
+# Setup (una tantum su codemagic.io):
+#   1. Crea account su https://codemagic.io (gratis, 500 min macOS/mese)
+#   2. Collega il repo GitHub
+#   3. In "Team settings" → "Code signing identities":
+#      - Carica il tuo certificato iOS (.p12) e la passphrase
+#      - Carica il provisioning profile (.mobileprovision)
+#   4. In questo workflow imposta le variabili d'ambiente:
+#      - APP_STORE_CONNECT_ISSUER_ID   (per firma automatica, opzionale)
+#      - APP_STORE_CONNECT_KEY_ID
+#      - APP_STORE_CONNECT_PRIVATE_KEY
+#
+# Senza il programma Apple ($99/anno):
+#   - distribution_type: development
+#   - IPA valida 7 giorni, installabile via AltStore o Sideloadly
+#   - NON pubblicabile sull'App Store
+# ═══════════════════════════════════════════════════════════════════════════════
+
+workflows:
+
+  # ─── Build Development IPA (account gratuito, installa via AltStore) ─────────
+  ios-development:
+    name: iOS Development IPA
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    environment:
+      node: "20"
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: development
+        bundle_identifier: to.fermenta.app
+
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $CM_BUILD_DIR/node_modules
+        - $HOME/Library/Caches/CocoaPods
+
+    scripts:
+      - name: Install Node dependencies
+        script: npm ci
+
+      - name: Build web assets
+        script: npm run build
+
+      - name: Add iOS platform
+        script: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          fi
+
+      - name: Sync Capacitor (plugin nativi + web assets)
+        script: npx cap sync ios
+
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+
+      - name: Set bundle identifier
+        script: |
+          cd ios/App
+          xcrun agvtool new-marketing-version 1.0.0
+
+      - name: Build IPA
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App \
+            --archive-xcargs "DEVELOPMENT_TEAM=auto"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      email:
+        recipients:
+          - info@fermenta.to
+        notify:
+          success: true
+          failure: true
+
+  # ─── Build App Store IPA (richiede programma $99/anno) ───────────────────────
+  ios-appstore:
+    name: iOS App Store IPA
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "v*"
+          include: true
+
+    environment:
+      node: "20"
+      xcode: latest
+      cocoapods: default
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: to.fermenta.app
+      # Aggiungi questi secret in Codemagic → Team settings → Environment variables:
+      # APP_STORE_CONNECT_ISSUER_ID
+      # APP_STORE_CONNECT_KEY_ID
+      # APP_STORE_CONNECT_PRIVATE_KEY (contenuto del file .p8)
+      vars:
+        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
+        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
+
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $CM_BUILD_DIR/node_modules
+        - $HOME/Library/Caches/CocoaPods
+
+    scripts:
+      - name: Install Node dependencies
+        script: npm ci
+
+      - name: Build web assets
+        script: npm run build
+
+      - name: Add iOS platform
+        script: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios
+          fi
+
+      - name: Sync Capacitor
+        script: npx cap sync ios
+
+      - name: Install CocoaPods
+        script: |
+          cd ios/App
+          pod install
+
+      - name: Build IPA per App Store
+        script: |
+          xcode-project use-profiles
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+      email:
+        recipients:
+          - info@fermenta.to
+        notify:
+          success: true
+          failure: true
