@@ -1,5 +1,4 @@
 {
-  "_comment": "PLACEHOLDER — notifiche push native NON attive. Sostituisci con il file reale da Firebase Console per attivare FCM.",
   "project_info": {
     "project_number": "000000000000",
     "firebase_url": "https://fermenta-placeholder.firebaseio.com",
@@ -17,7 +16,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "PLACEHOLDER_KEY_FCM_NOT_ACTIVE"
+          "current_key": "AIzaSyPlaceholderKeyFCMNotActive00000000"
         }
       ],
       "services": {

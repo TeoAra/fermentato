@@ -8516,14 +8516,15 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     res.json({
       current:      ver,
       minimum:      process.env.APP_MIN_VERSION    ?? ver,
-      downloadUrl:  "https://fermenta.to/app/download",
+      downloadUrl:  "https://fermenta.to/api/download/apk",
       releaseNotes: process.env.APP_RELEASE_NOTES  ?? "",
     });
   });
 
   // Scarica l'APK più recente — il file va copiato in <root>/downloads/fermenta.apk
-  // dal build script (build-apk.sh lo fa automaticamente).
-  app.get("/app/download", (_req, res) => {
+  // dal build script (GitHub Actions → build-android.yml lo carica via artefatto,
+  // oppure build-apk.sh su VPS lo copia automaticamente).
+  app.get("/api/download/apk", (_req, res) => {
     const apkPath = join(process.cwd(), "downloads", "fermenta.apk");
     if (!existsSync(apkPath)) {
       return res.status(404).json({

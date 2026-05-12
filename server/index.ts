@@ -79,7 +79,7 @@ app.use((req, res, next) => {
 // I file sotto /assets/ hanno hash nel nome (prodotti da Vite) → immutabili.
 app.use((req, res, next) => {
   const p = req.path;
-  if (p.startsWith('/assets/') || p.startsWith('/app/download')) {
+  if (p.startsWith('/assets/') || p.startsWith('/api/download/apk')) {
     // bundle JS/CSS immutabili (hash nel nome) o download APK → cache aggressiva
     if (p.startsWith('/assets/')) {
       res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');

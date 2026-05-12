@@ -85,6 +85,7 @@ const MicroblogNew       = lazy(() => import("@/pages/microblog-new"));
 const HashtagPage        = lazy(() => import("@/pages/hashtag"));
 const NewsPage           = lazy(() => import("@/pages/news"));
 const AdminBroadcast     = lazy(() => import("@/pages/admin-broadcast"));
+const AppDownload        = lazy(() => import("@/pages/app-download"));
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PageSkeleton = () => (
@@ -318,6 +319,7 @@ function Router() {
           <Route path="/news" component={NewsPage} />
           <Route path="/admin/broadcast" component={AdminBroadcast} />
           <Route path="/admin/broadcasts" component={AdminBroadcast} />
+          <Route path="/app/download" component={AppDownload} />
           <Route component={NotFound} />
         </Switch>
         </div>
