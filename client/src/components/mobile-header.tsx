@@ -44,6 +44,13 @@ const roleLabels: Record<string, string> = {
   brewery_owner: "Brewery Owner",
   admin: "Amministratore",
 };
+
+const roleSwitcherLabels: Record<string, string> = {
+  customer: "Utente",
+  pub_owner: "Titolare",
+  brewery_owner: "Brewery",
+  admin: "Admin",
+};
 const roleIcons: Record<string, any> = {
   customer: User,
   pub_owner: Store,
@@ -111,7 +118,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
   function SectionLabel({ children }: { children: React.ReactNode }) {
     return (
-      <div className="px-4 pt-4 pb-1.5">
+      <div className="px-4 pt-3 pb-1">
         <span className="text-[10px] font-black uppercase tracking-[0.08em] text-stone-400 dark:text-stone-500">{children}</span>
       </div>
     );
@@ -329,21 +336,25 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             {rolesData && rolesData.roles.length > 1 && (
               <>
                 <SectionLabel>Modalità attiva</SectionLabel>
-                <div className="mx-3 flex gap-2 p-1 bg-stone-100 dark:bg-white/5 rounded-2xl">
+                <div className="mx-3 flex gap-1.5 p-1 bg-stone-100 dark:bg-white/5 rounded-2xl overflow-hidden">
                   {rolesData.roles.map(role => {
                     const isActive = role === rolesData.activeRole;
+                    const RoleIcon = roleIcons[role];
                     return (
                       <button
                         key={role}
                         onClick={() => !isActive && switchRoleMutation.mutate(role)}
                         disabled={switchRoleMutation.isPending || isActive}
-                        className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all tap-scale ${
+                        className={`flex-1 min-w-0 py-2 px-1.5 rounded-xl transition-all tap-scale flex flex-col items-center gap-0.5 ${
                           isActive
                             ? 'bg-white dark:bg-white/10 text-foreground shadow-sm'
                             : 'text-muted-foreground hover:text-foreground'
                         }`}
                       >
-                        {roleLabels[role] || role}
+                        {RoleIcon && <RoleIcon className="h-3.5 w-3.5 flex-shrink-0" />}
+                        <span className="text-[10px] font-bold leading-none whitespace-nowrap">
+                          {roleSwitcherLabels[role] || role}
+                        </span>
                       </button>
                     );
                   })}
