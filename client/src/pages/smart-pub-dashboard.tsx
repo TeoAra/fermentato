@@ -776,12 +776,28 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base"
                   onClick={async () => {
                     const w = window as any;
+                    const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
                     const castFramework = w.cast?.framework;
+
+                    // iOS / mobile Safari: use native share sheet (AirPlay, etc.)
+                    if (!castFramework && navigator.share) {
+                      try {
+                        await navigator.share({ title: "Taplist Live", url: tvUrl });
+                      } catch (err: any) {
+                        if (err?.name === "AbortError") return;
+                        window.open(tvUrl, "_blank");
+                      }
+                      return;
+                    }
+
+                    // Chrome desktop without Cast SDK loaded
                     if (!castFramework) {
-                      window.open(`/tv/${currentPub?.id}`, '_blank');
+                      window.open(tvUrl, "_blank");
                       toast({ title: "Pagina TV aperta", description: "Usa il menu di Chrome per trasmettere" });
                       return;
                     }
+
+                    // Google Cast SDK available
                     try {
                       const ctx = castFramework.CastContext.getInstance();
                       ctx.setOptions({ receiverApplicationId: '6666EC62', autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? 'origin_scoped' });
@@ -794,7 +810,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       toast({ title: "Taplist LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
                     } catch (err: any) {
                       if (err?.code === 'cancel' || err?.message === 'cancel') return;
-                      window.open(`/tv/${currentPub?.id}`, '_blank');
+                      window.open(tvUrl, "_blank");
                       toast({ title: "Pagina TV aperta", description: "Usa Cast di Chrome per trasmetterla" });
                     }
                   }}
