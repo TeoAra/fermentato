@@ -20,9 +20,17 @@
 
 workflows:
 
-  # ─── Build Development IPA (account gratuito, installa via AltStore) ─────────
+  # ─── Build senza firma (verifica che il codice compili — nessun certificato richiesto) ─
+  # Per ottenere un IPA firmato installabile via AltStore/Sideloadly:
+  #   1. Su Mac: Xcode → Preferences → Accounts → aggiungi il tuo Apple ID gratuito
+  #   2. Crea un progetto fittizio con bundle ID "to.fermenta.app" → lascia che Xcode
+  #      generi automaticamente certificato e provisioning profile
+  #   3. Esporta il certificato da Keychain Access (.p12) e copia il profilo da
+  #      ~/Library/MobileDevice/Provisioning\ Profiles/ (.mobileprovision)
+  #   4. Su codemagic.io → apri il team → Code signing identities → carica .p12 + .mobileprovision
+  #   5. Decommenta il blocco ios_signing qui sotto e commenta il build senza firma
   ios-development:
-    name: iOS Development IPA
+    name: iOS Build (no signing — compile check)
     max_build_duration: 60
     instance_type: mac_mini_m1
 
@@ -37,9 +45,10 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: development
-        bundle_identifier: to.fermenta.app
+      # ── Decommenta quando hai caricato certificato + provisioning profile su Codemagic ──
+      # ios_signing:
+      #   distribution_type: development
+      #   bundle_identifier: to.fermenta.app
 
     cache:
       cache_paths:
@@ -68,21 +77,25 @@ workflows:
           cd ios/App
           pod install
 
-      - name: Set bundle identifier
+      - name: Build app (senza firma — solo verifica compilazione)
         script: |
-          cd ios/App
-          xcrun agvtool new-marketing-version 1.0.0
-
-      - name: Build IPA
-        script: |
-          xcode-project use-profiles
-          xcode-project build-ipa \
-            --workspace ios/App/App.xcworkspace \
-            --scheme App \
-            --archive-xcargs "DEVELOPMENT_TEAM=auto"
+          xcodebuild build \
+            -workspace ios/App/App.xcworkspace \
+            -scheme App \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            | xcpretty
+      # ── Decommenta il blocco seguente (e commenta quello sopra) dopo aver caricato i certificati ──
+      # - name: Build IPA firmato (richiede certificato su Codemagic)
+      #   script: |
+      #     xcode-project use-profiles
+      #     xcode-project build-ipa \
+      #       --workspace ios/App/App.xcworkspace \
+      #       --scheme App
 
     artifacts:
-      - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
 
     publishing:
