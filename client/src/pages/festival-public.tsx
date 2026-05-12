@@ -13,7 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Droplets, Search, Star, UtensilsCrossed, Beer, ChevronDown, ChevronUp,
   MapPin, CheckCircle2, XCircle, Loader2, Clock, Calendar, Trophy, Info,
-  Pencil, ExternalLink, MessageSquare, Reply, Send,
+  Pencil, ExternalLink, MessageSquare, Reply, Send, ArrowLeft,
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -794,6 +794,13 @@ export default function FestivalPublic() {
       </Helmet>
       {/* Hero section with gradient and decorative circles */}
       <div className="relative overflow-hidden bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:to-[hsl(20,75%,20%)] pt-12 pb-20 px-4">
+        <button
+          onClick={() => window.history.back()}
+          className="absolute top-3 left-4 lg:hidden w-10 h-10 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/50 transition tap-scale z-20"
+          aria-label="Torna indietro"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
         <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-white/5 blur-2xl" />
 

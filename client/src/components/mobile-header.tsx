@@ -1,4 +1,4 @@
-import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Bell, Activity, QrCode, Building2, Zap, Star, MapPin, ChevronRight, Home, PlusCircle, MessageSquare } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Bell, Activity, QrCode, Building2, Zap, Star, MapPin, ChevronRight, Home, PlusCircle, MessageSquare, ArrowLeft } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -24,6 +24,17 @@ function useScrolled(threshold = 12) {
 interface MobileHeaderProps {
   onMenuToggle: () => void;
   isMenuOpen: boolean;
+}
+
+function isDetailRoute(location: string): boolean {
+  return (
+    /^\/(beer|pub|brewery|birrificio)\//.test(location) ||
+    /^\/eventi\/.+\//.test(location) ||
+    /^\/festival\/[\w-]+$/.test(location) ||
+    /^\/user\//.test(location) ||
+    /^\/(scan-history|become-publican|registra-pub|pub-registration|attiva-pub|privacy|tos|search)$/.test(location) ||
+    /^\/static-page\//.test(location)
+  );
 }
 
 const roleLabels: Record<string, string> = {
@@ -146,35 +157,45 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       >
         <div className={`flex items-center justify-between px-4 transition-[height] duration-200 ${scrolled ? "h-11" : "h-14"}`}>
 
-          {/* Left: Avatar / Bell */}
-          <div className="flex items-center gap-0.5">
-            {/* Avatar */}
-            {isAuthenticated && typedUser ? (
-              <Link href="/dashboard" className="p-1 tap-scale">
-                <Avatar className="h-7 w-7 ring-2 ring-stone-200 dark:ring-stone-700">
-                  {typedUser.profileImageUrl && <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />}
-                  <AvatarFallback className="bg-orange-50 dark:bg-orange-900/30 text-primary text-xs font-bold">
-                    {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              </Link>
-            ) : (
-              <Link href="/login" className="p-2.5 tap-scale">
-                <User className="h-5 w-5 text-stone-500 dark:text-stone-400" />
-              </Link>
-            )}
-            {/* Bell */}
-            {isAuthenticated && (
-              <Link href="/notifications" className="relative p-2.5 tap-scale">
-                <Bell className="h-5 w-5 text-stone-500 dark:text-stone-400" />
-                {(unreadData?.count ?? 0) > 0 && (
-                  <span className="absolute top-1.5 right-1.5 h-[14px] w-[14px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
-                    {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
-                  </span>
-                )}
-              </Link>
-            )}
-          </div>
+          {/* Left: Back button (detail pages) or Avatar + Bell (root pages) */}
+          {isDetailRoute(location) ? (
+            <button
+              onClick={() => window.history.back()}
+              className="p-2 -ml-1 tap-scale text-stone-600 dark:text-stone-300 hover:text-primary dark:hover:text-primary hover:bg-stone-100 dark:hover:bg-white/8 rounded-xl transition-colors"
+              aria-label="Torna indietro"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+          ) : (
+            <div className="flex items-center gap-0.5">
+              {/* Avatar */}
+              {isAuthenticated && typedUser ? (
+                <Link href="/dashboard" className="p-1 tap-scale">
+                  <Avatar className="h-7 w-7 ring-2 ring-stone-200 dark:ring-stone-700">
+                    {typedUser.profileImageUrl && <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />}
+                    <AvatarFallback className="bg-orange-50 dark:bg-orange-900/30 text-primary text-xs font-bold">
+                      {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Link>
+              ) : (
+                <Link href="/login" className="p-2.5 tap-scale">
+                  <User className="h-5 w-5 text-stone-500 dark:text-stone-400" />
+                </Link>
+              )}
+              {/* Bell */}
+              {isAuthenticated && (
+                <Link href="/notifications" className="relative p-2.5 tap-scale">
+                  <Bell className="h-5 w-5 text-stone-500 dark:text-stone-400" />
+                  {(unreadData?.count ?? 0) > 0 && (
+                    <span className="absolute top-1.5 right-1.5 h-[14px] w-[14px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                      {(unreadData?.count ?? 0) > 9 ? '9+' : unreadData?.count}
+                    </span>
+                  )}
+                </Link>
+              )}
+            </div>
+          )}
 
           {/* Logo — center */}
           <Link href="/" className="absolute left-1/2 -translate-x-1/2">

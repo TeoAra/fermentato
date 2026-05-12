@@ -120,11 +120,14 @@ export default function EventDetailPage() {
         ) : (
           <div className="h-48 sm:h-64 bg-gradient-to-br from-purple-600 via-pink-600 to-amber-500" />
         )}
-        <Link href="/eventi">
-          <a className="absolute top-4 left-4 inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-black/50 backdrop-blur text-white text-sm hover:bg-black/70 transition" data-testid="link-back-eventi">
-            <ArrowLeft className="h-4 w-4" /> Eventi
-          </a>
-        </Link>
+        <button
+          onClick={() => window.history.back()}
+          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/70 transition tap-scale z-10"
+          data-testid="link-back-eventi"
+          aria-label="Torna indietro"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 sm:px-6 -mt-16 relative z-10 pb-16">
