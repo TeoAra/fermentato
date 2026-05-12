@@ -72,6 +72,10 @@ workflows:
       - name: Sync Capacitor (plugin nativi + web assets)
         script: npx cap sync ios
 
+      - name: Set iOS minimum deployment target to 14.0
+        script: |
+          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '14.0'/" ios/App/Podfile
+
       - name: Install CocoaPods
         script: |
           cd ios/App
@@ -156,6 +160,10 @@ workflows:
 
       - name: Sync Capacitor
         script: npx cap sync ios
+
+      - name: Set iOS minimum deployment target to 14.0
+        script: |
+          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '14.0'/" ios/App/Podfile
 
       - name: Install CocoaPods
         script: |

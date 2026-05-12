@@ -792,21 +792,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               </DialogHeader>
               {(() => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
-                  const dashboardUrl = `${window.location.origin}/smart-pub-dashboard`;
 
                   // Rileva se il Cast SDK è effettivamente caricato (indipendente dall'OS/browser)
                   // Se castState === "unavailable" il SDK non è disponibile in questo contesto
                   const castSdkLoaded = castState !== "unavailable";
-
-                  // Apre la dashboard in Chrome iOS tramite URL scheme
-                  const openInChrome = () => {
-                    const chromeUrl = dashboardUrl.replace(/^https?:\/\//, (m) =>
-                      m === "https://" ? "googlechromes://" : "googlechrome://"
-                    );
-                    const a = document.createElement("a");
-                    a.href = chromeUrl;
-                    a.click();
-                  };
 
                   return (
                     <div className="space-y-3">
@@ -860,27 +849,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         </div>
                       )}
 
-                      {/* ── Cast SDK non disponibile: offri "Apri in Chrome" su iOS ── */}
+                      {/* ── Cast SDK non disponibile su iOS (Chrome mobile non lo supporta) ── */}
                       {!castSdkLoaded && isIosDevice && (
-                        <div className="space-y-3">
-                          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
-                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300 flex items-center gap-2 mb-1">
-                              <Cast className="h-4 w-4 shrink-0" />
-                              Chromecast richiede Chrome
-                            </p>
-                            <p className="text-xs text-amber-700 dark:text-amber-400">
-                              Apri questa dashboard in Chrome per trasmettere automaticamente sulla Smart TV.
-                            </p>
-                          </div>
-                          <Button
-                            className="w-full gap-2 bg-[#4285F4] hover:bg-[#3367D6] text-white py-5 text-base"
-                            onClick={openInChrome}
-                          >
-                            <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 3a7 7 0 0 1 6.09 3.5H12a3.5 3.5 0 0 0-3.46 3H5.06A7 7 0 0 1 12 5zm-7 7c0-.34.03-.67.08-1h3.48a3.5 3.5 0 0 0 6.88 0h3.48c.05.33.08.66.08 1a7 7 0 0 1-7 7 7 7 0 0 1-7-7zm7 3.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/>
-                            </svg>
-                            Apri in Chrome per trasmettere
-                          </Button>
+                        <div className="bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-xl p-3 space-y-1.5">
+                          <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                            <Cast className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            Chromecast non disponibile su iPhone
+                          </p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            Il Cast SDK funziona solo su <strong>Chrome per Android</strong> o <strong>Chrome su PC/Mac</strong>. Copia il link qui sotto e aprilo da uno di quei dispositivi per trasmettere sulla TV.
+                          </p>
                         </div>
                       )}
 
