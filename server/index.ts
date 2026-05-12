@@ -67,7 +67,7 @@ app.use(express.urlencoded({ extended: false, limit: "10mb" }));
 
 app.use((req, res, next) => {
   if (!req.path.includes('cast-receiver')) {
-    res.setHeader('Permissions-Policy', 'presentation=(self), display-capture=(self)');
+    res.setHeader('Permissions-Policy', 'display-capture=(self)');
   }
   next();
 });

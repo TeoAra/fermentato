@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useChromecast } from "@/hooks/useChromecast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/image-upload";
 import { RichTextEditor } from "@/components/RichTextEditor";
@@ -96,69 +97,114 @@ interface Stats {
 }
 
 // ─── TV Mode button ─────────────────────────────────────────────────────────
-function TVModeButton({ slug }: { slug: string }) {
+function TVModeButton({ slug, festivalName }: { slug: string; festivalName?: string }) {
   const tvUrl = `${window.location.origin}/festival-tv/${slug}`;
   const { toast } = useToast();
-
-  const handleCast = async () => {
-    const w = window as any;
-    const castFramework = w.cast?.framework;
-    if (!castFramework) {
-      window.open(tvUrl, "_blank");
-      toast({ title: "Pagina TV aperta", description: "Usa il menu di Chrome per trasmettere" });
-      return;
-    }
-    try {
-      const ctx = castFramework.CastContext.getInstance();
-      ctx.setOptions({
-        receiverApplicationId: "6666EC62",
-        autoJoinPolicy: w.chrome?.cast?.AutoJoinPolicy?.ORIGIN_SCOPED ?? "origin_scoped",
-      });
-      toast({ title: "Connessione alla TV...", description: "Seleziona il dispositivo" });
-      await ctx.requestSession();
-      const session = ctx.getCurrentSession();
-      if (!session) { toast({ title: "Sessione non creata", description: "Riprova", variant: "destructive" }); return; }
-      toast({ title: "Connesso!", description: "Invio taplist live..." });
-      const castUrl = `https://fermenta.to/festival-tv/${slug}`;
-      await session.sendMessage("urn:x-cast:fermenta.to", { url: castUrl });
-      toast({ title: "Festival LIVE sulla TV!", description: "Si aggiorna in tempo reale" });
-    } catch (err: any) {
-      if (err?.code === "cancel" || err?.message === "cancel") return;
-      window.open(tvUrl, "_blank");
-      toast({ title: "Pagina TV aperta", description: "Usa Cast di Chrome per trasmetterla" });
-    }
-  };
+  const { castState, deviceName, castToTV, stopCasting, isAvailable, isConnected } = useChromecast();
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button size="sm" variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
-          <Monitor className="h-4 w-4 mr-1" />TV Mode
+        <Button
+          size="sm"
+          variant="outline"
+          className={`border-white/30 text-white hover:bg-white/30 gap-1.5 ${
+            isConnected
+              ? "bg-green-500/30 border-green-300/50"
+              : "bg-white/20"
+          }`}
+        >
+          <Monitor className="h-4 w-4" />
+          {isConnected ? `TV • ${deviceName}` : "TV Mode"}
+          {isConnected && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Monitor className="h-5 w-5 text-amber-600" />TV Mode
+            <Monitor className="h-5 w-5 text-amber-600" />
+            Festival TV
           </DialogTitle>
         </DialogHeader>
-        <p className="text-sm text-muted-foreground">
-          Apri questa URL su un TV o monitor per visualizzare la taplist in modalità schermo intero,
-          con aggiornamento automatico ogni 15 secondi.
-        </p>
-        <div className="flex items-center gap-2 bg-stone-50 border rounded-lg p-3">
-          <span className="text-xs text-muted-foreground break-all flex-1">{tvUrl}</span>
-          <Button size="sm" variant="outline" className="shrink-0"
-            onClick={() => { navigator.clipboard.writeText(tvUrl); toast({ title: "URL copiato!" }); }}>
-            <Copy className="h-3.5 w-3.5" />
-          </Button>
-        </div>
-        <div className="flex gap-2">
-          <Button className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white gap-2" onClick={handleCast}>
-            <Monitor className="h-4 w-4" />Trasmetti su TV
-          </Button>
-          <Button variant="outline" onClick={() => window.open(tvUrl, "_blank")}>
+
+        <div className="space-y-3">
+          {/* Stato streaming corrente */}
+          {isConnected && (
+            <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
+              <span className="text-sm font-medium text-green-700 dark:text-green-300 flex-1">
+                In streaming su <strong>{deviceName}</strong>
+              </span>
+              <button
+                onClick={stopCasting}
+                className="text-xs text-red-500 hover:text-red-700 font-medium underline"
+              >
+                Interrompi
+              </button>
+            </div>
+          )}
+
+          {castState === "no_devices" && (
+            <p className="text-xs text-muted-foreground text-center">
+              Nessun Chromecast trovato — verifica la rete WiFi
+            </p>
+          )}
+
+          {/* URL TV */}
+          <div className="flex items-center gap-2 bg-stone-50 dark:bg-stone-900/50 border rounded-xl p-3">
+            <span className="text-xs text-muted-foreground break-all flex-1 font-mono">{tvUrl}</span>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0"
+              onClick={() => { navigator.clipboard.writeText(tvUrl); toast({ title: "URL copiato!" }); }}
+            >
+              <Copy className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+
+          {/* Pulsante Trasmetti / Aggiorna */}
+          {!isConnected ? (
+            <Button
+              className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white py-5 text-base disabled:opacity-60"
+              disabled={castState === "connecting"}
+              onClick={async () => {
+                const ok = await castToTV(tvUrl, `Festival — ${festivalName || slug}`);
+                if (ok) {
+                  toast({ title: `Festival LIVE su ${deviceName || "TV"}!`, description: "Si aggiorna in tempo reale" });
+                } else if (castState === "unavailable") {
+                  window.open(tvUrl, "_blank");
+                  toast({ title: "Pagina TV aperta", description: "Usa il menu Cast di Chrome (⋮ → Trasmetti)" });
+                }
+              }}
+            >
+              <Monitor className="h-4 w-4" />
+              {castState === "connecting"
+                ? "Connessione in corso…"
+                : isAvailable
+                ? "Trasmetti su Chromecast"
+                : "Trasmetti su TV"}
+            </Button>
+          ) : (
+            <Button
+              className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white py-5 text-base"
+              onClick={async () => {
+                const ok = await castToTV(tvUrl, `Festival — ${festivalName || slug}`);
+                if (ok) toast({ title: "Festival aggiornato sulla TV!" });
+              }}
+            >
+              <Monitor className="h-4 w-4" />
+              Aggiorna su {deviceName}
+            </Button>
+          )}
+
+          <Button
+            variant="outline"
+            className="w-full gap-2"
+            onClick={() => window.open(tvUrl, "_blank")}
+          >
             <ExternalLink className="h-4 w-4" />
+            Apri in nuova scheda
           </Button>
         </div>
       </DialogContent>
@@ -1508,7 +1554,7 @@ export default function FestivalDashboard() {
                   onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
                   <ExternalLink className="h-4 w-4 mr-1" />Anteprima
                 </Button>
-                <TVModeButton slug={selectedFest.slug} />
+                <TVModeButton slug={selectedFest.slug} festivalName={selectedFest.name} />
               </>
             )}
             <Button size="sm" className="bg-white text-amber-700 hover:bg-amber-50"
