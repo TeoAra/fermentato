@@ -76,8 +76,8 @@ workflows:
             echo "ERRORE: Podfile non trovato dopo cap add ios"
             exit 1
           fi
-          # CapacitorStatusBar e altri plugin richiedono iOS 14+
-          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '14.0'/" ios/App/Podfile
+          # Capacitor 8 + tutti i plugin richiedono iOS 15+ (usiamo 16.0 per sicurezza)
+          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           echo "Podfile aggiornato:"
           grep "platform :ios" ios/App/Podfile
           # Ora eseguiamo pod install con il target corretto
@@ -168,7 +168,7 @@ workflows:
             echo "ERRORE: Podfile non trovato dopo cap add ios"
             exit 1
           fi
-          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '14.0'/" ios/App/Podfile
+          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           grep "platform :ios" ios/App/Podfile
           cd ios/App && pod install
 

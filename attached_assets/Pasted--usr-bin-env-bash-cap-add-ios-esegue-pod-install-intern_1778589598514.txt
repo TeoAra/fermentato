@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+# cap add ios esegue pod install internamente come ultimo step.
+# Se il deployment target è troppo basso, pod install fallisce ma il
+# progetto Xcode + Podfile vengono comunque creati → ignoriamo l'errore.
+if [ ! -d "ios" ]; then
+  npx cap add ios || true
+fi
+# Verifica che il Podfile esista prima di modificarlo
+if [ ! -f "ios/App/Podfile" ]; then
+  echo "ERRORE: Podfile non trovato dopo cap add ios"
+  exit 1
+fi
+# CapacitorStatusBar e altri plugin richiedono iOS 14+
+sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '14.0'/" ios/App/Podfile
+echo "Podfile aggiornato:"
+grep "platform :ios" ios/App/Podfile
+# Ora eseguiamo pod install con il target corretto
+cd ios/App && pod install
+✔ Adding native Xcode project in ios in 10.41ms
+✔ add in 10.59ms
+✔ Copying web assets from public to ios/App/App/public in 25.08ms
+✔ Creating capacitor.config.json in ios/App/App in 268.88μs
+✔ copy ios in 76.40ms
+✔ Updating iOS plugins in 10.54ms
+✖ Updating iOS native dependencies with pod install - failed!
+✖ update ios - failed!
+[error] Analyzing dependencies
+        Adding spec repo `trunk` with CDN `https://cdn.cocoapods.org/`
+        [!] CocoaPods could not find compatible versions for pod "CapacitorStatusBar":
+        In Podfile:
+        CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)
+        
+        Specs satisfying the `CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)` dependency were found, but they required a higher minimum deployment target.
+        
+Podfile aggiornato:
+platform :ios, '14.0'
+Analyzing dependencies
+[!] CocoaPods could not find compatible versions for pod "CapacitorStatusBar":
+  In Podfile:
+    CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)
+
+Specs satisfying the `CapacitorStatusBar (from `../../node_modules/@capacitor/status-bar`)` dependency were found, but they required a higher minimum deployment target.
+
+
+Build failed :|
+Step 5 script `Add iOS platform + fix deployment target + pod install` exited with status code 1
