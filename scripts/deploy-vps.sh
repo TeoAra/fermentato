@@ -46,6 +46,26 @@ else
 fi
 
 echo ""
+echo "6. Applying any missing schema patches (safe — idempotent)..."
+
+# Crea tabella native_push_tokens se non esiste (aggiunta nella sessione Capacitor)
+node -e "
+const { Pool } = require('pg');
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+pool.query(\`
+  CREATE TABLE IF NOT EXISTS native_push_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+    token TEXT NOT NULL UNIQUE,
+    platform VARCHAR(10) NOT NULL,
+    updated_at TIMESTAMP DEFAULT NOW()
+  );
+  CREATE INDEX IF NOT EXISTS native_push_tokens_user_idx ON native_push_tokens(user_id);
+\`).then(() => { console.log('   native_push_tokens: ok'); pool.end(); })
+  .catch(e => { console.log('   native_push_tokens: ' + e.message); pool.end(); });
+" 2>/dev/null || echo "   (patch script skipped — node pg not available inline, migration handled above)"
+
+echo ""
 echo "=== Deployment complete! ==="
 echo "Note: Only schema changes were applied. Your existing data is safe."
 echo ""
