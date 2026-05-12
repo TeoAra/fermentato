@@ -783,7 +783,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 </div>
               </div>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md max-h-[85dvh] overflow-y-auto rounded-2xl">
               <DialogHeader>
                 <DialogTitle className="flex items-center gap-2">
                   <Cast className="h-5 w-5" />
@@ -793,9 +793,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               {(() => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
                   const dashboardUrl = `${window.location.origin}/smart-pub-dashboard`;
-                  const isSafariIos = isIosDevice && !/CriOS/i.test(navigator.userAgent);
 
-                  // Apre la dashboard in Chrome iOS (dove il Cast SDK funziona)
+                  // Rileva se il Cast SDK è effettivamente caricato (indipendente dall'OS/browser)
+                  // Se castState === "unavailable" il SDK non è disponibile in questo contesto
+                  const castSdkLoaded = castState !== "unavailable";
+
+                  // Apre la dashboard in Chrome iOS tramite URL scheme
                   const openInChrome = () => {
                     const chromeUrl = dashboardUrl.replace(/^https?:\/\//, (m) =>
                       m === "https://" ? "googlechromes://" : "googlechrome://"
@@ -808,49 +811,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   return (
                     <div className="space-y-3">
 
-                      {/* ── iOS Safari: Chrome è l'unica via automatica per Chromecast ── */}
-                      {isSafariIos && (
-                        <div className="space-y-3">
-                          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
-                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300 flex items-center gap-2 mb-1">
-                              <Cast className="h-4 w-4 shrink-0" />
-                              Chromecast richiede Chrome
-                            </p>
-                            <p className="text-xs text-amber-700 dark:text-amber-400">
-                              Safari non supporta il Cast SDK. Apri questa dashboard in Chrome per trasmettere automaticamente sulla Smart TV.
-                            </p>
-                          </div>
-                          <Button
-                            className="w-full gap-2 bg-[#4285F4] hover:bg-[#3367D6] text-white py-5 text-base"
-                            onClick={openInChrome}
-                          >
-                            {/* Chrome logo SVG */}
-                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                              <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 3a7 7 0 0 1 6.09 3.5H12a3.5 3.5 0 0 0-3.46 3H5.06A7 7 0 0 1 12 5zm-7 7c0-.34.03-.67.08-1h3.48a3.5 3.5 0 0 0 6.88 0h3.48c.05.33.08.66.08 1a7 7 0 0 1-7 7 7 7 0 0 1-7-7zm7 3.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/>
-                            </svg>
-                            Apri in Chrome per trasmettere
-                          </Button>
-                          {/* AirPlay solo se Apple TV rilevata */}
-                          {airplayAvailable && (
-                            <Button
-                              variant="outline"
-                              className="w-full gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400"
-                              onClick={() => {
-                                const video = airplayVideoRef.current;
-                                if (video && (video as any).webkitShowPlaybackTargetPicker) {
-                                  (video as any).webkitShowPlaybackTargetPicker();
-                                }
-                              }}
-                            >
-                              <Tv className="h-4 w-4" />
-                              AirPlay su Apple TV
-                            </Button>
-                          )}
-                        </div>
-                      )}
-
-                      {/* ── Chrome/Android/Desktop: Cast SDK disponibile → automatico ── */}
-                      {!isSafariIos && (
+                      {/* ── Cast SDK caricato: pulsante Chromecast diretto ── */}
+                      {castSdkLoaded && (
                         <div className="space-y-2">
                           {isConnected && (
                             <div className="flex items-center gap-2 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl px-3 py-2.5">
@@ -869,7 +831,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                           {castState === "no_devices" && (
                             <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2">
                               <p className="text-xs text-amber-700 dark:text-amber-400 text-center">
-                                Nessun Chromecast trovato — assicurati che sia sulla stessa rete WiFi
+                                Nessun Chromecast trovato — verifica che sia sulla stessa rete WiFi
                               </p>
                             </div>
                           )}
@@ -877,17 +839,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                             className="w-full gap-2 bg-primary hover:bg-primary/90 py-5 text-base disabled:opacity-60"
                             disabled={castState === "connecting"}
                             onClick={async () => {
-                              if (isConnected) {
-                                const ok = await castToTV(tvUrl, `Fermenta.to — ${currentPub?.name || "Taplist"}`);
-                                if (ok) toast({ title: "Taplist aggiornata sulla TV!" });
-                                return;
-                              }
                               const ok = await castToTV(tvUrl, `Fermenta.to — ${currentPub?.name || "Taplist"}`);
                               if (ok) {
                                 toast({ title: `Taplist LIVE su ${deviceName || "TV"}!`, description: "Si aggiorna in tempo reale" });
                               } else {
                                 window.open(tvUrl, "_blank");
-                                toast({ title: "Pagina TV aperta", description: "Selezionala dal menu Cast di Chrome (⋮ → Trasmetti)" });
+                                toast({ title: "Pagina TV aperta", description: "Seleziona dal menu Cast di Chrome (⋮ → Trasmetti)" });
                               }
                             }}
                           >
@@ -903,7 +860,48 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         </div>
                       )}
 
-                      {/* ── URL sempre visibile — copia + apri ── */}
+                      {/* ── Cast SDK non disponibile: offri "Apri in Chrome" su iOS ── */}
+                      {!castSdkLoaded && isIosDevice && (
+                        <div className="space-y-3">
+                          <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-3">
+                            <p className="text-sm font-medium text-amber-800 dark:text-amber-300 flex items-center gap-2 mb-1">
+                              <Cast className="h-4 w-4 shrink-0" />
+                              Chromecast richiede Chrome
+                            </p>
+                            <p className="text-xs text-amber-700 dark:text-amber-400">
+                              Apri questa dashboard in Chrome per trasmettere automaticamente sulla Smart TV.
+                            </p>
+                          </div>
+                          <Button
+                            className="w-full gap-2 bg-[#4285F4] hover:bg-[#3367D6] text-white py-5 text-base"
+                            onClick={openInChrome}
+                          >
+                            <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                              <path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 3a7 7 0 0 1 6.09 3.5H12a3.5 3.5 0 0 0-3.46 3H5.06A7 7 0 0 1 12 5zm-7 7c0-.34.03-.67.08-1h3.48a3.5 3.5 0 0 0 6.88 0h3.48c.05.33.08.66.08 1a7 7 0 0 1-7 7 7 7 0 0 1-7-7zm7 3.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/>
+                            </svg>
+                            Apri in Chrome per trasmettere
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* ── AirPlay: solo se Apple TV rilevata sulla rete ── */}
+                      {isIosDevice && airplayAvailable && (
+                        <Button
+                          variant="outline"
+                          className="w-full gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400"
+                          onClick={() => {
+                            const video = airplayVideoRef.current;
+                            if (video && (video as any).webkitShowPlaybackTargetPicker) {
+                              (video as any).webkitShowPlaybackTargetPicker();
+                            }
+                          }}
+                        >
+                          <Tv className="h-4 w-4" />
+                          AirPlay su Apple TV
+                        </Button>
+                      )}
+
+                      {/* ── URL — copia + apri ── */}
                       <div className="flex gap-2">
                         <div
                           className="flex-1 bg-stone-100 dark:bg-card border border-stone-200 dark:border-border rounded-xl px-3 py-2.5 flex items-center gap-2 cursor-pointer hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors min-w-0"
