@@ -5778,6 +5778,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Native push token (FCM/APNs via Capacitor)
+  app.post("/api/push/native-token", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const { token, platform } = req.body;
+      if (!token || !platform) return res.status(400).json({ message: "token e platform obbligatori" });
+      await storage.saveNativePushToken(userId, token, platform);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving native push token:", error);
+      res.status(500).json({ message: "Errore salvataggio token nativo" });
+    }
+  });
+
+  app.delete("/api/push/native-token", isAuthenticated, async (req: any, res) => {
+    try {
+      const { token } = req.body;
+      if (!token) return res.status(400).json({ message: "token obbligatorio" });
+      await storage.deleteNativePushToken(token);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ message: "Errore eliminazione token nativo" });
+    }
+  });
+
   // ==================== Pub Events Routes ====================
 
   // GET upcoming events across all pubs (public)

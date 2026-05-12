@@ -756,6 +756,16 @@ export const insertPushSubscriptionSchema = createInsertSchema(pushSubscriptions
 export type PushSubscription = typeof pushSubscriptions.$inferSelect;
 export type InsertPushSubscription = z.infer<typeof insertPushSubscriptionSchema>;
 
+// Native push tokens (FCM per Android, APNs per iOS — via Capacitor)
+export const nativePushTokens = pgTable("native_push_tokens", {
+  id: serial("id").primaryKey(),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  token: text("token").notNull().unique(),
+  platform: varchar("platform", { length: 10 }).notNull(), // 'android' | 'ios'
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+export type NativePushToken = typeof nativePushTokens.$inferSelect;
+
 // Pub Events
 export const pubEvents = pgTable("pub_events", {
   id: serial("id").primaryKey(),

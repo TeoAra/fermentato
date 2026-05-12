@@ -50,6 +50,8 @@ import {
   pushSubscriptions,
   type PushSubscription,
   type InsertPushSubscription,
+  nativePushTokens,
+  type NativePushToken,
   pubEvents,
   type PubEvent,
   type InsertPubEvent,
@@ -307,6 +309,12 @@ export interface IStorage {
   getPushSubscriptionsByUser(userId: string): Promise<PushSubscription[]>;
   deletePushSubscription(endpoint: string): Promise<void>;
   deletePushSubscriptionsByUser(userId: string): Promise<void>;
+
+  // Native push token operations (FCM / APNs)
+  saveNativePushToken(userId: string, token: string, platform: string): Promise<void>;
+  deleteNativePushToken(token: string): Promise<void>;
+  getNativePushTokensByUser(userId: string): Promise<NativePushToken[]>;
+  getAllNativePushTokens(): Promise<NativePushToken[]>;
 
   // Pub Events operations
   getPubEvents(pubId: number, publicOnly?: boolean): Promise<PubEvent[]>;
@@ -1797,6 +1805,26 @@ export class DatabaseStorage implements IStorage {
     await db.delete(pushSubscriptions).where(eq(pushSubscriptions.userId, userId));
   }
 
+  // Native push token operations (FCM / APNs)
+  async saveNativePushToken(userId: string, token: string, platform: string): Promise<void> {
+    await db
+      .insert(nativePushTokens)
+      .values({ userId, token, platform, updatedAt: new Date() })
+      .onConflictDoUpdate({ target: nativePushTokens.token, set: { userId, platform, updatedAt: new Date() } });
+  }
+
+  async deleteNativePushToken(token: string): Promise<void> {
+    await db.delete(nativePushTokens).where(eq(nativePushTokens.token, token));
+  }
+
+  async getNativePushTokensByUser(userId: string): Promise<NativePushToken[]> {
+    return db.select().from(nativePushTokens).where(eq(nativePushTokens.userId, userId));
+  }
+
+  async getAllNativePushTokens(): Promise<NativePushToken[]> {
+    return db.select().from(nativePushTokens);
+  }
+
   // Pub Events operations
   async getPubEvents(pubId: number, publicOnly = false): Promise<PubEvent[]> {
     const conditions = [eq(pubEvents.pubId, pubId)];
@@ -2729,6 +2757,35 @@ class StorageWrapper implements IStorage {
     return this.dbCall(
       () => this.databaseStorage.deletePushSubscriptionsByUser(userId),
       async () => {}
+    );
+  }
+
+  // Native push token operations (FCM / APNs)
+  async saveNativePushToken(userId: string, token: string, platform: string): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.saveNativePushToken(userId, token, platform),
+      async () => {}
+    );
+  }
+
+  async deleteNativePushToken(token: string): Promise<void> {
+    return this.dbCall(
+      () => this.databaseStorage.deleteNativePushToken(token),
+      async () => {}
+    );
+  }
+
+  async getNativePushTokensByUser(userId: string): Promise<NativePushToken[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getNativePushTokensByUser(userId),
+      async () => []
+    );
+  }
+
+  async getAllNativePushTokens(): Promise<NativePushToken[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getAllNativePushTokens(),
+      async () => []
     );
   }
 

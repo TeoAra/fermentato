@@ -6,6 +6,12 @@ import { Capacitor } from "@capacitor/core";
 if (Capacitor.isNativePlatform()) {
   // Tag the document so CSS can target Capacitor-specific overrides
   document.documentElement.setAttribute("data-capacitor", "true");
+  document.documentElement.setAttribute("data-platform", Capacitor.getPlatform());
+
+  // Inizializza tutti i servizi nativi: push, deep link, back button, resume/pause
+  import("./services/capacitor-native").then(({ initCapacitorNative }) => {
+    initCapacitorNative().catch(() => {});
+  }).catch(() => {});
 
   // Status bar: icone scure su sfondo crema chiaro, no overlay del WebView
   // (su Android 13/14 evita il notch/edge-to-edge sopra la UI).

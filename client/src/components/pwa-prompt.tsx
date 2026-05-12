@@ -512,10 +512,9 @@ export function CapacitorPushPrompt() {
   const handleEnable = async () => {
     setShow(false);
     try {
-      const { PushNotifications } = await import("@capacitor/push-notifications");
-      const result = await PushNotifications.requestPermissions();
-      localStorage.setItem('capacitor-push-permission', result.receive);
-      // Non chiamiamo register() — FCM non configurato, causerebbe crash nativo
+      const { registerNativePush } = await import("@/services/capacitor-native");
+      const result = await registerNativePush();
+      localStorage.setItem('capacitor-push-permission', result);
     } catch {
       localStorage.setItem('capacitor-push-permission', 'error');
     }
