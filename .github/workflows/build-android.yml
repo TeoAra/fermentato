@@ -52,6 +52,16 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      - name: Disable Firebase auto-init (placeholder FCM key)
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          # Inserisce meta-data prima di </application> per disabilitare
+          # l'auto-inizializzazione di Firebase/FCM con credenziali placeholder,
+          # prevenendo crash all'avvio dell'APK.
+          sed -i 's|</application>|        <meta-data android:name="firebase_messaging_auto_init_enabled" android:value="false" />\n        <meta-data android:name="firebase_analytics_collection_deactivated" android:value="true" />\n    </application>|' "$MANIFEST"
+          echo "✓ Firebase auto-init disabilitato in AndroidManifest.xml"
+          grep -A2 "firebase_messaging" "$MANIFEST" || true
+
       - name: Make Gradle executable
         run: chmod +x android/gradlew
 

@@ -176,7 +176,6 @@ export default function MicroblogNew() {
           data-testid="textarea-microblog-content"
           className="rounded-2xl border-stone-200 dark:border-stone-700 text-base resize-none bg-white dark:bg-[hsl(220,5%,18%)] whitespace-pre-wrap"
           autoFocus
-          data-testid="input-post-content"
         />
         <div className="flex items-center justify-between text-xs text-stone-400">
           <span>Emoji, a capo e <span className="text-primary font-semibold">#hashtag</span> benvenuti</span>
