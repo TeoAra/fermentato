@@ -1,10 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # Codemagic CI/CD — Fermenta.to iOS IPA
-#
-# Prerequisiti (già fatti):
-# 1. Apple Developer Portal integration su Codemagic (Team settings → Integrations)
-# 2. Bundle ID to.fermentato.app registrato su Apple Developer
-# 3. App "Fermenta.to" creata su App Store Connect
+# Prerequisiti: bundle ID to.fermentato.app + app su App Store Connect.
+# Apple Developer Portal integration attiva su Codemagic.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 workflows:
@@ -29,6 +26,12 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
+      vars:
+        BUNDLE_ID: to.fermentato.app
+        # Variabili necessarie per publishing (ios_signing le prende dall'integrazione UI)
+        ASC_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        ASC_KEY_ID: $APP_STORE_CONNECT_KEY_ID
+        ASC_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
 
     cache:
       cache_paths:
@@ -79,6 +82,9 @@ workflows:
 
     publishing:
       app_store_connect:
+        api_key: $ASC_PRIVATE_KEY
+        key_id: $ASC_KEY_ID
+        issuer_id: $ASC_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
       email:
@@ -88,7 +94,7 @@ workflows:
           success: true
           failure: true
 
-  # ─── Build App Store IPA (trigger su tag v*) ────────────────────────────────
+  # ─── Build App Store IPA (trigger su tag v*) ─────────────────────────────────
   ios-appstore:
     name: iOS App Store IPA
     max_build_duration: 60
@@ -108,6 +114,11 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
+      vars:
+        BUNDLE_ID: to.fermentato.app
+        ASC_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        ASC_KEY_ID: $APP_STORE_CONNECT_KEY_ID
+        ASC_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
 
     cache:
       cache_paths:
@@ -149,6 +160,9 @@ workflows:
 
     publishing:
       app_store_connect:
+        api_key: $ASC_PRIVATE_KEY
+        key_id: $ASC_KEY_ID
+        issuer_id: $ASC_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
       email:
