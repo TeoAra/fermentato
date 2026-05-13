@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getGoogleMapsLoader } from "@/lib/googleMapsLoader";
+import { loadGoogleMapsLibrary } from "@/lib/googleMapsLoader";
 import { Input } from "@/components/ui/input";
 import { MapPin, Loader2 } from "lucide-react";
 
@@ -58,10 +58,7 @@ export function AddressAutocomplete({
       return;
     }
 
-    const loader = getGoogleMapsLoader();
-
-    loader
-      .importLibrary("places")
+    loadGoogleMapsLibrary("places")
       .then(() => {
         if (!inputRef.current) return;
 
@@ -135,7 +132,7 @@ export function AddressAutocomplete({
 
         setIsLoading(false);
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         console.error("Errore caricamento Google Places:", err);
         setError("Errore caricamento autocompletamento");
         setIsLoading(false);

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { getGoogleMapsLoader } from "@/lib/googleMapsLoader";
+import { loadGoogleMapsLibrary } from "@/lib/googleMapsLoader";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
@@ -12,16 +12,17 @@ interface AddressAutocompleteProps {
   countryRestriction?: string | null;
 }
 
-export default function AddressAutocomplete({ 
-  value, 
-  onChange, 
+export default function AddressAutocomplete({
+  value,
+  onChange,
   placeholder = "Inserisci l'indirizzo...",
   className,
   searchType = 'address',
-  countryRestriction = 'IT'
+  countryRestriction = 'IT',
 }: AddressAutocompleteProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const autocompleteRef = useRef<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,79 +34,65 @@ export default function AddressAutocomplete({
         setIsLoading(true);
         setError(null);
 
-        const loader = getGoogleMapsLoader();
+        await loadGoogleMapsLibrary("places");
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const g = (window as any).google;
+        if (!g?.maps?.places?.Autocomplete) {
+          setError("Google Places non disponibile");
+          setIsLoading(false);
+          return;
+        }
 
-        await loader.load();
-
-        // Configure autocomplete - 'all' type allows searching everything
-        const autocompleteOptions: google.maps.places.AutocompleteOptions = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const autocompleteOptions: any = {
           ...(countryRestriction ? { componentRestrictions: { country: countryRestriction } } : {}),
-          fields: ['address_components', 'formatted_address', 'geometry', 'name']
+          fields: ['address_components', 'formatted_address', 'geometry', 'name'],
         };
-        
-        // Only add types restriction if not 'all'
+
         if (searchType !== 'all') {
           const typesMap: Record<string, string[]> = {
-            'address': ['address'],
-            'cities': ['(cities)'],
-            'regions': ['(regions)']
+            address: ['address'],
+            cities: ['(cities)'],
+            regions: ['(regions)'],
           };
           autocompleteOptions.types = typesMap[searchType];
         }
-        
-        const autocomplete = new google.maps.places.Autocomplete(inputRef.current, autocompleteOptions);
 
+        const autocomplete = new g.maps.places.Autocomplete(inputRef.current, autocompleteOptions);
         autocompleteRef.current = autocomplete;
 
-        // Handle place selection
         autocomplete.addListener('place_changed', () => {
           const place = autocomplete.getPlace();
-          
-          if (!place.address_components && !place.name) {
-            return;
-          }
+          if (!place.address_components && !place.name) return;
 
           let city = '';
           let region = '';
           let postalCode = '';
-          
-          // Extract address components
+
           if (place.address_components) {
-            place.address_components.forEach((component) => {
-              const types = component.types;
-              
-              if (types.includes('locality')) {
-                city = component.long_name;
-              } else if (types.includes('administrative_area_level_1')) {
-                region = component.long_name;
-              } else if (types.includes('postal_code')) {
-                postalCode = component.long_name;
-              }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            place.address_components.forEach((component: any) => {
+              const types: string[] = component.types;
+              if (types.includes('locality')) city = component.long_name;
+              else if (types.includes('administrative_area_level_1')) region = component.long_name;
+              else if (types.includes('postal_code')) postalCode = component.long_name;
             });
           }
 
-          // Use place name for establishments, or formatted address for addresses
-          // For 'all' type, prefer place name if available (for businesses/POIs)
-          const placeName = place.name || '';
-          const formattedAddress = place.formatted_address || value;
-          
-          // If it's a business/POI, use the name + city format
-          // Otherwise use the formatted address
+          const placeName: string = place.name || '';
+          const formattedAddress: string = place.formatted_address || value;
+
           let finalAddress = formattedAddress;
-          if (placeName && searchType === 'all' && city) {
-            finalAddress = `${placeName}, ${city}`;
-          } else if (placeName && searchType === 'all') {
-            finalAddress = placeName;
-          }
-          
+          if (placeName && searchType === 'all' && city) finalAddress = `${placeName}, ${city}`;
+          else if (placeName && searchType === 'all') finalAddress = placeName;
+
           const lat = place.geometry?.location?.lat();
           const lng = place.geometry?.location?.lng();
           onChange(finalAddress, city, region, postalCode, lat, lng);
         });
-
       } catch (err) {
         console.error('Error loading Google Maps:', err);
-        setError('Errore nel caricamento dell\'autocompletamento indirizzi');
+        setError("Errore nel caricamento dell'autocompletamento indirizzi");
       } finally {
         setIsLoading(false);
       }
@@ -113,12 +100,14 @@ export default function AddressAutocomplete({
 
     initializeAutocomplete();
 
-    // Cleanup
     return () => {
-      if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const g = (window as any).google;
+      if (autocompleteRef.current && g?.maps?.event) {
+        g.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,9 +127,7 @@ export default function AddressAutocomplete({
           disabled={isLoading}
         />
       </div>
-      {error && (
-        <p className="text-sm text-red-600 mt-1">{error}</p>
-      )}
+      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
     </div>
   );
 }

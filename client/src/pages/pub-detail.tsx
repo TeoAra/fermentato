@@ -3,13 +3,12 @@ import { Helmet } from "react-helmet-async";
 import { useParams, Link, useLocation } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { SiFacebook, SiInstagram } from "react-icons/si";
 import { 
   Clock, 
   Phone, 
   Globe, 
   Wine, 
-  Facebook, 
-  Instagram, 
   Settings, 
   Heart,
   Share2,
@@ -884,7 +883,7 @@ export default function PubDetail() {
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-[#15202B]/40 border border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30 transition-all tap-scale"
                 data-testid="link-instagram"
               >
-                <Instagram className="h-5 w-5 text-foreground" />
+                <SiInstagram className="h-5 w-5 text-foreground" />
                 <span className="text-[11px] font-bold text-foreground leading-tight">Instagram</span>
                 <span className="text-[10px] text-stone-500 dark:text-stone-400 leading-tight truncate max-w-full px-1">
                   @{(pub as any).instagramUrl.replace(/^https?:\/\/(www\.)?instagram\.com\//i, '').replace(/\/.*$/, '').replace(/^@/, '') || 'instagram'}
@@ -1270,13 +1269,13 @@ export default function PubDetail() {
                         {(pub as any)?.instagramUrl && (
                           <a href={(pub as any).instagramUrl} target="_blank" rel="noopener noreferrer"
                             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-sm font-bold transition-all shadow-sm tap-scale">
-                            <Instagram size={16} /> Instagram
+                            <SiInstagram size={16} /> Instagram
                           </a>
                         )}
                         {(pub as any)?.facebookUrl && (
                           <a href={(pub as any).facebookUrl} target="_blank" rel="noopener noreferrer"
                             className="flex-1 flex items-center justify-center gap-2 py-3 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold transition-colors shadow-sm tap-scale">
-                            <Facebook size={16} /> Facebook
+                            <SiFacebook size={16} /> Facebook
                           </a>
                         )}
                       </div>
@@ -1391,13 +1390,13 @@ export default function PubDetail() {
                     {(pub as any)?.facebookUrl && (
                       <a href={(pub as any).facebookUrl} target="_blank" rel="noopener noreferrer"
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors">
-                        <Facebook size={13} /> Facebook
+                        <SiFacebook size={13} /> Facebook
                       </a>
                     )}
                     {(pub as any)?.instagramUrl && (
                       <a href={(pub as any).instagramUrl} target="_blank" rel="noopener noreferrer"
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white text-xs font-semibold transition-all">
-                        <Instagram size={13} /> Instagram
+                        <SiInstagram size={13} /> Instagram
                       </a>
                     )}
                   </div>

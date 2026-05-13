@@ -69,7 +69,7 @@ export default function RegistraPub() {
   const [sameSiteAsPub, setSameSiteAsPub] = useState(false);
 
   const form = useForm<FormData>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(schema) as any,
     defaultValues: {
       nickname: "", email: "", password: "", confirmPassword: "",
       pubName: "", pubAddress: "", pubCity: "", pubRegion: "",

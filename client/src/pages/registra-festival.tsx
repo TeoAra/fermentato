@@ -90,7 +90,7 @@ function StepAccount({ onDone }: { onDone: () => void }) {
   const [pendingVerification, setPendingVerification] = useState<string | null>(null);
 
   const form = useForm<RegisterData>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(registerSchema) as any,
     defaultValues: { nickname: "", email: "", password: "", confirmPassword: "" },
   });
 

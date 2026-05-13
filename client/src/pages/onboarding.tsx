@@ -55,13 +55,13 @@ export default function Onboarding() {
   const [newBrewery, setNewBrewery] = useState(false);
 
   const pubForm = useForm<PubForm>({
-    resolver: zodResolver(pubSchema),
+    resolver: zodResolver(pubSchema) as any,
     mode: "onSubmit",
     defaultValues: { pubName: "", pubAddress: "", pubCity: "", pubRegion: "", vatNumber: "", phone: "", description: "" },
   });
 
   const breweryForm = useForm<BreweryForm>({
-    resolver: zodResolver(brewerySchema),
+    resolver: zodResolver(brewerySchema) as any,
     mode: "onSubmit",
     defaultValues: { breweryName: "", breweryLocation: "", breweryRegion: "", breweryCountry: "Italia", breweryVatNumber: "", breweryPhone: "", breweryDescription: "", breweryWebsite: "" },
   });

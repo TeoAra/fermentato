@@ -115,12 +115,12 @@ export default function AuthPage() {
   const nicknameTimerRef = useRef<any>(null);
 
   const loginForm = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(loginSchema) as any,
     defaultValues: { emailOrUsername: "", password: "", rememberMe: false },
   });
 
   const registerForm = useForm<RegisterForm>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(registerSchema) as any,
     defaultValues: {
       nickname: "", email: "", password: "", confirmPassword: "",
       isPublican: false, pubName: "", pubAddress: "", pubCity: "", pubRegion: "",

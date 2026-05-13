@@ -32,7 +32,7 @@ export default function BecomePublican() {
   const [success, setSuccess] = useState(false);
 
   const form = useForm<BecomePublicanForm>({
-    resolver: zodResolver(becomePublicanSchema),
+    resolver: zodResolver(becomePublicanSchema) as any,
     defaultValues: {
       pubName: "",
       address: "",

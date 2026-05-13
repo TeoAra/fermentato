@@ -560,7 +560,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   });
 
   const form = useForm<BeerFormValues>({
-    resolver: zodResolver(beerFormSchema),
+    resolver: zodResolver(beerFormSchema) as any,
     defaultValues: {
       name: "", style: "", abv: null, ibu: null, description: "", color: "", imageUrl: "",
     },

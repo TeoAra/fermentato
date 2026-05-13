@@ -1,4 +1,4 @@
-import { Facebook, Instagram } from "lucide-react";
+import { SiFacebook, SiInstagram } from "react-icons/si";
 import { Link } from "wouter";
 import { CookieSettingsButton } from "@/components/CookieBanner";
 
@@ -17,10 +17,10 @@ export default function Footer() {
             </p>
             <div className="flex space-x-4">
               <a href="https://www.facebook.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                <Facebook size={24} />
+                <SiFacebook size={24} />
               </a>
               <a href="https://www.instagram.com/fermentato.social" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
-                <Instagram size={24} />
+                <SiInstagram size={24} />
               </a>
             </div>
           </div>

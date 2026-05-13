@@ -23,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
   Beer, Wine, Utensils, Building2, Plus, AlertCircle, LogIn,
-  Facebook, Instagram, X as Twitter, Music, Clock, MapPin, Phone, Globe, Camera,
+  X as Twitter, Music, Clock, MapPin, Phone, Globe, Camera,
   TrendingUp, Eye, CalendarDays
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
