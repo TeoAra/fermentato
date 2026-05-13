@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" | sed 's/\\n/\n/g' > /tmp/auth_key.p8
+app-store-connect fetch-signing-files "$BUNDLE_ID" \
+  --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+  --key-id "$APP_STORE_CONNECT_KEY_ID" \
+  --private-key @/tmp/auth_key.p8 \
+  --type IOS_APP_STORE \
+  --create
+usage: app-store-connect fetch-signing-files [-h] [--log-api-calls] [--api-unauthorized-retries UNAUTHORIZED_REQUEST_RETRIES] [--api-server-error-retries SERVER_ERROR_RETRIES] [--disable-jwt-cache] [--json] [--issuer-id ISSUER_ID] [--key-id KEY_IDENTIFIER] [--private-key PRIVATE_KEY] [--certificates-dir CERTIFICATES_DIRECTORY] [--profiles-dir PROFILES_DIRECTORY] [--platform {IOS,MAC_OS,UNIVERSAL,SERVICES}] [--certificate-key CERTIFICATE_KEY] [--certificate-key-password CERTIFICATE_KEY_PASSWORD] [--p12-password P12_CONTAINER_PASSWORD] [--type {IOS_APP_ADHOC,IOS_APP_DEVELOPMENT,IOS_APP_INHOUSE,IOS_APP_STORE,MAC_APP_DEVELOPMENT,MAC_APP_DIRECT,MAC_APP_STORE,MAC_CATALYST_APP_DEVELOPMENT,MAC_CATALYST_APP_DIRECT,MAC_CATALYST_APP_STORE,TVOS_APP_ADHOC,TVOS_APP_DEVELOPMENT,TVOS_APP_INHOUSE,TVOS_APP_STORE}] [--strict-match-identifier] [--create] [--delete-stale-profiles] [--log-stream {stderr,stdout}] [--no-color] [--version] [-s] [-v] bundle_id_identifier
+app-store-connect fetch-signing-files: error: argument --private-key: Provided value is not a valid PEM encoded private key
+
+
+Build failed :|
+Step 9 script `Scarica certificati e profili da App Store Connect` exited with status code 2
+usage: app-store-connect fetch-signing-files [-h] [--log-api-calls] [--api-unauthorized-retries UNAUTHORIZED_REQUEST_RETRIES] [--api-server-error-retries SERVER_ERROR_RETRIES] [--disable-jwt-cache] [--json] [--issuer-id ISSUER_ID] [--key-id KEY_IDENTIFIER] [--private-key PRIVATE_KEY] [--certificates-dir CERTIFICATES_DIRECTORY] [--profiles-dir PROFILES_DIRECTORY] [--platform {IOS,MAC_OS,UNIVERSAL,SERVICES}] [--certificate-key CERTIFICATE_KEY] [--certificate-key-password CERTIFICATE_KEY_PASSWORD] [--p12-password P12_CONTAINER_PASSWORD] [--type {IOS_APP_ADHOC,IOS_APP_DEVELOPMENT,IOS_APP_INHOUSE,IOS_APP_STORE,MAC_APP_DEVELOPMENT,MAC_APP_DIRECT,MAC_APP_STORE,MAC_CATALYST_APP_DEVELOPMENT,MAC_CATALYST_APP_DIRECT,MAC_CATALYST_APP_STORE,TVOS_APP_ADHOC,TVOS_APP_DEVELOPMENT,TVOS_APP_INHOUSE,TVOS_APP_STORE}] [--strict-match-identifier] [--create] [--delete-stale-profiles] [--log-stream {stderr,stdout}] [--no-color] [--version] [-s] [-v] bundle_id_identifier
+app-store-connect fetch-signing-files: error: argument --private-key: Provided value is not a valid PEM encoded private key
+
+
+Build failed :|
+Step 9 script `Scarica certificati e profili da App Store Connect` exited with status code 2
