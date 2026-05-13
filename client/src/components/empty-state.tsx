@@ -29,10 +29,10 @@ export function EmptyState({
 
   return (
     <div
-      className={`text-center ${padY} bg-white dark:bg-card rounded-3xl border border-stone-100 dark:border-stone-800/60 ${className}`}
+      className={`text-center ${padY} bg-white dark:bg-card rounded-3xl border border-stone-100 dark:border-[#2F3D4D]/60 ${className}`}
     >
       <div
-        className={`${iconBox} rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center mx-auto mb-3`}
+        className={`${iconBox} rounded-2xl bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center mx-auto mb-3`}
       >
         {icon}
       </div>

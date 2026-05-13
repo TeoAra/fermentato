@@ -160,7 +160,7 @@ export default function UserDashboard() {
         <div className={`p-2 rounded-lg ${
           unlocked 
             ? 'bg-primary text-white' 
-            : 'bg-stone-200 dark:bg-stone-700 text-stone-400'
+            : 'bg-stone-200 dark:bg-[#232F3D] text-stone-400'
         }`}>
           <Icon className="h-5 w-5" />
         </div>
@@ -289,7 +289,7 @@ export default function UserDashboard() {
             <CardContent className="p-6">
               <div className="space-y-4">
                 {favorites.slice(0, 5).map((fav: any, index: number) => (
-                  <div key={fav.id} className="flex items-center justify-between p-4 rounded-xl bg-stone-50 dark:bg-stone-900 hover:bg-stone-100 dark:hover:bg-gray-700 transition-colors">
+                  <div key={fav.id} className="flex items-center justify-between p-4 rounded-xl bg-stone-50 dark:bg-[#15202B] hover:bg-stone-100 dark:hover:bg-[#232F3D] transition-colors">
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm">
                         {fav.itemType === 'pub' && <Store className="h-5 w-5" />}
@@ -429,7 +429,7 @@ export default function UserDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Pub Favorites */}
         <Card className="modern-card rounded-2xl overflow-hidden">
-          <CardHeader className="bg-stone-50 dark:bg-stone-900">
+          <CardHeader className="bg-stone-50 dark:bg-[#15202B]">
             <CardTitle className="flex items-center justify-between">
               <div className="flex items-center">
                 <Store className="mr-3 h-5 w-5 text-orange-600" />
@@ -612,7 +612,7 @@ export default function UserDashboard() {
                   className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl w-full text-left transition-all duration-200 ${
                     isActive
                       ? `bg-gradient-to-r ${section.gradient} text-white shadow-lg transform scale-105`
-                      : 'text-muted-foreground dark:text-gray-300 hover:bg-stone-100 dark:hover:bg-stone-800 hover:text-gray-900 dark:hover:text-white hover:scale-102'
+                      : 'text-muted-foreground dark:text-gray-300 hover:bg-stone-100 dark:hover:bg-[#1B2735] hover:text-gray-900 dark:hover:text-white hover:scale-102'
                   }`}
                   data-testid={`nav-${section.id}`}
                 >
@@ -626,7 +626,7 @@ export default function UserDashboard() {
           
           {/* User Info */}
           <div className="p-4 border-t">
-            <div className="flex items-center space-x-3 p-3 rounded-xl bg-stone-50 dark:bg-stone-900">
+            <div className="flex items-center space-x-3 p-3 rounded-xl bg-stone-50 dark:bg-[#15202B]">
               <Avatar className="w-8 h-8">
                 <AvatarImage src={user?.profileImageUrl || ''} />
                 <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-sm">
@@ -715,7 +715,7 @@ export default function UserDashboard() {
                 className={`flex flex-col items-center py-3 px-2 text-xs rounded-xl transition-all duration-200 ${
                   isActive
                     ? `bg-gradient-to-t ${section.gradient} text-white shadow-lg scale-105`
-                    : 'text-muted-foreground dark:text-stone-400 hover:text-gray-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-stone-800'
+                    : 'text-muted-foreground dark:text-stone-400 hover:text-gray-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-[#1B2735]'
                 }`}
                 data-testid={`mobile-nav-${section.id}`}
               >

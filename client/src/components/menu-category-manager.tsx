@@ -541,7 +541,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
           />
         </div>
         
-        <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-stone-900/20 rounded-xl border border-stone-200 dark:border-stone-700/30">
+        <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-[#15202B]/20 rounded-xl border border-stone-200 dark:border-[#2F3D4D]/30">
           <div className="text-left">
             <Label htmlFor="category-visible" className="text-sm font-bold text-foreground">
               Visibile nel menu pubblico
@@ -662,7 +662,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="w-20 h-20 bg-stone-50 dark:bg-stone-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-stone-50 dark:bg-[#15202B]/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <Utensils className="h-10 w-10 text-primary opacity-20" />
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-2">
@@ -870,7 +870,7 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                                     ) : (
                                     <div
                                       key={product.id}
-                                      className="flex items-center justify-between p-3 bg-stone-50/50 dark:bg-stone-900/20 rounded-xl hover:bg-stone-100/60 dark:hover:bg-stone-900/40 transition-colors"
+                                      className="flex items-center justify-between p-3 bg-stone-50/50 dark:bg-[#15202B]/20 rounded-xl hover:bg-stone-100/60 dark:hover:bg-stone-900/40 transition-colors"
                                     >
                                       <div className="flex-1">
                                         <div className="flex items-center gap-2 flex-wrap">

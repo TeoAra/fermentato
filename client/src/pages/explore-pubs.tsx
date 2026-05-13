@@ -204,9 +204,9 @@ export default function ExplorePubs() {
           </div>
         </div>
         {isLoading ? (
-          <div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />
+          <div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />
         ) : (
-          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={mapPins} height="100%" /></Suspense>
+          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}><PubMap pins={mapPins} height="100%" /></Suspense>
         )}
       </div>
     );
@@ -220,7 +220,7 @@ export default function ExplorePubs() {
       </Helmet>
 
       {/* ── Header (scorre con la pagina) ── */}
-      <div className="bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
+      <div className="bg-white/95 dark:bg-[#15202B]/95 backdrop-blur-md border-b border-stone-100 dark:border-[#2F3D4D]">
         <PageContainer variant="standard" className="pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
@@ -238,7 +238,7 @@ export default function ExplorePubs() {
           </div>
 
           {/* Search bar */}
-          <div className="flex items-center gap-2 bg-stone-100 dark:bg-stone-800 rounded-2xl px-3 py-2.5 mb-3">
+          <div className="flex items-center gap-2 bg-stone-100 dark:bg-[#1B2735] rounded-2xl px-3 py-2.5 mb-3">
             <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
             <input
               ref={inputRef}
@@ -255,8 +255,8 @@ export default function ExplorePubs() {
 
           {/* Mini mappa — si nasconde se WebGL non è disponibile */}
           {mapVisible && (
-            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-stone-800 mb-3">
-              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
+            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-[#1B2735] mb-3">
+              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}>
                 <PubMap
                   pins={(filtered.length > 0 ? filtered : pubsArr).map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude || ""), longitude: String(p.longitude || ""), logoUrl: p.logoUrl, type: "pub" as const }))}
                   height="100%"
@@ -275,7 +275,7 @@ export default function ExplorePubs() {
                 className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
                   quickFilter === "nearby"
                     ? "bg-primary text-white border-primary"
-                    : "bg-white dark:bg-stone-800 text-stone-700 dark:text-stone-300 border-stone-200 dark:border-stone-700"
+                    : "bg-white dark:bg-[#1B2735] text-stone-700 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
                 }`}
               >
                 Entro {distanceKm} km ▾
@@ -306,7 +306,7 @@ export default function ExplorePubs() {
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
                   useRealRoute
                     ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700"
+                    : "bg-white dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
                 }`}
                 data-testid="toggle-real-route"
               >
@@ -326,7 +326,7 @@ export default function ExplorePubs() {
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
                   quickFilter === f.key
                     ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700"
+                    : "bg-white dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
                 }`}
               >
                 {f.icon}
@@ -378,7 +378,7 @@ export default function ExplorePubs() {
                   {popular.map((pub: any) => (
                     <Link key={pub.id} href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}>
                       <div className="flex-shrink-0 w-36 cursor-pointer">
-                        <div className="relative w-36 h-28 rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800 mb-2">
+                        <div className="relative w-36 h-28 rounded-2xl overflow-hidden bg-stone-200 dark:bg-[#1B2735] mb-2">
                           <img
                             src={pub.coverImageUrl || pub.logoUrl}
                             alt={pub.name}
@@ -462,9 +462,9 @@ function PubListCard({ pub, showDist, userLocation }: { pub: any; showDist: bool
 
   return (
     <Link href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}>
-      <div className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl p-3 shadow-sm border border-stone-100 dark:border-stone-800/60 active:scale-[0.98] transition-transform cursor-pointer">
+      <div className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl p-3 shadow-sm border border-stone-100 dark:border-[#2F3D4D]/60 active:scale-[0.98] transition-transform cursor-pointer">
         {/* Cover / Logo */}
-        <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 dark:bg-stone-800 flex-shrink-0">
+        <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 dark:bg-[#1B2735] flex-shrink-0">
           {!imgErr && (pub.coverImageUrl || pub.logoUrl) ? (
             <img
               src={pub.coverImageUrl || pub.logoUrl}

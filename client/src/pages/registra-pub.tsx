@@ -247,7 +247,7 @@ export default function RegistraPub() {
             { icon: "💳", title: "€65/anno", desc: "IVA inclusa, poi all'anno" },
             { icon: "❌", title: "Annulla quando vuoi", desc: "Nessun vincolo" },
           ].map(({ icon, title, desc }) => (
-            <div key={title} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 p-3 shadow-sm">
+            <div key={title} className="bg-white dark:bg-[#1B2735] rounded-xl border border-gray-100 dark:border-[#2F3D4D] p-3 shadow-sm">
               <div className="text-xl mb-1">{icon}</div>
               <p className="font-semibold text-foreground dark:text-gray-200 leading-tight">{title}</p>
               <p className="text-muted-foreground dark:text-stone-400 leading-tight mt-0.5">{desc}</p>
@@ -451,7 +451,7 @@ export default function RegistraPub() {
 
             {/* Section 4: Brewery details (if brewpub) */}
             {isBrewpub && (
-              <Card className="shadow-sm border-stone-300 dark:border-stone-700">
+              <Card className="shadow-sm border-stone-300 dark:border-[#2F3D4D]">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-base text-orange-800 dark:text-orange-200">
                     <Factory className="w-4 h-4" />
@@ -480,7 +480,7 @@ export default function RegistraPub() {
                               form.setValue("breweryRegion", b.region || "");
                               form.setValue("breweryCountry", (b as any).country || "");
                               setBrewerySearch("");
-                            }} className="w-full text-left p-2 rounded hover:bg-stone-50 dark:hover:bg-stone-800/35 transition-colors">
+                            }} className="w-full text-left p-2 rounded hover:bg-stone-50 dark:hover:bg-[#1B2735]/35 transition-colors">
                               <p className="font-medium text-sm">{b.name}</p>
                               <p className="text-xs text-muted-foreground">{b.location}</p>
                             </button>
@@ -574,7 +574,7 @@ export default function RegistraPub() {
                         )} />
                       )}
                       {sameSiteAsPub && (
-                        <div className="text-sm text-muted-foreground dark:text-stone-400 bg-stone-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 border border-stone-200 dark:border-stone-700">
+                        <div className="text-sm text-muted-foreground dark:text-stone-400 bg-stone-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 border border-stone-200 dark:border-[#2F3D4D]">
                           Sede: <span className="font-medium text-muted-foreground dark:text-stone-300">{form.watch("pubAddress") || form.watch("pubCity")}</span>
                         </div>
                       )}

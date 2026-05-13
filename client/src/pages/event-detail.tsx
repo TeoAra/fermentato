@@ -102,7 +102,7 @@ export default function EventDetailPage() {
       : null;
 
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-[hsl(25,14%,5%)]">
+    <div className="min-h-screen bg-stone-50 dark:bg-[#0F1820]">
       <Helmet>
         <title>{ev.title} · Eventi · Fermenta.to</title>
         <meta name="description" content={ev.description?.slice(0, 160) || `${ev.title} - ${ev.venueName}`} />
@@ -113,7 +113,7 @@ export default function EventDetailPage() {
       {/* Cover */}
       <div className="relative">
         {ev.imageUrl ? (
-          <div className="relative h-64 sm:h-80 lg:h-96 bg-stone-200 dark:bg-stone-900">
+          <div className="relative h-64 sm:h-80 lg:h-96 bg-stone-200 dark:bg-[#15202B]">
             <img src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           </div>

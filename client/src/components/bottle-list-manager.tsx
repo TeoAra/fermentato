@@ -372,11 +372,11 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
                           />
                         </div>
                         {searchResults?.beers && searchResults.beers.length > 0 && !formData.beerId && (
-                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-gray-900">
+                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-[#15202B]">
                             {searchResults.beers.map((beer: any, idx: number) => (
                               <div
                                 key={beer?.id ?? `result-${idx}`}
-                                className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer border-b last:border-b-0 transition-colors"
+                                className="p-3 hover:bg-gray-50 dark:hover:bg-[#1B2735] cursor-pointer border-b last:border-b-0 transition-colors"
                                 onClick={() => {
                                   setFormData({ ...formData, beerId: beer?.id?.toString() || "" });
                                 }}
@@ -412,7 +412,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
 
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && (
-                  <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                  <div className="p-4 bg-gray-50 dark:bg-[#1B2735] rounded-lg border">
                     <div className="font-semibold text-gray-900 dark:text-white">{editingItem.beer?.name || "Birra sconosciuta"}</div>
                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       {editingItem.beer?.brewery?.name || "Birrificio sconosciuto"} • {editingItem.beer?.style || "Stile sconosciuto"} • {editingItem.beer?.abv || "0"}% ABV
@@ -562,7 +562,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
               return (
                 <div
                   key={item.id}
-                  className={`border rounded-lg p-4 transition-colors ${!safeItem.isVisible ? 'opacity-60 bg-gray-50 dark:bg-gray-800/50' : 'bg-white dark:bg-gray-900'}`}
+                  className={`border rounded-lg p-4 transition-colors ${!safeItem.isVisible ? 'opacity-60 bg-gray-50 dark:bg-[#1B2735]/50' : 'bg-white dark:bg-[#15202B]'}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -645,7 +645,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
                       €{safeItem.price} • {safeItem.size || "33cl"}
                     </Badge>
                     {safeItem.quantity > 0 && (
-                      <Badge variant="outline" className="text-xs font-medium bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400">
+                      <Badge variant="outline" className="text-xs font-medium bg-gray-50 dark:bg-[#1B2735] border-gray-200 dark:border-[#2F3D4D] text-gray-600 dark:text-gray-400">
                         {safeItem.quantity} disponibili
                       </Badge>
                     )}

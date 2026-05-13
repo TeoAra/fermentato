@@ -99,7 +99,7 @@ export default function EventiPage() {
   const hasActiveFilters = q || city || category !== "all" || source !== "all" || range !== "all";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/40 to-white dark:from-[hsl(25,14%,7%)] dark:to-[hsl(25,14%,5%)]">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/40 to-white dark:from-[#15202B] dark:to-[#0F1820]">
       <Helmet>
         <title>Eventi birrari in Italia · Fermenta.to</title>
         <meta name="description" content="Scopri tutti gli eventi nei pub e birrifici italiani: degustazioni, live music, feste e molto altro. Trova un evento vicino a te." />
@@ -290,7 +290,7 @@ function EventCard({ ev }: { ev: PublicEvent }) {
       <a className="block group" data-testid={`card-event-${ev.sourceType}-${ev.id}`}>
         <Card className="overflow-hidden border-stone-200 dark:border-white/10 hover:shadow-lg transition-shadow h-full">
           {ev.imageUrl ? (
-            <div className="relative h-40 bg-stone-100 dark:bg-stone-800">
+            <div className="relative h-40 bg-stone-100 dark:bg-[#1B2735]">
               <img src={ev.imageUrl} alt={ev.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute top-2 left-2 flex gap-1.5">

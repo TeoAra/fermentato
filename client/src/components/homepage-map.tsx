@@ -221,7 +221,7 @@ export default function HomepageMap({
       style={{ touchAction: "pan-y", height: fixedHeight ? `${fixedHeight}px` : '100%', maxHeight: fixedHeight ? `${fixedHeight}px` : undefined }}
     >
       {isLoading && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-stone-800">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-[#1B2735]">
           <div className="flex flex-col items-center gap-3">
             <div className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin border-primary" />
             <span className="text-sm font-medium text-muted-foreground">Caricamento mappa...</span>

@@ -75,7 +75,7 @@ function DiffRow({ field, current, proposed }: { field: string; current: any; pr
   const img = isImageField(field);
 
   return (
-    <div className="grid grid-cols-3 gap-3 py-2 border-b border-gray-100 dark:border-gray-800 last:border-0">
+    <div className="grid grid-cols-3 gap-3 py-2 border-b border-gray-100 dark:border-[#2F3D4D] last:border-0">
       <div className="text-xs font-medium text-gray-500 dark:text-gray-400 self-start pt-1">{label}</div>
       <div className="text-xs text-gray-400 dark:text-gray-500 line-through">
         {img && current ? (
@@ -126,7 +126,7 @@ function SuggestionCard({ suggestion, onApprove, onReject, isProcessing }: {
   };
 
   return (
-    <Card className="border border-gray-200 dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow">
+    <Card className="border border-gray-200 dark:border-[#2F3D4D] shadow-sm hover:shadow-md transition-shadow">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -168,7 +168,7 @@ function SuggestionCard({ suggestion, onApprove, onReject, isProcessing }: {
           <div className="flex items-center gap-2 flex-shrink-0">
             <Avatar className="h-7 w-7">
               <AvatarImage src={suggestion.user?.profileImageUrl ?? undefined} />
-              <AvatarFallback className="text-xs bg-gray-200 dark:bg-gray-700">{userInitial}</AvatarFallback>
+              <AvatarFallback className="text-xs bg-gray-200 dark:bg-[#232F3D]">{userInitial}</AvatarFallback>
             </Avatar>
             <span className="text-xs text-gray-600 dark:text-gray-300 hidden sm:block">{userName}</span>
           </div>
@@ -195,7 +195,7 @@ function SuggestionCard({ suggestion, onApprove, onReject, isProcessing }: {
           </button>
 
           {expanded && (
-            <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div className="mt-3 p-3 bg-gray-50 dark:bg-[#15202B] rounded-lg">
               <div className="grid grid-cols-3 gap-3 mb-2 text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                 <div>Campo</div>
                 <div>Attuale</div>
@@ -338,7 +338,7 @@ export default function AdminSuggestions() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-amber-50/20 dark:from-gray-950 dark:to-amber-950/10">
       {/* Header */}
-      <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 sticky top-0 z-10">
+      <div className="bg-white dark:bg-[#15202B] border-b border-gray-200 dark:border-[#2F3D4D] sticky top-0 z-10">
         <PageContainer variant="standard" className="py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin">
@@ -347,7 +347,7 @@ export default function AdminSuggestions() {
                 Admin
               </Button>
             </Link>
-            <div className="h-4 w-px bg-gray-200 dark:bg-gray-700" />
+            <div className="h-4 w-px bg-gray-200 dark:bg-[#232F3D]" />
             <div className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-amber-500" />
               <h1 className="font-semibold text-gray-900 dark:text-white">Suggerimenti di modifica</h1>
@@ -363,14 +363,14 @@ export default function AdminSuggestions() {
 
       <PageContainer variant="standard" className="py-6 space-y-5">
         {/* Status tabs */}
-        <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-lg w-fit">
+        <div className="flex gap-2 p-1 bg-gray-100 dark:bg-[#1B2735] rounded-lg w-fit">
           {(["pending", "approved", "rejected"] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all ${
                 statusFilter === s
-                  ? "bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-white"
+                  ? "bg-white dark:bg-[#232F3D] shadow-sm text-gray-900 dark:text-white"
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
@@ -388,7 +388,7 @@ export default function AdminSuggestions() {
         {isLoading ? (
           <div className="space-y-4">
             {[...Array(3)].map((_, i) => (
-              <div key={i} className="h-40 bg-gray-200 dark:bg-gray-800 rounded-xl animate-pulse" />
+              <div key={i} className="h-40 bg-gray-200 dark:bg-[#1B2735] rounded-xl animate-pulse" />
             ))}
           </div>
         ) : suggestions.length === 0 ? (

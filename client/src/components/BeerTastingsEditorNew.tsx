@@ -206,7 +206,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
           {paginatedTastings.length > 0 ? (
             <div className="space-y-3">
               {paginatedTastings.map((tasting: any) => (
-                <div key={tasting.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-stone-50 dark:hover:bg-gray-800/50 transition-colors">
+                <div key={tasting.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-stone-50 dark:hover:bg-[#1B2735]/50 transition-colors">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <Link href={`/beer/${tasting.beerId || tasting.beer?.id}`}>
                       <img
@@ -227,7 +227,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                         </p>
                       </Link>
                       {tasting.personalNotes && (
-                        <p className="text-xs text-muted-foreground dark:text-stone-300 italic mt-1 bg-stone-50 dark:bg-gray-800 px-2 py-1 rounded line-clamp-2">
+                        <p className="text-xs text-muted-foreground dark:text-stone-300 italic mt-1 bg-stone-50 dark:bg-[#1B2735] px-2 py-1 rounded line-clamp-2">
                           "{tasting.personalNotes}"
                         </p>
                       )}

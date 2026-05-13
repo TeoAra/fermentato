@@ -210,7 +210,7 @@ export function IosInstallGuide({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-end justify-center p-4" onClick={onClose}>
       <div
-        className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8"
+        className="bg-white dark:bg-[#15202B] rounded-3xl w-full max-w-sm shadow-2xl overflow-hidden animate-in slide-in-from-bottom-8"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-4 flex items-center justify-between">
@@ -233,13 +233,13 @@ export function IosInstallGuide({ onClose }: { onClose: () => void }) {
             {steps.map((_, i) => (
               <div
                 key={i}
-                className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-amber-500' : i < step ? 'w-4 bg-amber-300' : 'w-4 bg-stone-200 dark:bg-gray-700'}`}
+                className={`h-1.5 rounded-full transition-all duration-300 ${i === step ? 'w-8 bg-amber-500' : i < step ? 'w-4 bg-amber-300' : 'w-4 bg-stone-200 dark:bg-[#232F3D]'}`}
               />
             ))}
           </div>
 
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-stone-100 dark:bg-gray-800 rounded-2xl flex items-center justify-center mx-auto">
+            <div className="w-16 h-16 bg-stone-100 dark:bg-[#1B2735] rounded-2xl flex items-center justify-center mx-auto">
               {current.icon}
             </div>
             <div>
@@ -352,7 +352,7 @@ export function PwaInstallPrompt() {
       {showIosGuide && <IosInstallGuide onClose={() => { setShowIosGuide(false); handleDismiss(); }} />}
 
       <div className="fixed bottom-nav-above left-4 right-4 lg:left-auto lg:right-4 lg:w-96 z-50 animate-in slide-in-from-bottom-5">
-        <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
+        <div className="bg-white/90 dark:bg-[#15202B]/90 backdrop-blur-xl border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
           <div className="flex items-start gap-3">
             <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">
               <Smartphone className="w-5 h-5 text-white" />
@@ -449,7 +449,7 @@ export function CapacitorLocationPrompt() {
 
   return (
     <div className="fixed bottom-36 left-4 right-4 z-50">
-      <div className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
+      <div className="bg-white dark:bg-[#15202B] border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
         <div className="flex items-start gap-3">
           <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">
             <MapPin className="w-5 h-5 text-white" />
@@ -530,7 +530,7 @@ export function CapacitorPushPrompt() {
 
   return (
     <div className="fixed bottom-nav-above left-4 right-4 z-50">
-      <div className="bg-white dark:bg-gray-900 border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
+      <div className="bg-white dark:bg-[#15202B] border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
         <div className="flex items-start gap-3">
           <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">
             <Bell className="w-5 h-5 text-white" />
@@ -607,7 +607,7 @@ export function PushNotificationPrompt() {
 
   return (
     <div className="fixed bottom-nav-above left-4 right-4 lg:left-auto lg:right-4 lg:w-96 z-50 animate-in slide-in-from-bottom-5">
-      <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
+      <div className="bg-white/90 dark:bg-[#15202B]/90 backdrop-blur-xl border border-amber-200 dark:border-amber-800 rounded-2xl p-4 shadow-2xl">
         <div className="flex items-start gap-3">
           <div className="p-2 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex-shrink-0">
             <Bell className="w-5 h-5 text-white" />

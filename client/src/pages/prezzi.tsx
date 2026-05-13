@@ -18,7 +18,7 @@ interface FeatureRowProps {
 }
 function FeatureRow({ label, included, icon }: FeatureRowProps) {
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-gray-100 dark:border-gray-800 last:border-0">
+    <div className="flex items-center gap-3 py-2.5 border-b border-gray-100 dark:border-[#2F3D4D] last:border-0">
       {icon && <div className="flex-shrink-0 w-4 h-4 text-stone-400">{icon}</div>}
       <div className="flex-1 text-sm text-muted-foreground dark:text-stone-300">{label}</div>
       <div className="flex-shrink-0">
@@ -32,7 +32,7 @@ function FeatureRow({ label, included, icon }: FeatureRowProps) {
 
 export default function PrezziPage() {
   return (
-    <div className="min-h-screen bg-background dark:bg-[hsl(25,14%,7%)]">
+    <div className="min-h-screen bg-background dark:bg-[#15202B]">
       <SEO
         title="Prezzi e Piani — Fermenta.to"
         description="Scopri i piani Fermenta.to per pub e birrifici. Piano pub da 65€/anno. Birrifici verificati gratuitamente."
@@ -214,7 +214,7 @@ export default function PrezziPage() {
           </div>
 
           {/* Info box */}
-          <div className="bg-stone-50 dark:bg-orange-900/20 border border-stone-300 dark:border-stone-700 rounded-xl p-4 mb-8 max-w-2xl mx-auto">
+          <div className="bg-stone-50 dark:bg-orange-900/20 border border-stone-300 dark:border-[#2F3D4D] rounded-xl p-4 mb-8 max-w-2xl mx-auto">
             <div className="flex gap-3">
               <Shield className="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" />
               <div>

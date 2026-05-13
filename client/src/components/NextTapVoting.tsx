@@ -62,7 +62,7 @@ export function NextTapVoting({ pubId, isOwner }: NextTapVotingProps) {
   const maxVotes = Math.max(...proposals.map((p: any) => parseInt(p.vote_count ?? 0)), 1);
 
   return (
-    <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm overflow-hidden">
+    <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm overflow-hidden">
       <div className="px-4 pt-4 pb-2 flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-stone-800 dark:text-stone-200 font-poppins text-sm flex items-center gap-1.5">
@@ -92,7 +92,7 @@ export function NextTapVoting({ pubId, isOwner }: NextTapVotingProps) {
           )}
         </div>
       ) : (
-        <div className="divide-y divide-stone-50 dark:divide-[hsl(220,5%,22%)]">
+        <div className="divide-y divide-stone-50 dark:divide-[#232F3D]">
           {proposals.map((proposal: any, index: number) => {
             const votes = parseInt(proposal.vote_count ?? 0);
             const voted = proposal.user_voted;
@@ -103,9 +103,9 @@ export function NextTapVoting({ pubId, isOwner }: NextTapVotingProps) {
                   {index + 1}
                 </span>
                 {proposal.beer_image ? (
-                  <img src={proposal.beer_image} alt={proposal.beer_name} className="w-12 h-12 object-contain rounded-xl bg-stone-50 dark:bg-[hsl(220,5%,22%)] flex-shrink-0" />
+                  <img src={proposal.beer_image} alt={proposal.beer_name} className="w-12 h-12 object-contain rounded-xl bg-stone-50 dark:bg-[#232F3D] flex-shrink-0" />
                 ) : (
-                  <div className="w-12 h-12 rounded-xl bg-stone-100 dark:bg-[hsl(220,5%,22%)] flex items-center justify-center flex-shrink-0">
+                  <div className="w-12 h-12 rounded-xl bg-stone-100 dark:bg-[#232F3D] flex items-center justify-center flex-shrink-0">
                     <Package className="w-5 h-5 text-stone-300" />
                   </div>
                 )}
@@ -115,7 +115,7 @@ export function NextTapVoting({ pubId, isOwner }: NextTapVotingProps) {
                   </Link>
                   <p className="text-xs text-stone-400">{proposal.brewery_name}</p>
                   <div className="flex items-center gap-2 mt-1">
-                    <div className="flex-1 h-1.5 bg-stone-100 dark:bg-[hsl(220,5%,25%)] rounded-full overflow-hidden">
+                    <div className="flex-1 h-1.5 bg-stone-100 dark:bg-[#2F3D4D] rounded-full overflow-hidden">
                       <div
                         className={cn("h-full rounded-full transition-all duration-500", index === 0 ? "bg-primary" : "bg-stone-300 dark:bg-stone-600")}
                         style={{ width: `${pct}%` }}
@@ -129,7 +129,7 @@ export function NextTapVoting({ pubId, isOwner }: NextTapVotingProps) {
                     <button
                       className={cn(
                         "w-8 h-8 rounded-full flex items-center justify-center transition-all active:scale-90",
-                        voted ? "bg-primary text-white" : "bg-stone-100 dark:bg-[hsl(220,5%,22%)] text-stone-400"
+                        voted ? "bg-primary text-white" : "bg-stone-100 dark:bg-[#232F3D] text-stone-400"
                       )}
                       onClick={() => voteMutation.mutate({ proposalId: proposal.id, voted })}
                       disabled={voteMutation.isPending}

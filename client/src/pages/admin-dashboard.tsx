@@ -264,8 +264,8 @@ export default function AdminDashboard() {
                     };
                     const ColorMap: Record<string, string> = {
                       user: "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
-                      pub: "text-primary bg-stone-50 dark:bg-stone-900/20",
-                      brewery: "text-primary bg-stone-50 dark:bg-stone-900/20",
+                      pub: "text-primary bg-stone-50 dark:bg-[#15202B]/20",
+                      brewery: "text-primary bg-stone-50 dark:bg-[#15202B]/20",
                       review: "text-yellow-500 bg-yellow-50 dark:bg-yellow-900/20",
                       event: "text-purple-500 bg-purple-50 dark:bg-purple-900/20",
                       festival: "text-pink-500 bg-pink-50 dark:bg-pink-900/20",
@@ -362,7 +362,7 @@ export default function AdminDashboard() {
         </div>
 
         <Tabs defaultValue="users" className="w-full">
-          <TabsList className="grid w-full max-w-xs grid-cols-2 bg-stone-50/60 dark:bg-stone-900/20">
+          <TabsList className="grid w-full max-w-xs grid-cols-2 bg-stone-50/60 dark:bg-[#15202B]/20">
             <TabsTrigger value="users" className="gap-2 data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary">
               <Users className="w-4 h-4" />
               Utenti
@@ -392,7 +392,7 @@ export default function AdminDashboard() {
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-stone-50/40 dark:bg-stone-900/10 border-b border-stone-100 dark:border-border">
+                    <thead className="bg-stone-50/40 dark:bg-[#15202B]/10 border-b border-stone-100 dark:border-border">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Utente</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ruolo</th>
@@ -541,7 +541,7 @@ export default function AdminDashboard() {
                               <span className="text-sm font-medium truncate">{style.style}</span>
                               <span className="text-xs text-stone-400 ml-2 flex-shrink-0">{parseInt(style.count).toLocaleString("it-IT")}</span>
                             </div>
-                            <div className="h-1.5 bg-stone-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-stone-100 dark:bg-[#1B2735] rounded-full overflow-hidden">
                               <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full" style={{ width: `${pct}%` }} />
                             </div>
                           </div>
@@ -566,7 +566,7 @@ export default function AdminDashboard() {
                 {globalStats?.topBreweries?.length > 0 ? (
                   <div className="space-y-2">
                     {globalStats.topBreweries.slice(0, 10).map((brewery: any, i: number) => (
-                      <div key={brewery.breweryName} className="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-gray-800 transition-colors">
+                      <div key={brewery.breweryName} className="flex items-center gap-3 p-2 rounded-lg hover:bg-stone-50 dark:hover:bg-[#1B2735] transition-colors">
                         <span className="text-xs font-bold text-stone-400 w-5 text-right flex-shrink-0">#{i + 1}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium truncate">{brewery.breweryName}</p>
@@ -622,7 +622,7 @@ export default function AdminDashboard() {
               <CardContent>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
                   {globalStats.countries.slice(0, 18).map((c: any) => (
-                    <div key={c.country} className="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-gray-800 text-xs">
+                    <div key={c.country} className="flex items-center justify-between p-2 rounded-lg bg-stone-50 dark:bg-[#1B2735] text-xs">
                       <span className="font-medium truncate">{c.country || "N/D"}</span>
                       <span className="text-stone-400 ml-1 flex-shrink-0">{parseInt(c.count).toLocaleString("it-IT")}</span>
                     </div>
@@ -645,7 +645,7 @@ export default function AdminDashboard() {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-gray-800 rounded-lg">
+            <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-[#1B2735] rounded-lg">
               <Avatar className="w-10 h-10">
                 <AvatarImage src={editTarget?.profileImageUrl} />
                 <AvatarFallback>{(editTarget?.nickname?.[0] || "U").toUpperCase()}</AvatarFallback>

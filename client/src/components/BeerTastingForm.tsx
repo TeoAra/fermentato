@@ -71,7 +71,7 @@ function RatingSlider({ value, onChange }: { value: number; onChange: (v: number
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
       >
-        <div className="absolute inset-x-0 h-2 bg-stone-100 dark:bg-stone-800 rounded-full" />
+        <div className="absolute inset-x-0 h-2 bg-stone-100 dark:bg-[#1B2735] rounded-full" />
         <div
           className="absolute left-0 h-2 bg-primary rounded-full transition-all duration-100"
           style={{ width: `${fillPct}%` }}
@@ -91,7 +91,7 @@ function RatingSlider({ value, onChange }: { value: number; onChange: (v: number
                     ? "w-5 h-5 bg-primary border-primary shadow-lg shadow-primary/40"
                     : isActive
                     ? "w-3 h-3 bg-primary border-primary"
-                    : "w-3 h-3 bg-white dark:bg-stone-700 border-stone-200 dark:border-stone-600"
+                    : "w-3 h-3 bg-white dark:bg-[#232F3D] border-stone-200 dark:border-stone-600"
                 }`}
               />
             </div>
@@ -185,7 +185,7 @@ export default function BeerTastingForm({
     return (
       <button
         onClick={() => setLocation("/login")}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-card text-sm font-medium text-foreground hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-stone-200 dark:border-[#2F3D4D] bg-white dark:bg-card text-sm font-medium text-foreground hover:bg-stone-50 dark:hover:bg-[#1B2735] transition-colors"
       >
         <span className="flex items-center gap-2 text-muted-foreground">
           <Beer className="w-4 h-4" />
@@ -218,7 +218,7 @@ export default function BeerTastingForm({
     return (
       <button
         onClick={() => setShowForm(true)}
-        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-card text-sm font-medium hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 rounded-2xl border border-stone-200 dark:border-[#2F3D4D] bg-white dark:bg-card text-sm font-medium hover:bg-stone-50 dark:hover:bg-[#1B2735] transition-colors"
       >
         <span className="flex items-center gap-2 text-muted-foreground">
           <Plus className="w-4 h-4" />
@@ -230,8 +230,8 @@ export default function BeerTastingForm({
   }
 
   return (
-    <div className="rounded-2xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100 dark:border-stone-800">
+    <div className="rounded-2xl border border-stone-200 dark:border-[#2F3D4D] bg-white dark:bg-card overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100 dark:border-[#2F3D4D]">
         <div className="flex items-center gap-2">
           <Beer className="w-4 h-4 text-primary" />
           <span className="text-sm font-bold text-foreground">
@@ -241,7 +241,7 @@ export default function BeerTastingForm({
         </div>
         <button
           onClick={() => { setShowForm(false); onCancel?.(); }}
-          className="w-7 h-7 flex items-center justify-center rounded-full bg-stone-100 dark:bg-stone-800 text-muted-foreground hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors"
+          className="w-7 h-7 flex items-center justify-center rounded-full bg-stone-100 dark:bg-[#1B2735] text-muted-foreground hover:bg-stone-200 dark:hover:bg-[#232F3D] transition-colors"
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -253,7 +253,7 @@ export default function BeerTastingForm({
           <RatingSlider value={rating} onChange={setRating} />
         </div>
 
-        <div className="h-px bg-stone-100 dark:bg-stone-800" />
+        <div className="h-px bg-stone-100 dark:bg-[#1B2735]" />
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
@@ -273,7 +273,7 @@ export default function BeerTastingForm({
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                   format === f
                     ? "bg-primary text-white border-primary"
-                    : "bg-stone-50 dark:bg-stone-800 text-muted-foreground border-stone-200 dark:border-stone-700 hover:border-stone-300"
+                    : "bg-stone-50 dark:bg-[#1B2735] text-muted-foreground border-stone-200 dark:border-[#2F3D4D] hover:border-stone-300"
                 }`}
               >
                 {f}
@@ -289,7 +289,7 @@ export default function BeerTastingForm({
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Sapori, profumi, sensazioni... cosa ti ha colpito?"
             rows={3}
-            className="resize-none rounded-xl border-stone-200 dark:border-stone-700 bg-stone-50/50 dark:bg-stone-900/20 text-sm focus-visible:ring-primary/20"
+            className="resize-none rounded-xl border-stone-200 dark:border-[#2F3D4D] bg-stone-50/50 dark:bg-[#15202B]/20 text-sm focus-visible:ring-primary/20"
           />
         </div>
 
@@ -318,7 +318,7 @@ export default function BeerTastingForm({
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="w-full h-20 rounded-xl border-2 border-dashed border-stone-200 dark:border-stone-700 flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
+              className="w-full h-20 rounded-xl border-2 border-dashed border-stone-200 dark:border-[#2F3D4D] flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:border-primary hover:text-primary transition-colors"
             >
               <Camera className="w-5 h-5" />
               <span className="text-xs font-medium">Scatta o scegli una foto</span>
@@ -341,7 +341,7 @@ export default function BeerTastingForm({
             type="button"
             variant="outline"
             onClick={() => { setShowForm(false); onCancel?.(); }}
-            className="h-11 px-4 rounded-xl border-stone-200 dark:border-stone-700"
+            className="h-11 px-4 rounded-xl border-stone-200 dark:border-[#2F3D4D]"
           >
             Annulla
           </Button>

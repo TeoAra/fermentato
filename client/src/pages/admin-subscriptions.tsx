@@ -175,7 +175,7 @@ export default function AdminSubscriptions() {
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-stone-50/50 dark:bg-stone-900/20 border-b border-stone-100 dark:border-border">
+                <thead className="bg-stone-50/50 dark:bg-[#15202B]/20 border-b border-stone-100 dark:border-border">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pub</th>
                     <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Proprietario</th>
@@ -293,7 +293,7 @@ export default function AdminSubscriptions() {
               </DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-2">
-              <div className="p-3 bg-stone-50 dark:bg-stone-900/20 rounded-lg">
+              <div className="p-3 bg-stone-50 dark:bg-[#15202B]/20 rounded-lg">
                 <p className="font-semibold text-primary dark:text-orange-400">{giftTarget?.name}</p>
                 <p className="text-sm text-muted-foreground">{giftTarget?.city}</p>
                 {giftTarget?.ownerEmail && (

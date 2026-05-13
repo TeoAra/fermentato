@@ -96,7 +96,7 @@ function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
           <h3 className="font-semibold text-foreground dark:text-white flex items-center gap-2">
             <BeerIcon className="w-4 h-4 text-amber-500" />
             Stili Preferiti
-            <span className="text-xs text-stone-400 font-normal bg-stone-100 dark:bg-gray-800 px-1.5 py-0.5 rounded-full">{current.length}/10</span>
+            <span className="text-xs text-stone-400 font-normal bg-stone-100 dark:bg-[#1B2735] px-1.5 py-0.5 rounded-full">{current.length}/10</span>
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">Seleziona fino a 10 stili. Si salvano automaticamente.</p>
         </div>
@@ -105,7 +105,7 @@ function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
 
       {/* Currently selected */}
       {current.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 p-3 bg-stone-50 dark:bg-stone-900/10 rounded-xl border border-stone-100 dark:border-stone-800/30">
+        <div className="flex flex-wrap gap-1.5 p-3 bg-stone-50 dark:bg-[#15202B]/10 rounded-xl border border-stone-100 dark:border-[#2F3D4D]/30">
           {current.map(style => (
             <button
               key={style}
@@ -157,8 +157,8 @@ function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
                     selected
                       ? 'bg-primary border-primary text-white shadow-sm'
                       : disabled
-                      ? 'bg-stone-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-stone-300 dark:text-muted-foreground cursor-not-allowed'
-                      : 'bg-white dark:bg-gray-800 border-stone-200 dark:border-stone-700 text-muted-foreground dark:text-stone-300 hover:border-primary/30 hover:bg-stone-50 dark:hover:bg-stone-900/20 hover:text-primary'
+                      ? 'bg-stone-50 dark:bg-[#15202B] border-gray-100 dark:border-[#2F3D4D] text-stone-300 dark:text-muted-foreground cursor-not-allowed'
+                      : 'bg-white dark:bg-[#1B2735] border-stone-200 dark:border-[#2F3D4D] text-muted-foreground dark:text-stone-300 hover:border-primary/30 hover:bg-stone-50 dark:hover:bg-stone-900/20 hover:text-primary'
                   }`}
                 >
                   {style}
@@ -554,7 +554,7 @@ export default function UserProfile() {
               <button
                 key={value}
                 onClick={() => setActiveProfileTab(value as any)}
-                className={`flex-1 px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeProfileTab === value ? 'bg-background dark:bg-[hsl(25,14%,12%)] text-primary dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                className={`flex-1 px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeProfileTab === value ? 'bg-background dark:bg-[#1B2735] text-primary dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 {label}
               </button>
@@ -587,7 +587,7 @@ export default function UserProfile() {
               const nextBadge = getNextBadge(reviewCount);
               const progress = getProgressToNextBadge(reviewCount);
               return nextBadge ? (
-                <Card className="border-0 shadow-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+                <Card className="border-0 shadow-md bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -599,7 +599,7 @@ export default function UserProfile() {
                         <span>→ {nextBadge.emoji} {nextBadge.name}</span>
                       </div>
                     </div>
-                    <div className="w-full h-2 bg-stone-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                    <div className="w-full h-2 bg-stone-200 dark:bg-[#232F3D] rounded-full overflow-hidden">
                       <div
                         className="h-full bg-gradient-to-r bg-primary rounded-full transition-all duration-700"
                         style={{ width: `${progress}%` }}
@@ -622,7 +622,7 @@ export default function UserProfile() {
                 { href: "/activity", icon: "👥", label: "Attività", sub: "Feed, amici e zona" },
               ].map(({ href, icon, label, sub }) => (
                 <Link key={href} href={href}>
-                  <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-3.5 shadow-sm flex items-center gap-3 active:opacity-80 transition-opacity border border-stone-100 dark:border-[hsl(220,5%,27%)]">
+                  <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-3.5 shadow-sm flex items-center gap-3 active:opacity-80 transition-opacity border border-stone-100 dark:border-[hsl(220,5%,27%)]">
                     <span className="text-xl">{icon}</span>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-stone-800 dark:text-stone-100 font-poppins">{label}</p>
@@ -634,7 +634,7 @@ export default function UserProfile() {
             </div>
 
             {/* Bio */}
-            <Card className="border-0 shadow-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+            <Card className="border-0 shadow-md bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2 text-foreground dark:text-white">
@@ -681,7 +681,7 @@ export default function UserProfile() {
             </Card>
 
             {/* Stili Preferiti */}
-            <Card className="border-0 shadow-md bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+            <Card className="border-0 shadow-md bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
               <CardContent className="p-5">
                 <StylesPickerOverview
                   current={editedProfile.favoriteStyles}
@@ -698,10 +698,10 @@ export default function UserProfile() {
           <TabsContent value="favorites" className="space-y-4">
             {/* Festival preferiti */}
             {Array.isArray(festivalFavorites) && festivalFavorites.length > 0 && (
-              <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+              <Card className="border-0 shadow-lg bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground dark:text-white text-base">
-                    <div className="p-2 bg-stone-100 dark:bg-stone-800/50 rounded-lg">
+                    <div className="p-2 bg-stone-100 dark:bg-[#1B2735]/50 rounded-lg">
                       <CalendarDays className="w-4 h-4 text-primary" />
                     </div>
                     Festival preferiti ({festivalFavorites.length})
@@ -721,7 +721,7 @@ export default function UserProfile() {
                         : null;
                       const festLink = slug ? `/festival/${slug}` : null;
                       return (
-                        <div key={fav.id || fav.itemId} className="flex flex-col rounded-xl overflow-hidden border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:shadow-md transition-all">
+                        <div key={fav.id || fav.itemId} className="flex flex-col rounded-xl overflow-hidden border border-gray-100 dark:border-[#2F3D4D] bg-white dark:bg-[#1B2735] hover:shadow-md transition-all">
                           {coverUrl && (
                             <div className="h-20 relative overflow-hidden">
                               <img src={coverUrl} alt={name} className="w-full h-full object-cover" />
@@ -778,10 +778,10 @@ export default function UserProfile() {
             )}
 
             {/* Preferiti pub/birrificio/birra */}
-            <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+            <Card className="border-0 shadow-lg bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
-                  <div className="p-2 bg-stone-100 dark:bg-stone-800/50 rounded-lg">
+                  <div className="p-2 bg-stone-100 dark:bg-[#1B2735]/50 rounded-lg">
                     <Heart className="w-5 h-5 text-orange-600" />
                   </div>
                   I Tuoi Preferiti ({Array.isArray(enrichedFavorites) ? enrichedFavorites.length : 0})
@@ -794,10 +794,10 @@ export default function UserProfile() {
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <Card className="border-0 shadow-lg bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl">
+            <Card className="border-0 shadow-lg bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
-                  <div className="p-2 bg-stone-100 dark:bg-stone-800/50 rounded-lg">
+                  <div className="p-2 bg-stone-100 dark:bg-[#1B2735]/50 rounded-lg">
                     <Settings className="w-5 h-5 text-orange-600" />
                   </div>
                   Impostazioni Account
@@ -829,7 +829,7 @@ export default function UserProfile() {
                           setIsEditingNickname(false);
                           setTempNickname(typedUser.nickname || "");
                         }}
-                        className="border-stone-300 hover:bg-stone-50 dark:border-stone-700"
+                        className="border-stone-300 hover:bg-stone-50 dark:border-[#2F3D4D]"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -847,7 +847,7 @@ export default function UserProfile() {
                         onClick={() => setIsEditingNickname(true)}
                         disabled={!canUpdateNickname()}
                         title={!canUpdateNickname() ? `Disponibile tra ${getDaysUntilNicknameUpdate()} giorni` : "Modifica nickname"}
-                        className="border-stone-300 hover:bg-stone-50 hover:text-orange-700 dark:border-stone-700 dark:hover:bg-stone-800/40"
+                        className="border-stone-300 hover:bg-stone-50 hover:text-orange-700 dark:border-[#2F3D4D] dark:hover:bg-[#1B2735]/40"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
@@ -888,7 +888,7 @@ export default function UserProfile() {
                           setIsEditingEmail(false);
                           setTempEmail(typedUser.email || "");
                         }}
-                        className="border-stone-300 hover:bg-stone-50 dark:border-stone-700"
+                        className="border-stone-300 hover:bg-stone-50 dark:border-[#2F3D4D]"
                       >
                         <X className="w-4 h-4" />
                       </Button>
@@ -904,7 +904,7 @@ export default function UserProfile() {
                         size="sm"
                         variant="outline"
                         onClick={() => setIsEditingEmail(true)}
-                        className="border-stone-300 hover:bg-stone-50 hover:text-orange-700 dark:border-stone-700 dark:hover:bg-stone-800/40"
+                        className="border-stone-300 hover:bg-stone-50 hover:text-orange-700 dark:border-[#2F3D4D] dark:hover:bg-[#1B2735]/40"
                       >
                         <Edit3 className="w-4 h-4" />
                       </Button>
@@ -915,12 +915,12 @@ export default function UserProfile() {
                   </p>
                 </div>
 
-                <div className="border-t border-stone-200 dark:border-gray-700 pt-4">
+                <div className="border-t border-stone-200 dark:border-[#2F3D4D] pt-4">
                   <h3 className="text-sm font-medium mb-4 text-muted-foreground dark:text-stone-300 flex items-center gap-2">
                     {isPublicProfile ? <Eye className="h-4 w-4 text-orange-600" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
                     Privacy Profilo
                   </h3>
-                  <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-gray-800 rounded-xl">
+                  <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-[#1B2735] rounded-xl">
                     <div className="flex-1 mr-4">
                       <p className="text-sm font-medium text-foreground dark:text-white">
                         {isPublicProfile ? "Profilo Pubblico" : "Profilo Privato"}
@@ -951,12 +951,12 @@ export default function UserProfile() {
                   )}
                 </div>
 
-                <div className="border-t border-stone-200 dark:border-gray-700 pt-4">
+                <div className="border-t border-stone-200 dark:border-[#2F3D4D] pt-4">
                   <h3 className="text-sm font-medium mb-4 text-muted-foreground dark:text-stone-300">Sicurezza</h3>
                   <PasswordChangeForm />
                 </div>
 
-                <div className="border-t border-stone-200 dark:border-gray-700 pt-4">
+                <div className="border-t border-stone-200 dark:border-[#2F3D4D] pt-4">
                   <h3 className="text-sm font-medium mb-4 text-red-600">Zona Pericolo</h3>
                   {!showDeleteConfirm ? (
                     <Button

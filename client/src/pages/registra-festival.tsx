@@ -218,7 +218,7 @@ function StepAccount({ onDone }: { onDone: () => void }) {
                         : passStrength <= 2 ? "bg-orange-400"
                         : passStrength <= 3 ? "bg-amber-400"
                         : "bg-green-500"
-                        : "bg-gray-200 dark:bg-gray-700"
+                        : "bg-gray-200 dark:bg-[#232F3D]"
                     }`} />
                   ))}
                 </div>
@@ -435,7 +435,7 @@ export default function RegistraFestivalPage() {
   return (
     <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-gray-950 flex flex-col">
       {/* Minimal header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#2F3D4D] bg-white dark:bg-[#15202B]">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
             <Beer className="w-4 h-4 text-white" />

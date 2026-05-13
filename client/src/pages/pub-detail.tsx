@@ -131,7 +131,7 @@ const ModernBeerCard = ({ beer, prices, className = "", onCheckin }: {
   <div className={`bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-[0_4px_20px_rgba(247,113,4,0.06)] hover:shadow-[0_6px_24px_rgba(247,113,4,0.12)] hover:border-stone-300 dark:hover:border-orange-800/40 transition-all duration-300 cursor-pointer ${className}`}>
     <div className="flex gap-3 p-4">
       <Link href={`/beer/${beer?.id}`} className="flex-shrink-0 self-center">
-        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-stone-50 dark:bg-stone-900/40 flex items-center justify-center border border-stone-200 dark:border-stone-700/30">
+        <div className="w-14 h-14 rounded-2xl overflow-hidden bg-stone-50 dark:bg-[#15202B]/40 flex items-center justify-center border border-stone-200 dark:border-[#2F3D4D]/30">
           <ImageWithFallback
             src={beer?.imageUrl || beer?.logoUrl || beer?.brewery?.logoUrl}
             alt={beer?.name || 'Beer'}
@@ -198,7 +198,7 @@ const ModernBeerCard = ({ beer, prices, className = "", onCheckin }: {
           {isAuthenticated && onCheckin && (
             <button
               onClick={(e) => { e.preventDefault(); e.stopPropagation(); onCheckin(); }}
-              className="w-8 h-8 rounded-full flex items-center justify-center bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400 hover:text-primary hover:bg-stone-200 dark:hover:bg-stone-700 active:scale-95 transition-all"
+              className="w-8 h-8 rounded-full flex items-center justify-center bg-stone-100 dark:bg-[#1B2735] text-stone-500 dark:text-stone-400 hover:text-primary hover:bg-stone-200 dark:hover:bg-[#232F3D] active:scale-95 transition-all"
               aria-label="Check-in"
               title="Sto bevendo questa"
             >
@@ -728,7 +728,7 @@ export default function PubDetail() {
               className={`ml-auto mb-2 w-10 h-10 rounded-full flex items-center justify-center tap-scale border transition-all ${
                 isFavorite
                   ? 'bg-primary/10 border-primary/40 text-primary'
-                  : 'bg-white dark:bg-stone-900/40 border-stone-200 dark:border-stone-700 text-foreground hover:border-primary/40'
+                  : 'bg-white dark:bg-[#15202B]/40 border-stone-200 dark:border-[#2F3D4D] text-foreground hover:border-primary/40'
               }`}>
               <Heart className={`h-5 w-5 ${isFavorite ? 'fill-primary text-primary' : ''}`} />
             </button>
@@ -819,7 +819,7 @@ export default function PubDetail() {
                 href={getMapNavigationUrl((pub as any).name, (pub as any).address)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-[#15202B]/40 border border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30 transition-all tap-scale"
                 data-testid="link-directions"
               >
                 <Navigation className="h-5 w-5 text-primary" />
@@ -827,7 +827,7 @@ export default function PubDetail() {
                 <span className="text-[10px] text-stone-500 dark:text-stone-400 leading-tight">Maps</span>
               </a>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-stone-900/20 border border-stone-100 dark:border-stone-800 opacity-50">
+              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-[#15202B]/20 border border-stone-100 dark:border-[#2F3D4D] opacity-50">
                 <Navigation className="h-5 w-5 text-stone-400" />
                 <span className="text-[11px] font-bold text-stone-400 leading-tight">Indicazioni</span>
                 <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
@@ -837,7 +837,7 @@ export default function PubDetail() {
             {(pub as any)?.phone ? (
               <a
                 href={`tel:${(pub as any).phone}`}
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-[#15202B]/40 border border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30 transition-all tap-scale"
                 data-testid="link-phone"
               >
                 <Phone className="h-5 w-5 text-foreground" />
@@ -847,7 +847,7 @@ export default function PubDetail() {
                 </span>
               </a>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-stone-900/20 border border-stone-100 dark:border-stone-800 opacity-50">
+              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-[#15202B]/20 border border-stone-100 dark:border-[#2F3D4D] opacity-50">
                 <Phone className="h-5 w-5 text-stone-400" />
                 <span className="text-[11px] font-bold text-stone-400 leading-tight">Chiama</span>
                 <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
@@ -859,7 +859,7 @@ export default function PubDetail() {
                 href={(pub as any).websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-[#15202B]/40 border border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30 transition-all tap-scale"
                 data-testid="link-website"
               >
                 <Globe className="h-5 w-5 text-foreground" />
@@ -869,7 +869,7 @@ export default function PubDetail() {
                 </span>
               </a>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-stone-900/20 border border-stone-100 dark:border-stone-800 opacity-50">
+              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-[#15202B]/20 border border-stone-100 dark:border-[#2F3D4D] opacity-50">
                 <Globe className="h-5 w-5 text-stone-400" />
                 <span className="text-[11px] font-bold text-stone-400 leading-tight">Sito web</span>
                 <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
@@ -881,7 +881,7 @@ export default function PubDetail() {
                 href={(pub as any).instagramUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-[#15202B]/40 border border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30 transition-all tap-scale"
                 data-testid="link-instagram"
               >
                 <Instagram className="h-5 w-5 text-foreground" />
@@ -893,7 +893,7 @@ export default function PubDetail() {
             ) : (
               <button
                 onClick={handleShare}
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-[#15202B]/40 border border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30 transition-all tap-scale"
                 data-testid="button-share-pub"
               >
                 <Share2 className="h-5 w-5 text-foreground" />
@@ -945,7 +945,7 @@ export default function PubDetail() {
           <div className="min-h-0">
             {/* ── TABS — underline style (mockup) ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="bg-white dark:bg-card border-b border-stone-200 dark:border-stone-800 px-4">
+                <div className="bg-white dark:bg-card border-b border-stone-200 dark:border-[#2F3D4D] px-4">
                   <div className="flex items-center justify-around gap-1 overflow-x-auto scrollbar-hide">
                     {[
                       { id: 'taplist', label: 'Spine' },
@@ -1020,7 +1020,7 @@ export default function PubDetail() {
                       {filteredBottles.map((bottle: any) => (
                         <Link key={bottle.id} href={`/beer/${bottle.beer?.id}`} className="flex items-center gap-3 px-4 py-3 tap-scale active:bg-stone-50 dark:active:bg-white/[0.03]">
                           <div className="flex-shrink-0">
-                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-50 dark:bg-stone-900 border border-stone-100 dark:border-stone-800">
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-50 dark:bg-[#15202B] border border-stone-100 dark:border-[#2F3D4D]">
                               <ImageWithFallback
                                 src={bottle.beer?.imageUrl || bottle.beer?.logoUrl}
                                 alt={bottle.beer?.name || 'Beer'}
@@ -1171,7 +1171,7 @@ export default function PubDetail() {
                       </div>
                     );
                     if ((pub as any)?.address) return (
-                      <div className="h-32 bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                      <div className="h-32 bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center">
                         <MapPin className="h-8 w-8 text-stone-400" />
                       </div>
                     );
@@ -1181,7 +1181,7 @@ export default function PubDetail() {
                   <div className="px-4 pt-4 space-y-3">
                     {/* Address + Navigation */}
                     {(pub as any)?.address && (
-                      <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-stone-800 overflow-hidden shadow-sm">
+                      <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-[#2F3D4D] overflow-hidden shadow-sm">
                         <div className="flex items-start gap-3 p-4">
                           <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0 mt-0.5">
                             <MapPin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
@@ -1215,7 +1215,7 @@ export default function PubDetail() {
 
                     {/* Hours */}
                     <button onClick={handleShowOpeningHours}
-                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 hover:bg-stone-50 dark:hover:bg-white/5 transition-colors text-left shadow-sm tap-scale">
+                      className="w-full flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] hover:bg-stone-50 dark:hover:bg-white/5 transition-colors text-left shadow-sm tap-scale">
                       <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950/30 flex-shrink-0">
                         <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                       </div>
@@ -1231,7 +1231,7 @@ export default function PubDetail() {
                     {/* Phone */}
                     {(pub as any)?.phone && (
                       <a href={`tel:${(pub as any).phone}`}
-                        className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors shadow-sm tap-scale">
+                        className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] hover:bg-emerald-50 dark:hover:bg-emerald-950/10 transition-colors shadow-sm tap-scale">
                         <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 flex-shrink-0">
                           <Phone className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                         </div>
@@ -1243,7 +1243,7 @@ export default function PubDetail() {
                     {/* Website */}
                     {(pub as any)?.websiteUrl && (
                       <a href={(pub as any).websiteUrl} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 hover:bg-violet-50 dark:hover:bg-violet-950/10 transition-colors shadow-sm tap-scale">
+                        className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] hover:bg-violet-50 dark:hover:bg-violet-950/10 transition-colors shadow-sm tap-scale">
                         <div className="p-2 rounded-xl bg-violet-50 dark:bg-violet-950/30 flex-shrink-0">
                           <Globe className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                         </div>
@@ -1255,7 +1255,7 @@ export default function PubDetail() {
                     {/* Email */}
                     {(pub as any)?.email && (
                       <a href={`mailto:${(pub as any).email}`}
-                        className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 hover:bg-blue-50 dark:hover:bg-blue-950/10 transition-colors shadow-sm tap-scale">
+                        className="flex items-center gap-3 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] hover:bg-blue-50 dark:hover:bg-blue-950/10 transition-colors shadow-sm tap-scale">
                         <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/30 flex-shrink-0">
                           <Mail className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                         </div>
@@ -1284,7 +1284,7 @@ export default function PubDetail() {
 
                     {/* Description */}
                     {(pub as any)?.description && (
-                      <div className="p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-stone-800 shadow-sm">
+                      <div className="p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] shadow-sm">
                         <p className="text-sm text-muted-foreground leading-relaxed">{(pub as any).description}</p>
                       </div>
                     )}
@@ -1333,7 +1333,7 @@ export default function PubDetail() {
 
             {/* Contatti + Social */}
             <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm overflow-hidden">
-              <div className="px-4 py-3 border-b border-stone-100 dark:border-stone-700/30">
+              <div className="px-4 py-3 border-b border-stone-100 dark:border-[#2F3D4D]/30">
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-wide">Contatti</h3>
               </div>
               <div className="p-4 space-y-3">
@@ -1387,7 +1387,7 @@ export default function PubDetail() {
                   </div>
                 )}
                 {((pub as any)?.facebookUrl || (pub as any)?.instagramUrl) && (
-                  <div className="flex gap-2 pt-1 border-t border-stone-100 dark:border-stone-700/30 mt-1">
+                  <div className="flex gap-2 pt-1 border-t border-stone-100 dark:border-[#2F3D4D]/30 mt-1">
                     {(pub as any)?.facebookUrl && (
                       <a href={(pub as any).facebookUrl} target="_blank" rel="noopener noreferrer"
                         className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors">

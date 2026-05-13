@@ -123,7 +123,7 @@ function UserRow({ user, followingIds, onToggle }: { user: any; followingIds: Se
       <button
         onClick={() => onToggle(user.id, isFollowing)}
         className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
-          isFollowing ? "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300" : "bg-primary text-white"
+          isFollowing ? "bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300" : "bg-primary text-white"
         }`}
       >
         {isFollowing ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
@@ -149,7 +149,7 @@ const BADGE_DEFS = [
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-4 shadow-sm text-center">
+    <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm text-center">
       <p className="text-2xl font-bold text-stone-900 dark:text-stone-50 font-poppins">{value}</p>
       <p className="text-xs text-stone-500 mt-0.5 font-medium">{label}</p>
       {sub && <p className="text-xs text-primary mt-0.5">{sub}</p>}
@@ -414,7 +414,7 @@ export default function Activity() {
 
       {!userLocation && !requestingLocation && !locationError && (
         <div className="mb-4 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-3 shadow-sm">
-          <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center flex-shrink-0">
             <Navigation className="h-5 w-5 text-stone-500 dark:text-stone-400" />
           </div>
           <div className="flex-1 min-w-0">
@@ -436,7 +436,7 @@ export default function Activity() {
 
       <Helmet><title>Attività | Fermenta.to</title></Helmet>
       <Tabs defaultValue="inzona">
-        <TabsList className="w-full mb-6 bg-stone-100 dark:bg-stone-800/60 p-1 rounded-xl h-auto">
+        <TabsList className="w-full mb-6 bg-stone-100 dark:bg-[#1B2735]/60 p-1 rounded-xl h-auto">
           <TabsTrigger value="inzona" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
             <MapPin className="h-3.5 w-3.5 mr-1" />
             In Zona
@@ -465,7 +465,7 @@ export default function Activity() {
                 <Loader2 className="h-7 w-7 animate-spin text-orange-600" />
               </div>
             ) : nearbyPubs.length === 0 ? (
-              <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+              <div className="text-center py-6 bg-stone-50 dark:bg-[#1B2735]/50 rounded-xl">
                 <MapPin className="h-9 w-9 text-stone-400 mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">Nessun pub trovato entro {radius} km</p>
                 <Button variant="link" size="sm" onClick={() => setRadius("100")}>Espandi a 100 km</Button>
@@ -540,7 +540,7 @@ export default function Activity() {
                 <Loader2 className="h-7 w-7 animate-spin text-orange-600" />
               </div>
             ) : popularBeersNearby.length === 0 ? (
-              <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+              <div className="text-center py-6 bg-stone-50 dark:bg-[#1B2735]/50 rounded-xl">
                 <Beer className="h-9 w-9 text-stone-400 mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">Nessuna birra popolare trovata entro {radius} km</p>
               </div>
@@ -555,11 +555,11 @@ export default function Activity() {
                   return (
                     <Link key={item.id ?? beer?.id} href={`/beer/${beer?.id ?? item.id}`}>
                       <div className="flex-shrink-0 w-[140px] group transition-transform duration-150 ease-out active:scale-[0.97]">
-                        <div className="w-full h-[140px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 border border-stone-100 dark:border-stone-700/30 mb-2 relative">
+                        <div className="w-full h-[140px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-[#1B2735] border border-stone-100 dark:border-[#2F3D4D]/30 mb-2 relative">
                           {img ? (
                             <img src={img} alt={beer?.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-stone-900">
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-[#15202B]">
                               <Beer className="h-10 w-10 text-orange-400/50" />
                             </div>
                           )}
@@ -598,7 +598,7 @@ export default function Activity() {
                 <Loader2 className="h-7 w-7 animate-spin text-pink-600" />
               </div>
             ) : nearbyEvents.length === 0 ? (
-              <div className="text-center py-6 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+              <div className="text-center py-6 bg-stone-50 dark:bg-[#1B2735]/50 rounded-xl">
                 <CalendarDays className="h-9 w-9 text-stone-400 mx-auto mb-2" />
                 <p className="text-sm text-muted-foreground">Nessun evento in programma entro {radius} km</p>
               </div>
@@ -645,7 +645,7 @@ export default function Activity() {
 
         <TabsContent value="sociale" className="mt-0">
           <div className="p-4 space-y-5">
-            <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm p-4">
+            <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm p-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
                 <Input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Cerca per nome o nickname…" className="pl-9 rounded-xl" />
@@ -671,7 +671,7 @@ export default function Activity() {
                 </>
               )}
             </div>
-            <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-4 shadow-sm">
+            <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Feed amici</p>
               {feedLoading ? (
                 <div className="text-sm text-stone-400">Caricamento...</div>
@@ -679,7 +679,7 @@ export default function Activity() {
                 <p className="text-sm text-stone-400">Nessuna attività recente</p>
               ) : (
                 feed.map((item: any) => (
-                  <div key={item.id} className="py-3 border-t first:border-t-0 border-stone-100 dark:border-stone-700/30">
+                  <div key={item.id} className="py-3 border-t first:border-t-0 border-stone-100 dark:border-[#2F3D4D]/30">
                     <p className="text-sm font-semibold">{item.beer_name}</p>
                     <p className="text-xs text-stone-400">{item.brewery_name}</p>
                     {item.notes && <p className="text-xs italic text-stone-500">"{item.notes}"</p>}
@@ -687,13 +687,13 @@ export default function Activity() {
                 ))
               )}
             </div>
-            <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl p-4 shadow-sm">
+            <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Badge · {earnedBadges.length}/{BADGE_DEFS.length}</p>
               <div className="grid grid-cols-4 gap-2">
                 {BADGE_DEFS.map((def: any) => {
                   const earned = badges.find((b: any) => b.key === def.key)?.earned;
                   return (
-                    <div key={def.key} className={`flex flex-col items-center gap-1 p-2 rounded-xl text-center ${earned ? "bg-primary/10" : "bg-stone-50 dark:bg-stone-800 opacity-40"}`}>
+                    <div key={def.key} className={`flex flex-col items-center gap-1 p-2 rounded-xl text-center ${earned ? "bg-primary/10" : "bg-stone-50 dark:bg-[#1B2735] opacity-40"}`}>
                       <span className="text-2xl">{def.icon}</span>
                       <p className="text-[9px] font-bold text-stone-600 dark:text-stone-300 leading-tight">{def.name}</p>
                     </div>
@@ -719,7 +719,7 @@ export default function Activity() {
                 <Loader2 className="h-7 w-7 animate-spin text-amber-600" />
               </div>
             ) : !Array.isArray(activeFestivals) || activeFestivals.length === 0 ? (
-              <div className="text-center py-8 bg-stone-50 dark:bg-stone-800/50 rounded-xl">
+              <div className="text-center py-8 bg-stone-50 dark:bg-[#1B2735]/50 rounded-xl">
                 <CalendarDays className="h-10 w-10 text-stone-400 mx-auto mb-3" />
                 <p className="text-sm text-muted-foreground">Nessun festival attivo al momento</p>
                 <Link href="/festival">

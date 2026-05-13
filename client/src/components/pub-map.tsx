@@ -232,7 +232,7 @@ export function PubMap({ pins, height = "100%", onError, label }: PubMapProps) {
 
   if (mapError) {
     return (
-      <div className="relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border bg-stone-50 dark:bg-stone-900/30 flex flex-col items-center justify-center gap-3 text-center px-6" style={{ height }}>
+      <div className="relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border bg-stone-50 dark:bg-[#15202B]/30 flex flex-col items-center justify-center gap-3 text-center px-6" style={{ height }}>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-stone-300 dark:text-stone-600">
           <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
@@ -264,7 +264,7 @@ export function PubMap({ pins, height = "100%", onError, label }: PubMapProps) {
       <button
         onClick={handleLocate}
         disabled={locating}
-        className="absolute bottom-10 right-3 z-10 w-9 h-9 rounded-xl bg-white dark:bg-[hsl(25,14%,12%)] shadow-md flex items-center justify-center text-primary hover:bg-stone-50 transition-colors border border-stone-100"
+        className="absolute bottom-10 right-3 z-10 w-9 h-9 rounded-xl bg-white dark:bg-[#1B2735] shadow-md flex items-center justify-center text-primary hover:bg-stone-50 transition-colors border border-stone-100"
         title="Vicino a me"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

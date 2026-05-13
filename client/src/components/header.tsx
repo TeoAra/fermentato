@@ -157,7 +157,7 @@ export default function Header() {
                   <button
                     className={`relative p-2 rounded-lg transition-colors ${
                       location.startsWith("/notifications")
-                        ? "bg-[hsl(24,90%,93%)] dark:bg-[hsl(35,30%,16%)] text-[hsl(24,93%,44%)] dark:text-[hsl(24,93%,56%)]"
+                        ? "bg-[hsl(24,90%,93%)] dark:bg-[#1B2735] text-[hsl(24,93%,44%)] dark:text-[hsl(24,93%,56%)]"
                         : "text-[hsl(28,8%,52%)] dark:text-[hsl(35,8%,52%)] hover:bg-[hsl(38,14%,93%)] dark:hover:bg-[hsl(25,12%,14%)] hover:text-[hsl(28,18%,20%)] dark:hover:text-[hsl(40,12%,88%)]"
                     }`}
                     title="Notifiche"

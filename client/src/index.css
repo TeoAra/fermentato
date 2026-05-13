@@ -617,14 +617,14 @@ html.dark {
     box-shadow: 0 3px 10px rgba(234, 88, 12, 0.3), inset 0 1px 0 rgba(255,255,255,0.25);
   }
   .dark .craft-pill {
-    background: hsl(220, 5%, 22%);
-    border-color: hsl(220, 5%, 30%);
+    background: #232F3D;
+    border-color: #2F3D4D;
     color: hsl(220, 8%, 88%);
     box-shadow: 0 1px 3px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.04);
   }
   .dark .craft-pill:hover {
-    background: hsl(220, 5%, 26%);
-    border-color: hsl(220, 5%, 36%);
+    background: #232F3D;
+    border-color: #3A4A5C;
   }
 
   /* ── Stagger list reveals ── */
@@ -766,8 +766,8 @@ html.dark {
     transition: box-shadow 0.2s ease, transform 0.2s ease;
   }
   .dark .neu-card {
-    background: hsl(220, 5%, 18%);
-    border: 1px solid hsl(220, 5%, 27%);
+    background: #1B2735;
+    border: 1px solid #2F3D4D;
     box-shadow: 0 1px 4px rgba(0,0,0,0.22);
   }
   .neu-card:hover {
@@ -782,8 +782,8 @@ html.dark {
     border: 1px solid hsl(36, 10%, 91%);
   }
   .dark .neu-inset {
-    background: hsl(220, 5%, 14%);
-    border: 1px solid hsl(220, 5%, 24%);
+    background: #15202B;
+    border: 1px solid #2F3D4D;
   }
 
   .neu-pill {
@@ -926,11 +926,11 @@ html.dark {
 .pac-matched { font-weight: 700; }
 
 .dark .pac-container {
-  background-color: hsl(220, 5%, 18%);
-  border-color: hsl(220, 5%, 27%);
+  background-color: #1B2735;
+  border-color: #2F3D4D;
 }
-.dark .pac-item       { border-color: hsl(220, 5%, 27%); }
-.dark .pac-item:hover { background-color: hsl(220, 5%, 22%); }
+.dark .pac-item       { border-color: #2F3D4D; }
+.dark .pac-item:hover { background-color: #232F3D; }
 
 /* Fix Leaflet z-index so modals/dialogs render above the map */
 .leaflet-pane         { z-index: 4 !important; }

@@ -110,14 +110,14 @@ export default function BotConnectCard({ pubId }: Props) {
       )}
 
       {/* Tab Telegram / WhatsApp */}
-      <div className="flex bg-stone-100 dark:bg-stone-800/60 rounded-2xl p-1 gap-1">
+      <div className="flex bg-stone-100 dark:bg-[#1B2735]/60 rounded-2xl p-1 gap-1">
         {(["telegram", "whatsapp"] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-1.5 ${
               activeTab === tab
-                ? "bg-white dark:bg-stone-700 text-foreground shadow-sm"
+                ? "bg-white dark:bg-[#232F3D] text-foreground shadow-sm"
                 : "text-stone-400 dark:text-stone-500"
             }`}
           >
@@ -148,7 +148,7 @@ export default function BotConnectCard({ pubId }: Props) {
                 <ol className="space-y-1.5 text-xs text-stone-500 list-decimal list-inside">
                   <li>Genera un codice qui sotto (valido 15 minuti)</li>
                   <li>Apri il bot Telegram{telegramUsername ? <> <a href={`https://t.me/${telegramUsername.replace("@","")}`} target="_blank" rel="noopener noreferrer" className="text-sky-500 font-semibold hover:underline">{telegramUsername}</a></> : ""}</li>
-                  <li>Invia il messaggio: <code className="bg-stone-100 dark:bg-stone-800 px-1 rounded">/start [codice]</code></li>
+                  <li>Invia il messaggio: <code className="bg-stone-100 dark:bg-[#1B2735] px-1 rounded">/start [codice]</code></li>
                 </ol>
               </div>
 
@@ -156,7 +156,7 @@ export default function BotConnectCard({ pubId }: Props) {
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-stone-500">Il tuo codice (valido 15 min):</p>
                   <div
-                    className="flex items-center gap-2 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl cursor-pointer"
+                    className="flex items-center gap-2 p-3 bg-stone-100 dark:bg-[#1B2735] rounded-xl cursor-pointer"
                     onClick={copyToken}
                   >
                     <code className="flex-1 text-xs font-mono text-primary break-all">{generatedToken}</code>
@@ -232,7 +232,7 @@ export default function BotConnectCard({ pubId }: Props) {
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-stone-500">Il tuo codice (valido 15 min):</p>
                   <div
-                    className="flex items-center gap-2 p-3 bg-stone-100 dark:bg-stone-800 rounded-xl cursor-pointer"
+                    className="flex items-center gap-2 p-3 bg-stone-100 dark:bg-[#1B2735] rounded-xl cursor-pointer"
                     onClick={copyToken}
                   >
                     <code className="flex-1 text-xs font-mono text-primary break-all">{generatedToken}</code>
@@ -281,7 +281,7 @@ export default function BotConnectCard({ pubId }: Props) {
       )}
 
       {/* Esempio comandi */}
-      <div className="p-3 bg-stone-50 dark:bg-stone-800/40 rounded-2xl border border-stone-100 dark:border-stone-700/50">
+      <div className="p-3 bg-stone-50 dark:bg-[#1B2735]/40 rounded-2xl border border-stone-100 dark:border-[#2F3D4D]/50">
         <p className="text-xs font-bold text-stone-500 mb-2">Esempi comandi:</p>
         <div className="space-y-1 text-xs text-stone-500 font-mono">
           {[

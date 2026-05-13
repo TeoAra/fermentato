@@ -111,7 +111,7 @@ function TransferDialog({ festival, onClose }: { festival: AdminFestival; onClos
           <p className="text-sm text-muted-foreground">Cerca e seleziona l'utente a cui assegnare questo festival:</p>
           <UserSearchPicker onSelect={u => setSelectedUser(u)} />
           {selectedUser && (
-            <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-orange-900/20 border border-stone-200 dark:border-stone-700 rounded-xl">
+            <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-orange-900/20 border border-stone-200 dark:border-[#2F3D4D] rounded-xl">
               <UserCheck className="h-5 w-5 text-primary flex-shrink-0" />
               <div>
                 <p className="text-sm font-semibold text-foreground">{selectedUser.full_name || selectedUser.username || selectedUser.email}</p>
@@ -201,7 +201,7 @@ function CreateForUserDialog({ onClose }: { onClose: () => void }) {
             <Label className="text-xs text-muted-foreground uppercase tracking-wide font-semibold">Luogo</Label>
             <Input className="mt-1 h-9 border-stone-200 rounded-xl focus-visible:ring-primary/20" value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="Es. Milano, Arena Civica" />
           </div>
-          <p className="text-xs text-primary bg-stone-50 dark:bg-orange-900/20 border border-stone-200 dark:border-stone-700 rounded-lg px-3 py-2">
+          <p className="text-xs text-primary bg-stone-50 dark:bg-orange-900/20 border border-stone-200 dark:border-[#2F3D4D] rounded-lg px-3 py-2">
             Il festival sarà creato come già pagato e attivo (gratuito).
           </p>
           <div className="flex gap-2 justify-end pt-2 border-t border-stone-200">

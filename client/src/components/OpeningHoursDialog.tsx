@@ -71,7 +71,7 @@ export default function OpeningHoursDialog({ open, onOpenChange, pubName, openin
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border border-white/20 dark:border-gray-700/30 shadow-2xl" data-testid="dialog-opening-hours">
+      <DialogContent className="sm:max-w-md bg-white/95 dark:bg-[#15202B]/95 backdrop-blur-md border border-white/20 dark:border-[#2F3D4D]/30 shadow-2xl" data-testid="dialog-opening-hours">
         <DialogHeader className="space-y-4">
           <div className="flex items-center space-x-3">
             <div className="p-3 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
@@ -86,7 +86,7 @@ export default function OpeningHoursDialog({ open, onOpenChange, pubName, openin
           </div>
 
           {/* Current Status */}
-          <div className="flex items-center justify-center p-4 rounded-xl bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-center p-4 rounded-xl bg-gradient-to-r from-gray-50 to-blue-50 dark:from-gray-800 dark:to-blue-900 border border-gray-200 dark:border-[#2F3D4D]">
             <Badge
               className={`${
                 isOpenNow
@@ -116,12 +116,12 @@ export default function OpeningHoursDialog({ open, onOpenChange, pubName, openin
                 className={`flex items-center justify-between p-3 rounded-lg transition-all duration-200 ${
                   isToday
                     ? "bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-700 shadow-sm"
-                    : "bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    : "bg-gray-50 dark:bg-[#1B2735] hover:bg-gray-100 dark:hover:bg-[#232F3D]"
                 }`}
                 data-testid={`hours-${dayKey}`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-lg ${isToday ? "bg-gradient-to-br from-amber-500 to-orange-600" : "bg-gray-200 dark:bg-gray-700"}`}>
+                  <div className={`p-2 rounded-lg ${isToday ? "bg-gradient-to-br from-amber-500 to-orange-600" : "bg-gray-200 dark:bg-[#232F3D]"}`}>
                     <Clock className={`h-3 w-3 ${isToday ? "text-white" : "text-gray-500 dark:text-gray-400"}`} />
                   </div>
                   <span className={`font-medium ${isToday ? "text-amber-800 dark:text-amber-200" : "text-gray-900 dark:text-white"}`}>

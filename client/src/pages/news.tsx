@@ -21,13 +21,13 @@ export default function NewsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[hsl(220,5%,14%)] pb-24">
+    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] pb-24">
       <Helmet>
         <title>News birra artigianale | Fermenta.to</title>
         <meta name="description" content="Le ultime notizie dal mondo della birra artigianale italiana, aggregate dai migliori blog e magazine di settore." />
       </Helmet>
 
-      <header className="bg-white dark:bg-[hsl(220,5%,18%)] border-b border-stone-100 dark:border-stone-800 px-4 pt-6 pb-4">
+      <header className="bg-white dark:bg-[#1B2735] border-b border-stone-100 dark:border-[#2F3D4D] px-4 pt-6 pb-4">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Newspaper className="w-5 h-5 text-primary" />
@@ -50,7 +50,7 @@ export default function NewsPage() {
         ) : (
           items.map((it) => (
             <a key={it.id} href={it.link} target="_blank" rel="noopener noreferrer"
-              className="block bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+              className="block bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
               <div className="flex gap-0">
                 {it.image_url && (
                   <img src={it.image_url} alt="" loading="lazy"

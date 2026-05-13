@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-gray-950 flex flex-col">
-      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900">
+      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#2F3D4D] bg-white dark:bg-[#15202B]">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
             <Beer className="w-4 h-4 text-white" />
@@ -73,7 +73,7 @@ export default function ResetPasswordPage() {
       </header>
 
       <div className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-8">
+        <div className="w-full max-w-md bg-white dark:bg-[#15202B] rounded-2xl shadow-sm border border-gray-100 dark:border-[#2F3D4D] p-8">
 
           {done ? (
             <div className="text-center space-y-4">
@@ -136,7 +136,7 @@ export default function ResetPasswordPage() {
                                   : passStrength <= 2 ? "bg-orange-400"
                                   : passStrength <= 3 ? "bg-amber-400"
                                   : "bg-green-500"
-                                  : "bg-stone-200 dark:bg-gray-700"
+                                  : "bg-stone-200 dark:bg-[#232F3D]"
                               }`} />
                             ))}
                           </div>

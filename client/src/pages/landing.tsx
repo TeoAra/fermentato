@@ -279,7 +279,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 variant="ghost"
-                className="h-14 px-8 text-base font-semibold rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-white dark:hover:bg-white/10 border border-stone-200 dark:border-stone-700 bg-white/60 dark:bg-white/5 backdrop-blur-sm active:scale-[0.97] transition-transform"
+                className="h-14 px-8 text-base font-semibold rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-white dark:hover:bg-white/10 border border-stone-200 dark:border-[#2F3D4D] bg-white/60 dark:bg-white/5 backdrop-blur-sm active:scale-[0.97] transition-transform"
               >
                 <Search className="mr-2 w-5 h-5" />
                 Esplora senza account
@@ -298,7 +298,7 @@ export default function Landing() {
                 { icon: Store, val: animPubs.toLocaleString("it-IT"), label: "pub" },
                 { icon: Beer, val: (() => { if (!animBeers) return "—"; if (animBeers < 1000) return animBeers.toString(); const k = Math.round(animBeers / 100) / 10; return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + "k"; })(), label: "birre" },
               ].map(({ icon: Icon, val, label }) => (
-                <div key={label} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/8 rounded-full border border-stone-100 dark:border-stone-800 shadow-sm tabular-nums">
+                <div key={label} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/8 rounded-full border border-stone-100 dark:border-[#2F3D4D] shadow-sm tabular-nums">
                   <Icon className="w-4 h-4 text-primary flex-shrink-0" />
                   <span className="font-bold text-stone-900 dark:text-white text-sm min-w-[2.5rem] text-right">{val}</span>
                   <span className="text-stone-400 dark:text-stone-500 text-sm">{label}</span>
@@ -318,7 +318,7 @@ export default function Landing() {
       </section>
 
       {/* ─── SOCIAL PROOF BAR ────────────────────────────────────────────── */}
-      <section className="border-y border-stone-100 dark:border-stone-800 bg-white/50 dark:bg-white/3 py-5">
+      <section className="border-y border-stone-100 dark:border-[#2F3D4D] bg-white/50 dark:bg-white/3 py-5">
         <PageContainer variant="hero" className="flex flex-wrap items-center justify-center gap-8 text-sm text-stone-500 dark:text-stone-400">
           <span className="flex items-center gap-2 font-medium">
             <CheckCircle2 className="w-4 h-4 text-green-500" /> 100% gratuito per gli utenti
@@ -377,7 +377,7 @@ export default function Landing() {
                 desc: "Oltre 50.000 birrifici mappati in tutto il mondo. Visita i più vicini, segui le uscite stagionali e scopri nuovi produttori.",
                 cta: "Esplora birrifici",
                 href: "/explore/breweries",
-                accent: "bg-stone-50 dark:bg-stone-800/50 border-stone-100 dark:border-stone-700",
+                accent: "bg-stone-50 dark:bg-[#1B2735]/50 border-stone-100 dark:border-[#2F3D4D]",
                 ctaClass: "text-stone-700 dark:text-stone-300",
               },
             ].map((card, i) => (
@@ -426,8 +426,8 @@ export default function Landing() {
           </div>
 
           {locationStatus === 'granted' ? (
-            <div className="relative w-full h-[420px] rounded-3xl overflow-hidden bg-stone-100 dark:bg-stone-900" style={{ maxHeight: 420 }}>
-              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
+            <div className="relative w-full h-[420px] rounded-3xl overflow-hidden bg-stone-100 dark:bg-[#15202B]" style={{ maxHeight: 420 }}>
+              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}>
                 <HomepageMap
                   pubs={Array.isArray(pubs) ? pubs : []}
                   breweries={Array.isArray(breweriesForMap) && breweriesForMap.length > 0 ? breweriesForMap : (Array.isArray(breweriesFallback) ? breweriesFallback : [])}
@@ -439,7 +439,7 @@ export default function Landing() {
               </Suspense>
             </div>
           ) : (
-            <div className="rounded-3xl overflow-hidden border border-stone-100 dark:border-stone-800 bg-stone-50 dark:bg-stone-900/50 h-80 flex flex-col items-center justify-center text-center gap-4 p-8">
+            <div className="rounded-3xl overflow-hidden border border-stone-100 dark:border-[#2F3D4D] bg-stone-50 dark:bg-[#15202B]/50 h-80 flex flex-col items-center justify-center text-center gap-4 p-8">
               <div className="w-16 h-16 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
                 <MapPin className="w-7 h-7 text-primary" />
               </div>
@@ -479,7 +479,7 @@ export default function Landing() {
           </div>
           {pubsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-stone-800 rounded-3xl h-80 animate-pulse" />)}
+              {[...Array(3)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-[#1B2735] rounded-3xl h-80 animate-pulse" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -509,7 +509,7 @@ export default function Landing() {
           </div>
           {Array.isArray(breweriesFallback) && breweriesFallback.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-stone-800 rounded-3xl h-72 animate-pulse" />)}
+              {[...Array(4)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-[#1B2735] rounded-3xl h-72 animate-pulse" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -626,7 +626,7 @@ export default function Landing() {
           </div>
 
           {/* ── Festival Mode — full-width banner below both cards ── */}
-          <div className="mt-6 rounded-3xl border border-stone-200 dark:border-stone-700 bg-white dark:bg-stone-900 overflow-hidden">
+          <div className="mt-6 rounded-3xl border border-stone-200 dark:border-[#2F3D4D] bg-white dark:bg-[#15202B] overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-0">
               <div className="p-8">
                 <p className="text-xs font-black text-primary uppercase tracking-widest mb-3">🎪 Festival Mode</p>
@@ -644,7 +644,7 @@ export default function Landing() {
                   </Button>
                 </Link>
               </div>
-              <div className="hidden md:flex flex-col items-center justify-center px-10 py-8 bg-stone-50 dark:bg-stone-800/60 border-l border-stone-100 dark:border-stone-700 h-full gap-2 min-w-[200px]">
+              <div className="hidden md:flex flex-col items-center justify-center px-10 py-8 bg-stone-50 dark:bg-[#1B2735]/60 border-l border-stone-100 dark:border-[#2F3D4D] h-full gap-2 min-w-[200px]">
                 <div className="text-5xl mb-1">🎪</div>
                 <span className="text-3xl font-black text-stone-900 dark:text-white">€50</span>
                 <span className="text-xs text-stone-400 dark:text-stone-500 text-center">una tantum<br />per evento</span>

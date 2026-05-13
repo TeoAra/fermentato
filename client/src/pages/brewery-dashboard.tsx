@@ -87,7 +87,7 @@ function CollabBrewerySelector({ selected, onChange, excludeBreweryId }: { selec
           autoComplete="off"
         />
         {showResults && results.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border border-stone-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1B2735] border border-stone-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
             {results.map((b: any) => (
               <button key={b.id} type="button" onMouseDown={e => { e.preventDefault(); add(b); }}
                 className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
@@ -124,7 +124,7 @@ function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: strin
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
       <Card className="max-w-md w-full bg-white dark:bg-card border border-stone-200 dark:border-border rounded-2xl shadow-2xl">
         <CardContent className="pt-8 pb-8 text-center space-y-6">
-          <div className="w-20 h-20 mx-auto rounded-full bg-stone-50 dark:bg-stone-900/30 flex items-center justify-center">
+          <div className="w-20 h-20 mx-auto rounded-full bg-stone-50 dark:bg-[#15202B]/30 flex items-center justify-center">
             <Clock className="w-10 h-10 text-primary" />
           </div>
           <div>
@@ -224,7 +224,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
 
   const typeLabel: Record<string, { label: string; color: string; icon: any }> = {
     news: { label: "Novità", color: "bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-950/30 dark:text-blue-300", icon: Newspaper },
-    release: { label: "Nuova Birra", color: "bg-stone-50 text-primary border-stone-200 dark:bg-stone-900/30 dark:text-orange-400", icon: Rocket },
+    release: { label: "Nuova Birra", color: "bg-stone-50 text-primary border-stone-200 dark:bg-[#15202B]/30 dark:text-orange-400", icon: Rocket },
     collab: { label: "Collaborazione", color: "bg-purple-50 text-purple-700 border-purple-100 dark:bg-purple-950/30 dark:text-purple-300", icon: Users },
   };
 
@@ -438,7 +438,7 @@ const BreweryStatsCard = ({ icon: Icon, value, label, colorClass, onClick }: any
     onClick={onClick}
   >
     <div className="flex items-center space-x-3">
-      <div className={`p-3 rounded-xl bg-stone-50 dark:bg-stone-900/30 group-hover:scale-110 transition-transform duration-300`}>
+      <div className={`p-3 rounded-xl bg-stone-50 dark:bg-[#15202B]/30 group-hover:scale-110 transition-transform duration-300`}>
         <Icon className={`h-5 w-5 ${colorClass || 'text-primary'}`} />
       </div>
       <div className="text-left">
@@ -751,7 +751,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <Card className="max-w-md w-full bg-white dark:bg-card border border-stone-200 dark:border-border rounded-2xl shadow-sm">
           <CardContent className="pt-8 pb-8 text-center">
-            <div className="w-20 h-20 mx-auto rounded-full bg-stone-50 dark:bg-stone-900/30 flex items-center justify-center mb-6">
+            <div className="w-20 h-20 mx-auto rounded-full bg-stone-50 dark:bg-[#15202B]/30 flex items-center justify-center mb-6">
               <Factory className="w-10 h-10 text-primary" />
             </div>
             <h2 className="text-2xl font-bold text-foreground mb-2">Nessun Birrificio Associato</h2>
@@ -782,7 +782,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/">
-              <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-xl cursor-pointer hover:scale-105 transition-transform">
+              <div className="p-2 bg-stone-50 dark:bg-[#15202B]/30 rounded-xl cursor-pointer hover:scale-105 transition-transform">
                 <BeerIcon className="h-6 w-6 text-primary" />
               </div>
             </Link>
@@ -915,17 +915,17 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
               <div className="flex gap-4 mt-6">
                 {(brewery as any).instagramUrl && (
-                  <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener" className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-xl text-primary hover:scale-110 transition-transform">
+                  <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener" className="p-2 bg-stone-50 dark:bg-[#15202B]/30 rounded-xl text-primary hover:scale-110 transition-transform">
                     <SiInstagram className="h-5 w-5" />
                   </a>
                 )}
                 {(brewery as any).facebookUrl && (
-                  <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener" className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-xl text-primary hover:scale-110 transition-transform">
+                  <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener" className="p-2 bg-stone-50 dark:bg-[#15202B]/30 rounded-xl text-primary hover:scale-110 transition-transform">
                     <SiFacebook className="h-5 w-5" />
                   </a>
                 )}
                 {(brewery as any).tiktokUrl && (
-                  <a href={(brewery as any).tiktokUrl} target="_blank" rel="noopener" className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-xl text-primary hover:scale-110 transition-transform">
+                  <a href={(brewery as any).tiktokUrl} target="_blank" rel="noopener" className="p-2 bg-stone-50 dark:bg-[#15202B]/30 rounded-xl text-primary hover:scale-110 transition-transform">
                     <SiTiktok className="h-5 w-5" />
                   </a>
                 )}
@@ -937,7 +937,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               <div className="space-y-3">
                 {brewery.websiteUrl && (
                   <a href={brewery.websiteUrl} target="_blank" rel="noopener" className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
-                    <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-lg group-hover:bg-primary/10">
+                    <div className="p-2 bg-stone-50 dark:bg-[#15202B]/30 rounded-lg group-hover:bg-primary/10">
                       <Globe className="h-4 w-4 text-primary" />
                     </div>
                     <span className="truncate">{brewery.websiteUrl.replace(/^https?:\/\//, '')}</span>
@@ -945,7 +945,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 )}
                 {(brewery as any).email && (
                   <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
-                    <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-lg group-hover:bg-primary/10">
+                    <div className="p-2 bg-stone-50 dark:bg-[#15202B]/30 rounded-lg group-hover:bg-primary/10">
                       <Mail className="h-4 w-4 text-primary" />
                     </div>
                     <span className="truncate">{(brewery as any).email}</span>
@@ -953,7 +953,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 )}
                 {brewery.phone && (
                   <a href={`tel:${brewery.phone}`} className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
-                    <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-lg group-hover:bg-primary/10">
+                    <div className="p-2 bg-stone-50 dark:bg-[#15202B]/30 rounded-lg group-hover:bg-primary/10">
                       <Phone className="h-4 w-4 text-primary" />
                     </div>
                     <span>{brewery.phone}</span>
@@ -961,7 +961,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 )}
                 {brewery.vatNumber && (
                   <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="p-2 bg-stone-50 dark:bg-stone-900/30 rounded-lg">
+                    <div className="p-2 bg-stone-50 dark:bg-[#15202B]/30 rounded-lg">
                       <FileText className="h-4 w-4 text-primary" />
                     </div>
                     <span>P.IVA: {brewery.vatNumber}</span>
@@ -1010,8 +1010,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           </div>
 
           {beers.length === 0 ? (
-            <div className="text-center py-16 border-2 border-dashed border-stone-200 dark:border-stone-700/30 rounded-3xl">
-              <div className="w-20 h-20 bg-stone-50 dark:bg-stone-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div className="text-center py-16 border-2 border-dashed border-stone-200 dark:border-[#2F3D4D]/30 rounded-3xl">
+              <div className="w-20 h-20 bg-stone-50 dark:bg-[#15202B]/30 rounded-full flex items-center justify-center mx-auto mb-4">
                 <BeerIcon className="h-10 w-10 text-primary opacity-20" />
               </div>
               <h3 className="text-xl font-bold text-foreground mb-2">Nessuna birra ancora</h3>
@@ -1031,7 +1031,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                           src={beer?.imageUrl}
                           alt={beer?.name}
                           imageType="beer"
-                          containerClassName="w-16 h-16 rounded-xl border border-stone-200 dark:border-stone-700/30"
+                          containerClassName="w-16 h-16 rounded-xl border border-stone-200 dark:border-[#2F3D4D]/30"
                           className="w-16 h-16 object-cover rounded-xl group-hover:scale-110 transition-transform duration-500"
                           iconSize="lg"
                         />
@@ -1064,7 +1064,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                       )}
 
                       {/* Edit/Delete buttons */}
-                      <div className="flex items-center gap-2 pt-4 border-t border-stone-100 dark:border-stone-700/30">
+                      <div className="flex items-center gap-2 pt-4 border-t border-stone-100 dark:border-[#2F3D4D]/30">
                         <Button
                           variant="outline"
                           size="sm"
@@ -1163,7 +1163,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                           <p className="text-sm text-muted-foreground leading-relaxed italic border-l-2 border-stone-200 pl-3 mb-3">"{review.personalNotes}"</p>
                         )}
                         {review.ownerReply && (
-                          <div className="mt-3 bg-stone-50 dark:bg-stone-900/20 p-4 rounded-xl border border-stone-200 dark:border-stone-700/30">
+                          <div className="mt-3 bg-stone-50 dark:bg-[#15202B]/20 p-4 rounded-xl border border-stone-200 dark:border-[#2F3D4D]/30">
                             <p className="text-xs font-bold text-primary uppercase tracking-wider mb-1">La tua risposta</p>
                             <p className="text-sm text-foreground">{review.ownerReply}</p>
                           </div>
@@ -1341,7 +1341,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 />
               </div>
             </div>
-            <div className="bg-stone-50/50 dark:bg-stone-900/10 p-5 rounded-3xl border border-stone-200 dark:border-stone-700/30">
+            <div className="bg-stone-50/50 dark:bg-[#15202B]/10 p-5 rounded-3xl border border-stone-200 dark:border-[#2F3D4D]/30">
               <p className="text-sm font-bold mb-4 flex items-center gap-2 text-foreground text-left">
                 <SiInstagram className="h-4 w-4 text-primary" />
                 Presenza Social

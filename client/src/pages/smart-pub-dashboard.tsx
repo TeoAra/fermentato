@@ -131,7 +131,7 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
   }
 
   return (
-    <div className="bg-stone-50 dark:bg-stone-900/20 border border-stone-200 dark:border-stone-700/50 rounded-2xl p-4">
+    <div className="bg-stone-50 dark:bg-[#15202B]/20 border border-stone-200 dark:border-[#2F3D4D]/50 rounded-2xl p-4">
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Info className="h-4 w-4 text-primary" />
@@ -238,7 +238,7 @@ function SpecialDaysEditor({ specialDays, onChange }: { specialDays: any[]; onCh
       )}
 
       {showForm ? (
-        <div className="p-4 border border-stone-200 dark:border-border rounded-xl space-y-3 bg-stone-50 dark:bg-stone-900/30">
+        <div className="p-4 border border-stone-200 dark:border-border rounded-xl space-y-3 bg-stone-50 dark:bg-[#15202B]/30">
           <div className="grid grid-cols-2 gap-3">
             <div>
               <Label className="text-xs text-muted-foreground mb-1 block">Data</Label>
@@ -637,7 +637,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
     if (status === 'trial' && trialEndsAt) {
       return (
-        <div className={`mb-6 flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 ${isTrialExpiringSoon ? 'bg-stone-50 dark:bg-stone-900/20 border-primary/30' : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30'}`}>
+        <div className={`mb-6 flex items-center justify-between gap-4 rounded-2xl border px-4 py-3 ${isTrialExpiringSoon ? 'bg-stone-50 dark:bg-[#15202B]/20 border-primary/30' : 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-900/30'}`}>
           <div className="flex items-center gap-3 min-w-0">
             <Gift className={`w-5 h-5 flex-shrink-0 ${isTrialExpiringSoon ? 'text-primary' : 'text-emerald-600'}`} />
             <div className="min-w-0">
@@ -678,7 +678,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     // Hibernated / no subscription
     if (!currentPub.isActive || status === 'none' || status === 'cancelled' || status === 'expired') {
       return (
-        <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-stone-200 dark:border-stone-700/30 bg-stone-50 dark:bg-stone-900/20 px-4 py-3">
+        <div className="mb-6 flex items-center justify-between gap-4 rounded-2xl border border-stone-200 dark:border-[#2F3D4D]/30 bg-stone-50 dark:bg-[#15202B]/20 px-4 py-3">
           <div className="flex items-center gap-3 min-w-0">
             <ShieldOff className="w-5 h-5 flex-shrink-0 text-primary" />
             <div className="min-w-0">
@@ -747,7 +747,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <PubQRCode pubId={currentPub?.id} pubName={currentPub?.name || ""} pubSlug={(currentPub as any)?.slug} compact />
 
           {/* PDF Menu */}
-          <Suspense fallback={<div className="h-20 bg-stone-100 dark:bg-stone-800 animate-pulse rounded-2xl" />}>
+          <Suspense fallback={<div className="h-20 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded-2xl" />}>
             <MenuPdfDownload
               pubName={currentPub?.name || ""}
               tapList={typedTapList}
@@ -775,7 +775,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           <Sheet>
             <SheetTrigger asChild>
               <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all">
-                <div className="p-2.5 bg-stone-100 dark:bg-stone-800/60 rounded-xl shrink-0">
+                <div className="p-2.5 bg-stone-100 dark:bg-[#1B2735]/60 rounded-xl shrink-0">
                   <Cast className="h-5 w-5 text-foreground" />
                 </div>
                 <div className="min-w-0">
@@ -852,7 +852,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
                       {/* ── Cast SDK non disponibile su iOS (Chrome mobile non lo supporta) ── */}
                       {!castSdkLoaded && isIosDevice && (
-                        <div className="bg-stone-50 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-700 rounded-xl p-3 space-y-1.5">
+                        <div className="bg-stone-50 dark:bg-[#15202B]/50 border border-stone-200 dark:border-[#2F3D4D] rounded-xl p-3 space-y-1.5">
                           <p className="text-sm font-medium text-foreground flex items-center gap-2">
                             <Cast className="h-4 w-4 shrink-0 text-muted-foreground" />
                             Chromecast non disponibile su iPhone
@@ -883,7 +883,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                       {/* ── URL — copia + apri ── */}
                       <div className="flex gap-2">
                         <div
-                          className="flex-1 bg-stone-100 dark:bg-card border border-stone-200 dark:border-border rounded-xl px-3 py-2.5 flex items-center gap-2 cursor-pointer hover:bg-stone-200 dark:hover:bg-stone-800 transition-colors min-w-0"
+                          className="flex-1 bg-stone-100 dark:bg-card border border-stone-200 dark:border-border rounded-xl px-3 py-2.5 flex items-center gap-2 cursor-pointer hover:bg-stone-200 dark:hover:bg-[#1B2735] transition-colors min-w-0"
                           onClick={() => { navigator.clipboard?.writeText(tvUrl).catch(() => {}); toast({ title: "Link copiato!" }); }}
                         >
                           <code className="text-xs font-mono font-bold text-primary dark:text-orange-400 truncate">
@@ -912,7 +912,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all"
             onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
           >
-            <div className="p-2.5 bg-stone-100 dark:bg-stone-800/60 rounded-xl shrink-0">
+            <div className="p-2.5 bg-stone-100 dark:bg-[#1B2735]/60 rounded-xl shrink-0">
               <Eye className="h-5 w-5 text-foreground" />
             </div>
             <div className="min-w-0">
@@ -1102,7 +1102,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <p className="text-sm text-muted-foreground dark:text-muted-foreground">Birre alla Spina</p>
               <p className="text-2xl font-bold">{typedTapList.length}</p>
             </div>
-            <div className="p-2 bg-stone-100 dark:bg-stone-900/20 rounded-xl">
+            <div className="p-2 bg-stone-100 dark:bg-[#15202B]/20 rounded-xl">
               <Beer className="h-6 w-6 text-primary" />
             </div>
           </div>
@@ -1958,7 +1958,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   onClick={() => setCurrentSection(section.id as DashboardSection)}
                   className={`group flex items-center px-4 py-3 text-sm font-medium rounded-2xl w-full text-left transition-all duration-200 ${
                     isActive
-                      ? `bg-stone-50 dark:bg-stone-900/20 text-primary border-r-2 border-primary`
+                      ? `bg-stone-50 dark:bg-[#15202B]/20 text-primary border-r-2 border-primary`
                       : 'text-muted-foreground hover:bg-stone-50/60 dark:hover:bg-stone-900/10 hover:text-foreground'
                   }`}
                   data-testid={`nav-${section.id}`}
@@ -2027,7 +2027,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </>
           ) : (
             <>
-              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-stone-100 dark:bg-stone-800 mx-auto">
+              <div className="flex items-center justify-center w-20 h-20 rounded-full bg-stone-100 dark:bg-[#1B2735] mx-auto">
                 <Store className="w-10 h-10 text-muted-foreground" />
               </div>
               <h2 className="text-2xl font-bold text-foreground dark:text-white">Nessun pub trovato</h2>

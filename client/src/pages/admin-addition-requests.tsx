@@ -132,17 +132,17 @@ export default function AdminAdditionRequests() {
                 <div key={r.id} className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm overflow-hidden transition-all">
                   <div className="p-4">
                     <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-stone-100 dark:border-stone-700/50 ${r.type === 'beer' ? 'bg-stone-50 dark:bg-stone-900/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-stone-100 dark:border-[#2F3D4D]/50 ${r.type === 'beer' ? 'bg-stone-50 dark:bg-[#15202B]/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>
                         {r.type === 'beer' ? <Beer className="h-5 w-5 text-primary" /> : <Building2 className="h-5 w-5 text-blue-600 dark:text-blue-400" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <Badge className={`text-xs rounded-full font-medium ${r.type === 'beer' ? 'bg-stone-50 text-primary border-stone-200 dark:bg-stone-900/40 dark:text-orange-400' : 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/40 dark:text-blue-400'}`} variant="outline">
+                          <Badge className={`text-xs rounded-full font-medium ${r.type === 'beer' ? 'bg-stone-50 text-primary border-stone-200 dark:bg-[#15202B]/40 dark:text-orange-400' : 'bg-blue-50 text-blue-700 border-blue-100 dark:bg-blue-900/40 dark:text-blue-400'}`} variant="outline">
                             {r.type === 'beer' ? 'Birra' : 'Birrificio'}
                           </Badge>
                           {r.status === 'approved' && <Badge className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400 text-xs rounded-full font-medium border-emerald-100 dark:border-emerald-900/50">Approvata</Badge>}
                           {r.status === 'rejected' && <Badge className="bg-destructive/10 text-destructive dark:bg-destructive/20 text-xs rounded-full font-medium border-destructive/20">Rifiutata</Badge>}
-                          {r.status === 'pending' && <Badge className="bg-stone-50 text-primary dark:bg-stone-900/20 dark:text-orange-400 text-xs rounded-full font-medium border-stone-200 dark:border-stone-700/50">In attesa</Badge>}
+                          {r.status === 'pending' && <Badge className="bg-stone-50 text-primary dark:bg-[#15202B]/20 dark:text-orange-400 text-xs rounded-full font-medium border-stone-200 dark:border-[#2F3D4D]/50">In attesa</Badge>}
                         </div>
                         <p className="font-bold text-foreground mt-1 truncate">{name || "—"}</p>
                         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
@@ -151,10 +151,10 @@ export default function AdminAdditionRequests() {
                         </div>
                         {/* Quick info pills */}
                         <div className="flex flex-wrap gap-1.5 mt-2">
-                          {r.style && <span className="text-xs bg-stone-50/50 dark:bg-stone-900/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-stone-700/30">{r.style}</span>}
-                          {r.abv && <span className="text-xs bg-stone-50/50 dark:bg-stone-900/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-stone-700/30">{r.abv}%</span>}
-                          {r.city && <span className="text-xs bg-stone-50/50 dark:bg-stone-900/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-stone-700/30">{r.city}</span>}
-                          {r.country && r.country !== 'Italia' && <span className="text-xs bg-stone-50/50 dark:bg-stone-900/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-stone-700/30">{r.country}</span>}
+                          {r.style && <span className="text-xs bg-stone-50/50 dark:bg-[#15202B]/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-[#2F3D4D]/30">{r.style}</span>}
+                          {r.abv && <span className="text-xs bg-stone-50/50 dark:bg-[#15202B]/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-[#2F3D4D]/30">{r.abv}%</span>}
+                          {r.city && <span className="text-xs bg-stone-50/50 dark:bg-[#15202B]/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-[#2F3D4D]/30">{r.city}</span>}
+                          {r.country && r.country !== 'Italia' && <span className="text-xs bg-stone-50/50 dark:bg-[#15202B]/10 text-primary dark:text-orange-400 px-2.5 py-0.5 rounded-full font-medium border border-stone-100 dark:border-[#2F3D4D]/30">{r.country}</span>}
                           {r.breweryId && <span className="text-xs bg-blue-50/50 dark:bg-blue-950/10 text-blue-600 dark:text-blue-400 px-2.5 py-0.5 rounded-full font-medium border border-blue-50 dark:border-blue-900/30">Birrificio ID #{r.breweryId}</span>}
                         </div>
                       </div>
@@ -182,7 +182,7 @@ export default function AdminAdditionRequests() {
                           <p className="text-muted-foreground"><span className="font-bold text-foreground">Note utente:</span> {r.notes}</p>
                         )}
                         {r.adminNotes && (
-                          <div className="bg-stone-50/30 dark:bg-stone-900/10 p-3 rounded-xl border border-stone-100 dark:border-stone-700/30">
+                          <div className="bg-stone-50/30 dark:bg-[#15202B]/10 p-3 rounded-xl border border-stone-100 dark:border-[#2F3D4D]/30">
                             <p className="text-muted-foreground"><span className="font-bold text-foreground text-primary">Note admin:</span> {r.adminNotes}</p>
                           </div>
                         )}

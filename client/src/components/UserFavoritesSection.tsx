@@ -53,7 +53,7 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
       case 'beer': return { border: 'border-l-green-500', icon: 'text-green-600 bg-green-100 dark:bg-green-900/20', hover: 'hover:text-green-600' };
       case 'brewery': return { border: 'border-l-amber-500', icon: 'text-amber-600 bg-amber-100 dark:bg-amber-900/20', hover: 'hover:text-amber-600' };
       case 'pub': return { border: 'border-l-blue-500', icon: 'text-blue-600 bg-blue-100 dark:bg-blue-900/20', hover: 'hover:text-blue-600' };
-      default: return { border: 'border-l-gray-500', icon: 'text-muted-foreground bg-stone-100 dark:bg-gray-900/20', hover: 'hover:text-muted-foreground' };
+      default: return { border: 'border-l-gray-500', icon: 'text-muted-foreground bg-stone-100 dark:bg-[#15202B]/20', hover: 'hover:text-muted-foreground' };
     }
   };
 
@@ -78,7 +78,7 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
   if (!favorites || favorites.length === 0) {
     return (
       <div className="text-center py-12">
-        <div className="w-16 h-16 bg-stone-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 bg-stone-100 dark:bg-[#1B2735] rounded-full flex items-center justify-center mx-auto mb-4">
           <Heart className="h-8 w-8 text-stone-400" />
         </div>
         <h3 className="text-lg font-semibold text-foreground dark:text-white mb-2">Nessun preferito ancora</h3>

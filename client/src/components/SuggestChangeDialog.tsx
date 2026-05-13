@@ -278,7 +278,7 @@ export default function SuggestChangeDialog({ open, onOpenChange, type, itemId, 
           )}
 
           {/* Optional message */}
-          <div className="space-y-1.5 border-t border-gray-100 dark:border-gray-800 pt-4">
+          <div className="space-y-1.5 border-t border-gray-100 dark:border-[#2F3D4D] pt-4">
             <Label>Nota per i revisori (opzionale)</Label>
             <Textarea
               value={message}

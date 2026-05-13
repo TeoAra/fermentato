@@ -123,7 +123,7 @@ export default function RouteCard({ destination, destinationName, destinationAdd
                 className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${
                   active
                     ? "bg-primary text-white border-primary"
-                    : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700"
+                    : "bg-white dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
                 }`}
               >
                 <Icon className="w-3.5 h-3.5" />
@@ -170,11 +170,11 @@ export default function RouteCard({ destination, destinationName, destinationAdd
         {enabled && data && (
           <div className="mt-1">
             <div className="grid grid-cols-2 gap-3 mb-3">
-              <div className="bg-stone-50 dark:bg-stone-900/40 rounded-xl p-3">
+              <div className="bg-stone-50 dark:bg-[#15202B]/40 rounded-xl p-3">
                 <p className="text-[10px] uppercase tracking-wide font-bold text-muted-foreground">Distanza</p>
                 <p className="text-xl font-black text-foreground">{formatDistance(data.distanceM)}</p>
               </div>
-              <div className="bg-stone-50 dark:bg-stone-900/40 rounded-xl p-3">
+              <div className="bg-stone-50 dark:bg-[#15202B]/40 rounded-xl p-3">
                 <p className="text-[10px] uppercase tracking-wide font-bold text-muted-foreground">Durata</p>
                 <p className="text-xl font-black text-foreground">{formatDuration(data.durationS)}</p>
               </div>
@@ -229,7 +229,7 @@ export default function RouteCard({ destination, destinationName, destinationAdd
           href={getMapNavigationUrl(destinationName, destinationAddress || `${destination.lat},${destination.lng}`)}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 px-3 py-2 rounded-xl text-xs font-bold border border-stone-200 dark:border-[#2F3D4D] text-stone-700 dark:text-stone-300 hover:bg-stone-50 dark:hover:bg-[#1B2735]/40 transition-colors"
         >
           <MapPin className="w-3.5 h-3.5" />
           Apri in Google/Apple Maps

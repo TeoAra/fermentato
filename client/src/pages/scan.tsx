@@ -522,11 +522,11 @@ export default function ScanPage() {
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-sm">
+      <div className="sticky top-0 z-20 bg-white dark:bg-[#15202B] border-b border-gray-200 dark:border-[#2F3D4D] shadow-sm">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={handleRescan}
-            className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-gray-800 transition-colors text-muted-foreground dark:text-stone-400"
+            className="p-2 rounded-full hover:bg-stone-100 dark:hover:bg-[#1B2735] transition-colors text-muted-foreground dark:text-stone-400"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -557,7 +557,7 @@ export default function ScanPage() {
               value={manualQuery}
               onChange={e => setManualQuery(e.target.value)}
               placeholder="Affina la ricerca..."
-              className="w-full pl-9 pr-9 py-2.5 bg-stone-100 dark:bg-gray-800 rounded-xl text-sm text-foreground dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-amber-400"
+              className="w-full pl-9 pr-9 py-2.5 bg-stone-100 dark:bg-[#1B2735] rounded-xl text-sm text-foreground dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-amber-400"
             />
             {manualQuery && (
               <button
@@ -673,10 +673,10 @@ export default function ScanPage() {
                           }));
                           navigate(`/beer/${beer.id}?from=scan`);
                         }}
-                        className={`flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border active:scale-[0.98] transition-all cursor-pointer ${
+                        className={`flex items-center gap-3 bg-white dark:bg-[#15202B] rounded-2xl p-3 shadow-sm border active:scale-[0.98] transition-all cursor-pointer ${
                           isConfirmed
                             ? "border-green-400 dark:border-green-600 ring-1 ring-green-300 dark:ring-green-700"
-                            : "border-gray-100 dark:border-gray-800 hover:border-amber-200 dark:hover:border-amber-900"
+                            : "border-gray-100 dark:border-[#2F3D4D] hover:border-amber-200 dark:hover:border-amber-900"
                         }`}
                       >
                         <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
@@ -718,7 +718,7 @@ export default function ScanPage() {
                           className={`shrink-0 flex items-center justify-center w-8 h-8 rounded-full transition-all ${
                             isConfirmed
                               ? "bg-green-500 text-white shadow-sm"
-                              : "border-2 border-gray-200 dark:border-gray-700 text-gray-300 dark:text-gray-600 hover:border-green-400 hover:text-green-400 dark:hover:border-green-500 dark:hover:text-green-500"
+                              : "border-2 border-gray-200 dark:border-[#2F3D4D] text-gray-300 dark:text-gray-600 hover:border-green-400 hover:text-green-400 dark:hover:border-green-500 dark:hover:text-green-500"
                           }`}
                           aria-label={isConfirmed ? "Confermata" : "Conferma questa birra"}
                         >
@@ -743,7 +743,7 @@ export default function ScanPage() {
                     <div
                       key={brewery.id}
                       onClick={() => { saveFeedback(undefined, brewery.id); navigate(`/brewery/${brewery.id}`); }}
-                      className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-gray-800 active:scale-[0.98] transition-transform cursor-pointer hover:border-blue-200 dark:hover:border-blue-900"
+                      className="flex items-center gap-3 bg-white dark:bg-[#15202B] rounded-2xl p-3 shadow-sm border border-gray-100 dark:border-[#2F3D4D] active:scale-[0.98] transition-transform cursor-pointer hover:border-blue-200 dark:hover:border-blue-900"
                     >
                       <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center overflow-hidden shrink-0">
                         {brewery.logoUrl ? (
@@ -775,7 +775,7 @@ export default function ScanPage() {
             {/* Success: beer confirmed via manual search */}
             {manualConfirmedBeer ? (
               <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-800 rounded-2xl p-3">
-                <div className="w-10 h-10 rounded-xl bg-white dark:bg-gray-900 flex items-center justify-center overflow-hidden shrink-0 border border-green-200 dark:border-green-800">
+                <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#15202B] flex items-center justify-center overflow-hidden shrink-0 border border-green-200 dark:border-green-800">
                   {manualConfirmedBeer.imageUrl
                     ? <img src={manualConfirmedBeer.imageUrl} alt={manualConfirmedBeer.name} className="w-full h-full object-cover rounded-xl" />
                     : <Beer className="h-5 w-5 text-amber-400" />}
@@ -797,7 +797,7 @@ export default function ScanPage() {
               </div>
             ) : showManualSearch ? (
               /* Search panel */
-              <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl p-3 shadow-sm">
+              <div className="bg-white dark:bg-[#15202B] border border-gray-200 dark:border-[#2F3D4D] rounded-2xl p-3 shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
                   <p className="text-xs font-semibold text-foreground dark:text-white flex-1">Cerca la birra giusta</p>
                   <button onClick={() => { setShowManualSearch(false); setManualQuery(""); setManualResults([]); }} className="text-muted-foreground hover:text-foreground">
@@ -811,7 +811,7 @@ export default function ScanPage() {
                     value={fallbackQuery}
                     onChange={e => handleFallbackQueryChange(e.target.value)}
                     placeholder="Nome birra o birrificio..."
-                    className="w-full pl-8 pr-3 py-2 text-sm bg-stone-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl outline-none focus:ring-1 focus:ring-amber-400 dark:focus:ring-amber-600"
+                    className="w-full pl-8 pr-3 py-2 text-sm bg-stone-50 dark:bg-[#1B2735] border border-gray-200 dark:border-[#2F3D4D] rounded-xl outline-none focus:ring-1 focus:ring-amber-400 dark:focus:ring-amber-600"
                   />
                   {isFallbackSearching && (
                     <span className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 border-2 border-amber-400 border-t-transparent rounded-full animate-spin" />
@@ -820,7 +820,7 @@ export default function ScanPage() {
                 {fallbackResults.length > 0 && (
                   <div className="space-y-1.5 max-h-72 overflow-y-auto">
                     {fallbackResults.map(beer => (
-                      <div key={beer.id} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-stone-50 dark:hover:bg-gray-800 cursor-pointer group">
+                      <div key={beer.id} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-stone-50 dark:hover:bg-[#1B2735] cursor-pointer group">
                         <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
                           {beer.imageUrl
                             ? <img src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-lg" />
@@ -860,7 +860,7 @@ export default function ScanPage() {
               /* Toggle button */
               <button
                 onClick={() => setShowManualSearch(true)}
-                className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-medium text-muted-foreground dark:text-stone-400 border border-dashed border-gray-200 dark:border-gray-700 rounded-2xl hover:border-amber-300 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-400 transition-colors"
+                className="w-full flex items-center justify-center gap-2 py-2.5 text-xs font-medium text-muted-foreground dark:text-stone-400 border border-dashed border-gray-200 dark:border-[#2F3D4D] rounded-2xl hover:border-amber-300 hover:text-amber-600 dark:hover:border-amber-700 dark:hover:text-amber-400 transition-colors"
               >
                 <Search className="h-3.5 w-3.5" />
                 {scanState === "results" ? "Nessuna di queste? Cerca o crea" : "Cerca manualmente o crea"}
@@ -882,7 +882,7 @@ export default function ScanPage() {
                 <div
                   key={`img-${beer.id}`}
                   onClick={() => { saveFeedback(beer.id, undefined); enrichBarcodeData(beer.id); navigate(`/beer/${beer.id}`); }}
-                  className="flex items-center gap-3 bg-white dark:bg-gray-900 rounded-2xl p-3 shadow-sm border border-purple-100 dark:border-purple-900/40 active:scale-[0.98] transition-transform cursor-pointer hover:border-purple-300 dark:hover:border-purple-700"
+                  className="flex items-center gap-3 bg-white dark:bg-[#15202B] rounded-2xl p-3 shadow-sm border border-purple-100 dark:border-purple-900/40 active:scale-[0.98] transition-transform cursor-pointer hover:border-purple-300 dark:hover:border-purple-700"
                 >
                   <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
                     {(beer.logoUrl || beer.imageUrl) ? (

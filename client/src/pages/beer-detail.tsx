@@ -692,7 +692,7 @@ export default function BeerDetail() {
       {/* ── Scan redirect banner ── */}
       {scanCtx && !scanBannerDismissed && (
         <div className="fixed bottom-20 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-          <div className="bg-gray-900 dark:bg-gray-800 text-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3 max-w-sm w-full pointer-events-auto border border-white/10">
+          <div className="bg-gray-900 dark:bg-[#1B2735] text-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3 max-w-sm w-full pointer-events-auto border border-white/10">
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-300 leading-tight">Trovata via scansione</p>
               <p className="text-sm font-semibold truncate leading-tight mt-0.5">
@@ -805,7 +805,7 @@ export default function BeerDetail() {
           </button>
           <button onClick={handleFavoriteToggle} disabled={favoriteMutation.isPending}
             data-testid="button-bookmark"
-            className={`mb-3 w-10 h-10 rounded-full bg-card border border-stone-200 dark:border-stone-700 shadow-md flex items-center justify-center tap-scale transition-colors ${isBeerFavorited ? 'text-primary' : 'text-stone-600 dark:text-stone-300'}`}
+            className={`mb-3 w-10 h-10 rounded-full bg-card border border-stone-200 dark:border-[#2F3D4D] shadow-md flex items-center justify-center tap-scale transition-colors ${isBeerFavorited ? 'text-primary' : 'text-stone-600 dark:text-stone-300'}`}
             aria-label="Salva">
             <Bookmark className={`h-5 w-5 ${isBeerFavorited ? 'fill-current' : ''}`} />
           </button>
@@ -887,7 +887,7 @@ export default function BeerDetail() {
                   </span>
                 )}
                 {beer?.isAlcoholFree && (
-                  <span className="text-[10px] font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-stone-800 px-2 py-1 rounded-full">0.0% Analcolica</span>
+                  <span className="text-[10px] font-bold text-stone-600 dark:text-stone-300 bg-stone-100 dark:bg-[#1B2735] px-2 py-1 rounded-full">0.0% Analcolica</span>
                 )}
               </div>
             )}
@@ -895,19 +895,19 @@ export default function BeerDetail() {
 
           {/* ═══════════ 4 Stat cards ═══════════ */}
           <div className="grid grid-cols-4 gap-2 mt-5">
-            <div className="bg-stone-50 dark:bg-stone-900/40 rounded-2xl px-2 py-3 flex flex-col items-center text-center">
+            <div className="bg-stone-50 dark:bg-[#15202B]/40 rounded-2xl px-2 py-3 flex flex-col items-center text-center">
               <span className="text-base font-extrabold text-foreground leading-tight">{beer?.abv ? `${beer.abv}%` : '—'}</span>
               <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-0.5">ABV</span>
             </div>
-            <div className="bg-stone-50 dark:bg-stone-900/40 rounded-2xl px-2 py-3 flex flex-col items-center text-center">
+            <div className="bg-stone-50 dark:bg-[#15202B]/40 rounded-2xl px-2 py-3 flex flex-col items-center text-center">
               <span className="text-sm font-extrabold text-foreground leading-tight line-clamp-1 px-1">{beer?.color || '—'}</span>
               <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-0.5">Colore</span>
             </div>
-            <div className="bg-stone-50 dark:bg-stone-900/40 rounded-2xl px-2 py-3 flex flex-col items-center text-center">
+            <div className="bg-stone-50 dark:bg-[#15202B]/40 rounded-2xl px-2 py-3 flex flex-col items-center text-center">
               <span className="text-sm font-extrabold text-foreground leading-tight line-clamp-1 px-1">{beer?.style?.split(/\s*[-–\/]\s*/)[0] || '—'}</span>
               <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-0.5">Stile</span>
             </div>
-            <div className="bg-stone-50 dark:bg-stone-900/40 rounded-2xl px-2 py-3 flex flex-col items-center text-center">
+            <div className="bg-stone-50 dark:bg-[#15202B]/40 rounded-2xl px-2 py-3 flex flex-col items-center text-center">
               <span className="text-base font-extrabold text-foreground leading-tight">{beer?.ibu ? String(beer.ibu) : '—'}</span>
               <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-0.5">{beer?.ibu ? 'IBU' : 'Profilo'}</span>
             </div>
@@ -927,7 +927,7 @@ export default function BeerDetail() {
               onClick={handleFavoriteToggle}
               disabled={favoriteMutation.isPending}
               data-testid="button-favorite"
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold border tap-scale ${isBeerFavorited ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-500' : 'bg-card border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300'}`}
+              className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold border tap-scale ${isBeerFavorited ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-500' : 'bg-card border-stone-200 dark:border-[#2F3D4D] text-stone-700 dark:text-stone-300'}`}
             >
               <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
               {isBeerFavorited ? 'Salvata' : 'Salva'}
@@ -939,7 +939,7 @@ export default function BeerDetail() {
                 setTimeout(() => document.getElementById('beer-reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
               }}
               data-testid="button-review"
-              className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold border bg-card border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 tap-scale"
+              className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold border bg-card border-stone-200 dark:border-[#2F3D4D] text-stone-700 dark:text-stone-300 tap-scale"
             >
               <Star className="h-4 w-4" />
               Recensisci
@@ -947,7 +947,7 @@ export default function BeerDetail() {
             <button
               onClick={handleShare}
               data-testid="button-share-bottom"
-              className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold border bg-card border-stone-200 dark:border-stone-700 text-stone-700 dark:text-stone-300 tap-scale"
+              className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold border bg-card border-stone-200 dark:border-[#2F3D4D] text-stone-700 dark:text-stone-300 tap-scale"
             >
               <Share2 className="h-4 w-4" />
               Condividi
@@ -968,7 +968,7 @@ export default function BeerDetail() {
                   className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border tap-scale transition-all whitespace-nowrap ${
                     inCellar
                       ? 'bg-primary/10 border-primary/30 text-primary'
-                      : 'bg-card border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-primary/30'
+                      : 'bg-card border-stone-200 dark:border-[#2F3D4D] text-stone-600 dark:text-stone-300 hover:border-primary/30'
                   }`}
                   title={inCellar ? 'Rimuovi dalla cantina' : 'Aggiungi alla cantina'}
                 >
@@ -980,7 +980,7 @@ export default function BeerDetail() {
                 <button
                   onClick={() => setIsSuggestDialogOpen(true)}
                   data-testid="button-suggest-change"
-                  className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border bg-card border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 hover:border-primary/30 tap-scale transition-all whitespace-nowrap"
+                  className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border bg-card border-stone-200 dark:border-[#2F3D4D] text-stone-600 dark:text-stone-300 hover:border-primary/30 tap-scale transition-all whitespace-nowrap"
                   title="Suggerisci una modifica a questa scheda"
                 >
                   <Lightbulb className="h-4 w-4" />
@@ -1054,7 +1054,7 @@ export default function BeerDetail() {
                       <Link href={`/pub/${loc.pub.id}`}>
                         <div className="flex items-center gap-3 px-4 py-3 active:bg-muted/40 transition-colors">
                           <Avatar className="h-10 w-10 flex-shrink-0">
-                            <AvatarFallback className="bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 text-xs font-bold">
+                            <AvatarFallback className="bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 text-xs font-bold">
                               {loc.pub.name?.charAt(0)?.toUpperCase() || 'P'}
                             </AvatarFallback>
                           </Avatar>
@@ -1138,7 +1138,7 @@ export default function BeerDetail() {
             <div className="mt-6">
               <Link href={`/brewery/${beer.brewery.id}`}>
                 <div className="rounded-2xl border border-stone-100 dark:border-border bg-card p-4 flex items-center gap-3 active:scale-[0.99] transition-all hover:border-primary/20">
-                  <div className="w-12 h-12 rounded-2xl bg-stone-50 dark:bg-stone-900/40 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                  <div className="w-12 h-12 rounded-2xl bg-stone-50 dark:bg-[#15202B]/40 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {(beer.brewery as any).logoUrl ? (
                       <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1" />
                     ) : (
@@ -1169,7 +1169,7 @@ export default function BeerDetail() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {(beer as any).awards.map((award: any, i: number) => (
-                  <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-stone-100 dark:border-stone-700/50 shadow-sm text-sm">
+                  <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-stone-100 dark:border-[#2F3D4D]/50 shadow-sm text-sm">
                     <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${award.type === 'gold' ? 'text-yellow-500' : award.type === 'silver' ? 'text-muted-foreground' : 'text-primary'}`} />
                     <span className="font-semibold text-foreground">{award.name}</span>
                     <span className="text-muted-foreground">·</span>
@@ -1196,7 +1196,7 @@ export default function BeerDetail() {
                 {suggestedBeers.filter((sb: any) => sb && sb.id != null).map((sb: any) => (
                   <Link key={sb.id} href={`/beer/${sb.id}`}>
                     <div className="flex-shrink-0 w-[130px] active:scale-[0.97] transition-transform">
-                      <div className="relative w-full h-[140px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 mb-2">
+                      <div className="relative w-full h-[140px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-[#1B2735] mb-2">
                         {sb.imageUrl ? (
                           <img src={sb.imageUrl} alt={sb.name} className="w-full h-full object-cover" />
                         ) : (
@@ -1294,7 +1294,7 @@ export default function BeerDetail() {
                 </div>
 
                 {reviewsData.distribution && (
-                  <div className="mb-4 space-y-1.5 bg-stone-50/50 dark:bg-stone-900/20 rounded-xl p-3">
+                  <div className="mb-4 space-y-1.5 bg-stone-50/50 dark:bg-[#15202B]/20 rounded-xl p-3">
                     {[5, 4, 3, 2, 1].map(star => {
                       const count = reviewsData.distribution?.[star] || 0;
                       const pct = reviewsData.reviewCount > 0 ? (count / reviewsData.reviewCount) * 100 : 0;
@@ -1303,7 +1303,7 @@ export default function BeerDetail() {
                         <button
                           key={star}
                           onClick={() => { setReviewFilterRating(isActive ? null : star); setShowAllReviews(false); }}
-                          className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-stone-100 dark:bg-stone-900/30' : 'hover:bg-stone-50 dark:hover:bg-stone-900/20'}`}
+                          className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-stone-100 dark:bg-[#15202B]/30' : 'hover:bg-stone-50 dark:hover:bg-stone-900/20'}`}
                         >
                           <div className="flex items-center gap-1 w-12 flex-shrink-0">
                             <span className="text-xs font-bold text-muted-foreground w-3">{star}</span>
@@ -1330,7 +1330,7 @@ export default function BeerDetail() {
                   {reviewFilterRating !== null && (
                     <button
                       onClick={() => setReviewFilterRating(null)}
-                      className="flex items-center gap-1 text-xs bg-stone-50 dark:bg-stone-900/20 text-primary px-2.5 py-1 rounded-full font-medium border border-stone-200 dark:border-stone-700/30 hover:bg-stone-100 transition-colors"
+                      className="flex items-center gap-1 text-xs bg-stone-50 dark:bg-[#15202B]/20 text-primary px-2.5 py-1 rounded-full font-medium border border-stone-200 dark:border-[#2F3D4D]/30 hover:bg-stone-100 transition-colors"
                     >
                       {reviewFilterRating}★ <X className="h-3 w-3" />
                     </button>
@@ -1357,7 +1357,7 @@ export default function BeerDetail() {
                     const userBadge = getBadgeForCount(Number(review.userReviewCount || 0));
                     const isPublicReviewer = review.isPublic !== false;
                     return (
-                      <div key={review.id} className="flex gap-3 p-3 bg-stone-50/30 dark:bg-stone-900/10 rounded-xl group">
+                      <div key={review.id} className="flex gap-3 p-3 bg-stone-50/30 dark:bg-[#15202B]/10 rounded-xl group">
                         <Avatar className="h-9 w-9 flex-shrink-0">
                           {review.profileImageUrl && <AvatarImage src={review.profileImageUrl} />}
                           <AvatarFallback className="bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] text-white font-bold text-sm">
@@ -1386,7 +1386,7 @@ export default function BeerDetail() {
                             <p className="text-sm text-foreground italic mb-1">"{review.personalNotes}"</p>
                           )}
                           {review.ownerReply && (
-                            <div className="mt-2 ml-1 pl-3 border-l-2 border-stone-100 dark:border-stone-700/30 rounded-sm">
+                            <div className="mt-2 ml-1 pl-3 border-l-2 border-stone-100 dark:border-[#2F3D4D]/30 rounded-sm">
                               <div className="flex items-center gap-1 mb-0.5">
                                 <MessageSquare className="h-3 w-3 text-primary" />
                                 <span className="text-xs font-bold text-primary">Risposta del birrificio</span>
@@ -1430,7 +1430,7 @@ export default function BeerDetail() {
                 {filteredReviews.length > 5 && (
                   <button
                     onClick={() => setShowAllReviews(!showAllReviews)}
-                    className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-primary hover:text-primary/80 border border-dashed border-stone-200 dark:border-stone-700/30 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/10 transition-colors"
+                    className="w-full mt-4 flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-primary hover:text-primary/80 border border-dashed border-stone-200 dark:border-[#2F3D4D]/30 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-900/10 transition-colors"
                   >
                     <ChevronDown className={`h-4 w-4 transition-transform ${showAllReviews ? 'rotate-180' : ''}`} />
                     {showAllReviews ? 'Mostra meno' : `Mostra altre ${filteredReviews.length - 5} recensioni`}
@@ -1565,7 +1565,7 @@ export default function BeerDetail() {
                 {editCollabBreweries.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {editCollabBreweries.map(b => (
-                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-card border border-stone-100 dark:border-stone-700/30 text-primary">
+                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D]/30 text-primary">
                         <Building2 className="w-3 h-3" />{b.name}
                         <button type="button" onClick={() => setEditCollabBreweries(editCollabBreweries.filter(x => x.id !== b.id))} className="ml-0.5 hover:text-primary/80 transition-colors">×</button>
                       </span>
@@ -1754,7 +1754,7 @@ export default function BeerDetail() {
 
       {/* Potrebbero piacerti — same style, other breweries */}
       {similarBeers.length > 0 && (
-        <div className="bg-background dark:bg-[hsl(25,14%,8%)] border-t  py-8">
+        <div className="bg-background dark:bg-[#15202B] border-t  py-8">
           <PageContainer variant="wide">
             <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />

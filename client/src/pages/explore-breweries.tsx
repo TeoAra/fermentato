@@ -260,9 +260,9 @@ export default function ExploreBreweries() {
           </div>
         </div>
         {isLoading ? (
-          <div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />
+          <div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />
         ) : (
-          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}><PubMap pins={breweryMapPins} height="100%" /></Suspense>
+          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}><PubMap pins={breweryMapPins} height="100%" /></Suspense>
         )}
       </div>
     );
@@ -276,7 +276,7 @@ export default function ExploreBreweries() {
       </Helmet>
 
       {/* ── Header (scorre con la pagina) ── */}
-      <div className="bg-white/95 dark:bg-[hsl(25,14%,8%)]/95 backdrop-blur-md border-b border-stone-100 dark:border-stone-800">
+      <div className="bg-white/95 dark:bg-[#15202B]/95 backdrop-blur-md border-b border-stone-100 dark:border-[#2F3D4D]">
         <PageContainer variant="standard" className="pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
@@ -294,7 +294,7 @@ export default function ExploreBreweries() {
           </div>
 
           {/* Search */}
-          <div className="flex items-center gap-2 bg-stone-100 dark:bg-stone-800 rounded-2xl px-3 py-2.5 mb-3">
+          <div className="flex items-center gap-2 bg-stone-100 dark:bg-[#1B2735] rounded-2xl px-3 py-2.5 mb-3">
             <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
             <input
               value={searchInput}
@@ -310,8 +310,8 @@ export default function ExploreBreweries() {
 
           {/* Mini mappa — si nasconde se WebGL non è disponibile */}
           {mapVisible && (
-            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-stone-800/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-stone-800 mb-3">
-              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-stone-800 animate-pulse" />}>
+            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-[#1B2735] mb-3">
+              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}>
                 <PubMap pins={breweryMapPins} height="100%" onError={() => setMapVisible(false)} label="birrifici" />
               </Suspense>
             </div>
@@ -355,7 +355,7 @@ export default function ExploreBreweries() {
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
                   useRealRoute
                     ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700"
+                    : "bg-white dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
                 }`}
                 data-testid="toggle-real-route-breweries"
               >
@@ -373,7 +373,7 @@ export default function ExploreBreweries() {
                     ? "bg-primary text-white border-primary shadow-sm"
                     : f.key === "all"
                     ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white dark:bg-stone-800 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-stone-700"
+                    : "bg-white dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
                 }`}
               >
                 {f.icon}
@@ -394,7 +394,7 @@ export default function ExploreBreweries() {
                     className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all tap-scale ${
                       isItaly
                         ? "bg-orange-50 dark:bg-orange-950/20 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-800/30"
-                        : "bg-white dark:bg-stone-800/40 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-stone-700"
+                        : "bg-white dark:bg-[#1B2735]/40 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-[#2F3D4D]"
                     }`}
                   >
                     <span>{getFlag(c.country)}</span>
@@ -476,7 +476,7 @@ export default function ExploreBreweries() {
                 <button
                   disabled={page <= 1}
                   onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-bold border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 disabled:opacity-40 tap-scale bg-white dark:bg-card"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-bold border border-stone-200 dark:border-[#2F3D4D] text-stone-600 dark:text-stone-300 disabled:opacity-40 tap-scale bg-white dark:bg-card"
                 >
                   <ChevronLeft className="w-4 h-4" />
                   Precedente
@@ -487,7 +487,7 @@ export default function ExploreBreweries() {
                 <button
                   disabled={page >= totalPages}
                   onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0, behavior: "smooth" }); }}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-bold border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 disabled:opacity-40 tap-scale bg-white dark:bg-card"
+                  className="flex items-center gap-1.5 px-4 py-2 rounded-2xl text-sm font-bold border border-stone-200 dark:border-[#2F3D4D] text-stone-600 dark:text-stone-300 disabled:opacity-40 tap-scale bg-white dark:bg-card"
                 >
                   Successiva
                   <ChevronRightIcon className="w-4 h-4" />
@@ -509,7 +509,7 @@ function FeaturedCard({ brewery }: { brewery: any }) {
   return (
     <Link href={`/brewery/${brewery.id}`}>
       <div className="flex-shrink-0 w-40 cursor-pointer">
-        <div className="relative w-40 h-28 rounded-2xl overflow-hidden bg-stone-200 dark:bg-stone-800 mb-2">
+        <div className="relative w-40 h-28 rounded-2xl overflow-hidden bg-stone-200 dark:bg-[#1B2735] mb-2">
           {!imgErr && (brewery.coverImageUrl || brewery.logoUrl) ? (
             <img
               src={brewery.coverImageUrl || brewery.logoUrl}
@@ -589,10 +589,10 @@ function BreweryListCard({ brewery, showDist, userLocation }: { brewery: any; sh
   const dist = brewery._distance ?? brewery._dist;
 
   return (
-    <div className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-stone-800/60 shadow-sm overflow-hidden active:scale-[0.98] transition-transform">
+    <div className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm overflow-hidden active:scale-[0.98] transition-transform">
       {/* Logo */}
       <Link href={`/brewery/${brewery.id}`} className="flex-shrink-0">
-        <div className="w-16 h-16 bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+        <div className="w-16 h-16 bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center">
           {!imgErr && brewery.logoUrl ? (
             <img
               src={brewery.logoUrl}
@@ -656,8 +656,8 @@ function BreweryListCard({ brewery, showDist, userLocation }: { brewery: any; sh
             onClick={e => { e.preventDefault(); e.stopPropagation(); favMut.mutate({ action: isFav ? "remove" : "add" }); }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all tap-scale ${
               isFav
-                ? "bg-stone-100 dark:bg-stone-800 text-stone-500 border-stone-200 dark:border-stone-700"
-                : "bg-white dark:bg-stone-800/60 text-stone-500 border-stone-200 dark:border-stone-700"
+                ? "bg-stone-100 dark:bg-[#1B2735] text-stone-500 border-stone-200 dark:border-[#2F3D4D]"
+                : "bg-white dark:bg-[#1B2735]/60 text-stone-500 border-stone-200 dark:border-[#2F3D4D]"
             }`}
           >
             {isFav ? "✓ Seguito" : "👤 Segui"}

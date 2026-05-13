@@ -88,7 +88,7 @@ export default function AdminContent() {
         </div>
 
         <Tabs defaultValue="beers" className="space-y-6">
-          <TabsList className="bg-stone-50 dark:bg-[hsl(25,14%,12%)] p-1 rounded-2xl h-auto">
+          <TabsList className="bg-stone-50 dark:bg-[#1B2735] p-1 rounded-2xl h-auto">
             <TabsTrigger value="beers" className="flex items-center gap-2 text-sm font-semibold rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-card data-[state=active]:text-primary data-[state=active]:shadow-sm">
               <BeerIcon className="w-4 h-4" />
               Birre

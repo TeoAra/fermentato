@@ -45,7 +45,7 @@ function getNotificationIcon(type: string) {
   switch (type) {
     case 'new_beer':
     case 'tap_change':
-      return { icon: <Beer className={`${base} text-orange-600`} />, bg: 'bg-stone-50 dark:bg-stone-900/30' };
+      return { icon: <Beer className={`${base} text-orange-600`} />, bg: 'bg-stone-50 dark:bg-[#15202B]/30' };
     case 'beer_removed':
       return { icon: <Beer className={`${base} text-red-500`} />, bg: 'bg-red-50 dark:bg-red-950/30' };
     case 'event':
@@ -63,7 +63,7 @@ function getNotificationIcon(type: string) {
     case 'festival_update':
       return { icon: <CalendarDays className={`${base} text-violet-600`} />, bg: 'bg-violet-50 dark:bg-violet-950/30' };
     default:
-      return { icon: <Bell className={`${base} text-muted-foreground`} />, bg: 'bg-stone-100 dark:bg-stone-800' };
+      return { icon: <Bell className={`${base} text-muted-foreground`} />, bg: 'bg-stone-100 dark:bg-[#1B2735]' };
   }
 }
 
@@ -247,7 +247,7 @@ export default function Notifications() {
     return (
       <div className="max-w-2xl mx-auto px-4 py-8 pb-24 space-y-4">
         {[...Array(4)].map((_, i) => (
-          <div key={i} className="h-20 bg-stone-50/80 dark:bg-stone-900/10 rounded-2xl animate-pulse" />
+          <div key={i} className="h-20 bg-stone-50/80 dark:bg-[#15202B]/10 rounded-2xl animate-pulse" />
         ))}
       </div>
     );
@@ -276,7 +276,7 @@ export default function Notifications() {
           <button
             onClick={() => markAllReadMutation.mutate()}
             disabled={markAllReadMutation.isPending}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-50 dark:bg-stone-900/20 text-primary hover:bg-stone-100 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-stone-50 dark:bg-[#15202B]/20 text-primary hover:bg-stone-100 transition-colors"
             data-testid="button-mark-all-read"
           >
             {markAllReadMutation.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCheck className="h-3.5 w-3.5" />}
@@ -286,7 +286,7 @@ export default function Notifications() {
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-stone-50 dark:bg-stone-900/20 rounded-2xl p-1 gap-1">
+      <div className="flex bg-stone-50 dark:bg-[#15202B]/20 rounded-2xl p-1 gap-1">
         <button
           onClick={() => setTab('storia')}
           className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${tab === 'storia' ? 'bg-white dark:bg-card text-primary shadow-sm' : 'text-muted-foreground'}`}
@@ -321,7 +321,7 @@ export default function Notifications() {
         </div>
       ) : notifPerm !== 'granted' && notifPerm !== 'unsupported' && (
         <div className={`rounded-2xl p-4 border flex items-start gap-3 ${notifPerm === 'denied' ? 'bg-red-50 dark:bg-red-950/20 border-red-100 dark:border-red-900/30' : 'bg-white dark:bg-card border-stone-100 dark:border-border'}`}>
-          <div className={`p-2 rounded-xl flex-shrink-0 ${notifPerm === 'denied' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-stone-100 dark:bg-stone-800'}`}>
+          <div className={`p-2 rounded-xl flex-shrink-0 ${notifPerm === 'denied' ? 'bg-red-100 dark:bg-red-900/30' : 'bg-stone-100 dark:bg-[#1B2735]'}`}>
             <BellOff className={`h-4 w-4 ${notifPerm === 'denied' ? 'text-red-600' : 'text-stone-500'}`} />
           </div>
           <div className="flex-1 min-w-0">
@@ -361,7 +361,7 @@ export default function Notifications() {
                 className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-colors ${
                   filter === f.value
                     ? 'bg-primary text-white'
-                    : 'bg-stone-50 dark:bg-stone-900/20 text-muted-foreground hover:bg-stone-100'
+                    : 'bg-stone-50 dark:bg-[#15202B]/20 text-muted-foreground hover:bg-stone-100'
                 }`}
                 data-testid={`filter-${f.value}`}
               >
@@ -383,7 +383,7 @@ export default function Notifications() {
                     onClick={() => handleClick(n)}
                     className={`rounded-2xl border cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
                       !n.isRead
-                        ? 'bg-white dark:bg-card border-stone-200 dark:border-stone-700/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
+                        ? 'bg-white dark:bg-card border-stone-200 dark:border-[#2F3D4D]/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
                         : 'bg-white dark:bg-card border-stone-100 dark:border-border'
                     } hover:shadow-[0_4px_20px_rgba(247,113,4,0.1)]`}
                     data-testid={`notif-card-${n.id}`}
@@ -458,7 +458,7 @@ export default function Notifications() {
             )}
 
             {notificationsList.length === 0 && (
-              <div className="text-center py-16 rounded-2xl border-2 border-dashed border-stone-200 dark:border-stone-700/30">
+              <div className="text-center py-16 rounded-2xl border-2 border-dashed border-stone-200 dark:border-[#2F3D4D]/30">
                 <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: 'linear-gradient(135deg, rgba(247,113,4,0.1) 0%, rgba(245,166,35,0.1) 100%)' }}>
                   <Bell className="h-8 w-8 text-primary/40" />
                 </div>
@@ -493,7 +493,7 @@ export default function Notifications() {
           <div className="rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card p-5">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-stone-100 dark:bg-stone-800 flex-shrink-0">
+                <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-stone-100 dark:bg-[#1B2735] flex-shrink-0">
                   <Bell className="h-4 w-4 text-primary" />
                 </div>
                 <div className="min-w-0">
@@ -545,7 +545,7 @@ export default function Notifications() {
 
           {/* Matrice categorie × canali */}
           <div className="rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card overflow-hidden">
-            <div className="px-5 py-3 border-b border-stone-100 dark:border-border bg-background dark:bg-stone-900/10 flex items-center justify-between">
+            <div className="px-5 py-3 border-b border-stone-100 dark:border-border bg-background dark:bg-[#15202B]/10 flex items-center justify-between">
               <h2 className="font-bold text-foreground text-sm">Categorie</h2>
               <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider text-muted-foreground">
                 <span className="w-12 text-center">In-app</span>
@@ -563,7 +563,7 @@ export default function Notifications() {
                 const emailOn = preferences?.[cat.emailKey] === true;
                 return (
                   <div key={cat.inAppKey} className="px-5 py-4 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-stone-50 dark:bg-stone-900/30 flex-shrink-0">
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center bg-stone-50 dark:bg-[#15202B]/30 flex-shrink-0">
                       <Icon className={`h-4 w-4 ${cat.iconColor}`} />
                     </div>
                     <div className="flex-1 min-w-0">
@@ -600,7 +600,7 @@ export default function Notifications() {
                 );
               })}
             </div>
-            <div className="px-5 py-3 border-t border-stone-100 dark:border-border bg-stone-50/50 dark:bg-stone-900/10 space-y-2">
+            <div className="px-5 py-3 border-t border-stone-100 dark:border-border bg-stone-50/50 dark:bg-[#15202B]/10 space-y-2">
               <div className="flex items-center justify-between gap-3">
                 <p className="text-xs text-muted-foreground">Notifiche dentro l'app</p>
                 <Switch
@@ -656,14 +656,14 @@ export default function Notifications() {
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => setPref('quietHoursMode', 'queue')}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${preferences?.quietHoursMode !== 'skip' ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-stone-900/20 text-muted-foreground'}`}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${preferences?.quietHoursMode !== 'skip' ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-[#15202B]/20 text-muted-foreground'}`}
                 data-testid="button-mode-queue"
               >
                 Rimanda
               </button>
               <button
                 onClick={() => setPref('quietHoursMode', 'skip')}
-                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${preferences?.quietHoursMode === 'skip' ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-stone-900/20 text-muted-foreground'}`}
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-colors ${preferences?.quietHoursMode === 'skip' ? 'bg-primary text-white' : 'bg-stone-50 dark:bg-[#15202B]/20 text-muted-foreground'}`}
                 data-testid="button-mode-skip"
               >
                 Scarta

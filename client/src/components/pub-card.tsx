@@ -57,7 +57,7 @@ export default function PubCard({ pub, distance, isLast }: PubCardProps) {
 
           {/* Logo */}
           <div className="relative flex-shrink-0">
-            <div className="w-[52px] h-[52px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-stone-800 ring-1 ring-black/[0.04] dark:ring-white/[0.06] shadow-sm group-hover:shadow-md transition-shadow">
+            <div className="w-[52px] h-[52px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-[#1B2735] ring-1 ring-black/[0.04] dark:ring-white/[0.06] shadow-sm group-hover:shadow-md transition-shadow">
               <ImageWithFallback
                 src={pub.logoUrl || pub.coverImageUrl}
                 alt={pub.name}
@@ -102,7 +102,7 @@ export default function PubCard({ pub, distance, isLast }: PubCardProps) {
               <span className={`inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-[3px] rounded-full leading-none ${
                 open
                   ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-stone-100 dark:bg-stone-800/60 text-stone-400 dark:text-stone-500'
+                  : 'bg-stone-100 dark:bg-[#1B2735]/60 text-stone-400 dark:text-stone-500'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${open ? 'bg-emerald-500' : 'bg-stone-300 dark:bg-stone-600'}`} />
                 {open ? 'Aperto' : 'Chiuso'}

@@ -77,7 +77,7 @@ export function DesktopSidebar() {
       <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {/* ── Desktop Topbar ── hidden on mobile, shown on lg+ */}
-      <header className="hidden lg:flex fixed top-0 left-0 right-0 z-50 h-16 items-center border-b border-stone-200 dark:border-[hsl(25,12%,14%)] bg-white/97 dark:bg-[hsl(25,14%,8%)]/97 backdrop-blur-xl">
+      <header className="hidden lg:flex fixed top-0 left-0 right-0 z-50 h-16 items-center border-b border-stone-200 dark:border-[hsl(25,12%,14%)] bg-white/97 dark:bg-[#15202B]/97 backdrop-blur-xl">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-6">
 
           {/* Logo */}
@@ -154,7 +154,7 @@ export function DesktopSidebar() {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent side="bottom" align="end" className="w-56 mt-1">
-                  <div className="px-3 py-2.5 border-b border-stone-100 dark:border-stone-800">
+                  <div className="px-3 py-2.5 border-b border-stone-100 dark:border-[#2F3D4D]">
                     <div className="text-[13px] font-semibold text-foreground truncate">
                       {typedUser.firstName
                         ? `${typedUser.firstName} ${typedUser.lastName || ""}`.trim()

@@ -34,7 +34,7 @@ export default function BreweryCard({ brewery, beerCount = 0, distance, isLast }
         <div className="flex items-center gap-4 px-4 py-4 active:bg-stone-50/80 dark:active:bg-stone-800/20 cursor-pointer group transition-colors">
 
           {/* Logo */}
-          <div className="w-[52px] h-[52px] rounded-2xl overflow-hidden flex-shrink-0 bg-amber-50 dark:bg-stone-800 ring-1 ring-black/[0.04] dark:ring-white/[0.06] shadow-sm group-hover:shadow-md transition-shadow">
+          <div className="w-[52px] h-[52px] rounded-2xl overflow-hidden flex-shrink-0 bg-amber-50 dark:bg-[#1B2735] ring-1 ring-black/[0.04] dark:ring-white/[0.06] shadow-sm group-hover:shadow-md transition-shadow">
             <ImageWithFallback
               src={brewery.logoUrl || brewery.coverImageUrl}
               alt={String(brewery.name)}

@@ -165,7 +165,7 @@ const STAT_ACCENTS = {
   purple:   { bg: "bg-purple-50 dark:bg-purple-950/30",   text: "text-purple-600 dark:text-purple-400" },
   red:      { bg: "bg-red-50 dark:bg-red-950/30",         text: "text-red-500 dark:text-red-400" },
   amber:    { bg: "bg-amber-50 dark:bg-amber-950/30",     text: "text-amber-600 dark:text-amber-400" },
-  stone:    { bg: "bg-stone-100 dark:bg-stone-800/50",    text: "text-stone-600 dark:text-stone-300" },
+  stone:    { bg: "bg-stone-100 dark:bg-[#1B2735]/50",    text: "text-stone-600 dark:text-stone-300" },
 };
 
 export function StatCard({ icon: Icon, label, value, accent = "primary", onClick, href }: StatCardItem) {

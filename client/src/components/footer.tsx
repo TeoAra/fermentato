@@ -4,7 +4,7 @@ import { CookieSettingsButton } from "@/components/CookieBanner";
 
 export default function Footer() {
   return (
-    <footer className="bg-[hsl(38,14%,94%)] dark:bg-[hsl(25,14%,9%)] text-[hsl(28,12%,36%)] dark:text-[hsl(35,8%,58%)] border-t border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,15%)] mt-16 pb-16 lg:pb-0 -mb-16 lg:mb-0">
+    <footer className="bg-[hsl(38,14%,94%)] dark:bg-[#15202B] text-[hsl(28,12%,36%)] dark:text-[hsl(35,8%,58%)] border-t border-[hsl(36,14%,87%)] dark:border-[hsl(25,12%,15%)] mt-16 pb-16 lg:pb-0 -mb-16 lg:mb-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">

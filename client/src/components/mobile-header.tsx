@@ -129,7 +129,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     return (
       <Link href={href} onClick={() => { onMenuToggle(); onClick?.(); }}>
         <div className={`flex items-center gap-3 mx-2 px-3 py-2.5 rounded-xl transition-colors tap-scale ${isActive ? 'bg-primary/8 dark:bg-primary/12' : 'hover:bg-stone-50 dark:hover:bg-white/5'}`}>
-          <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 ${isActive ? 'bg-primary text-white' : 'bg-stone-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400'}`}>
+          <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 ${isActive ? 'bg-primary text-white' : 'bg-stone-100 dark:bg-[#1B2735] text-stone-500 dark:text-stone-400'}`}>
             <Icon className="h-[18px] w-[18px]" />
           </div>
           <div className="flex-1 min-w-0">
@@ -290,7 +290,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
               </>
             ) : (
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-stone-100 dark:bg-stone-800 flex-shrink-0">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-stone-100 dark:bg-[#1B2735] flex-shrink-0">
                   <User className="h-6 w-6 text-stone-400" />
                 </div>
                 <div className="flex-1 min-w-0">

@@ -35,7 +35,7 @@ const statusColors: Record<string, string> = {
   pending: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
   escalated: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
   resolved: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
-  dismissed: "bg-stone-100 text-stone-700 dark:bg-stone-800 dark:text-stone-300",
+  dismissed: "bg-stone-100 text-stone-700 dark:bg-[#1B2735] dark:text-stone-300",
 };
 
 const statusLabels: Record<string, string> = {
@@ -116,7 +116,7 @@ export function OwnerReportsSection({ ownerType, ownerId }: Props) {
                   <p className="text-xs font-semibold text-primary mb-1">🍺 {r.beerName}</p>
                 )}
                 {text && (
-                  <p className="text-sm text-foreground italic bg-stone-50 dark:bg-stone-900/30 rounded-lg p-2 mb-2">
+                  <p className="text-sm text-foreground italic bg-stone-50 dark:bg-[#15202B]/30 rounded-lg p-2 mb-2">
                     "{text}"
                   </p>
                 )}

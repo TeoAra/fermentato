@@ -14,7 +14,7 @@ export default function TermsOfService() {
           </Button>
         </Link>
 
-        <div className="bg-white dark:bg-gray-900 rounded-lg shadow-sm p-8">
+        <div className="bg-white dark:bg-[#15202B] rounded-lg shadow-sm p-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Termini di Servizio</h1>
           <p className="text-gray-500 dark:text-gray-400 mb-8">Ultimo aggiornamento: 24 Dicembre 2024</p>
 

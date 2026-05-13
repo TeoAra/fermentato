@@ -45,7 +45,7 @@ export function FollowButton({ userId, className }: FollowButtonProps) {
       variant="outline"
       className={`rounded-xl text-xs h-8 font-medium transition-all ${
         following
-          ? "border-stone-300 dark:border-stone-600 bg-stone-100 dark:bg-stone-700 text-stone-700 dark:text-stone-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 hover:text-red-600 dark:hover:text-red-400"
+          ? "border-stone-300 dark:border-stone-600 bg-stone-100 dark:bg-[#232F3D] text-stone-700 dark:text-stone-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 hover:text-red-600 dark:hover:text-red-400"
           : "border-primary bg-primary text-white hover:bg-primary/90 hover:border-primary/90"
       } ${className}`}
       onClick={() => followMutation.mutate()}

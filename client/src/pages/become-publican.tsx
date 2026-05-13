@@ -161,7 +161,7 @@ export default function BecomePublican() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-900 dark:to-gray-800 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-[#15202B] dark:to-gray-800 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <Button 
           variant="ghost" 
@@ -173,7 +173,7 @@ export default function BecomePublican() {
           Indietro
         </Button>
 
-        <Card className="backdrop-blur-sm bg-white/80 dark:bg-gray-800/80 border-amber-200 dark:border-amber-800">
+        <Card className="backdrop-blur-sm bg-white/80 dark:bg-[#1B2735]/80 border-amber-200 dark:border-amber-800">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <div className="p-4 bg-amber-100 dark:bg-amber-900/30 rounded-full">

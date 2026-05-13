@@ -737,7 +737,7 @@ export default function BreweryDetail() {
               className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 transition-all tap-scale border ${
                 isBreweryFavorited
                   ? 'bg-primary/5 border-primary/30'
-                  : 'bg-stone-50 dark:bg-stone-900/40 border-stone-100 dark:border-stone-800 hover:border-primary/30'
+                  : 'bg-stone-50 dark:bg-[#15202B]/40 border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30'
               }`}
               data-testid="button-follow-brewery"
             >
@@ -753,7 +753,7 @@ export default function BreweryDetail() {
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((brewery.name || '') + ' ' + brewery.location)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-[#15202B]/40 border border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30 transition-all tap-scale"
                 data-testid="link-directions"
               >
                 <Navigation className="h-5 w-5 text-foreground" />
@@ -761,7 +761,7 @@ export default function BreweryDetail() {
                 <span className="text-[10px] text-stone-500 dark:text-stone-400 leading-tight">Maps</span>
               </a>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-stone-900/20 border border-stone-100 dark:border-stone-800 opacity-50">
+              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-[#15202B]/20 border border-stone-100 dark:border-[#2F3D4D] opacity-50">
                 <Navigation className="h-5 w-5 text-stone-400" />
                 <span className="text-[11px] font-bold text-stone-400 leading-tight">Indicazioni</span>
                 <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
@@ -773,7 +773,7 @@ export default function BreweryDetail() {
                 href={brewery.websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-[#15202B]/40 border border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30 transition-all tap-scale"
                 data-testid="link-website"
               >
                 <Globe className="h-5 w-5 text-foreground" />
@@ -783,7 +783,7 @@ export default function BreweryDetail() {
                 </span>
               </a>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-stone-900/20 border border-stone-100 dark:border-stone-800 opacity-50">
+              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-[#15202B]/20 border border-stone-100 dark:border-[#2F3D4D] opacity-50">
                 <Globe className="h-5 w-5 text-stone-400" />
                 <span className="text-[11px] font-bold text-stone-400 leading-tight">Sito web</span>
                 <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
@@ -792,7 +792,7 @@ export default function BreweryDetail() {
 
             <button
               onClick={handleShare}
-              className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-stone-900/40 border border-stone-100 dark:border-stone-800 hover:border-primary/30 transition-all tap-scale"
+              className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50 dark:bg-[#15202B]/40 border border-stone-100 dark:border-[#2F3D4D] hover:border-primary/30 transition-all tap-scale"
               data-testid="button-share-brewery"
             >
               <Share2 className="h-5 w-5 text-foreground" />
@@ -830,7 +830,7 @@ export default function BreweryDetail() {
 
             {/* Tabs Section — underline style per mockup */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b border-stone-200 dark:border-stone-800 px-4 md:px-8">
+              <div className="border-b border-stone-200 dark:border-[#2F3D4D] px-4 md:px-8">
                 <TabsList className="bg-transparent dark:bg-transparent rounded-none p-0 h-auto gap-6 w-full justify-start">
                   <TabsTrigger
                     value="birre"
@@ -871,7 +871,7 @@ export default function BreweryDetail() {
                       <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         <button
                           onClick={() => { setActiveStyleFilter(""); setVisibleCount(9); }}
-                          className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all ${activeStyleFilter === "" ? "bg-primary text-white shadow-sm" : "bg-white dark:bg-stone-900/40 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 hover:border-primary/40"}`}
+                          className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all ${activeStyleFilter === "" ? "bg-primary text-white shadow-sm" : "bg-white dark:bg-[#15202B]/40 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-[#2F3D4D] hover:border-primary/40"}`}
                           data-testid="filter-all"
                         >
                           Tutte
@@ -886,7 +886,7 @@ export default function BreweryDetail() {
                               className={`shrink-0 px-4 py-2 rounded-full text-xs font-bold transition-all max-w-[160px] truncate ${
                                 isActive
                                   ? "bg-primary text-white shadow-sm"
-                                  : "bg-white dark:bg-stone-900/40 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700 hover:border-primary/40"
+                                  : "bg-white dark:bg-[#15202B]/40 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-[#2F3D4D] hover:border-primary/40"
                               }`}
                               title={style || ''}
                             >
@@ -895,7 +895,7 @@ export default function BreweryDetail() {
                           );
                         })}
                         <button
-                          className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-stone-900/40 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-stone-700"
+                          className="shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold bg-white dark:bg-[#15202B]/40 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-[#2F3D4D]"
                           onClick={() => setActiveStyleFilter("")}
                           data-testid="filter-more"
                         >
@@ -912,8 +912,8 @@ export default function BreweryDetail() {
                         ))}
                       </div>
                     ) : beers.length === 0 ? (
-                      <div className="text-center py-12 border-2 border-dashed border-stone-200 dark:border-stone-700/30 rounded-3xl">
-                        <div className="w-16 h-16 bg-stone-50 dark:bg-stone-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <div className="text-center py-12 border-2 border-dashed border-stone-200 dark:border-[#2F3D4D]/30 rounded-3xl">
+                        <div className="w-16 h-16 bg-stone-50 dark:bg-[#15202B]/20 rounded-full flex items-center justify-center mx-auto mb-4">
                           <Beer className="h-8 w-8 text-primary/40" />
                         </div>
                         <h3 className="text-lg font-bold text-foreground">Nessuna birra ancora</h3>
@@ -938,10 +938,10 @@ export default function BreweryDetail() {
                                       <img
                                         src={beer.imageUrl}
                                         alt={beer.name}
-                                        className="w-16 h-16 rounded-2xl object-cover lightbox-img bg-stone-50 dark:bg-stone-900/30"
+                                        className="w-16 h-16 rounded-2xl object-cover lightbox-img bg-stone-50 dark:bg-[#15202B]/30"
                                       />
                                     ) : (
-                                      <div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center">
+                                      <div className="w-16 h-16 rounded-2xl bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center">
                                         <Beer className="h-7 w-7 text-stone-400 dark:text-stone-500" />
                                       </div>
                                     )}
@@ -1064,8 +1064,8 @@ export default function BreweryDetail() {
                       <h3 className="font-bold text-foreground">Contatti e Social</h3>
                       <div className="flex flex-col gap-2">
                         {brewery?.websiteUrl && (
-                          <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 hover:border-primary/30 transition-all group">
-                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-[hsl(25,14%,12%)] flex items-center justify-center text-primary shadow-sm">
+                          <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-2xl bg-stone-50/50 dark:bg-[#15202B]/10 border border-stone-100 dark:border-[#2F3D4D]/20 hover:border-primary/30 transition-all group">
+                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#1B2735] flex items-center justify-center text-primary shadow-sm">
                               <Globe className="h-5 w-5" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1075,8 +1075,8 @@ export default function BreweryDetail() {
                           </a>
                         )}
                         {(brewery as any)?.email && (
-                          <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-3 p-3 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 hover:border-primary/30 transition-all group">
-                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-[hsl(25,14%,12%)] flex items-center justify-center text-primary shadow-sm">
+                          <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-3 p-3 rounded-2xl bg-stone-50/50 dark:bg-[#15202B]/10 border border-stone-100 dark:border-[#2F3D4D]/20 hover:border-primary/30 transition-all group">
+                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#1B2735] flex items-center justify-center text-primary shadow-sm">
                               <Mail className="h-5 w-5" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1087,12 +1087,12 @@ export default function BreweryDetail() {
                         )}
                         <div className="flex gap-2">
                           {(brewery as any)?.instagramUrl && (
-                            <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 flex items-center justify-center text-primary hover:border-primary/30 transition-all">
+                            <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-stone-50/50 dark:bg-[#15202B]/10 border border-stone-100 dark:border-[#2F3D4D]/20 flex items-center justify-center text-primary hover:border-primary/30 transition-all">
                               <SiInstagram className="h-5 w-5" />
                             </a>
                           )}
                           {(brewery as any)?.facebookUrl && (
-                            <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 flex items-center justify-center text-primary hover:border-primary/30 transition-all">
+                            <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener noreferrer" className="h-12 w-12 rounded-2xl bg-stone-50/50 dark:bg-[#15202B]/10 border border-stone-100 dark:border-[#2F3D4D]/20 flex items-center justify-center text-primary hover:border-primary/30 transition-all">
                               <SiFacebook className="h-5 w-5" />
                             </a>
                           )}
@@ -1117,10 +1117,10 @@ export default function BreweryDetail() {
                           href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(brewery.name + ' ' + brewery.location)}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="block p-3 rounded-2xl bg-stone-50/50 dark:bg-stone-900/10 border border-stone-100 dark:border-stone-700/20 hover:border-primary/30 transition-all group"
+                          className="block p-3 rounded-2xl bg-stone-50/50 dark:bg-[#15202B]/10 border border-stone-100 dark:border-[#2F3D4D]/20 hover:border-primary/30 transition-all group"
                         >
                           <div className="flex items-center gap-3 mb-3">
-                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-[hsl(25,14%,12%)] flex items-center justify-center text-primary shadow-sm">
+                            <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#1B2735] flex items-center justify-center text-primary shadow-sm">
                               <MapPin className="h-5 w-5" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -1128,7 +1128,7 @@ export default function BreweryDetail() {
                               <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{brewery.location}</p>
                             </div>
                           </div>
-                          <div className="h-32 rounded-xl bg-stone-100/50 dark:bg-orange-900/20 flex items-center justify-center text-primary/50 text-xs font-bold uppercase tracking-widest border border-stone-300/50 dark:border-stone-700/30">
+                          <div className="h-32 rounded-xl bg-stone-100/50 dark:bg-orange-900/20 flex items-center justify-center text-primary/50 text-xs font-bold uppercase tracking-widest border border-stone-300/50 dark:border-[#2F3D4D]/30">
                             Vedi sulla mappa
                           </div>
                         </a>
@@ -1147,9 +1147,9 @@ export default function BreweryDetail() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {announcements.map((announcement: any) => (
-                          <div key={announcement.id} className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-stone-700/20 p-5 shadow-sm">
+                          <div key={announcement.id} className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-[#2F3D4D]/20 p-5 shadow-sm">
                             <div className="flex items-start gap-4">
-                              <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-stone-900/30 flex items-center justify-center text-primary shrink-0">
+                              <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-[#15202B]/30 flex items-center justify-center text-primary shrink-0">
                                 <Newspaper className="h-5 w-5" />
                               </div>
                               <div className="space-y-1">
@@ -1174,7 +1174,7 @@ export default function BreweryDetail() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {breweryEvents.filter(e => isFuture(new Date(e.eventDate))).slice(0, 4).map((event: any) => (
-                          <div key={event.id} className="bg-white dark:bg-card rounded-3xl overflow-hidden border border-stone-100 dark:border-stone-700/20 shadow-sm group">
+                          <div key={event.id} className="bg-white dark:bg-card rounded-3xl overflow-hidden border border-stone-100 dark:border-[#2F3D4D]/20 shadow-sm group">
                             {event.imageUrl && (
                               <div className="h-40 bg-cover bg-center transition-transform group-hover:scale-105 duration-500" style={{ backgroundImage: `url(${event.imageUrl})` }} />
                             )}
@@ -1204,7 +1204,7 @@ export default function BreweryDetail() {
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
                       <h2 className="text-xl font-bold text-foreground">Dove trovarci</h2>
-                      <span className="bg-stone-50 dark:bg-stone-800/40 text-primary text-[10px] font-bold px-3 py-1 rounded-full">
+                      <span className="bg-stone-50 dark:bg-[#1B2735]/40 text-primary text-[10px] font-bold px-3 py-1 rounded-full">
                         {distribution.length} {distribution.length === 1 ? 'LOCALE' : 'LOCALI'}
                       </span>
                     </div>
@@ -1252,11 +1252,11 @@ export default function BreweryDetail() {
           {/* ── DESKTOP SIDEBAR ── */}
           <aside className="hidden lg:flex lg:flex-col gap-4 sticky top-20 self-start">
             {/* Brewery identity card */}
-            <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm overflow-hidden">
+            <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-[#2F3D4D] shadow-sm overflow-hidden">
               <div className="p-5 space-y-4">
                 {/* Logo + name on desktop */}
                 <div className="flex items-center gap-3">
-                  <Avatar className="h-14 w-14 rounded-2xl border border-stone-100 dark:border-stone-700 shadow-sm bg-stone-800 flex-shrink-0">
+                  <Avatar className="h-14 w-14 rounded-2xl border border-stone-100 dark:border-[#2F3D4D] shadow-sm bg-stone-800 flex-shrink-0">
                     <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-cover" />
                     <AvatarFallback className="bg-stone-700 text-white text-xl font-bold">{brewery?.name?.[0] || 'B'}</AvatarFallback>
                   </Avatar>
@@ -1274,13 +1274,13 @@ export default function BreweryDetail() {
                 {/* Stats */}
                 <div className="flex items-center gap-3">
                   {beers.length > 0 && (
-                    <div className="flex-1 text-center py-2 bg-stone-50 dark:bg-stone-800/40 rounded-xl">
+                    <div className="flex-1 text-center py-2 bg-stone-50 dark:bg-[#1B2735]/40 rounded-xl">
                       <p className="text-lg font-extrabold text-primary">{beers.length}</p>
                       <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">Birre</p>
                     </div>
                   )}
                   {breweryRating?.avgRating && (
-                    <div className="flex-1 text-center py-2 bg-stone-50 dark:bg-stone-800/40 rounded-xl">
+                    <div className="flex-1 text-center py-2 bg-stone-50 dark:bg-[#1B2735]/40 rounded-xl">
                       <p className="text-lg font-extrabold text-amber-500">{breweryRating.avgRating.toFixed(1)}</p>
                       <p className="text-[10px] font-bold text-stone-400 uppercase tracking-wide">{breweryRating.reviewCount} voti</p>
                     </div>
@@ -1292,14 +1292,14 @@ export default function BreweryDetail() {
                   <button onClick={handleFavoriteToggle} disabled={favoriteMutation.isPending}
                     className={`flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold transition-all tap-scale ${
                       isBreweryFavorited
-                        ? 'bg-stone-100 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 text-stone-600'
+                        ? 'bg-stone-100 dark:bg-[#1B2735] border border-stone-200 dark:border-[#2F3D4D] text-stone-600'
                         : 'bg-primary text-white btn-orange-glow'
                     }`}>
                     <Heart className={`h-4 w-4 ${isBreweryFavorited ? 'fill-current text-red-500' : ''}`} />
                     {isBreweryFavorited ? 'Seguendo' : 'Segui'}
                   </button>
                   <button onClick={handleShare}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold bg-white dark:bg-card border border-stone-200 dark:border-stone-700 text-stone-600 dark:text-stone-300 tap-scale">
+                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-sm font-bold bg-white dark:bg-card border border-stone-200 dark:border-[#2F3D4D] text-stone-600 dark:text-stone-300 tap-scale">
                     <Share2 className="h-4 w-4" />
                     Condividi
                   </button>
@@ -1307,7 +1307,7 @@ export default function BreweryDetail() {
 
                 {/* Description */}
                 {((brewery as any)?.description) && (
-                  <div className="border-t border-stone-100 dark:border-stone-800 pt-4">
+                  <div className="border-t border-stone-100 dark:border-[#2F3D4D] pt-4">
                     <p className="text-sm text-muted-foreground leading-relaxed line-clamp-6">
                       {(brewery as any).description}
                     </p>
@@ -1317,12 +1317,12 @@ export default function BreweryDetail() {
             </div>
 
             {/* Contacts & Location */}
-            <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm p-5 space-y-3">
+            <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-[#2F3D4D] shadow-sm p-5 space-y-3">
               <h3 className="text-xs font-bold text-stone-400 uppercase tracking-widest">Informazioni</h3>
               {brewery?.websiteUrl && (
                 <a href={brewery.websiteUrl} target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors group">
-                  <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-[#1B2735]/40 transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center flex-shrink-0">
                     <Globe className="h-4 w-4 text-primary" />
                   </div>
                   <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
@@ -1333,8 +1333,8 @@ export default function BreweryDetail() {
               {brewery?.location && (
                 <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((brewery.name || '') + ' ' + brewery.location)}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors group">
-                  <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-[#1B2735]/40 transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center flex-shrink-0">
                     <MapPin className="h-4 w-4 text-primary" />
                   </div>
                   <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
@@ -1344,8 +1344,8 @@ export default function BreweryDetail() {
               )}
               {(brewery as any)?.email && (
                 <a href={`mailto:${(brewery as any).email}`}
-                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-stone-800/40 transition-colors group">
-                  <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
+                  className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-stone-50 dark:hover:bg-[#1B2735]/40 transition-colors group">
+                  <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center flex-shrink-0">
                     <Mail className="h-4 w-4 text-primary" />
                   </div>
                   <span className="text-sm font-semibold text-foreground truncate group-hover:text-primary transition-colors">
@@ -1358,13 +1358,13 @@ export default function BreweryDetail() {
                 <div className="flex gap-2 pt-1">
                   {(brewery as any)?.instagramUrl && (
                     <a href={(brewery as any).instagramUrl} target="_blank" rel="noopener noreferrer"
-                      className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+                      className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
                       <SiInstagram className="h-4 w-4" />
                     </a>
                   )}
                   {(brewery as any)?.facebookUrl && (
                     <a href={(brewery as any).facebookUrl} target="_blank" rel="noopener noreferrer"
-                      className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-stone-800 flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
+                      className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center text-primary hover:bg-primary hover:text-white transition-colors">
                       <SiFacebook className="h-4 w-4" />
                     </a>
                   )}
@@ -1375,7 +1375,7 @@ export default function BreweryDetail() {
             {/* Admin quick-edit */}
             {isAdmin && (
               <Link href={`/admin/edit-brewery/${id}`}>
-                <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 text-sm font-bold tap-scale hover:bg-stone-200 dark:hover:bg-stone-700 transition-colors">
+                <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 text-sm font-bold tap-scale hover:bg-stone-200 dark:hover:bg-[#232F3D] transition-colors">
                   <Settings className="h-4 w-4" />
                   Modifica birrificio
                 </button>
@@ -1670,7 +1670,7 @@ export default function BreweryDetail() {
                 {beerEditCollabBreweries.length > 0 && (
                   <div className="flex flex-wrap gap-2">
                     {beerEditCollabBreweries.map(b => (
-                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-card border border-stone-100 dark:border-stone-700/30 text-primary">
+                      <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D]/30 text-primary">
                         <Building2 className="w-3 h-3" />{b.name}
                         <button type="button" onClick={() => setBeerEditCollabBreweries(beerEditCollabBreweries.filter(x => x.id !== b.id))} className="ml-0.5 hover:text-primary/80">×</button>
                       </span>
@@ -1702,7 +1702,7 @@ export default function BreweryDetail() {
               </div>
             )}
             {/* Images */}
-            <div className="space-y-3 border-t border-stone-100 dark:border-stone-700/20 pt-4">
+            <div className="space-y-3 border-t border-stone-100 dark:border-[#2F3D4D]/20 pt-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <ImageUpload
                   label="Immagine Birra"
@@ -1724,7 +1724,7 @@ export default function BreweryDetail() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 dark:border-stone-700/20">
+            <div className="flex justify-end gap-2 pt-2 border-t border-stone-100 dark:border-[#2F3D4D]/20">
               <Button variant="outline" className="rounded-xl" onClick={() => setIsBeerEditOpen(false)}>
                 <X className="h-4 w-4 mr-1.5" />Annulla
               </Button>

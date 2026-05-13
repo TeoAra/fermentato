@@ -31,15 +31,15 @@ export default function HashtagPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[hsl(220,5%,14%)] pb-20">
+    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] pb-20">
       <Helmet>
         <title>#{tag} · Post della community · Fermenta.to</title>
         <meta name="description" content={`Tutti i post taggati con #${tag} sulla community di Fermenta.to`} />
       </Helmet>
 
-      <header className="sticky top-0 z-10 bg-white/95 dark:bg-[hsl(220,5%,18%)]/95 backdrop-blur-xl border-b border-stone-100 dark:border-stone-800 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-10 bg-white/95 dark:bg-[#1B2735]/95 backdrop-blur-xl border-b border-stone-100 dark:border-[#2F3D4D] px-4 py-3 flex items-center gap-3">
         <Link href="/feed">
-          <button className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-stone-800" data-testid="btn-back-feed">
+          <button className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-[#1B2735]" data-testid="btn-back-feed">
             <ArrowLeft className="w-5 h-5" />
           </button>
         </Link>
@@ -56,7 +56,7 @@ export default function HashtagPage() {
         {isLoading ? (
           <>{[0, 1, 2].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}</>
         ) : posts.length === 0 ? (
-          <div className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl border border-dashed border-stone-200 dark:border-stone-700 p-8 text-center">
+          <div className="bg-white dark:bg-[#1B2735] rounded-2xl border border-dashed border-stone-200 dark:border-[#2F3D4D] p-8 text-center">
             <Users className="w-10 h-10 mx-auto text-stone-300 mb-2" />
             <p className="text-sm text-stone-500 dark:text-stone-400">
               Nessun post con <span className="font-semibold text-primary">#{tag}</span> per ora.
@@ -67,7 +67,7 @@ export default function HashtagPage() {
           </div>
         ) : (
           posts.map((post: any) => (
-            <div key={post.id} className="bg-white dark:bg-[hsl(220,5%,18%)] rounded-2xl border border-stone-100 dark:border-stone-800 shadow-sm p-4" data-testid={`hashtag-post-${post.id}`}>
+            <div key={post.id} className="bg-white dark:bg-[#1B2735] rounded-2xl border border-stone-100 dark:border-[#2F3D4D] shadow-sm p-4" data-testid={`hashtag-post-${post.id}`}>
               <div className="flex items-center gap-2 mb-2">
                 <Link href={`/user/${post.username}`}><PostAvatar post={post} /></Link>
                 <div className="flex-1 min-w-0">
@@ -92,12 +92,12 @@ export default function HashtagPage() {
                   )}
                   {post.pub_name && (
                     <Link href={`/pub/${post.pub_id}`}>
-                      <span className="text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer">📍 {post.pub_name}</span>
+                      <span className="text-[10px] bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer">📍 {post.pub_name}</span>
                     </Link>
                   )}
                   {post.brewery_name && (
                     <Link href={`/brewery/${post.brewery_id}`}>
-                      <span className="text-[10px] bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer">🏭 {post.brewery_name}</span>
+                      <span className="text-[10px] bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer">🏭 {post.brewery_name}</span>
                     </Link>
                   )}
                 </div>
