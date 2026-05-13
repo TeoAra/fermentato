@@ -58,6 +58,24 @@ workflows:
       - name: Copia web assets nel progetto iOS
         script: npx cap copy ios
 
+      - name: Aggiungi purpose strings al Info.plist
+        script: |
+          PLIST="ios/App/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocationAlwaysAndWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocationAlwaysAndWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          echo "Info.plist aggiornato:"
+          /usr/libexec/PlistBuddy -c "Print" "$PLIST"
+
       - name: Imposta versione app
         script: |
           VERSION=$(node -p "require('./package.json').version")
@@ -159,6 +177,22 @@ workflows:
 
       - name: Copia web assets nel progetto iOS
         script: npx cap copy ios
+
+      - name: Aggiungi purpose strings al Info.plist
+        script: |
+          PLIST="ios/App/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocationAlwaysAndWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocationAlwaysAndWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
 
       - name: Inizializza keychain
         script: keychain initialize
