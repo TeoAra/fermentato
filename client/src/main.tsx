@@ -13,12 +13,16 @@ if (Capacitor.isNativePlatform()) {
     initCapacitorNative().catch(() => {});
   }).catch(() => {});
 
-  // Status bar: icone scure su sfondo crema chiaro, no overlay del WebView
-  // (su Android 13/14 evita il notch/edge-to-edge sopra la UI).
+  // Status bar: WebView edge-to-edge (overlaysWebView=true) così l'header
+  // del sito estende il proprio background fin sotto la status bar tramite
+  // env(safe-area-inset-top) e nulla "stacca". Stile e colore vengono poi
+  // mantenuti in sync col tema dark/light dentro ThemeProvider.
   import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
-    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {});
-    StatusBar.setStyle({ style: Style.Dark }).catch(() => {});
-    StatusBar.setBackgroundColor({ color: "#FFF7ED" }).catch(() => {});
+    const isDark = document.documentElement.classList.contains("dark");
+    const bg = isDark ? "#0F0F10" : "#FFFFFF";
+    StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+    StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark }).catch(() => {});
+    StatusBar.setBackgroundColor({ color: bg }).catch(() => {});
   }).catch(() => {});
 
   // Splash screen: nascondiamo manualmente al ready del DOM, con un

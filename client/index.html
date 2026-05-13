@@ -6,13 +6,37 @@
 
     <!-- ─── PWA / App meta ─────────────────────────────────────────────── -->
     <meta name="application-name" content="Fermenta.to" />
-    <meta name="theme-color" content="#C47A1E" />
+    <!-- theme-color = colore esatto dell'header (white / #0F0F10 in dark).
+         Viene riallineato a runtime dal ThemeProvider in base al tema scelto. -->
+    <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0F0F10" media="(prefers-color-scheme: dark)" />
     <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Fermenta.to" />
+
+    <!-- ── Bootstrap ultra-early del tema: applica `dark` su <html> e
+         allinea theme-color/background PRIMA di qualunque paint, così
+         non si vede flash bianco quando l'utente è in dark mode. ── -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('fermenta-theme');
+          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+          var isDark = stored === 'dark' || (stored !== 'light' && false /* default light */);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.background = '#0F0F10';
+            var meta = document.querySelector('meta[name="theme-color"]');
+            if (meta) meta.setAttribute('content', '#0F0F10');
+          } else {
+            document.documentElement.style.background = '#FFFFFF';
+          }
+        } catch (e) {}
+      })();
+    </script>
     <meta name="format-detection" content="telephone=no" />
 
     <!-- Icons -->

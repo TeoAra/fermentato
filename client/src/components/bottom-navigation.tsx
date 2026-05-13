@@ -56,7 +56,7 @@ export function BottomNavigation() {
       <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white/95 dark:bg-[#0F0F10]/96 backdrop-blur-xl border-t border-stone-100/80 dark:border-white/[0.05]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#0F0F10] border-t border-stone-100 dark:border-white/[0.06] shadow-[0_-1px_0_0_rgba(0,0,0,0.03)] dark:shadow-[0_-1px_0_0_rgba(255,255,255,0.02)]"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="flex items-stretch">

@@ -30,6 +30,24 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.classList.remove("dark");
     }
     localStorage.setItem("fermenta-theme", theme);
+
+    // Sync browser/PWA chrome (status bar color in Chrome Android, iOS Safari
+    // address bar tint, Android task switcher header).
+    const headerBg = theme === "dark" ? "#0F0F10" : "#FFFFFF";
+    const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
+    if (meta) meta.setAttribute("content", headerBg);
+
+    // Sync iOS PWA status bar text color
+    const iosMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement | null;
+    if (iosMeta) iosMeta.setAttribute("content", theme === "dark" ? "black-translucent" : "default");
+
+    // Sync Capacitor native status bar (iOS + Android) when running in app
+    if ((window as any).Capacitor?.isNativePlatform?.()) {
+      import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
+        StatusBar.setStyle({ style: theme === "dark" ? Style.Light : Style.Dark }).catch(() => {});
+        StatusBar.setBackgroundColor({ color: headerBg }).catch(() => {});
+      }).catch(() => {});
+    }
   }, [theme]);
 
   const setTheme = (t: Theme) => setThemeState(t);

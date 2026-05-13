@@ -35,11 +35,31 @@
 /* Safe area / header offset per Capacitor native */
 :root {
   --mobile-top-offset: calc(3.5rem + env(safe-area-inset-top, 0px));
+  --app-chrome-light: #FFFFFF;
+  --app-chrome-dark: #0F0F10;
 }
 @media (min-width: 1024px) {
   :root {
     --mobile-top-offset: 4rem;
   }
+}
+
+/* ── App chrome integration: il colore di fondo del documento e dell'<html>
+   deve combaciare con header/bottom-nav, così quando in Capacitor la
+   WebView estende edge-to-edge sotto la status bar / home indicator non
+   compare nessuno "stacco" né flash di colore diverso prima del render. */
+html {
+  background: var(--app-chrome-light);
+}
+html.dark {
+  background: var(--app-chrome-dark);
+}
+[data-capacitor="true"] body {
+  background: var(--app-chrome-light);
+}
+[data-capacitor="true"].dark body,
+.dark [data-capacitor="true"] body {
+  background: var(--app-chrome-dark);
 }
 
 /* Mobile-first responsive utilities */
