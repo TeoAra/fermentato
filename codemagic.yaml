@@ -68,11 +68,10 @@ workflows:
       - name: Scarica certificati e profili da App Store Connect
         script: |
           printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" | sed 's/\\n/\n/g' > /tmp/auth_key.p8
-          head -2 /tmp/auth_key.p8
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
             --key-id "$APP_STORE_CONNECT_KEY_ID" \
-            --private-key /tmp/auth_key.p8 \
+            --private-key @/tmp/auth_key.p8 \
             --type IOS_APP_STORE \
             --create
 
@@ -167,7 +166,7 @@ workflows:
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
             --key-id "$APP_STORE_CONNECT_KEY_ID" \
-            --private-key /tmp/auth_key.p8 \
+            --private-key @/tmp/auth_key.p8 \
             --type IOS_APP_STORE \
             --create
 
