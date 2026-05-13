@@ -59,6 +59,7 @@ workflows:
       - name: Imposta versione app
         script: |
           VERSION=$(node -p "require('./package.json').version")
+          cd ios/App
           xcrun agvtool new-marketing-version "$VERSION"
           xcrun agvtool new-version -all "${CM_BUILD_NUMBER:-1}"
 
