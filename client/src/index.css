@@ -351,11 +351,11 @@ html.dark {
     }
   }
 
-  @media all and (display-mode: standalone) {
-    body {
-      padding-top: env(safe-area-inset-top);
-    }
-  }
+  /* In PWA standalone non aggiungiamo più padding-top al body: la WebView
+     va edge-to-edge (apple-mobile-web-app-status-bar-style=black-translucent)
+     e il MobileHeader / le pagine fullscreen estendono già il proprio
+     background sotto la safe area via env(safe-area-inset-top). Aggiungere
+     padding qui causerebbe un gap duplicato sotto l'header fisso. */
 
   /* ── Type scale ── */
   .text-display-2xl { font-size: 3.2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.08; }

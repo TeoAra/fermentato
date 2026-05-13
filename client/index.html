@@ -14,7 +14,11 @@
 
     <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <!-- 'black-translucent' = la WebView va edge-to-edge sotto la status bar
+         iOS; il colore della status bar diventa quello dell'header (gestito
+         via env(safe-area-inset-top) nei componenti). 'default' invece forza
+         iOS a disegnare una barra opaca bianca/grigia separata dall'app. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Fermenta.to" />
 
     <!-- ── Bootstrap ultra-early del tema: applica `dark` su <html> e
@@ -31,6 +35,8 @@
             document.documentElement.style.background = '#0F0F10';
             var meta = document.querySelector('meta[name="theme-color"]');
             if (meta) meta.setAttribute('content', '#0F0F10');
+            var ios = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+            if (ios) ios.setAttribute('content', 'black-translucent');
           } else {
             document.documentElement.style.background = '#FFFFFF';
           }

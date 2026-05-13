@@ -37,7 +37,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     if (meta) meta.setAttribute("content", headerBg);
 
-    // Sync iOS PWA status bar text color
+    // iOS PWA: in dark mode usiamo 'black-translucent' (icone bianche su
+    // header scuro #0F0F10 esteso via env(safe-area-inset-top) → no stacco).
+    // In light mode usiamo 'default' (barra opaca bianca con icone scure):
+    // iOS la disegna del proprio bianco di sistema che combacia col bianco
+    // dell'header, quindi visivamente non c'è gap. 'black-translucent' in
+    // light mode renderebbe le icone bianche su sfondo bianco = invisibili.
     const iosMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement | null;
     if (iosMeta) iosMeta.setAttribute("content", theme === "dark" ? "black-translucent" : "default");
 
