@@ -48,15 +48,8 @@ const SLIDES: Slide[] = [
     icon: Star,
     badge: "Per chi beve",
     title: "Recensisci e tieni traccia",
-    body: "Recensisci le birre in stile Untappd, scatta una foto del check-in e crea il tuo storico bevute. Segui altri utenti e vedi cosa stanno bevendo in tempo reale.",
+    body: "Lascia recensioni e voti sulle birre, scatta una foto del check-in e crea il tuo storico bevute. Segui altri utenti e vedi cosa stanno bevendo in tempo reale.",
     tone: "violet",
-  },
-  {
-    icon: Camera,
-    badge: "Scan",
-    title: "Scansiona etichetta o codice a barre",
-    body: "Inquadra una bottiglia con la fotocamera: riconosciamo automaticamente birra e birrificio combinando AI visiva, OCR e database mondiale Open Food Facts.",
-    tone: "emerald",
   },
   {
     icon: Store,
