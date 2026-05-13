@@ -272,7 +272,20 @@ html.dark {
     -webkit-overflow-scrolling: touch;
     min-height: 100vh;
     min-height: -webkit-fill-available;
+    min-height: 100dvh;
     position: relative;
+  }
+
+  /* ── Dynamic viewport units fallback ──────────────────────────────────
+     Tailwind h-screen / min-h-screen usano 100vh statico: su iOS Safari
+     questo NON cambia quando appare/scompare la toolbar, causando
+     contenuti tagliati o sovrapposti alla bottom bar di Safari. Forziamo
+     dvh dove supportato (iOS 15.4+, Chrome 108+) così l'altezza si adatta
+     dinamicamente alla viewport visibile. */
+  @supports (height: 100dvh) {
+    .h-screen { height: 100dvh; }
+    .min-h-screen { min-height: 100dvh; }
+    .max-h-screen { max-height: 100dvh; }
   }
 
   /* ── Capacitor Android WebView overrides ─────────────────────────────────

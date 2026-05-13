@@ -844,7 +844,7 @@ export default function FestivalPublic() {
       </div>
 
       {/* Main content with rounded corners overlap */}
-      <div className="max-w-2xl mx-auto bg-white dark:bg-card rounded-t-3xl -mt-8 relative z-10 px-4 pt-6 min-h-[calc(100vh-200px)]">
+      <div className="max-w-2xl mx-auto bg-white dark:bg-card rounded-t-3xl -mt-8 relative z-10 px-4 pt-6 min-h-[calc(100dvh-200px)]">
         {/* Info content */}
         <div className="space-y-4">
           {/* Schedule */}

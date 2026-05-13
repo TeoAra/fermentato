@@ -362,7 +362,7 @@ export function RichTextEditor({ value, onChange, placeholder = "Scrivi il conte
           [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-gray-300 [&_.ProseMirror_td]:dark:border-neutral-600 [&_.ProseMirror_td]:p-2
           [&_.ProseMirror_blockquote]:border-l-4 [&_.ProseMirror_blockquote]:border-amber-400 [&_.ProseMirror_blockquote]:pl-4 [&_.ProseMirror_blockquote]:italic [&_.ProseMirror_blockquote]:text-gray-600 [&_.ProseMirror_blockquote]:dark:text-gray-400
           [&_.ProseMirror_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)] [&_.ProseMirror_.is-editor-empty:first-child::before]:text-gray-400 [&_.ProseMirror_.is-editor-empty:first-child::before]:float-left [&_.ProseMirror_.is-editor-empty:first-child::before]:pointer-events-none [&_.ProseMirror_.is-editor-empty:first-child::before]:h-0
-          ${isFullscreen ? "flex-1 min-h-0 h-[calc(100vh-100px)]" : "min-h-[340px] max-h-[640px]"}
+          ${isFullscreen ? "flex-1 min-h-0 h-[calc(100dvh-100px)]" : "min-h-[340px] max-h-[640px]"}
         `}
       />
 
