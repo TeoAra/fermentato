@@ -1,7 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # Codemagic CI/CD — Fermenta.to iOS IPA
-# Prerequisiti: bundle ID to.fermentato.app + app su App Store Connect.
-# Apple Developer Portal integration attiva su Codemagic.
+# Usa Apple Developer Portal integration (configurata in Team settings → Integrations)
+# Le credenziali vengono lette automaticamente dall'integrazione UI.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 workflows:
@@ -19,19 +19,15 @@ workflows:
         - pattern: main
           include: true
 
+    integrations:
+      app_store_connect: Fermenta.to
+
     environment:
       node: "20"
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: to.fermentato.app
       vars:
         BUNDLE_ID: to.fermentato.app
-        # Variabili necessarie per publishing (ios_signing le prende dall'integrazione UI)
-        ASC_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-        ASC_KEY_ID: $APP_STORE_CONNECT_KEY_ID
-        ASC_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
 
     cache:
       cache_paths:
@@ -68,9 +64,23 @@ workflows:
           xcrun agvtool new-marketing-version "$VERSION"
           xcrun agvtool new-version -all "${CM_BUILD_NUMBER:-1}"
 
+      - name: Inizializza keychain
+        script: keychain initialize
+
+      - name: Scarica certificati e profili (credenziali da integrazione UI)
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Aggiungi certificati al keychain
+        script: keychain add-certificates
+
+      - name: Applica profili al progetto Xcode
+        script: xcode-project use-profiles
+
       - name: Build IPA firmato
         script: |
-          xcode-project use-profiles
           xcode-project build-ipa \
             --workspace ios/App/App.xcworkspace \
             --scheme App \
@@ -82,9 +92,6 @@ workflows:
 
     publishing:
       app_store_connect:
-        api_key: $ASC_PRIVATE_KEY
-        key_id: $ASC_KEY_ID
-        issuer_id: $ASC_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
       email:
@@ -107,18 +114,15 @@ workflows:
         - pattern: "v*"
           include: true
 
+    integrations:
+      app_store_connect: Fermenta.to
+
     environment:
       node: "20"
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: to.fermentato.app
       vars:
         BUNDLE_ID: to.fermentato.app
-        ASC_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-        ASC_KEY_ID: $APP_STORE_CONNECT_KEY_ID
-        ASC_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
 
     cache:
       cache_paths:
@@ -148,9 +152,23 @@ workflows:
       - name: Copia web assets nel progetto iOS
         script: npx cap copy ios
 
+      - name: Inizializza keychain
+        script: keychain initialize
+
+      - name: Scarica certificati e profili (credenziali da integrazione UI)
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Aggiungi certificati al keychain
+        script: keychain add-certificates
+
+      - name: Applica profili al progetto Xcode
+        script: xcode-project use-profiles
+
       - name: Build IPA per App Store
         script: |
-          xcode-project use-profiles
           xcode-project build-ipa \
             --workspace ios/App/App.xcworkspace \
             --scheme App
@@ -160,9 +178,6 @@ workflows:
 
     publishing:
       app_store_connect:
-        api_key: $ASC_PRIVATE_KEY
-        key_id: $ASC_KEY_ID
-        issuer_id: $ASC_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
       email:
