@@ -1,0 +1,79 @@
+ 15 files changed, 145 insertions(+), 154 deletions(-)
+npm warn config init.module Use `--init-module` instead.
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: react-leaflet@4.2.1
+npm error Found: react@19.2.0
+npm error node_modules/react
+npm error   react@"^19.2.0" from the root project
+npm error   peer react@">=16.8.0" from @floating-ui/react-dom@2.1.8
+npm error   node_modules/@floating-ui/react-dom
+npm error     @floating-ui/react-dom@"^2.0.0" from @radix-ui/react-popper@1.2.8
+npm error     node_modules/@radix-ui/react-popper
+npm error       @radix-ui/react-popper@"1.2.8" from @radix-ui/react-hover-card@1.1.15
+npm error       node_modules/@radix-ui/react-hover-card
+npm error         @radix-ui/react-hover-card@"^1.1.15" from the root project
+npm error       4 more (@radix-ui/react-menu, @radix-ui/react-popover, ...)
+npm error   96 more (@radix-ui/react-accordion, ...)
+npm error
+npm error Could not resolve dependency:
+npm error peer react@"^18.0.0" from react-leaflet@4.2.1
+npm error node_modules/react-leaflet
+npm error   react-leaflet@"^4.2.1" from the root project
+npm error
+npm error Conflicting peer dependency: react@18.3.1
+npm error node_modules/react
+npm error   peer react@"^18.0.0" from react-leaflet@4.2.1
+npm error   node_modules/react-leaflet
+npm error     react-leaflet@"^4.2.1" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /www/server/nodejs/v20.19.6/cache/_logs/2026-05-13T18_30_10_628Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /www/server/nodejs/v20.19.6/cache/_logs/2026-05-13T18_30_10_628Z-debug-0.log
+root@luppolino:/www/nodeapps/fermenta# cd /www/nodeapps/fermenta && git checkout -- package-lock.json && git pull origin main && npm install && pm2 restart all && npm run build && npx cap sync
+From https://github.com/TeoAra/fermentato
+ * branch            main       -> FETCH_HEAD
+Already up to date.
+npm warn config init.module Use `--init-module` instead.
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: react-leaflet@4.2.1
+npm error Found: react@19.2.0
+npm error node_modules/react
+npm error   react@"^19.2.0" from the root project
+npm error   peer react@">=16.8.0" from @floating-ui/react-dom@2.1.8
+npm error   node_modules/@floating-ui/react-dom
+npm error     @floating-ui/react-dom@"^2.0.0" from @radix-ui/react-popper@1.2.8
+npm error     node_modules/@radix-ui/react-popper
+npm error       @radix-ui/react-popper@"1.2.8" from @radix-ui/react-hover-card@1.1.15
+npm error       node_modules/@radix-ui/react-hover-card
+npm error         @radix-ui/react-hover-card@"^1.1.15" from the root project
+npm error       4 more (@radix-ui/react-menu, @radix-ui/react-popover, ...)
+npm error   96 more (@radix-ui/react-accordion, ...)
+npm error
+npm error Could not resolve dependency:
+npm error peer react@"^18.0.0" from react-leaflet@4.2.1
+npm error node_modules/react-leaflet
+npm error   react-leaflet@"^4.2.1" from the root project
+npm error
+npm error Conflicting peer dependency: react@18.3.1
+npm error node_modules/react
+npm error   peer react@"^18.0.0" from react-leaflet@4.2.1
+npm error   node_modules/react-leaflet
+npm error     react-leaflet@"^4.2.1" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error /www/server/nodejs/v20.19.6/cache/_logs/2026-05-13T18_30_26_689Z-eresolve-report.txt
+npm error A complete log of this run can be found in: /www/server/nodejs/v20.19.6/cache/_logs/2026-05-13T18_30_26_689Z-debug-0.log
