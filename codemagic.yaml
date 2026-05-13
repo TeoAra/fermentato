@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# Codemagic CI/CD — Fermenta.to iOS IPA (firma manuale via script)
+# Codemagic CI/CD — Fermenta.to iOS IPA (firma automatica, senza Mac fisico)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 workflows:
@@ -21,10 +21,9 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
+      groups:
+        - ios-signing   # gruppo creato in Codemagic → Team settings → Global variables
       vars:
-        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-        APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
-        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
         BUNDLE_ID: to.fermentato.app
 
     cache:
@@ -68,9 +67,7 @@ workflows:
 
       - name: Scarica certificati e profili da App Store Connect
         script: |
-          # Converte \n letterali in newline reali e scrive su file
           printf '%s' "$APP_STORE_CONNECT_PRIVATE_KEY" | sed 's/\\n/\n/g' > /tmp/auth_key.p8
-          echo "--- prime 2 righe del file chiave ---"
           head -2 /tmp/auth_key.p8
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
@@ -127,10 +124,9 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
+      groups:
+        - ios-signing   # gruppo creato in Codemagic → Team settings → Global variables
       vars:
-        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-        APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
-        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
         BUNDLE_ID: to.fermentato.app
 
     cache:
