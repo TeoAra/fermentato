@@ -584,8 +584,8 @@ export const insertPubSchema = createInsertSchema(pubs).omit({
   createdAt: true,
   updatedAt: true,
 }).extend({
-  logoUrl: z.string().url().optional().nullable(),
-  coverImageUrl: z.string().url().optional().nullable(),
+  logoUrl: z.url().optional().nullable(),
+  coverImageUrl: z.url().optional().nullable(),
 });
 
 export const insertBeerSchema = createInsertSchema(beers).omit({
@@ -1233,8 +1233,8 @@ export const pubRegistrationSchema = insertPubSchema.extend({
   description: z.string().nullable().optional(),
   postalCode: z.string().nullable().optional(),
   phone: z.string().nullable().optional(),
-  email: z.string().email("Email non valida").nullable().optional(),
-  websiteUrl: z.string().url("URL non valido").nullable().optional(),
+  email: z.email("Email non valida").nullable().optional(),
+  websiteUrl: z.url("URL non valido").nullable().optional(),
   slug: z.string()
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Solo lettere minuscole, numeri e trattini (es. il-mio-pub)")
     .max(100)

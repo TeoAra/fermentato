@@ -1967,7 +1967,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(pub);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error creating pub:", error);
       res.status(500).json({ message: "Failed to create pub" });
@@ -2155,7 +2155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedPub);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error updating pub:", error);
       res.status(500).json({ message: "Failed to update pub" });
@@ -2187,7 +2187,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(tapItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error adding beer to tap:", error);
       res.status(500).json({ message: "Failed to add beer to tap" });
@@ -2204,7 +2204,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedTap);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error updating tap item:", error);
       res.status(500).json({ message: "Failed to update tap item" });
@@ -2244,7 +2244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(bottleItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error adding beer to bottle list:", error);
       res.status(500).json({ message: "Failed to add beer to bottle list" });
@@ -2333,7 +2333,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(category);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error creating menu category:", error);
       res.status(500).json({ message: "Failed to create menu category" });
@@ -2445,7 +2445,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(item);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error creating menu item:", error);
       res.status(500).json({ message: "Failed to create menu item" });
@@ -2460,7 +2460,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(item);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error creating menu item:", error);
       res.status(500).json({ message: "Failed to create menu item" });
@@ -2516,7 +2516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updatedItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error updating menu item:", error);
       res.status(500).json({ message: "Failed to update menu item" });
@@ -6022,7 +6022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(event);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error creating pub event:", error);
       res.status(500).json({ message: "Failed to create event" });
@@ -6057,7 +6057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(updated);
     } catch (error) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.errors });
+        return res.status(400).json({ message: "Validation error", errors: error.issues });
       }
       console.error("Error updating pub event:", error);
       res.status(500).json({ message: "Failed to update event" });
@@ -6182,7 +6182,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.status(201).json(event);
     } catch (error) {
-      if (error instanceof z.ZodError) return res.status(400).json({ message: "Validation error", errors: error.errors });
+      if (error instanceof z.ZodError) return res.status(400).json({ message: "Validation error", errors: error.issues });
       console.error("Error creating brewery event:", error);
       res.status(500).json({ message: "Failed to create event" });
     }
@@ -6212,7 +6212,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(breweryEvents.id, eventId)).returning();
       res.json(updated);
     } catch (error) {
-      if (error instanceof z.ZodError) return res.status(400).json({ message: "Validation error", errors: error.errors });
+      if (error instanceof z.ZodError) return res.status(400).json({ message: "Validation error", errors: error.issues });
       console.error("Error updating brewery event:", error);
       res.status(500).json({ message: "Failed to update event" });
     }

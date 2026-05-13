@@ -36,7 +36,7 @@ const registerSchema = z.object({
     .min(3, "Username: minimo 3 caratteri")
     .max(30, "Username: massimo 30 caratteri")
     .regex(/^[a-zA-Z0-9_.]+$/, "Solo lettere, numeri, punti e underscore"),
-  email: z.string().email("Email non valida"),
+  email: z.email("Email non valida"),
   password: z.string()
     .min(8, "Minimo 8 caratteri")
     .regex(/[A-Z]/, "Serve almeno una lettera maiuscola")

@@ -24,7 +24,7 @@ const RECAPTCHA_SITE_KEY = (import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | 
 
 const schema = z.object({
   nickname: z.string().min(3, "Minimo 3 caratteri").max(30, "Massimo 30 caratteri").regex(/^[a-zA-Z0-9_.]+$/, "Solo lettere, numeri, punti e underscore"),
-  email: z.string().email("Email non valida"),
+  email: z.email("Email non valida"),
   password: z.string().min(8, "Minimo 8 caratteri"),
   confirmPassword: z.string(),
   pubName: z.string().min(2, "Nome locale obbligatorio"),
