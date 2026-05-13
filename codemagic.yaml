@@ -67,10 +67,15 @@ workflows:
       - name: Inizializza keychain
         script: keychain initialize
 
+      - name: Genera chiave privata per certificato
+        script: |
+          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution_private_key -q -N ""
+
       - name: Scarica certificati e profili (credenziali da integrazione UI)
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/apple_distribution_private_key \
             --create
 
       - name: Aggiungi certificati al keychain
@@ -156,10 +161,15 @@ workflows:
       - name: Inizializza keychain
         script: keychain initialize
 
+      - name: Genera chiave privata per certificato
+        script: |
+          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution_private_key -q -N ""
+
       - name: Scarica certificati e profili (credenziali da integrazione UI)
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
             --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/apple_distribution_private_key \
             --create
 
       - name: Aggiungi certificati al keychain
