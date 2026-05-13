@@ -1,9 +1,9 @@
 import { Search, User, Home, Bell, Users } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, type ReactNode } from "react";
+import { useState, lazy, Suspense, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import FindBeerSheet from "@/components/FindBeerSheet";
+const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
 
 export function BottomNavigation() {
   const [location] = useLocation();
@@ -70,7 +70,11 @@ export function BottomNavigation() {
 
   return (
     <>
-      <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
+      {searchOpen && (
+        <Suspense fallback={null}>
+          <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
+        </Suspense>
+      )}
 
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#15202B] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)]"

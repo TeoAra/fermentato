@@ -11,12 +11,16 @@ import { useAnalytics } from "./hooks/use-analytics";
 import { usePushBadge } from "@/hooks/use-push-badge";
 import { NavigationProgress } from "@/components/navigation-progress";
 import Lightbox from "@/components/lightbox";
-import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber, CapacitorPushPrompt, CapacitorLocationPrompt } from "@/components/pwa-prompt";
+const PwaInstallPrompt        = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.PwaInstallPrompt })));
+const PushNotificationPrompt  = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.PushNotificationPrompt })));
+const AutoPushSubscriber      = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.AutoPushSubscriber })));
+const CapacitorPushPrompt     = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.CapacitorPushPrompt })));
+const CapacitorLocationPrompt = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.CapacitorLocationPrompt })));
 import { MobileHeader } from "@/components/mobile-header";
-import { OnboardingTutorial } from "@/components/OnboardingTutorial";
+const OnboardingTutorial = lazy(() => import("@/components/OnboardingTutorial").then(m => ({ default: m.OnboardingTutorial })));
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { DesktopSidebar } from "@/components/desktop-sidebar";
-import CookieBanner from "@/components/CookieBanner";
+const CookieBanner = lazy(() => import("@/components/CookieBanner"));
 import { AppUpdateCheck } from "@/components/app-update-check";
 import { ThemeProvider } from "@/lib/theme";
 import type { User } from "@shared/schema";
@@ -335,7 +339,7 @@ function Router() {
       <BottomNavigation />
 
       {/* Tutorial iniziale (mostrato al primo avvio in PWA installata o app nativa) */}
-      <OnboardingTutorial />
+      <Suspense fallback={null}><OnboardingTutorial /></Suspense>
     </div>
   );
 }
@@ -384,12 +388,14 @@ function App() {
             <Lightbox />
             <AppUpdateCheck />
             <Router />
-            <AutoPushSubscriber />
-            <PwaInstallPrompt />
-            <PushNotificationPrompt />
-            <CapacitorLocationPrompt />
-            <CapacitorPushPrompt />
-            <CookieBanner />
+            <Suspense fallback={null}>
+              <AutoPushSubscriber />
+              <PwaInstallPrompt />
+              <PushNotificationPrompt />
+              <CapacitorLocationPrompt />
+              <CapacitorPushPrompt />
+              <CookieBanner />
+            </Suspense>
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

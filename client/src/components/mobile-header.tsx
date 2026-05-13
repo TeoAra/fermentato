@@ -7,8 +7,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { User as UserType } from "@shared/schema";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useState, useEffect } from "react";
-import FindBeerSheet from "@/components/FindBeerSheet";
+import { useState, useEffect, lazy, Suspense } from "react";
+const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
 import { IosInstallGuide } from "@/components/pwa-prompt";
 
 function useScrolled(threshold = 12) {
@@ -439,7 +439,11 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         </SheetContent>
       </Sheet>
 
-      <FindBeerSheet open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+      {isSearchOpen && (
+        <Suspense fallback={null}>
+          <FindBeerSheet open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
+        </Suspense>
+      )}
       {showIosInstallGuide && (
         <IosInstallGuide onClose={() => setShowIosInstallGuide(false)} />
       )}
