@@ -163,7 +163,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     <>
       {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
       <header
-        className={`lg:hidden fixed top-0 left-0 right-0 z-50 transition-[box-shadow,border-color] duration-200 bg-white dark:bg-[#0F0F10] ${
+        className={`lg:hidden fixed top-0 left-0 right-0 z-50 transition-[box-shadow,border-color] duration-200 bg-white dark:bg-[#15202B] ${
           scrolled
             ? "border-b border-stone-200/70 dark:border-white/[0.08] shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
             : "border-b border-transparent"
@@ -237,7 +237,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
         <SheetContent
           side="right"
-          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#0F0F10] border-l border-stone-100/80 dark:border-white/[0.06]"
+          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#15202B] border-l border-stone-100/80 dark:border-white/[0.06]"
         >
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
 
@@ -382,7 +382,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 >
                   <div className="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white relative">
                     <Download className="h-[18px] w-[18px]" />
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-[#0F0F10]" />
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-[#15202B]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-foreground leading-snug">Installa l'app</div>

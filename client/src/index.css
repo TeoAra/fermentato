@@ -36,7 +36,7 @@
 :root {
   --mobile-top-offset: calc(3.5rem + env(safe-area-inset-top, 0px));
   --app-chrome-light: #FFFFFF;
-  --app-chrome-dark: #0F0F10;
+  --app-chrome-dark: #15202B;
 }
 @media (min-width: 1024px) {
   :root {
@@ -175,29 +175,30 @@ html.dark {
    DARK MODE — COLOUR PALETTE
    ============================ */
 .dark {
-  /* Base surfaces — ultra-premium #0F0F10 / #1A1A1C (Spotify+Apple Music) */
-  --background: hsl(240, 3%, 6%);
-  --foreground: hsl(0, 0%, 100%);
-  --muted: hsl(240, 3%, 14%);
-  --muted-foreground: hsl(0, 0%, 63%);
+  /* Base surfaces — slate navy moderno (Twitter/Tweetbot dark), tono blu-grigio
+     opaco che fa risaltare l'arancione craft. Più caldo dei classic dark grigi. */
+  --background: hsl(213, 35%, 12%);          /* #15202B */
+  --foreground: hsl(210, 18%, 96%);
+  --muted: hsl(213, 28%, 18%);               /* #232F3D */
+  --muted-foreground: hsl(213, 12%, 68%);
 
-  /* Card / Popover */
-  --popover: hsl(240, 3%, 11%);
-  --popover-foreground: hsl(0, 0%, 100%);
-  --card: hsl(240, 3%, 11%);
-  --card-foreground: hsl(0, 0%, 100%);
+  /* Card / Popover — leggermente più chiari del background per gerarchia */
+  --popover: hsl(213, 32%, 16%);             /* #1B2735 */
+  --popover-foreground: hsl(210, 18%, 96%);
+  --card: hsl(213, 32%, 16%);                /* #1B2735 */
+  --card-foreground: hsl(210, 18%, 96%);
 
   /* Borders / Inputs */
-  --border: hsl(240, 3%, 18%);
-  --input: hsl(240, 3%, 18%);
+  --border: hsl(213, 22%, 24%);              /* #2F3D4D */
+  --input: hsl(213, 22%, 24%);
 
-  /* Primary — slightly brighter orange on dark */
-  --primary: hsl(29, 100%, 56%);
+  /* Primary — arancione vibrante, l'unica nota calda sulla palette navy */
+  --primary: hsl(29, 100%, 58%);
   --primary-foreground: hsl(0, 0%, 100%);
 
   /* Secondary */
-  --secondary: hsl(240, 3%, 18%);
-  --secondary-foreground: hsl(0, 0%, 100%);
+  --secondary: hsl(213, 25%, 22%);
+  --secondary-foreground: hsl(210, 18%, 96%);
 
   /* Shadow tokens dark — deeper for dark bg */
   --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.40);
@@ -222,14 +223,14 @@ html.dark {
   --radius: 1rem;
 
   /* Glassmorphism dark */
-  --glass-bg: hsla(240, 3%, 11%, 0.85);
-  --glass-border: hsla(240, 20%, 100%, 0.07);
-  --glass-shadow: hsla(0, 0%, 0%, 0.35);
+  --glass-bg: hsla(213, 32%, 16%, 0.85);
+  --glass-border: hsla(213, 30%, 100%, 0.08);
+  --glass-shadow: hsla(213, 40%, 0%, 0.40);
 
-  /* Surfaces */
-  --surface-primary: hsl(240, 3%, 11%);
-  --surface-secondary: hsl(240, 3%, 14%);
-  --surface-tertiary: hsl(240, 3%, 17%);
+  /* Surfaces — slate navy, gerarchia di elevazione coerente con --card */
+  --surface-primary: hsl(213, 32%, 16%);
+  --surface-secondary: hsl(213, 30%, 19%);
+  --surface-tertiary: hsl(213, 28%, 23%);
 
   /* Elevations */
   --elevation-1: 0 1px 3px hsla(0, 0%, 0%, 0.40), 0 1px 2px hsla(0, 0%, 0%, 0.50);
@@ -243,7 +244,7 @@ html.dark {
   --gradient-stats: linear-gradient(135deg, hsl(174, 54%, 40%) 0%, hsl(195, 62%, 44%) 100%);
   --gradient-success: linear-gradient(135deg, hsl(142, 52%, 38%) 0%, hsl(158, 56%, 40%) 100%);
   --gradient-warning: linear-gradient(135deg, hsl(29, 100%, 52%) 0%, hsl(44, 88%, 54%) 100%);
-  --gradient-hero: linear-gradient(135deg, hsl(240, 3%, 6%) 0%, hsl(240, 3%, 11%) 100%);
+  --gradient-hero: linear-gradient(135deg, hsl(213, 38%, 10%) 0%, hsl(213, 32%, 16%) 100%);
 }
 
 @layer base {

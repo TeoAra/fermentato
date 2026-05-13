@@ -46,7 +46,7 @@ const config: CapacitorConfig = {
     },
     StatusBar: {
       // overlaysWebView=true → la WebView passa sotto la status bar; il
-      // background dell'header (white o #0F0F10) estende i suoi pixel fin
+      // background dell'header (white o #15202B) estende i suoi pixel fin
       // dentro la safe area, eliminando qualunque "stacco" visivo.
       // Lo style viene poi aggiornato a runtime in base al tema (vedi theme.tsx).
       style: 'DARK',

@@ -6,10 +6,10 @@
 
     <!-- ─── PWA / App meta ─────────────────────────────────────────────── -->
     <meta name="application-name" content="Fermenta.to" />
-    <!-- theme-color = colore esatto dell'header (white / #0F0F10 in dark).
+    <!-- theme-color = colore esatto dell'header (white / #15202B in dark).
          Viene riallineato a runtime dal ThemeProvider in base al tema scelto. -->
     <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0F0F10" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#15202B" media="(prefers-color-scheme: dark)" />
     <meta name="mobile-web-app-capable" content="yes" />
 
     <!-- iOS PWA -->
@@ -32,9 +32,9 @@
           var isDark = stored === 'dark' || (stored !== 'light' && false /* default light */);
           if (isDark) {
             document.documentElement.classList.add('dark');
-            document.documentElement.style.background = '#0F0F10';
+            document.documentElement.style.background = '#15202B';
             var meta = document.querySelector('meta[name="theme-color"]');
-            if (meta) meta.setAttribute('content', '#0F0F10');
+            if (meta) meta.setAttribute('content', '#15202B');
             var ios = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
             if (ios) ios.setAttribute('content', 'black-translucent');
           } else {

@@ -36,8 +36,16 @@ const DialogContent = React.forwardRef<
   <DialogPortal>
     {/* Overlay separata, dietro il wrapper flex */}
     <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-    {/* Wrapper flex che centra senza transform — funziona su iOS/Android WebView */}
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+    {/* Wrapper flex che centra il dialog escludendo l'area occupata da
+        header fisso (top) e bottom nav (bottom) + safe area iOS, così i
+        bottoni di conferma non finiscono mai sotto la barra inferiore. */}
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+      style={{
+        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
+      }}
+    >
       <DialogPrimitive.Content
         ref={ref}
         onPointerDownOutside={(e) => {
@@ -53,7 +61,7 @@ const DialogContent = React.forwardRef<
           }
         }}
         className={cn(
-          "pointer-events-auto relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-2xl duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "pointer-events-auto relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-2xl duration-200 max-h-full overflow-y-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className
         )}
         {...props}

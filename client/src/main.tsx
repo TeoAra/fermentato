@@ -19,7 +19,7 @@ if (Capacitor.isNativePlatform()) {
   // mantenuti in sync col tema dark/light dentro ThemeProvider.
   import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
     const isDark = document.documentElement.classList.contains("dark");
-    const bg = isDark ? "#0F0F10" : "#FFFFFF";
+    const bg = isDark ? "#15202B" : "#FFFFFF";
     StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
     StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark }).catch(() => {});
     StatusBar.setBackgroundColor({ color: bg }).catch(() => {});

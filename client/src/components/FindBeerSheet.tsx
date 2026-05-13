@@ -170,7 +170,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
       >
       <div
         ref={sheetRef}
-        className="relative z-[61] bg-background dark:bg-[#0F0F10] shadow-2xl flex flex-col
+        className="relative z-[61] bg-background dark:bg-[#15202B] shadow-2xl flex flex-col
                    w-full max-w-md max-h-[88dvh]
                    rounded-3xl border border-stone-200 dark:border-stone-800
                    md:max-w-2xl md:max-h-[86vh]"
