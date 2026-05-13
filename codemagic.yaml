@@ -30,6 +30,8 @@ workflows:
         bundle_identifier: to.fermentato.app
       vars:
         BUNDLE_ID: to.fermentato.app
+        # Codemagic ios_signing richiede KEY_IDENTIFIER (non KEY_ID)
+        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_ID
 
     cache:
       cache_paths:
@@ -116,6 +118,7 @@ workflows:
         bundle_identifier: to.fermentato.app
       vars:
         BUNDLE_ID: to.fermentato.app
+        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_ID
 
     cache:
       cache_paths:
