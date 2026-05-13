@@ -1,7 +1,10 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # Codemagic CI/CD — Fermenta.to iOS IPA
-# Prerequisiti: bundle ID to.fermentato.app registrato su Apple Developer
-# e App Store Connect. Variabili nel gruppo "ios-signing" su Codemagic.
+#
+# Prerequisiti (già fatti):
+# 1. Apple Developer Portal integration su Codemagic (Team settings → Integrations)
+# 2. Bundle ID to.fermentato.app registrato su Apple Developer
+# 3. App "Fermenta.to" creata su App Store Connect
 # ═══════════════════════════════════════════════════════════════════════════════
 
 workflows:
@@ -23,15 +26,9 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
-      groups:
-        - ios-signing
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
-      vars:
-        BUNDLE_ID: to.fermentato.app
-        # Codemagic ios_signing richiede KEY_IDENTIFIER (non KEY_ID)
-        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_ID
 
     cache:
       cache_paths:
@@ -82,9 +79,6 @@ workflows:
 
     publishing:
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_ID
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
       email:
@@ -94,7 +88,7 @@ workflows:
           success: true
           failure: true
 
-  # ─── Build App Store IPA (trigger su tag v*) ─────────────────────────────────
+  # ─── Build App Store IPA (trigger su tag v*) ────────────────────────────────
   ios-appstore:
     name: iOS App Store IPA
     max_build_duration: 60
@@ -111,14 +105,9 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
-      groups:
-        - ios-signing
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
-      vars:
-        BUNDLE_ID: to.fermentato.app
-        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_ID
 
     cache:
       cache_paths:
@@ -160,9 +149,6 @@ workflows:
 
     publishing:
       app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_ID
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
       email:
