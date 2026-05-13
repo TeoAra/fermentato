@@ -34,10 +34,10 @@ const AlertDialogContent = React.forwardRef<
     <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
     {/* Wrapper flex che centra senza transform — funziona su iOS/Android WebView */}
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+      className="fixed left-0 right-0 z-50 flex items-center justify-center px-4 pointer-events-none [&>*]:!max-h-full"
       style={{
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
+        top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
       }}
     >
       <AlertDialogPrimitive.Content

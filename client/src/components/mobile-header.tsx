@@ -237,7 +237,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
         <SheetContent
           side="right"
-          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#15202B] border-l border-stone-100/80 dark:border-white/[0.06]"
+          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#15202B] border-l border-stone-100/80 dark:border-white/[0.06] [&]:!overflow-hidden overscroll-contain touch-pan-y"
+          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
         >
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
 

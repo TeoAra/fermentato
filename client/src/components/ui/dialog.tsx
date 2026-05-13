@@ -36,14 +36,17 @@ const DialogContent = React.forwardRef<
   <DialogPortal>
     {/* Overlay separata, dietro il wrapper flex */}
     <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
-    {/* Wrapper flex che centra il dialog escludendo l'area occupata da
-        header fisso (top) e bottom nav (bottom) + safe area iOS, così i
-        bottoni di conferma non finiscono mai sotto la barra inferiore. */}
+    {/* Wrapper flex che centra il dialog ESCLUDENDO la safe-area top e
+        l'altezza della bottom nav (~64px + safe-area-bottom). Usiamo
+        top/bottom esplicite (non padding) così l'area diventa la viewport
+        REALMENTE visibile. Il selettore [&>*]:!max-h-full forza qualsiasi
+        DialogContent (anche se imposta max-h-[85vh] hardcoded) a stare
+        dentro questo box, evitando che i CTA finiscano sotto la tab bar. */}
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
+      className="fixed left-0 right-0 z-50 flex items-center justify-center px-4 pointer-events-none [&>*]:!max-h-full"
       style={{
-        paddingTop: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-        paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
+        top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
+        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
       }}
     >
       <DialogPrimitive.Content
