@@ -1,10 +1,7 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # Codemagic CI/CD — Fermenta.to iOS IPA
-#
-# PREREQUISITI (una tantum via UI Codemagic):
-# 1. Team settings → Integrations → App Store Connect → aggiungi API key
-#    (carica il file .p8, inserisci Issuer ID e Key ID)
-# 2. Il bundle ID to.fermentato.app deve esistere su Apple Developer + App Store Connect
+# Prerequisiti: bundle ID to.fermentato.app registrato su Apple Developer
+# e App Store Connect. Variabili nel gruppo "ios-signing" su Codemagic.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 workflows:
@@ -26,9 +23,13 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
+      groups:
+        - ios-signing
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
+      vars:
+        BUNDLE_ID: to.fermentato.app
 
     cache:
       cache_paths:
@@ -79,6 +80,9 @@ workflows:
 
     publishing:
       app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
       email:
@@ -105,9 +109,13 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
+      groups:
+        - ios-signing
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
+      vars:
+        BUNDLE_ID: to.fermentato.app
 
     cache:
       cache_paths:
@@ -149,6 +157,9 @@ workflows:
 
     publishing:
       app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
         submit_to_testflight: true
         submit_to_app_store: false
       email:
