@@ -13,10 +13,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
 
       - name: Setup Java 17
@@ -37,10 +37,25 @@ jobs:
         run: npm ci
 
       - name: Build web assets
-        run: npm run build
+        run: |
+          echo "::group::npm run build"
+          npm run build
+          echo "::endgroup::"
+          if [ ! -d "dist/public" ] && [ ! -d "dist" ]; then
+            echo "::error::Build output directory not found"
+            exit 1
+          fi
+          ls -la dist/ || true
 
       - name: Add Android platform
-        run: npx cap add android
+        run: |
+          # cap add fallisce se la cartella esiste già (cache stale o aggiunta
+          # in step precedente fallito). Rimuoviamo per garantire idempotenza.
+          if [ -d "android" ]; then
+            echo "Cartella android/ esistente, la rimuovo per add pulito"
+            rm -rf android
+          fi
+          npx cap add android
 
       - name: Setup google-services.json (placeholder — no FCM)
         run: |
