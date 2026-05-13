@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'to.fermenta.app',
+  appId: 'to.fermentato.app',
   appName: 'Fermenta.to',
   webDir: 'dist/public',
   server: {

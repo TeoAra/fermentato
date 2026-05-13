@@ -20,7 +20,7 @@
 #
 # 4. Registra il bundle ID su Apple Developer:
 #    → https://developer.apple.com/account → Certificates, IDs & Profiles
-#    → Identifiers → + → App IDs → bundle ID: to.fermenta.app
+#    → Identifiers → + → App IDs → bundle ID: to.fermentato.app
 #
 # Codemagic gestisce tutto il resto: crea certificati, profili, firma e
 # carica su TestFlight automaticamente. Zero Mac fisico richiesto.
@@ -47,7 +47,7 @@ workflows:
       cocoapods: default
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: to.fermenta.app
+        bundle_identifier: to.fermentato.app
       vars:
         APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
         APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
@@ -136,7 +136,7 @@ workflows:
       cocoapods: default
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: to.fermenta.app
+        bundle_identifier: to.fermentato.app
       # Aggiungi questi secret in Codemagic → Team settings → Environment variables:
       # APP_STORE_CONNECT_ISSUER_ID
       # APP_STORE_CONNECT_KEY_ID
