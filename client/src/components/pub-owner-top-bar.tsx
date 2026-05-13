@@ -40,7 +40,10 @@ export function PubOwnerTopBar({
 }: PubOwnerTopBarProps) {
   const [, navigate] = useLocation();
   return (
-    <div className="sticky top-14 lg:top-0 z-40 w-full">
+    <div
+      className="sticky lg:top-0 z-40 w-full"
+      style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
+    >
       <motion.div 
         className="glass-card border-b border-white/20 dark:border-gray-800/50 backdrop-blur-xl bg-white/80 dark:bg-gray-900/80"
         initial={{ y: -100, opacity: 0 }}
