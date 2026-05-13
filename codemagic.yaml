@@ -1,34 +1,10 @@
 # ═══════════════════════════════════════════════════════════════════════════════
 # Codemagic CI/CD — Fermenta.to iOS IPA (firma automatica, senza Mac fisico)
-#
-# SETUP UNA TANTUM (tutto da browser, no Mac):
-#
-# 1. Acquista Apple Developer Program → https://developer.apple.com ($99/anno)
-#
-# 2. Crea App Store Connect API Key:
-#    → https://appstoreconnect.apple.com → Utenti e accesso → Chiavi API
-#    → Nuova chiave, ruolo "App Manager"
-#    → Scarica il file .p8 (solo una volta!)
-#    → Annota: Issuer ID (in cima alla pagina) e Key ID (nella lista)
-#
-# 3. Aggiungi 3 variabili su Codemagic → apri il team → Team settings →
-#    Environment variables (spunta "Secure"):
-#    - APP_STORE_CONNECT_ISSUER_ID   → l'Issuer ID copiato sopra
-#    - APP_STORE_CONNECT_KEY_ID      → il Key ID copiato sopra
-#    - APP_STORE_CONNECT_PRIVATE_KEY → il contenuto del file .p8
-#      (apri il file con un editor di testo, copia tutto incluso BEGIN/END)
-#
-# 4. Registra il bundle ID su Apple Developer:
-#    → https://developer.apple.com/account → Certificates, IDs & Profiles
-#    → Identifiers → + → App IDs → bundle ID: to.fermentato.app
-#
-# Codemagic gestisce tutto il resto: crea certificati, profili, firma e
-# carica su TestFlight automaticamente. Zero Mac fisico richiesto.
 # ═══════════════════════════════════════════════════════════════════════════════
 
 workflows:
 
-  # ─── Build IPA firmato → TestFlight (firma automatica via App Store Connect API) ──
+  # ─── Build IPA firmato → TestFlight ─────────────────────────────────────────
   ios-development:
     name: iOS IPA → TestFlight
     max_build_duration: 90
@@ -45,11 +21,6 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
-      # app_store_connect QUI (a livello environment) è necessario per ios_signing
-      app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_ID
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
@@ -57,6 +28,7 @@ workflows:
         APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
         APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
         APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
+        BUNDLE_ID: to.fermentato.app
 
     cache:
       cache_paths:
@@ -80,7 +52,6 @@ workflows:
             echo "ERRORE: Podfile non trovato dopo cap add ios"
             exit 1
           fi
-          # Capacitor 8 richiede iOS 16.0+
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           grep "platform :ios" ios/App/Podfile
           cd ios/App && pod install
@@ -90,15 +61,27 @@ workflows:
 
       - name: Imposta versione app
         script: |
-          # Legge la versione da package.json e la imposta nell'Info.plist
           VERSION=$(node -p "require('./package.json').version")
-          BUILD=$CM_BUILD_NUMBER
           xcrun agvtool new-marketing-version "$VERSION"
-          xcrun agvtool new-version -all "${BUILD:-1}"
+          xcrun agvtool new-version -all "${CM_BUILD_NUMBER:-1}"
+
+      - name: Inizializza keychain per code signing
+        script: keychain initialize
+
+      - name: Scarica profili di firma da App Store Connect
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Aggiungi certificati al keychain
+        script: keychain add-certificates
+
+      - name: Applica profili al progetto Xcode
+        script: xcode-project use-profiles
 
       - name: Build IPA firmato
         script: |
-          xcode-project use-profiles
           xcode-project build-ipa \
             --workspace ios/App/App.xcworkspace \
             --scheme App \
@@ -122,7 +105,7 @@ workflows:
           success: true
           failure: true
 
-  # ─── Build App Store IPA (richiede programma $99/anno) ───────────────────────
+  # ─── Build App Store IPA (trigger su tag v*) ─────────────────────────────────
   ios-appstore:
     name: iOS App Store IPA
     max_build_duration: 60
@@ -139,11 +122,6 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
-      # app_store_connect QUI (a livello environment) è necessario per ios_signing
-      app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_ID
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
@@ -151,6 +129,7 @@ workflows:
         APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
         APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
         APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
+        BUNDLE_ID: to.fermentato.app
 
     cache:
       cache_paths:
@@ -181,9 +160,23 @@ workflows:
       - name: Copia web assets nel progetto iOS
         script: npx cap copy ios
 
+      - name: Inizializza keychain per code signing
+        script: keychain initialize
+
+      - name: Scarica profili di firma da App Store Connect
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --create
+
+      - name: Aggiungi certificati al keychain
+        script: keychain add-certificates
+
+      - name: Applica profili al progetto Xcode
+        script: xcode-project use-profiles
+
       - name: Build IPA per App Store
         script: |
-          xcode-project use-profiles
           xcode-project build-ipa \
             --workspace ios/App/App.xcworkspace \
             --scheme App
