@@ -31,23 +31,40 @@ export function BottomNavigation() {
   const notifActive    = isActive("/notifications");
   const attivitaActive = isActive("/feed");
   const cercaActive    = searchOpen;
-  const accountActive  = isActive("/profile") || isActive("/login") || isActive("/auth");
+  const accountActive  = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
 
   const Tab = ({
     active,
-    children,
-    onClick,
+    icon,
+    label,
+    badge,
   }: {
     active: boolean;
-    children: ReactNode;
-    onClick?: () => void;
+    icon: ReactNode;
+    label: string;
+    badge?: ReactNode;
   }) => (
-    <div
-      className={`bottom-nav-tab ${active ? "tab-active" : ""}`}
-      onClick={onClick}
-    >
-      <div className="bottom-nav-pill" />
-      {children}
+    <div className="flex-1 flex flex-col items-center justify-start gap-0.5 pt-2.5 cursor-pointer select-none">
+      <span
+        className={`relative inline-flex items-center justify-center transition-colors ${
+          active ? "text-primary" : "text-stone-400 dark:text-stone-500"
+        }`}
+      >
+        {icon}
+        {badge}
+      </span>
+      <span
+        className={`text-[10px] tracking-tight transition-colors ${
+          active ? "font-semibold text-primary" : "font-medium text-stone-500 dark:text-stone-400"
+        }`}
+      >
+        {label}
+      </span>
+      <span
+        className={`mt-0.5 h-1 w-1 rounded-full transition-all ${
+          active ? "bg-primary opacity-100 scale-100" : "opacity-0 scale-50"
+        }`}
+      />
     </div>
   );
 
@@ -56,88 +73,83 @@ export function BottomNavigation() {
       <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
 
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#15202B] rounded-t-3xl border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.08)] dark:shadow-[0_-8px_24px_-8px_rgba(0,0,0,0.4)]"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#15202B] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)]"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="flex items-stretch">
+        <div className="relative flex items-stretch h-[64px] px-2">
 
           {/* Home */}
           <Link href="/" className="flex-1 flex">
-            <Tab active={homeActive}>
-              <span className="nav-icon">
+            <Tab
+              active={homeActive}
+              label="Home"
+              icon={
                 <Home
                   className="h-[22px] w-[22px]"
                   strokeWidth={homeActive ? 2.5 : 1.8}
                   fill={homeActive ? "currentColor" : "none"}
                   style={homeActive ? { fillOpacity: 0.12 } : {}}
                 />
-              </span>
-              <span className="nav-label">Home</span>
-            </Tab>
+              }
+            />
           </Link>
 
           {/* Notifiche */}
           <Link href="/notifications" className="flex-1 flex">
-            <Tab active={notifActive}>
-              <span className="nav-icon relative">
+            <Tab
+              active={notifActive}
+              label="Notifiche"
+              icon={
                 <Bell
                   className="h-[22px] w-[22px]"
                   strokeWidth={notifActive ? 2.5 : 1.8}
                   fill={notifActive ? "currentColor" : "none"}
                   style={notifActive ? { fillOpacity: 0.12 } : {}}
                 />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1.5 min-w-[14px] h-[14px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-[3px] leading-none">
+              }
+              badge={
+                unreadCount > 0 ? (
+                  <span className="absolute -top-1 -right-2 min-w-[14px] h-[14px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-[3px] leading-none">
                     {unreadCount > 9 ? "9+" : unreadCount}
                   </span>
-                )}
-              </span>
-              <span className="nav-label">Notifiche</span>
-            </Tab>
+                ) : undefined
+              }
+            />
           </Link>
 
-          {/* Cerca */}
-          <button onClick={() => setSearchOpen(true)} className="flex-1 flex">
-            <Tab active={cercaActive}>
-              <span className="nav-icon">
-                <Search
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={cercaActive ? 2.5 : 1.8}
-                  fill={cercaActive ? "currentColor" : "none"}
-                  style={cercaActive ? { fillOpacity: 0.12 } : {}}
-                />
-              </span>
-              <span className="nav-label">Cerca</span>
-            </Tab>
-          </button>
+          {/* Spacer for FAB Cerca */}
+          <div className="w-16 flex-shrink-0" aria-hidden="true" />
 
           {/* Sociale */}
           <Link href="/feed" className="flex-1 flex">
-            <Tab active={attivitaActive}>
-              <span className="nav-icon">
+            <Tab
+              active={attivitaActive}
+              label="Sociale"
+              icon={
                 <Users
                   className="h-[22px] w-[22px]"
                   strokeWidth={attivitaActive ? 2.5 : 1.8}
                   fill={attivitaActive ? "currentColor" : "none"}
                   style={attivitaActive ? { fillOpacity: 0.12 } : {}}
                 />
-              </span>
-              <span className="nav-label">Sociale</span>
-            </Tab>
+              }
+            />
           </Link>
 
           {/* Account */}
           <Link href={isAuthenticated ? "/dashboard" : "/login"} className="flex-1 flex">
-            <Tab active={accountActive}>
-              <span className="nav-icon">
-                {avatarUrl ? (
+            <Tab
+              active={accountActive}
+              label="Account"
+              icon={
+                avatarUrl ? (
                   <img
                     src={avatarUrl}
                     alt="profilo"
-                    className={`h-[22px] w-[22px] rounded-full object-cover border-2 transition-all duration-200 ${
+                    className={`h-[22px] w-[22px] rounded-full object-cover border-2 transition-all ${
                       accountActive
                         ? "border-primary ring-1 ring-primary/30"
-                        : "border-stone-200 dark:border-stone-600"
+                        : "border-stone-200 dark:border-[#2F3D4D]"
                     }`}
                   />
                 ) : (
@@ -147,11 +159,25 @@ export function BottomNavigation() {
                     fill={accountActive ? "currentColor" : "none"}
                     style={accountActive ? { fillOpacity: 0.12 } : {}}
                   />
-                )}
-              </span>
-              <span className="nav-label">Account</span>
-            </Tab>
+                )
+              }
+            />
           </Link>
+
+          {/* FAB Cerca — centrale, sporge sopra la barra */}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Cerca"
+            className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-[0_8px_20px_rgba(232,119,34,0.45)] border-4 border-white dark:border-[#15202B] transition-transform active:scale-95 z-[1]"
+          >
+            <Search
+              className="w-6 h-6"
+              strokeWidth={2.5}
+              fill={cercaActive ? "currentColor" : "none"}
+              style={cercaActive ? { fillOpacity: 0.2 } : {}}
+            />
+          </button>
 
         </div>
       </nav>
