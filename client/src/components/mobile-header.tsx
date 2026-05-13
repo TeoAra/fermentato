@@ -1,4 +1,4 @@
-import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Bell, Activity, QrCode, Building2, Zap, Star, MapPin, ChevronRight, Home, PlusCircle, MessageSquare, ArrowLeft, Download } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Bell, Activity, QrCode, Building2, Zap, Star, MapPin, ChevronRight, Home, PlusCircle, MessageSquare, ArrowLeft, Download, Sparkles } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -396,8 +396,19 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
           </div>
 
-          {/* ── Footer: theme + logout ── */}
+          {/* ── Footer: tutorial + theme + logout ── */}
           <div className="px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+4rem)]">
+            <button
+              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground hover:bg-stone-50 dark:hover:bg-white/5 transition-colors tap-scale"
+              onClick={() => {
+                onMenuToggle();
+                window.dispatchEvent(new CustomEvent("fermenta:open-onboarding"));
+              }}
+              data-testid="button-replay-tutorial"
+            >
+              <Sparkles style={{ width: '18px', height: '18px' }} className="text-primary" />
+              <span className="text-sm font-semibold">Rivedi tutorial</span>
+            </button>
             <div className="flex items-center justify-between px-3 py-2">
               <span className="text-sm text-muted-foreground font-medium">Tema</span>
               <ThemeToggle />

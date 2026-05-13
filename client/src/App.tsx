@@ -13,6 +13,7 @@ import { NavigationProgress } from "@/components/navigation-progress";
 import Lightbox from "@/components/lightbox";
 import { PwaInstallPrompt, PushNotificationPrompt, AutoPushSubscriber, CapacitorPushPrompt, CapacitorLocationPrompt } from "@/components/pwa-prompt";
 import { MobileHeader } from "@/components/mobile-header";
+import { OnboardingTutorial } from "@/components/OnboardingTutorial";
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { DesktopSidebar } from "@/components/desktop-sidebar";
 import CookieBanner from "@/components/CookieBanner";
@@ -332,6 +333,9 @@ function Router() {
 
       {/* Bottom Navigation — fixed to viewport, outside main-content-wrapper to avoid will-change:transform containing-block trap */}
       <BottomNavigation />
+
+      {/* Tutorial iniziale (mostrato al primo avvio in PWA installata o app nativa) */}
+      <OnboardingTutorial />
     </div>
   );
 }
