@@ -1,0 +1,26 @@
+error during build:
+Build failed with 1 error:
+
+Error: [vite]: Rolldown failed to resolve import "react-is" from "/www/nodeapps/fermenta/node_modules/recharts/es6/util/ReactUtils.js".
+This is most likely unintended because it can break your application at runtime.
+If you do want to externalize this module explicitly add it to
+`build.rolldownOptions.external`
+    at viteLog (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/node.js:33145:57)
+    at file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/node.js:33181:71
+    at onwarn (file:///www/nodeapps/fermenta/node_modules/@vitejs/plugin-react/dist/index.js:40:7)
+    at file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/node.js:33181:28
+    at onRollupLog (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/node.js:33176:63)
+    at onLog (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/node.js:32945:4)
+    at file:///www/nodeapps/fermenta/node_modules/rolldown/dist/shared/rolldown-build-D_ShytiL.mjs:50:26
+    at logger (file:///www/nodeapps/fermenta/node_modules/rolldown/dist/shared/rolldown-build-D_ShytiL.mjs:41:3)
+    at onLog (file:///www/nodeapps/fermenta/node_modules/rolldown/dist/shared/bindingify-input-options-zrVFGksD.mjs:2013:32)
+    at aggregateBindingErrorsIntoJsError (file:///www/nodeapps/fermenta/node_modules/rolldown/dist/shared/error-BrnLyQ-g.mjs:48:18)
+    at unwrapBindingResult (file:///www/nodeapps/fermenta/node_modules/rolldown/dist/shared/error-BrnLyQ-g.mjs:18:128)
+    at #build (file:///www/nodeapps/fermenta/node_modules/rolldown/dist/shared/rolldown-build-D_ShytiL.mjs:3257:34)
+    at async buildEnvironment (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/node.js:33052:64)
+    at async Object.build (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/node.js:33474:19)
+    at async Object.buildApp (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/chunks/node.js:33471:153)
+    at async CAC.<anonymous> (file:///www/nodeapps/fermenta/node_modules/vite/dist/node/cli.js:778:3) {
+  errors: [Getter/Setter]
+}
+root@luppolino:/www/nodeapps/fermenta#
