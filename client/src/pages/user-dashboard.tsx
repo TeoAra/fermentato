@@ -102,7 +102,7 @@ export default function UserDashboard() {
       {/* Content */}
       <div className="relative z-10">
         <div className="flex items-center justify-between mb-4">
-          <div className={`p-3 rounded-xl bg-gradient-to-br ${gradient} bg-opacity-10 group-hover:bg-opacity-20 transition-all duration-300`}>
+          <div className={`p-3 rounded-xl bg-gradient-to-br ${gradient} opacity-10 group-hover:opacity-20 transition-all duration-300`}>
             <Icon className={`h-6 w-6 text-transparent bg-gradient-to-br ${gradient} bg-clip-text`} />
           </div>
           <div className="flex items-center space-x-2">

@@ -1,6 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@config "../../tailwind.config.ts";
+
+/* Tailwind v4 compat: borders default to currentColor in v4; restore v3 default (gray-200) */
+@layer base {
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    border-color: #e5e7eb;
+  }
+  .dark *, .dark ::after, .dark ::before, .dark ::backdrop, .dark ::file-selector-button {
+    border-color: hsl(var(--border));
+  }
+}
 
 /* Tiptap rich text editor */
 .tiptap p.is-editor-empty:first-child::before {
