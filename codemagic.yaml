@@ -45,6 +45,11 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
+      # app_store_connect QUI (a livello environment) è necessario per ios_signing
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
@@ -87,7 +92,7 @@ workflows:
         script: |
           # Legge la versione da package.json e la imposta nell'Info.plist
           VERSION=$(node -p "require('./package.json').version")
-          BUILD=$GITHUB_RUN_NUMBER
+          BUILD=$CM_BUILD_NUMBER
           xcrun agvtool new-marketing-version "$VERSION"
           xcrun agvtool new-version -all "${BUILD:-1}"
 
@@ -134,13 +139,14 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
+      # app_store_connect QUI (a livello environment) è necessario per ios_signing
+      app_store_connect:
+        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+        key_id: $APP_STORE_CONNECT_KEY_ID
+        issuer_id: $APP_STORE_CONNECT_ISSUER_ID
       ios_signing:
         distribution_type: app_store
         bundle_identifier: to.fermentato.app
-      # Aggiungi questi secret in Codemagic → Team settings → Environment variables:
-      # APP_STORE_CONNECT_ISSUER_ID
-      # APP_STORE_CONNECT_KEY_ID
-      # APP_STORE_CONNECT_PRIVATE_KEY (contenuto del file .p8)
       vars:
         APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
         APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
