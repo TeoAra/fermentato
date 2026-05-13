@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# Codemagic CI/CD — Fermenta.to iOS IPA (firma automatica, senza Mac fisico)
+# Codemagic CI/CD — Fermenta.to iOS IPA (firma manuale via script)
 # ═══════════════════════════════════════════════════════════════════════════════
 
 workflows:
@@ -21,9 +21,6 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: to.fermentato.app
       vars:
         APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
         APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
@@ -65,12 +62,15 @@ workflows:
           xcrun agvtool new-marketing-version "$VERSION"
           xcrun agvtool new-version -all "${CM_BUILD_NUMBER:-1}"
 
-      - name: Inizializza keychain per code signing
+      - name: Inizializza keychain
         script: keychain initialize
 
-      - name: Scarica profili di firma da App Store Connect
+      - name: Scarica certificati e profili da App Store Connect
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_ID" \
+            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY" \
             --type IOS_APP_STORE \
             --create
 
@@ -122,9 +122,6 @@ workflows:
       node: "20"
       xcode: latest
       cocoapods: default
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: to.fermentato.app
       vars:
         APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
         APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
@@ -160,12 +157,15 @@ workflows:
       - name: Copia web assets nel progetto iOS
         script: npx cap copy ios
 
-      - name: Inizializza keychain per code signing
+      - name: Inizializza keychain
         script: keychain initialize
 
-      - name: Scarica profili di firma da App Store Connect
+      - name: Scarica certificati e profili da App Store Connect
         script: |
           app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --issuer-id "$APP_STORE_CONNECT_ISSUER_ID" \
+            --key-id "$APP_STORE_CONNECT_KEY_ID" \
+            --private-key "$APP_STORE_CONNECT_PRIVATE_KEY" \
             --type IOS_APP_STORE \
             --create
 
