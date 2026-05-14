@@ -494,7 +494,8 @@ export function CapacitorPushPrompt() {
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (!isNative || !isAuthenticated) return;
+    // Su Android 13+ il permesso notifiche va richiesto esplicitamente anche senza login
+    if (!isNative) return;
 
     const status = localStorage.getItem('capacitor-push-permission');
     if (status) return; // già gestito
@@ -505,7 +506,9 @@ export function CapacitorPushPrompt() {
       if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return;
     }
 
-    const timer = setTimeout(() => setShow(true), 6000);
+    // Se autenticato mostra subito dopo 3s, altrimenti dopo 8s (dà tempo al caricamento)
+    const delay = isAuthenticated ? 3000 : 8000;
+    const timer = setTimeout(() => setShow(true), delay);
     return () => clearTimeout(timer);
   }, [isNative, isAuthenticated]);
 

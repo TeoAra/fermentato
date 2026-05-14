@@ -123,12 +123,26 @@ export default function Home() {
     };
   }, []);
 
-  const handleRequestLocation = useCallback(() => {
+  const handleRequestLocation = useCallback(async () => {
+    setLocationStatus('requesting');
+    // Su nativo (Android/iOS) usa il plugin Capacitor — mostra il dialog di sistema
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const perm = await Geolocation.requestPermissions();
+        if (perm.location === 'granted' || (perm.location as string) === 'limited') {
+          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000 });
+          applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy ?? 999 } } as any);
+        } else {
+          setLocationStatus('denied');
+        }
+      } catch { setLocationStatus('denied'); }
+      return;
+    }
+    // PWA: browser API
     if (!navigator.geolocation) return;
     if (autoWatchRef.current !== null) { navigator.geolocation.clearWatch(autoWatchRef.current); autoWatchRef.current = null; }
     if (manualWatchRef.current !== null) { navigator.geolocation.clearWatch(manualWatchRef.current); manualWatchRef.current = null; }
     lastAccuracyRef.current = Infinity;
-    setLocationStatus('requesting');
     const wid = navigator.geolocation.watchPosition(
       (pos) => {
         applyPosition(pos);

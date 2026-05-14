@@ -282,6 +282,7 @@ interface SmartPubDashboardProps {
 }
 
 const isIosDevice = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+const isNativeAndroid = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.() && !isIosDevice;
 
 export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps = {}) {
   const { user, isAuthenticated } = useAuth();
@@ -796,9 +797,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               {(() => {
                   const tvUrl = `${window.location.origin}/tv/${currentPub?.id}`;
 
-                  // Rileva se il Cast SDK è effettivamente caricato (indipendente dall'OS/browser)
-                  // Se castState === "unavailable" il SDK non è disponibile in questo contesto
-                  const castSdkLoaded = castState !== "unavailable";
+                  // Su Android nativo mostriamo sempre il pulsante Cast (il plugin può
+                  // impiegare qualche istante ad inizializzarsi dopo il montaggio del componente).
+                  // Su browser/PWA lo nascondiamo se il Cast SDK non è stato caricato.
+                  const castSdkLoaded = castState !== "unavailable" || isNativeAndroid;
 
                   return (
                     <div className="space-y-3">
