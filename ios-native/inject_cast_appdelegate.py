@@ -20,17 +20,13 @@ if "GCKCastContext.setSharedInstanceWith" in txt:
     print("GCKCastContext già presente in AppDelegate — skip")
     sys.exit(0)
 
-# 1. Aggiungi 'import GoogleCast' dopo 'import UIKit'
-if "import GoogleCast" not in txt:
-    txt = re.sub(
-        r"^(import UIKit)",
-        r"\1\nimport GoogleCast",
-        txt,
-        count=1,
-        flags=re.MULTILINE,
-    )
+# NOTA: 'import GoogleCast' NON viene iniettato qui.
+# Le classi GCK sono disponibili tramite il bridging header App-Bridging-Header.h
+# che Xcode carica automaticamente per tutti i file Swift del target App.
+# Aggiungere 'import GoogleCast' causerebbe "unable to resolve module dependency"
+# con Xcode 16 + XCFramework binari (bug noto Google Cast iOS SDK).
 
-# 2. Inietta il setup di GCKCastContext prima del primo 'return true'
+# Inietta il setup di GCKCastContext prima del primo 'return true'
 #    che si trova in application(_:didFinishLaunchingWithOptions:)
 cast_block = (
     "        // Google Cast SDK — inizializzato all'avvio per avviare discovery dispositivi\n"
