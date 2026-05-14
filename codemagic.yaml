@@ -66,11 +66,8 @@ workflows:
           fi
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
-          # Aggiungi Google Cast SDK (variante senza Bluetooth — iOS 13+)
-          # :modular_headers => true è OBBLIGATORIO per importare GoogleCast in Swift
-          # senza di esso Xcode fallisce con "unable to resolve module dependency"
-          sed -i '' "/capacitor_pods/a\\  pod 'google-cast-sdk-no-bluetooth', :modular_headers => true" ios/App/Podfile
-          echo "Podfile aggiornato:"; cat ios/App/Podfile
+          echo "Podfile pronto (nessun pod extra — AirPlay nativo su iOS):"
+          cat ios/App/Podfile
           cd ios/App && pod install
 
       - name: Copia web assets e plugin Swift nel progetto iOS
@@ -84,10 +81,9 @@ workflows:
           # Xcode lo ignora e il plugin Capacitor non si registra.
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
-          # Inietta GCKCastContext.setSharedInstanceWith nell'AppDelegate
-          # La discovery deve partire all'avvio, non quando JS chiama initialize()
-          python3 ios-native/inject_cast_appdelegate.py \
-            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
+          # NOTA: inject_cast_appdelegate.py NON viene più chiamato.
+          # Il Google Cast iOS SDK causa errori irrisolvibili con Xcode 16 + use_frameworks!
+          # Su iOS si usa AirPlay nativo; il pulsante Cast è mostrato solo su Android.
 
       - name: Genera icone app iOS
         script: |
@@ -270,8 +266,8 @@ workflows:
           fi
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
-          sed -i '' "/capacitor_pods/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile
-          echo "Podfile aggiornato:"; cat ios/App/Podfile
+          echo "Podfile pronto (nessun pod extra — AirPlay nativo su iOS):"
+          cat ios/App/Podfile
           cd ios/App && pod install
 
       - name: Copia web assets e plugin Swift nel progetto iOS
@@ -284,10 +280,9 @@ workflows:
           # Xcode lo ignora e il plugin Capacitor non si registra.
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
-          # Inietta GCKCastContext.setSharedInstanceWith nell'AppDelegate
-          # La discovery deve partire all'avvio, non quando JS chiama initialize()
-          python3 ios-native/inject_cast_appdelegate.py \
-            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
+          # NOTA: inject_cast_appdelegate.py NON viene più chiamato.
+          # Il Google Cast iOS SDK causa errori irrisolvibili con Xcode 16 + use_frameworks!
+          # Su iOS si usa AirPlay nativo; il pulsante Cast è mostrato solo su Android.
 
       - name: Genera icone app iOS
         script: |

@@ -806,7 +806,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   // Su Android nativo mostriamo sempre il pulsante Cast (il plugin può
                   // impiegare qualche istante ad inizializzarsi dopo il montaggio del componente).
                   // Su browser/PWA lo nascondiamo se il Cast SDK non è stato caricato.
-                  const castSdkLoaded = castState !== "unavailable" || isNativeAndroid || isNativeIos;
+                  // iOS nativo: SOLO AirPlay (Google Cast SDK non è compatibile con Xcode 16).
+                  const castSdkLoaded = castState !== "unavailable" || isNativeAndroid;
 
                   return (
                     <div className="space-y-3">
