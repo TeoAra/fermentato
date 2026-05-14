@@ -1,7 +1,19 @@
 # ═══════════════════════════════════════════════════════════════════════════════
-# Codemagic CI/CD — Fermenta.to iOS IPA
-# Usa Apple Developer Portal integration (configurata in Team settings → Integrations)
-# Le credenziali vengono lette automaticamente dall'integrazione UI.
+# Codemagic CI/CD — Fermenta.to
+#
+# Tre workflow:
+#   ios-development  → push su main  → IPA firmato su TestFlight
+#   ios-appstore     → tag v*        → IPA per App Store review
+#   android-apk      → push su main  → APK debug scaricabile + pronto per Play Store
+#
+# Integrazioni richieste (Codemagic → Team settings → Integrations):
+#   • Apple Developer Portal: "Fermenta.to"
+#
+# Variabili d'ambiente da impostare in Codemagic (Environment variables):
+#   CAST_APP_ID      → ID receiver Chromecast (default: CC1AD845)
+#   APNS_KEY_ID      → Apple Push key ID (10 caratteri)
+#   APNS_TEAM_ID     → Apple Team ID (10 caratteri)
+#   APNS_P8_KEY      → Contenuto file .p8 con \n letterali
 # ═══════════════════════════════════════════════════════════════════════════════
 
 workflows:
@@ -28,6 +40,7 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
+        CAST_APP_ID: CC1AD845
 
     cache:
       cache_paths:
@@ -205,6 +218,7 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
+        CAST_APP_ID: CC1AD845
 
     cache:
       cache_paths:
