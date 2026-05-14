@@ -53,10 +53,17 @@ workflows:
           fi
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
+          # Aggiungi Google Cast SDK (variante senza Bluetooth — iOS 13+)
+          sed -i '' "/capacitor_pods/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile
+          echo "Podfile aggiornato:"; cat ios/App/Podfile
           cd ios/App && pod install
 
-      - name: Copia web assets nel progetto iOS
-        script: npx cap copy ios
+      - name: Copia web assets e plugin Swift nel progetto iOS
+        script: |
+          npx cap copy ios
+          # Copia il plugin NativeCast nel target App
+          cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
+          echo "NativeCast.swift copiato in ios/App/App/"
 
       - name: Genera icone app iOS
         script: |
@@ -98,16 +105,22 @@ workflows:
       - name: Aggiungi purpose strings al Info.plist
         script: |
           PLIST="ios/App/App/Info.plist"
+          CAST_APP_ID="${CAST_APP_ID:-CC1AD845}"
           /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST" 2>/dev/null || \
-            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'\''app.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'\''app.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSLocationAlwaysAndWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSLocationAlwaysAndWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocalNetworkUsageDescription string 'Fermenta.to usa la rete locale per trovare dispositivi Chromecast vicini.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocalNetworkUsageDescription 'Fermenta.to usa la rete locale per trovare dispositivi Chromecast vicini.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices array" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:0 string '_googlecast._tcp'" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:1 string '_${CAST_APP_ID}._googlecast._tcp'" "$PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
           echo "Info.plist aggiornato:"
@@ -217,10 +230,15 @@ workflows:
           fi
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
+          sed -i '' "/capacitor_pods/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile
+          echo "Podfile aggiornato:"; cat ios/App/Podfile
           cd ios/App && pod install
 
-      - name: Copia web assets nel progetto iOS
-        script: npx cap copy ios
+      - name: Copia web assets e plugin Swift nel progetto iOS
+        script: |
+          npx cap copy ios
+          cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
+          echo "NativeCast.swift copiato in ios/App/App/"
 
       - name: Genera icone app iOS
         script: |
@@ -276,18 +294,26 @@ workflows:
       - name: Aggiungi purpose strings al Info.plist
         script: |
           PLIST="ios/App/App/Info.plist"
+          CAST_APP_ID="${CAST_APP_ID:-CC1AD845}"
           /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST"
-          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST" 2>/dev/null || \
-            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'\''app.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'\''app.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSLocationAlwaysAndWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSLocationAlwaysAndWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocalNetworkUsageDescription string 'Fermenta.to usa la rete locale per trovare dispositivi Chromecast vicini.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocalNetworkUsageDescription 'Fermenta.to usa la rete locale per trovare dispositivi Chromecast vicini.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices array" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:0 string '_googlecast._tcp'" "$PLIST" 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:1 string '_${CAST_APP_ID}._googlecast._tcp'" "$PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          echo "Info.plist aggiornato:"
+          /usr/libexec/PlistBuddy -c "Print" "$PLIST"
 
       - name: Inizializza keychain
         script: keychain initialize
