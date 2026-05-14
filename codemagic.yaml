@@ -76,12 +76,19 @@ workflows:
           echo "Info.plist aggiornato:"
           /usr/libexec/PlistBuddy -c "Print" "$PLIST"
 
-      - name: Imposta versione app
+      - name: Imposta versione e build number
         script: |
+          set -e
           VERSION=$(node -p "require('./package.json').version")
+          BUILD_NUM=$(date +%s)
           cd ios/App
-          xcrun agvtool new-marketing-version "$VERSION"
-          xcrun agvtool new-version -all "${CM_BUILD_NUMBER:-1}"
+          sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = $VERSION;/g" App.xcodeproj/project.pbxproj
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9.]*;/CURRENT_PROJECT_VERSION = $BUILD_NUM;/g" App.xcodeproj/project.pbxproj
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" App/Info.plist 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $VERSION" App/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" App/Info.plist 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $BUILD_NUM" App/Info.plist
+          echo "Version: $VERSION  Build: $BUILD_NUM"
 
       - name: Inizializza keychain
         script: keychain initialize
@@ -177,6 +184,20 @@ workflows:
 
       - name: Copia web assets nel progetto iOS
         script: npx cap copy ios
+
+      - name: Imposta versione e build number
+        script: |
+          set -e
+          VERSION=$(node -p "require('./package.json').version")
+          BUILD_NUM=$(date +%s)
+          cd ios/App
+          sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = $VERSION;/g" App.xcodeproj/project.pbxproj
+          sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9.]*;/CURRENT_PROJECT_VERSION = $BUILD_NUM;/g" App.xcodeproj/project.pbxproj
+          /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" App/Info.plist 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Add :CFBundleShortVersionString string $VERSION" App/Info.plist
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUM" App/Info.plist 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $BUILD_NUM" App/Info.plist
+          echo "Version: $VERSION  Build: $BUILD_NUM"
 
       - name: Aggiungi purpose strings al Info.plist
         script: |
