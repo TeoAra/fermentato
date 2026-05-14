@@ -1,16 +1,16 @@
 {
   "project_info": {
     "project_number": "000000000000",
-    "firebase_url": "https://fermenta-placeholder.firebaseio.com",
-    "project_id": "fermenta-placeholder",
-    "storage_bucket": "fermenta-placeholder.appspot.com"
+    "firebase_url": "https://fermentato-placeholder.firebaseio.com",
+    "project_id": "fermentato-placeholder",
+    "storage_bucket": "fermentato-placeholder.appspot.com"
   },
   "client": [
     {
       "client_info": {
         "mobilesdk_app_id": "1:000000000000:android:0000000000000000",
         "android_client_info": {
-          "package_name": "to.fermenta.app"
+          "package_name": "to.fermentato.app"
         }
       },
       "oauth_client": [],

@@ -1,8 +1,8 @@
 name: Build Android APK
 
+# Build Android ora gestito da Codemagic (workflow android-apk).
+# Questo workflow rimane solo per esecuzioni manuali se necessario.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -34,7 +34,7 @@ jobs:
           sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools"
 
       - name: Install Node dependencies
-        run: npm ci
+        run: npm ci --legacy-peer-deps
 
       - name: Build web assets
         run: |
