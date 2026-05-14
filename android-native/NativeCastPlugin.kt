@@ -6,9 +6,6 @@ import com.getcapacitor.PluginCall
 import com.getcapacitor.PluginMethod
 import com.getcapacitor.annotation.CapacitorPlugin
 import com.google.android.gms.cast.CastMediaControlIntent
-import com.google.android.gms.cast.MediaInfo
-import com.google.android.gms.cast.MediaLoadRequestData
-import com.google.android.gms.cast.MediaMetadata
 import com.google.android.gms.cast.framework.CastContext
 import com.google.android.gms.cast.framework.CastSession
 import com.google.android.gms.cast.framework.CastState
@@ -16,6 +13,7 @@ import com.google.android.gms.cast.framework.SessionManager
 import com.google.android.gms.cast.framework.SessionManagerListener
 import androidx.mediarouter.app.MediaRouteChooserDialog
 import androidx.mediarouter.media.MediaRouteSelector
+import org.json.JSONObject
 
 // ─── Capacitor plugin: NativeCast (Android) ──────────────────────────────────
 // Mirrors the iOS NativeCast Swift plugin, wrapping the Google Cast Android SDK.
@@ -36,16 +34,29 @@ class NativeCastPlugin : Plugin() {
     private var pendingTitle: String? = null
     private var pendingCall: PluginCall? = null
 
+    // ── Lazy init helper — usa Activity context (richiesto da CastContext) ────
+    private fun getOrInitCastContext(): CastContext? {
+        if (castContext != null) return castContext
+        return try {
+            // activity è il contesto corretto per CastContext su Android
+            castContext = CastContext.getSharedInstance(activity)
+            castContext?.sessionManager?.addSessionManagerListener(
+                sessionListener, CastSession::class.java
+            )
+            castContext
+        } catch (e: Exception) {
+            null
+        }
+    }
+
     private val sessionListener = object : SessionManagerListener<CastSession> {
         override fun onSessionStarted(session: CastSession, sessionId: String) {
-            val url = pendingUrl
+            val url   = pendingUrl
             val title = pendingTitle
-            val call = pendingCall
+            val call  = pendingCall
             if (url != null) {
-                loadMedia(session, url, title ?: "Fermenta.to")
-                pendingUrl = null
-                pendingTitle = null
-                pendingCall = null
+                sendUrlMessage(session, url, title ?: "Fermenta.to")
+                pendingUrl = null; pendingTitle = null; pendingCall = null
                 call?.resolve(JSObject().put("success", true))
             }
             notifyState()
@@ -63,34 +74,33 @@ class NativeCastPlugin : Plugin() {
             notifyState()
         }
 
-        override fun onSessionStarting(session: CastSession) = notifyState()
-        override fun onSessionResumed(session: CastSession, wasSuspended: Boolean) = notifyState()
-        override fun onSessionResuming(session: CastSession, sessionId: String) = notifyState()
-        override fun onSessionEnding(session: CastSession) = notifyState()
-        override fun onSessionSuspended(session: CastSession, reason: Int) = notifyState()
+        override fun onSessionStarting(session: CastSession)                             = notifyState()
+        override fun onSessionResumed(session: CastSession, wasSuspended: Boolean)       = notifyState()
+        override fun onSessionResuming(session: CastSession, sessionId: String)          = notifyState()
+        override fun onSessionEnding(session: CastSession)                               = notifyState()
+        override fun onSessionSuspended(session: CastSession, reason: Int)               = notifyState()
     }
 
     override fun load() {
-        try {
-            castContext = CastContext.getSharedInstance(context)
-            castContext?.sessionManager?.addSessionManagerListener(sessionListener, CastSession::class.java)
-        } catch (e: Exception) {
-            // Cast SDK not available (emulator / device without Play Services)
-        }
+        // Inizializzazione anticipata — se fallisce verrà ritentata in showPickerAndLoad
+        getOrInitCastContext()
     }
 
     override fun handleOnDestroy() {
         try {
-            castContext?.sessionManager?.removeSessionManagerListener(sessionListener, CastSession::class.java)
+            castContext?.sessionManager?.removeSessionManagerListener(
+                sessionListener, CastSession::class.java
+            )
         } catch (_: Exception) {}
     }
 
     @PluginMethod
     fun initialize(call: PluginCall) {
-        try {
+        val ctx = getOrInitCastContext()
+        if (ctx != null) {
             notifyState()
             call.resolve(JSObject().put("success", true))
-        } catch (e: Exception) {
+        } else {
             call.resolve(JSObject().put("success", false))
         }
     }
@@ -99,13 +109,17 @@ class NativeCastPlugin : Plugin() {
     fun showPickerAndLoad(call: PluginCall) {
         val url   = call.getString("url")   ?: return call.reject("url required")
         val title = call.getString("title") ?: "Fermenta.to"
-        val ctx   = castContext ?: return call.resolve(JSObject().put("success", false))
+
+        // Ritenta l'inizializzazione se la prima volta è fallita
+        val ctx = getOrInitCastContext()
+            ?: return call.resolve(JSObject().put("success", false))
 
         activity.runOnUiThread {
             try {
                 val session = ctx.sessionManager.currentCastSession
                 if (session != null && session.isConnected) {
-                    loadMedia(session, url, title)
+                    // Sessione già attiva: invia subito il messaggio
+                    sendUrlMessage(session, url, title)
                     call.resolve(JSObject().put("success", true))
                 } else {
                     // Salva il pending load — verrà eseguito quando la sessione parte
@@ -122,6 +136,7 @@ class NativeCastPlugin : Plugin() {
                     dialog.show()
                 }
             } catch (e: Exception) {
+                pendingUrl = null; pendingTitle = null; pendingCall = null
                 call.resolve(JSObject().put("success", false))
             }
         }
@@ -142,18 +157,18 @@ class NativeCastPlugin : Plugin() {
 
     // ── Helpers ──────────────────────────────────────────────────────────────
 
-    private fun loadMedia(session: CastSession, url: String, title: String) {
+    /**
+     * Invia l'URL al Custom Web Receiver tramite sendMessage.
+     * Il receiver (https://fermenta.to/tv/<id>) ascolta "urn:x-cast:fermenta.to"
+     * e naviga all'URL ricevuto — stessa logica del client web in useChromecast.ts.
+     */
+    private fun sendUrlMessage(session: CastSession, url: String, title: String) {
         try {
-            val meta = MediaMetadata(MediaMetadata.MEDIA_TYPE_GENERIC)
-            meta.putString(MediaMetadata.KEY_TITLE, title)
-            val info = MediaInfo.Builder(url)
-                .setStreamType(MediaInfo.STREAM_TYPE_NONE)
-                .setContentType("text/html")
-                .setMetadata(meta)
-                .build()
-            session.remoteMediaClient?.load(
-                MediaLoadRequestData.Builder().setMediaInfo(info).build()
-            )
+            val payload = JSONObject()
+                .put("url", url)
+                .put("title", title)
+                .toString()
+            session.sendMessage("urn:x-cast:fermenta.to", payload)
         } catch (_: Exception) {}
         notifyState()
     }
