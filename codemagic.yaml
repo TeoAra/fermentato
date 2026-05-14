@@ -85,6 +85,8 @@ workflows:
           ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
           mkdir -p "$ICONSET"
           sips -z 1024 1024 "$ICON_SRC" --out /tmp/icon-1024.png
+          # Rimuovi alpha channel — Apple rifiuta icone trasparenti (errore 90717)
+          sips --setProperty hasAlpha false /tmp/icon-1024.png
           for size in 20 29 40 58 60 76 80 87 120 152 167 180 1024; do
             sips -z $size $size /tmp/icon-1024.png --out "$ICONSET/Icon-${size}.png" 2>/dev/null || true
           done
@@ -268,6 +270,8 @@ workflows:
           ICONSET="ios/App/App/Assets.xcassets/AppIcon.appiconset"
           mkdir -p "$ICONSET"
           sips -z 1024 1024 "$ICON_SRC" --out /tmp/icon-1024.png
+          # Rimuovi alpha channel — Apple rifiuta icone trasparenti (errore 90717)
+          sips --setProperty hasAlpha false /tmp/icon-1024.png
           for size in 20 29 40 58 60 76 80 87 120 152 167 180 1024; do
             sips -z $size $size /tmp/icon-1024.png --out "$ICONSET/Icon-${size}.png" 2>/dev/null || true
           done

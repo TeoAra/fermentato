@@ -1,0 +1,75 @@
+== Gathering artifacts ==
+
+== Publishing artifacts ==
+
+Publishing artifact App.ipa
+Publishing artifact fermentato_38_artifacts.zip
+Publishing App.ipa to App Store Connect
+> app-store-connect publish --path /Users/builder/clone/build/ios/ipa/App.ipa
+
+Publish "/Users/builder/clone/build/ios/ipa/App.ipa" to App Store Connect
+App name: Fermenta.to
+Bundle identifier: to.fermentato.app
+Certificate expires: 2027-05-14T13:15:25.000+0000
+Distribution type: App Store
+Min OS version: 16.0
+Provisioned devices: N/A
+Provisions all devices: No
+Supported platforms: iPhoneOS
+Version code: 1778765123
+Version: 1.0.0
+
+Upload "/Users/builder/clone/build/ios/ipa/App.ipa" to App Store Connect
+Running altool at path '/Applications/Xcode-26.4.app/Contents/SharedFrameworks/ContentDelivery.framework/Resources/altool'...
+
+26.30.4 (173004)
+Running altool at path '/Applications/Xcode-26.4.app/Contents/SharedFrameworks/ContentDelivery.framework/Resources/altool'...
+
+2026-05-14 13:27:44.426 ERROR: [ContentDelivery.Uploader.7B3050700] 
+=======================================
+UPLOAD FAILED with 1 error
+=======================================
+2026-05-14 13:27:44.430 ERROR: [altool.10370AD20] ExitFailure (31)
+{
+  "os-version" : "Version 26.4.1 (Build 25E253)",
+  "product-errors" : [
+    {
+      "code" : 90717,
+      "message" : "Invalid large app icon. The large app icon in the asset catalog in “App.app” can’t be transparent or contain an alpha channel. For details, visit: https://developer.apple.com/design/human-interface-guidelines/app-icons.",
+      "underlying-errors" : [
+        {
+          "code" : -19241,
+          "message" : "A server error occurred.",
+          "underlying-errors" : [
+
+          ],
+          "user-info" : {
+            "NSLocalizedDescription" : "A server error occurred.",
+            "code" : "90717",
+            "description" : "Invalid large app icon. The large app icon in the asset catalog in “App.app” can’t be transparent or contain an alpha channel. For details, visit: https://developer.apple.com/design/human-interface-guidelines/app-icons."
+          }
+        }
+      ],
+      "user-info" : {
+        "NSLocalizedDescription" : "Invalid large app icon. The large app icon in the asset catalog in “App.app” can’t be transparent or contain an alpha channel. For details, visit: https://developer.apple.com/design/human-interface-guidelines/app-icons.",
+        "NSLocalizedFailureReason" : "The server’s response was: ‘{\n    code = 90717;\n    description = \"Invalid large app icon. The large app icon in the asset catalog in \\U201cApp.app\\U201d can\\U2019t be transparent or contain an alpha channel. For details, visit: https://developer.apple.com/design/human-interface-guidelines/app-icons.\";\n}’.",
+        "NSUnderlyingError" : "Error Domain=IrisAPI Code=-19241 \"A server error occurred.\" UserInfo={code=90717, NSLocalizedDescription=A server error occurred., description=Invalid large app icon. The large app icon in the asset catalog in “App.app” can’t be transparent or contain an alpha channel. For details, visit: https://developer.apple.com/design/human-interface-guidelines/app-icons.}",
+        "iris-code" : "90717"
+      }
+    }
+  ],
+  "tool-path" : "/Applications/Xcode-26.4.app/Contents/SharedFrameworks/ContentDelivery.framework/Resources",
+  "tool-version" : "26.30.4 (173004)"
+}
+
+Failed to upload archive at "/Users/builder/clone/build/ios/ipa/App.ipa"
+Failed to publish /Users/builder/clone/build/ios/ipa/App.ipa
+
+Failed to publish App.ipa to App Store Connect.
+
+Build failed :|
+
+
+Publishing failed :|
+Failed to publish App.ipa to App Store Connect.
+

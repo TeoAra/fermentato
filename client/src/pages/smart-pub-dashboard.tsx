@@ -81,6 +81,7 @@ import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
 import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
+import { QRCodeSVG } from "qrcode.react";
 import { Cast, Share2, Link as LinkIcon, Tv, Info, QrCode, Bot } from "lucide-react";
 import BotConnectCard from "@/components/BotConnectCard";
 
@@ -890,6 +891,47 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
+                      </div>
+
+                      {/* ── Condividi — share nativo (Android/iOS) ── */}
+                      <div className="flex gap-2">
+                        {typeof navigator !== 'undefined' && 'share' in navigator && (
+                          <Button
+                            variant="outline"
+                            className="flex-1 gap-2 rounded-xl"
+                            onClick={() => {
+                              navigator.share({
+                                title: `Taplist ${currentPub?.name || ''} — Fermenta.to`,
+                                text: 'Guarda la taplist live su TV',
+                                url: tvUrl,
+                              }).catch(() => {});
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                            </svg>
+                            Condividi link
+                          </Button>
+                        )}
+                        <Button
+                          variant="outline"
+                          className="flex-1 gap-2 rounded-xl"
+                          onClick={() => { navigator.clipboard?.writeText(tvUrl).catch(() => {}); toast({ title: "Link copiato negli appunti!" }); }}
+                        >
+                          <LinkIcon className="h-4 w-4" />
+                          Copia link
+                        </Button>
+                      </div>
+
+                      {/* ── QR Code per puntare la TV con il telefono ── */}
+                      <div className="border border-border rounded-xl p-4 flex flex-col items-center gap-2 bg-white dark:bg-card">
+                        <p className="text-xs text-muted-foreground font-medium text-center">
+                          Inquadra con la TV o scansiona con un altro dispositivo
+                        </p>
+                        <div className="bg-white rounded-lg p-2">
+                          <PubQRCode pubId={currentPub?.id} pubName={currentPub?.name || ""} pubSlug={(currentPub as any)?.slug} compact />
+                        </div>
                       </div>
 
                     </div>
