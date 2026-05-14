@@ -86,7 +86,10 @@ workflows:
           mkdir -p "$ICONSET"
           sips -z 1024 1024 "$ICON_SRC" --out /tmp/icon-1024.png
           # Rimuovi alpha channel — Apple rifiuta icone trasparenti (errore 90717)
-          sips --setProperty hasAlpha false /tmp/icon-1024.png
+          # PNG→JPEG→PNG è il metodo affidabile con sips per appiattire l'alpha
+          sips -s format jpeg /tmp/icon-1024.png --out /tmp/icon-1024-flat.jpg
+          sips -s format png  /tmp/icon-1024-flat.jpg --out /tmp/icon-1024.png
+          rm -f /tmp/icon-1024-flat.jpg
           for size in 20 29 40 58 60 76 80 87 120 152 167 180 1024; do
             sips -z $size $size /tmp/icon-1024.png --out "$ICONSET/Icon-${size}.png" 2>/dev/null || true
           done
@@ -271,7 +274,10 @@ workflows:
           mkdir -p "$ICONSET"
           sips -z 1024 1024 "$ICON_SRC" --out /tmp/icon-1024.png
           # Rimuovi alpha channel — Apple rifiuta icone trasparenti (errore 90717)
-          sips --setProperty hasAlpha false /tmp/icon-1024.png
+          # PNG→JPEG→PNG è il metodo affidabile con sips per appiattire l'alpha
+          sips -s format jpeg /tmp/icon-1024.png --out /tmp/icon-1024-flat.jpg
+          sips -s format png  /tmp/icon-1024-flat.jpg --out /tmp/icon-1024.png
+          rm -f /tmp/icon-1024-flat.jpg
           for size in 20 29 40 58 60 76 80 87 120 152 167 180 1024; do
             sips -z $size $size /tmp/icon-1024.png --out "$ICONSET/Icon-${size}.png" 2>/dev/null || true
           done
