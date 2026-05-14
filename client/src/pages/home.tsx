@@ -80,16 +80,23 @@ export default function Home() {
         }
         lastAccuracyRef.current = Infinity;
         gotGoodPositionRef.current = false;
+        // Quick initial position (non-blocking)
+        Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 8000 })
+          .then(pos => {
+            const acc = pos.coords.accuracy ?? 9999;
+            applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: acc } } as any);
+          })
+          .catch(() => {});
         let watchId: string | null = null;
         const cleanup = () => { if (watchId !== null) { Geolocation.clearWatch({ id: watchId }); watchId = null; } };
-        const th = setTimeout(() => { cleanup(); if (!gotGoodPositionRef.current) setLocationStatus('denied'); }, 30000);
+        const th = setTimeout(() => { cleanup(); if (!gotGoodPositionRef.current) setLocationStatus('denied'); }, 45000);
         watchId = await Geolocation.watchPosition(
-          { enableHighAccuracy: false, timeout: 15000 },
+          { enableHighAccuracy: true, timeout: 30000 },
           (pos, err) => {
             if (err || !pos) return;
             const acc = pos.coords.accuracy ?? 9999;
             applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: acc } } as any);
-            if (acc <= 3000) { clearTimeout(th); cleanup(); }
+            if (acc <= 100) { clearTimeout(th); cleanup(); }
           }
         );
       } catch { setLocationStatus('denied'); }
@@ -144,11 +151,20 @@ export default function Home() {
           setLocationStatus('denied');
           return;
         }
-        // Reset accuratezza — FONDAMENTALE: senza questo le posizioni vengono
-        // rifiutate da applyPosition se lastAccuracyRef ha già un valore basso
         lastAccuracyRef.current = Infinity;
         gotGoodPositionRef.current = false;
 
+        // Prova subito getCurrentPosition per una posizione rapida (rete/cache).
+        // Non blocchiamo: se fallisce continuiamo con watchPosition.
+        Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 8000 })
+          .then(pos => {
+            const acc = pos.coords.accuracy ?? 9999;
+            applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: acc } } as any);
+          })
+          .catch(() => {});
+
+        // watchPosition con enableHighAccuracy:true attiva il GPS hardware —
+        // garantisce una posizione precisa anche quando il segnale di rete è debole.
         let watchId: string | null = null;
         const cleanup = () => {
           if (watchId !== null) { Geolocation.clearWatch({ id: watchId }); watchId = null; }
@@ -156,14 +172,14 @@ export default function Home() {
         const timeoutHandle = setTimeout(() => {
           cleanup();
           if (!gotGoodPositionRef.current) setLocationStatus('denied');
-        }, 30000);
+        }, 45000);
         watchId = await Geolocation.watchPosition(
-          { enableHighAccuracy: false, timeout: 15000 },
+          { enableHighAccuracy: true, timeout: 30000 },
           (pos, err) => {
             if (err || !pos) return;
             const acc = pos.coords.accuracy ?? 9999;
             applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: acc } } as any);
-            if (acc <= 3000) { clearTimeout(timeoutHandle); cleanup(); }
+            if (acc <= 100) { clearTimeout(timeoutHandle); cleanup(); }
           }
         );
       } catch { setLocationStatus('denied'); }

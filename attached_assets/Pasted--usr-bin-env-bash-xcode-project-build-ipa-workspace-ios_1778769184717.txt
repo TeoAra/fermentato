@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+
+xcode-project build-ipa \
+  --workspace ios/App/App.xcworkspace \
+  --scheme App \
+  --config Release
+Showing the last 50 lines. Click this button to load the full log
+	...
+	^ (in target 'App' from project 'App')
+	/Users/builder/clone/ios/App/App/AppDelegate.swift:2:8: note: A dependency of main module 'App'
+	import GoogleCast
+	^ (in target 'App' from project 'App')
+	warning: Run script build phase '[CP] Copy XCFrameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'IONGeolocationLib' from project 'Pods')
+	warning: Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+
+
+Build failed :|
+Step 15 script `Build IPA firmato` exited with status code 65
+▸ Compiling Pods-App-dummy.m
+▸ Touching Pods_App.framework (in target 'Pods-App' from project 'Pods')
+▸ Running script '[CP] Check Pods Manifest.lock'
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/public
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/config.xml
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/InstallationBuildProductsLocation/Applications/App.app/capacitor.config.json
+▸ Compiling Main.storyboard
+
+❌  /Users/builder/clone/ios/App/App/AppDelegate.swift:2:8: unable to resolve module dependency: 'GoogleCast'
+
+import GoogleCast
+                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~
+
+
+▸ Compiling LaunchScreen.storyboard
+
+❌  /Users/builder/clone/ios/App/App/AppDelegate.swift:2:8: Unable to resolve module dependency: 'GoogleCast'
+
+import GoogleCast
+       ^
+
+
+    Run script build phase '[CP] Copy XCFrameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'IONGeolocationLib' from project 'Pods')
+    Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+Failed to archive ios/App/App.xcworkspace. The following build commands failed:
+
+SwiftDriver App normal arm64 com.apple.xcode.tools.swift.compiler (in target 'App' from project 'App')
+	...
+	^ (in target 'App' from project 'App')
+	/Users/builder/clone/ios/App/App/AppDelegate.swift:2:8: note: A dependency of main module 'App'
+	import GoogleCast
+	^ (in target 'App' from project 'App')
+	warning: Run script build phase '[CP] Copy XCFrameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'IONGeolocationLib' from project 'Pods')
+	warning: Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+
+
+Build failed :|
+Step 15 script `Build IPA firmato` exited with status code 65

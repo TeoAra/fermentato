@@ -67,7 +67,9 @@ workflows:
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
           # Aggiungi Google Cast SDK (variante senza Bluetooth — iOS 13+)
-          sed -i '' "/capacitor_pods/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile
+          # :modular_headers => true è OBBLIGATORIO per importare GoogleCast in Swift
+          # senza di esso Xcode fallisce con "unable to resolve module dependency"
+          sed -i '' "/capacitor_pods/a\\  pod 'google-cast-sdk-no-bluetooth', :modular_headers => true" ios/App/Podfile
           echo "Podfile aggiornato:"; cat ios/App/Podfile
           cd ios/App && pod install
 
@@ -77,6 +79,11 @@ workflows:
           # Copia il plugin NativeCast nel target App
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
           echo "NativeCast.swift copiato in ios/App/App/"
+          # Aggiungi NativeCast.swift al progetto Xcode (pbxproj):
+          # copiare il file nella cartella NON basta — senza voce in PBXSourcesBuildPhase
+          # Xcode lo ignora e il plugin Capacitor non si registra.
+          python3 ios-native/add_swift_to_xcode.py \
+            ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
           # Inietta GCKCastContext.setSharedInstanceWith nell'AppDelegate
           # La discovery deve partire all'avvio, non quando JS chiama initialize()
           python3 ios-native/inject_cast_appdelegate.py \
@@ -272,6 +279,11 @@ workflows:
           npx cap copy ios
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
           echo "NativeCast.swift copiato in ios/App/App/"
+          # Aggiungi NativeCast.swift al progetto Xcode (pbxproj):
+          # copiare il file nella cartella NON basta — senza voce in PBXSourcesBuildPhase
+          # Xcode lo ignora e il plugin Capacitor non si registra.
+          python3 ios-native/add_swift_to_xcode.py \
+            ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
           # Inietta GCKCastContext.setSharedInstanceWith nell'AppDelegate
           # La discovery deve partire all'avvio, non quando JS chiama initialize()
           python3 ios-native/inject_cast_appdelegate.py \

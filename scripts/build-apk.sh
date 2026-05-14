@@ -211,10 +211,18 @@ inject_cast_plugin() {
   python3 "$APP_DIR/android-native/inject_cast_manifest.py" \
     "app/src/main/AndroidManifest.xml"
 
-  # ── 5. Permessi mDNS per discovery Chromecast ────────────────────────────
+  # ── 5. Permessi mDNS/WiFi per discovery Chromecast ───────────────────────
+  # CHANGE_WIFI_MULTICAST_STATE: obbligatorio per ricevere i pacchetti mDNS
+  # con cui il Cast SDK scopre i Chromecast sulla rete locale.
+  # Inseriamo prima di </manifest> (più robusto del match sulla riga INTERNET
+  # che varia per spazi/formato nei diversi template Capacitor).
   local MANIFEST="app/src/main/AndroidManifest.xml"
-  grep -q "CHANGE_WIFI_MULTICAST_STATE" "$MANIFEST" || \
-    sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>|' "$MANIFEST"
+  if ! grep -q "CHANGE_WIFI_MULTICAST_STATE" "$MANIFEST"; then
+    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n</manifest>|' "$MANIFEST"
+    echo "    ✅ Permessi mDNS/WiFi aggiunti al manifest"
+  else
+    echo "    ℹ️  Permessi mDNS/WiFi già presenti"
+  fi
   echo "    ✅ Cast plugin iniettato con successo"
 }
 
