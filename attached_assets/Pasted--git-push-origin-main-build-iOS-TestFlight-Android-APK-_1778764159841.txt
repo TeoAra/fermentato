@@ -1,0 +1,43 @@
+▶ git push origin main → build iOS TestFlight + Android APK
+Enumerating objects: 64, done.
+Counting objects: 100% (56/56), done.
+Delta compression using up to 4 threads
+Compressing objects: 100% (43/43), done.
+Writing objects: 100% (46/46), 13.63 MiB | 14.58 MiB/s, done.
+Total 46 (delta 15), reused 4 (delta 0), pack-reused 0
+remote: Resolving deltas: 100% (15/15), completed with 8 local objects.
+remote: error: GH013: Repository rule violations found for refs/heads/main.
+remote:
+remote: - GITHUB PUSH PROTECTION
+remote:   —————————————————————————————————————————
+remote:     Resolve the following violations before pushing again
+remote:
+remote:     - Push cannot contain secrets
+remote:
+remote:
+remote:      (?) Learn how to resolve a blocked push
+remote:      https://docs.github.com/code-security/secret-scanning/working-with-secret-scanning-and-push-protection/working-with-push-protection-from-the-command-line#resolving-a-blocked-push
+remote:
+remote:
+remote:       —— Google OAuth Client Secret ————————————————————————
+remote:        locations:
+remote:          - commit: d2560cdbfb63be214e2627bc4251ec4b85ed046d
+remote:            path: .env:17
+remote:
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/TeoAra/fermentato/security/secret-scanning/unblock-secret/3DiTzQ5B8PK3HiZ2O4PJ2T8cmeY
+remote:
+remote:
+remote:       —— Stripe API Key ————————————————————————————————————
+remote:        locations:
+remote:          - commit: d2560cdbfb63be214e2627bc4251ec4b85ed046d
+remote:            path: .env:28
+remote:
+remote:        (?) To push, remove secret from commit(s) or follow this URL to allow the secret.
+remote:        https://github.com/TeoAra/fermentato/security/secret-scanning/unblock-secret/3DiTzUwlOqHik5BUCfSWz5BZHKG
+remote:
+remote:
+remote:
+To https://github.com/TeoAra/fermentato.git
+ ! [remote rejected] main -> main (push declined due to repository rule violations)
+error: failed to push some refs to 'https://github.com/TeoAra/fermentato.git'

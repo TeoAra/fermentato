@@ -49,7 +49,7 @@ fi
 # ── 3. Git commit + push su main (triggera Codemagic: iOS TF + Android APK) ─
 step "git push origin main → build iOS TestFlight + Android APK"
 if [[ -n "$(git --no-optional-locks status --porcelain 2>/dev/null)" ]]; then
-  git add -A
+  git add -A -- ':!.env' ':!.env.*'
   git commit -m "deploy: $(date '+%Y-%m-%d %H:%M')"
 fi
 git push origin main
