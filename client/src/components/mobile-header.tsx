@@ -172,7 +172,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
           paddingTop: 'env(safe-area-inset-top)',
         }}
       >
-        <div className={`flex items-center justify-between px-4 transition-[height] duration-200 ${scrolled ? "h-11" : "h-14"}`}>
+        <div className="flex items-center justify-between px-4 h-14">
 
           {/* Left: Back button (detail pages) or Avatar + Bell (root pages) */}
           {isDetailRoute(location) ? (
@@ -216,9 +216,9 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
           {/* Logo — center */}
           <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-            <img src="/logo-full.png" alt="Fermenta.to" className={`w-auto block dark:hidden transition-[height] duration-200 ${scrolled ? "h-6" : "h-7"}`}
+            <img src="/logo-full.png" alt="Fermenta.to" className="w-auto h-7 block dark:hidden"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-            <img src="/logo-dark-mode.png" alt="Fermenta.to" className={`w-auto hidden dark:block transition-[height] duration-200 ${scrolled ? "h-6" : "h-7"}`}
+            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="w-auto h-7 hidden dark:block"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
           </Link>
 
