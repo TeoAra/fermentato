@@ -158,7 +158,7 @@ export default function Home() {
   const { data: taplistActivity = [] } = useQuery<any[]>({ queryKey: ["/api/home/taplist-activity"], staleTime: 2 * 60 * 1000 });
   const { data: homeAnnouncements = [] } = useQuery<any[]>({ queryKey: ["/api/home/announcements"], staleTime: 5 * 60 * 1000 });
   const { data: popularStyles } = useQuery<{ style: string; count: number }[]>({ queryKey: ["/api/beers/popular-styles"], staleTime: 10 * 60 * 1000 });
-  const { data: allBreweries } = useQuery({ queryKey: ["/api/breweries/map"], staleTime: 10 * 60 * 1000, enabled: !Capacitor.isNativePlatform() });
+  const { data: allBreweries } = useQuery({ queryKey: ["/api/breweries/map"], staleTime: 10 * 60 * 1000 });
   const { data: favorites } = useQuery({ queryKey: ["/api/favorites"], enabled: !!user });
   const { data: myPubs } = useQuery({ queryKey: ["/api/my-pubs"], enabled: isAuthenticated && ((user as any)?.userType === 'pub_owner' || (user as any)?.userType === 'admin') });
   const { data: myBreweryData } = useQuery<{ brewery: any; beers: any[] }>({ queryKey: ["/api/brewery/mine"], enabled: isAuthenticated && (user as any)?.userType === 'brewery_owner' });
@@ -229,32 +229,25 @@ export default function Home() {
       <div className="max-w-2xl mx-auto px-4 pt-4">
         {/* Map card — taller on mobile, more compact on desktop */}
         <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-[#15202B] shadow-card h-[300px] lg:h-[240px]" style={{ maxHeight: 300 }}>
-          {!Capacitor.isNativePlatform() ? (
-            <div className="absolute inset-0 overflow-hidden" style={{ maxHeight: '100%' }}>
-              <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-[#1B2735]" />}>
-                <HomepageMap
-                  pubs={Array.isArray(pubs) ? pubs as any[] : []}
-                  breweries={(() => {
-                    const src = Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : []);
-                    return (src as any[]).filter((b: any) => b.latitude && b.longitude);
-                  })()}
-                  userLocation={userLocation}
-                  isLoading={pubsLoading}
-                  showPubs={showPubs}
-                  showBreweries={showBreweries}
-                  distanceKm={userLocation ? distanceKm : undefined}
-                  onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
-                  showControls={false}
-                  fixedHeight={300}
-                />
-              </Suspense>
-            </div>
-          ) : (
-            <div
-              className="absolute inset-0"
-              style={{ background: 'linear-gradient(145deg, #1a0800 0%, #3d1200 35%, #8b3000 70%, #c95000 100%)' }}
-            />
-          )}
+          <div className="absolute inset-0 overflow-hidden" style={{ maxHeight: '100%' }}>
+            <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-[#1B2735]" />}>
+              <HomepageMap
+                pubs={Array.isArray(pubs) ? pubs as any[] : []}
+                breweries={(() => {
+                  const src = Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : []);
+                  return (src as any[]).filter((b: any) => b.latitude && b.longitude);
+                })()}
+                userLocation={userLocation}
+                isLoading={pubsLoading}
+                showPubs={showPubs}
+                showBreweries={showBreweries}
+                distanceKm={userLocation ? distanceKm : undefined}
+                onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
+                showControls={false}
+                fixedHeight={300}
+              />
+            </Suspense>
+          </div>
 
           {/* Floating location chip — top-left, doesn't obscure the map center */}
           <div className="absolute top-3 left-3 z-10 pointer-events-none">
