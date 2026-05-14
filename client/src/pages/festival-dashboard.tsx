@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useChromecast } from "@/hooks/useChromecast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/image-upload";
@@ -23,8 +23,9 @@ import {
   Beer, UtensilsCrossed, BarChart3, Settings, Plus, QrCode,
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
-  X, Search, ChevronDown, Clock, Monitor, Copy, Heart, MessageSquare, Reply, Send,
+  X, Search, ChevronDown, Clock, Monitor, Copy, Heart, MessageSquare, Reply, Send, Tv,
 } from "lucide-react";
+import { Capacitor } from "@capacitor/core";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { useLocation } from "wouter";
@@ -101,6 +102,27 @@ function TVModeButton({ slug, festivalName }: { slug: string; festivalName?: str
   const tvUrl = `${window.location.origin}/festival-tv/${slug}`;
   const { toast } = useToast();
   const { castState, deviceName, castToTV, stopCasting, isAvailable, isConnected } = useChromecast();
+  const isIos = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
+  const airplayVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [airplayAvailable, setAirplayAvailable] = useState(false);
+
+  useEffect(() => {
+    if (!isIos) return;
+    const video = document.createElement("video");
+    video.setAttribute("x-webkit-airplay", "allow");
+    video.setAttribute("playsinline", "");
+    video.muted = true;
+    video.style.cssText = "position:absolute;width:0;height:0;opacity:0;pointer-events:none;";
+    document.body.appendChild(video);
+    airplayVideoRef.current = video;
+    const onAvail = (e: Event) => setAirplayAvailable((e as any).availability === "available");
+    video.addEventListener("webkitplaybacktargetavailabilitychanged", onAvail);
+    return () => {
+      video.removeEventListener("webkitplaybacktargetavailabilitychanged", onAvail);
+      if (document.body.contains(video)) document.body.removeChild(video);
+      airplayVideoRef.current = null;
+    };
+  }, [isIos]);
 
   return (
     <Dialog>
@@ -144,10 +166,29 @@ function TVModeButton({ slug, festivalName }: { slug: string; festivalName?: str
             </div>
           )}
 
-          {castState === "no_devices" && (
+          {castState === "no_devices" && !isIos && (
             <p className="text-xs text-muted-foreground text-center">
               Nessun Chromecast trovato — verifica la rete WiFi
             </p>
+          )}
+
+          {/* AirPlay: sempre visibile su iOS native */}
+          {isIos && (
+            <Button
+              variant="outline"
+              className="w-full gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400"
+              onClick={() => {
+                const video = airplayVideoRef.current;
+                if (video && (video as any).webkitShowPlaybackTargetPicker) {
+                  (video as any).webkitShowPlaybackTargetPicker();
+                } else {
+                  window.open(tvUrl, "_blank");
+                }
+              }}
+            >
+              <Tv className="h-4 w-4" />
+              {airplayAvailable ? "AirPlay su Apple TV" : "Apri festival su TV"}
+            </Button>
           )}
 
           {/* URL TV */}

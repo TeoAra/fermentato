@@ -1,11 +1,89 @@
 import webpush from "web-push";
 import { storage } from "./storage";
+import jwt from "jsonwebtoken";
+import http2 from "http2";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT || 'mailto:info@fermenta.to';
 
 let vapidConfigured = false;
+
+// ── APNs config (iOS native push) ──────────────────────────────────────────
+const APNS_KEY_ID    = process.env.APNS_KEY_ID    || '';
+const APNS_TEAM_ID   = process.env.APNS_TEAM_ID   || '';
+const APNS_BUNDLE_ID = process.env.APNS_BUNDLE_ID || 'to.fermentato.app';
+// La chiave .p8 deve essere in APNS_P8_KEY come stringa PEM, ad es.:
+//   -----BEGIN PRIVATE KEY-----\nABC...\n-----END PRIVATE KEY-----
+const APNS_P8_KEY = (process.env.APNS_P8_KEY || '').replace(/\\n/g, '\n');
+const apnsConfigured = !!(APNS_KEY_ID && APNS_TEAM_ID && APNS_P8_KEY);
+
+// Genera un JWT APNs valido per 55 minuti (max 60)
+let apnsJwtCache: { token: string; exp: number } | null = null;
+function getApnsJwt(): string {
+  const now = Math.floor(Date.now() / 1000);
+  if (apnsJwtCache && apnsJwtCache.exp - now > 120) return apnsJwtCache.token;
+  const token = jwt.sign({ iss: APNS_TEAM_ID, iat: now }, APNS_P8_KEY, {
+    algorithm: 'ES256',
+    header: { alg: 'ES256', kid: APNS_KEY_ID } as any,
+  });
+  apnsJwtCache = { token, exp: now + 55 * 60 };
+  return token;
+}
+
+// Invia una singola notifica APNs via HTTP/2
+async function sendApns(deviceToken: string, payload: any): Promise<void> {
+  if (!apnsConfigured) return;
+  const body = JSON.stringify({
+    aps: {
+      alert: { title: payload.title, body: payload.body },
+      sound: 'default',
+      badge: 1,
+      'mutable-content': 1,
+    },
+    url: payload.url,
+    tag: payload.tag,
+    type: payload.type,
+  });
+  const host = 'api.push.apple.com';
+  const path = `/3/device/${deviceToken}`;
+  const jwtToken = getApnsJwt();
+
+  return new Promise((resolve, reject) => {
+    try {
+      const client = http2.connect(`https://${host}`);
+      client.on('error', reject);
+      const req = client.request({
+        ':method': 'POST',
+        ':path': path,
+        'authorization': `bearer ${jwtToken}`,
+        'apns-topic': APNS_BUNDLE_ID,
+        'apns-push-type': 'alert',
+        'apns-expiration': String(Math.floor(Date.now() / 1000) + PUSH_TTL),
+        'content-type': 'application/json',
+      });
+      req.write(body);
+      req.end();
+      req.setEncoding('utf8');
+      let data = '';
+      req.on('data', (chunk) => { data += chunk; });
+      req.on('end', () => {
+        client.close();
+        if (data) {
+          try {
+            const json = JSON.parse(data);
+            if (json.reason === 'BadDeviceToken' || json.reason === 'Unregistered') {
+              storage.deleteNativePushToken(deviceToken).catch(() => {});
+            }
+          } catch { /* empty response = success */ }
+        }
+        resolve();
+      });
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
 
 const PUSH_TTL = 3600;
 const PUSH_URGENCY = 'normal' as const;
@@ -120,8 +198,9 @@ export async function shouldSendNotification(
 }
 
 async function deliverPush(userId: string, payload: any) {
+  // Web push (VAPID) per browser PWA
   const subs = await storage.getPushSubscriptionsByUser(userId);
-  const sendPromises = subs.map(async (sub) => {
+  const webPromises = subs.map(async (sub) => {
     try {
       await webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
@@ -134,7 +213,20 @@ async function deliverPush(userId: string, payload: any) {
       }
     }
   });
-  await Promise.allSettled(sendPromises);
+
+  // APNs per iOS native (richiede APNS_KEY_ID, APNS_TEAM_ID, APNS_P8_KEY)
+  const nativeTokens = await storage.getNativePushTokensByUser(userId);
+  const apnsPromises = nativeTokens
+    .filter(t => t.platform === 'ios')
+    .map(async (t) => {
+      try {
+        await sendApns(t.token, payload);
+      } catch (err) {
+        console.error('[apns] errore invio:', err);
+      }
+    });
+
+  await Promise.allSettled([...webPromises, ...apnsPromises]);
 }
 
 type PushPayload = {

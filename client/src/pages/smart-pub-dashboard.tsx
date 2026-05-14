@@ -850,21 +850,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         </div>
                       )}
 
-                      {/* ── Cast SDK non disponibile su iOS (Chrome mobile non lo supporta) ── */}
-                      {!castSdkLoaded && isIosDevice && (
-                        <div className="bg-stone-50 dark:bg-[#15202B]/50 border border-stone-200 dark:border-[#2F3D4D] rounded-xl p-3 space-y-1.5">
-                          <p className="text-sm font-medium text-foreground flex items-center gap-2">
-                            <Cast className="h-4 w-4 shrink-0 text-muted-foreground" />
-                            Chromecast non disponibile su iPhone
-                          </p>
-                          <p className="text-xs text-muted-foreground leading-relaxed">
-                            Il Cast SDK funziona solo su <strong>Chrome per Android</strong> o <strong>Chrome su PC/Mac</strong>. Copia il link qui sotto e aprilo da uno di quei dispositivi per trasmettere sulla TV.
-                          </p>
-                        </div>
-                      )}
-
-                      {/* ── AirPlay: solo se Apple TV rilevata sulla rete ── */}
-                      {isIosDevice && airplayAvailable && (
+                      {/* ── AirPlay: sempre visibile su iOS native ── */}
+                      {isIosDevice && (
                         <Button
                           variant="outline"
                           className="w-full gap-2 border-blue-200 text-blue-600 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-400"
@@ -872,11 +859,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                             const video = airplayVideoRef.current;
                             if (video && (video as any).webkitShowPlaybackTargetPicker) {
                               (video as any).webkitShowPlaybackTargetPicker();
+                            } else {
+                              // Fallback: istruzioni Control Center
+                              window.open(tvUrl, "_blank");
                             }
                           }}
                         >
                           <Tv className="h-4 w-4" />
-                          AirPlay su Apple TV
+                          {airplayAvailable ? "AirPlay su Apple TV" : "Apri taplist su TV"}
                         </Button>
                       )}
 

@@ -218,7 +218,7 @@ export default function HomepageMap({
     <div
       ref={containerRef}
       className="relative w-full overflow-hidden"
-      style={{ touchAction: "pan-y", height: fixedHeight ? `${fixedHeight}px` : '100%', maxHeight: fixedHeight ? `${fixedHeight}px` : undefined }}
+      style={{ touchAction: isNative ? "none" : "pan-y", height: fixedHeight ? `${fixedHeight}px` : '100%', maxHeight: fixedHeight ? `${fixedHeight}px` : undefined }}
     >
       {isLoading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-[#1B2735]">
