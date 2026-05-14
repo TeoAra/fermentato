@@ -77,6 +77,10 @@ workflows:
           # Copia il plugin NativeCast nel target App
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
           echo "NativeCast.swift copiato in ios/App/App/"
+          # Inietta GCKCastContext.setSharedInstanceWith nell'AppDelegate
+          # La discovery deve partire all'avvio, non quando JS chiama initialize()
+          python3 ios-native/inject_cast_appdelegate.py \
+            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
       - name: Genera icone app iOS
         script: |
@@ -268,6 +272,10 @@ workflows:
           npx cap copy ios
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
           echo "NativeCast.swift copiato in ios/App/App/"
+          # Inietta GCKCastContext.setSharedInstanceWith nell'AppDelegate
+          # La discovery deve partire all'avvio, non quando JS chiama initialize()
+          python3 ios-native/inject_cast_appdelegate.py \
+            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
       - name: Genera icone app iOS
         script: |
