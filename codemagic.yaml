@@ -66,36 +66,16 @@ workflows:
           fi
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
-          # Aggiungi Google Cast SDK — nessun :modular_headers (non serve con il bridging header)
-          # Usiamo multiple pattern per gestire diversi formati di Podfile Capacitor
-          sed -i '' "/capacitor_pods/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile || true
-          grep -q "google-cast-sdk-no-bluetooth" ios/App/Podfile || \
-            sed -i '' "/# Add your Pods here/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile || true
-          grep -q "google-cast-sdk-no-bluetooth" ios/App/Podfile || \
-            sed -i '' "/target 'App' do/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile || true
-          echo "Podfile aggiornato:"; cat ios/App/Podfile
+          echo "Podfile (nessun pod extra — AirPlay nativo):"; cat ios/App/Podfile
           cd ios/App && pod install
 
       - name: Copia web assets e plugin Swift nel progetto iOS
         script: |
           npx cap copy ios
-          # Copia il plugin NativeCast nel target App
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
-          echo "NativeCast.swift copiato in ios/App/App/"
-          # Aggiungi NativeCast.swift al progetto Xcode (pbxproj)
+          echo "NativeCast.swift (stub AirPlay) copiato in ios/App/App/"
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
-          # Crea il bridging header ObjC → Swift e configura SWIFT_OBJC_BRIDGING_HEADER
-          # nel pbxproj: tutte le classi GCK diventano disponibili in ogni file Swift
-          # del target senza 'import GoogleCast', bypassando il bug Xcode 16 + XCFramework.
-          python3 ios-native/set_bridging_header.py \
-            ios/App/App.xcodeproj/project.pbxproj \
-            "App/App-Bridging-Header.h" \
-            ios/App/App/App-Bridging-Header.h
-          # Inietta GCKCastContext.setSharedInstanceWith nell'AppDelegate
-          # (senza import GoogleCast — il bridging header lo gestisce)
-          python3 ios-native/inject_cast_appdelegate.py \
-            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
       - name: Genera icone app iOS
         script: |
@@ -278,27 +258,16 @@ workflows:
           fi
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
-          sed -i '' "/capacitor_pods/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile || true
-          grep -q "google-cast-sdk-no-bluetooth" ios/App/Podfile || \
-            sed -i '' "/# Add your Pods here/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile || true
-          grep -q "google-cast-sdk-no-bluetooth" ios/App/Podfile || \
-            sed -i '' "/target 'App' do/a\\  pod 'google-cast-sdk-no-bluetooth'" ios/App/Podfile || true
-          echo "Podfile aggiornato:"; cat ios/App/Podfile
+          echo "Podfile (nessun pod extra — AirPlay nativo):"; cat ios/App/Podfile
           cd ios/App && pod install
 
       - name: Copia web assets e plugin Swift nel progetto iOS
         script: |
           npx cap copy ios
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
-          echo "NativeCast.swift copiato in ios/App/App/"
+          echo "NativeCast.swift (stub AirPlay) copiato in ios/App/App/"
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
-          python3 ios-native/set_bridging_header.py \
-            ios/App/App.xcodeproj/project.pbxproj \
-            "App/App-Bridging-Header.h" \
-            ios/App/App/App-Bridging-Header.h
-          python3 ios-native/inject_cast_appdelegate.py \
-            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
       - name: Genera icone app iOS
         script: |
