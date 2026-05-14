@@ -85,16 +85,13 @@ workflows:
           # Aggiungi NativeCast.swift al progetto Xcode (pbxproj)
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
-          # Crea il bridging header ObjC → Swift per GoogleCast.
-          # Con questo file, TUTTI i file Swift del target vedono le classi GCK
-          # senza 'import GoogleCast', bypassando il bug Xcode 16 + XCFramework.
-          cat > ios/App/App/App-Bridging-Header.h << 'BRIDGING_EOF'
-// Bridging header — espone il Google Cast iOS SDK a tutti i file Swift del target.
-// Non usare 'import GoogleCast' nei file Swift: le classi GCK sono già disponibili.
-#import <GoogleCast/GoogleCast.h>
-BRIDGING_EOF
+          # Crea il bridging header ObjC → Swift e configura SWIFT_OBJC_BRIDGING_HEADER
+          # nel pbxproj: tutte le classi GCK diventano disponibili in ogni file Swift
+          # del target senza 'import GoogleCast', bypassando il bug Xcode 16 + XCFramework.
           python3 ios-native/set_bridging_header.py \
-            ios/App/App.xcodeproj/project.pbxproj "App/App-Bridging-Header.h"
+            ios/App/App.xcodeproj/project.pbxproj \
+            "App/App-Bridging-Header.h" \
+            ios/App/App/App-Bridging-Header.h
           # Inietta GCKCastContext.setSharedInstanceWith nell'AppDelegate
           # (senza import GoogleCast — il bridging header lo gestisce)
           python3 ios-native/inject_cast_appdelegate.py \
@@ -296,13 +293,10 @@ BRIDGING_EOF
           echo "NativeCast.swift copiato in ios/App/App/"
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
-          cat > ios/App/App/App-Bridging-Header.h << 'BRIDGING_EOF'
-// Bridging header — espone il Google Cast iOS SDK a tutti i file Swift del target.
-// Non usare 'import GoogleCast' nei file Swift: le classi GCK sono già disponibili.
-#import <GoogleCast/GoogleCast.h>
-BRIDGING_EOF
           python3 ios-native/set_bridging_header.py \
-            ios/App/App.xcodeproj/project.pbxproj "App/App-Bridging-Header.h"
+            ios/App/App.xcodeproj/project.pbxproj \
+            "App/App-Bridging-Header.h" \
+            ios/App/App/App-Bridging-Header.h
           python3 ios-native/inject_cast_appdelegate.py \
             ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
