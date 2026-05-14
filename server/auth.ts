@@ -229,6 +229,16 @@ export async function setupAuth(app: Express) {
     return res.json({ available: !existing });
   });
 
+  // Check pub slug availability (used during registration)
+  app.get('/api/auth/check-pub-slug', async (req, res) => {
+    const { slug } = req.query as { slug: string };
+    if (!slug || slug.length < 2) return res.json({ available: false });
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) return res.json({ available: false, invalid: true });
+    const [existing] = await db.select({ id: pubs.id }).from(pubs)
+      .where(eq(pubs.slug, slug.toLowerCase()));
+    return res.json({ available: !existing });
+  });
+
   // Register with email/password
   app.post('/api/auth/register', async (req, res) => {
     try {
@@ -446,7 +456,7 @@ export async function setupAuth(app: Express) {
       const {
         nickname, email, password,
         pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description,
-        pubLat, pubLng,
+        pubLat, pubLng, pubSlug,
         isBrewpub,
         breweryId: existingBreweryId, breweryName, breweryLocation, breweryRegion, breweryCountry,
         breweryVatNumber, breweryPhone, breweryDescription, breweryWebsite,
@@ -497,7 +507,7 @@ export async function setupAuth(app: Express) {
       });
 
       // Create pub directly in pubs table (unverified, no subscription yet)
-      await db.insert(pubs).values({
+      const [newPub] = await db.insert(pubs).values({
         name: trimmedPubName,
         address: trimmedPubAddress,
         city: trimmedPubCity,
@@ -511,7 +521,27 @@ export async function setupAuth(app: Express) {
         isVerified: false,
         subscriptionStatus: 'none',
         isActive: true,
-      });
+      }).returning({ id: pubs.id });
+
+      // Generate and assign slug immediately (do not wait for startup migration)
+      try {
+        const rawSlug = typeof pubSlug === 'string' && pubSlug.trim()
+          ? pubSlug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 100)
+          : trimmedPubName.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 100);
+        let finalSlug = rawSlug;
+        let counter = 2;
+        while (true) {
+          const [taken] = await db.select({ id: pubs.id }).from(pubs).where(
+            sql`${pubs.slug} = ${finalSlug} AND ${pubs.id} != ${newPub.id}`
+          ).limit(1);
+          if (!taken) break;
+          finalSlug = `${rawSlug}-${counter}`;
+          counter++;
+        }
+        await db.update(pubs).set({ slug: finalSlug }).where(eq(pubs.id, newPub.id));
+      } catch (slugErr) {
+        console.error('[register-pub] slug generation error:', slugErr);
+      }
 
       // If brewpub: create brewery request for admin approval
       if (isBrewpub) {

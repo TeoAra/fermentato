@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import {
   Store, Lock, Mail, User, Phone, Building2, Factory, Plus, Search,
-  CheckCircle2, Beer, ArrowLeft, Eye, EyeOff, MailCheck, RefreshCw, X
+  CheckCircle2, Beer, ArrowLeft, Eye, EyeOff, MailCheck, RefreshCw, X, Link2
 } from "lucide-react";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ReCAPTCHA from "react-google-recaptcha";
@@ -28,6 +28,11 @@ const schema = z.object({
   password: z.string().min(8, "Minimo 8 caratteri"),
   confirmPassword: z.string(),
   pubName: z.string().min(2, "Nome locale obbligatorio"),
+  pubSlug: z.string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Solo lettere minuscole, numeri e trattini (es. il-mio-pub)")
+    .max(100, "Massimo 100 caratteri")
+    .optional()
+    .or(z.literal("")),
   pubAddress: z.string().min(3, "Indirizzo obbligatorio"),
   pubCity: z.string().min(2, "Città obbligatoria"),
   pubRegion: z.string().optional(),
@@ -63,6 +68,9 @@ export default function RegistraPub() {
   const [resendLoading, setResendLoading] = useState(false);
   const [nicknameAvailable, setNicknameAvailable] = useState<boolean | null>(null);
   const [nicknameChecking, setNicknameChecking] = useState(false);
+  const [slugAvailable, setSlugAvailable] = useState<boolean | null>(null);
+  const [slugChecking, setSlugChecking] = useState(false);
+  const [slugAutoFilled, setSlugAutoFilled] = useState(false);
   const [brewerySearch, setBrewerySearch] = useState("");
   const [selectedBrewery, setSelectedBrewery] = useState<Brewery | null>(null);
   const [creatingNewBrewery, setCreatingNewBrewery] = useState(false);
@@ -72,7 +80,7 @@ export default function RegistraPub() {
     resolver: zodResolver(schema) as any,
     defaultValues: {
       nickname: "", email: "", password: "", confirmPassword: "",
-      pubName: "", pubAddress: "", pubCity: "", pubRegion: "",
+      pubName: "", pubSlug: "", pubAddress: "", pubCity: "", pubRegion: "",
       vatNumber: "", phone: "", description: "",
       isBrewpub: false,
       breweryId: undefined, breweryName: "", breweryLocation: "",
@@ -82,6 +90,19 @@ export default function RegistraPub() {
   });
 
   const isBrewpub = form.watch("isBrewpub");
+  const pubNameValue = form.watch("pubName");
+
+  // Auto-fill slug from pub name (only if user hasn't manually changed it)
+  useEffect(() => {
+    if (!slugAutoFilled && pubNameValue && pubNameValue.length >= 2) {
+      const generated = toSlug(pubNameValue);
+      if (generated) {
+        form.setValue("pubSlug", generated);
+        checkSlug(generated);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pubNameValue]);
 
   // Pre-fill from sessionStorage if user came from auth page
   useEffect(() => {
@@ -123,6 +144,22 @@ export default function RegistraPub() {
     } catch { setNicknameAvailable(null); }
     finally { setNicknameChecking(false); }
   }, []);
+
+  const checkSlug = useCallback(async (value: string) => {
+    if (!value || value.length < 2) { setSlugAvailable(null); return; }
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value)) { setSlugAvailable(null); return; }
+    setSlugChecking(true);
+    try {
+      const res = await fetch(`/api/auth/check-pub-slug?slug=${encodeURIComponent(value)}`, { credentials: "include" });
+      const data = await res.json();
+      setSlugAvailable(data.available);
+    } catch { setSlugAvailable(null); }
+    finally { setSlugChecking(false); }
+  }, []);
+
+  const toSlug = (name: string) =>
+    name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 100);
 
   const { data: searchedBreweries } = useQuery<Brewery[]>({
     queryKey: [`/api/breweries/search?q=${encodeURIComponent(brewerySearch)}`],
@@ -348,6 +385,46 @@ export default function RegistraPub() {
                         <Input {...field} placeholder="Es. The Craft Pub" className="pl-10" />
                       </div>
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                <FormField control={form.control} name="pubSlug" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1.5">
+                      <Link2 className="w-3.5 h-3.5 text-stone-400" />
+                      Indirizzo web univoco
+                      <span className="text-xs font-normal text-muted-foreground">(opzionale)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs select-none">fermenta.to/pub/</span>
+                        <Input
+                          {...field}
+                          placeholder="nome-del-pub"
+                          className="pl-[130px]"
+                          onChange={e => {
+                            const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "");
+                            field.onChange(val);
+                            setSlugAutoFilled(true);
+                            setSlugAvailable(null);
+                            checkSlug(val);
+                          }}
+                        />
+                        {slugChecking && <RefreshCw className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-stone-400" />}
+                        {!slugChecking && field.value && slugAvailable === true && <CheckCircle2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />}
+                        {!slugChecking && field.value && slugAvailable === false && <X className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-red-500" />}
+                      </div>
+                    </FormControl>
+                    {field.value && slugAvailable === false && (
+                      <p className="text-xs text-red-500">Questo indirizzo è già in uso, scegline un altro.</p>
+                    )}
+                    {field.value && slugAvailable === true && (
+                      <p className="text-xs text-green-600">Disponibile! Il tuo pub sarà raggiungibile su fermenta.to/pub/{field.value}</p>
+                    )}
+                    {!field.value && (
+                      <FormDescription className="text-xs">Lascia vuoto per generarlo automaticamente dal nome.</FormDescription>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )} />

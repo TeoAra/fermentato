@@ -435,6 +435,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         isActive: currentPub.isActive ?? true,
         businessName: currentPub.businessName || '',
         vatNumber: currentPub.vatNumber || '',
+        slug: (currentPub as any).slug || '',
       });
       setSettingsChanged(false);
     }
@@ -1482,6 +1483,31 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 data-testid="input-vat-number"
               />
             </div>
+          </div>
+          <div className="mt-4">
+            <Label htmlFor="pub-slug" className="flex items-center gap-1.5">
+              Indirizzo web univoco
+              <span className="text-xs font-normal text-muted-foreground">(opzionale)</span>
+            </Label>
+            <div className="relative mt-1">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-xs select-none pointer-events-none">fermenta.to/pub/</span>
+              <Input
+                id="pub-slug"
+                className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20 pl-[130px]"
+                value={settingsData.slug || ''}
+                onChange={(e) => {
+                  const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
+                  updateSettingsField('slug', val);
+                }}
+                placeholder="nome-del-pub"
+                data-testid="input-pub-slug"
+              />
+            </div>
+            {settingsData.slug && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Il tuo pub sarà raggiungibile su fermenta.to/pub/{settingsData.slug}
+              </p>
+            )}
           </div>
           <div className="mt-4">
             <Label htmlFor="pub-description">Descrizione</Label>
