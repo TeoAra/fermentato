@@ -66,16 +66,26 @@ workflows:
           fi
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
-          echo "Podfile (nessun pod extra — AirPlay nativo):"; cat ios/App/Podfile
-          cd ios/App && pod install
+          rm -rf ios/App/Pods ios/App/Podfile.lock
+          python3 ios-native/add_cast_pod.py ios/App/Podfile "google-cast-sdk"
+          echo "=== Podfile ==="; cat ios/App/Podfile
+          cd ios/App && pod install --repo-update
+          grep -q "google-cast-sdk" Podfile.lock || { echo "ERRORE: google-cast-sdk non in Podfile.lock"; exit 1; }
+          echo "google-cast-sdk installato correttamente"
 
       - name: Copia web assets e plugin Swift nel progetto iOS
         script: |
           npx cap copy ios
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
-          echo "NativeCast.swift (stub AirPlay) copiato in ios/App/App/"
+          echo "NativeCast.swift copiato in ios/App/App/"
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
+          python3 ios-native/set_bridging_header.py \
+            ios/App/App.xcodeproj/project.pbxproj \
+            "App/App-Bridging-Header.h" \
+            ios/App/App/App-Bridging-Header.h
+          python3 ios-native/inject_cast_appdelegate.py \
+            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
       - name: Genera icone app iOS
         script: |
@@ -258,16 +268,26 @@ workflows:
           fi
           sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
-          echo "Podfile (nessun pod extra — AirPlay nativo):"; cat ios/App/Podfile
-          cd ios/App && pod install
+          rm -rf ios/App/Pods ios/App/Podfile.lock
+          python3 ios-native/add_cast_pod.py ios/App/Podfile "google-cast-sdk"
+          echo "=== Podfile ==="; cat ios/App/Podfile
+          cd ios/App && pod install --repo-update
+          grep -q "google-cast-sdk" Podfile.lock || { echo "ERRORE: google-cast-sdk non in Podfile.lock"; exit 1; }
+          echo "google-cast-sdk installato correttamente"
 
       - name: Copia web assets e plugin Swift nel progetto iOS
         script: |
           npx cap copy ios
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
-          echo "NativeCast.swift (stub AirPlay) copiato in ios/App/App/"
+          echo "NativeCast.swift copiato in ios/App/App/"
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
+          python3 ios-native/set_bridging_header.py \
+            ios/App/App.xcodeproj/project.pbxproj \
+            "App/App-Bridging-Header.h" \
+            ios/App/App/App-Bridging-Header.h
+          python3 ios-native/inject_cast_appdelegate.py \
+            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
       - name: Genera icone app iOS
         script: |
