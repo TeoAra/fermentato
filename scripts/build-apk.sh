@@ -177,6 +177,47 @@ disable_firebase_autoinit() {
   echo "    ✅ Firebase auto-init disabilitato (placeholder FCM — no crash avvio)"
 }
 
+inject_cast_plugin() {
+  local PKG_DIR="app/src/main/java/to/fermentato/app"
+  mkdir -p "$PKG_DIR"
+
+  # ── 1. Copia sorgenti Kotlin ──────────────────────────────────────────────
+  if [ -d "$APP_DIR/android-native" ]; then
+    cp "$APP_DIR/android-native/NativeCastPlugin.kt"    "$PKG_DIR/"
+    cp "$APP_DIR/android-native/CastOptionsProvider.kt" "$PKG_DIR/"
+    echo "    ✅ NativeCastPlugin.kt e CastOptionsProvider.kt copiati"
+  else
+    echo "    ⚠️  android-native/ non trovata — skip Cast plugin"
+    return
+  fi
+
+  # ── 2. Registra il plugin in MainActivity ────────────────────────────────
+  local MAIN="$PKG_DIR/MainActivity.java"
+  if [ -f "$MAIN" ]; then
+    grep -q "NativeCastPlugin" "$MAIN" || \
+      sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport to.fermentato.app.NativeCastPlugin;/' "$MAIN"
+    grep -q "registerPlugin(NativeCastPlugin" "$MAIN" || \
+      sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN"
+    echo "    ✅ NativeCastPlugin registrato in MainActivity"
+  fi
+
+  # ── 3. Dipendenze Cast in build.gradle ───────────────────────────────────
+  local BUILD="app/build.gradle"
+  grep -q "play-services-cast-framework" "$BUILD" || \
+    sed -i '/dependencies {/a\    implementation "com.google.android.gms:play-services-cast-framework:21.5.0"\n    implementation "androidx.mediarouter:mediarouter:1.7.0"' "$BUILD"
+  echo "    ✅ Dipendenze Cast aggiunte a build.gradle"
+
+  # ── 4. CastOptionsProvider in AndroidManifest ────────────────────────────
+  python3 "$APP_DIR/android-native/inject_cast_manifest.py" \
+    "app/src/main/AndroidManifest.xml"
+
+  # ── 5. Permessi mDNS per discovery Chromecast ────────────────────────────
+  local MANIFEST="app/src/main/AndroidManifest.xml"
+  grep -q "CHANGE_WIFI_MULTICAST_STATE" "$MANIFEST" || \
+    sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>|' "$MANIFEST"
+  echo "    ✅ Cast plugin iniettato con successo"
+}
+
 build() {
   echo "════════════════════════════════════════════"
   echo "  Build APK Fermenta.to                     "
@@ -267,6 +308,9 @@ build() {
 
   # --- Firebase: disabilita auto-init (placeholder FCM → evita crash avvio) ---
   disable_firebase_autoinit
+
+  # --- Plugin NativeCast (Chromecast nativo) --------------------------------
+  inject_cast_plugin
 
   echo "── 6/6 Compilo APK ──"
   chmod +x gradlew
