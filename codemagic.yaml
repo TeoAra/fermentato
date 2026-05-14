@@ -463,24 +463,7 @@ workflows:
 
           # ── 4. Registra CastOptionsProvider in AndroidManifest ─────────────
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          if ! grep -q "CastOptionsProvider" "$MANIFEST"; then
-            python3 - "$MANIFEST" <<'PYEOF'
-import sys, re
-path = sys.argv[1]
-txt = open(path).read()
-meta = (
-    '\n        <meta-data'
-    '\n            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"'
-    '\n            android:value="to.fermentato.app.CastOptionsProvider" />'
-)
-# Inserisci dopo il tag <application ...> (prima della prima riga interna)
-txt = re.sub(r'(<application\b[^>]*>)', r'\1' + meta, txt, count=1)
-open(path, 'w').write(txt)
-print("CastOptionsProvider aggiunto a AndroidManifest")
-PYEOF
-          else
-            echo "CastOptionsProvider già presente in AndroidManifest"
-          fi
+          python3 android-native/inject_cast_manifest.py "$MANIFEST"
 
       - name: Aggiungi permessi AndroidManifest (Cast + Camera + Location)
         script: |
