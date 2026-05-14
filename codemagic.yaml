@@ -156,9 +156,16 @@ workflows:
       - name: Inizializza keychain
         script: keychain initialize
 
-      - name: Genera chiave privata per certificato
+      - name: Prepara chiave privata per certificato
         script: |
-          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution_private_key -q -N ""
+          if [ -n "$APPLE_DISTRIBUTION_PRIVATE_KEY" ]; then
+            echo "$APPLE_DISTRIBUTION_PRIVATE_KEY" | base64 --decode > /tmp/apple_distribution_private_key
+            chmod 600 /tmp/apple_distribution_private_key
+            echo "Chiave caricata da env var APPLE_DISTRIBUTION_PRIVATE_KEY"
+          else
+            ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution_private_key -q -N ""
+            echo "ATTENZIONE: chiave generata al volo. Imposta APPLE_DISTRIBUTION_PRIVATE_KEY in Codemagic per build stabili."
+          fi
 
       - name: Scarica certificati e profili (credenziali da integrazione UI)
         script: |
@@ -332,9 +339,16 @@ workflows:
       - name: Inizializza keychain
         script: keychain initialize
 
-      - name: Genera chiave privata per certificato
+      - name: Prepara chiave privata per certificato
         script: |
-          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution_private_key -q -N ""
+          if [ -n "$APPLE_DISTRIBUTION_PRIVATE_KEY" ]; then
+            echo "$APPLE_DISTRIBUTION_PRIVATE_KEY" | base64 --decode > /tmp/apple_distribution_private_key
+            chmod 600 /tmp/apple_distribution_private_key
+            echo "Chiave caricata da env var APPLE_DISTRIBUTION_PRIVATE_KEY"
+          else
+            ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution_private_key -q -N ""
+            echo "ATTENZIONE: chiave generata al volo. Imposta APPLE_DISTRIBUTION_PRIVATE_KEY in Codemagic per build stabili."
+          fi
 
       - name: Scarica certificati e profili (credenziali da integrazione UI)
         script: |
