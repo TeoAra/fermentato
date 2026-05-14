@@ -322,8 +322,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     const video = document.createElement('video');
     video.setAttribute('x-webkit-airplay', 'allow');
     video.setAttribute('playsinline', '');
+    video.setAttribute('webkit-playsinline', '');
     video.muted = true;
-    video.style.cssText = 'position:absolute;width:0;height:0;opacity:0;pointer-events:none;';
+    video.loop = true;
+    // Sorgente audio necessaria: senza src WKWebView (Capacitor) non rileva
+    // i dispositivi AirPlay 2 (LG TV, Apple TV) nel picker
+    video.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA';
+    video.style.cssText = 'position:fixed;width:1px;height:1px;top:-9999px;left:-9999px;opacity:0;pointer-events:none;';
     document.body.appendChild(video);
     airplayVideoRef.current = video;
 
