@@ -1,0 +1,236 @@
+# ═══════════════════════════════════════════════════════════════════════════════
+# Codemagic CI/CD — Fermenta.to iOS IPA
+# Usa Apple Developer Portal integration (configurata in Team settings → Integrations)
+# Le credenziali vengono lette automaticamente dall'integrazione UI.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+workflows:
+
+  # ─── Build IPA firmato → TestFlight ─────────────────────────────────────────
+  ios-development:
+    name: iOS IPA → TestFlight
+    max_build_duration: 90
+    instance_type: mac_mini_m1
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    integrations:
+      app_store_connect: Fermenta.to
+
+    environment:
+      node: "20"
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: to.fermentato.app
+
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $CM_BUILD_DIR/node_modules
+        - $HOME/Library/Caches/CocoaPods
+
+    scripts:
+      - name: Install Node dependencies
+        script: npm ci
+
+      - name: Build web assets
+        script: npm run build
+
+      - name: Add iOS platform + fix deployment target + pod install
+        script: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios || true
+          fi
+          if [ ! -f "ios/App/Podfile" ]; then
+            echo "ERRORE: Podfile non trovato dopo cap add ios"
+            exit 1
+          fi
+          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
+          cd ios/App && pod install
+
+      - name: Copia web assets nel progetto iOS
+        script: npx cap copy ios
+
+      - name: Aggiungi purpose strings al Info.plist
+        script: |
+          PLIST="ios/App/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocationAlwaysAndWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocationAlwaysAndWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          echo "Info.plist aggiornato:"
+          /usr/libexec/PlistBuddy -c "Print" "$PLIST"
+
+      - name: Imposta versione app
+        script: |
+          VERSION=$(node -p "require('./package.json').version")
+          cd ios/App
+          xcrun agvtool new-marketing-version "$VERSION"
+          xcrun agvtool new-version -all "${CM_BUILD_NUMBER:-1}"
+
+      - name: Inizializza keychain
+        script: keychain initialize
+
+      - name: Genera chiave privata per certificato
+        script: |
+          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution_private_key -q -N ""
+
+      - name: Scarica certificati e profili (credenziali da integrazione UI)
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/apple_distribution_private_key \
+            --create
+
+      - name: Aggiungi certificati al keychain
+        script: keychain add-certificates
+
+      - name: Applica profili al progetto Xcode
+        script: xcode-project use-profiles
+
+      - name: Build IPA firmato
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App \
+            --config Release
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+      email:
+        recipients:
+          - info@fermenta.to
+        notify:
+          success: true
+          failure: true
+
+  # ─── Build App Store IPA (trigger su tag v*) ─────────────────────────────────
+  ios-appstore:
+    name: iOS App Store IPA
+    max_build_duration: 60
+    instance_type: mac_mini_m1
+
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "v*"
+          include: true
+
+    integrations:
+      app_store_connect: Fermenta.to
+
+    environment:
+      node: "20"
+      xcode: latest
+      cocoapods: default
+      vars:
+        BUNDLE_ID: to.fermentato.app
+
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $CM_BUILD_DIR/node_modules
+        - $HOME/Library/Caches/CocoaPods
+
+    scripts:
+      - name: Install Node dependencies
+        script: npm ci
+
+      - name: Build web assets
+        script: npm run build
+
+      - name: Add iOS platform + fix deployment target + pod install
+        script: |
+          if [ ! -d "ios" ]; then
+            npx cap add ios || true
+          fi
+          if [ ! -f "ios/App/Podfile" ]; then
+            echo "ERRORE: Podfile non trovato dopo cap add ios"
+            exit 1
+          fi
+          sed -i '' "s/platform :ios, '[0-9.]*'/platform :ios, '16.0'/" ios/App/Podfile
+          sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
+          cd ios/App && pod install
+
+      - name: Copia web assets nel progetto iOS
+        script: npx cap copy ios
+
+      - name: Aggiungi purpose strings al Info.plist
+        script: |
+          PLIST="ios/App/App/Info.plist"
+          /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryUsageDescription 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryAddUsageDescription string 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSPhotoLibraryAddUsageDescription 'Fermenta.to salva nella tua libreria foto le immagini condivise dall'app.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocationWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocationWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :NSLocationAlwaysAndWhenInUseUsageDescription string 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :NSLocationAlwaysAndWhenInUseUsageDescription 'Fermenta.to usa la posizione per mostrarti pub e birrifici vicino a te.'" "$PLIST"
+          /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
+            /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+
+      - name: Inizializza keychain
+        script: keychain initialize
+
+      - name: Genera chiave privata per certificato
+        script: |
+          ssh-keygen -t rsa -b 2048 -m PEM -f /tmp/apple_distribution_private_key -q -N ""
+
+      - name: Scarica certificati e profili (credenziali da integrazione UI)
+        script: |
+          app-store-connect fetch-signing-files "$BUNDLE_ID" \
+            --type IOS_APP_STORE \
+            --certificate-key=@file:/tmp/apple_distribution_private_key \
+            --create
+
+      - name: Aggiungi certificati al keychain
+        script: keychain add-certificates
+
+      - name: Applica profili al progetto Xcode
+        script: xcode-project use-profiles
+
+      - name: Build IPA per App Store
+        script: |
+          xcode-project build-ipa \
+            --workspace ios/App/App.xcworkspace \
+            --scheme App
+
+    artifacts:
+      - build/ios/ipa/*.ipa
+
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        submit_to_app_store: false
+      email:
+        recipients:
+          - info@fermenta.to
+        notify:
+          success: true
+          failure: true
