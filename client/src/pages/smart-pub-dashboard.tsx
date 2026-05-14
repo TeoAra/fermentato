@@ -924,14 +924,22 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                         </Button>
                       </div>
 
-                      {/* ── QR Code per puntare la TV con il telefono ── */}
-                      <div className="border border-border rounded-xl p-4 flex flex-col items-center gap-2 bg-white dark:bg-card">
+                      {/* ── QR Code — punta direttamente alla pagina TV ── */}
+                      <div className="border border-border rounded-xl p-4 flex flex-col items-center gap-3 bg-white dark:bg-card">
                         <p className="text-xs text-muted-foreground font-medium text-center">
-                          Inquadra con la TV o scansiona con un altro dispositivo
+                          Scansiona per aprire la taplist su un altro schermo
                         </p>
-                        <div className="bg-white rounded-lg p-2">
-                          <PubQRCode pubId={currentPub?.id} pubName={currentPub?.name || ""} pubSlug={(currentPub as any)?.slug} compact />
+                        <div className="bg-white rounded-xl p-3 shadow-sm">
+                          <QRCodeSVG
+                            value={tvUrl}
+                            size={160}
+                            level="M"
+                            includeMargin={false}
+                          />
                         </div>
+                        <p className="text-[11px] text-muted-foreground font-mono text-center opacity-60 truncate max-w-full px-2">
+                          {tvUrl}
+                        </p>
                       </div>
 
                     </div>

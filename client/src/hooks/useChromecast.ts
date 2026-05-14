@@ -1,11 +1,10 @@
 /**
  * useChromecast — Hook centralizzato per Google Cast.
  *
- * Su iOS native (Capacitor) usa il plugin Swift NativeCast che wrappa
- * il Google Cast iOS SDK nativo.
+ * Su iOS/Android native (Capacitor) usa il plugin NativeCast che wrappa
+ * il Google Cast SDK nativo (Swift su iOS, Kotlin su Android).
  *
- * Su browser (PWA / Android WebView) usa il Google Cast JS SDK caricato
- * in index.html tramite cast_sender.js.
+ * Su browser/PWA usa il Google Cast JS SDK caricato in index.html.
  *
  * castState:
  *  "unavailable"    → SDK non disponibile
@@ -47,8 +46,9 @@ interface UseChromecastReturn {
   isConnected: boolean;
 }
 
-const isNativeIos =
-  Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
+// Entrambe le piattaforme native usano il plugin NativeCast
+const isNative = Capacitor.isNativePlatform();
+const isNativeIos = isNative && Capacitor.getPlatform() === "ios";
 
 // ── Hook principale ──────────────────────────────────────────────────────────
 export function useChromecast(): UseChromecastReturn {
@@ -65,9 +65,9 @@ export function useChromecast(): UseChromecastReturn {
       .catch(() => {});
   }, []);
 
-  // ── iOS native: inizializza il plugin Swift e ascolta gli eventi ──────────
+  // ── iOS + Android native: inizializza il plugin NativeCast ────────────────
   useEffect(() => {
-    if (!isNativeIos) return;
+    if (!isNative) return;
 
     let mounted = true;
     NativeCast.initialize({ appId })
@@ -75,7 +75,10 @@ export function useChromecast(): UseChromecastReturn {
       .then(({ state }) => {
         if (mounted) setCastState(state as CastState);
       })
-      .catch(() => {});
+      .catch(() => {
+        // Plugin non disponibile (es. emulatore senza Play Services)
+        if (mounted) setCastState("unavailable");
+      });
 
     NativeCast.addListener("castStateChanged", (data) => {
       if (!mounted) return;
@@ -83,7 +86,7 @@ export function useChromecast(): UseChromecastReturn {
       setDeviceName(data.deviceName ?? "");
     }).then((handle) => {
       listenerRef.current = handle;
-    });
+    }).catch(() => {});
 
     return () => {
       mounted = false;
@@ -93,7 +96,7 @@ export function useChromecast(): UseChromecastReturn {
 
   // ── Web / PWA: usa il Google Cast JS SDK ──────────────────────────────────
   useEffect(() => {
-    if (isNativeIos) return;
+    if (isNative) return;
 
     const init = () => {
       const w = window as any;
@@ -138,8 +141,8 @@ export function useChromecast(): UseChromecastReturn {
   // ── castToTV ──────────────────────────────────────────────────────────────
   const castToTV = useCallback(
     async (url: string, title = "Fermenta.to"): Promise<boolean> => {
-      // iOS native: usa il plugin Swift
-      if (isNativeIos) {
+      // iOS + Android native: usa il plugin NativeCast
+      if (isNative) {
         try {
           setCastState("connecting");
           const result = await NativeCast.showPickerAndLoad({ url, title });
@@ -174,9 +177,6 @@ export function useChromecast(): UseChromecastReturn {
         setDeviceName(device?.friendlyName || "TV");
         setCastState("connected");
 
-        // Invia l'URL al receiver tramite namespace custom.
-        // loadMedia("text/html") risolve senza errori lato SDK ma il receiver
-        // non naviga mai all'URL — usa sempre sendMessage come approccio primario.
         try {
           await new Promise<void>((resolve, reject) => {
             session.sendMessage(
@@ -204,7 +204,7 @@ export function useChromecast(): UseChromecastReturn {
 
   // ── stopCasting ───────────────────────────────────────────────────────────
   const stopCasting = useCallback(() => {
-    if (isNativeIos) {
+    if (isNative) {
       NativeCast.endSession().catch(() => {});
       setCastState("not_connected");
       setDeviceName("");

@@ -432,12 +432,65 @@ workflows:
           fi
           npx cap copy android
 
+      - name: Inietta plugin NativeCast Android (Chromecast nativo)
+        script: |
+          PKG_DIR="android/app/src/main/java/to/fermentato/app"
+          mkdir -p "$PKG_DIR"
+
+          # ── 1. Copia i sorgenti Kotlin del plugin ──────────────────────────
+          cp android-native/NativeCastPlugin.kt   "$PKG_DIR/"
+          cp android-native/CastOptionsProvider.kt "$PKG_DIR/"
+
+          # ── 2. Registra il plugin in MainActivity ──────────────────────────
+          MAIN="$PKG_DIR/MainActivity.java"
+          if [ -f "$MAIN" ]; then
+            # Aggiungi import se non c'è già
+            grep -q "NativeCastPlugin" "$MAIN" || \
+              sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport to.fermentato.app.NativeCastPlugin;/' "$MAIN"
+            # Aggiungi registerPlugin nella onCreate
+            grep -q "registerPlugin(NativeCastPlugin" "$MAIN" || \
+              sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN"
+            echo "MainActivity aggiornata con NativeCastPlugin"
+          else
+            echo "ATTENZIONE: MainActivity.java non trovata in $MAIN"
+          fi
+
+          # ── 3. Aggiungi dipendenza Cast al build.gradle ─────────────────────
+          BUILD="android/app/build.gradle"
+          grep -q "play-services-cast-framework" "$BUILD" || \
+            sed -i '/dependencies {/a\    implementation "com.google.android.gms:play-services-cast-framework:21.5.0"\n    implementation "androidx.mediarouter:mediarouter:1.7.0"' "$BUILD"
+          echo "Dipendenze Cast aggiunte a build.gradle"
+
+          # ── 4. Registra CastOptionsProvider in AndroidManifest ─────────────
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          if ! grep -q "CastOptionsProvider" "$MANIFEST"; then
+            python3 - "$MANIFEST" <<'PYEOF'
+import sys, re
+path = sys.argv[1]
+txt = open(path).read()
+meta = (
+    '\n        <meta-data'
+    '\n            android:name="com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"'
+    '\n            android:value="to.fermentato.app.CastOptionsProvider" />'
+)
+# Inserisci dopo il tag <application ...> (prima della prima riga interna)
+txt = re.sub(r'(<application\b[^>]*>)', r'\1' + meta, txt, count=1)
+open(path, 'w').write(txt)
+print("CastOptionsProvider aggiunto a AndroidManifest")
+PYEOF
+          else
+            echo "CastOptionsProvider già presente in AndroidManifest"
+          fi
+
       - name: Aggiungi permessi AndroidManifest (Cast + Camera + Location)
         script: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           # Rete locale per Chromecast discovery
           grep -q "CHANGE_NETWORK_STATE" "$MANIFEST" || \
             sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>|' "$MANIFEST"
+          # mDNS per Cast discovery su Android 12+
+          grep -q "CHANGE_WIFI_MULTICAST_STATE" "$MANIFEST" || \
+            sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>|' "$MANIFEST"
           echo "AndroidManifest aggiornato:"
           grep "uses-permission" "$MANIFEST"
 
