@@ -836,6 +836,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                               const ok = await castToTV(tvUrl, `Fermenta.to — ${currentPub?.name || "Taplist"}`);
                               if (ok) {
                                 toast({ title: `Taplist LIVE su ${deviceName || "TV"}!`, description: "Si aggiorna in tempo reale" });
+                              } else if (isNativeAndroid) {
+                                // Su APK il fallback non deve aprire l'URL TV nel WebView:
+                                // mostra solo un suggerimento operativo
+                                toast({
+                                  title: "Nessun Chromecast trovato",
+                                  description: "Assicurati che il Chromecast sia acceso e sulla stessa rete WiFi, poi riprova.",
+                                  variant: "destructive",
+                                });
                               } else {
                                 window.open(tvUrl, "_blank");
                                 toast({ title: "Pagina TV aperta", description: "Seleziona dal menu Cast di Chrome (⋮ → Trasmetti)" });

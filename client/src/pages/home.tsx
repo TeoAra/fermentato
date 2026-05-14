@@ -129,12 +129,31 @@ export default function Home() {
     if (Capacitor.isNativePlatform()) {
       try {
         const perm = await Geolocation.requestPermissions();
-        if (perm.location === 'granted' || (perm.location as string) === 'limited') {
-          const pos = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 10000 });
-          applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy ?? 999 } } as any);
-        } else {
+        if (perm.location !== 'granted' && (perm.location as string) !== 'limited') {
           setLocationStatus('denied');
+          return;
         }
+        // watchPosition continua a riprovarci — più robusto di getCurrentPosition
+        // che va in timeout se il GPS non si aggancia al primo tentativo
+        let watchId: string | null = null;
+        const cleanup = () => {
+          if (watchId !== null) { Geolocation.clearWatch({ id: watchId }); watchId = null; }
+        };
+        // Timeout di sicurezza: se dopo 30s non otteniamo nulla, abbandoniamo
+        const timeoutHandle = setTimeout(() => {
+          cleanup();
+          if (!gotGoodPositionRef.current) setLocationStatus('denied');
+        }, 30000);
+        watchId = await Geolocation.watchPosition(
+          { enableHighAccuracy: false, timeout: 15000 },
+          (pos, err) => {
+            if (err || !pos) return;
+            const acc = pos.coords.accuracy ?? 999;
+            applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: acc } } as any);
+            // Una volta che abbiamo una posizione accettabile, smettiamo di ascoltare
+            if (acc <= 3000) { clearTimeout(timeoutHandle); cleanup(); }
+          }
+        );
       } catch { setLocationStatus('denied'); }
       return;
     }
