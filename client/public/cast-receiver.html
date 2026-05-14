@@ -7,34 +7,56 @@
     html, body { width: 100%; height: 100%; overflow: hidden; background: #0a0a0a; }
     #splash {
       display: flex; flex-direction: column; align-items: center; justify-content: center;
-      height: 100%; color: #F59E0B; font-family: sans-serif; text-align: center;
+      height: 100%; color: #F59E0B; font-family: sans-serif; text-align: center; gap: 24px;
     }
-    #splash h1 { font-size: 64px; margin-bottom: 16px; }
-    #splash p { font-size: 24px; color: #9CA3AF; }
-    #taplist { width: 100%; height: 100%; border: none; display: none; }
+    #splash img { width: 280px; opacity: 0.9; }
+    #splash p { font-size: 22px; color: #6B7280; letter-spacing: 0.05em; }
+    #taplist { width: 100%; height: 100%; border: none; display: none; position: fixed; inset: 0; }
   </style>
 </head>
 <body>
   <div id="splash">
-    <h1>&#127866; Fermenta.to</h1>
-    <p id="msg">In attesa...</p>
+    <img src="/logo-full.png" alt="Fermenta.to">
+    <p id="msg">In attesa della taplist…</p>
   </div>
-  <iframe id="taplist" allow="autoplay"></iframe>
+  <iframe id="taplist" allow="autoplay; fullscreen"></iframe>
+
   <script src="https://www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
   <script>
     var context = cast.framework.CastReceiverContext.getInstance();
-    var ns = 'urn:x-cast:fermenta.to';
+    var playerManager = context.getPlayerManager();
+    var NS = 'urn:x-cast:fermenta.to';
     var opts = new cast.framework.CastReceiverOptions();
     opts.disableIdleTimeout = true;
     opts.customNamespaces = {};
-    opts.customNamespaces[ns] = cast.framework.system.MessageType.JSON;
-    context.addCustomMessageListener(ns, function(e) {
-      if (e.data && e.data.url) {
-        document.getElementById('taplist').src = e.data.url;
-        document.getElementById('taplist').style.display = 'block';
-        document.getElementById('splash').style.display = 'none';
-      }
+    opts.customNamespaces[NS] = cast.framework.system.MessageType.JSON;
+
+    function showTaplist(url) {
+      var frame = document.getElementById('taplist');
+      var splash = document.getElementById('splash');
+      frame.src = url;
+      frame.style.display = 'block';
+      splash.style.display = 'none';
+    }
+
+    // Metodo primario: messaggio custom inviato dal sender
+    context.addCustomMessageListener(NS, function(e) {
+      if (e.data && e.data.url) showTaplist(e.data.url);
     });
+
+    // Metodo secondario: intercetta loadMedia (backup per receiver CAF standard)
+    playerManager.setMessageInterceptor(
+      cast.framework.messages.MessageType.LOAD,
+      function(req) {
+        var url = (req.media && (req.media.entity || req.media.contentId)) || '';
+        if (url.indexOf('http') === 0 || url.indexOf('/') === 0) {
+          showTaplist(url);
+          return null; // blocca il player CAF, gestiamo noi
+        }
+        return req;
+      }
+    );
+
     context.start(opts);
   </script>
 </body>

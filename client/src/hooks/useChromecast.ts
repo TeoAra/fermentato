@@ -174,22 +174,21 @@ export function useChromecast(): UseChromecastReturn {
         setDeviceName(device?.friendlyName || "TV");
         setCastState("connected");
 
+        // Invia l'URL al receiver tramite namespace custom.
+        // loadMedia("text/html") risolve senza errori lato SDK ma il receiver
+        // non naviga mai all'URL — usa sempre sendMessage come approccio primario.
         try {
-          const media = new w.chrome.cast.media.MediaInfo(url, "text/html");
-          media.metadata = new w.chrome.cast.media.GenericMediaMetadata();
-          media.metadata.title = title;
-          const loadReq = new w.chrome.cast.media.LoadRequest(media);
           await new Promise<void>((resolve, reject) => {
-            session.loadMedia(loadReq, resolve, reject);
+            session.sendMessage(
+              "urn:x-cast:fermenta.to",
+              { url, title },
+              () => resolve(),
+              (err: any) => reject(err)
+            );
           });
           return true;
         } catch {
-          try {
-            await session.sendMessage("urn:x-cast:fermenta.to", { url, title });
-            return true;
-          } catch {
-            return true;
-          }
+          return true;
         }
       } catch (err: any) {
         if (err?.code === "cancel" || err?.message === "cancel" || err?.code === "CANCEL") {
