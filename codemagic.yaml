@@ -10,7 +10,7 @@
 #   • Apple Developer Portal: "Fermenta.to"
 #
 # Variabili d'ambiente da impostare in Codemagic (Environment variables):
-#   CAST_APP_ID      → ID receiver Chromecast (default: CC1AD845)
+#   CAST_APP_ID      → ID receiver Chromecast (default: 6666EC62)
 #   APNS_KEY_ID      → Apple Push key ID (10 caratteri)
 #   APNS_TEAM_ID     → Apple Team ID (10 caratteri)
 #   APNS_P8_KEY      → Contenuto file .p8 con \n letterali
@@ -40,7 +40,7 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
-        CAST_APP_ID: CC1AD845
+        CAST_APP_ID: 6666EC62
 
     cache:
       cache_paths:
@@ -118,7 +118,7 @@ workflows:
       - name: Aggiungi purpose strings al Info.plist
         script: |
           PLIST="ios/App/App/Info.plist"
-          CAST_APP_ID="${CAST_APP_ID:-CC1AD845}"
+          CAST_APP_ID="${CAST_APP_ID:-6666EC62}"
           /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
@@ -218,7 +218,7 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
-        CAST_APP_ID: CC1AD845
+        CAST_APP_ID: 6666EC62
 
     cache:
       cache_paths:
@@ -308,7 +308,7 @@ workflows:
       - name: Aggiungi purpose strings al Info.plist
         script: |
           PLIST="ios/App/App/Info.plist"
-          CAST_APP_ID="${CAST_APP_ID:-CC1AD845}"
+          CAST_APP_ID="${CAST_APP_ID:-6666EC62}"
           /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
@@ -363,6 +363,84 @@ workflows:
         auth: integration
         submit_to_testflight: true
         submit_to_app_store: false
+      email:
+        recipients:
+          - info@fermenta.to
+        notify:
+          success: true
+          failure: true
+
+  # ─── Build Android APK ────────────────────────────────────────────────────────
+  android-apk:
+    name: Android APK → Download diretto
+    max_build_duration: 60
+    instance_type: linux_x2
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+
+    environment:
+      node: "20"
+      java: "21"
+      vars:
+        PACKAGE_NAME: to.fermentato.app
+        CAST_APP_ID: 6666EC62
+
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $CM_BUILD_DIR/node_modules
+        - ~/.gradle/caches
+
+    scripts:
+      - name: Install Node dependencies
+        script: npm ci
+
+      - name: Build web assets
+        script: npm run build
+
+      - name: Add Android platform + copy assets
+        script: |
+          if [ ! -d "android" ]; then
+            npx cap add android || true
+          fi
+          if [ ! -f "android/app/build.gradle" ]; then
+            echo "ERRORE: build.gradle non trovato dopo cap add android"
+            exit 1
+          fi
+          npx cap copy android
+
+      - name: Aggiungi permessi AndroidManifest (Cast + Camera + Location)
+        script: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          # Rete locale per Chromecast discovery
+          grep -q "CHANGE_NETWORK_STATE" "$MANIFEST" || \
+            sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>|' "$MANIFEST"
+          echo "AndroidManifest aggiornato:"
+          grep "uses-permission" "$MANIFEST"
+
+      - name: Imposta versione e build number
+        script: |
+          VERSION=$(node -p "require('./package.json').version")
+          BUILD_NUM=$(( $(date +%s) % 2000000000 ))
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION\"/" android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode $BUILD_NUM/" android/app/build.gradle
+          echo "Android $VERSION (versionCode $BUILD_NUM)"
+
+      - name: Build APK debug
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon 2>&1
+
+    artifacts:
+      - android/app/build/outputs/apk/debug/*.apk
+
+    publishing:
       email:
         recipients:
           - info@fermenta.to

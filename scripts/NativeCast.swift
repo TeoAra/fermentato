@@ -8,7 +8,7 @@ import GoogleCast
 //
 // JS usage:
 //   const NativeCast = registerPlugin('NativeCast');
-//   await NativeCast.initialize({ appId: 'CC1AD845' });
+//   await NativeCast.initialize({ appId: '6666EC62' });
 //   await NativeCast.showPickerAndLoad({ url: '...', title: '...' });
 //   await NativeCast.endSession();
 //   NativeCast.addListener('castStateChanged', handler);
@@ -33,7 +33,7 @@ public class NativeCastPlugin: CAPPlugin, CAPBridgedPlugin {
     // MARK: - initialize
 
     @objc func initialize(_ call: CAPPluginCall) {
-        let appId = call.getString("appId") ?? kGCKDefaultMediaReceiverApplicationID
+        let appId = call.getString("appId") ?? "6666EC62"
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             if !self.initialized {

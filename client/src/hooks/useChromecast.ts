@@ -54,7 +54,7 @@ const isNativeIos =
 export function useChromecast(): UseChromecastReturn {
   const [castState, setCastState] = useState<CastState>("unavailable");
   const [deviceName, setDeviceName] = useState("");
-  const [appId, setAppId] = useState("CC1AD845");
+  const [appId, setAppId] = useState("6666EC62");
   const listenerRef = useRef<PluginListenerHandle | null>(null);
 
   // Carica app ID dal server
