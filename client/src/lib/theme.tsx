@@ -46,11 +46,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const iosMeta = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]') as HTMLMetaElement | null;
     if (iosMeta) iosMeta.setAttribute("content", theme === "dark" ? "black-translucent" : "default");
 
-    // Sync Capacitor native status bar (iOS + Android) when running in app
+    // Sync Capacitor native status bar (iOS + Android) when running in app.
+    // Su iOS con setOverlaysWebView(overlay:true) la status bar è trasparente:
+    // chiamare setBackgroundColor interferirebbe con lo stile delle icone.
+    // Su Android (non-overlay) impostiamo anche il colore di sfondo esplicito.
     if ((window as any).Capacitor?.isNativePlatform?.()) {
+      const platform = (window as any).Capacitor?.getPlatform?.();
       import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
+        // Style.Light = icone bianche (per sfondi scuri); Style.Dark = icone nere (per sfondi chiari)
         StatusBar.setStyle({ style: theme === "dark" ? Style.Light : Style.Dark }).catch(() => {});
-        StatusBar.setBackgroundColor({ color: headerBg }).catch(() => {});
+        if (platform !== "ios") {
+          StatusBar.setBackgroundColor({ color: headerBg }).catch(() => {});
+        }
       }).catch(() => {});
     }
   }, [theme]);

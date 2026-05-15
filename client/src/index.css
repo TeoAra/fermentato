@@ -854,7 +854,8 @@ html.dark {
 @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp   { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes scaleIn   { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
-@keyframes routeFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes routeFade { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+@keyframes splashLogoIn { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: none; } }
 @keyframes staggerReveal {
   from { opacity: 0; transform: translateY(12px) scale(0.99); }
   to   { opacity: 1; transform: none; }

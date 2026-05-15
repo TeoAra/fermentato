@@ -74,11 +74,13 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const [showIosInstallGuide, setShowIosInstallGuide] = useState(false);
   const scrolled = useScrolled(12);
 
+  const isNativeApp = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
   const isIosBrowser = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
   const isStandaloneMode = typeof window !== 'undefined' && (
     window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true
   );
-  const showIosInstallEntry = isIosBrowser && !isStandaloneMode;
+  // Nasconde la voce "Installa app" quando l'utente usa già l'app nativa (IPA/APK)
+  const showIosInstallEntry = isIosBrowser && !isStandaloneMode && !isNativeApp;
 
   const { data: rolesData } = useQuery<{ roles: string[]; activeRole: string }>({
     queryKey: ["/api/auth/roles"],
@@ -237,7 +239,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
         <SheetContent
           side="right"
-          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#15202B] border-l border-stone-100/80 dark:border-white/[0.06] [&]:!overflow-hidden overscroll-contain touch-pan-y"
+          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#15202B] border-l border-stone-100/80 dark:border-white/[0.06] overflow-y-auto overscroll-contain touch-pan-y"
           style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
         >
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
@@ -304,8 +306,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             )}
           </div>
 
-          {/* ── Scrollable nav items ── */}
-          <div className="flex-1 overflow-y-auto py-2 space-y-0.5">
+          {/* ── Nav items (non-scrollable; tutto il menu scorre come un'unica unità) ── */}
+          <div className="flex-1 py-2 space-y-0.5">
 
             <MenuItem href="/" icon={Home} label="Home" />
 
@@ -396,8 +398,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
           </div>
 
-          {/* ── Footer: tutorial + theme + logout ── */}
-          <div className="px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+4rem)]">
+          {/* ── Footer: tutorial + theme + logout (sticky al fondo) ── */}
+          <div className="sticky bottom-0 z-10 bg-white dark:bg-[#15202B] px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+4rem)]">
             <button
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground hover:bg-stone-50 dark:hover:bg-white/5 transition-colors tap-scale"
               onClick={() => {

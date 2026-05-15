@@ -506,8 +506,10 @@ export function CapacitorPushPrompt() {
       if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return;
     }
 
-    // Se autenticato mostra subito dopo 3s, altrimenti dopo 8s (dà tempo al caricamento)
-    const delay = isAuthenticated ? 3000 : 8000;
+    // GPS prompt appare dopo 3s per auth utenti → push appare dopo 7s così
+    // non si sovrappongono entrambi i dialog nello stesso momento.
+    // Per non-autenticati 10s dà tempo al caricamento della pagina.
+    const delay = isAuthenticated ? 7000 : 10000;
     const timer = setTimeout(() => setShow(true), delay);
     return () => clearTimeout(timer);
   }, [isNative, isAuthenticated]);

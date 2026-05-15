@@ -115,7 +115,8 @@ export async function setStatusBarStyle(isDark: boolean) {
   if (!isNative) return;
   try {
     const { StatusBar, Style } = await import("@capacitor/status-bar");
-    await StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light });
+    // Style.Light = icone bianche (per sfondi scuri); Style.Dark = icone nere (per sfondi chiari)
+    await StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark });
   } catch {}
 }
 

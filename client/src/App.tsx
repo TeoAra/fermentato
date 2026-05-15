@@ -23,6 +23,7 @@ import { DesktopSidebar } from "@/components/desktop-sidebar";
 const CookieBanner = lazy(() => import("@/components/CookieBanner"));
 import { AppUpdateCheck } from "@/components/app-update-check";
 import { ThemeProvider } from "@/lib/theme";
+import { NativeSplashOverlay } from "@/components/native-splash-overlay";
 import type { User } from "@shared/schema";
 
 // ─── Page lazy imports — loaded only when the route is visited ───────────────
@@ -384,6 +385,7 @@ function App() {
       <ThemeProvider>
         <QueryClientProvider client={queryClient}>
           <TooltipProvider>
+            <NativeSplashOverlay />
             <Toaster />
             <Lightbox />
             <AppUpdateCheck />
