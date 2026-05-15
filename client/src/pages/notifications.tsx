@@ -82,6 +82,9 @@ function isIosDevice() { return /iPad|iPhone|iPod/.test(navigator.userAgent); }
 function isStandaloneMode() {
   return window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone === true;
 }
+function isNativeCapacitorApp() {
+  return typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.() === true;
+}
 
 export default function Notifications() {
   const { toast } = useToast();
@@ -94,7 +97,9 @@ export default function Notifications() {
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [filter, setFilter] = useState<string>('all');
 
-  const iosNotStandalone = isIosDevice() && !isStandaloneMode();
+  // Su app nativa (IPA/APK) non mostriamo mai il banner "installa da Safari":
+  // siamo già dentro l'app, il problema non si pone.
+  const iosNotStandalone = isIosDevice() && !isStandaloneMode() && !isNativeCapacitorApp();
 
   // Reset paginazione quando cambia il filtro
   useEffect(() => { setPage(0); setAccumulated([]); }, [filter]);
@@ -503,7 +508,16 @@ export default function Notifications() {
               </div>
               <Switch
                 checked={pushMaster}
-                onCheckedChange={(v) => updatePrefsMutation.mutate({ pushEnabled: v })}
+                onCheckedChange={async (v) => {
+                  updatePrefsMutation.mutate({ pushEnabled: v });
+                  // Su app nativa: richiede permesso iOS/Android se non ancora concesso
+                  if (v && isNativeCapacitorApp()) {
+                    try {
+                      const { registerNativePush } = await import('@/services/capacitor-native');
+                      await registerNativePush();
+                    } catch {}
+                  }
+                }}
                 disabled={iosNotStandalone}
                 data-testid="switch-push-master"
               />

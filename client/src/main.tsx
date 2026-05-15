@@ -35,8 +35,10 @@ if (Capacitor.isNativePlatform()) {
       hidden = true;
       SplashScreen.hide({ fadeOutDuration: 300 }).catch(() => {});
     };
-    // Nascondi appena React ha renderizzato qualcosa di visibile
-    requestAnimationFrame(() => setTimeout(hide, 350));
+    // Nascondi dopo 1200ms: dà tempo al bundle JS di caricarsi e alla
+    // NativeSplashOverlay React di renderizzarsi PRIMA che la splash nativa
+    // scompaia, evitando il flash del logo default Capacitor (icona blu X).
+    requestAnimationFrame(() => setTimeout(hide, 1200));
     // Fallback duro: dopo 3.5s nascondi comunque
     setTimeout(hide, 3500);
   }).catch(() => {});

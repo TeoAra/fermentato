@@ -851,6 +851,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                                   description: "Assicurati che il Chromecast sia acceso e sulla stessa rete WiFi, poi riprova.",
                                   variant: "destructive",
                                 });
+                              } else if (isNativeIos) {
+                                // GCK SDK non ancora attivo su questo build:
+                                // guida l'utente verso AirPlay che è sempre disponibile su iOS
+                                toast({
+                                  title: "Usa AirPlay",
+                                  description: "Premi il pulsante AirPlay qui sotto per trasmettere la taplist su Apple TV o TV compatibile.",
+                                });
                               } else {
                                 window.open(tvUrl, "_blank");
                                 toast({ title: "Pagina TV aperta", description: "Seleziona dal menu Cast di Chrome (⋮ → Trasmetti)" });
