@@ -35,12 +35,10 @@ ok "Build web completato → dist/public"
 # ── 2. Riavvia PWA su PM2 ─────────────────────────────────────────────────
 step "Riavvio PWA con PM2"
 if pm2 list | grep -q "fermenta\|app\|server"; then
-  # --update-env è ESSENZIALE: senza, pm2 mantiene le env vars del processo
-  # originale e ignora le modifiche al file .env (es. nuove APNS_KEY_ID).
-  pm2 restart all --update-env
-  ok "PM2 riavviato (env ricaricato) — PWA live su https://fermenta.to"
+  pm2 restart all
+  ok "PM2 riavviato — PWA live su https://fermenta.to"
 else
-  fail "PM2 non trovato o nessun processo attivo. Avvia l'app con: ./deploy.sh"
+  fail "PM2 non trovato o nessun processo attivo. Avvia l'app con: pm2 start"
 fi
 
 if [[ "$MODE" == "pwa" ]]; then
