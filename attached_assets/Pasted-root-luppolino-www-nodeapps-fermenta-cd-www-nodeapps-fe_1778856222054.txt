@@ -1,0 +1,57 @@
+root@luppolino:/www/nodeapps/fermenta# cd /www/nodeapps/fermenta
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# # Restart con env aggiornato
+root@luppolino:/www/nodeapps/fermenta# pm2 restart fermenta --update-env
+[PM2] Applying action restartProcessId on app [fermenta](ids: [ 0 ])
+[PM2] [fermenta](0) ✓
+┌────┬─────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name            │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼─────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 1  │ clip-service    │ default     │ N/A     │ fork    │ 303154   │ 17m    │ 15   │ online    │ 0%       │ 1.0gb    │ root     │ disabled │
+│ 0  │ fermenta        │ default     │ N/A     │ fork    │ 306998   │ 0s     │ 26   │ online    │ 0%       │ 3.3mb    │ root     │ disabled │
+└────┴─────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# # Aspetta 3 secondi poi controlla tutto
+root@luppolino:/www/nodeapps/fermenta# sleep 3
+root@luppolino:/www/nodeapps/fermenta# echo "=== APNs/VAPID config ==="
+=== APNs/VAPID config ===
+root@luppolino:/www/nodeapps/fermenta# pm2 logs fermenta --lines 200 --nostream | grep -iE "apns|vapid" | tail -5
+0|fermenta | 2026-05-15T14:37:00: APNs configured for iOS native push (bundle: to.fermentato.app )
+0|fermenta | 2026-05-15T14:39:37: Web Push configured with VAPID keys
+0|fermenta | 2026-05-15T14:39:37: APNs configured for iOS native push (bundle: to.fermentato.app )
+0|fermenta | 2026-05-15T14:43:28: Web Push configured with VAPID keys
+0|fermenta | 2026-05-15T14:43:28: APNs configured for iOS native push (bundle: to.fermentato.app )
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# echo ""
+
+root@luppolino:/www/nodeapps/fermenta# echo "=== Errori recenti ==="
+=== Errori recenti ===
+root@luppolino:/www/nodeapps/fermenta# pm2 logs fermenta --lines 50 --nostream --err | tail -20
+0|fermenta | 2026-05-15T14:14:53: }
+0|fermenta | 2026-05-15T14:21:00: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:24:52: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:24:55: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:25:24: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:26:05: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:26:08: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:26:38: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:30:40: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:30:43: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:31:13: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:36:58: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:37:01: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:37:31: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:39:34: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:39:37: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:40:07: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:43:25: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:43:28: [indexes] migration soft-fail: column "slug" does not exist
+
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# echo ""
+
+root@luppolino:/www/nodeapps/fermenta# echo "=== Porta in ascolto ==="
+=== Porta in ascolto ===
+root@luppolino:/www/nodeapps/fermenta# ss -lntp | grep :5000
+LISTEN 0      511               0.0.0.0:5000       0.0.0.0:*    users:(("node",pid=307020,fd=76))
+root@luppolino:/www/nodeapps/fermenta#
