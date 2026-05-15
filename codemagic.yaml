@@ -93,6 +93,9 @@ workflows:
           python3 ios-native/add_push_entitlement.py \
             ios/App/App.xcodeproj/project.pbxproj
           echo "=== App.entitlements ===" && cat ios/App/App/App.entitlements
+          python3 ios-native/inject_push_appdelegate.py \
+            ios/App/App/AppDelegate.swift
+          echo "=== AppDelegate.swift (push methods) ===" && grep -A 2 "didRegisterForRemoteNotifications\|didFailToRegisterForRemoteNotifications" ios/App/App/AppDelegate.swift
 
       - name: Genera icone app iOS
         script: |
@@ -302,6 +305,9 @@ workflows:
           python3 ios-native/add_push_entitlement.py \
             ios/App/App.xcodeproj/project.pbxproj
           echo "=== App.entitlements ===" && cat ios/App/App/App.entitlements
+          python3 ios-native/inject_push_appdelegate.py \
+            ios/App/App/AppDelegate.swift
+          echo "=== AppDelegate.swift (push methods) ===" && grep -A 2 "didRegisterForRemoteNotifications\|didFailToRegisterForRemoteNotifications" ios/App/App/AppDelegate.swift
 
       - name: Genera icone app iOS
         script: |
