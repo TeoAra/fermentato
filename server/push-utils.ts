@@ -198,8 +198,8 @@ export async function shouldSendNotification(
 }
 
 async function deliverPush(userId: string, payload: any) {
-  // Web push (VAPID) per browser PWA
-  const subs = await storage.getPushSubscriptionsByUser(userId);
+  // Web push (VAPID) per browser PWA — solo se VAPID è configurato
+  const subs = vapidConfigured ? await storage.getPushSubscriptionsByUser(userId) : [];
   const webPromises = subs.map(async (sub) => {
     try {
       await webpush.sendNotification(
@@ -270,7 +270,9 @@ async function scheduleDelivery(userId: string, payload: PushPayload, deferMs: n
 }
 
 export async function sendPushToUser(userId: string, payload: PushPayload) {
-  if (!vapidConfigured) return;
+  // NB: non blocchiamo su !vapidConfigured — le push iOS native (APNs) vanno
+  // inviate anche senza VAPID. deliverPush salta web push se VAPID assente.
+  if (!vapidConfigured && !apnsConfigured) return;
   try {
     const { allowed, deferMs } = await shouldSendNotification(userId, payload.category);
     if (!allowed) return;
@@ -343,7 +345,8 @@ async function flushBatch(userId: string, bkey: string) {
 }
 
 export async function sendPushToUserImmediate(userId: string, payload: PushPayload) {
-  if (!vapidConfigured) return;
+  // Stesso fix di sendPushToUser: APNs deve funzionare anche senza VAPID.
+  if (!vapidConfigured && !apnsConfigured) return;
   try {
     // Rispetta SEMPRE le quiet hours + categoria + master pushEnabled.
     // Bypassa solo throttle/batching (per push critiche tipo segnalazioni

@@ -237,7 +237,12 @@ async function runLocalTesseract(dataUrl: string): Promise<string> {
 if (initVapid()) {
   console.log('Web Push configured with VAPID keys');
 } else {
-  console.warn('VAPID keys not set - push notifications disabled');
+  console.warn('VAPID keys not set - web push (PWA) disabled. APNs (iOS native) still works if APNS_KEY_ID/TEAM_ID/P8_KEY are set.');
+}
+if (process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID && process.env.APNS_P8_KEY) {
+  console.log('APNs configured for iOS native push (bundle:', process.env.APNS_BUNDLE_ID || 'to.fermentato.app', ')');
+} else {
+  console.warn('APNs not fully configured - iOS native push disabled. Set APNS_KEY_ID, APNS_TEAM_ID, APNS_P8_KEY.');
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
