@@ -41,11 +41,23 @@ fi
 echo "==> [6] Salva startup PM2"
 pm2 save
 
-echo "==> [7] Sanity check: ascolto su porta $PORT"
-sleep 1
-ss -lntp | grep -q ":$PORT" && echo "✅ Porta $PORT in ascolto" || echo "⚠️ Porta $PORT NON in ascolto (controlla pm2 logs)"
+echo "==> [7] Sanity check: ascolto su porta $PORT (attendo fino a 30s)"
+# L'app impiega ~3-10s per finire bootstrap (Stripe sync, SMTP verify,
+# Telegram webhook). Faccio polling invece di un singolo check.
+LISTENING=0
+for i in $(seq 1 30); do
+  if ss -lntp 2>/dev/null | grep -q ":$PORT"; then
+    LISTENING=1
+    echo "✅ Porta $PORT in ascolto dopo ${i}s"
+    break
+  fi
+  sleep 1
+done
+if [[ $LISTENING -eq 0 ]]; then
+  echo "⚠️ Porta $PORT NON in ascolto dopo 30s — controlla: pm2 logs $APP_NAME --lines 50"
+fi
 
 echo "==> [8] Test API locale"
-curl -s -I "http://127.0.0.1:$PORT/" | head -n 1 || true
+curl -s -o /dev/null -w "HTTP %{http_code}\n" "http://127.0.0.1:$PORT/api/stats" || true
 
 echo "✅ Deploy completato: $(git log -1 --oneline)"
