@@ -1,0 +1,61 @@
+root@luppolino:/www/nodeapps/fermenta# # Controlla se ci sono errori "native_push_tokens" RECENTI (ultimi 5 min)
+root@luppolino:/www/nodeapps/fermenta# pm2 logs fermenta --lines 200 --nostream | grep -E "native_push_tokens|push.*throttle" | tail -20
+0|fermenta | 2026-05-15T14:14:53:   query: 'select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1',
+0|fermenta | 2026-05-15T14:14:53:   cause: error: relation "native_push_tokens" does not exist
+0|fermenta | 2026-05-15T14:14:53: [push] throttle error: DrizzleQueryError: Failed query: select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1
+0|fermenta | 2026-05-15T14:14:53:   query: 'select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1',
+0|fermenta | 2026-05-15T14:14:53:   cause: error: relation "native_push_tokens" does not exist
+0|fermenta | 2026-05-15T14:14:53: [push] throttle error: DrizzleQueryError: Failed query: select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1
+0|fermenta | 2026-05-15T14:14:53:   query: 'select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1',
+0|fermenta | 2026-05-15T14:14:53:   cause: error: relation "native_push_tokens" does not exist
+0|fermenta | 2026-05-15T14:14:53: [push] throttle error: DrizzleQueryError: Failed query: select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1
+0|fermenta | 2026-05-15T14:14:53:   query: 'select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1',
+0|fermenta | 2026-05-15T14:14:53:   cause: error: relation "native_push_tokens" does not exist
+0|fermenta | 2026-05-15T14:14:53: [push] throttle error: DrizzleQueryError: Failed query: select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1
+0|fermenta | 2026-05-15T14:14:53:   query: 'select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1',
+0|fermenta | 2026-05-15T14:14:53:   cause: error: relation "native_push_tokens" does not exist
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# # Forza una push: invia una notifica di test dall'app (es. festival broadcast,
+root@luppolino:/www/nodeapps/fermenta# # o crea un evento) e poi guarda i log live
+root@luppolino:/www/nodeapps/fermenta# pm2 logs fermenta --lines 0
+0|fermenta  | 2026-05-15T15:03:19: 3:03:19 PM [express] GET /api/search 200 in 1187ms :: {"pubs":[],"breweries":[{"id":18434,"name":"Ba…
+0|fermenta  | 2026-05-15T15:03:24: 3:03:24 PM [express] GET /api/search 200 in 1114ms :: {"pubs":[],"breweries":[{"id":42266,"name":"Br…
+0|fermenta  | 2026-05-15T15:03:24: 3:03:24 PM [express] GET /api/search 200 in 1063ms :: {"pubs":[],"breweries":[],"beers":[{"id":27525…
+0|fermenta  | 2026-05-15T15:03:26: 3:03:26 PM [express] GET /api/search 200 in 2605ms :: {"pubs":[],"breweries":[],"beers":[{"id":89431…
+0|fermenta  | 2026-05-15T15:03:29: 3:03:29 PM [express] GET /api/search 200 in 2073ms :: {"pubs":[],"breweries":[{"id":13351,"name":"Sp…
+0|fermenta  | 2026-05-15T15:03:30: 3:03:30 PM [express] GET /api/search 200 in 967ms :: {"pubs":[],"breweries":[],"beers":[{"id":132001…
+0|fermenta  | 2026-05-15T15:03:31: 3:03:31 PM [express] GET /api/search 200 in 506ms :: {"pubs":[],"breweries":[],"beers":[{"id":275267…
+0|fermenta  | 2026-05-15T15:03:35: PATCH taplist item: {
+0|fermenta  | 2026-05-15T15:03:35:   pubId: '7',
+0|fermenta  | 2026-05-15T15:03:35:   id: '75',
+0|fermenta  | 2026-05-15T15:03:35:   data: {
+0|fermenta  | 2026-05-15T15:03:35:     beerId: 275267,
+0|fermenta  | 2026-05-15T15:03:35:     tapNumber: null,
+0|fermenta  | 2026-05-15T15:03:35:     tapType: 'spina',
+0|fermenta  | 2026-05-15T15:03:35:     description: null,
+0|fermenta  | 2026-05-15T15:03:35:     isVisible: true
+0|fermenta  | 2026-05-15T15:03:35:   }
+0|fermenta  | 2026-05-15T15:03:35: }
+0|fermenta  | 2026-05-15T15:03:35: Updated taplist item: {
+0|fermenta  | 2026-05-15T15:03:35:   id: 75,
+0|fermenta  | 2026-05-15T15:03:35:   pubId: 7,
+0|fermenta  | 2026-05-15T15:03:35:   beerId: 275267,
+0|fermenta  | 2026-05-15T15:03:35:   isActive: true,
+0|fermenta  | 2026-05-15T15:03:35:   isVisible: true,
+0|fermenta  | 2026-05-15T15:03:35:   prices: { '20cl': 4.5, '40cl': 7.5 },
+0|fermenta  | 2026-05-15T15:03:35:   priceSmall: null,
+0|fermenta  | 2026-05-15T15:03:35:   priceMedium: null,
+0|fermenta  | 2026-05-15T15:03:35:   priceLarge: null,
+0|fermenta  | 2026-05-15T15:03:35:   tapNumber: null,
+0|fermenta  | 2026-05-15T15:03:35:   tapType: 'spina',
+0|fermenta  | 2026-05-15T15:03:35:   description: null,
+0|fermenta  | 2026-05-15T15:03:35:   addedAt: 2026-05-15T14:57:15.945Z,
+0|fermenta  | 2026-05-15T15:03:35:   updatedAt: 2026-05-15T15:03:35.021Z
+0|fermenta  | 2026-05-15T15:03:35: }
+0|fermenta  | 2026-05-15T15:03:35: 3:03:35 PM [express] PATCH /api/pubs/7/taplist/75 200 in 36ms :: {"id":75,"pubId":7,"beerId":275267,…
+0|fermenta  | 2026-05-15T15:03:35: 3:03:35 PM [express] GET /api/pubs/7/taplist 200 in 18ms :: [{"id":41,"pubId":7,"beerId":46352,"isAc…
+0|fermenta  | 2026-05-15T15:03:35: 3:03:35 PM [express] POST /api/pubs/7/taplist/75/prices 200 in 37ms :: {"id":75,"pubId":7,"beerId":2…
+0|fermenta  | 2026-05-15T15:03:35: 3:03:35 PM [express] GET /api/pubs/7/taplist 200 in 13ms :: [{"id":41,"pubId":7,"beerId":46352,"isAc…
+0|fermenta  | 2026-05-15T15:03:36: 3:03:36 PM [express] GET /api/notifications/unread-count 200 in 7ms :: {"count":1}
+^C
+root@luppolino:/www/nodeapps/fermenta#
