@@ -145,7 +145,16 @@ export function useChromecast(): UseChromecastReturn {
       if (isNative) {
         try {
           setCastState("connecting");
-          const result = await NativeCast.showPickerAndLoad({ url, title });
+          // Timeout 30s: se l'utente chiude il picker senza scegliere un dispositivo,
+          // la Promise nativa rimane pending indefinitamente (keepAlive=true in Swift).
+          // Dopo 30s consideriamo l'operazione annullata e torniamo a "not_connected".
+          const result = await Promise.race([
+            NativeCast.showPickerAndLoad({ url, title }),
+            new Promise<{ success: boolean }>((_resolve, reject) =>
+              setTimeout(() => reject(new Error("picker_timeout")), 30_000)
+            ),
+          ]);
+          if (!result.success) setCastState("not_connected");
           return result.success;
         } catch {
           setCastState("not_connected");
