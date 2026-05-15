@@ -18,8 +18,10 @@ git fetch origin
 git checkout "$BRANCH" >/dev/null 2>&1 || true
 git reset --hard "origin/$BRANCH"
 
-echo "==> [2] Install dipendenze"
-npm install
+echo "==> [2] Install dipendenze (incluse dev: vite/esbuild servono per build)"
+# --include=dev forza l'installazione delle devDependencies anche se
+# NODE_ENV=production. Senza, vite/esbuild mancano e il build fallisce.
+npm install --include=dev
 
 echo "==> [3] Build"
 npm run build
