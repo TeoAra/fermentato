@@ -1,0 +1,478 @@
+#!/usr/bin/env bash
+
+xcode-project build-ipa \
+  --workspace ios/App/App.xcworkspace \
+  --scheme App \
+  --config Release
+Using Xcode 16.3 (16E140)
+Check App.xcworkspace build settings
+Execute "xcodebuild -workspace ios/App/App.xcworkspace -scheme App -config Release -showBuildSettings"
+
+Archive App.xcworkspace
+Execute "xcodebuild -workspace ios/App/App.xcworkspace -scheme App -config Release -archivePath /Users/builder/clone/build/ios/xcarchive/App_b8yjbvjs.xcarchive archive COMPILER_INDEX_STORE_ENABLE=NO DEVELOPMENT_TEAM=524DC89B7P 'CODE_SIGN_IDENTITY=Apple Distribution' CODE_SIGN_STYLE=Manual"
+
+▸ Running script '[CP] Copy XCFrameworks'
+▸ Copying Pods-App-umbrella.h
+▸ Copying IONCameraLib-umbrella.h
+▸ Copying CapacitorStatusBar-umbrella.h
+▸ Copying CapacitorSplashScreen-umbrella.h
+▸ Copying CapacitorPushNotifications-umbrella.h
+▸ Copying CapacitorGeolocation-umbrella.h
+▸ Copying NSDictionary+CordovaPreferences.h
+▸ Copying CapacitorCordova.h
+▸ Copying CDVWebViewProcessPoolFactory.h
+▸ Copying CDVViewController.h
+▸ Copying CDVURLProtocol.h
+▸ Copying CDVScreenOrientationDelegate.h
+▸ Copying CDVPluginResult.h
+▸ Copying CDVPluginManager.h
+▸ Copying CDVPlugin.h
+▸ Copying CDVPlugin+Resources.h
+▸ Copying CDVInvokedUrlCommand.h
+▸ Copying CDVConfigParser.h
+▸ Copying CDVCommandDelegateImpl.h
+▸ Copying CDVCommandDelegate.h
+▸ Copying CDVAvailabilityDeprecated.h
+▸ Copying CDVAvailability.h
+▸ Copying CDV.h
+▸ Copying AppDelegate.h
+▸ Copying CapacitorCamera-umbrella.h
+▸ Copying CapacitorApp-umbrella.h
+▸ Copying Capacitor.h
+▸ Copying CAPPluginMethod.h
+▸ Copying CAPPluginCall.h
+▸ Copying CAPPlugin.h
+▸ Copying CAPInstanceDescriptor.h
+▸ Copying CAPInstanceConfiguration.h
+▸ Copying CAPBridgedPlugin.h
+▸ Copying CAPBridgedJSTypes.h
+▸ Copying CAPBridgeViewController+CDVScreenOrientationDelegate.h
+▸ Processing ResourceBundle-GoogleCast-google-cast-sdk-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/GoogleCast.bundle/PrivacyInfo.xcprivacy
+▸ Processing ResourceBundle-CapacitorCordova-CapacitorCordova-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/CapacitorCordova.bundle/PrivacyInfo.xcprivacy
+▸ Touching GoogleCast.bundle (in target 'google-cast-sdk-GoogleCast' from project 'Pods')
+▸ Touching CapacitorCordova.bundle (in target 'CapacitorCordova-CapacitorCordova' from project 'Pods')
+▸ Running script '[CP] Copy XCFrameworks'
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/Cordova.framework/CapacitorCordova.bundle
+▸ Processing CapacitorCordova-Info.plist
+▸ Compiling Cordova_vers.c
+
+⚠️  /Users/builder/clone/ios/App/Pods/IONCameraLib/Sources/IONCameraLib/Interfaces/IONCAMREditorBehaviour.swift:9:51: 'windows' was deprecated in iOS 15.0: Use UIWindowScene.windows on a relevant window scene instead
+
+            let isPortrait = UIApplication.shared.windows.first?.windowScene?.interfaceOrientation.isPortrait ?? false
+                                                  ^
+
+
+
+⚠️  /Users/builder/clone/ios/App/Pods/IONCameraLib/Sources/IONCameraLib/Interfaces/Editor/IONCAMRImageEditorView.swift:91:54: 'windows' was deprecated in iOS 15.0: Use UIWindowScene.windows on a relevant window scene instead
+
+            guard isPortrait != UIApplication.shared.windows.first?.windowScene?.interfaceOrientation.isPortrait else { return }
+                                                     ^
+
+
+
+⚠️  /Users/builder/clone/ios/App/Pods/IONCameraLib/Sources/IONCameraLib/Interfaces/IONCAMRPlayerBehaviour.swift:38:17: capture of 'self' with non-sendable type 'IONCAMRPlayerBehaviour' in a '@Sendable' closure
+
+                self.coordinator.present(playerViewController)
+                ^
+
+
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/ios/Capacitor/Capacitor/CapacitorBridge.swift:226:89: 'tmpVCAppeared' is deprecated: obsolete
+
+        observers.append(NotificationCenter.default.addObserver(forName: type(of: self).tmpVCAppeared.name, object: .none, queue: .none) { [weak self] _ in
+            ^
+
+
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/ios/Capacitor/Capacitor/CapacitorBridge.swift:227:19: 'tmpWindow' is deprecated: obsolete
+
+            self?.tmpWindow = nil
+                                                                                        ^
+
+
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/ios/Capacitor/Capacitor/TmpViewController.swift:6:57: 'tmpVCAppeared' is deprecated: obsolete
+
+        NotificationCenter.default.post(CapacitorBridge.tmpVCAppeared)
+                  ^
+
+
+▸ Compiling CDVURLProtocol.m
+▸ Compiling CapacitorCordova-dummy.m
+▸ Compiling CDVInvokedUrlCommand.m
+▸ Compiling CDVConfigParser.m
+▸ Compiling NSDictionary+CordovaPreferences.m
+▸ Compiling CDVViewController.m
+▸ Compiling CDVPluginResult.m
+▸ Compiling AppDelegate.m
+▸ Compiling CDVPluginManager.m
+▸ Compiling CDVWebViewProcessPoolFactory.m
+▸ Compiling CDVPlugin.m
+▸ Compiling CDVPlugin+Resources.m
+▸ Compiling CDVCommandDelegateImpl.m
+▸ Linking Cordova
+▸ Generating 'Cordova.framework.dSYM'
+▸ Touching Cordova.framework (in target 'CapacitorCordova' from project 'Pods')
+▸ Processing ResourceBundle-Capacitor-Capacitor-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/Capacitor.bundle/PrivacyInfo.xcprivacy
+▸ Touching Capacitor.bundle (in target 'Capacitor-Capacitor' from project 'Pods')
+▸ Processing Capacitor-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/Capacitor.framework/native-bridge.js
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/Capacitor.framework/Capacitor.bundle
+▸ Processing ResourceBundle-IONCameraLibResources-IONCameraLib-Info.plist
+▸ Touching IONCameraLibResources.bundle (in target 'IONCameraLib-IONCameraLibResources' from project 'Pods')
+▸ Processing IONCameraLib-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/IONCameraLib.framework/IONCameraLibResources.bundle
+▸ Compiling IONCameraLib_vers.c
+▸ Compiling IONCameraLib-dummy.m
+▸ Linking IONCameraLib
+▸ Generating 'IONCameraLib.framework.dSYM'
+▸ Touching IONCameraLib.framework (in target 'IONCameraLib' from project 'Pods')
+▸ Compiling Capacitor_vers.c
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift:38:49: 'alert' was deprecated in iOS 14.0
+
+                    presentationOptions.insert(.alert)
+                                                        ^
+
+
+
+❌  /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/BuildProductsPath/Release-iphoneos/XCFrameworkIntermediates/IONGeolocationLib/IONGeolocationLib.framework/Modules/IONGeolocationLib.swiftmodule/arm64-apple-ios.private.swiftinterface:67:44: cannot find type '_LocationEssentials' in scope
+
+  public static func create(from location: _LocationEssentials.CLLocation, heading: CoreLocation.CLHeading? = nil) -> IONGeolocationLib.IONGLOCPositionModel
+                                                ^
+
+
+
+❌  /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/BuildProductsPath/Release-iphoneos/XCFrameworkIntermediates/IONGeolocationLib/IONGeolocationLib.framework/Modules/IONGeolocationLib.swiftmodule/arm64-apple-ios.private.swiftinterface:134:119: cannot find type '_LocationEssentials' in scope
+
+  @objc dynamic public func locationManager(_ manager: CoreLocation.CLLocationManager, didUpdateLocations locations: [_LocationEssentials.CLLocation])
+                                           ^~~~~~~~~~~~~~~~~~~
+
+
+
+❌  /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationCallbackManager.swift:2:8: failed to build module 'IONGeolocationLib'; this SDK is not supported by the compiler (the SDK is built with 'Apple Swift version 6.2.3 effective-5.10 (swiftlang-6.2.3.3.21 clang-1700.6.3.2)', while this compiler is 'Apple Swift version 6.1 effective-5.10 (swiftlang-6.1.0.110.21 clang-1700.0.13.3)'). Please select a toolchain which matches the SDK.
+
+import IONGeolocationLib
+                                                                                                                      ^~~~~~~~~~~~~~~~~~~
+
+
+
+❌  /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/BuildProductsPath/Release-iphoneos/XCFrameworkIntermediates/IONGeolocationLib/IONGeolocationLib.framework/Modules/IONGeolocationLib.swiftmodule/arm64-apple-ios.private.swiftinterface:67:44: cannot find type '_LocationEssentials' in scope
+
+  public static func create(from location: _LocationEssentials.CLLocation, heading: CoreLocation.CLHeading? = nil) -> IONGeolocationLib.IONGLOCPositionModel
+       ^
+
+
+
+❌  /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/BuildProductsPath/Release-iphoneos/XCFrameworkIntermediates/IONGeolocationLib/IONGeolocationLib.framework/Modules/IONGeolocationLib.swiftmodule/arm64-apple-ios.private.swiftinterface:134:119: cannot find type '_LocationEssentials' in scope
+
+  @objc dynamic public func locationManager(_ manager: CoreLocation.CLLocationManager, didUpdateLocations locations: [_LocationEssentials.CLLocation])
+                                           ^~~~~~~~~~~~~~~~~~~
+
+
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/app/ios/Sources/AppPlugin/AppPlugin.swift:121:22: expression implicitly coerced from 'String?' to 'Any'
+
+            "value": Bundle.main.preferredLocalizations.first
+                                                                                                                      ^~~~~~~~~~~~~~~~~~~
+
+
+▸ Compiling WKWebView+Capacitor.m
+▸ Compiling UIStatusBarManager+CAPHandleTapAction.m
+▸ Compiling CAPPluginMethod.m
+▸ Compiling Capacitor-dummy.m
+▸ Compiling CAPPluginCall.m
+▸ Compiling CAPPlugin.m
+▸ Compiling CAPInstanceDescriptor.m
+▸ Compiling CAPInstanceConfiguration.m
+▸ Compiling CAPBridgedJSTypes.m
+▸ Compiling CAPBridgeViewController+CDVScreenOrientationDelegate.m
+▸ Linking Capacitor
+▸ Generating 'Capacitor.framework.dSYM'
+▸ Compiling CapacitorApp_vers.c
+▸ Touching Capacitor.framework (in target 'Capacitor' from project 'Pods')
+▸ Processing CapacitorStatusBar-Info.plist
+▸ Processing CapacitorSplashScreen-Info.plist
+▸ Processing CapacitorPushNotifications-Info.plist
+▸ Processing CapacitorGeolocation-Info.plist
+▸ Processing CapacitorCamera-Info.plist
+▸ Processing CapacitorApp-Info.plist
+▸ Compiling CapacitorSplashScreen_vers.c
+▸ Compiling CapacitorStatusBar_vers.c
+▸ Compiling CapacitorPushNotifications_vers.c
+▸ Compiling CapacitorApp-dummy.m
+▸ Linking CapacitorApp
+▸ Compiling CapacitorSplashScreen-dummy.m
+▸ Linking CapacitorSplashScreen
+▸ Compiling CapacitorStatusBar-dummy.m
+▸ Linking CapacitorStatusBar
+▸ Generating 'CapacitorApp.framework.dSYM'
+▸ Generating 'CapacitorSplashScreen.framework.dSYM'
+▸ Touching CapacitorApp.framework (in target 'CapacitorApp' from project 'Pods')
+▸ Compiling CapacitorPushNotifications-dummy.m
+▸ Touching CapacitorSplashScreen.framework (in target 'CapacitorSplashScreen' from project 'Pods')
+▸ Linking CapacitorPushNotifications
+▸ Generating 'CapacitorStatusBar.framework.dSYM'
+▸ Touching CapacitorStatusBar.framework (in target 'CapacitorStatusBar' from project 'Pods')
+▸ Generating 'CapacitorPushNotifications.framework.dSYM'
+▸ Touching CapacitorPushNotifications.framework (in target 'CapacitorPushNotifications' from project 'Pods')
+▸ Compiling CapacitorCamera_vers.c
+    Run script build phase '[CP] Copy XCFrameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'google-cast-sdk' from project 'Pods')
+    Run script build phase '[CP] Copy XCFrameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'IONGeolocationLib' from project 'Pods')
+    Run script build phase '[CP] Copy Pods Resources' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+    Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+Failed to archive ios/App/App.xcworkspace. The following build commands failed:
+
+CompileSwift normal arm64 (in target 'CapacitorGeolocation' from project 'Pods')
+	...
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorCordova-CapacitorCordova' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorCordova' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorCamera' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorApp' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Capacitor-Capacitor' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Capacitor' from project 'Pods')
+
+SwiftCompile normal arm64 Compiling\ GeolocationCallbackManager.swift,\ GeolocationConstants.swift,\ GeolocationError.swift,\ GeolocationPlugin.swift,\ IONGLOCPositionModel+JSONTransformer.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationCallbackManager.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationConstants.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationError.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationPlugin.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/IONGLOCPositionModel+JSONTransformer.swift (in target 'CapacitorGeolocation' from project 'Pods')
+
+
+Build failed :|
+Step 16 script `Build IPA firmato` exited with status code 65
+Using Xcode 16.3 (16E140)
+Check App.xcworkspace build settings
+Execute "xcodebuild -workspace ios/App/App.xcworkspace -scheme App -config Release -showBuildSettings"
+
+Archive App.xcworkspace
+Execute "xcodebuild -workspace ios/App/App.xcworkspace -scheme App -config Release -archivePath /Users/builder/clone/build/ios/xcarchive/App_b8yjbvjs.xcarchive archive COMPILER_INDEX_STORE_ENABLE=NO DEVELOPMENT_TEAM=524DC89B7P 'CODE_SIGN_IDENTITY=Apple Distribution' CODE_SIGN_STYLE=Manual"
+
+▸ Running script '[CP] Copy XCFrameworks'
+▸ Copying Pods-App-umbrella.h
+▸ Copying IONCameraLib-umbrella.h
+▸ Copying CapacitorStatusBar-umbrella.h
+▸ Copying CapacitorSplashScreen-umbrella.h
+▸ Copying CapacitorPushNotifications-umbrella.h
+▸ Copying CapacitorGeolocation-umbrella.h
+▸ Copying NSDictionary+CordovaPreferences.h
+▸ Copying CapacitorCordova.h
+▸ Copying CDVWebViewProcessPoolFactory.h
+▸ Copying CDVViewController.h
+▸ Copying CDVURLProtocol.h
+▸ Copying CDVScreenOrientationDelegate.h
+▸ Copying CDVPluginResult.h
+▸ Copying CDVPluginManager.h
+▸ Copying CDVPlugin.h
+▸ Copying CDVPlugin+Resources.h
+▸ Copying CDVInvokedUrlCommand.h
+▸ Copying CDVConfigParser.h
+▸ Copying CDVCommandDelegateImpl.h
+▸ Copying CDVCommandDelegate.h
+▸ Copying CDVAvailabilityDeprecated.h
+▸ Copying CDVAvailability.h
+▸ Copying CDV.h
+▸ Copying AppDelegate.h
+▸ Copying CapacitorCamera-umbrella.h
+▸ Copying CapacitorApp-umbrella.h
+▸ Copying Capacitor.h
+▸ Copying CAPPluginMethod.h
+▸ Copying CAPPluginCall.h
+▸ Copying CAPPlugin.h
+▸ Copying CAPInstanceDescriptor.h
+▸ Copying CAPInstanceConfiguration.h
+▸ Copying CAPBridgedPlugin.h
+▸ Copying CAPBridgedJSTypes.h
+▸ Copying CAPBridgeViewController+CDVScreenOrientationDelegate.h
+▸ Processing ResourceBundle-GoogleCast-google-cast-sdk-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/GoogleCast.bundle/PrivacyInfo.xcprivacy
+▸ Processing ResourceBundle-CapacitorCordova-CapacitorCordova-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/CapacitorCordova.bundle/PrivacyInfo.xcprivacy
+▸ Touching GoogleCast.bundle (in target 'google-cast-sdk-GoogleCast' from project 'Pods')
+▸ Touching CapacitorCordova.bundle (in target 'CapacitorCordova-CapacitorCordova' from project 'Pods')
+▸ Running script '[CP] Copy XCFrameworks'
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/Cordova.framework/CapacitorCordova.bundle
+▸ Processing CapacitorCordova-Info.plist
+▸ Compiling Cordova_vers.c
+
+⚠️  /Users/builder/clone/ios/App/Pods/IONCameraLib/Sources/IONCameraLib/Interfaces/IONCAMREditorBehaviour.swift:9:51: 'windows' was deprecated in iOS 15.0: Use UIWindowScene.windows on a relevant window scene instead
+
+            let isPortrait = UIApplication.shared.windows.first?.windowScene?.interfaceOrientation.isPortrait ?? false
+                                                  ^
+
+
+
+⚠️  /Users/builder/clone/ios/App/Pods/IONCameraLib/Sources/IONCameraLib/Interfaces/Editor/IONCAMRImageEditorView.swift:91:54: 'windows' was deprecated in iOS 15.0: Use UIWindowScene.windows on a relevant window scene instead
+
+            guard isPortrait != UIApplication.shared.windows.first?.windowScene?.interfaceOrientation.isPortrait else { return }
+                                                     ^
+
+
+
+⚠️  /Users/builder/clone/ios/App/Pods/IONCameraLib/Sources/IONCameraLib/Interfaces/IONCAMRPlayerBehaviour.swift:38:17: capture of 'self' with non-sendable type 'IONCAMRPlayerBehaviour' in a '@Sendable' closure
+
+                self.coordinator.present(playerViewController)
+                ^
+
+
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/ios/Capacitor/Capacitor/CapacitorBridge.swift:226:89: 'tmpVCAppeared' is deprecated: obsolete
+
+        observers.append(NotificationCenter.default.addObserver(forName: type(of: self).tmpVCAppeared.name, object: .none, queue: .none) { [weak self] _ in
+            ^
+
+
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/ios/Capacitor/Capacitor/CapacitorBridge.swift:227:19: 'tmpWindow' is deprecated: obsolete
+
+            self?.tmpWindow = nil
+                                                                                        ^
+
+
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/ios/Capacitor/Capacitor/TmpViewController.swift:6:57: 'tmpVCAppeared' is deprecated: obsolete
+
+        NotificationCenter.default.post(CapacitorBridge.tmpVCAppeared)
+                  ^
+
+
+▸ Compiling CDVURLProtocol.m
+▸ Compiling CapacitorCordova-dummy.m
+▸ Compiling CDVInvokedUrlCommand.m
+▸ Compiling CDVConfigParser.m
+▸ Compiling NSDictionary+CordovaPreferences.m
+▸ Compiling CDVViewController.m
+▸ Compiling CDVPluginResult.m
+▸ Compiling AppDelegate.m
+▸ Compiling CDVPluginManager.m
+▸ Compiling CDVWebViewProcessPoolFactory.m
+▸ Compiling CDVPlugin.m
+▸ Compiling CDVPlugin+Resources.m
+▸ Compiling CDVCommandDelegateImpl.m
+▸ Linking Cordova
+▸ Generating 'Cordova.framework.dSYM'
+▸ Touching Cordova.framework (in target 'CapacitorCordova' from project 'Pods')
+▸ Processing ResourceBundle-Capacitor-Capacitor-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/Capacitor.bundle/PrivacyInfo.xcprivacy
+▸ Touching Capacitor.bundle (in target 'Capacitor-Capacitor' from project 'Pods')
+▸ Processing Capacitor-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/Capacitor.framework/native-bridge.js
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/Capacitor.framework/Capacitor.bundle
+▸ Processing ResourceBundle-IONCameraLibResources-IONCameraLib-Info.plist
+▸ Touching IONCameraLibResources.bundle (in target 'IONCameraLib-IONCameraLibResources' from project 'Pods')
+▸ Processing IONCameraLib-Info.plist
+▸ Copying /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/IONCameraLib.framework/IONCameraLibResources.bundle
+▸ Compiling IONCameraLib_vers.c
+▸ Compiling IONCameraLib-dummy.m
+▸ Linking IONCameraLib
+▸ Generating 'IONCameraLib.framework.dSYM'
+▸ Touching IONCameraLib.framework (in target 'IONCameraLib' from project 'Pods')
+▸ Compiling Capacitor_vers.c
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/push-notifications/ios/Sources/PushNotificationsPlugin/PushNotificationsHandler.swift:38:49: 'alert' was deprecated in iOS 14.0
+
+                    presentationOptions.insert(.alert)
+                                                        ^
+
+
+
+❌  /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/BuildProductsPath/Release-iphoneos/XCFrameworkIntermediates/IONGeolocationLib/IONGeolocationLib.framework/Modules/IONGeolocationLib.swiftmodule/arm64-apple-ios.private.swiftinterface:67:44: cannot find type '_LocationEssentials' in scope
+
+  public static func create(from location: _LocationEssentials.CLLocation, heading: CoreLocation.CLHeading? = nil) -> IONGeolocationLib.IONGLOCPositionModel
+                                                ^
+
+
+
+❌  /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/BuildProductsPath/Release-iphoneos/XCFrameworkIntermediates/IONGeolocationLib/IONGeolocationLib.framework/Modules/IONGeolocationLib.swiftmodule/arm64-apple-ios.private.swiftinterface:134:119: cannot find type '_LocationEssentials' in scope
+
+  @objc dynamic public func locationManager(_ manager: CoreLocation.CLLocationManager, didUpdateLocations locations: [_LocationEssentials.CLLocation])
+                                           ^~~~~~~~~~~~~~~~~~~
+
+
+
+❌  /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationCallbackManager.swift:2:8: failed to build module 'IONGeolocationLib'; this SDK is not supported by the compiler (the SDK is built with 'Apple Swift version 6.2.3 effective-5.10 (swiftlang-6.2.3.3.21 clang-1700.6.3.2)', while this compiler is 'Apple Swift version 6.1 effective-5.10 (swiftlang-6.1.0.110.21 clang-1700.0.13.3)'). Please select a toolchain which matches the SDK.
+
+import IONGeolocationLib
+                                                                                                                      ^~~~~~~~~~~~~~~~~~~
+
+
+
+❌  /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/BuildProductsPath/Release-iphoneos/XCFrameworkIntermediates/IONGeolocationLib/IONGeolocationLib.framework/Modules/IONGeolocationLib.swiftmodule/arm64-apple-ios.private.swiftinterface:67:44: cannot find type '_LocationEssentials' in scope
+
+  public static func create(from location: _LocationEssentials.CLLocation, heading: CoreLocation.CLHeading? = nil) -> IONGeolocationLib.IONGLOCPositionModel
+       ^
+
+
+
+❌  /Users/builder/Library/Developer/Xcode/DerivedData/App-dfqlwfgrvlmjunbkfzimjqcghcbo/Build/Intermediates.noindex/ArchiveIntermediates/App/BuildProductsPath/Release-iphoneos/XCFrameworkIntermediates/IONGeolocationLib/IONGeolocationLib.framework/Modules/IONGeolocationLib.swiftmodule/arm64-apple-ios.private.swiftinterface:134:119: cannot find type '_LocationEssentials' in scope
+
+  @objc dynamic public func locationManager(_ manager: CoreLocation.CLLocationManager, didUpdateLocations locations: [_LocationEssentials.CLLocation])
+                                           ^~~~~~~~~~~~~~~~~~~
+
+
+
+⚠️  /Users/builder/clone/node_modules/@capacitor/app/ios/Sources/AppPlugin/AppPlugin.swift:121:22: expression implicitly coerced from 'String?' to 'Any'
+
+            "value": Bundle.main.preferredLocalizations.first
+                                                                                                                      ^~~~~~~~~~~~~~~~~~~
+
+
+▸ Compiling WKWebView+Capacitor.m
+▸ Compiling UIStatusBarManager+CAPHandleTapAction.m
+▸ Compiling CAPPluginMethod.m
+▸ Compiling Capacitor-dummy.m
+▸ Compiling CAPPluginCall.m
+▸ Compiling CAPPlugin.m
+▸ Compiling CAPInstanceDescriptor.m
+▸ Compiling CAPInstanceConfiguration.m
+▸ Compiling CAPBridgedJSTypes.m
+▸ Compiling CAPBridgeViewController+CDVScreenOrientationDelegate.m
+▸ Linking Capacitor
+▸ Generating 'Capacitor.framework.dSYM'
+▸ Compiling CapacitorApp_vers.c
+▸ Touching Capacitor.framework (in target 'Capacitor' from project 'Pods')
+▸ Processing CapacitorStatusBar-Info.plist
+▸ Processing CapacitorSplashScreen-Info.plist
+▸ Processing CapacitorPushNotifications-Info.plist
+▸ Processing CapacitorGeolocation-Info.plist
+▸ Processing CapacitorCamera-Info.plist
+▸ Processing CapacitorApp-Info.plist
+▸ Compiling CapacitorSplashScreen_vers.c
+▸ Compiling CapacitorStatusBar_vers.c
+▸ Compiling CapacitorPushNotifications_vers.c
+▸ Compiling CapacitorApp-dummy.m
+▸ Linking CapacitorApp
+▸ Compiling CapacitorSplashScreen-dummy.m
+▸ Linking CapacitorSplashScreen
+▸ Compiling CapacitorStatusBar-dummy.m
+▸ Linking CapacitorStatusBar
+▸ Generating 'CapacitorApp.framework.dSYM'
+▸ Generating 'CapacitorSplashScreen.framework.dSYM'
+▸ Touching CapacitorApp.framework (in target 'CapacitorApp' from project 'Pods')
+▸ Compiling CapacitorPushNotifications-dummy.m
+▸ Touching CapacitorSplashScreen.framework (in target 'CapacitorSplashScreen' from project 'Pods')
+▸ Linking CapacitorPushNotifications
+▸ Generating 'CapacitorStatusBar.framework.dSYM'
+▸ Touching CapacitorStatusBar.framework (in target 'CapacitorStatusBar' from project 'Pods')
+▸ Generating 'CapacitorPushNotifications.framework.dSYM'
+▸ Touching CapacitorPushNotifications.framework (in target 'CapacitorPushNotifications' from project 'Pods')
+▸ Compiling CapacitorCamera_vers.c
+    Run script build phase '[CP] Copy XCFrameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'google-cast-sdk' from project 'Pods')
+    Run script build phase '[CP] Copy XCFrameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'IONGeolocationLib' from project 'Pods')
+    Run script build phase '[CP] Copy Pods Resources' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+    Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+Failed to archive ios/App/App.xcworkspace. The following build commands failed:
+
+CompileSwift normal arm64 (in target 'CapacitorGeolocation' from project 'Pods')
+	...
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorCordova-CapacitorCordova' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorCordova' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorCamera' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorApp' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Capacitor-Capacitor' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Capacitor' from project 'Pods')
+
+SwiftCompile normal arm64 Compiling\ GeolocationCallbackManager.swift,\ GeolocationConstants.swift,\ GeolocationError.swift,\ GeolocationPlugin.swift,\ IONGLOCPositionModel+JSONTransformer.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationCallbackManager.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationConstants.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationError.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationPlugin.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/IONGLOCPositionModel+JSONTransformer.swift (in target 'CapacitorGeolocation' from project 'Pods')
+
+
+Build failed :|
+Step 16 script `Build IPA firmato` exited with status code 65
