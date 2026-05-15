@@ -1,0 +1,69 @@
+⚡ Done in 64ms
+==> [4] Drizzle push (schema -> DB)
+npm warn config init.module Use `--init-module` instead.
+
+> rest-express@1.0.0 db:push
+> drizzle-kit push
+
+No config path provided, using default 'drizzle.config.ts'
+Reading config file '/www/nodeapps/fermenta/drizzle.config.ts'
+Using 'pg' driver for database querying
+[✓] Pulling schema from database...
++ brewery_announcements table will be created
++ native_push_tokens table will be created
+--- all table conflicts resolved ---
+
+· You're about to add allergens_name_unique unique constraint to the table, which contains 15 items. If this statement fails, you will receive an error from the database. Do you want to truncate allergens table?
+
+· You're about to add oauth_accounts_provider_provider_user_id_unique unique constraint to the table, which contains 9 items. If this statement fails, you will receive an error from the database. Do you want to truncate oauth_accounts table?
+
+· You're about to add users_nickname_unique unique constraint to the table, which contains 19 items. If this statement fails, you will receive an error from the database. Do you want to truncate users table?
+
+· You're about to add favorites_user_id_item_type_item_id_unique unique constraint to the table, which contains 9 items. If this statement fails, you will receive an error from the database. Do you want to truncate favorites table?
+
+· You're about to add static_pages_slug_unique unique constraint to the table, which contains 4 items. If this statement fails, you will receive an error from the database. Do you want to truncate static_pages table?
+
+· You're about to add beer_collaborations_beer_id_brewery_id_unique unique constraint to the table, which contains 27 items. If this statement fails, you will receive an error from the database. Do you want to truncate beer_collaborations table?
+
+· You're about to add pubs_slug_unique unique constraint to the table, which contains 2 items. If this statement fails, you will receive an error from the database. Do you want to truncate pubs table?
+
+· You're about to add user_follows_follower_id_following_id_unique unique constraint to the table, which contains 2 items. If this statement fails, you will receive an error from the database. Do you want to truncate user_follows table?
+
+· You're about to add bot_link_tokens_token_unique unique constraint to the table, which contains 1 items. If this statement fails, you will receive an error from the database. Do you want to truncate bot_link_tokens table?
+
+· You're about to add rss_sources_url_unique unique constraint to the table, which contains 4 items. If this statement fails, you will receive an error from the database. Do you want to truncate rss_sources table?
+
+· You're about to add rss_items_source_id_guid_unique unique constraint to the table, which contains 46 items. If this statement fails, you will receive an error from the database. Do you want to truncate rss_items table?
+
+· You're about to add notification_preferences_user_id_unique unique constraint to the table, which contains 8 items. If this statement fails, you will receive an error from the database. Do you want to truncate notification_preferences table?
+
+ Warning  Found data-loss statements:
+· You're about to delete beer_embeddings table with 26548 items
+· You're about to delete format column in bottle_list table with 12 items
+· You're about to delete last_email_change column in users table with 19 items
+· You're about to delete last_password_change column in users table with 19 items
+· You're about to delete bottle_image_url column in beers table with 1190410 items
+· You're about to delete brewery_name column in beers table with 1190410 items
+· You're about to delete ocr_embedding column in scan_logs table with 100 items
+
+THIS ACTION WILL CAUSE DATA LOSS AND CANNOT BE REVERTED
+
+Do you still want to push changes?
+[x] All changes were aborted
+==> [5] Restart PM2 (con update env)
+[PM2] Applying action restartProcessId on app [fermenta](ids: [ 0 ])
+[PM2] [fermenta](0) ✓
+┌────┬─────────────────┬─────────────┬─────────┬─────────┬──────────┬────────┬──────┬───────────┬──────────┬──────────┬──────────┬──────────┐
+│ id │ name            │ namespace   │ version │ mode    │ pid      │ uptime │ ↺    │ status    │ cpu      │ mem      │ user     │ watching │
+├────┼─────────────────┼─────────────┼─────────┼─────────┼──────────┼────────┼──────┼───────────┼──────────┼──────────┼──────────┼──────────┤
+│ 1  │ clip-service    │ default     │ N/A     │ fork    │ 303154   │ 4m     │ 15   │ online    │ 0%       │ 1.0gb    │ root     │ disabled │
+│ 0  │ fermenta        │ default     │ N/A     │ fork    │ 304123   │ 0s     │ 23   │ online    │ 0%       │ 11.8mb   │ root     │ disabled │
+└────┴─────────────────┴─────────────┴─────────┴─────────┴──────────┴────────┴──────┴───────────┴──────────┴──────────┴──────────┴──────────┘
+==> [6] Salva startup PM2
+[PM2] Saving current process list...
+[PM2] Successfully saved in /root/.pm2/dump.pm2
+==> [7] Sanity check: ascolto su porta 5000
+⚠️ Porta 5000 NON in ascolto (controlla pm2 logs)
+==> [8] Test API locale
+✅ Deploy completato: 4779589 Fix push notifications for native iOS and web apps
+root@luppolino:/www/nodeapps/fermenta#
