@@ -36,7 +36,7 @@ workflows:
 
     environment:
       node: "20"
-      xcode: latest
+      xcode: 16.3
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
@@ -244,7 +244,7 @@ workflows:
 
     environment:
       node: "20"
-      xcode: latest
+      xcode: 16.3
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
