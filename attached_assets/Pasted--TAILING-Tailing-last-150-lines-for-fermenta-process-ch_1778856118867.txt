@@ -1,0 +1,152 @@
+[TAILING] Tailing last 150 lines for [fermenta] process (change the value with --lines option)
+/root/.pm2/logs/fermenta-error.log last 150 lines:
+0|fermenta | 2026-05-15T14:14:53:       at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:117:22
+0|fermenta | 2026-05-15T14:14:53:       at async StorageWrapper.dbCall (file:///www/nodeapps/fermenta/dist/index.js:2961:18)
+0|fermenta | 2026-05-15T14:14:53:       at async deliverPush (file:///www/nodeapps/fermenta/dist/index.js:3889:24)
+0|fermenta | 2026-05-15T14:14:53:       at async Timeout._onTimeout (file:///www/nodeapps/fermenta/dist/index.js:3921:7) {
+0|fermenta | 2026-05-15T14:14:53:     length: 117,
+0|fermenta | 2026-05-15T14:14:53:     severity: 'ERROR',
+0|fermenta | 2026-05-15T14:14:53:     code: '42P01',
+0|fermenta | 2026-05-15T14:14:53:     detail: undefined,
+0|fermenta | 2026-05-15T14:14:53:     hint: undefined,
+0|fermenta | 2026-05-15T14:14:53:     position: '64',
+0|fermenta | 2026-05-15T14:14:53:     internalPosition: undefined,
+0|fermenta | 2026-05-15T14:14:53:     internalQuery: undefined,
+0|fermenta | 2026-05-15T14:14:53:     where: undefined,
+0|fermenta | 2026-05-15T14:14:53:     schema: undefined,
+0|fermenta | 2026-05-15T14:14:53:     table: undefined,
+0|fermenta | 2026-05-15T14:14:53:     column: undefined,
+0|fermenta | 2026-05-15T14:14:53:     dataType: undefined,
+0|fermenta | 2026-05-15T14:14:53:     constraint: undefined,
+0|fermenta | 2026-05-15T14:14:53:     file: 'parse_relation.c',
+0|fermenta | 2026-05-15T14:14:53:     line: '1466',
+0|fermenta | 2026-05-15T14:14:53:     routine: 'parserOpenTable'
+0|fermenta | 2026-05-15T14:14:53:   }
+0|fermenta | 2026-05-15T14:14:53: }
+0|fermenta | 2026-05-15T14:14:53: [push] throttle error: DrizzleQueryError: Failed query: select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1
+0|fermenta | 2026-05-15T14:14:53: params: VycmvNeKACpdNcnomc_Cc
+0|fermenta | 2026-05-15T14:14:53:     at NodePgPreparedQuery.queryWithCache (file:///www/nodeapps/fermenta/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|fermenta | 2026-05-15T14:14:53:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|fermenta | 2026-05-15T14:14:53:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:117:22
+0|fermenta | 2026-05-15T14:14:53:     ... 2 lines matching cause stack trace ...
+0|fermenta | 2026-05-15T14:14:53:     at async Timeout._onTimeout (file:///www/nodeapps/fermenta/dist/index.js:3921:7) {
+0|fermenta | 2026-05-15T14:14:53:   query: 'select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1',
+0|fermenta | 2026-05-15T14:14:53:   params: [ 'VycmvNeKACpdNcnomc_Cc' ],
+0|fermenta | 2026-05-15T14:14:53:   cause: error: relation "native_push_tokens" does not exist
+0|fermenta | 2026-05-15T14:14:53:       at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+0|fermenta | 2026-05-15T14:14:53:       at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|fermenta | 2026-05-15T14:14:53:       at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:124:18
+0|fermenta | 2026-05-15T14:14:53:       at async NodePgPreparedQuery.queryWithCache (file:///www/nodeapps/fermenta/node_modules/drizzle-orm/pg-core/session.js:39:16)
+0|fermenta | 2026-05-15T14:14:53:       at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:117:22
+0|fermenta | 2026-05-15T14:14:53:       at async StorageWrapper.dbCall (file:///www/nodeapps/fermenta/dist/index.js:2961:18)
+0|fermenta | 2026-05-15T14:14:53:       at async deliverPush (file:///www/nodeapps/fermenta/dist/index.js:3889:24)
+0|fermenta | 2026-05-15T14:14:53:       at async Timeout._onTimeout (file:///www/nodeapps/fermenta/dist/index.js:3921:7) {
+0|fermenta | 2026-05-15T14:14:53:     length: 117,
+0|fermenta | 2026-05-15T14:14:53:     severity: 'ERROR',
+0|fermenta | 2026-05-15T14:14:53:     code: '42P01',
+0|fermenta | 2026-05-15T14:14:53:     detail: undefined,
+0|fermenta | 2026-05-15T14:14:53:     hint: undefined,
+0|fermenta | 2026-05-15T14:14:53:     position: '64',
+0|fermenta | 2026-05-15T14:14:53:     internalPosition: undefined,
+0|fermenta | 2026-05-15T14:14:53:     internalQuery: undefined,
+0|fermenta | 2026-05-15T14:14:53:     where: undefined,
+0|fermenta | 2026-05-15T14:14:53:     schema: undefined,
+0|fermenta | 2026-05-15T14:14:53:     table: undefined,
+0|fermenta | 2026-05-15T14:14:53:     column: undefined,
+0|fermenta | 2026-05-15T14:14:53:     dataType: undefined,
+0|fermenta | 2026-05-15T14:14:53:     constraint: undefined,
+0|fermenta | 2026-05-15T14:14:53:     file: 'parse_relation.c',
+0|fermenta | 2026-05-15T14:14:53:     line: '1466',
+0|fermenta | 2026-05-15T14:14:53:     routine: 'parserOpenTable'
+0|fermenta | 2026-05-15T14:14:53:   }
+0|fermenta | 2026-05-15T14:14:53: }
+0|fermenta | 2026-05-15T14:14:53: [push] throttle error: DrizzleQueryError: Failed query: select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1
+0|fermenta | 2026-05-15T14:14:53: params: 45321347
+0|fermenta | 2026-05-15T14:14:53:     at NodePgPreparedQuery.queryWithCache (file:///www/nodeapps/fermenta/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|fermenta | 2026-05-15T14:14:53:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|fermenta | 2026-05-15T14:14:53:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:117:22
+0|fermenta | 2026-05-15T14:14:53:     ... 2 lines matching cause stack trace ...
+0|fermenta | 2026-05-15T14:14:53:     at async Timeout._onTimeout (file:///www/nodeapps/fermenta/dist/index.js:3921:7) {
+0|fermenta | 2026-05-15T14:14:53:   query: 'select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1',
+0|fermenta | 2026-05-15T14:14:53:   params: [ '45321347' ],
+0|fermenta | 2026-05-15T14:14:53:   cause: error: relation "native_push_tokens" does not exist
+0|fermenta | 2026-05-15T14:14:53:       at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+0|fermenta | 2026-05-15T14:14:53:       at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|fermenta | 2026-05-15T14:14:53:       at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:124:18
+0|fermenta | 2026-05-15T14:14:53:       at async NodePgPreparedQuery.queryWithCache (file:///www/nodeapps/fermenta/node_modules/drizzle-orm/pg-core/session.js:39:16)
+0|fermenta | 2026-05-15T14:14:53:       at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:117:22
+0|fermenta | 2026-05-15T14:14:53:       at async StorageWrapper.dbCall (file:///www/nodeapps/fermenta/dist/index.js:2961:18)
+0|fermenta | 2026-05-15T14:14:53:       at async deliverPush (file:///www/nodeapps/fermenta/dist/index.js:3889:24)
+0|fermenta | 2026-05-15T14:14:53:       at async Timeout._onTimeout (file:///www/nodeapps/fermenta/dist/index.js:3921:7) {
+0|fermenta | 2026-05-15T14:14:53:     length: 117,
+0|fermenta | 2026-05-15T14:14:53:     severity: 'ERROR',
+0|fermenta | 2026-05-15T14:14:53:     code: '42P01',
+0|fermenta | 2026-05-15T14:14:53:     detail: undefined,
+0|fermenta | 2026-05-15T14:14:53:     hint: undefined,
+0|fermenta | 2026-05-15T14:14:53:     position: '64',
+0|fermenta | 2026-05-15T14:14:53:     internalPosition: undefined,
+0|fermenta | 2026-05-15T14:14:53:     internalQuery: undefined,
+0|fermenta | 2026-05-15T14:14:53:     where: undefined,
+0|fermenta | 2026-05-15T14:14:53:     schema: undefined,
+0|fermenta | 2026-05-15T14:14:53:     table: undefined,
+0|fermenta | 2026-05-15T14:14:53:     column: undefined,
+0|fermenta | 2026-05-15T14:14:53:     dataType: undefined,
+0|fermenta | 2026-05-15T14:14:53:     constraint: undefined,
+0|fermenta | 2026-05-15T14:14:53:     file: 'parse_relation.c',
+0|fermenta | 2026-05-15T14:14:53:     line: '1466',
+0|fermenta | 2026-05-15T14:14:53:     routine: 'parserOpenTable'
+0|fermenta | 2026-05-15T14:14:53:   }
+0|fermenta | 2026-05-15T14:14:53: }
+0|fermenta | 2026-05-15T14:14:53: [push] throttle error: DrizzleQueryError: Failed query: select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1
+0|fermenta | 2026-05-15T14:14:53: params: y6h1vyzZR3bTCX1X0Q_j9
+0|fermenta | 2026-05-15T14:14:53:     at NodePgPreparedQuery.queryWithCache (file:///www/nodeapps/fermenta/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|fermenta | 2026-05-15T14:14:53:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|fermenta | 2026-05-15T14:14:53:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:117:22
+0|fermenta | 2026-05-15T14:14:53:     ... 2 lines matching cause stack trace ...
+0|fermenta | 2026-05-15T14:14:53:     at async Timeout._onTimeout (file:///www/nodeapps/fermenta/dist/index.js:3921:7) {
+0|fermenta | 2026-05-15T14:14:53:   query: 'select "id", "user_id", "token", "platform", "updated_at" from "native_push_tokens" where "native_push_tokens"."user_id" = $1',
+0|fermenta | 2026-05-15T14:14:53:   params: [ 'y6h1vyzZR3bTCX1X0Q_j9' ],
+0|fermenta | 2026-05-15T14:14:53:   cause: error: relation "native_push_tokens" does not exist
+0|fermenta | 2026-05-15T14:14:53:       at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+0|fermenta | 2026-05-15T14:14:53:       at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|fermenta | 2026-05-15T14:14:53:       at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:124:18
+0|fermenta | 2026-05-15T14:14:53:       at async NodePgPreparedQuery.queryWithCache (file:///www/nodeapps/fermenta/node_modules/drizzle-orm/pg-core/session.js:39:16)
+0|fermenta | 2026-05-15T14:14:53:       at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:117:22
+0|fermenta | 2026-05-15T14:14:53:       at async StorageWrapper.dbCall (file:///www/nodeapps/fermenta/dist/index.js:2961:18)
+0|fermenta | 2026-05-15T14:14:53:       at async deliverPush (file:///www/nodeapps/fermenta/dist/index.js:3889:24)
+0|fermenta | 2026-05-15T14:14:53:       at async Timeout._onTimeout (file:///www/nodeapps/fermenta/dist/index.js:3921:7) {
+0|fermenta | 2026-05-15T14:14:53:     length: 117,
+0|fermenta | 2026-05-15T14:14:53:     severity: 'ERROR',
+0|fermenta | 2026-05-15T14:14:53:     code: '42P01',
+0|fermenta | 2026-05-15T14:14:53:     detail: undefined,
+0|fermenta | 2026-05-15T14:14:53:     hint: undefined,
+0|fermenta | 2026-05-15T14:14:53:     position: '64',
+0|fermenta | 2026-05-15T14:14:53:     internalPosition: undefined,
+0|fermenta | 2026-05-15T14:14:53:     internalQuery: undefined,
+0|fermenta | 2026-05-15T14:14:53:     where: undefined,
+0|fermenta | 2026-05-15T14:14:53:     schema: undefined,
+0|fermenta | 2026-05-15T14:14:53:     table: undefined,
+0|fermenta | 2026-05-15T14:14:53:     column: undefined,
+0|fermenta | 2026-05-15T14:14:53:     dataType: undefined,
+0|fermenta | 2026-05-15T14:14:53:     constraint: undefined,
+0|fermenta | 2026-05-15T14:14:53:     file: 'parse_relation.c',
+0|fermenta | 2026-05-15T14:14:53:     line: '1466',
+0|fermenta | 2026-05-15T14:14:53:     routine: 'parserOpenTable'
+0|fermenta | 2026-05-15T14:14:53:   }
+0|fermenta | 2026-05-15T14:14:53: }
+0|fermenta | 2026-05-15T14:21:00: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:24:52: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:24:55: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:25:24: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:26:05: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:26:08: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:26:38: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:30:40: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:30:43: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:31:13: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:36:58: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:37:01: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:37:31: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-15T14:39:34: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-15T14:39:37: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-15T14:40:07: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
