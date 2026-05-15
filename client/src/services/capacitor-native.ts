@@ -95,9 +95,18 @@ async function setupAppLifecycle() {
       }
     });
 
-    // Resume dall'app in background — aggiorna i dati
-    App.addListener("resume", () => {
+    // Resume dall'app in background — aggiorna i dati e rinnova token push
+    App.addListener("resume", async () => {
       window.dispatchEvent(new CustomEvent("native-app-resume"));
+      // Rinnova il token APNs/FCM: può cambiare dopo aggiornamenti OS o
+      // passaggi di test→produzione. Re-registrare è idempotente e sicuro.
+      try {
+        const { PushNotifications } = await import("@capacitor/push-notifications");
+        const perm = await PushNotifications.checkPermissions();
+        if (perm.receive === "granted") {
+          await PushNotifications.register();
+        }
+      } catch {}
     });
 
     // App sospesa

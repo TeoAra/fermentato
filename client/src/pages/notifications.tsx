@@ -131,6 +131,10 @@ export default function Notifications() {
       return r.json();
     },
     enabled: isAuthenticated,
+    staleTime: 0,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
+    refetchInterval: 30_000,  // aggiornamento automatico ogni 30s (nuove notifiche in tempo reale)
   });
 
   // Accumula i risultati di pagine successive (modalità "Carica altre")
@@ -149,6 +153,23 @@ export default function Notifications() {
   const { data: preferences } = useQuery<NotificationPreference>({
     queryKey: ['/api/notification-preferences'], enabled: isAuthenticated,
   });
+
+  // Quando l'app torna in foreground (da background), aggiorna subito la lista.
+  // Cattura anche le notifiche push arrivate mentre l'app era in background.
+  useEffect(() => {
+    const onResume = () => {
+      setPage(0);
+      setAccumulated([]);
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/notifications/unread-count'] });
+    };
+    window.addEventListener('native-app-resume', onResume);
+    // Anche su browser/PWA: aggiorna quando l'utente torna sulla tab
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) onResume(); });
+    return () => {
+      window.removeEventListener('native-app-resume', onResume);
+    };
+  }, []);
 
   const invalidateNotifs = () => {
     // Reset paginazione + accumulatore dopo mutazioni (delete/mark-read),

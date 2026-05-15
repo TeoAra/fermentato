@@ -21,8 +21,13 @@ if (Capacitor.isNativePlatform()) {
     const isDark = document.documentElement.classList.contains("dark");
     const bg = isDark ? "#15202B" : "#FFFFFF";
     StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+    // Style.Light = icone BIANCHE (per sfondi scuri); Style.Dark = icone NERE (per sfondi chiari)
     StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark }).catch(() => {});
-    StatusBar.setBackgroundColor({ color: bg }).catch(() => {});
+    // Su iOS non chiamare setBackgroundColor: in overlay mode interferirebbe con
+    // il colore delle icone e causerebbe icone del colore sbagliato dopo cambio tema.
+    if (Capacitor.getPlatform() !== "ios") {
+      StatusBar.setBackgroundColor({ color: bg }).catch(() => {});
+    }
   }).catch(() => {});
 
   // Splash screen: nascondiamo manualmente al ready del DOM, con un

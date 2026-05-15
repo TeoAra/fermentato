@@ -87,6 +87,12 @@ workflows:
           python3 ios-native/inject_cast_appdelegate.py \
             ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
+      - name: Abilita Push Notifications entitlement (APNs)
+        script: |
+          python3 ios-native/add_push_entitlement.py \
+            ios/App/App.xcodeproj/project.pbxproj
+          echo "=== App.entitlements ===" && cat ios/App/App/App.entitlements
+
       - name: Genera icone app iOS
         script: |
           set -e
@@ -288,6 +294,12 @@ workflows:
             ios/App/App/App-Bridging-Header.h
           python3 ios-native/inject_cast_appdelegate.py \
             ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
+
+      - name: Abilita Push Notifications entitlement (APNs)
+        script: |
+          python3 ios-native/add_push_entitlement.py \
+            ios/App/App.xcodeproj/project.pbxproj
+          echo "=== App.entitlements ===" && cat ios/App/App/App.entitlements
 
       - name: Genera icone app iOS
         script: |
