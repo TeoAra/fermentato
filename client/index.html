@@ -14,11 +14,14 @@
 
     <!-- iOS PWA -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!-- 'black-translucent' = la WebView va edge-to-edge sotto la status bar
-         iOS; il colore della status bar diventa quello dell'header (gestito
-         via env(safe-area-inset-top) nei componenti). 'default' invece forza
-         iOS a disegnare una barra opaca bianca/grigia separata dall'app. -->
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <!-- IMPORTANTE: il valore di apple-mobile-web-app-status-bar-style va
+         cambiato a runtime in base al tema. Default = 'default' (light mode):
+         iOS disegna una barra OPACA con icone NERE — visibili su header bianco.
+         In dark mode passa a 'black-translucent': icone BIANCHE, WebView
+         edge-to-edge sotto la barra (header scuro che la copre). Settare
+         'black-translucent' in light mode renderebbe icone bianche su sfondo
+         bianco = INVISIBILI (era il bug della status bar). -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Fermenta.to" />
 
     <!-- ── Bootstrap ultra-early del tema: applica `dark` su <html> e
@@ -28,17 +31,20 @@
       (function () {
         try {
           var stored = localStorage.getItem('fermenta-theme');
-          var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-          var isDark = stored === 'dark' || (stored !== 'light' && false /* default light */);
+          var isDark = stored === 'dark';
+          var meta = document.querySelector('meta[name="theme-color"]');
+          var ios  = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
           if (isDark) {
             document.documentElement.classList.add('dark');
             document.documentElement.style.background = '#15202B';
-            var meta = document.querySelector('meta[name="theme-color"]');
             if (meta) meta.setAttribute('content', '#15202B');
-            var ios = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+            // Dark: black-translucent → icone BIANCHE, header scuro fa da sfondo
             if (ios) ios.setAttribute('content', 'black-translucent');
           } else {
             document.documentElement.style.background = '#FFFFFF';
+            if (meta) meta.setAttribute('content', '#FFFFFF');
+            // Light: default → icone NERE su barra bianca opaca (visibili)
+            if (ios) ios.setAttribute('content', 'default');
           }
         } catch (e) {}
       })();
