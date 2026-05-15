@@ -68,6 +68,7 @@ workflows:
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
           rm -rf ios/App/Pods ios/App/Podfile.lock
           python3 ios-native/add_cast_pod.py ios/App/Podfile "google-cast-sdk"
+          python3 ios-native/add_podfile_hooks.py ios/App/Podfile
           echo "=== Podfile ==="; cat ios/App/Podfile
           cd ios/App && pod install --repo-update
           grep -q "google-cast-sdk" Podfile.lock || { echo "ERRORE: google-cast-sdk non in Podfile.lock"; exit 1; }
@@ -276,6 +277,7 @@ workflows:
           sed -i '' "s/IPHONEOS_DEPLOYMENT_TARGET = [0-9.]*;/IPHONEOS_DEPLOYMENT_TARGET = 16.0;/g" ios/App/App.xcodeproj/project.pbxproj
           rm -rf ios/App/Pods ios/App/Podfile.lock
           python3 ios-native/add_cast_pod.py ios/App/Podfile "google-cast-sdk"
+          python3 ios-native/add_podfile_hooks.py ios/App/Podfile
           echo "=== Podfile ==="; cat ios/App/Podfile
           cd ios/App && pod install --repo-update
           grep -q "google-cast-sdk" Podfile.lock || { echo "ERRORE: google-cast-sdk non in Podfile.lock"; exit 1; }

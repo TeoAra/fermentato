@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+
+xcode-project build-ipa \
+  --workspace ios/App/App.xcworkspace \
+  --scheme App \
+  --config Release
+Showing the last 50 lines. Click this button to load the full log
+▸ Compiling CAPBridgeViewController+CDVScreenOrientationDelegate.m
+▸ Linking Capacitor
+▸ Compiling CapacitorSplashScreen_vers.c
+▸ Compiling CapacitorApp_vers.c
+▸ Generating 'Capacitor.framework.dSYM'
+▸ Touching Capacitor.framework (in target 'Capacitor' from project 'Pods')
+▸ Processing CapacitorStatusBar-Info.plist
+▸ Processing CapacitorSplashScreen-Info.plist
+▸ Processing CapacitorPushNotifications-Info.plist
+▸ Processing CapacitorGeolocation-Info.plist
+▸ Processing CapacitorCamera-Info.plist
+▸ Processing CapacitorApp-Info.plist
+▸ Compiling CapacitorPushNotifications_vers.c
+▸ Compiling CapacitorSplashScreen-dummy.m
+▸ Compiling CapacitorApp-dummy.m
+▸ Linking CapacitorSplashScreen
+▸ Linking CapacitorApp
+▸ Compiling CapacitorStatusBar_vers.c
+▸ Generating 'CapacitorSplashScreen.framework.dSYM'
+▸ Generating 'CapacitorApp.framework.dSYM'
+▸ Touching CapacitorSplashScreen.framework (in target 'CapacitorSplashScreen' from project 'Pods')
+▸ Touching CapacitorApp.framework (in target 'CapacitorApp' from project 'Pods')
+▸ Compiling CapacitorPushNotifications-dummy.m
+▸ Linking CapacitorPushNotifications
+▸ Compiling CapacitorStatusBar-dummy.m
+▸ Linking CapacitorStatusBar
+▸ Generating 'CapacitorPushNotifications.framework.dSYM'
+▸ Touching CapacitorPushNotifications.framework (in target 'CapacitorPushNotifications' from project 'Pods')
+▸ Generating 'CapacitorStatusBar.framework.dSYM'
+▸ Touching CapacitorStatusBar.framework (in target 'CapacitorStatusBar' from project 'Pods')
+    Run script build phase '[CP] Copy XCFrameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'google-cast-sdk' from project 'Pods')
+    Run script build phase '[CP] Copy XCFrameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'IONGeolocationLib' from project 'Pods')
+    Run script build phase '[CP] Copy Pods Resources' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+    Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this issue, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+Failed to archive ios/App/App.xcworkspace. The following build commands failed:
+
+CompileSwift normal arm64 (in target 'CapacitorGeolocation' from project 'Pods')
+	...
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorCordova-CapacitorCordova' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorCordova' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorCamera' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'CapacitorApp' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Capacitor-Capacitor' from project 'Pods')
+	note: Disabling previews because SWIFT_VERSION is set and SWIFT_OPTIMIZATION_LEVEL=-O, expected -Onone (in target 'Capacitor' from project 'Pods')
+
+SwiftCompile normal arm64 Compiling\ GeolocationCallbackManager.swift,\ GeolocationConstants.swift,\ GeolocationError.swift,\ GeolocationPlugin.swift,\ IONGLOCPositionModel+JSONTransformer.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationCallbackManager.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationConstants.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationError.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/GeolocationPlugin.swift /Users/builder/clone/node_modules/@capacitor/geolocation/ios/Sources/GeolocationPlugin/IONGLOCPositionModel+JSONTransformer.swift (in target 'CapacitorGeolocation' from project 'Pods')
+
+
+Build failed :|
+Step 16 script `Build IPA firmato` exited with status code 65
