@@ -97,7 +97,7 @@ public class NativeCastPlugin: CAPPlugin, CAPBridgedPlugin {
         let payload      = "{\"url\":\"\(escapedUrl)\",\"title\":\"\(escapedTitle)\"}"
         let channel      = FermentaCastChannel()
         session.add(channel)
-        try? channel.sendTextMessage(payload)
+        channel.sendTextMessage(payload, error: nil)
         notifyState()
     }
 
