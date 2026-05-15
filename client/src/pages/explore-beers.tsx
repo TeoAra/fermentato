@@ -284,7 +284,7 @@ export default function ExploreBeers() {
           className="sticky lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-[#2F3D4D]/60"
           style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
         >
-          <PageContainer variant="narrow" className="py-2.5 space-y-2.5">
+          <PageContainer variant="wide" className="py-2.5 space-y-2.5">
             <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-2.5 border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm">
               <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
               <input
@@ -327,7 +327,7 @@ export default function ExploreBeers() {
           </PageContainer>
         </div>
 
-        <PageContainer as="main" variant="narrow" className="pt-4 pb-28 lg:pb-12">
+        <PageContainer as="main" variant="wide" className="pt-4 pb-28 lg:pb-12">
           <header className="mb-4">
             <h1 className="text-3xl lg:text-4xl font-extrabold text-foreground tracking-tight">Esplora Birre</h1>
             <p className="text-sm text-stone-500 dark:text-stone-400 mt-1">Scopri nuovi stili e trova la tua prossima preferita</p>
@@ -430,7 +430,7 @@ export default function ExploreBeers() {
         // ═══════════════════════════════════════════════════════════════
         // STYLE SELECTED VIEW — Hai selezionato X
         // ═══════════════════════════════════════════════════════════════
-        <PageContainer as="main" variant="narrow" className="pt-3 pb-28 lg:pb-12">
+        <PageContainer as="main" variant="wide" className="pt-3 pb-28 lg:pb-12">
           {/* Back link */}
           <button
             onClick={clearAll}

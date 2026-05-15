@@ -285,9 +285,9 @@ export default function Home() {
 
       {/* ═══════════════════════════════════════════════════════════════
           HERO — Clean map (top) + filter chips + content card
-          Centered on desktop with max-w-2xl, lighter on the eye
+          Inside the main wide container so it expands on large screens
       ═══════════════════════════════════════════════════════════════ */}
-      <div className="max-w-2xl mx-auto px-4 pt-4">
+      <PageContainer as="main" variant="wide" className="pt-4 pb-28">
         {/* Map card — taller on mobile, more compact on desktop */}
         <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-[#15202B] shadow-card h-[300px] lg:h-[240px]" style={{ maxHeight: 300 }}>
           <div className="absolute inset-0 overflow-hidden" style={{ maxHeight: '100%' }}>
@@ -430,10 +430,6 @@ export default function Home() {
             <NewsStrip variant="hero" limit={6} />
           </div>
         </div>
-      </div>
-
-      <PageContainer as="main" variant="wide" className="pt-5 pb-28">
-
 
         {/* GPS denied banner */}
         {locationStatus === 'denied' && (

@@ -277,7 +277,7 @@ export default function ExploreBreweries() {
 
       {/* ── Header (scorre con la pagina) ── */}
       <div className="bg-white/95 dark:bg-[#15202B]/95 backdrop-blur-md border-b border-stone-100 dark:border-[#2F3D4D]">
-        <PageContainer variant="standard" className="pt-3 pb-2">
+        <PageContainer variant="wide" className="pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -408,7 +408,7 @@ export default function ExploreBreweries() {
         </PageContainer>
 
         {/* Result count */}
-        <PageContainer variant="standard" className="pb-2">
+        <PageContainer variant="wide" className="pb-2">
           <p className="text-[11px] text-stone-400 dark:text-stone-500 font-medium">
             {isLoading ? "Caricamento…" : `${total.toLocaleString("it-IT")} birrifici trovati`}
             {quickFilter === "italian" ? " italiani" : quickFilter === "international" ? " internazionali" : ""}
@@ -418,7 +418,7 @@ export default function ExploreBreweries() {
       </div>
 
       {/* ── Content ── */}
-      <PageContainer as="main" variant="standard" className="pt-3 pb-28 lg:pb-12">
+      <PageContainer as="main" variant="wide" className="pt-3 pb-28 lg:pb-12">
         {isLoading ? (
           <div className="space-y-3">
             {[...Array(8)].map((_, i) => (
