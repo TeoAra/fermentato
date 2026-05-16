@@ -2473,7 +2473,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         imageUrl: b.imageUrl ?? null,
         orderIndex: b.orderIndex !== undefined ? Number(b.orderIndex) : 0,
       };
-      const itemData = insertMenuItemSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(normalizedBody);
+      // Schema esplicito (no .omit()): in alcune combinazioni Zod 4 + drizzle-zod
+      // chiamare .omit({id: true}) su uno schema dove `id` è già stato auto-rimosso
+      // lancia "Unrecognized key: 'id'" lazily al parse(). Definirlo a mano è solido.
+      const menuItemPayloadSchema = z.object({
+        categoryId: z.number().int(),
+        name: z.string().min(1).max(255),
+        description: z.string().nullable().optional(),
+        price: z.string().regex(/^\d+(\.\d{1,2})?$/, 'Prezzo non valido'),
+        allergens: z.array(z.string()).default([]),
+        isVisible: z.boolean().default(true),
+        isAvailable: z.boolean().default(true),
+        isInfoBox: z.boolean().default(false),
+        isVegetarian: z.boolean().default(false),
+        isSpicy: z.boolean().default(false),
+        imageUrl: z.string().nullable().optional(),
+        orderIndex: z.number().int().default(0),
+      });
+      const itemData = menuItemPayloadSchema.parse(normalizedBody);
       const item = await storage.createMenuItem(itemData);
       broadcastPubUpdate(pubId, "menu");
       res.status(201).json(item);
