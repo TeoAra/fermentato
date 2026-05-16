@@ -2455,8 +2455,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rawPrice === undefined || rawPrice === null || rawPrice === ''
           ? rawPrice
           : String(rawPrice).trim().replace(',', '.');
+      // Rimuovi chiavi auto-gestite o di stato lato client che lo schema strict rifiuterebbe.
+      const { id: _omitId, createdAt: _omitCa, updatedAt: _omitUa, ...rest } = req.body || {};
       const normalizedBody = {
-        ...req.body,
+        ...rest,
         categoryId: Number(req.body.categoryId),
         price: normalizedPrice,
         allergens: Array.isArray(req.body.allergens) ? req.body.allergens : [],
