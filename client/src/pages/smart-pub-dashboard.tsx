@@ -310,7 +310,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     }
   };
   // ── Chromecast ───────────────────────────────────────────────────────────
-  const { castState, deviceName, castToTV, stopCasting, isAvailable, isConnected } = useChromecast();
+  const { castState, deviceName, castToTV, stopCasting, isAvailable, isConnected, getDiagnostics } = useChromecast();
 
   // ── AirPlay: video element persistente per webkitShowPlaybackTargetPicker ──
   // Deve essere già nel DOM quando l'utente preme il pulsante, altrimenti
@@ -854,10 +854,20 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                               } else if (isNativeIos) {
                                 // Cast SDK attivo ma nessun Chromecast trovato o utente ha annullato il picker.
                                 // NON forzare AirPlay: AirPlay è un pulsante separato qui sotto.
+                                // Includiamo la diagnostica live nel toast: utile per capire se la discovery
+                                // sta funzionando (deviceCount>0 = device vede la TV ma sessione fallita;
+                                // deviceCount=0 = TV non scoperta → problema permessi/rete/bundleID).
+                                const diag = await getDiagnostics();
+                                const diagText = diag
+                                  ? diag.deviceCount === 0
+                                    ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device trovati`
+                                    : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}`
+                                  : "";
                                 toast({
                                   title: "Nessun Chromecast trovato",
-                                  description: "Assicurati che il Chromecast/Android TV sia sulla stessa rete WiFi e che Fermenta abbia il permesso 'Rete locale' (Impostazioni → Fermenta).",
+                                  description: `Assicurati che il Chromecast/Android TV sia sulla stessa rete WiFi e che Fermenta abbia il permesso 'Rete locale'.${diagText ? "\n\n" + diagText : ""}`,
                                   variant: "destructive",
+                                  duration: 10000,
                                 });
                               } else {
                                 window.open(tvUrl, "_blank");

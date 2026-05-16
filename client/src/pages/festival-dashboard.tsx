@@ -101,7 +101,7 @@ interface Stats {
 function TVModeButton({ slug, festivalName }: { slug: string; festivalName?: string }) {
   const tvUrl = `${window.location.origin}/festival-tv/${slug}`;
   const { toast } = useToast();
-  const { castState, deviceName, castToTV, stopCasting, isAvailable, isConnected } = useChromecast();
+  const { castState, deviceName, castToTV, stopCasting, isAvailable, isConnected, getDiagnostics } = useChromecast();
   const isIos = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "ios";
   const airplayVideoRef = useRef<HTMLVideoElement | null>(null);
   const [airplayAvailable, setAirplayAvailable] = useState(false);
@@ -216,6 +216,20 @@ function TVModeButton({ slug, festivalName }: { slug: string; festivalName?: str
                 } else if (castState === "unavailable") {
                   window.open(tvUrl, "_blank");
                   toast({ title: "Pagina TV aperta", description: "Usa il menu Cast di Chrome (⋮ → Trasmetti)" });
+                } else {
+                  // Diagnostica Cast in-app (vedi smart-pub-dashboard per dettagli).
+                  const diag = await getDiagnostics();
+                  const diagText = diag
+                    ? diag.deviceCount === 0
+                      ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device trovati`
+                      : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}`
+                    : "";
+                  toast({
+                    title: "Nessun Chromecast trovato",
+                    description: `Verifica che il device sia sulla stessa rete WiFi e che l'app abbia il permesso 'Rete locale'.${diagText ? "\n\n" + diagText : ""}`,
+                    variant: "destructive",
+                    duration: 10000,
+                  });
                 }
               }}
             >

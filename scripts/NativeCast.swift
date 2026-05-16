@@ -29,6 +29,7 @@ public class NativeCastPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "initialize",        returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "showPickerAndLoad", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "getDiagnostics", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "endSession",        returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "getState",          returnType: CAPPluginReturnPromise),
     ]
@@ -82,6 +83,33 @@ public class NativeCastPlugin: CAPPlugin, CAPBridgedPlugin {
                 self.pendingLoad = PendingLoad(url: url, title: title, call: call)
                 GCKCastContext.sharedInstance().presentCastDialog()
             }
+        }
+    }
+
+    // MARK: - getDiagnostics
+    //
+    // Espone a JS lo stato attuale della discovery (deviceCount + lista nomi/modelli)
+    // così l'utente può vedere in-app quanti Chromecast/Android TV vengono trovati
+    // senza dover collegare l'iPhone a un Mac per Console.app.
+
+    @objc func getDiagnostics(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            let dm = GCKCastContext.sharedInstance().discoveryManager
+            var devices: [[String: Any]] = []
+            for i in 0..<dm.deviceCount {
+                let d = dm.device(at: i)
+                devices.append([
+                    "name":       d.friendlyName ?? "?",
+                    "modelName":  d.modelName ?? "?",
+                    "deviceID":   d.deviceID,
+                    "category":   d.category,
+                ])
+            }
+            call.resolve([
+                "discoveryActive": dm.discoveryActive,
+                "deviceCount":     dm.deviceCount,
+                "devices":         devices,
+            ])
         }
     }
 

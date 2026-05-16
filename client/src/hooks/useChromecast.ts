@@ -23,6 +23,11 @@ interface NativeCastPlugin {
   showPickerAndLoad(options: { url: string; title?: string }): Promise<{ success: boolean; loaded?: boolean }>;
   endSession(): Promise<{ success: boolean }>;
   getState(): Promise<{ state: string }>;
+  getDiagnostics(): Promise<{
+    discoveryActive: boolean;
+    deviceCount: number;
+    devices: Array<{ name: string; modelName: string; deviceID: string; category: string }>;
+  }>;
   addListener(event: "castStateChanged", handler: (data: { state: string; deviceName?: string }) => void): Promise<PluginListenerHandle>;
   removeAllListeners(): Promise<void>;
 }
@@ -37,6 +42,12 @@ export type CastState =
   | "connecting"
   | "connected";
 
+export interface CastDiagnostics {
+  discoveryActive: boolean;
+  deviceCount: number;
+  devices: Array<{ name: string; modelName: string; deviceID: string; category: string }>;
+}
+
 interface UseChromecastReturn {
   castState: CastState;
   deviceName: string;
@@ -44,6 +55,7 @@ interface UseChromecastReturn {
   stopCasting: () => void;
   isAvailable: boolean;
   isConnected: boolean;
+  getDiagnostics: () => Promise<CastDiagnostics | null>;
 }
 
 // Entrambe le piattaforme native usano il plugin NativeCast
@@ -231,6 +243,18 @@ export function useChromecast(): UseChromecastReturn {
     }
   }, []);
 
+  // Espone la diagnostica del Cast SDK (solo iOS native). Utile per mostrare
+  // in-app quanti device sono stati trovati e i loro nomi quando il picker
+  // sembra vuoto — evita di dover collegare l'iPhone a un Mac per Console.app.
+  const getDiagnostics = useCallback(async (): Promise<CastDiagnostics | null> => {
+    if (!isNative) return null;
+    try {
+      return await NativeCast.getDiagnostics();
+    } catch {
+      return null;
+    }
+  }, []);
+
   return {
     castState,
     deviceName,
@@ -238,5 +262,6 @@ export function useChromecast(): UseChromecastReturn {
     stopCasting,
     isAvailable: castState !== "unavailable" && castState !== "no_devices",
     isConnected: castState === "connected",
+    getDiagnostics,
   };
 }
