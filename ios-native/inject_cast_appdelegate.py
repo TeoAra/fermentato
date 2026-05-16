@@ -29,11 +29,19 @@ if "GCKCastContext.setSharedInstanceWith" in txt:
 # Inietta il setup di GCKCastContext prima del primo 'return true'
 #    che si trova in application(_:didFinishLaunchingWithOptions:)
 cast_block = (
-    "        // Google Cast SDK — inizializzato all'avvio per avviare discovery dispositivi\n"
+    "        // Google Cast SDK — inizializzato all'avvio per avviare discovery dispositivi.\n"
+    "        // startDiscoveryAfterFirstTapOnCastButton=false è ESSENZIALE: dal SDK 4.4.8 in poi\n"
+    "        // la discovery non parte se questo flag è true e l'app non usa il GCKUICastButton\n"
+    "        // standard. Senza discovery attiva il prompt iOS 'Rete locale' non appare mai e\n"
+    "        // il picker risulta vuoto. Impostandolo a false, la discovery (e quindi la query\n"
+    "        // Bonjour _googlecast._tcp) parte all'avvio e iOS chiede subito il permesso.\n"
     f'        let _castCriteria = GCKDiscoveryCriteria(applicationID: "{app_id}")\n'
     "        let _castOptions  = GCKCastOptions(discoveryCriteria: _castCriteria)\n"
     "        _castOptions.physicalVolumeButtonsWillControlDeviceVolume = true\n"
+    "        _castOptions.startDiscoveryAfterFirstTapOnCastButton = false\n"
+    "        _castOptions.suspendSessionsWhenBackgrounded = true\n"
     "        GCKCastContext.setSharedInstanceWith(_castOptions)\n"
+    "        GCKCastContext.sharedInstance().discoveryManager.startDiscovery()\n"
     "        "
 )
 

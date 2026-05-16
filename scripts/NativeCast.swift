@@ -47,6 +47,11 @@ public class NativeCastPlugin: CAPPlugin, CAPBridgedPlugin {
                 GCKCastContext.sharedInstance().sessionManager.add(del)
                 GCKCastContext.sharedInstance().discoveryManager.add(del)
             }
+            // Safety net: garantisce che la discovery sia attiva anche se l'AppDelegate
+            // non l'avesse avviata (es. iOS che ha sospeso il discoveryManager dopo
+            // un cambio di rete o background prolungato). Idempotente. Triggera il
+            // prompt 'Rete locale' la prima volta che viene chiamato.
+            GCKCastContext.sharedInstance().discoveryManager.startDiscovery()
             self.notifyState()
             call.resolve(["success": true])
         }
