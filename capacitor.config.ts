@@ -34,7 +34,10 @@ const config: CapacitorConfig = {
       splashImmersive: true,
     },
     StatusBar: {
-      style: 'DARK',
+      // ⚠️ Capacitor 8: 'LIGHT' → icone NERE (sfondo bianco header light theme).
+      // 'DARK' produrrebbe icone bianche invisibili sull'header bianco iniziale.
+      // Lo style viene poi aggiornato dinamicamente da ThemeProvider al cambio tema.
+      style: 'LIGHT',
       backgroundColor: '#FFFFFF',
       overlaysWebView: true,
     },

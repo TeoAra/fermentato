@@ -53,8 +53,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     if ((window as any).Capacitor?.isNativePlatform?.()) {
       const platform = (window as any).Capacitor?.getPlatform?.();
       import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
-        // Style.Light = icone bianche (per sfondi scuri); Style.Dark = icone nere (per sfondi chiari)
-        StatusBar.setStyle({ style: theme === "dark" ? Style.Light : Style.Dark }).catch(() => {});
+        // ⚠️ Capacitor 8: la mappatura nomi è INVERTITA rispetto alla semantica:
+        //   Style.Dark  ("DARK")  → UIStatusBarStyle.lightContent → icone BIANCHE
+        //   Style.Light ("LIGHT") → UIStatusBarStyle.darkContent  → icone NERE
+        // Dark theme (sfondo navy) → Style.Dark (icone bianche);
+        // light theme (sfondo bianco) → Style.Light (icone nere).
+        StatusBar.setStyle({ style: theme === "dark" ? Style.Dark : Style.Light }).catch(() => {});
         if (platform !== "ios") {
           StatusBar.setBackgroundColor({ color: headerBg }).catch(() => {});
         }

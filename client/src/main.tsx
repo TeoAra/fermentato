@@ -21,8 +21,12 @@ if (Capacitor.isNativePlatform()) {
     const isDark = document.documentElement.classList.contains("dark");
     const bg = isDark ? "#15202B" : "#FFFFFF";
     StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
-    // Style.Light = icone BIANCHE (per sfondi scuri); Style.Dark = icone NERE (per sfondi chiari)
-    StatusBar.setStyle({ style: isDark ? Style.Light : Style.Dark }).catch(() => {});
+    // ⚠️ Capacitor 8: la mappatura nomi è INVERTITA rispetto alla semantica:
+    //   Style.Dark  ("DARK")  → UIStatusBarStyle.lightContent → icone BIANCHE
+    //   Style.Light ("LIGHT") → UIStatusBarStyle.darkContent  → icone NERE
+    // Quindi: dark theme (sfondo navy) vuole Style.Dark (icone bianche);
+    // light theme (sfondo bianco) vuole Style.Light (icone nere).
+    StatusBar.setStyle({ style: isDark ? Style.Dark : Style.Light }).catch(() => {});
     // Su iOS non chiamare setBackgroundColor: in overlay mode interferirebbe con
     // il colore delle icone e causerebbe icone del colore sbagliato dopo cambio tema.
     if (Capacitor.getPlatform() !== "ios") {
