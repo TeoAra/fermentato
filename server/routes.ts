@@ -2455,13 +2455,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rawPrice === undefined || rawPrice === null || rawPrice === ''
           ? rawPrice
           : String(rawPrice).trim().replace(',', '.');
-      // Rimuovi chiavi auto-gestite o di stato lato client che lo schema strict rifiuterebbe.
-      const { id: _omitId, createdAt: _omitCa, updatedAt: _omitUa, ...rest } = req.body || {};
-      const normalizedBody = {
-        ...rest,
-        categoryId: Number(req.body.categoryId),
+      // Whitelist esplicita: solo i campi che lo schema consente. Zod 4 con
+      // schemi creati da drizzle-zod è strict per default, quindi qualsiasi
+      // chiave extra (id, createdAt, ecc.) farebbe fallire la parse().
+      const b = req.body || {};
+      const normalizedBody: any = {
+        categoryId: Number(b.categoryId),
+        name: typeof b.name === 'string' ? b.name : '',
+        description: b.description ?? null,
         price: normalizedPrice,
-        allergens: Array.isArray(req.body.allergens) ? req.body.allergens : [],
+        allergens: Array.isArray(b.allergens) ? b.allergens : [],
+        isVisible: b.isVisible !== undefined ? !!b.isVisible : true,
+        isAvailable: b.isAvailable !== undefined ? !!b.isAvailable : true,
+        isInfoBox: b.isInfoBox !== undefined ? !!b.isInfoBox : false,
+        isVegetarian: b.isVegetarian !== undefined ? !!b.isVegetarian : false,
+        isSpicy: b.isSpicy !== undefined ? !!b.isSpicy : false,
+        imageUrl: b.imageUrl ?? null,
+        orderIndex: b.orderIndex !== undefined ? Number(b.orderIndex) : 0,
       };
       const itemData = insertMenuItemSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(normalizedBody);
       const item = await storage.createMenuItem(itemData);
