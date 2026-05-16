@@ -320,8 +320,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             {isAuthenticated && (
               <>
                 <SectionLabel>Azioni veloci</SectionLabel>
-                <ActionItem icon={PlusCircle} label="Aggiungi bevuta" color="bg-primary/10 text-primary" onClick={() => { onMenuToggle(); setLocation('/dashboard'); }} />
-                <ActionItem icon={MessageSquare} label="Scrivi recensione" color="bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400" onClick={() => { onMenuToggle(); setLocation('/activity'); }} />
+                <ActionItem icon={PlusCircle} label="Aggiungi bevuta" color="bg-primary/10 text-primary" onClick={() => { onMenuToggle(); setLocation('/explore/beers?action=checkin'); }} />
+                <ActionItem icon={MessageSquare} label="Scrivi recensione" color="bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400" onClick={() => { onMenuToggle(); setLocation('/explore/beers?action=review'); }} />
 
                 <SectionLabel>Account</SectionLabel>
                 <MenuItem href="/dashboard" icon={User} label="Il mio profilo" />

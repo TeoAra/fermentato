@@ -353,7 +353,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
               <p className="text-xs font-semibold text-stone-500 dark:text-stone-400 uppercase tracking-wide mb-2">
                 Foto (opzionale)
               </p>
-              <input ref={photoInputRef} type="file" accept="image/*" capture="environment" className="hidden"
+              <input ref={photoInputRef} type="file" accept="image/*" className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelect(f); e.target.value = ""; }} />
               {photoUrl ? (
                 <div className="relative inline-block">
