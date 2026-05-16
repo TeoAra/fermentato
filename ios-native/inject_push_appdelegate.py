@@ -30,6 +30,18 @@ push_block = """
     func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
         NotificationCenter.default.post(name: .capacitorDidFailToRegisterForRemoteNotifications, object: error)
     }
+
+    // Azzera il badge rosso sull'icona quando l'utente apre/riprende l'app, e
+    // rimuove le notifiche già consegnate dal Notification Center. Senza questo,
+    // il pallino con il numero resta visibile anche dopo aver letto le notifiche.
+    func applicationDidBecomeActive(_ application: UIApplication) {
+        if #available(iOS 16.0, *) {
+            UNUserNotificationCenter.current().setBadgeCount(0) { _ in }
+        } else {
+            application.applicationIconBadgeNumber = 0
+        }
+        UNUserNotificationCenter.current().removeAllDeliveredNotifications()
+    }
 """
 
 # Inserisci prima dell'ultima parentesi graffa di chiusura della classe AppDelegate.

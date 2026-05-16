@@ -51,7 +51,9 @@ public class NativeCastPlugin: CAPPlugin, CAPBridgedPlugin {
             // non l'avesse avviata (es. iOS che ha sospeso il discoveryManager dopo
             // un cambio di rete o background prolungato). Idempotente. Triggera il
             // prompt 'Rete locale' la prima volta che viene chiamato.
-            GCKCastContext.sharedInstance().discoveryManager.startDiscovery()
+            let dm = GCKCastContext.sharedInstance().discoveryManager
+            dm.startDiscovery()
+            NSLog("[NativeCast] initialize: discoveryActive=\(dm.discoveryActive) deviceCount=\(dm.deviceCount)")
             self.notifyState()
             call.resolve(["success": true])
         }
@@ -67,6 +69,12 @@ public class NativeCastPlugin: CAPPlugin, CAPBridgedPlugin {
         DispatchQueue.main.async { [weak self] in
             guard let self = self else { return }
             let sm = GCKCastContext.sharedInstance().sessionManager
+            let dm = GCKCastContext.sharedInstance().discoveryManager
+            NSLog("[NativeCast] showPickerAndLoad: discoveryActive=\(dm.discoveryActive) deviceCount=\(dm.deviceCount) hasSession=\(sm.hasConnectedCastSession())")
+            for i in 0..<dm.deviceCount {
+                let d = dm.device(at: i)
+                NSLog("[NativeCast]   device[\(i)]: name=\(d.friendlyName ?? "?") modelName=\(d.modelName ?? "?") deviceID=\(d.deviceID) capabilities=\(d.capabilities)")
+            }
             if sm.hasConnectedCastSession(), let session = sm.currentCastSession {
                 self.sendUrlMessage(session: session, url: url, title: title)
                 call.resolve(["success": true])
