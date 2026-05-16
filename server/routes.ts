@@ -1497,12 +1497,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/cast-config", (_req, res) => {
-    // CC1AD845 = Google Default Media Receiver, supportato nativamente da tutti
-    // i Chromecast/Android TV/Google TV senza registrazione. Sostituisce il vecchio
-    // "6666EC62" che era un app ID custom mai registrato → i device non rispondevano.
-    // Se CAST_APP_ID è ancora il vecchio valore o vuoto, forza il default.
-    const envId = process.env.CAST_APP_ID;
-    const appId = (envId && envId !== '6666EC62') ? envId : 'CC1AD845';
+    // 6666EC62 = Fermenta receiver custom registrato su Cast Developer Console.
+    // Riceve messaggi sul namespace 'urn:x-cast:fermenta.to' e apre la taplist
+    // (es. https://fermenta.to/tv/7) sulla TV. Se il receiver è in stato Draft
+    // sulla Console solo i device aggiunti come "test device" lo vedranno nella
+    // discovery — per produzione va pubblicato.
+    const appId = process.env.CAST_APP_ID || '6666EC62';
     res.json({ appId });
   });
 

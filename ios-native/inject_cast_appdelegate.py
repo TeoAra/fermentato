@@ -12,7 +12,7 @@ import sys
 import re
 
 path   = sys.argv[1]
-app_id = sys.argv[2] if len(sys.argv) > 2 else "CC1AD845"
+app_id = sys.argv[2] if len(sys.argv) > 2 else "6666EC62"
 
 txt = open(path).read()
 

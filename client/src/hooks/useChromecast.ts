@@ -54,13 +54,10 @@ const isNativeIos = isNative && Capacitor.getPlatform() === "ios";
 export function useChromecast(): UseChromecastReturn {
   const [castState, setCastState] = useState<CastState>("unavailable");
   const [deviceName, setDeviceName] = useState("");
-  // CC1AD845 = Default Media Receiver di Google (supportato nativamente da tutti
-  // i Chromecast / Android TV / Google TV senza necessità di registrare un receiver
-  // custom sulla Cast Developer Console). Permette load di URL media (HLS/DASH/MP4)
-  // e di URL web tramite metadata custom. Sostituisce il vecchio "6666EC62" che era
-  // un app ID custom mai registrato, motivo per cui i device non rispondevano alla
-  // discovery e la lista restava vuota.
-  const [appId, setAppId] = useState("CC1AD845");
+  // 6666EC62 = Fermenta custom receiver registrato su Cast Developer Console.
+  // Riceve messaggi sul namespace 'urn:x-cast:fermenta.to' per aprire la taplist
+  // sulla TV. Viene comunque sovrascritto dal /api/cast-config se diverso.
+  const [appId, setAppId] = useState("6666EC62");
   const listenerRef = useRef<PluginListenerHandle | null>(null);
 
   // Carica app ID dal server
