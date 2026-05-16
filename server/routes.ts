@@ -1497,8 +1497,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.get("/api/cast-config", (_req, res) => {
-    const appId = process.env.CAST_APP_ID || '';
-    res.json({ appId: appId || null });
+    // CC1AD845 = Google Default Media Receiver, supportato nativamente da tutti
+    // i Chromecast/Android TV/Google TV senza registrazione. Sostituisce il vecchio
+    // "6666EC62" che era un app ID custom mai registrato → i device non rispondevano.
+    // Se CAST_APP_ID è ancora il vecchio valore o vuoto, forza il default.
+    const envId = process.env.CAST_APP_ID;
+    const appId = (envId && envId !== '6666EC62') ? envId : 'CC1AD845';
+    res.json({ appId });
   });
 
   app.get("/api/pubs/:id/taplist-image", async (req, res) => {

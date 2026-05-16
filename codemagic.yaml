@@ -10,7 +10,7 @@
 #   • Apple Developer Portal: "Fermenta.to"
 #
 # Variabili d'ambiente da impostare in Codemagic (Environment variables):
-#   CAST_APP_ID      → ID receiver Chromecast (default: 6666EC62)
+#   CAST_APP_ID      → ID receiver Chromecast (default: CC1AD845 = Google Default Media Receiver)
 #   APNS_KEY_ID      → Apple Push key ID (10 caratteri)
 #   APNS_TEAM_ID     → Apple Team ID (10 caratteri)
 #   APNS_P8_KEY      → Contenuto file .p8 con \n letterali
@@ -40,7 +40,7 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
-        CAST_APP_ID: 6666EC62
+        CAST_APP_ID: CC1AD845
 
     cache:
       cache_paths:
@@ -86,7 +86,7 @@ workflows:
             "App/App-Bridging-Header.h" \
             ios/App/App/App-Bridging-Header.h
           python3 ios-native/inject_cast_appdelegate.py \
-            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
+            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-CC1AD845}"
 
       - name: Abilita Push Notifications entitlement (APNs)
         script: |
@@ -142,7 +142,7 @@ workflows:
       - name: Aggiungi purpose strings al Info.plist
         script: |
           PLIST="ios/App/App/Info.plist"
-          CAST_APP_ID="${CAST_APP_ID:-6666EC62}"
+          CAST_APP_ID="${CAST_APP_ID:-CC1AD845}"
           /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
@@ -252,7 +252,7 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
-        CAST_APP_ID: 6666EC62
+        CAST_APP_ID: CC1AD845
 
     cache:
       cache_paths:
@@ -298,7 +298,7 @@ workflows:
             "App/App-Bridging-Header.h" \
             ios/App/App/App-Bridging-Header.h
           python3 ios-native/inject_cast_appdelegate.py \
-            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
+            ios/App/App/AppDelegate.swift "${CAST_APP_ID:-CC1AD845}"
 
       - name: Abilita Push Notifications entitlement (APNs)
         script: |
@@ -368,7 +368,7 @@ workflows:
       - name: Aggiungi purpose strings al Info.plist
         script: |
           PLIST="ios/App/App/Info.plist"
-          CAST_APP_ID="${CAST_APP_ID:-6666EC62}"
+          CAST_APP_ID="${CAST_APP_ID:-CC1AD845}"
           /usr/libexec/PlistBuddy -c "Add :NSCameraUsageDescription string 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :NSCameraUsageDescription 'Fermenta.to usa la fotocamera per scansionare codici a barre ed etichette di birre.'" "$PLIST"
           /usr/libexec/PlistBuddy -c "Add :NSPhotoLibraryUsageDescription string 'Fermenta.to accede alle foto per permetterti di caricare immagini di birre, check-in e profilo.'" "$PLIST" 2>/dev/null || \
@@ -458,7 +458,7 @@ workflows:
       java: "21"
       vars:
         PACKAGE_NAME: to.fermentato.app
-        CAST_APP_ID: 6666EC62
+        CAST_APP_ID: CC1AD845
 
     cache:
       cache_paths:

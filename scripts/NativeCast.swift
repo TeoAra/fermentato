@@ -15,7 +15,7 @@ import Capacitor
 //
 // JS usage (useChromecast.ts):
 //   const NativeCast = registerPlugin('NativeCast');
-//   await NativeCast.initialize({ appId: '6666EC62' });
+//   await NativeCast.initialize({ appId: 'CC1AD845' });  // Default Media Receiver
 //   await NativeCast.showPickerAndLoad({ url, title });
 //   await NativeCast.endSession();
 //   NativeCast.addListener('castStateChanged', handler);
