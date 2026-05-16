@@ -187,7 +187,7 @@ function TVModeButton({ slug, festivalName }: { slug: string; festivalName?: str
               }}
             >
               <Tv className="h-4 w-4" />
-              {airplayAvailable ? "AirPlay su Apple TV" : "Apri festival su TV"}
+              {airplayAvailable ? "AirPlay (Apple TV / Smart TV)" : "AirPlay / Apri su altro schermo"}
             </Button>
           )}
 

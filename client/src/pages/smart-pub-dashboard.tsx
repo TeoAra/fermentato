@@ -852,11 +852,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                                   variant: "destructive",
                                 });
                               } else if (isNativeIos) {
-                                // GCK SDK non ancora attivo su questo build:
-                                // guida l'utente verso AirPlay che è sempre disponibile su iOS
+                                // Cast SDK attivo ma nessun Chromecast trovato o utente ha annullato il picker.
+                                // NON forzare AirPlay: AirPlay è un pulsante separato qui sotto.
                                 toast({
-                                  title: "Usa AirPlay",
-                                  description: "Premi il pulsante AirPlay qui sotto per trasmettere la taplist su Apple TV o TV compatibile.",
+                                  title: "Nessun Chromecast trovato",
+                                  description: "Assicurati che il Chromecast/Android TV sia sulla stessa rete WiFi e che Fermenta abbia il permesso 'Rete locale' (Impostazioni → Fermenta).",
+                                  variant: "destructive",
                                 });
                               } else {
                                 window.open(tvUrl, "_blank");
@@ -892,7 +893,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                           }}
                         >
                           <Tv className="h-4 w-4" />
-                          {airplayAvailable ? "AirPlay su Apple TV" : "Apri taplist su TV"}
+                          {airplayAvailable ? "AirPlay (Apple TV / Smart TV)" : "AirPlay / Apri su altro schermo"}
                         </Button>
                       )}
 
