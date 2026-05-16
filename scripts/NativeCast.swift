@@ -74,7 +74,7 @@ public class NativeCastPlugin: CAPPlugin, CAPBridgedPlugin {
             NSLog("[NativeCast] showPickerAndLoad: discoveryActive=\(dm.discoveryActive) deviceCount=\(dm.deviceCount) hasSession=\(sm.hasConnectedCastSession())")
             for i in 0..<dm.deviceCount {
                 let d = dm.device(at: i)
-                NSLog("[NativeCast]   device[\(i)]: name=\(d.friendlyName ?? "?") modelName=\(d.modelName ?? "?") deviceID=\(d.deviceID) capabilities=\(d.capabilities)")
+                NSLog("[NativeCast]   device[\(i)]: name=\(d.friendlyName ?? "?") modelName=\(d.modelName ?? "?") deviceID=\(d.deviceID)")
             }
             if sm.hasConnectedCastSession(), let session = sm.currentCastSession {
                 self.sendUrlMessage(session: session, url: url, title: title)
@@ -102,7 +102,7 @@ public class NativeCastPlugin: CAPPlugin, CAPBridgedPlugin {
                     "name":       d.friendlyName ?? "?",
                     "modelName":  d.modelName ?? "?",
                     "deviceID":   d.deviceID,
-                    "category":   d.category,
+                    "category":   d.category ?? "",
                 ])
             }
             call.resolve([
