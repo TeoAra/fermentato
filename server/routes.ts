@@ -2449,16 +2449,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Category does not belong to this pub" });
       }
 
-      const itemData = insertMenuItemSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse({ ...req.body, categoryId: req.body.categoryId });
+      // Normalizza il payload: garantisce price come stringa decimale e tipi corretti.
+      const rawPrice = req.body?.price;
+      const normalizedPrice =
+        rawPrice === undefined || rawPrice === null || rawPrice === ''
+          ? rawPrice
+          : String(rawPrice).trim().replace(',', '.');
+      const normalizedBody = {
+        ...req.body,
+        categoryId: Number(req.body.categoryId),
+        price: normalizedPrice,
+        allergens: Array.isArray(req.body.allergens) ? req.body.allergens : [],
+      };
+      const itemData = insertMenuItemSchema.omit({ id: true, createdAt: true, updatedAt: true }).parse(normalizedBody);
       const item = await storage.createMenuItem(itemData);
       broadcastPubUpdate(pubId, "menu");
       res.status(201).json(item);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ message: "Validation error", errors: error.issues });
+        console.error("[menu-items] validation failed:", JSON.stringify(error.issues), "body=", JSON.stringify(req.body));
+        const summary = error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ');
+        return res.status(400).json({ message: `Dati non validi: ${summary}`, errors: error.issues });
       }
-      console.error("Error creating menu item:", error);
-      res.status(500).json({ message: "Failed to create menu item" });
+      console.error("[menu-items] create failed:", error?.message || error, "body=", JSON.stringify(req.body));
+      res.status(500).json({ message: error?.message || "Failed to create menu item" });
     }
   });
 

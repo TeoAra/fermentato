@@ -1305,9 +1305,12 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                   const snapshot = { ...itemForm };
                   const catIds = [...selectedCategoryIds];
                   try {
+                    // Normalizza il prezzo: rimuovi virgole/spazi, converti virgola decimale in punto.
+                    const priceStr = String(snapshot.price ?? '').trim().replace(/\s+/g, '').replace(',', '.');
+                    const payloadBase = { ...snapshot, price: priceStr };
                     await Promise.all(
                       catIds.map(catId =>
-                        apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, { ...snapshot, categoryId: catId })
+                        apiRequest(`/api/pubs/${pubId}/menu-items`, { method: 'POST' }, { ...payloadBase, categoryId: catId })
                       )
                     );
                     queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
@@ -1315,8 +1318,18 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
                     setSelectedCategoryIds([]);
                     setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false });
                     toast({ title: catIds.length > 1 ? `✅ Prodotto aggiunto in ${catIds.length} categorie!` : "✅ Prodotto aggiunto!" });
-                  } catch {
-                    toast({ title: "❌ Errore", description: "Impossibile aggiungere il prodotto", variant: "destructive" });
+                  } catch (err: any) {
+                    // Mostra il messaggio reale del server invece di un errore generico.
+                    const serverMsg = err?.message || err?.errors?.[0]?.message || 'Errore sconosciuto';
+                    const fieldDetail = Array.isArray(err?.errors)
+                      ? err.errors.map((e: any) => `${e.path?.join?.('.') || ''}: ${e.message}`).join(' · ')
+                      : '';
+                    console.error('[menu-items] add failed:', err);
+                    toast({
+                      title: "❌ Impossibile aggiungere",
+                      description: fieldDetail || serverMsg,
+                      variant: "destructive"
+                    });
                   } finally {
                     setIsSubmittingProduct(false);
                   }
