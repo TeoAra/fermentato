@@ -5740,9 +5740,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = (req.user as any).id;
       const subs = await storage.getPushSubscriptionsByUser(userId);
-      if (subs.length === 0) {
+      const nativeTokens = await storage.getNativePushTokensByUser(userId);
+      if (subs.length === 0 && nativeTokens.length === 0) {
         return res.status(404).json({ message: "Nessuna sottoscrizione push trovata. Attiva prima le notifiche." });
       }
+      console.log(`[push:test] userId=${userId} webSubs=${subs.length} nativeTokens=${nativeTokens.length}`);
       await sendPushToUserImmediate(userId, {
         title: "Fermenta.to - Test",
         body: "Le notifiche push funzionano correttamente! Riceverai avvisi quando i tuoi pub preferiti aggiornano le spine.",
@@ -5750,7 +5752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         type: "test",
         category: 'adminBroadcasts',
       });
-      res.json({ success: true, subscriptions: subs.length });
+      res.json({ success: true, subscriptions: subs.length, nativeTokens: nativeTokens.length });
     } catch (error) {
       console.error("Error sending test push:", error);
       res.status(500).json({ message: "Errore nell'invio della notifica di test" });
