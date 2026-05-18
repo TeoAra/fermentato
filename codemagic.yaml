@@ -78,9 +78,12 @@ workflows:
         script: |
           npx cap copy ios
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
-          echo "NativeCast.swift copiato in ios/App/App/"
+          cp scripts/NativeCast.m     ios/App/App/NativeCast.m
+          echo "NativeCast.swift + NativeCast.m copiati in ios/App/App/"
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
+          python3 ios-native/add_swift_to_xcode.py \
+            ios/App/App.xcodeproj/project.pbxproj NativeCast.m
           python3 ios-native/set_bridging_header.py \
             ios/App/App.xcodeproj/project.pbxproj \
             "App/App-Bridging-Header.h" \
@@ -290,9 +293,12 @@ workflows:
         script: |
           npx cap copy ios
           cp scripts/NativeCast.swift ios/App/App/NativeCast.swift
-          echo "NativeCast.swift copiato in ios/App/App/"
+          cp scripts/NativeCast.m     ios/App/App/NativeCast.m
+          echo "NativeCast.swift + NativeCast.m copiati in ios/App/App/"
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
+          python3 ios-native/add_swift_to_xcode.py \
+            ios/App/App.xcodeproj/project.pbxproj NativeCast.m
           python3 ios-native/set_bridging_header.py \
             ios/App/App.xcodeproj/project.pbxproj \
             "App/App-Bridging-Header.h" \

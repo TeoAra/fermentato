@@ -32,13 +32,27 @@ def main():
         print(f"{filename} già presente in {pbxproj} — skip")
         sys.exit(0)
 
+    # Mapping estensione → tipo PBXFileReference (richiesto da Xcode per
+    # compilare correttamente il file). Senza il tipo giusto Xcode aggiunge
+    # il file al progetto ma NON lo compila — sintomo identico al bug del
+    # plugin Capacitor "is not implemented on ios".
+    if filename.endswith(".swift"):
+        file_type = "sourcecode.swift"
+    elif filename.endswith(".m"):
+        file_type = "sourcecode.c.objc"
+    elif filename.endswith(".h"):
+        file_type = "sourcecode.c.h"
+    else:
+        print(f"Estensione non supportata: {filename}")
+        sys.exit(1)
+
     file_ref_uuid   = make_uuid(f"FileRef:{filename}")
     build_file_uuid = make_uuid(f"BuildFile:{filename}")
 
     # ── 1. PBXFileReference ───────────────────────────────────────────────────
     file_ref_entry = (
         f"\t\t{file_ref_uuid} /* {filename} */ = "
-        f"{{isa = PBXFileReference; lastKnownFileType = sourcecode.swift; "
+        f"{{isa = PBXFileReference; lastKnownFileType = {file_type}; "
         f"path = {filename}; sourceTree = \"<group>\"; }};\n"
     )
     txt = re.sub(
