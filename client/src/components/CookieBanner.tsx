@@ -70,8 +70,8 @@ export default function CookieBanner() {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-[9999] p-3 md:p-6 pb-[calc(64px+env(safe-area-inset-bottom)+8px)] lg:pb-6 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="max-w-4xl mx-auto bg-white dark:bg-[#15202B] rounded-2xl shadow-2xl border border-gray-200 dark:border-[#2F3D4D] overflow-hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-[9999] p-3 md:p-6 pb-[calc(64px+env(safe-area-inset-bottom)+8px)] lg:pb-6 pointer-events-none">
+      <div className="max-w-4xl mx-auto bg-white dark:bg-[#15202B] rounded-2xl shadow-2xl border border-gray-200 dark:border-[#2F3D4D] overflow-hidden pointer-events-auto">
         {/* Main banner */}
         {!showSettings ? (
           <div className="p-5 md:p-6">
