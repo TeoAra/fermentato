@@ -7,11 +7,22 @@ type Diag = {
   devices: { name: string; modelName: string; deviceID: string; category: string }[];
 } | null;
 
+function getRegisteredPlugins(): string[] {
+  try {
+    const cap = (window as any).Capacitor;
+    if (!cap?.Plugins) return [];
+    return Object.keys(cap.Plugins).sort();
+  } catch {
+    return [];
+  }
+}
+
 export function CastDiagnosticPanel() {
   const { getDiagnostics } = useChromecast();
   const [diag, setDiag] = useState<Diag>(null);
   const [pluginAvailable, setPluginAvailable] = useState<boolean | null>(null);
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
+  const [plugins, setPlugins] = useState<string[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -21,10 +32,12 @@ export function CastDiagnosticPanel() {
         if (!mounted) return;
         setPluginAvailable(d !== null);
         setDiag(d);
+        setPlugins(getRegisteredPlugins());
         setLastUpdate(Date.now());
       } catch {
         if (!mounted) return;
         setPluginAvailable(false);
+        setPlugins(getRegisteredPlugins());
       }
     };
     tick();
@@ -74,6 +87,28 @@ export function CastDiagnosticPanel() {
         <p className="pt-1.5 border-t border-stone-200 dark:border-stone-800 text-amber-600 dark:text-amber-400 leading-snug">
           Il plugin nativo Cast non è caricato. Probabilmente stai usando un build TestFlight vecchio: verifica su TestFlight che ci sia un build più recente disponibile e installalo.
         </p>
+      )}
+      {plugins.length > 0 && (
+        <details className="pt-1.5 border-t border-stone-200 dark:border-stone-800">
+          <summary className="text-stone-500 cursor-pointer text-[11px]">
+            Plugin Capacitor registrati ({plugins.length})
+          </summary>
+          <ul className="mt-1 space-y-0.5 font-mono text-[11px]">
+            {plugins.map((p) => (
+              <li
+                key={p}
+                className={
+                  p === "NativeCast"
+                    ? "text-green-600 dark:text-green-400 font-bold"
+                    : "text-stone-600 dark:text-stone-400"
+                }
+              >
+                {p === "NativeCast" ? "✓ " : "· "}
+                {p}
+              </li>
+            ))}
+          </ul>
+        </details>
       )}
     </div>
   );
