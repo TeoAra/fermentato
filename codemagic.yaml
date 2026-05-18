@@ -105,6 +105,11 @@ workflows:
             ios/App/App/AppDelegate.swift
           echo "=== AppDelegate.swift (push methods) ===" && grep -A 2 "didRegisterForRemoteNotifications\|didFailToRegisterForRemoteNotifications" ios/App/App/AppDelegate.swift
 
+      - name: Abilita Sign in with Apple entitlement
+        script: |
+          python3 ios-native/add_apple_signin_entitlement.py \
+            ios/App/App/App.entitlements
+
       - name: Genera icone app iOS
         script: |
           set -e
@@ -171,6 +176,10 @@ workflows:
           /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:3 string '_raop._tcp'" "$PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          # Google Sign-In: registra l'URL scheme reversed del client ID iOS
+          # cosi' iOS sa rilanciare l'app dopo il callback OAuth.
+          python3 ios-native/add_google_url_scheme.py "$PLIST" \
+            "com.googleusercontent.apps.131123139785-stv42sugd3i1u0lb3u0jssoink746n81"
           echo "Info.plist aggiornato:"
           /usr/libexec/PlistBuddy -c "Print" "$PLIST"
 
@@ -325,6 +334,11 @@ workflows:
             ios/App/App/AppDelegate.swift
           echo "=== AppDelegate.swift (push methods) ===" && grep -A 2 "didRegisterForRemoteNotifications\|didFailToRegisterForRemoteNotifications" ios/App/App/AppDelegate.swift
 
+      - name: Abilita Sign in with Apple entitlement
+        script: |
+          python3 ios-native/add_apple_signin_entitlement.py \
+            ios/App/App/App.entitlements
+
       - name: Genera icone app iOS
         script: |
           set -e
@@ -405,6 +419,10 @@ workflows:
           /usr/libexec/PlistBuddy -c "Add :NSBonjourServices:3 string '_raop._tcp'" "$PLIST" 2>/dev/null || true
           /usr/libexec/PlistBuddy -c "Add :ITSAppUsesNonExemptEncryption bool false" "$PLIST" 2>/dev/null || \
             /usr/libexec/PlistBuddy -c "Set :ITSAppUsesNonExemptEncryption false" "$PLIST"
+          # Google Sign-In: registra l'URL scheme reversed del client ID iOS
+          # cosi' iOS sa rilanciare l'app dopo il callback OAuth.
+          python3 ios-native/add_google_url_scheme.py "$PLIST" \
+            "com.googleusercontent.apps.131123139785-stv42sugd3i1u0lb3u0jssoink746n81"
           echo "Info.plist aggiornato:"
           /usr/libexec/PlistBuddy -c "Print" "$PLIST"
 

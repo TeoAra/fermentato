@@ -254,6 +254,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.error("Failed to initialize authentication:", error.message);
   }
 
+  // Endpoint nativi per Google/Apple Sign-In dell'app iOS/Android (Capacitor).
+  // Su native, il plugin @capgo/capacitor-social-login fornisce idToken /
+  // identityToken firmati dal provider; questi endpoint li verificano e
+  // creano la sessione (vedi server/native-auth.ts).
+  const { registerNativeAuthRoutes } = await import("./native-auth");
+  registerNativeAuthRoutes(app);
+  console.log("Native auth routes (Google/Apple) registered");
+
   // Test SMTP connection at startup
   testSmtpConnection();
 

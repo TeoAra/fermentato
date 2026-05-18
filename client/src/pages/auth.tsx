@@ -13,7 +13,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Factory, Plus, Search, MailCheck, RefreshCw, CheckCircle2, CheckCircle, XCircle, AlertTriangle, Check, X, QrCode, Loader2 } from "lucide-react";
-import { SiGoogle } from "react-icons/si";
+import { SiGoogle, SiApple } from "react-icons/si";
+import { isNative, isNativeIos, loginGoogleNative, loginAppleNative } from "@/lib/nativeSocialLogin";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ReCAPTCHA from "react-google-recaptcha";
 import type { Brewery } from "@shared/schema";
@@ -219,7 +220,48 @@ export default function AuthPage() {
     onError: () => setForgotSent(true), // Always show success to avoid email enumeration
   });
 
-  const handleGoogleLogin = () => { window.location.href = "/api/auth/google"; };
+  const handleGoogleLogin = async () => {
+    // Su native iOS/Android usa il plugin nativo (UI Google nativa, niente
+    // WebView — Google blocca OAuth in WebView con errore disallowed_useragent).
+    if (isNative) {
+      const r = await loginGoogleNative();
+      if (r.ok) {
+        await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        setLocation("/dashboard");
+      } else {
+        toast({
+          title: "Login Google fallito",
+          description: r.error ?? "Riprova",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+    // Web: redirect classico Passport.js
+    window.location.href = "/api/auth/google";
+  };
+
+  const handleAppleLogin = async () => {
+    if (!isNativeIos) {
+      toast({
+        title: "Apple Sign-In",
+        description: "Disponibile solo sull'app iOS",
+        variant: "destructive",
+      });
+      return;
+    }
+    const r = await loginAppleNative();
+    if (r.ok) {
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      setLocation("/dashboard");
+    } else {
+      toast({
+        title: "Login Apple fallito",
+        description: r.error ?? "Riprova",
+        variant: "destructive",
+      });
+    }
+  };
 
   const passReqs = PASSWORD_REQUIREMENTS.map(r => ({ ...r, passed: r.test(passwordValue) }));
   const passStrength = passReqs.filter(r => r.passed).length;
@@ -435,11 +477,20 @@ export default function AuthPage() {
                 <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-card px-2 text-muted-foreground">Oppure continua con</span></div>
               </div>
 
-              <Button type="button" variant="outline" onClick={handleGoogleLogin}
-                className="w-full h-11 bg-white dark:bg-[#1B2735] border border-stone-200 dark:border-border text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20">
-                <SiGoogle className="w-4 h-4 mr-2" />
-                Google
-              </Button>
+              <div className="space-y-3">
+                <Button type="button" variant="outline" onClick={handleGoogleLogin}
+                  className="w-full h-11 bg-white dark:bg-[#1B2735] border border-stone-200 dark:border-border text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20">
+                  <SiGoogle className="w-4 h-4 mr-2" />
+                  Google
+                </Button>
+                {isNativeIos && (
+                  <Button type="button" variant="outline" onClick={handleAppleLogin}
+                    className="w-full h-11 bg-black hover:bg-stone-900 text-white border-black rounded-xl font-medium">
+                    <SiApple className="w-4 h-4 mr-2" />
+                    Continua con Apple
+                  </Button>
+                )}
+              </div>
             </div>
           )}
 
@@ -690,11 +741,20 @@ export default function AuthPage() {
                   <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-card px-2 text-muted-foreground">Oppure registrati con</span></div>
                 </div>
 
-                <Button type="button" variant="outline" onClick={handleGoogleLogin}
-                  className="w-full h-11 bg-white dark:bg-[#1B2735] border border-stone-200 dark:border-border text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20">
-                  <SiGoogle className="w-4 h-4 mr-2" />
-                  Google
-                </Button>
+                <div className="space-y-3">
+                  <Button type="button" variant="outline" onClick={handleGoogleLogin}
+                    className="w-full h-11 bg-white dark:bg-[#1B2735] border border-stone-200 dark:border-border text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20">
+                    <SiGoogle className="w-4 h-4 mr-2" />
+                    Google
+                  </Button>
+                  {isNativeIos && (
+                    <Button type="button" variant="outline" onClick={handleAppleLogin}
+                      className="w-full h-11 bg-black hover:bg-stone-900 text-white border-black rounded-xl font-medium">
+                      <SiApple className="w-4 h-4 mr-2" />
+                      Registrati con Apple
+                    </Button>
+                  )}
+                </div>
               </form>
             </Form>
           )}
