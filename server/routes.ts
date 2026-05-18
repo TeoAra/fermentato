@@ -1502,7 +1502,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // (es. https://fermenta.to/tv/7) sulla TV. Se il receiver è in stato Draft
     // sulla Console solo i device aggiunti come "test device" lo vedranno nella
     // discovery — per produzione va pubblicato.
-    const appId = process.env.CAST_APP_ID || '6666EC62';
+    const appId = process.env.CAST_APP_ID || 'CC1AD845';
     res.json({ appId });
   });
 

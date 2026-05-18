@@ -70,6 +70,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useChromecast } from "@/hooks/useChromecast";
+import { CastDiagnosticPanel } from "@/components/cast-diagnostic-panel";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { useMemo } from "react";
@@ -811,6 +812,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
                   return (
                     <div className="space-y-3">
+
+                      {/* ── Pannello diagnostico (visibile solo su iOS native) ── */}
+                      {isNativeIos && <CastDiagnosticPanel />}
 
                       {/* ── Cast SDK caricato: pulsante Chromecast diretto ── */}
                       {castSdkLoaded && (
