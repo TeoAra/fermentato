@@ -40,7 +40,7 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
-        CAST_APP_ID: CC1AD845
+        CAST_APP_ID: 6666EC62
 
     cache:
       cache_paths:
@@ -269,7 +269,7 @@ workflows:
       cocoapods: default
       vars:
         BUNDLE_ID: to.fermentato.app
-        CAST_APP_ID: CC1AD845
+        CAST_APP_ID: 6666EC62
 
     cache:
       cache_paths:
@@ -492,7 +492,7 @@ workflows:
       java: "21"
       vars:
         PACKAGE_NAME: to.fermentato.app
-        CAST_APP_ID: CC1AD845
+        CAST_APP_ID: 6666EC62
 
     cache:
       cache_paths:
