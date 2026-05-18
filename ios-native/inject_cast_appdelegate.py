@@ -17,7 +17,22 @@ app_id = sys.argv[2] if len(sys.argv) > 2 else "6666EC62"
 txt = open(path).read()
 
 if "GCKCastContext.setSharedInstanceWith" in txt:
-    print("GCKCastContext già presente in AppDelegate — skip")
+    # Patch idempotente: assicura che NativeCastPlugin.self sia referenziato
+    # anche su build già modificati (chiave per Capacitor auto-discovery).
+    if "NativeCastPlugin.self" not in txt:
+        txt = txt.replace(
+            "GCKCastContext.setSharedInstanceWith(_castOptions)",
+            "// Force-load del plugin nella ObjC runtime: senza questo riferimento\n"
+            "        // esplicito Swift NON carica la classe finché qualcuno non la usa,\n"
+            "        // quindi Capacitor non la trova in objc_getClassList() al boot e\n"
+            "        // il plugin NativeCast risulta NON disponibile da JS.\n"
+            "        _ = NativeCastPlugin.self\n"
+            "        GCKCastContext.setSharedInstanceWith(_castOptions)"
+        )
+        open(path, "w").write(txt)
+        print("✅ Aggiunto force-load NativeCastPlugin.self in AppDelegate esistente")
+    else:
+        print("GCKCastContext + force-load già presenti — skip")
     sys.exit(0)
 
 # NOTA: 'import GoogleCast' NON viene iniettato qui.
@@ -40,6 +55,11 @@ cast_block = (
     "        _castOptions.physicalVolumeButtonsWillControlDeviceVolume = true\n"
     "        _castOptions.startDiscoveryAfterFirstTapOnCastButton = false\n"
     "        _castOptions.suspendSessionsWhenBackgrounded = true\n"
+    "        // Force-load del plugin nella ObjC runtime: senza questo riferimento\n"
+    "        // esplicito Swift NON carica la classe finché qualcuno non la usa,\n"
+    "        // quindi Capacitor non la trova in objc_getClassList() al boot e\n"
+    "        // il plugin NativeCast risulta NON disponibile da JS.\n"
+    "        _ = NativeCastPlugin.self\n"
     "        GCKCastContext.setSharedInstanceWith(_castOptions)\n"
     "        GCKCastContext.sharedInstance().discoveryManager.startDiscovery()\n"
     "        "
