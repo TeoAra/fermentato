@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useChromecast } from "@/hooks/useChromecast";
 
 type Diag = {
   discoveryActive: boolean;
@@ -17,9 +16,33 @@ function getRegisteredPlugins(): string[] {
   }
 }
 
+// Chiamata diretta al plugin nativo (bypassa useChromecast) per esporre
+// l'eventuale errore grezzo dalla bridge nativa — fondamentale per capire
+// se il metodo non esiste lato Swift o se crasha runtime.
+async function callGetDiagnosticsDirect(): Promise<
+  { ok: true; data: Diag } | { ok: false; error: string }
+> {
+  try {
+    const cap = (window as any).Capacitor;
+    const plugin = cap?.Plugins?.NativeCast;
+    if (!plugin) return { ok: false, error: "Capacitor.Plugins.NativeCast assente" };
+    if (typeof plugin.getDiagnostics !== "function") {
+      return { ok: false, error: "metodo getDiagnostics non esposto da JS" };
+    }
+    const data = await plugin.getDiagnostics();
+    return { ok: true, data };
+  } catch (e: any) {
+    const msg =
+      e?.message ||
+      e?.errorMessage ||
+      (typeof e === "string" ? e : JSON.stringify(e ?? "?"));
+    return { ok: false, error: msg };
+  }
+}
+
 export function CastDiagnosticPanel() {
-  const { getDiagnostics } = useChromecast();
   const [diag, setDiag] = useState<Diag>(null);
+  const [lastError, setLastError] = useState<string | null>(null);
   const [pluginAvailable, setPluginAvailable] = useState<boolean | null>(null);
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [plugins, setPlugins] = useState<string[]>([]);
@@ -27,17 +50,18 @@ export function CastDiagnosticPanel() {
   useEffect(() => {
     let mounted = true;
     const tick = async () => {
-      try {
-        const d = await getDiagnostics();
-        if (!mounted) return;
-        setPluginAvailable(d !== null);
-        setDiag(d);
-        setPlugins(getRegisteredPlugins());
-        setLastUpdate(Date.now());
-      } catch {
-        if (!mounted) return;
+      const r = await callGetDiagnosticsDirect();
+      if (!mounted) return;
+      setPlugins(getRegisteredPlugins());
+      setLastUpdate(Date.now());
+      if (r.ok) {
+        setPluginAvailable(true);
+        setDiag(r.data);
+        setLastError(null);
+      } else {
         setPluginAvailable(false);
-        setPlugins(getRegisteredPlugins());
+        setDiag(null);
+        setLastError(r.error);
       }
     };
     tick();
@@ -46,7 +70,7 @@ export function CastDiagnosticPanel() {
       mounted = false;
       clearInterval(id);
     };
-  }, [getDiagnostics]);
+  }, []);
 
   return (
     <div className="border border-dashed border-stone-300 dark:border-stone-700 rounded-xl p-3 bg-stone-50 dark:bg-stone-900/40 text-xs space-y-1.5">
@@ -83,10 +107,15 @@ export function CastDiagnosticPanel() {
           ))}
         </ul>
       )}
-      {pluginAvailable === false && (
-        <p className="pt-1.5 border-t border-stone-200 dark:border-stone-800 text-amber-600 dark:text-amber-400 leading-snug">
-          Il plugin nativo Cast non è caricato. Probabilmente stai usando un build TestFlight vecchio: verifica su TestFlight che ci sia un build più recente disponibile e installalo.
-        </p>
+      {pluginAvailable === false && lastError && (
+        <div className="pt-1.5 border-t border-stone-200 dark:border-stone-800 space-y-1">
+          <p className="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
+            Errore nativo:
+          </p>
+          <p className="text-[11px] text-amber-600 dark:text-amber-400 leading-snug font-mono break-words">
+            {lastError}
+          </p>
+        </div>
       )}
       {plugins.length > 0 && (
         <details className="pt-1.5 border-t border-stone-200 dark:border-stone-800">
