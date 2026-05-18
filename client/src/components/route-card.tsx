@@ -10,6 +10,7 @@ import {
   type RouteMode,
 } from "@/lib/route";
 import { getMapNavigationUrl } from "@/lib/utils";
+import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
 
 interface RouteCardProps {
   destination: LatLng;
@@ -47,26 +48,24 @@ export default function RouteCard({ destination, destinationName, destinationAdd
   const { data, isLoading, isError, refetch } = useRouteDistance(origin, destination, { mode, enabled });
 
   const handleLocate = () => {
-    if (!navigator.geolocation) {
-      setLocateError("Il browser non supporta la geolocalizzazione");
+    if (!isGeolocationAvailable()) {
+      setLocateError("Geolocalizzazione non disponibile");
       return;
     }
     setLocating(true);
     setLocateError(null);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
+    getCurrentPosition({ enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 })
+      .then((pos) => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setOrigin(loc);
         try { localStorage.setItem("fermenta:userLocation", JSON.stringify(loc)); } catch {}
         setEnabled(true);
         setLocating(false);
-      },
-      (err) => {
-        setLocateError(err.message || "Impossibile ottenere la posizione");
+      })
+      .catch((err: any) => {
+        setLocateError(err?.message || "Impossibile ottenere la posizione");
         setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 8000, maximumAge: 60000 },
-    );
+      });
   };
 
   const handleCalculate = () => {

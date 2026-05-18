@@ -359,7 +359,7 @@ export default function Notifications() {
                 ? 'Sblocca le notifiche nelle impostazioni del browser per ricevere aggiornamenti.'
                 : 'Ricevi avvisi quando ci sono novità sui tuoi locali, birre o amici.'}
             </p>
-            {notifPerm !== 'denied' && (
+            {notifPerm !== 'denied' && !isNativeCapacitorApp() && (
               <button
                 onClick={handleSubscribe}
                 disabled={isSubscribing}

@@ -14,6 +14,7 @@ import BreweryCard from "@/components/brewery-card";
 import { lazy, Suspense } from "react";
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
 import { PageContainer } from "@/components/layout/page-container";
+import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
 import NewsStrip from "@/components/news-strip";
 
 function useCountUp(target: number, duration = 1400, startDelay = 300) {
@@ -88,13 +89,18 @@ export default function Landing() {
   const [locationStatus, setLocationStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
 
   useEffect(() => {
-    if (!navigator.geolocation) { setLocationStatus('denied'); return; }
+    // Sulla landing pubblica non chiediamo automaticamente la posizione su
+    // nativo: l'utente non è ancora loggato e il prompt nativo iOS in apertura
+    // è invadente. Su web manteniamo l'auto-richiesta (silent fail).
+    if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) {
+      setLocationStatus('idle');
+      return;
+    }
+    if (!isGeolocationAvailable()) { setLocationStatus('denied'); return; }
     setLocationStatus('requesting');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocationStatus('granted'); },
-      () => setLocationStatus('denied'),
-      { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 }
-    );
+    getCurrentPosition({ enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 })
+      .then((pos) => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocationStatus('granted'); })
+      .catch(() => setLocationStatus('denied'));
   }, []);
 
   const { data: pubs, isLoading: pubsLoading } = useQuery({ queryKey: ["/api/pubs"] });
@@ -143,13 +149,11 @@ export default function Landing() {
   }, [userLocation, nearbyHasResults, breweriesNearby, breweriesFallback]);
 
   const handleRequestLocation = () => {
-    if (!navigator.geolocation) return;
+    if (!isGeolocationAvailable()) return;
     setLocationStatus('requesting');
-    navigator.geolocation.getCurrentPosition(
-      (pos) => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocationStatus('granted'); },
-      () => setLocationStatus('denied'),
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
+    getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 })
+      .then((pos) => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocationStatus('granted'); })
+      .catch(() => setLocationStatus('denied'));
   };
 
   const totalBreweries = globalStats?.totalBreweries ?? 0;

@@ -18,6 +18,7 @@ import { ShareButton } from "@/components/share-button";
 import { Helmet } from "react-helmet-async";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -190,22 +191,22 @@ export default function Activity() {
   const { isPulling, isRefreshing, pullProgress } = usePullToRefresh(handleRefresh);
 
   const requestLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError("La geolocalizzazione non è supportata dal tuo browser");
+    if (!isGeolocationAvailable()) {
+      setLocationError("La geolocalizzazione non è supportata dal tuo dispositivo");
       return;
     }
     setRequestingLocation(true);
     setLocationError(null);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
+    getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 })
+      .then((position) => {
         setUserLocation({ lat: position.coords.latitude, lng: position.coords.longitude });
         setRequestingLocation(false);
-      },
-      (error) => {
+      })
+      .catch((error: any) => {
         setRequestingLocation(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            setLocationError("Permesso negato. Abilita la geolocalizzazione nelle impostazioni del browser.");
+        switch (error?.code) {
+          case error?.PERMISSION_DENIED:
+            setLocationError("Permesso negato. Abilita la geolocalizzazione nelle impostazioni.");
             break;
           case error.POSITION_UNAVAILABLE:
             setLocationError("Posizione non disponibile");
@@ -216,9 +217,7 @@ export default function Activity() {
           default:
             setLocationError("Errore nella geolocalizzazione");
         }
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
-    );
+      });
   };
 
   useEffect(() => {

@@ -8,6 +8,7 @@ const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m
 import FindBeerSheet from "@/components/FindBeerSheet";
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
+import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
 
 type ViewMode = "list" | "map";
 type StyleTab = "birre" | "dove";
@@ -193,12 +194,12 @@ export default function ExploreBeers() {
   const mapPins = useMemo(() => filteredPubs.map((p: any) => ({ ...p, type: "pub" as const })), [filteredPubs]);
 
   function handleLocate() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(pos => {
+    if (!isGeolocationAvailable()) return;
+    getCurrentPosition().then(pos => {
       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       setUserLocation(loc);
       try { localStorage.setItem("fermenta:userLocation", JSON.stringify(loc)); } catch {}
-    });
+    }).catch(() => {});
   }
 
   function selectStyle(api: string) {

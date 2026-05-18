@@ -11,6 +11,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
+import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
 
 const countryNameMap: Record<string, string> = {
   "Italy": "Italia", "Italia": "Italia",
@@ -211,12 +212,12 @@ export default function ExploreBreweries() {
   }, [data?.breweries]);
 
   const handleLocate = () => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(pos => {
+    if (!isGeolocationAvailable()) return;
+    getCurrentPosition().then(pos => {
       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       setUserLocation(loc);
       try { localStorage.setItem("fermenta:userLocation", JSON.stringify(loc)); } catch {}
-    });
+    }).catch(() => {});
   };
 
   const handleQuickFilter = (f: QuickFilter) => {
