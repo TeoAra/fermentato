@@ -66,11 +66,12 @@ const isNativeIos = isNative && Capacitor.getPlatform() === "ios";
 export function useChromecast(): UseChromecastReturn {
   const [castState, setCastState] = useState<CastState>("unavailable");
   const [deviceName, setDeviceName] = useState("");
-  // CC1AD845 = Default Media Receiver di Google (sempre autorizzato, nessuna
-  // registrazione richiesta). Diagnostico temporaneo per isolare se il problema
-  // di discovery sia rete/Bonjour vs autorizzazione del custom receiver.
-  // Viene comunque sovrascritto dal /api/cast-config se diverso.
-  const [appId, setAppId] = useState("CC1AD845");
+  // 6666EC62 = Fermenta custom Web Receiver registrato su Google Cast Developer
+  // Console. È quello che sa interpretare l'URL della taplist (es. /tv/7) e
+  // mostrarla a schermo intero sulla TV. Il Default Media Receiver di Google
+  // (CC1AD845) NON funziona per pagine HTML — accetta solo URL media (mp4/m3u8).
+  // Viene confermato dal /api/cast-config a runtime (env var CAST_APP_ID).
+  const [appId, setAppId] = useState("6666EC62");
   const listenerRef = useRef<PluginListenerHandle | null>(null);
 
   // Carica app ID dal server

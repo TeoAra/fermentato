@@ -46,6 +46,17 @@ export function CastDiagnosticPanel() {
   const [pluginAvailable, setPluginAvailable] = useState<boolean | null>(null);
   const [lastUpdate, setLastUpdate] = useState<number>(Date.now());
   const [plugins, setPlugins] = useState<string[]>([]);
+  // Receiver ID configurato lato server (env CAST_APP_ID). 6666EC62 = custom
+  // Fermenta, CC1AD845 = Default Media Receiver di Google (non funziona per
+  // pagine web — solo media URL).
+  const [serverAppId, setServerAppId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/cast-config")
+      .then((r) => r.json())
+      .then((c) => setServerAppId(c?.appId ?? null))
+      .catch(() => setServerAppId(null));
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -72,6 +83,14 @@ export function CastDiagnosticPanel() {
     };
   }, []);
 
+  const isDefaultReceiver = serverAppId === "CC1AD845";
+  const receiverLabel =
+    serverAppId === null
+      ? "…"
+      : isDefaultReceiver
+        ? `${serverAppId} (default Google — non funziona per HTML!)`
+        : `${serverAppId} (custom Fermenta)`;
+
   return (
     <div className="border border-dashed border-stone-300 dark:border-stone-700 rounded-xl p-3 bg-stone-50 dark:bg-stone-900/40 text-xs space-y-1.5">
       <div className="flex items-center justify-between">
@@ -92,7 +111,9 @@ export function CastDiagnosticPanel() {
           {diag === null ? "—" : diag.discoveryActive ? "attiva" : "inattiva"}
         </span>
         <span className="text-stone-500">Receiver ID:</span>
-        <span className="text-stone-700 dark:text-stone-300">CC1AD845 (default)</span>
+        <span className={isDefaultReceiver ? "text-red-600 dark:text-red-400 font-bold" : "text-green-600 dark:text-green-400"}>
+          {receiverLabel}
+        </span>
         <span className="text-stone-500">Device trovati:</span>
         <span className={diag && diag.deviceCount > 0 ? "text-green-600 dark:text-green-400 font-bold" : "text-stone-700 dark:text-stone-300"}>
           {diag === null ? "—" : diag.deviceCount}
