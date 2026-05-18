@@ -84,6 +84,11 @@ workflows:
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.m
+          # Registra NativeCastPlugin nel packageClassList letto da Capacitor
+          # al boot per scoprire i plugin nativi (auto-discovery via ObjC
+          # runtime NON funziona in Capacitor 8 — vedi script per dettagli).
+          python3 ios-native/add_to_package_classlist.py \
+            ios/App/App/capacitor.config.json NativeCastPlugin
           python3 ios-native/set_bridging_header.py \
             ios/App/App.xcodeproj/project.pbxproj \
             "App/App-Bridging-Header.h" \
@@ -299,6 +304,11 @@ workflows:
             ios/App/App.xcodeproj/project.pbxproj NativeCast.swift
           python3 ios-native/add_swift_to_xcode.py \
             ios/App/App.xcodeproj/project.pbxproj NativeCast.m
+          # Registra NativeCastPlugin nel packageClassList letto da Capacitor
+          # al boot per scoprire i plugin nativi (auto-discovery via ObjC
+          # runtime NON funziona in Capacitor 8 — vedi script per dettagli).
+          python3 ios-native/add_to_package_classlist.py \
+            ios/App/App/capacitor.config.json NativeCastPlugin
           python3 ios-native/set_bridging_header.py \
             ios/App/App.xcodeproj/project.pbxproj \
             "App/App-Bridging-Header.h" \
