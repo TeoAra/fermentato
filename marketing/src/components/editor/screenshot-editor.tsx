@@ -388,11 +388,14 @@ export function ScreenshotEditor() {
     el.style.transformOrigin = "top left";
     el.style.zIndex = "-1";
     try {
+      // App Store / Play Store rifiutano PNG con canale alfa o trasparenze:
+      // forziamo lo sfondo del tema così l'immagine esportata è opaca.
       const dataUrl = await toPng(el, {
         width: w,
         height: h,
         pixelRatio: 1,
         cacheBust: false,
+        backgroundColor: theme.bg,
       });
       return dataUrl;
     } finally {
