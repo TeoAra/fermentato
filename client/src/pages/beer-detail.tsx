@@ -574,14 +574,27 @@ export default function BeerDetail() {
   const handleFindWebImage = async () => {
     if (!id || isSearchingImage) return;
     setIsSearchingImage(true);
+    const currentImage = beer?.logoUrl || beer?.imageUrl || null;
     try {
       await apiRequest("POST", `/api/beers/${id}/find-web-image`, { force: true });
-      // Poll for image after ~15s (finder is fire-and-forget)
-      setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
-        setIsSearchingImage(false);
-      }, 15000);
+      // Il finder è fire-and-forget: facciamo polling fino a 60s, fermandoci
+      // appena vediamo cambiare l'URL dell'immagine.
+      const delays = [4000, 4000, 5000, 7000, 10000, 15000, 15000];
+      let elapsed = 0;
+      for (const wait of delays) {
+        elapsed += wait;
+        await new Promise(r => setTimeout(r, wait));
+        await queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
+        const fresh = queryClient.getQueryData<any>(["/api/beers", id]);
+        const next = fresh?.logoUrl || fresh?.imageUrl || null;
+        if (next && next !== currentImage) {
+          toast({ title: "✓ Immagine aggiornata" });
+          break;
+        }
+      }
     } catch {
+      // ignora — verrà comunque ricaricato dopo
+    } finally {
       setIsSearchingImage(false);
     }
   };
