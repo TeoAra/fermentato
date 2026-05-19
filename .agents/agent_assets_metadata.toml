@@ -143,3 +143,45 @@ id = "0zGXxIVsjUQI4nEeTGW0O"
 uri = "file://capacitor-resources/android/mipmap-xxxhdpi/ic_launcher.png"
 type = "image"
 title = "Icona generata per Android xxxhdpi (192×192)"
+
+[[outputs]]
+id = "VtQDKDfQaXfK_49RDsKrt"
+uri = "file://screenshots/app-store/01-home.jpg"
+type = "image"
+title = "Landing - Trova la birra perfetta"
+
+[[outputs]]
+id = "MuA8BKcENafrpbEwP8zIY"
+uri = "file://screenshots/app-store/02-pubs.jpg"
+type = "image"
+title = "Esplora Pub"
+
+[[outputs]]
+id = "8XmMT_W405KWKAUIAsYxL"
+uri = "file://screenshots/app-store/04-beers.jpg"
+type = "image"
+title = "Esplora Birre"
+
+[[outputs]]
+id = "OM6ZT3MHFHCVRnOvH_Qfu"
+uri = "file://screenshots/app-store/05-eventi.jpg"
+type = "image"
+title = "Eventi birrari"
+
+[[outputs]]
+id = "Msn0CwP83bK7Ed7dcRp6O"
+uri = "file://screenshots/app-store/07-festival.jpg"
+type = "image"
+title = "Festival Mode"
+
+[[outputs]]
+id = "71EPWObE9n9tiXELoiG6S"
+uri = "file://screenshots/app-store/08-pub-detail.jpg"
+type = "image"
+title = "Dettaglio Pub con taplist"
+
+[[outputs]]
+id = "kF6mtg0z6JUl2RLWfPOiX"
+uri = "file://screenshots/app-store/09-beer-detail.jpg"
+type = "image"
+title = "Dettaglio Birra"
