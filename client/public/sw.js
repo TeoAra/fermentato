@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const STATIC_CACHE = `fermenta-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `fermenta-pages-${CACHE_VERSION}`;
 const IMAGE_CACHE = `fermenta-images-${CACHE_VERSION}`;
