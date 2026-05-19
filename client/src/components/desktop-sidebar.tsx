@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Home, Building2, Store, CalendarDays, Search, Bell, User, Beer, LogOut, Activity, Shield, Users as UsersIcon, Newspaper, GlassWater } from "lucide-react";
+import { Home, Building2, Store, CalendarDays, Search, Bell, User, Beer, LogOut, Activity, Shield, Users as UsersIcon, Newspaper, GlassWater, QrCode } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -66,6 +66,7 @@ export function DesktopSidebar() {
     { icon: Building2, label: "Birrifici", href: "/explore/breweries" },
     { icon: Store, label: "Pub", href: "/explore/pubs" },
     { icon: CalendarDays, label: "Eventi", href: "/eventi" },
+    { icon: QrCode, label: "Festival", href: "/festival" },
     { icon: Newspaper, label: "News", href: "/news" },
     { icon: UsersIcon, label: "Sociale", href: "/feed" },
   ];
