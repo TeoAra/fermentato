@@ -215,3 +215,9 @@ id = "jQn9t6sV6W5VHKl1xXSQE"
 uri = "file://screenshots/app-store/07-beer-detail.jpg"
 type = "image"
 title = "Dettaglio Birra - ReAle Extra"
+
+[[outputs]]
+id = "F_yxQvQQCP6ohvMC4lAYU"
+uri = "file://screenshots/app-store/06-beer-detail.jpg"
+type = "image"
+title = "Dettaglio Birra - Spaceman (Brewfist)"

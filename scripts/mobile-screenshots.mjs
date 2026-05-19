@@ -11,8 +11,7 @@ const shots = [
   { name: '03-beers',        path: '/explore/beers' },
   { name: '04-eventi',       path: '/eventi' },
   { name: '05-festival',     path: '/festival' },
-  { name: '06-pub-detail',   path: '/pub/7' },
-  { name: '07-beer-detail',  path: '/beer/1' },
+  { name: '06-beer-detail',  path: '/beer/20924' },
 ];
 
 const browser = await puppeteer.launch({
