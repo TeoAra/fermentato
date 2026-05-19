@@ -82,7 +82,25 @@ function androidSlides(): Slide[] {
 
 function ipadStarter(): Slide[] {
   return build([
-    { layout: "hero", label: "FERMENTA.TO", headline: "Trova la birra\nperfetta.", screenshot: "" },
+    {
+      layout: "hero",
+      label: "BENVENUTO",
+      headline: "Trova la birra\nperfetta.",
+      screenshot: "/screenshots/apple/ipad/{locale}/01.png",
+    },
+    {
+      layout: "device-bottom",
+      label: "CATALOGO",
+      headline: "Oltre 1 milione\ndi birre artigianali.",
+      screenshot: "/screenshots/apple/ipad/{locale}/02.png",
+    },
+    {
+      layout: "device-top",
+      label: "FESTIVAL MODE",
+      headline: "Il tuo festival\ndigitale.",
+      screenshot: "/screenshots/apple/ipad/{locale}/03.png",
+      inverted: true,
+    },
   ]);
 }
 
