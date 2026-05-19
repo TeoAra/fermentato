@@ -1077,64 +1077,6 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </div>
       </motion.div>
 
-      {/* Menu Stats Cards */}
-      <motion.div 
-        className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-      >
-        <motion.div
-          className="bg-card border border-border rounded-2xl p-6"
-          whileHover={{ scale: 1.02, y: -2 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">Categorie Totali</p>
-              <p className="text-2xl font-bold text-foreground">{typedMenuData.length}</p>
-            </div>
-            <div className="p-3 bg-muted rounded-2xl">
-              <Utensils className="h-6 w-6 text-foreground/60" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="bg-card border border-border rounded-2xl p-6"
-          whileHover={{ scale: 1.02, y: -2 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">Categorie Visibili</p>
-              <p className="text-2xl font-bold text-foreground">{typedMenuData.filter(cat => cat.isVisible).length}</p>
-            </div>
-            <div className="p-3 bg-muted rounded-2xl">
-              <Eye className="h-6 w-6 text-foreground/60" />
-            </div>
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="bg-card border border-border rounded-2xl p-6"
-          whileHover={{ scale: 1.02, y: -2 }}
-          transition={{ duration: 0.2 }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-muted-foreground mb-1">Prodotti Totali</p>
-              <p className="text-2xl font-bold text-foreground">
-                {categoriesWithItems.reduce((total: number, category: any) => total + (category.items || []).filter((i: any) => !i.isInfoBox).length, 0)}
-              </p>
-            </div>
-            <div className="p-3 bg-orange-50 dark:bg-orange-950/20 rounded-2xl">
-              <Package className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-        </motion.div>
-      </motion.div>
-      
       {/* Pub-level Menu Info Box */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
