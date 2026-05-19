@@ -987,22 +987,23 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
         {/* Beers Section */}
         <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <div className="p-2 bg-primary rounded-xl shadow-sm">
+          <div className="flex items-center justify-between gap-2 mb-6">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="p-2 bg-primary rounded-xl shadow-sm shrink-0">
                 <BeerIcon className="h-5 w-5 text-white" />
               </div>
-              <h2 className="text-xl font-bold text-foreground">Catalogo Birre</h2>
-              <Badge variant="secondary" className="bg-stone-50 text-orange-700 border-stone-200 ml-2">
+              <h2 className="text-base sm:text-xl font-bold text-foreground truncate">Catalogo Birre</h2>
+              <Badge variant="secondary" className="bg-stone-50 text-orange-700 border-stone-200 ml-1 shrink-0">
                 {beers.length}
               </Badge>
             </div>
             <Button
               onClick={openCreateDialog}
-              className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
+              size="sm"
+              className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm shrink-0 px-2 sm:px-4"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Aggiungi Birra
+              <Plus className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Aggiungi Birra</span>
             </Button>
           </div>
 
