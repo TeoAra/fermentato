@@ -950,7 +950,7 @@ export default function PubDetail() {
                       { id: 'taplist', label: 'Spine' },
                       { id: 'bottles', label: 'Cantina' },
                       { id: 'menu', label: 'Menu' },
-                      ...(Array.isArray(pubEvents) && pubEvents.length > 0 ? [{ id: 'events', label: 'Serate' }] : []),
+                      ...(Array.isArray(pubEvents) && pubEvents.length > 0 ? [{ id: 'events', label: 'Eventi' }] : []),
                       { id: 'info', label: 'Info', mobileOnly: true },
                     ].map((tab: any) => {
                       const isTab = activeTab === tab.id;
@@ -1112,12 +1112,21 @@ export default function PubDetail() {
                                 <Calendar className="h-4 w-4" />
                                 <span>{format(new Date(event.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
                               </div>
-                              {event.endDate && (
-                                <div className="flex items-center text-xs text-muted-foreground gap-2 mb-3">
-                                  <Clock className="h-3.5 w-3.5" />
-                                  <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: itLocale })}</span>
-                                </div>
-                              )}
+                              {event.endDate && (() => {
+                                const start = new Date(event.eventDate);
+                                const end = new Date(event.endDate);
+                                const sameDay = start.toDateString() === end.toDateString();
+                                return (
+                                  <div className="flex items-center text-xs text-muted-foreground gap-2 mb-3">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    <span>
+                                      {sameDay
+                                        ? `fino alle ${format(end, "HH:mm", { locale: itLocale })}`
+                                        : `fino a ${format(end, "EEEE d MMMM 'alle' HH:mm", { locale: itLocale })}`}
+                                    </span>
+                                  </div>
+                                );
+                              })()}
                               {event.description && (
                                 <p className="text-gray-600 dark:text-stone-400 text-sm mb-3">{event.description}</p>
                               )}
@@ -1457,12 +1466,21 @@ export default function PubDetail() {
                   <Calendar className="h-4 w-4" />
                   <span>{format(new Date(selectedEvent.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", { locale: itLocale })}</span>
                 </div>
-                {selectedEvent.endDate && (
-                  <div className="flex items-center text-sm text-muted-foreground gap-2">
-                    <Clock className="h-4 w-4" />
-                    <span>fino alle {format(new Date(selectedEvent.endDate), "HH:mm", { locale: itLocale })}</span>
-                  </div>
-                )}
+                {selectedEvent.endDate && (() => {
+                  const start = new Date(selectedEvent.eventDate);
+                  const end = new Date(selectedEvent.endDate);
+                  const sameDay = start.toDateString() === end.toDateString();
+                  return (
+                    <div className="flex items-center text-sm text-muted-foreground gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>
+                        {sameDay
+                          ? `fino alle ${format(end, "HH:mm", { locale: itLocale })}`
+                          : `fino a ${format(end, "EEEE d MMMM 'alle' HH:mm", { locale: itLocale })}`}
+                      </span>
+                    </div>
+                  );
+                })()}
                 {selectedEvent.description && (
                   <p className="text-foreground whitespace-pre-wrap">{selectedEvent.description}</p>
                 )}

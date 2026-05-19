@@ -1829,8 +1829,11 @@ export class DatabaseStorage implements IStorage {
   async getPubEvents(pubId: number, publicOnly = false): Promise<PubEvent[]> {
     const conditions = [eq(pubEvents.pubId, pubId)];
     if (publicOnly) {
-      // Show event if: COALESCE(endDate, eventDate) + 12 hours > now
-      conditions.push(sql`COALESCE(${pubEvents.endDate}, ${pubEvents.eventDate}) + INTERVAL '12 hours' > NOW()`);
+      // Show event if: GREATEST(eventDate, endDate) + 12 hours > now
+      // GREATEST evita che un endDate erroneamente salvato PRIMA di eventDate
+      // (bug comune del date picker che usa mezzanotte come default) nasconda
+      // l'evento prematuramente — usa sempre il tempo più tardo dei due.
+      conditions.push(sql`GREATEST(${pubEvents.eventDate}, COALESCE(${pubEvents.endDate}, ${pubEvents.eventDate})) + INTERVAL '12 hours' > NOW()`);
     }
     return db.select().from(pubEvents)
       .where(and(...conditions))
