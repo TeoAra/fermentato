@@ -1,9 +1,36 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
+import http from "node:http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 
 const app = express();
+
+// ── Proxy /screenshots/* → marketing editor (Next.js su localhost:23639) ──
+// Solo in dev: in produzione l'editor NON deve essere esposto pubblicamente
+// (le sue API permettono scrittura file). Deve stare PRIMA di compression/express.json.
+if (process.env.NODE_ENV !== "production") {
+  app.use("/screenshots", (req, res) => {
+    const proxyReq = http.request(
+      {
+        host: "127.0.0.1",
+        port: 23639,
+        method: req.method,
+        path: req.originalUrl,
+        headers: { ...req.headers, host: "127.0.0.1:23639" },
+      },
+      (proxyRes) => {
+        res.writeHead(proxyRes.statusCode || 502, proxyRes.headers);
+        proxyRes.pipe(res);
+      }
+    );
+    proxyReq.on("error", (err) => {
+      res.status(502).type("text/plain").send("Marketing editor non raggiungibile: " + err.message);
+    });
+    req.pipe(proxyReq);
+  });
+}
+
 app.use(compression());
 
 // CORS per Capacitor (app nativa) — deve stare PRIMA di qualsiasi route

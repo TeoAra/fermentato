@@ -62,8 +62,8 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd marketing && npm install --legacy-peer-deps --no-audit --no-fund && npm run dev -- --port 3000"
-waitForPort = 3000
+args = "cd marketing && npm install --legacy-peer-deps --no-audit --no-fund && npm run dev -- --port 23639 --hostname 0.0.0.0"
+waitForPort = 23639
 
 [agent]
 integrations = ["javascript_log_in_with_replit:1.0.0", "javascript_websocket:1.0.0", "javascript_database:1.0.0", "javascript_google_analytics:1.0.0", "stripe:1.0.0"]
