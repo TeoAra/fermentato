@@ -641,14 +641,27 @@ export async function findAndUpdateBeerImage(
   forceUpdate = false,
 ): Promise<void> {
   try {
+    // Leggiamo SIA image_url SIA logo_url: il client mostra "logo_url || image_url",
+    // quindi se logo_url contiene un placeholder (boccale generico), la nuova
+    // image_url non viene mai visualizzata.
+    const { rows } = await pool.query(
+      "SELECT image_url, logo_url FROM beers WHERE id = $1",
+      [beerId],
+    );
+    const existingImage = rows[0]?.image_url;
+    const existingLogo = rows[0]?.logo_url;
+    const logoIsPlaceholder = isPlaceholderImage(existingLogo);
+
     if (!forceUpdate) {
-      const { rows } = await pool.query("SELECT image_url FROM beers WHERE id = $1", [beerId]);
-      const existing = rows[0]?.image_url;
-      if (existing && !isPlaceholderImage(existing)) {
-        console.log(`[beer-img] beer ${beerId} already has real image, skipping`);
+      const imageIsReal = existingImage && !isPlaceholderImage(existingImage);
+      const logoIsReal = existingLogo && !logoIsPlaceholder;
+      if (imageIsReal && logoIsReal) {
+        console.log(`[beer-img] beer ${beerId} already has real image+logo, skipping`);
         return;
       }
-      if (existing) console.log(`[beer-img] beer ${beerId} has placeholder image (Unsplash), replacing`);
+      if (existingImage || existingLogo) {
+        console.log(`[beer-img] beer ${beerId} has placeholder image/logo, replacing`);
+      }
     }
 
     const result = await findBestBeerImage(beerName, breweryName, breweryWebsite);
@@ -666,8 +679,19 @@ export async function findAndUpdateBeerImage(
     const cloudUrl = await uploadBestImage(result.url, beerId);
     if (!cloudUrl) return;
 
-    await pool.query("UPDATE beers SET image_url = $1 WHERE id = $2", [cloudUrl, beerId]);
-    console.log(`[beer-img] ✓ beer ${beerId} image updated: ${cloudUrl.substring(0, 80)}`);
+    // Se il logo era un placeholder (o assente), lo azzeriamo: il client mostra
+    // logo_url come priorità, quindi se restasse il boccale generico
+    // l'utente non vedrebbe mai la nuova immagine appena trovata.
+    if (logoIsPlaceholder) {
+      await pool.query(
+        "UPDATE beers SET image_url = $1, logo_url = NULL WHERE id = $2",
+        [cloudUrl, beerId],
+      );
+      console.log(`[beer-img] ✓ beer ${beerId} image updated + placeholder logo cleared`);
+    } else {
+      await pool.query("UPDATE beers SET image_url = $1 WHERE id = $2", [cloudUrl, beerId]);
+      console.log(`[beer-img] ✓ beer ${beerId} image updated (logo preserved)`);
+    }
   } catch (e: any) {
     console.error(`[beer-img] error for beer ${beerId}: ${e?.message?.substring(0, 100)}`);
   }
