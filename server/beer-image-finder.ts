@@ -652,8 +652,12 @@ export async function findAndUpdateBeerImage(
     }
 
     const result = await findBestBeerImage(beerName, breweryName, breweryWebsite);
-    if (result.confidence !== "high" || !result.url) {
-      console.log(`[beer-img] no confident image for beer ${beerId} — leaving as-is`);
+    // Quando l'utente forza la ricerca (es. click su "Re-cerca img"), accettiamo
+    // anche risultati a bassa confidenza: l'utente preferisce QUALCOSA piuttosto
+    // che lasciare invariata l'immagine vecchia/errata. Senza force, solo "high".
+    const minConfidence = forceUpdate ? ["high", "low"] : ["high"];
+    if (!result.url || !minConfidence.includes(result.confidence)) {
+      console.log(`[beer-img] no usable image for beer ${beerId} (confidence=${result.confidence}, force=${forceUpdate}) — leaving as-is`);
       return;
     }
 
