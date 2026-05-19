@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor, { RichTextDisplay } from "@/components/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -793,11 +794,11 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
 
                     <div>
                       <Label className="text-xs">Descrizione</Label>
-                      <Textarea
-                        value={newBeerData.description}
-                        onChange={(e) => setNewBeerData({ ...newBeerData, description: e.target.value })}
+                      <RichTextEditor
+                        content={newBeerData.description}
+                        onChange={(html) => setNewBeerData({ ...newBeerData, description: html })}
                         placeholder="Note sulla birra, aromi, sapore..."
-                        className="min-h-[60px] text-sm"
+                        maxChars={2000}
                       />
                     </div>
 
@@ -902,11 +903,11 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
 
                     <div>
                       <Label className="text-xs">Descrizione</Label>
-                      <Textarea
-                        value={newBreweryData.description}
-                        onChange={(e) => setNewBreweryData({ ...newBreweryData, description: e.target.value })}
+                      <RichTextEditor
+                        content={newBreweryData.description}
+                        onChange={(html) => setNewBreweryData({ ...newBreweryData, description: html })}
                         placeholder="Breve descrizione del birrificio..."
-                        className="min-h-[50px] text-sm"
+                        maxChars={2000}
                       />
                     </div>
 
@@ -1315,12 +1316,11 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
 
                 <div>
                   <Label className="text-sm font-medium">Note aggiuntive</Label>
-                  <Textarea
+                  <RichTextEditor
+                    content={formData.description}
+                    onChange={(html) => setFormData({ ...formData, description: html })}
                     placeholder="Note speciali, caratteristiche della spillatura..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
-                    data-testid="textarea-tap-description"
+                    maxChars={2000}
                   />
                 </div>
 
@@ -1500,7 +1500,7 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
 
                 {item.description && (
                   <div className="mt-3 ml-[60px]">
-                    <p className="text-sm text-muted-foreground dark:text-stone-400 italic">{item.description}</p>
+                    <RichTextDisplay html={item.description} className="text-sm italic text-muted-foreground dark:text-stone-400" />
                   </div>
                 )}
               </div>

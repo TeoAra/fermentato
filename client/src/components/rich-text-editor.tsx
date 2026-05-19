@@ -1,4 +1,5 @@
-import { useEditor, EditorContent, BubbleMenu, FloatingMenu } from "@tiptap/react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import DOMPurify from "isomorphic-dompurify";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
 import Underline from "@tiptap/extension-underline";
@@ -256,9 +257,88 @@ export default function RichTextEditor({
   );
 }
 
-/** Renders sanitized HTML from the rich text editor safely */
+/**
+ * Detects HTML content vs plain text. Plain-text legacy values (with \n)
+ * get converted to HTML paragraphs/<br> so they render correctly inside the
+ * rich text display (which uses dangerouslySetInnerHTML).
+ */
+const SANITIZE_CONFIG = {
+  ALLOWED_TAGS: [
+    "p", "br", "strong", "em", "u", "s", "mark",
+    "h1", "h2", "h3", "h4", "h5", "h6",
+    "ul", "ol", "li", "blockquote", "hr",
+    "a", "img", "span", "div",
+  ],
+  ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "title", "class", "style"],
+  ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:|data:image\/(?:png|jpeg|gif|webp|svg\+xml);)/i,
+  ALLOW_DATA_ATTR: false,
+};
+
+export function sanitizeRichHtml(html: string): string {
+  return DOMPurify.sanitize(html, SANITIZE_CONFIG);
+}
+
+/**
+ * Detects HTML content vs plain text. Plain-text legacy values (with \n)
+ * get converted to HTML paragraphs/<br> so they render correctly inside the
+ * rich text display. Output is always sanitized.
+ */
+export function normalizeRichContent(input: string | null | undefined): string {
+  if (!input) return "";
+  const s = String(input);
+  // Heuristic: starts with a known block tag → treat as already HTML
+  const looksLikeHtml = /^\s*<(p|h[1-6]|ul|ol|blockquote|div|hr|br|img|span|strong|em|a)\b/i.test(s);
+  if (looksLikeHtml) return sanitizeRichHtml(s);
+  const escapeHtml = (t: string) =>
+    t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  // Split on blank lines → paragraphs. Single \n inside a paragraph → <br>.
+  const paragraphs = s.split(/\n\s*\n/);
+  return paragraphs
+    .map((p) => `<p>${escapeHtml(p).replace(/\n/g, "<br/>")}</p>`)
+    .join("");
+}
+
+/**
+ * Strips HTML to plain text for short previews (cards, list items with
+ * line-clamp). Collapses whitespace and adds a single space between blocks.
+ */
+export function richTextToPlain(input: string | null | undefined): string {
+  if (!input) return "";
+  return String(input)
+    .replace(/<\s*(br|p|div|li|h[1-6]|blockquote|hr)[^>]*>/gi, " ")
+    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** True if a value coming from the editor / DB is effectively empty. */
+export function isRichContentEmpty(input: string | null | undefined): boolean {
+  if (!input) return true;
+  const s = String(input).trim();
+  if (!s) return true;
+  // Strip tags & nbsp to see if there's any real text or media
+  const stripped = s
+    .replace(/<br\s*\/?>(\s|&nbsp;)*/gi, "")
+    .replace(/<p>(\s|&nbsp;)*<\/p>/gi, "")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, "")
+    .trim();
+  if (stripped) return false;
+  // No text, but maybe contains an image
+  return !/<img\b/i.test(s);
+}
+
+/** Renders sanitized HTML from the rich text editor safely. Accepts legacy plain text. */
 export function RichTextDisplay({ html, className = "" }: { html: string; className?: string }) {
-  if (!html || html === "<p></p>") return null;
+  if (isRichContentEmpty(html)) return null;
+  const normalized = normalizeRichContent(html);
   return (
     <div
       className={`prose prose-sm dark:prose-invert max-w-none
@@ -271,7 +351,7 @@ export function RichTextDisplay({ html, className = "" }: { html: string; classN
         prose-blockquote:border-l-amber-400 prose-blockquote:text-gray-500 dark:prose-blockquote:text-gray-400
         prose-hr:border-gray-200 dark:prose-hr:border-gray-700
         ${className}`}
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{ __html: normalized }}
     />
   );
 }

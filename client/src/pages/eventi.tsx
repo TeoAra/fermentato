@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { richTextToPlain, isRichContentEmpty } from "@/components/rich-text-editor";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
@@ -335,8 +336,8 @@ function EventCard({ ev }: { ev: PublicEvent }) {
               <span>·</span>
               <span className="truncate">{venueLabel}</span>
             </div>
-            {ev.description && (
-              <p className="text-sm text-muted-foreground line-clamp-2 mt-2">{ev.description}</p>
+            {!isRichContentEmpty(ev.description) && (
+              <p className="text-sm text-muted-foreground line-clamp-2 mt-2">{richTextToPlain(ev.description)}</p>
             )}
             <div className="flex items-center justify-end mt-3 text-xs font-semibold text-purple-700 dark:text-purple-400">
               Dettagli <ArrowRight className="h-3.5 w-3.5 ml-1" />

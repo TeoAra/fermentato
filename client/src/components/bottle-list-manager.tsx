@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor, { RichTextDisplay } from "@/components/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -494,12 +494,11 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
 
                 <div>
                   <Label className="text-sm font-medium">Note aggiuntive</Label>
-                  <Textarea
+                  <RichTextEditor
+                    content={formData.description}
+                    onChange={(html) => setFormData({ ...formData, description: html })}
                     placeholder="Caratteristiche speciali, note di degustazione..."
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
-                    data-testid="textarea-description"
+                    maxChars={2000}
                   />
                 </div>
 
@@ -653,7 +652,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
 
                   {safeItem.description && (
                     <div className="mt-3 ml-[60px]">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 italic">{safeItem.description}</p>
+                      <RichTextDisplay html={safeItem.description} className="text-sm italic text-gray-600 dark:text-gray-400" />
                     </div>
                   )}
                 </div>

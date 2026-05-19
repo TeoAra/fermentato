@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor, { RichTextDisplay } from "@/components/rich-text-editor";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -164,15 +165,16 @@ function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: 
         </div>
       </div>
       {isEditing ? (
-        <Textarea
-          className="bg-white dark:bg-card border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+        <RichTextEditor
+          content={text}
+          onChange={setText}
           placeholder="Nota informativa che apparirà prima di tutto il menu nel PDF..."
-          rows={3}
+          maxChars={2000}
         />
       ) : (
-        <p className="text-sm text-orange-900 dark:text-orange-100 italic">{currentValue}</p>
+        <div className="text-sm text-orange-900 dark:text-orange-100 italic">
+          <RichTextDisplay html={currentValue} />
+        </div>
       )}
     </div>
   );
@@ -1600,13 +1602,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </div>
           <div className="mt-4">
             <Label htmlFor="pub-description">Descrizione</Label>
-            <Textarea className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" 
-              id="pub-description"
-              value={settingsData.description || ''}
-              onChange={(e) => updateSettingsField('description', e.target.value)}
+            <RichTextEditor
+              content={settingsData.description || ''}
+              onChange={(html) => updateSettingsField('description', html)}
               placeholder="Racconta la storia del tuo pub, cosa lo rende speciale..."
-              rows={4}
-              data-testid="textarea-pub-description"
+              maxChars={5000}
             />
           </div>
         </Card>

@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Helmet } from "react-helmet-async";
 import { Camera, X, Loader2, Send, ArrowLeft, Beer, MapPin, Building2, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/rich-text-editor";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -155,16 +155,9 @@ export default function MicroblogNew() {
           </div>
         )}
 
-        <Textarea
-          value={content}
-          onChange={(e) => {
-            // Troncamento grapheme-aware: Array.from rispetta gli emoji
-            // (code-point >U+FFFF) ed evita di spezzarli a metà come farebbe
-            // .slice() su una stringa UTF-16. Andate a capo e spazi sono
-            // preservati nativamente dalla textarea.
-            const chars = Array.from(e.target.value);
-            setContent(chars.length > 1000 ? chars.slice(0, 1000).join("") : e.target.value);
-          }}
+        <RichTextEditor
+          content={content}
+          onChange={setContent}
           placeholder={
             tag.beerName ? `Cosa pensi di ${tag.beerName}? Usa #hashtag per categorie.` :
             tag.pubName ? `Racconta la tua esperienza a ${tag.pubName}…` :
@@ -172,14 +165,10 @@ export default function MicroblogNew() {
             tag.eventName ? `Sei a ${tag.eventName}? Racconta com'è!` :
             "Cosa stai bevendo? Vai a capo, usa emoji 🍺🇮🇹, #hashtag per categorie."
           }
-          rows={6}
-          data-testid="textarea-microblog-content"
-          className="rounded-2xl border-stone-200 dark:border-[#2F3D4D] text-base resize-none bg-white dark:bg-[#1B2735] whitespace-pre-wrap"
-          autoFocus
+          maxChars={1000}
         />
-        <div className="flex items-center justify-between text-xs text-stone-400">
-          <span>Emoji, a capo e <span className="text-primary font-semibold">#hashtag</span> benvenuti</span>
-          <span>{Array.from(content).length}/1000</span>
+        <div className="text-xs text-stone-400">
+          Emoji, a capo e <span className="text-primary font-semibold">#hashtag</span> benvenuti
         </div>
 
         <input ref={fileRef} type="file" accept="image/*" className="hidden"

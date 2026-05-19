@@ -1,5 +1,5 @@
 import { Helmet } from "react-helmet-async";
-import RichTextEditor, { RichTextDisplay } from "@/components/rich-text-editor";
+import RichTextEditor, { RichTextDisplay, richTextToPlain, isRichContentEmpty } from "@/components/rich-text-editor";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { 
@@ -711,11 +711,11 @@ export default function BreweryDetail() {
             </div>
 
             {/* Description with read-more toggle */}
-            {(brewery as any)?.description && (
+            {!isRichContentEmpty((brewery as any)?.description) && (
               <div className="pt-2">
-                <p className={`text-sm text-stone-600 dark:text-stone-400 leading-relaxed whitespace-pre-line ${descExpanded ? '' : 'line-clamp-3'}`}>
-                  {(brewery as any).description}
-                </p>
+                <div className={`text-sm ${descExpanded ? '' : 'line-clamp-3'}`}>
+                  <RichTextDisplay html={(brewery as any).description} />
+                </div>
                 {((brewery as any).description as string).length > 140 && (
                   <button
                     onClick={() => setDescExpanded(v => !v)}
@@ -1047,13 +1047,11 @@ export default function BreweryDetail() {
                   {((brewery as any)?.descriptionHtml || brewery?.description) && (
                     <div className="space-y-4">
                       <h2 className="text-xl font-bold text-foreground">Il Birrificio</h2>
-                      <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <div>
                         {(brewery as any)?.descriptionHtml ? (
                           <RichTextDisplay html={(brewery as any).descriptionHtml} />
                         ) : (
-                          <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                            {brewery.description}
-                          </p>
+                          <RichTextDisplay html={brewery.description || ""} />
                         )}
                       </div>
                     </div>
@@ -1306,10 +1304,10 @@ export default function BreweryDetail() {
                 </div>
 
                 {/* Description */}
-                {((brewery as any)?.description) && (
+                {!isRichContentEmpty((brewery as any)?.description) && (
                   <div className="border-t border-stone-100 dark:border-[#2F3D4D] pt-4">
                     <p className="text-sm text-muted-foreground leading-relaxed line-clamp-6">
-                      {(brewery as any).description}
+                      {richTextToPlain((brewery as any).description)}
                     </p>
                   </div>
                 )}
@@ -1623,12 +1621,11 @@ export default function BreweryDetail() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="bedit-desc">Descrizione</Label>
-              <Textarea
-                id="bedit-desc"
-                value={beerEditForm.description}
-                onChange={e => setBeerEditForm({ ...beerEditForm, description: e.target.value })}
+              <RichTextEditor
+                content={beerEditForm.description}
+                onChange={(html) => setBeerEditForm({ ...beerEditForm, description: html })}
                 placeholder="Descrizione della birra..."
-                rows={4}
+                maxChars={2000}
               />
             </div>
             <div className="flex items-center gap-6 flex-wrap">

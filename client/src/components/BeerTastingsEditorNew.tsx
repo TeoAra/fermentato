@@ -4,7 +4,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor, { richTextToPlain } from "@/components/rich-text-editor";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -228,7 +228,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                       </Link>
                       {tasting.personalNotes && (
                         <p className="text-xs text-muted-foreground dark:text-stone-300 italic mt-1 bg-stone-50 dark:bg-[#1B2735] px-2 py-1 rounded line-clamp-2">
-                          "{tasting.personalNotes}"
+                          "{richTextToPlain(tasting.personalNotes)}"
                         </p>
                       )}
                       {(tasting.createdAt || tasting.tastedAt) && (
@@ -401,11 +401,11 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Note personali</label>
-                  <Textarea
-                    value={editNotes}
-                    onChange={(e) => setEditNotes(e.target.value)}
+                  <RichTextEditor
+                    content={editNotes}
+                    onChange={setEditNotes}
                     placeholder="Aggiungi le tue note su questa birra..."
-                    rows={3}
+                    maxChars={2000}
                   />
                 </div>
 

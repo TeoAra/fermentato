@@ -1,4 +1,5 @@
 import React, { lazy, Suspense, useState, useMemo, useEffect } from "react";
+import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
 import { Helmet } from "react-helmet-async";
 import { useParams, Link, useLocation } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
@@ -793,11 +794,11 @@ export default function PubDetail() {
             </div>
 
             {/* Description with read-more toggle */}
-            {(pub as any)?.description && (
+            {!isRichContentEmpty((pub as any)?.description) && (
               <div className="pt-2">
-                <p className={`text-sm text-stone-600 dark:text-stone-400 leading-relaxed whitespace-pre-line ${descExpanded ? '' : 'line-clamp-3'}`}>
-                  {(pub as any).description}
-                </p>
+                <div className={`text-sm ${descExpanded ? '' : 'line-clamp-3'}`}>
+                  <RichTextDisplay html={(pub as any).description} />
+                </div>
                 {((pub as any).description as string).length > 140 && (
                   <button
                     onClick={() => setDescExpanded(v => !v)}
@@ -1127,8 +1128,10 @@ export default function PubDetail() {
                                   </div>
                                 );
                               })()}
-                              {event.description && (
-                                <p className="text-gray-600 dark:text-stone-400 text-sm mb-3">{event.description}</p>
+                              {!isRichContentEmpty(event.description) && (
+                                <div className="text-sm mb-3">
+                                  <RichTextDisplay html={event.description} />
+                                </div>
                               )}
                               <div className="flex items-center gap-2 flex-wrap">
                                 <EventShareButtons event={event} pubId={(pub as any).id} />
@@ -1291,9 +1294,9 @@ export default function PubDetail() {
                     )}
 
                     {/* Description */}
-                    {(pub as any)?.description && (
+                    {!isRichContentEmpty((pub as any)?.description) && (
                       <div className="p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] shadow-sm">
-                        <p className="text-sm text-muted-foreground leading-relaxed">{(pub as any).description}</p>
+                        <RichTextDisplay html={(pub as any).description} className="text-sm" />
                       </div>
                     )}
                   </div>
@@ -1315,9 +1318,9 @@ export default function PubDetail() {
           <div className="hidden lg:block space-y-4 pt-4 pl-6 pr-4 sticky top-20 self-start">
 
             {/* Description */}
-            {(pub as any)?.description && (
+            {!isRichContentEmpty((pub as any)?.description) && (
               <div className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4">
-                <p className="text-sm text-gray-600 dark:text-stone-400 leading-relaxed">{(pub as any).description}</p>
+                <RichTextDisplay html={(pub as any).description} className="text-sm" />
               </div>
             )}
 
@@ -1481,8 +1484,8 @@ export default function PubDetail() {
                     </div>
                   );
                 })()}
-                {selectedEvent.description && (
-                  <p className="text-foreground whitespace-pre-wrap">{selectedEvent.description}</p>
+                {!isRichContentEmpty(selectedEvent.description) && (
+                  <RichTextDisplay html={selectedEvent.description} />
                 )}
                 <div className="pt-3 border-t">
                   <p className="text-xs text-muted-foreground mb-2">Condividi questo evento</p>

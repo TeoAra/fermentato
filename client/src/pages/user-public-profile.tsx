@@ -1,4 +1,5 @@
 import { useParams, Link } from "wouter";
+import { RichTextDisplay, richTextToPlain } from "@/components/rich-text-editor";
 import { useQuery } from "@tanstack/react-query";
 import { Star, ArrowLeft, Calendar, Beer, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -183,7 +184,11 @@ export default function UserPublicProfile() {
                   <span className="text-white/90 font-semibold text-lg">{badge.name}</span>
                   <span className="bg-white/20 text-white text-xs px-2 py-0.5 rounded-full">Livello {badge.level}</span>
                 </div>
-                {profile.bio && <p className="text-white/80 text-sm max-w-md">{profile.bio}</p>}
+                {profile.bio && (
+                  <div className="text-white/80 text-sm max-w-md">
+                    <RichTextDisplay html={profile.bio} />
+                  </div>
+                )}
                 <div className="flex items-center justify-center sm:justify-start gap-4 mt-3 text-sm text-white/70 flex-wrap">
                   <span className="flex items-center gap-1">
                     <Calendar className="h-3.5 w-3.5" />
@@ -344,7 +349,7 @@ export default function UserPublicProfile() {
                         </div>
                         {review.beerStyle && <span className="text-xs text-muted-foreground">{review.beerStyle}</span>}
                         {review.personalNotes && (
-                          <p className="text-xs text-muted-foreground dark:text-stone-400 italic mt-1 line-clamp-2">"{review.personalNotes}"</p>
+                          <p className="text-xs text-muted-foreground dark:text-stone-400 italic mt-1 line-clamp-2">"{richTextToPlain(review.personalNotes)}"</p>
                         )}
                         <p className="text-xs text-stone-400 mt-1">
                           {format(new Date(review.tastedAt), "d MMM yyyy", { locale: it })}

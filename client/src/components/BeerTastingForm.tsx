@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/rich-text-editor";
 import { useAuth } from "@/hooks/useAuth";
 import { PubAutocomplete } from "./PubAutocomplete";
 import {
@@ -284,12 +284,11 @@ export default function BeerTastingForm({
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Note personali</p>
-          <Textarea
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
+          <RichTextEditor
+            content={notes}
+            onChange={setNotes}
             placeholder="Sapori, profumi, sensazioni... cosa ti ha colpito?"
-            rows={3}
-            className="resize-none rounded-xl border-stone-200 dark:border-[#2F3D4D] bg-stone-50/50 dark:bg-[#15202B]/20 text-sm focus-visible:ring-primary/20"
+            maxChars={2000}
           />
         </div>
 

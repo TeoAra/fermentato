@@ -19,7 +19,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ImageUpload } from "@/components/image-upload";
 import { WebImageSearchButton } from "@/components/web-image-search-button";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
-import RichTextEditor from "@/components/rich-text-editor";
+import RichTextEditor, { RichTextDisplay, richTextToPlain, isRichContentEmpty } from "@/components/rich-text-editor";
 import ImageWithFallback from "@/components/image-with-fallback";
 import {
   Beer as BeerIcon, Plus, Pencil, Trash2, Factory, MapPin, Loader2,
@@ -903,12 +903,9 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             <div className="md:col-span-2 text-left">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Descrizione</p>
               {brewery.descriptionHtml ? (
-                <div 
-                  className="text-sm text-muted-foreground prose prose-sm dark:prose-invert max-w-none"
-                  dangerouslySetInnerHTML={{ __html: brewery.descriptionHtml }}
-                />
-              ) : brewery.description ? (
-                <p className="text-sm text-muted-foreground whitespace-pre-line">{brewery.description}</p>
+                <RichTextDisplay html={brewery.descriptionHtml} className="text-sm" />
+              ) : !isRichContentEmpty(brewery.description) ? (
+                <RichTextDisplay html={brewery.description} className="text-sm" />
               ) : (
                 <p className="text-sm text-muted-foreground italic">Nessuna descrizione impostata.</p>
               )}
@@ -1057,9 +1054,9 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                         </div>
                       </div>
 
-                      {beer.description && (
+                      {!isRichContentEmpty(beer.description) && (
                         <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem] mb-4 text-left">
-                          {beer.description}
+                          {richTextToPlain(beer.description)}
                         </p>
                       )}
 
@@ -1160,7 +1157,9 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                           </div>
                         </div>
                         {review.personalNotes && (
-                          <p className="text-sm text-muted-foreground leading-relaxed italic border-l-2 border-stone-200 pl-3 mb-3">"{review.personalNotes}"</p>
+                          <div className="text-sm text-muted-foreground leading-relaxed italic border-l-2 border-stone-200 pl-3 mb-3">
+                            <RichTextDisplay html={review.personalNotes} />
+                          </div>
                         )}
                         {review.ownerReply && (
                           <div className="mt-3 bg-stone-50 dark:bg-[#15202B]/20 p-4 rounded-xl border border-stone-200 dark:border-[#2F3D4D]/30">
@@ -1544,7 +1543,14 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="font-bold">Descrizione Organolettica</FormLabel>
-                    <FormControl><Textarea placeholder="Note di degustazione, malti e luppoli utilizzati..." rows={3} {...field} value={field.value ?? ""} className="border-stone-200 rounded-xl focus-visible:ring-primary/20" /></FormControl>
+                    <FormControl>
+                      <RichTextEditor
+                        content={field.value ?? ""}
+                        onChange={field.onChange}
+                        placeholder="Note di degustazione, malti e luppoli utilizzati..."
+                        maxChars={2000}
+                      />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}

@@ -50,6 +50,7 @@ import UserFavoritesSection from "@/components/UserFavoritesSection";
 import { FestivalLikeButton } from "@/components/festival-like-button";
 import { ShareButton } from "@/components/share-button";
 import BeerTastingsEditor from "@/components/BeerTastingsEditorNew";
+import RichTextEditor, { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
 import { getBadgeForCount, getNextBadge, getProgressToNextBadge } from "@/lib/badges";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
 import { StatsGrid } from "@/components/dashboard-primitives";
@@ -655,12 +656,11 @@ export default function UserProfile() {
               <CardContent className="pt-0">
                 {isEditing ? (
                   <div className="space-y-3">
-                    <Textarea
-                      value={editedProfile.bio}
-                      onChange={(e) => setEditedProfile({ ...editedProfile, bio: e.target.value })}
+                    <RichTextEditor
+                      content={editedProfile.bio}
+                      onChange={(html) => setEditedProfile({ ...editedProfile, bio: html })}
                       placeholder="Racconta qualcosa di te, cosa ami bere..."
-                      rows={3}
-                      className="border-stone-300 focus:border-orange-400 focus:ring-orange-400/20 text-sm"
+                      maxChars={1000}
                     />
                     <div className="flex gap-2">
                       <Button size="sm" onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} className="bg-primary hover:bg-primary/90 text-white">
@@ -673,9 +673,13 @@ export default function UserProfile() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground dark:text-stone-300 leading-relaxed">
-                    {typedUser.bio || <span className="italic text-stone-400">Nessuna bio — clicca Modifica per aggiungerne una</span>}
-                  </p>
+                  isRichContentEmpty(typedUser.bio) ? (
+                    <p className="text-sm text-muted-foreground dark:text-stone-300 leading-relaxed">
+                      <span className="italic text-stone-400">Nessuna bio — clicca Modifica per aggiungerne una</span>
+                    </p>
+                  ) : (
+                    <RichTextDisplay html={typedUser.bio || ""} className="text-sm" />
+                  )
                 )}
               </CardContent>
             </Card>

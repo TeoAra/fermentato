@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
 import { Link, useParams } from "wouter";
 import { Helmet } from "react-helmet-async";
 import { format } from "date-fns";
@@ -166,9 +167,9 @@ export default function EventDetailPage() {
             </div>
 
             {/* Description */}
-            {ev.description && (
-              <div className="mt-6 prose prose-stone dark:prose-invert max-w-none">
-                <p className="whitespace-pre-line text-foreground dark:text-stone-200">{ev.description}</p>
+            {!isRichContentEmpty(ev.description) && (
+              <div className="mt-6">
+                <RichTextDisplay html={ev.description} />
               </div>
             )}
 

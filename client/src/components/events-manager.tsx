@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor, { richTextToPlain, isRichContentEmpty } from "@/components/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -327,12 +328,11 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
 
               <div>
                 <Label htmlFor="event-desc">Descrizione</Label>
-                <Textarea
-                  id="event-desc"
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                <RichTextEditor
+                  content={form.description}
+                  onChange={(html) => setForm({ ...form, description: html })}
                   placeholder="Descrivi l'evento..."
-                  rows={3}
+                  maxChars={3000}
                 />
               </div>
 
@@ -468,8 +468,8 @@ function EventCard({ event, pubId, onEdit, onDelete, isPast }: { event: any; pub
                 <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: it })}</span>
               </div>
             )}
-            {event.description && (
-              <p className="text-sm text-muted-foreground dark:text-stone-400 line-clamp-2 mb-2">{event.description}</p>
+            {!isRichContentEmpty(event.description) && (
+              <p className="text-sm text-muted-foreground dark:text-stone-400 line-clamp-2 mb-2">{richTextToPlain(event.description)}</p>
             )}
             <div className="flex items-center gap-2 flex-wrap">
               <EventShareButtons event={event} pubId={pubId} size="sm" />
@@ -540,7 +540,7 @@ function BreweryEventCard({ event, breweryId, onEdit, onDelete, isPast }: { even
                 <span>fino alle {format(new Date(event.endDate), "HH:mm", { locale: it })}</span>
               </div>
             )}
-            {event.description && <p className="text-sm text-muted-foreground dark:text-stone-400 line-clamp-2 mb-2">{event.description}</p>}
+            {!isRichContentEmpty(event.description) && <p className="text-sm text-muted-foreground dark:text-stone-400 line-clamp-2 mb-2">{richTextToPlain(event.description)}</p>}
             <div className="flex items-center gap-2 flex-wrap">
               <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground dark:text-stone-400" onClick={handleShare} title="Condividi">
                 <Share2 className="h-3.5 w-3.5" />
@@ -700,7 +700,7 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
               </div>
               <div>
                 <Label htmlFor="be-desc">Descrizione</Label>
-                <Textarea id="be-desc" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Descrivi l'evento..." rows={3} />
+                <RichTextEditor content={form.description} onChange={(html) => setForm({ ...form, description: html })} placeholder="Descrivi l'evento..." maxChars={3000} />
               </div>
               <ImageUpload
                 label="Immagine Evento"

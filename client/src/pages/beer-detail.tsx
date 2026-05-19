@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useCallback, useEffect, lazy, Suspense } from "react";
+import { RichTextDisplay } from "@/components/rich-text-editor";
 
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 import { Helmet } from "react-helmet-async";
@@ -1112,9 +1113,9 @@ export default function BeerDetail() {
                   <span className="text-[10px] font-semibold bg-stone-50 text-primary px-2 py-0.5 rounded-full">Tradotto</span>
                 )}
               </div>
-              <p className={`text-sm text-foreground/85 leading-relaxed whitespace-pre-line ${descExpanded ? '' : 'line-clamp-3'}`}>
-                {String(translatedDesc || beer.description || '')}
-              </p>
+              <div className={`text-sm ${descExpanded ? '' : 'line-clamp-3'}`}>
+                <RichTextDisplay html={String(translatedDesc || beer.description || '')} />
+              </div>
               {String(translatedDesc || beer.description || '').length > 160 && (
                 <button onClick={() => setDescExpanded(!descExpanded)} className="text-sm font-bold text-primary mt-1 tap-scale">
                   {descExpanded ? 'Mostra meno' : 'Leggi di più'}
@@ -1125,9 +1126,9 @@ export default function BeerDetail() {
                   <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none transition-colors">
                     Testo originale
                   </summary>
-                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed whitespace-pre-line border-t border-stone-100 pt-2">
-                    {String(beer.description)}
-                  </p>
+                  <div className="mt-2 border-t border-stone-100 pt-2">
+                    <RichTextDisplay html={String(beer.description)} className="text-sm" />
+                  </div>
                 </details>
               )}
             </div>
@@ -1262,7 +1263,9 @@ export default function BeerDetail() {
                       <span className="text-sm font-bold text-foreground">{existingTasting.rating}/5</span>
                     </div>
                     {(existingTasting.personalNotes || existingTasting.notes) && (
-                      <p className="text-muted-foreground italic text-sm">"{existingTasting.personalNotes || existingTasting.notes}"</p>
+                      <div className="text-muted-foreground italic text-sm border-l-2 border-stone-200 pl-3">
+                        <RichTextDisplay html={String(existingTasting.personalNotes || existingTasting.notes)} />
+                      </div>
                     )}
                     <p className="text-xs text-muted-foreground">
                       Degustata il {new Date(existingTasting.tastedAt).toLocaleDateString('it-IT')}
