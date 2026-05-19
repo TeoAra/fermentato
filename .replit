@@ -29,6 +29,10 @@ args = "Start application"
 task = "workflow.run"
 args = "Crawl brewery images"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Marketing Screenshots Editor"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -49,6 +53,18 @@ args = "npx tsx scripts/crawl-brewery-images.ts --country Italia --limit 500 --r
 [workflows.workflow.metadata]
 outputType = "console"
 
+[[workflows.workflow]]
+name = "Marketing Screenshots Editor"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "console"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd marketing && npm install --legacy-peer-deps --no-audit --no-fund && npm run dev -- --port 3000"
+waitForPort = 3000
+
 [agent]
 integrations = ["javascript_log_in_with_replit:1.0.0", "javascript_websocket:1.0.0", "javascript_database:1.0.0", "javascript_google_analytics:1.0.0", "stripe:1.0.0"]
 
@@ -68,6 +84,10 @@ TELEGRAM_BOT_USERNAME = "fermentato_bot"
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 120000
+
+[[ports]]
+localPort = 3000
+externalPort = 5000
 
 [[ports]]
 localPort = 5000
