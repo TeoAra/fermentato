@@ -6021,9 +6021,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // GET published events for a pub (public)
   app.get("/api/pubs/:pubId/events", async (req, res) => {
     try {
-      const pubId = parseInt(req.params.pubId);
-      if (isNaN(pubId)) {
-        return res.status(400).json({ message: "Invalid pub ID" });
+      const pubId = await resolvePubId(req.params.pubId);
+      if (!pubId) {
+        return res.status(404).json({ message: "Pub not found" });
       }
       const events = await storage.getPubEvents(pubId, true);
       const publishedEvents = events.filter(e => e.isPublished);
