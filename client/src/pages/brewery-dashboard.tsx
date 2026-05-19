@@ -230,19 +230,20 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
 
   return (
     <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-foreground flex items-center">
-          <div className="p-2 bg-primary rounded-xl mr-3 shadow-sm">
-            <Megaphone className="h-6 w-6 text-white" />
+      <div className="flex items-center justify-between gap-2 mb-6">
+        <h2 className="text-base sm:text-2xl font-bold text-foreground flex items-center min-w-0">
+          <div className="p-2 bg-primary rounded-xl mr-2 sm:mr-3 shadow-sm shrink-0">
+            <Megaphone className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
-          Annunci & Uscite
+          <span className="truncate">Annunci & Uscite</span>
         </h2>
         <Button
           onClick={() => setOpen(true)}
-          className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
+          size="sm"
+          className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm shrink-0 px-2 sm:px-4"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          Nuovo Annuncio
+          <Plus className="w-4 h-4 sm:mr-2" />
+          <span className="hidden sm:inline">Nuovo Annuncio</span>
         </Button>
       </div>
 
