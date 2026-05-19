@@ -319,8 +319,13 @@ export default function BeerDetail() {
         apiRequest(`/api/admin/beers/${id}`, { method: 'PATCH' }, updates),
         apiRequest(`/api/beers/${id}/collaborations`, { method: 'PUT' }, { breweryIds: collabIds }),
       ]);
-      queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
-      queryClient.invalidateQueries({ queryKey: ["/api/beers", id, "collaborations"] });
+      // Forziamo un refetch immediato (refetchQueries, non invalidateQueries che
+      // è asincrono e "stale-then-refresh"). Così quando chiudiamo il dialog
+      // l'immagine nuova è già nello store di React Query e l'utente la vede.
+      await Promise.all([
+        queryClient.refetchQueries({ queryKey: ["/api/beers", id], type: "active" }),
+        queryClient.refetchQueries({ queryKey: ["/api/beers", id, "collaborations"], type: "active" }),
+      ]);
       collabIds.forEach((bid: number) => {
         queryClient.invalidateQueries({ queryKey: ["/api/breweries", String(bid)] });
       });
