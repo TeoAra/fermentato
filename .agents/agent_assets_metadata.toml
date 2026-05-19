@@ -148,7 +148,7 @@ title = "Icona generata per Android xxxhdpi (192×192)"
 id = "VtQDKDfQaXfK_49RDsKrt"
 uri = "file://screenshots/app-store/01-home.jpg"
 type = "image"
-title = "Landing - Trova la birra perfetta"
+title = "Home - Trova la birra perfetta"
 
 [[outputs]]
 id = "MuA8BKcENafrpbEwP8zIY"
@@ -185,3 +185,33 @@ id = "kF6mtg0z6JUl2RLWfPOiX"
 uri = "file://screenshots/app-store/09-beer-detail.jpg"
 type = "image"
 title = "Dettaglio Birra"
+
+[[outputs]]
+id = "BcYoJ6VGY9EfOAlpEuKHP"
+uri = "file://screenshots/app-store/03-beers.jpg"
+type = "image"
+title = "Esplora Birre"
+
+[[outputs]]
+id = "wb8rZEV_QbdghYy2dOjQ-"
+uri = "file://screenshots/app-store/04-eventi.jpg"
+type = "image"
+title = "Eventi birrari"
+
+[[outputs]]
+id = "UZ8Ph4df-aR9qZ8peYJaH"
+uri = "file://screenshots/app-store/05-festival.jpg"
+type = "image"
+title = "Festival Mode"
+
+[[outputs]]
+id = "HF4HoIQmh2qgGeOWcCmmd"
+uri = "file://screenshots/app-store/06-pub-detail.jpg"
+type = "image"
+title = "Dettaglio Pub - Luppolino"
+
+[[outputs]]
+id = "jQn9t6sV6W5VHKl1xXSQE"
+uri = "file://screenshots/app-store/07-beer-detail.jpg"
+type = "image"
+title = "Dettaglio Birra - ReAle Extra"
