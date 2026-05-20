@@ -84,6 +84,7 @@ class NativeCastPlugin : Plugin() {
         override fun onSessionStarting(session: CastSession)                             = notifyState()
         override fun onSessionResumed(session: CastSession, wasSuspended: Boolean)       = notifyState()
         override fun onSessionResuming(session: CastSession, sessionId: String)          = notifyState()
+        override fun onSessionResumeFailed(session: CastSession, error: Int)             = notifyState()
         override fun onSessionEnding(session: CastSession)                               = notifyState()
         override fun onSessionSuspended(session: CastSession, reason: Int)               = notifyState()
     }

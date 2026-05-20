@@ -540,6 +540,9 @@ workflows:
           echo "Package Android rilevato: $PKG → $PKG_DIR"
 
           # ── 2. Copia + riscrivi package nei sorgenti Kotlin del plugin ─────────────
+          # Rimuovi copie stale in package vecchi (build precedenti)
+          find android/app/src/main/java \( -name 'NativeCastPlugin.kt' -o -name 'CastOptionsProvider.kt' \) \
+            -not -path "$PKG_DIR/*" -print -delete 2>/dev/null || true
           cp android-native/NativeCastPlugin.kt    "$PKG_DIR/"
           cp android-native/CastOptionsProvider.kt "$PKG_DIR/"
           sed -i "s/^package .*/package $PKG/" "$PKG_DIR/NativeCastPlugin.kt"

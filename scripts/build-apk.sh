@@ -206,6 +206,10 @@ inject_cast_plugin() {
     export CAST_PKG="$PKG"
 
     # ── 2. Copia + riscrivi package nei sorgenti Kotlin del plugin ─────────────
+    # Prima rimuovi eventuali copie stale in package vecchi (es. to/fermentato/app
+    # da un build precedente, prima che rilevassimo dinamicamente il package).
+    find app/src/main/java \( -name 'NativeCastPlugin.kt' -o -name 'CastOptionsProvider.kt' \) \
+      -not -path "$PKG_DIR/*" -print -delete 2>/dev/null || true
     cp "$APP_DIR/android-native/NativeCastPlugin.kt"    "$PKG_DIR/"
     cp "$APP_DIR/android-native/CastOptionsProvider.kt" "$PKG_DIR/"
     sed -i "s/^package .*/package $PKG/" "$PKG_DIR/NativeCastPlugin.kt"
