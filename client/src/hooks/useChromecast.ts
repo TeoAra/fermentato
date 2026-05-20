@@ -105,8 +105,25 @@ export function useChromecast(): UseChromecastReturn {
       listenerRef.current = handle;
     }).catch(() => {});
 
+    // Polling diagnostiche: il plugin Android emette castStateChanged solo per
+    // cambi di sessione, NON quando il discovery mDNS trova un nuovo device.
+    // Senza questo poll, castState resta "no_devices" anche se in realtà
+    // ci sono device disponibili → banner "Nessun Chromecast trovato" sbagliato.
+    const pollId = setInterval(() => {
+      NativeCast.getDiagnostics().then((d) => {
+        if (!mounted) return;
+        setCastState((prev) => {
+          // Non sovrascrivere stati attivi (connecting/connected)
+          if (prev === "connecting" || prev === "connected") return prev;
+          if (d.deviceCount > 0) return "not_connected";
+          return "no_devices";
+        });
+      }).catch(() => {});
+    }, 2000);
+
     return () => {
       mounted = false;
+      clearInterval(pollId);
       listenerRef.current?.remove();
     };
   }, [appId]);
