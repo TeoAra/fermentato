@@ -218,11 +218,11 @@ inject_cast_plugin() {
     # il classpath kotlin-gradle-plugin nel build.gradle di progetto (root).
     local ROOT_GRADLE="build.gradle"
     local APP_GRADLE="app/build.gradle"
-    if ! grep -q "kotlin-gradle-plugin" "$ROOT_GRADLE" 2>/dev/null; then
-      # Inserisce classpath kotlin subito dopo il classpath di AGP
-      sed -i '0,/classpath\s*["'"'"']com\.android\.tools\.build:gradle/{s#\(classpath\s*["'"'"']com\.android\.tools\.build:gradle[^"'"'"']*["'"'"']\)#\1\n        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0"#}' "$ROOT_GRADLE"
-      echo "    ✅ kotlin-gradle-plugin aggiunto al classpath di $ROOT_GRADLE"
-    fi
+    # Upsert: rimuove eventuale vecchia versione e reinserisce sempre 2.1.0
+    # (necessario per allinearsi al kotlin-stdlib 2.1.0 tirato da @capacitor/geolocation 8.x)
+    sed -i '/kotlin-gradle-plugin/d' "$ROOT_GRADLE"
+    sed -i '0,/classpath\s*["'"'"']com\.android\.tools\.build:gradle/{s#\(classpath\s*["'"'"']com\.android\.tools\.build:gradle[^"'"'"']*["'"'"']\)#\1\n        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0"#}' "$ROOT_GRADLE"
+    echo "    ✅ kotlin-gradle-plugin:2.1.0 forzato nel classpath di $ROOT_GRADLE"
     if ! grep -qE "(kotlin-android|org.jetbrains.kotlin.android)" "$APP_GRADLE"; then
       sed -i '0,/apply plugin: .com.android.application./{s//apply plugin: "com.android.application"\napply plugin: "kotlin-android"/}' "$APP_GRADLE"
       echo "    ✅ Plugin kotlin-android applicato in $APP_GRADLE"
