@@ -522,82 +522,91 @@ workflows:
 
       - name: Inietta plugin NativeCast Android (Chromecast nativo)
         script: |
-          PKG_DIR="android/app/src/main/java/to/fermentato/app"
+          # ── 1. Rileva package reale dell'app (può differire da to.fermentato.app) ──
+          MAIN_FILE=$(find android/app/src/main/java \( -name 'MainActivity.kt' -o -name 'MainActivity.java' \) 2>/dev/null | head -1)
+          PKG=""
+          if [ -n "$MAIN_FILE" ]; then
+            PKG=$(grep -oP '^package\s+\K[a-zA-Z0-9_.]+' "$MAIN_FILE" | head -1)
+          fi
+          if [ -z "$PKG" ]; then
+            PKG=$(grep -oP "applicationId\s+[\"']\K[^\"']+" android/app/build.gradle 2>/dev/null | head -1)
+          fi
+          if [ -z "$PKG" ]; then
+            PKG="to.fermentato.app"
+          fi
+          PKG_PATH=${PKG//./\/}
+          PKG_DIR="android/app/src/main/java/$PKG_PATH"
           mkdir -p "$PKG_DIR"
+          echo "Package Android rilevato: $PKG → $PKG_DIR"
 
-          # ── 1. Copia i sorgenti Kotlin del plugin ──────────────────────────
-          cp android-native/NativeCastPlugin.kt   "$PKG_DIR/"
+          # ── 2. Copia + riscrivi package nei sorgenti Kotlin del plugin ─────────────
+          cp android-native/NativeCastPlugin.kt    "$PKG_DIR/"
           cp android-native/CastOptionsProvider.kt "$PKG_DIR/"
+          sed -i "s/^package .*/package $PKG/" "$PKG_DIR/NativeCastPlugin.kt"
+          sed -i "s/^package .*/package $PKG/" "$PKG_DIR/CastOptionsProvider.kt"
 
-          # ── 2. Registra il plugin in MainActivity (Java o Kotlin) ──────────
-          # Capacitor 8 genera MainActivity.kt (Kotlin) di default. Cerchiamo
-          # ovunque sotto android/app/src/main/java/ perché il package può
-          # differire dal nostro PKG_DIR. Se proprio non esiste, la generiamo.
-          MAIN_JAVA=$(find android/app/src/main/java -name MainActivity.java 2>/dev/null | head -1)
-          MAIN_KT=$(find android/app/src/main/java -name MainActivity.kt 2>/dev/null | head -1)
-          if [ -z "$MAIN_JAVA" ] && [ -z "$MAIN_KT" ]; then
+          # ── 3. Assicura kotlin-android nel build.gradle ─────────────────────────────
+          APP_GRADLE="android/app/build.gradle"
+          if ! grep -qE "(kotlin-android|org.jetbrains.kotlin.android)" "$APP_GRADLE"; then
+            sed -i '0,/apply plugin: .com.android.application./{s//apply plugin: "com.android.application"\napply plugin: "kotlin-android"/}' "$APP_GRADLE"
+            echo "Plugin kotlin-android applicato in $APP_GRADLE"
+          fi
+
+          # ── 4. Registra il plugin in MainActivity (Java o Kotlin) ──────────────────
+          if [ -z "$MAIN_FILE" ]; then
             echo "MainActivity non trovata: la genero in $PKG_DIR/MainActivity.kt"
-            cat > "$PKG_DIR/MainActivity.kt" <<'KTEOF'
-          package to.fermentato.app
+            cat > "$PKG_DIR/MainActivity.kt" <<KTEOF
+          package $PKG
 
           import com.getcapacitor.BridgeActivity
 
           class MainActivity : BridgeActivity()
           KTEOF
-            # rimuove l'indentazione YAML che bash heredoc preserva
             sed -i 's/^          //' "$PKG_DIR/MainActivity.kt"
-            MAIN_KT="$PKG_DIR/MainActivity.kt"
+            MAIN_FILE="$PKG_DIR/MainActivity.kt"
           fi
-          if [ -n "$MAIN_JAVA" ]; then
-            grep -q "NativeCastPlugin" "$MAIN_JAVA" || \
-              sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport to.fermentato.app.NativeCastPlugin;/' "$MAIN_JAVA"
-            grep -q "registerPlugin(NativeCastPlugin" "$MAIN_JAVA" || \
-              sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_JAVA"
-            echo "MainActivity.java aggiornata con NativeCastPlugin ($MAIN_JAVA)"
-          elif [ -n "$MAIN_KT" ]; then
-            # Kotlin: sintassi diversa per import e per registerPlugin
-            grep -q "NativeCastPlugin" "$MAIN_KT" || \
-              sed -i 's/import com.getcapacitor.BridgeActivity/import com.getcapacitor.BridgeActivity\nimport to.fermentato.app.NativeCastPlugin/' "$MAIN_KT"
-            if ! grep -q "registerPlugin(NativeCastPlugin" "$MAIN_KT"; then
-              # Se esiste già un override di onCreate, aggiungi registerPlugin lì.
-              # Altrimenti, aggiungi un override onCreate completo che registra il plugin.
-              if grep -q "override fun onCreate" "$MAIN_KT"; then
-                sed -i 's/super.onCreate(savedInstanceState)/registerPlugin(NativeCastPlugin::class.java)\n        super.onCreate(savedInstanceState)/' "$MAIN_KT"
-              else
-                # Inietta un onCreate prima dell'ultima parentesi graffa della classe
-                python3 - "$MAIN_KT" <<'PYEOF'
-import sys, re
-p = sys.argv[1]
-txt = open(p).read()
-inject = """
-    override fun onCreate(savedInstanceState: android.os.Bundle?) {
-        registerPlugin(NativeCastPlugin::class.java)
-        super.onCreate(savedInstanceState)
-    }
-"""
-# Inserisce prima dell'ultima "}" del file (chiusura classe)
-idx = txt.rstrip().rfind("}")
-out = txt[:idx] + inject + txt[idx:]
-open(p, "w").write(out)
-PYEOF
+          case "$MAIN_FILE" in
+            *.java)
+              grep -q "NativeCastPlugin" "$MAIN_FILE" || \
+                sed -i "s|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport $PKG.NativeCastPlugin;|" "$MAIN_FILE"
+              grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE" || \
+                sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_FILE"
+              echo "MainActivity.java aggiornata con NativeCastPlugin ($MAIN_FILE)"
+              ;;
+            *.kt)
+              grep -q "NativeCastPlugin" "$MAIN_FILE" || \
+                sed -i "s|import com.getcapacitor.BridgeActivity|import com.getcapacitor.BridgeActivity\nimport $PKG.NativeCastPlugin|" "$MAIN_FILE"
+              if ! grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE"; then
+                if grep -q "override fun onCreate" "$MAIN_FILE"; then
+                  sed -i 's/super.onCreate(savedInstanceState)/registerPlugin(NativeCastPlugin::class.java)\n        super.onCreate(savedInstanceState)/' "$MAIN_FILE"
+                else
+                  python3 - "$MAIN_FILE" <<'PYEOF'
+          import sys
+          p = sys.argv[1]
+          txt = open(p).read()
+          inject = """
+              override fun onCreate(savedInstanceState: android.os.Bundle?) {
+                  registerPlugin(NativeCastPlugin::class.java)
+                  super.onCreate(savedInstanceState)
+              }
+          """
+          idx = txt.rstrip().rfind("}")
+          open(p, "w").write(txt[:idx] + inject + txt[idx:])
+          PYEOF
+                fi
               fi
-            fi
-            echo "MainActivity.kt aggiornata con NativeCastPlugin ($MAIN_KT)"
-          else
-            echo "ERRORE: MainActivity non trovata e generazione fallita"
-            ls -la "$PKG_DIR"
-            exit 1
-          fi
+              echo "MainActivity.kt aggiornata con NativeCastPlugin ($MAIN_FILE)"
+              ;;
+          esac
 
-          # ── 3. Aggiungi dipendenza Cast al build.gradle ─────────────────────
-          BUILD="android/app/build.gradle"
-          grep -q "play-services-cast-framework" "$BUILD" || \
-            sed -i '/dependencies {/a\    implementation "com.google.android.gms:play-services-cast-framework:21.5.0"\n    implementation "androidx.mediarouter:mediarouter:1.7.0"' "$BUILD"
-          echo "Dipendenze Cast aggiunte a build.gradle"
+          # ── 5. Dipendenze Cast in build.gradle ─────────────────────────────────────
+          grep -q "play-services-cast-framework" "$APP_GRADLE" || \
+            sed -i '/dependencies {/a\    implementation "com.google.android.gms:play-services-cast-framework:21.5.0"\n    implementation "androidx.mediarouter:mediarouter:1.7.0"' "$APP_GRADLE"
+          echo "Dipendenze Cast aggiunte a $APP_GRADLE"
 
-          # ── 4. Registra CastOptionsProvider in AndroidManifest ─────────────
+          # ── 6. Registra CastOptionsProvider in AndroidManifest (con package giusto) ─
           MANIFEST="android/app/src/main/AndroidManifest.xml"
-          python3 android-native/inject_cast_manifest.py "$MANIFEST"
+          python3 android-native/inject_cast_manifest.py "$MANIFEST" "$PKG"
 
       - name: Aggiungi permessi AndroidManifest (Cast + Camera + Location)
         script: |

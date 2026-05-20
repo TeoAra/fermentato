@@ -178,54 +178,75 @@ disable_firebase_autoinit() {
 }
 
 inject_cast_plugin() {
-  local PKG_DIR="app/src/main/java/to/fermentato/app"
-  mkdir -p "$PKG_DIR"
+    if [ ! -d "$APP_DIR/android-native" ]; then
+      echo "    ⚠️  android-native/ non trovata — skip Cast plugin"
+      return
+    fi
 
-  # ── 1. Copia sorgenti Kotlin ──────────────────────────────────────────────
-  if [ -d "$APP_DIR/android-native" ]; then
+    # ── 1. Rileva il package reale dell'app ────────────────────────────────────
+    # Il package può differire da to.fermentato.app (es. la cartella android/
+    # sulla VPS è stata scaffoldata con un appId vecchio). Lo deduciamo dalla
+    # posizione di MainActivity, oppure dall'applicationId in build.gradle.
+    local MAIN_FILE
+    MAIN_FILE=$(find app/src/main/java \( -name 'MainActivity.kt' -o -name 'MainActivity.java' \) 2>/dev/null | head -1)
+    local PKG=""
+    if [ -n "$MAIN_FILE" ]; then
+      PKG=$(grep -oP '^package\s+\K[a-zA-Z0-9_.]+' "$MAIN_FILE" | head -1)
+    fi
+    if [ -z "$PKG" ]; then
+      PKG=$(grep -oP "applicationId\s+[\"']\K[^\"']+" app/build.gradle 2>/dev/null | head -1)
+    fi
+    if [ -z "$PKG" ]; then
+      PKG="to.fermentato.app"
+    fi
+    local PKG_PATH=${PKG//./\/}
+    local PKG_DIR="app/src/main/java/$PKG_PATH"
+    mkdir -p "$PKG_DIR"
+    echo "    ℹ️  Package Android rilevato: $PKG → $PKG_DIR"
+    export CAST_PKG="$PKG"
+
+    # ── 2. Copia + riscrivi package nei sorgenti Kotlin del plugin ─────────────
     cp "$APP_DIR/android-native/NativeCastPlugin.kt"    "$PKG_DIR/"
     cp "$APP_DIR/android-native/CastOptionsProvider.kt" "$PKG_DIR/"
-    echo "    ✅ NativeCastPlugin.kt e CastOptionsProvider.kt copiati"
-  else
-    echo "    ⚠️  android-native/ non trovata — skip Cast plugin"
-    return
-  fi
+    sed -i "s/^package .*/package $PKG/" "$PKG_DIR/NativeCastPlugin.kt"
+    sed -i "s/^package .*/package $PKG/" "$PKG_DIR/CastOptionsProvider.kt"
+    echo "    ✅ Sorgenti plugin copiati (package=$PKG)"
 
-  # ── 2. Registra il plugin in MainActivity ────────────────────────────────
-  # Registra il plugin in MainActivity (gestisce Java legacy E Kotlin Capacitor 8+)
-  # NB: cerchiamo MainActivity ovunque sotto app/src/main/java/ perché il package
-  # path effettivo può differire dal nostro PKG_DIR (es. Capacitor lo genera nel
-  # package di default io.ionic.starter o in un altro path).
-  local MAIN_JAVA
-  local MAIN_KT
-  MAIN_JAVA=$(find app/src/main/java -name MainActivity.java 2>/dev/null | head -1)
-  MAIN_KT=$(find app/src/main/java -name MainActivity.kt 2>/dev/null | head -1)
-  if [ -z "$MAIN_JAVA" ] && [ -z "$MAIN_KT" ]; then
-    # Nessun MainActivity trovato: lo creiamo noi nel package corretto
-    echo "    ⚠️  MainActivity non trovata: la genero in $PKG_DIR/MainActivity.kt"
-    cat > "$PKG_DIR/MainActivity.kt" <<'KTEOF'
-package to.fermentato.app
+    # ── 3. Assicura kotlin-android nel build.gradle (i .kt non compilano senza) ─
+    local APP_GRADLE="app/build.gradle"
+    if ! grep -qE "(kotlin-android|org.jetbrains.kotlin.android)" "$APP_GRADLE"; then
+      sed -i '0,/apply plugin: .com.android.application./{s//apply plugin: "com.android.application"\napply plugin: "kotlin-android"/}' "$APP_GRADLE"
+      echo "    ✅ Plugin kotlin-android applicato in $APP_GRADLE"
+    fi
+
+    # ── 4. Registra il plugin in MainActivity (Java o Kotlin) ──────────────────
+    if [ -z "$MAIN_FILE" ]; then
+      echo "    ⚠️  MainActivity non trovata: la genero in $PKG_DIR/MainActivity.kt"
+      cat > "$PKG_DIR/MainActivity.kt" <<KTEOF
+package $PKG
 
 import com.getcapacitor.BridgeActivity
 
 class MainActivity : BridgeActivity()
 KTEOF
-    MAIN_KT="$PKG_DIR/MainActivity.kt"
-  fi
-  if [ -n "$MAIN_JAVA" ]; then
-    grep -q "NativeCastPlugin" "$MAIN_JAVA" || \
-      sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport to.fermentato.app.NativeCastPlugin;/' "$MAIN_JAVA"
-    grep -q "registerPlugin(NativeCastPlugin" "$MAIN_JAVA" || \
-      sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_JAVA"
-    echo "    ✅ NativeCastPlugin registrato in MainActivity.java"
-  elif [ -n "$MAIN_KT" ]; then
-    grep -q "NativeCastPlugin" "$MAIN_KT" || \
-      sed -i 's/import com.getcapacitor.BridgeActivity/import com.getcapacitor.BridgeActivity\nimport to.fermentato.app.NativeCastPlugin/' "$MAIN_KT"
-    if ! grep -q "registerPlugin(NativeCastPlugin" "$MAIN_KT"; then
-      if grep -q "override fun onCreate" "$MAIN_KT"; then
-        sed -i 's/super.onCreate(savedInstanceState)/registerPlugin(NativeCastPlugin::class.java)\n        super.onCreate(savedInstanceState)/' "$MAIN_KT"
-      else
-        python3 - "$MAIN_KT" <<'PYEOF'
+      MAIN_FILE="$PKG_DIR/MainActivity.kt"
+    fi
+    case "$MAIN_FILE" in
+      *.java)
+        grep -q "NativeCastPlugin" "$MAIN_FILE" || \
+          sed -i "s|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport $PKG.NativeCastPlugin;|" "$MAIN_FILE"
+        grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE" || \
+          sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_FILE"
+        echo "    ✅ NativeCastPlugin registrato in $MAIN_FILE"
+        ;;
+      *.kt)
+        grep -q "NativeCastPlugin" "$MAIN_FILE" || \
+          sed -i "s|import com.getcapacitor.BridgeActivity|import com.getcapacitor.BridgeActivity\nimport $PKG.NativeCastPlugin|" "$MAIN_FILE"
+        if ! grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE"; then
+          if grep -q "override fun onCreate" "$MAIN_FILE"; then
+            sed -i 's/super.onCreate(savedInstanceState)/registerPlugin(NativeCastPlugin::class.java)\n        super.onCreate(savedInstanceState)/' "$MAIN_FILE"
+          else
+            python3 - "$MAIN_FILE" <<'PYEOF'
 import sys
 p = sys.argv[1]
 txt = open(p).read()
@@ -238,15 +259,13 @@ inject = """
 idx = txt.rstrip().rfind("}")
 open(p, "w").write(txt[:idx] + inject + txt[idx:])
 PYEOF
-      fi
-    fi
-    echo "    ✅ NativeCastPlugin registrato in $MAIN_KT"
-  else
-    echo "    ❌ ERRORE: MainActivity non trovata e generazione fallita"
-    return 1
-  fi
+          fi
+        fi
+        echo "    ✅ NativeCastPlugin registrato in $MAIN_FILE"
+        ;;
+    esac
 
-  # ── 3. Dipendenze Cast in build.gradle ───────────────────────────────────
+    # ── 3. Dipendenze Cast in build.gradle ───────────────────────────────────
   local BUILD="app/build.gradle"
   grep -q "play-services-cast-framework" "$BUILD" || \
     sed -i '/dependencies {/a\    implementation "com.google.android.gms:play-services-cast-framework:21.5.0"\n    implementation "androidx.mediarouter:mediarouter:1.7.0"' "$BUILD"
