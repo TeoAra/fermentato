@@ -8,6 +8,13 @@ Fermenta.to is a full-stack web application designed to connect craft beer enthu
 
 Preferred communication style: Simple, everyday language.
 
+### Force in-app update
+Per forzare l'aggiornamento in-app dopo un deploy importante:
+1. Imposta `APP_MIN_VERSION=<nuova_versione>` nell'ambiente del server (VPS).
+2. Aggiorna `client/src/lib/app-version.ts` nel prossimo build per riflettere la stessa versione.
+
+Questo trigger forza i client (PWA e APK) a ricaricare/aggiornare quando la versione installata è inferiore a `APP_MIN_VERSION`.
+
 ## System Architecture
 
 ### Frontend
