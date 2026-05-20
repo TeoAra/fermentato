@@ -40,16 +40,27 @@ async function ensureInit(): Promise<void> {
 
   initPromise = (async () => {
     const { SocialLogin } = await import("@capgo/capacitor-social-login");
+    // IMPORTANTE — Apple Sign-In iOS:
+    // Su iOS NON dobbiamo passare `redirectUrl`. Se lo passassimo, il plugin
+    // dopo l'auth nativa fa un POST a quell'URL aspettandosi una risposta
+    // 3xx con `Location: ...?success=true&...` (flusso web "Sign in with
+    // Apple JS"). Il nostro callback Passport risponde 200 + HTML, e il
+    // plugin lancia `AppleProviderError.invalidResponseCode(statusCode: 200)`
+    // → motivo del rejection App Store 2.1 ("Continue with Apple displays
+    // an error message"). Con redirectUrl vuoto il plugin restituisce
+    // direttamente l'identityToken nativo che noi inviamo a
+    // /api/auth/apple-native.
+    // Su Android invece il fallback web ha bisogno di clientId+redirectUrl.
+    const appleConfig = isNativeIos
+      ? {}
+      : { clientId: APPLE_SERVICE_ID, redirectUrl: APPLE_REDIRECT_URI };
     await SocialLogin.initialize({
       google: {
         iOSClientId: GOOGLE_IOS_CLIENT_ID,
         // webClientId verrà aggiunto quando configureremo Android
         mode: "online",
       },
-      apple: {
-        clientId: APPLE_SERVICE_ID,
-        redirectUrl: APPLE_REDIRECT_URI,
-      },
+      apple: appleConfig,
     });
     initialized = true;
   })().catch((err) => {

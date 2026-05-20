@@ -1,9 +1,18 @@
 import { useState, useEffect } from "react";
+import { Capacitor } from "@capacitor/core";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Cookie, X, ChevronDown, ChevronUp, Shield, BarChart3, Target, Settings2 } from "lucide-react";
 
 const STORAGE_KEY = "fermenta_cookie_consent";
+
+// Apple App Store rifiuta app che mostrano cookie banner senza
+// implementare App Tracking Transparency (guideline 5.1.2). Nella nostra
+// app nativa NON usiamo cookie di tracciamento di terze parti / advertising:
+// abbiamo solo sessione, analytics di prima parte e preferenze locali. La
+// soluzione raccomandata da Apple ("remove the cookie prompts") è non
+// mostrare il banner nell'app nativa. Sul web il banner resta come da GDPR.
+const IS_NATIVE_APP = Capacitor.isNativePlatform();
 
 interface CookiePreferences {
   essential: boolean;
@@ -35,6 +44,12 @@ function savePreferences(prefs: CookiePreferences) {
 }
 
 export function getCookiePreferences(): CookiePreferences | null {
+  // Nell'app nativa non usiamo tracking/marketing: ritorniamo sempre solo
+  // gli essenziali, così analytics/marketing restano disattivati anche se
+  // qualcuno avesse vecchie preferenze salvate.
+  if (IS_NATIVE_APP) {
+    return { essential: true, preferences: false, analytics: false, marketing: false };
+  }
   return loadPreferences();
 }
 
@@ -44,6 +59,8 @@ export default function CookieBanner() {
   const [prefs, setPrefs] = useState<CookiePreferences>(DEFAULT_PREFERENCES);
 
   useEffect(() => {
+    // Mai mostrare il banner nell'app nativa (Apple 5.1.2 / no tracking).
+    if (IS_NATIVE_APP) return;
     const existing = loadPreferences();
     if (!existing) {
       setTimeout(() => setVisible(true), 800);

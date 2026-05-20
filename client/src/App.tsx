@@ -7,6 +7,7 @@ import { HelmetProvider } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, Component, ReactNode, lazy, Suspense } from "react";
 import { initGA } from "./lib/analytics";
+import { Capacitor } from "@capacitor/core";
 import { useAnalytics } from "./hooks/use-analytics";
 import { usePushBadge } from "@/hooks/use-push-badge";
 import { NavigationProgress } from "@/components/navigation-progress";
@@ -349,8 +350,11 @@ function App() {
   // Refresh notification badge immediately when a push arrives
   usePushBadge();
 
-  // Initialize Google Analytics when app loads
+  // Initialize Google Analytics when app loads.
+  // Apple guideline 5.1.2: niente tracking nelle app native senza ATT.
+  // Disattiviamo GA su iOS/Android nativi; sul web rimane attivo.
   useEffect(() => {
+    if (Capacitor.isNativePlatform()) return;
     initGA();
   }, []);
 

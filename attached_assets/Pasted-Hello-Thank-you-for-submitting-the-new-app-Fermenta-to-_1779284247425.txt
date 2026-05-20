@@ -1,0 +1,81 @@
+Hello,
+
+Thank you for submitting the new app, Fermenta.to, for review. We noticed some issues that require your attention. Please see below for additional information.
+
+If you have any questions, we are here to help. Reply to this message in App Store Connect and let us know.
+
+Review Environment
+Submission ID: 5df282ac-3c16-43f0-a9be-919d521f0038
+Review date: May 19, 2026
+Review Device: iPhone 17 Pro Max
+Version reviewed: 1.0 (1779118829)
+
+Guideline 5.1.2(i) - Legal - Privacy - Data Use and Sharing
+
+Issue Description
+
+The app accesses web content you own where you collect cookies. Cookies may be used to track users, but you do not use App Tracking Transparency to request the user's permission before collecting data used to track.
+
+Apps need to receive the user’s permission through the AppTrackingTransparency framework before collecting data used to track them.
+
+Next Steps
+
+If you do not collect cookies for tracking purposes on Apple devices, remove the cookie prompts or revise them to clarify you do not track users.
+
+Otherwise, follow these steps to resolve this issue:
+
+1. If you haven't already, update the app privacy information in App Store Connect to disclose that you track users. You must have the Account Holder or Admin role to update app privacy information.
+2. Implement App Tracking Transparency.
+3. Request permission using App Tracking Transparency before collecting data used to track the user. When you resubmit, indicate in the Review Notes where the permission request is located.
+4. If the user does not allow tracking, do not collect cookies for tracking purposes.
+
+You may also choose to remove the tracking functionality from the app, including tracking that occurs when accessing web content.
+
+Note that if the app behaves differently in different countries or regions, you should provide a way for App Review to review these variations in the app submission. Additionally, these differences should be documented in the Review Notes section of App Store Connect.
+
+Resources
+
+- Tracking is linking data collected from the app with third-party data for advertising purposes, or sharing the collected data with a data broker. Learn more about tracking.
+- See Frequently Asked Questions about the requirements for apps that track users.
+- Learn more about designing appropriate permission requests.
+Guideline 2.1(a) - Performance - App Completeness
+Issue Description
+
+The app exhibited one or more bugs that would negatively impact users.
+
+Bug description: "Continue with Apple" displays an error message.
+
+Steps to reproduce bug:
+
+1. Launch the app.
+2. Tap "Continue with Apple".
+3. Bug occurs: app displays an error message and it is not possible to log in.
+
+
+Review device details:
+
+- Device type: iPhone 17 Pro Max
+- OS version: iOS 26.5
+- Internet Connection: Active
+
+Next Steps
+
+Test the app on supported devices to identify and resolve bugs and stability issues before submitting for review.
+
+If the bug cannot be reproduced, try the following:
+
+- For new apps, uninstall all previous versions of the app from a device, then install and follow the steps to reproduce.
+- For app updates, install the new version as an update to the previous version, then follow the steps to reproduce.
+
+Note that users expect apps they download to function on all the devices where they are available. For example, apps that may be downloaded onto iPad devices should function as expected for iPad users.
+
+Resources
+
+- For information about testing apps and preparing them for review, see Testing a Release Build.
+- To learn about troubleshooting networking issues, see Networking Overview.
+
+
+Support
+- Reply to this message in your preferred language if you need assistance. If you need additional support, use the Contact Us module.
+- Consult with fellow developers and Apple engineers on the Apple Developer Forums.
+- Provide feedback on this message and your review experience by completing a short survey.
