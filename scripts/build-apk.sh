@@ -223,6 +223,16 @@ inject_cast_plugin() {
   else
     echo "    ℹ️  Permessi mDNS/WiFi già presenti"
   fi
+
+  # ── 6. Permessi Geolocalizzazione (per @capacitor/geolocation) ──────────
+  # FINE = GPS preciso, COARSE = wifi/cell-tower fallback. Senza questi
+  # il plugin non mostra il dialog di sistema "Consenti accesso posizione".
+  if ! grep -q "ACCESS_FINE_LOCATION" "$MANIFEST"; then
+    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />\n</manifest>|' "$MANIFEST"
+    echo "    ✅ Permessi Geolocalizzazione aggiunti al manifest"
+  else
+    echo "    ℹ️  Permessi Geolocalizzazione già presenti"
+  fi
   echo "    ✅ Cast plugin iniettato con successo"
 }
 
