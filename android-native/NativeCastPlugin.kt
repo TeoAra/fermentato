@@ -41,7 +41,7 @@ class NativeCastPlugin : Plugin() {
         // getDiagnostics e visibile nel pannello diagnostica così l'utente
         // può verificare di avere installato l'APK aggiornato (non basta
         // ./deploy.sh per le modifiche Kotlin — serve ./scripts/build-apk.sh).
-        const val PLUGIN_BUILD_ID = "2026-05-20-v3-errcode+dismiss"
+        const val PLUGIN_BUILD_ID = "2026-05-20-v4-prediscover+exception"
     }
 
     private var castContext: CastContext? = null
@@ -177,6 +177,27 @@ class NativeCastPlugin : Plugin() {
                     val selector = MediaRouteSelector.Builder()
                         .addControlCategory(CastMediaControlIntent.categoryForCast(appId))
                         .build()
+
+                    // FORZA discovery attiva PRIMA di aprire il picker. Senza questo
+                    // step il MediaRouter non sta facendo scanning attivo, il
+                    // MediaRouteChooserDialog può aprirsi vuoto anche se la TV è
+                    // raggiungibile in rete. Il chooser nativo non sempre triggera
+                    // discovery da solo in modo affidabile su Capacitor WebView.
+                    val router = MediaRouter.getInstance(activity)
+                    val discoveryCb = object : MediaRouter.Callback() {}
+                    router.addCallback(
+                        selector,
+                        discoveryCb,
+                        MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY
+                    )
+                    val routesNow = router.routes.count {
+                        it.matchesSelector(selector) && !it.isDefault
+                    }
+                    android.util.Log.i(
+                        "NativeCast",
+                        "Pre-picker: routes=$routesNow appId=$appId"
+                    )
+
                     val dialog = MediaRouteChooserDialog(activity)
                     dialog.routeSelector = selector
                     // Listener dismiss: se l'utente chiude il picker senza scegliere,
@@ -184,26 +205,43 @@ class NativeCastPlugin : Plugin() {
                     // pendingCall resterebbe pending fino al timeout JS (30s).
                     // Risolviamo subito con errorCode=-1 (sentinel USER_CANCELLED).
                     dialog.setOnDismissListener {
+                        // Rimuovi sempre il callback discovery per non sprecare batteria
+                        try { router.removeCallback(discoveryCb) } catch (_: Exception) {}
                         if (pendingCall != null) {
                             lastErrorCode = -1
-                            lastErrorSource = "picker_dismissed"
-                            android.util.Log.w("NativeCast", "Picker dismissed without selection")
+                            lastErrorSource = "picker_dismissed(routes_at_open=$routesNow)"
+                            android.util.Log.w(
+                                "NativeCast",
+                                "Picker dismissed without selection — routes_at_open=$routesNow"
+                            )
                             pendingCall?.resolve(
                                 JSObject()
                                     .put("success", false)
                                     .put("errorCode", -1)
                                     .put("source", "picker_dismissed")
+                                    .put("routesAtOpen", routesNow)
                             )
                             pendingUrl = null; pendingTitle = null; pendingCall = null
                             notifyState()
                         }
                     }
-                    android.util.Log.i("NativeCast", "Showing MediaRouteChooserDialog for appId=$appId")
+                    android.util.Log.i("NativeCast", "Showing MediaRouteChooserDialog")
                     dialog.show()
                 }
             } catch (e: Exception) {
+                // Sentinel -2 = SHOW_EXCEPTION. Senza questa riga lastErrorCode
+                // restava 0 e l'utente non aveva alcun feedback nel pannello.
+                lastErrorCode = -2
+                lastErrorSource = "show_exception: ${e.javaClass.simpleName}: ${e.message ?: "?"}"
+                android.util.Log.e("NativeCast", "showPickerAndLoad exception", e)
                 pendingUrl = null; pendingTitle = null; pendingCall = null
-                call.resolve(JSObject().put("success", false))
+                call.resolve(
+                    JSObject()
+                        .put("success", false)
+                        .put("errorCode", -2)
+                        .put("source", lastErrorSource)
+                )
+                notifyState()
             }
         }
     }
