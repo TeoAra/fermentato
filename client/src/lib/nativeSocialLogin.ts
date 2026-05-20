@@ -127,11 +127,18 @@ export async function loginAppleNative(): Promise<NativeAuthResult> {
       provider: "apple",
       options: { scopes: ["email", "name"] },
     });
+    // @capgo/capacitor-social-login v8.x: il campo è `idToken` (JWT firmato
+    // da Apple), NON `identityToken` come nei vecchi plugin. Manteniamo il
+    // fallback per retro-compatibilità nel caso il plugin venga downgradato.
     // @ts-ignore — il tipo varia
-    const identityToken: string | undefined = res?.result?.identityToken;
+    const identityToken: string | undefined =
+      res?.result?.idToken ?? res?.result?.identityToken;
     // @ts-ignore
     const profile = res?.result?.profile;
-    if (!identityToken) return { ok: false, error: "no_identity_token" };
+    if (!identityToken) {
+      const keys = res?.result ? Object.keys(res.result).join(",") : "no-result";
+      return { ok: false, error: `no_identity_token (keys=${keys})` };
+    }
 
     const r = await fetch("/api/auth/apple-native", {
       method: "POST",
