@@ -1,5 +1,10 @@
 package to.fermentato.app
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
@@ -98,6 +103,23 @@ class NativeCastPlugin : Plugin() {
 
     @PluginMethod
     fun initialize(call: PluginCall) {
+        // Su Android 13+ (API 33) NEARBY_WIFI_DEVICES è un runtime permission
+        // OBBLIGATORIO per la discovery Chromecast via mDNS. Senza, il Cast SDK
+        // non vede nessun device anche con manifest + Play Services OK.
+        // Lo richiediamo qui (idempotente: il sistema mostra il dialog solo
+        // la prima volta o se l'utente l'ha rifiutato in precedenza).
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val granted = ContextCompat.checkSelfPermission(
+                activity, Manifest.permission.NEARBY_WIFI_DEVICES
+            ) == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                ActivityCompat.requestPermissions(
+                    activity,
+                    arrayOf(Manifest.permission.NEARBY_WIFI_DEVICES),
+                    /* requestCode = */ 9871
+                )
+            }
+        }
         val ctx = getOrInitCastContext()
         if (ctx != null) {
             notifyState()
