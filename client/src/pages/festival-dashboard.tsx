@@ -219,16 +219,25 @@ function TVModeButton({ slug, festivalName }: { slug: string; festivalName?: str
                 } else {
                   // Diagnostica Cast in-app (vedi smart-pub-dashboard per dettagli).
                   const diag = await getDiagnostics();
+                  const errCode = (diag as any)?.lastErrorCode ?? 0;
+                  const errLabel = errCode === 2005 ? "AUTH_FAILED — sender package non autorizzato in Cast Console"
+                    : errCode === 2002 ? "APP_NOT_FOUND — app ID non registrato o non pubblicato"
+                    : errCode === 2003 ? "APP_NOT_RUNNING"
+                    : errCode === 15   ? "TIMEOUT"
+                    : errCode === 7    ? "NETWORK_ERROR"
+                    : errCode !== 0    ? `code ${errCode}`
+                    : "";
                   const diagText = diag
                     ? diag.deviceCount === 0
-                      ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device trovati`
-                      : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}`
+                      ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device${errLabel ? ` · ❌ ${errLabel}` : ""}`
+                      : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}${errLabel ? `\n❌ ${errLabel}` : ""}`
                     : "";
+                  const title = errCode === 2005 ? "Sessione Cast rifiutata" : "Nessun Chromecast trovato";
                   toast({
-                    title: "Nessun Chromecast trovato",
+                    title,
                     description: `Verifica che il device sia sulla stessa rete WiFi e che l'app abbia il permesso 'Rete locale'.${diagText ? "\n\n" + diagText : ""}`,
                     variant: "destructive",
-                    duration: 10000,
+                    duration: 15000,
                   });
                 }
               }}

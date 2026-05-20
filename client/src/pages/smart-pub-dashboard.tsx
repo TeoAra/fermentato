@@ -855,16 +855,25 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                                 // problema è discovery (deviceCount=0 → permessi/rete)
                                 // o app ID (deviceCount>0 ma picker vuoto).
                                 const diag = await getDiagnostics();
+                                const errCode = (diag as any)?.lastErrorCode ?? 0;
+                                const errLabel = errCode === 2005 ? "AUTH_FAILED — sender package non autorizzato in Cast Console"
+                                  : errCode === 2002 ? "APP_NOT_FOUND — app ID non registrato o non pubblicato"
+                                  : errCode === 2003 ? "APP_NOT_RUNNING"
+                                  : errCode === 15   ? "TIMEOUT"
+                                  : errCode === 7    ? "NETWORK_ERROR"
+                                  : errCode !== 0    ? `code ${errCode}`
+                                  : "";
                                 const diagText = diag
                                   ? diag.deviceCount === 0
-                                    ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device trovati · App ID ${(diag as any).appId ?? ""}`
-                                    : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}`
+                                    ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device · App ID ${(diag as any).appId ?? ""}${errLabel ? ` · ❌ ${errLabel}` : ""}`
+                                    : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}${errLabel ? `\n❌ ${errLabel}` : ""}`
                                   : "📊 Diagnostica non disponibile";
+                                const title = errCode === 2005 ? "Sessione Cast rifiutata" : "Nessun Chromecast trovato";
                                 toast({
-                                  title: "Nessun Chromecast trovato",
+                                  title,
                                   description: `Assicurati che il Chromecast sia acceso e sulla stessa rete WiFi e che Fermenta abbia il permesso 'Dispositivi nelle vicinanze'.\n\n${diagText}`,
                                   variant: "destructive",
-                                  duration: 12000,
+                                  duration: 15000,
                                 });
                               } else if (isNativeIos) {
                                 // Cast SDK attivo ma nessun Chromecast trovato o utente ha annullato il picker.

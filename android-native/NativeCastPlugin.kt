@@ -40,6 +40,7 @@ class NativeCastPlugin : Plugin() {
     private var pendingUrl: String? = null
     private var pendingTitle: String? = null
     private var pendingCall: PluginCall? = null
+    private var lastErrorCode: Int = 0
 
     // ── Lazy init helper — usa Activity context (richiesto da CastContext) ────
     private fun getOrInitCastContext(): CastContext? {
@@ -66,17 +67,24 @@ class NativeCastPlugin : Plugin() {
                 pendingUrl = null; pendingTitle = null; pendingCall = null
                 call?.resolve(JSObject().put("success", true))
             }
+            lastErrorCode = 0
             notifyState()
         }
 
         override fun onSessionStartFailed(session: CastSession, error: Int) {
-            pendingCall?.resolve(JSObject().put("success", false))
+            // error è un codice CastStatusCodes — lo esponiamo a JS per diagnostica.
+            // 2005=AUTHENTICATION_FAILED (sender non autorizzato in Cast Console),
+            // 2002=APPLICATION_NOT_FOUND (app ID 6666EC62 non registrato/non pubblicato),
+            // 2003=APPLICATION_NOT_RUNNING, 15=TIMEOUT, 7=NETWORK_ERROR.
+            lastErrorCode = error
+            pendingCall?.resolve(JSObject().put("success", false).put("errorCode", error))
             pendingUrl = null; pendingTitle = null; pendingCall = null
             notifyState()
         }
 
         override fun onSessionEnded(session: CastSession, error: Int) {
-            pendingCall?.resolve(JSObject().put("success", false))
+            lastErrorCode = error
+            pendingCall?.resolve(JSObject().put("success", false).put("errorCode", error))
             pendingUrl = null; pendingTitle = null; pendingCall = null
             notifyState()
         }
@@ -221,6 +229,7 @@ class NativeCastPlugin : Plugin() {
                     .put("devices",         devices)
                     .put("castState",       currentStateString())
                     .put("appId",           appIdLocal)
+                    .put("lastErrorCode",   lastErrorCode)
                 call.resolve(result)
             } catch (e: Exception) {
                 call.resolve(
