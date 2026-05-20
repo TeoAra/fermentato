@@ -7,6 +7,7 @@ type Diag = {
   lastErrorCode?: number;
   lastErrorSource?: string;
   pluginBuildId?: string;
+  ctxInitError?: string;
   appId?: string;
 } | null;
 
@@ -155,6 +156,13 @@ export function CastDiagnosticPanel() {
               → {ERR_LABELS[diag.lastErrorCode!]}
             </p>
           )}
+        </div>
+      )}
+      {diag && diag.ctxInitError && (
+        <div className="pt-1.5 border-t border-stone-200 dark:border-stone-800">
+          <p className="text-[11px] text-red-600 dark:text-red-400 font-mono leading-snug break-words">
+            ❌ CastContext init: {diag.ctxInitError}
+          </p>
         </div>
       )}
       {diag && diag.devices.length > 0 && (

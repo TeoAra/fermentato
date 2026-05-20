@@ -41,7 +41,7 @@ class NativeCastPlugin : Plugin() {
         // getDiagnostics e visibile nel pannello diagnostica così l'utente
         // può verificare di avere installato l'APK aggiornato (non basta
         // ./deploy.sh per le modifiche Kotlin — serve ./scripts/build-apk.sh).
-        const val PLUGIN_BUILD_ID = "2026-05-20-v5-noctx-sentinel"
+        const val PLUGIN_BUILD_ID = "2026-05-20-v6-ctxerror"
     }
 
     private var castContext: CastContext? = null
@@ -52,6 +52,8 @@ class NativeCastPlugin : Plugin() {
     private var lastErrorSource: String = ""
 
     // ── Lazy init helper — usa Activity context (richiesto da CastContext) ────
+    private var lastCtxInitError: String? = null
+
     private fun getOrInitCastContext(): CastContext? {
         if (castContext != null) return castContext
         return try {
@@ -60,8 +62,17 @@ class NativeCastPlugin : Plugin() {
             castContext?.sessionManager?.addSessionManagerListener(
                 sessionListener, CastSession::class.java
             )
+            lastCtxInitError = null
             castContext
         } catch (e: Exception) {
+            // Espone il messaggio dell'eccezione in diagnostica così non
+            // resta più un silent-null misterioso. Cause tipiche:
+            // - ClassNotFoundException: meta-data OPTIONS_PROVIDER_CLASS_NAME
+            //   nel manifest punta a una FQN che non esiste nel dex
+            //   (mismatch package, vedi inject_cast_manifest.py + $PKG).
+            // - Google Play Services Cast non installato/aggiornato.
+            lastCtxInitError = "${e.javaClass.simpleName}: ${e.message}"
+            android.util.Log.e("NativeCast", "getSharedInstance failed", e)
             null
         }
     }
@@ -313,6 +324,7 @@ class NativeCastPlugin : Plugin() {
                     .put("lastErrorCode",   lastErrorCode)
                     .put("lastErrorSource", lastErrorSource)
                     .put("pluginBuildId",   PLUGIN_BUILD_ID)
+                    .put("ctxInitError",    lastCtxInitError ?: "")
                 call.resolve(result)
             } catch (e: Exception) {
                 call.resolve(

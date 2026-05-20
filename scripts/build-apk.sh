@@ -313,8 +313,13 @@ PYEOF
   echo "    ✅ Dipendenze Cast aggiunte a build.gradle"
 
   # ── 4. CastOptionsProvider in AndroidManifest ────────────────────────────
+  # CRITICO: passare $PKG come secondo arg. Senza, lo script usa il default
+  # to.fermentato.app, e il meta-data nel manifest punta a una classe
+  # inesistente (la classe compilata è in $PKG, riscritta da sed sopra).
+  # Risultato: ClassNotFoundException → CastContext.getSharedInstance()
+  # rigetta → la nostra app vede "NO_CAST_CONTEXT" (-3) senza causa apparente.
   python3 "$APP_DIR/android-native/inject_cast_manifest.py" \
-    "app/src/main/AndroidManifest.xml"
+    "app/src/main/AndroidManifest.xml" "$PKG"
 
   # ── 5. Permessi mDNS/WiFi per discovery Chromecast ───────────────────────
   # CHANGE_WIFI_MULTICAST_STATE: obbligatorio per ricevere i pacchetti mDNS
