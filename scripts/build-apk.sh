@@ -220,7 +220,7 @@ inject_cast_plugin() {
     local APP_GRADLE="app/build.gradle"
     if ! grep -q "kotlin-gradle-plugin" "$ROOT_GRADLE" 2>/dev/null; then
       # Inserisce classpath kotlin subito dopo il classpath di AGP
-      sed -i '0,/classpath\s*["'"'"']com\.android\.tools\.build:gradle/{s#\(classpath\s*["'"'"']com\.android\.tools\.build:gradle[^"'"'"']*["'"'"']\)#\1\n        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24"#}' "$ROOT_GRADLE"
+      sed -i '0,/classpath\s*["'"'"']com\.android\.tools\.build:gradle/{s#\(classpath\s*["'"'"']com\.android\.tools\.build:gradle[^"'"'"']*["'"'"']\)#\1\n        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0"#}' "$ROOT_GRADLE"
       echo "    ✅ kotlin-gradle-plugin aggiunto al classpath di $ROOT_GRADLE"
     fi
     if ! grep -qE "(kotlin-android|org.jetbrains.kotlin.android)" "$APP_GRADLE"; then
