@@ -244,17 +244,17 @@ class MainActivity : BridgeActivity()
 KTEOF
       MAIN_FILE="$PKG_DIR/MainActivity.kt"
     fi
+    # Rimuove qualsiasi import stale di NativeCastPlugin (package vecchio) prima di reinserire
+    sed -i '/^import .*\.NativeCastPlugin;\?$/d' "$MAIN_FILE"
     case "$MAIN_FILE" in
       *.java)
-        grep -q "NativeCastPlugin" "$MAIN_FILE" || \
-          sed -i "s|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport $PKG.NativeCastPlugin;|" "$MAIN_FILE"
+        sed -i "s|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport $PKG.NativeCastPlugin;|" "$MAIN_FILE"
         grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE" || \
           sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_FILE"
-        echo "    ✅ NativeCastPlugin registrato in $MAIN_FILE"
+        echo "    ✅ NativeCastPlugin registrato in $MAIN_FILE (import → $PKG)"
         ;;
       *.kt)
-        grep -q "NativeCastPlugin" "$MAIN_FILE" || \
-          sed -i "s|import com.getcapacitor.BridgeActivity|import com.getcapacitor.BridgeActivity\nimport $PKG.NativeCastPlugin|" "$MAIN_FILE"
+        sed -i "s|import com.getcapacitor.BridgeActivity|import com.getcapacitor.BridgeActivity\nimport $PKG.NativeCastPlugin|" "$MAIN_FILE"
         if ! grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE"; then
           if grep -q "override fun onCreate" "$MAIN_FILE"; then
             sed -i 's/super.onCreate(savedInstanceState)/registerPlugin(NativeCastPlugin::class.java)\n        super.onCreate(savedInstanceState)/' "$MAIN_FILE"
