@@ -545,8 +545,13 @@ workflows:
           sed -i "s/^package .*/package $PKG/" "$PKG_DIR/NativeCastPlugin.kt"
           sed -i "s/^package .*/package $PKG/" "$PKG_DIR/CastOptionsProvider.kt"
 
-          # ── 3. Assicura kotlin-android nel build.gradle ─────────────────────────────
+          # ── 3. Assicura supporto Kotlin (classpath root + plugin app) ──────────────
+          ROOT_GRADLE="android/build.gradle"
           APP_GRADLE="android/app/build.gradle"
+          if ! grep -q "kotlin-gradle-plugin" "$ROOT_GRADLE" 2>/dev/null; then
+            sed -i '0,/classpath\s*["'"'"']com\.android\.tools\.build:gradle/{s#\(classpath\s*["'"'"']com\.android\.tools\.build:gradle[^"'"'"']*["'"'"']\)#\1\n        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24"#}' "$ROOT_GRADLE"
+            echo "kotlin-gradle-plugin aggiunto al classpath di $ROOT_GRADLE"
+          fi
           if ! grep -qE "(kotlin-android|org.jetbrains.kotlin.android)" "$APP_GRADLE"; then
             sed -i '0,/apply plugin: .com.android.application./{s//apply plugin: "com.android.application"\napply plugin: "kotlin-android"/}' "$APP_GRADLE"
             echo "Plugin kotlin-android applicato in $APP_GRADLE"

@@ -212,8 +212,17 @@ inject_cast_plugin() {
     sed -i "s/^package .*/package $PKG/" "$PKG_DIR/CastOptionsProvider.kt"
     echo "    ✅ Sorgenti plugin copiati (package=$PKG)"
 
-    # ── 3. Assicura kotlin-android nel build.gradle (i .kt non compilano senza) ─
+    # ── 3. Assicura supporto Kotlin (classpath root + plugin app) ──────────────
+    # Senza kotlin-android i .kt del plugin Cast non vengono compilati →
+    # "package X does not exist". Ma per APPLICARE kotlin-android serve prima
+    # il classpath kotlin-gradle-plugin nel build.gradle di progetto (root).
+    local ROOT_GRADLE="build.gradle"
     local APP_GRADLE="app/build.gradle"
+    if ! grep -q "kotlin-gradle-plugin" "$ROOT_GRADLE" 2>/dev/null; then
+      # Inserisce classpath kotlin subito dopo il classpath di AGP
+      sed -i '0,/classpath\s*["'"'"']com\.android\.tools\.build:gradle/{s#\(classpath\s*["'"'"']com\.android\.tools\.build:gradle[^"'"'"']*["'"'"']\)#\1\n        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.24"#}' "$ROOT_GRADLE"
+      echo "    ✅ kotlin-gradle-plugin aggiunto al classpath di $ROOT_GRADLE"
+    fi
     if ! grep -qE "(kotlin-android|org.jetbrains.kotlin.android)" "$APP_GRADLE"; then
       sed -i '0,/apply plugin: .com.android.application./{s//apply plugin: "com.android.application"\napply plugin: "kotlin-android"/}' "$APP_GRADLE"
       echo "    ✅ Plugin kotlin-android applicato in $APP_GRADLE"
