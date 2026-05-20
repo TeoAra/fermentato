@@ -815,8 +815,8 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   return (
                     <div className="space-y-3">
 
-                      {/* ── Pannello diagnostico (visibile solo su iOS native) ── */}
-                      {isNativeIos && <CastDiagnosticPanel />}
+                      {/* ── Pannello diagnostico (iOS + Android native) ── */}
+                      {(isNativeIos || isNativeAndroid) && <CastDiagnosticPanel />}
 
                       {/* ── Cast SDK caricato: pulsante Chromecast diretto ── */}
                       {castSdkLoaded && (
@@ -850,12 +850,21 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                               if (ok) {
                                 toast({ title: `Taplist LIVE su ${deviceName || "TV"}!`, description: "Si aggiorna in tempo reale" });
                               } else if (isNativeAndroid) {
-                                // Su APK il fallback non deve aprire l'URL TV nel WebView:
-                                // mostra solo un suggerimento operativo
+                                // Su APK Android mostriamo la diagnostica live nel toast
+                                // (mirror della logica iOS) — utile per capire se il
+                                // problema è discovery (deviceCount=0 → permessi/rete)
+                                // o app ID (deviceCount>0 ma picker vuoto).
+                                const diag = await getDiagnostics();
+                                const diagText = diag
+                                  ? diag.deviceCount === 0
+                                    ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device trovati · App ID ${(diag as any).appId ?? ""}`
+                                    : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}`
+                                  : "📊 Diagnostica non disponibile";
                                 toast({
                                   title: "Nessun Chromecast trovato",
-                                  description: "Assicurati che il Chromecast sia acceso e sulla stessa rete WiFi, poi riprova.",
+                                  description: `Assicurati che il Chromecast sia acceso e sulla stessa rete WiFi e che Fermenta abbia il permesso 'Dispositivi nelle vicinanze'.\n\n${diagText}`,
                                   variant: "destructive",
+                                  duration: 12000,
                                 });
                               } else if (isNativeIos) {
                                 // Cast SDK attivo ma nessun Chromecast trovato o utente ha annullato il picker.

@@ -12,7 +12,9 @@ import com.google.android.gms.cast.framework.CastState
 import com.google.android.gms.cast.framework.SessionManager
 import com.google.android.gms.cast.framework.SessionManagerListener
 import androidx.mediarouter.app.MediaRouteChooserDialog
+import androidx.mediarouter.media.MediaRouter
 import androidx.mediarouter.media.MediaRouteSelector
+import org.json.JSONArray
 import org.json.JSONObject
 
 // ─── Capacitor plugin: NativeCast (Android) ──────────────────────────────────
@@ -153,6 +155,60 @@ class NativeCastPlugin : Plugin() {
     @PluginMethod
     fun getState(call: PluginCall) {
         call.resolve(JSObject().put("state", currentStateString()))
+    }
+
+    // ── Diagnostica: mirror della getDiagnostics iOS ──────────────────────────
+    // Espone a JS lo stato attuale della discovery e la lista delle route
+    // (Chromecast / Android TV) trovate da MediaRouter. Utile per debugging
+    // "Nessun Chromecast trovato": se discoveryActive=true e deviceCount=0
+    // significa che il problema è di rete (mDNS bloccato, WiFi diversa) o di
+    // permessi (NEARBY_WIFI_DEVICES non concesso). Se deviceCount>0 ma il
+    // picker è vuoto, il problema è nell'app ID.
+    @PluginMethod
+    fun getDiagnostics(call: PluginCall) {
+        activity.runOnUiThread {
+            try {
+                val ctx = getOrInitCastContext()
+                val appIdLocal = CastOptionsProvider.CAST_APP_ID
+                val selector = MediaRouteSelector.Builder()
+                    .addControlCategory(CastMediaControlIntent.categoryForCast(appIdLocal))
+                    .build()
+                val router = MediaRouter.getInstance(activity)
+                // Forza discovery attiva per ottenere il count aggiornato
+                router.addCallback(
+                    selector,
+                    object : MediaRouter.Callback() {},
+                    MediaRouter.CALLBACK_FLAG_REQUEST_DISCOVERY
+                )
+                val routes = router.routes.filter {
+                    it.matchesSelector(selector) && !it.isDefault
+                }
+                val devices = JSONArray()
+                routes.forEach { r ->
+                    val obj = JSONObject()
+                        .put("name",      r.name ?: "?")
+                        .put("modelName", r.description ?: "?")
+                        .put("deviceID",  r.id)
+                        .put("category",  "cast")
+                    devices.put(obj)
+                }
+                val result = JSObject()
+                    .put("discoveryActive", ctx != null)
+                    .put("deviceCount",     routes.size)
+                    .put("devices",         devices)
+                    .put("castState",       currentStateString())
+                    .put("appId",           appIdLocal)
+                call.resolve(result)
+            } catch (e: Exception) {
+                call.resolve(
+                    JSObject()
+                        .put("discoveryActive", false)
+                        .put("deviceCount", 0)
+                        .put("devices", JSONArray())
+                        .put("error", e.message ?: "unknown")
+                )
+            }
+        }
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────
