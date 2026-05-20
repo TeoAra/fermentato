@@ -573,13 +573,14 @@ workflows:
             sed -i 's/^          //' "$PKG_DIR/MainActivity.kt"
             MAIN_FILE="$PKG_DIR/MainActivity.kt"
           fi
-          # Rimuove qualsiasi import stale di NativeCastPlugin (package vecchio) prima di reinserire
+          # Rimuove qualsiasi import + registerPlugin stale prima di reinserire
           sed -i '/^import .*\.NativeCastPlugin;\?$/d' "$MAIN_FILE"
+          sed -i '/registerPlugin(NativeCastPlugin/d' "$MAIN_FILE"
           case "$MAIN_FILE" in
             *.java)
               sed -i "s|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport $PKG.NativeCastPlugin;|" "$MAIN_FILE"
-              grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE" || \
-                sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_FILE"
+              # IMPORTANTE: registerPlugin DEVE essere PRIMA di super.onCreate
+              sed -i 's/super.onCreate(savedInstanceState);/registerPlugin(NativeCastPlugin.class);\n        super.onCreate(savedInstanceState);/' "$MAIN_FILE"
               echo "MainActivity.java aggiornata con NativeCastPlugin → $PKG ($MAIN_FILE)"
               ;;
             *.kt)

@@ -244,14 +244,15 @@ class MainActivity : BridgeActivity()
 KTEOF
       MAIN_FILE="$PKG_DIR/MainActivity.kt"
     fi
-    # Rimuove qualsiasi import stale di NativeCastPlugin (package vecchio) prima di reinserire
+    # Rimuove qualsiasi import + registerPlugin stale (package vecchio o posizione sbagliata)
     sed -i '/^import .*\.NativeCastPlugin;\?$/d' "$MAIN_FILE"
+    sed -i '/registerPlugin(NativeCastPlugin/d' "$MAIN_FILE"
     case "$MAIN_FILE" in
       *.java)
         sed -i "s|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport $PKG.NativeCastPlugin;|" "$MAIN_FILE"
-        grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE" || \
-          sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_FILE"
-        echo "    ✅ NativeCastPlugin registrato in $MAIN_FILE (import → $PKG)"
+        # IMPORTANTE: registerPlugin DEVE essere PRIMA di super.onCreate (Capacitor docs)
+        sed -i 's/super.onCreate(savedInstanceState);/registerPlugin(NativeCastPlugin.class);\n        super.onCreate(savedInstanceState);/' "$MAIN_FILE"
+        echo "    ✅ NativeCastPlugin registrato in $MAIN_FILE (import → $PKG, prima di super.onCreate)"
         ;;
       *.kt)
         sed -i "s|import com.getcapacitor.BridgeActivity|import com.getcapacitor.BridgeActivity\nimport $PKG.NativeCastPlugin|" "$MAIN_FILE"
