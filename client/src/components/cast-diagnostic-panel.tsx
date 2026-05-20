@@ -4,7 +4,20 @@ type Diag = {
   discoveryActive: boolean;
   deviceCount: number;
   devices: { name: string; modelName: string; deviceID: string; category: string }[];
+  lastErrorCode?: number;
+  lastErrorSource?: string;
+  pluginBuildId?: string;
+  appId?: string;
 } | null;
+
+const ERR_LABELS: Record<number, string> = {
+  [-1]: "USER_CANCELLED (picker chiuso senza scegliere)",
+  7:    "NETWORK_ERROR",
+  15:   "TIMEOUT",
+  2002: "APPLICATION_NOT_FOUND (app ID non registrato/pubblicato)",
+  2003: "APPLICATION_NOT_RUNNING",
+  2005: "AUTHENTICATION_FAILED (sender package non autorizzato in Cast Console)",
+};
 
 function getRegisteredPlugins(): string[] {
   try {
@@ -98,9 +111,19 @@ export function CastDiagnosticPanel() {
           Diagnostica Cast
         </span>
         <span className="text-[10px] text-stone-400 font-mono">
-          v2 · {new Date(lastUpdate).toLocaleTimeString()}
+          v3 · {new Date(lastUpdate).toLocaleTimeString()}
         </span>
       </div>
+      {diag?.pluginBuildId && (
+        <div className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 -mt-1">
+          plugin build: {diag.pluginBuildId}
+        </div>
+      )}
+      {diag && !diag.pluginBuildId && (
+        <div className="text-[10px] font-mono text-red-600 dark:text-red-400 -mt-1">
+          ⚠ plugin Kotlin VECCHIO — rebuilda l'APK (./scripts/build-apk.sh)
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-x-2 gap-y-1 font-mono">
         <span className="text-stone-500">Plugin nativo:</span>
         <span className={pluginAvailable ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>
@@ -119,6 +142,19 @@ export function CastDiagnosticPanel() {
           {diag === null ? "—" : diag.deviceCount}
         </span>
       </div>
+      {diag && (diag.lastErrorCode ?? 0) !== 0 && (
+        <div className="pt-1.5 border-t border-stone-200 dark:border-stone-800">
+          <p className="text-[11px] text-red-600 dark:text-red-400 font-mono leading-snug break-words">
+            ❌ Ultimo errore: code {diag.lastErrorCode}
+            {diag.lastErrorSource ? ` · ${diag.lastErrorSource}` : ""}
+          </p>
+          {ERR_LABELS[diag.lastErrorCode!] && (
+            <p className="text-[11px] text-red-700 dark:text-red-300 leading-snug mt-0.5">
+              → {ERR_LABELS[diag.lastErrorCode!]}
+            </p>
+          )}
+        </div>
+      )}
       {diag && diag.devices.length > 0 && (
         <ul className="pt-1.5 border-t border-stone-200 dark:border-stone-800 space-y-0.5">
           {diag.devices.map((d, i) => (

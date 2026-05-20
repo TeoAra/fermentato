@@ -36,11 +36,20 @@ import org.json.JSONObject
 @CapacitorPlugin(name = "NativeCast")
 class NativeCastPlugin : Plugin() {
 
+    companion object {
+        // BUMP QUESTO STRING AD OGNI MODIFICA del plugin. È esposto via
+        // getDiagnostics e visibile nel pannello diagnostica così l'utente
+        // può verificare di avere installato l'APK aggiornato (non basta
+        // ./deploy.sh per le modifiche Kotlin — serve ./scripts/build-apk.sh).
+        const val PLUGIN_BUILD_ID = "2026-05-20-v3-errcode+dismiss"
+    }
+
     private var castContext: CastContext? = null
     private var pendingUrl: String? = null
     private var pendingTitle: String? = null
     private var pendingCall: PluginCall? = null
     private var lastErrorCode: Int = 0
+    private var lastErrorSource: String = ""
 
     // ── Lazy init helper — usa Activity context (richiesto da CastContext) ────
     private fun getOrInitCastContext(): CastContext? {
@@ -77,14 +86,18 @@ class NativeCastPlugin : Plugin() {
             // 2002=APPLICATION_NOT_FOUND (app ID 6666EC62 non registrato/non pubblicato),
             // 2003=APPLICATION_NOT_RUNNING, 15=TIMEOUT, 7=NETWORK_ERROR.
             lastErrorCode = error
-            pendingCall?.resolve(JSObject().put("success", false).put("errorCode", error))
+            lastErrorSource = "onSessionStartFailed"
+            android.util.Log.e("NativeCast", "Session start failed code=$error")
+            pendingCall?.resolve(JSObject().put("success", false).put("errorCode", error).put("source", "onSessionStartFailed"))
             pendingUrl = null; pendingTitle = null; pendingCall = null
             notifyState()
         }
 
         override fun onSessionEnded(session: CastSession, error: Int) {
             lastErrorCode = error
-            pendingCall?.resolve(JSObject().put("success", false).put("errorCode", error))
+            lastErrorSource = "onSessionEnded"
+            android.util.Log.w("NativeCast", "Session ended code=$error")
+            pendingCall?.resolve(JSObject().put("success", false).put("errorCode", error).put("source", "onSessionEnded"))
             pendingUrl = null; pendingTitle = null; pendingCall = null
             notifyState()
         }
@@ -166,6 +179,26 @@ class NativeCastPlugin : Plugin() {
                         .build()
                     val dialog = MediaRouteChooserDialog(activity)
                     dialog.routeSelector = selector
+                    // Listener dismiss: se l'utente chiude il picker senza scegliere,
+                    // la sessione non parte mai → onSessionStartFailed non viene chiamato →
+                    // pendingCall resterebbe pending fino al timeout JS (30s).
+                    // Risolviamo subito con errorCode=-1 (sentinel USER_CANCELLED).
+                    dialog.setOnDismissListener {
+                        if (pendingCall != null) {
+                            lastErrorCode = -1
+                            lastErrorSource = "picker_dismissed"
+                            android.util.Log.w("NativeCast", "Picker dismissed without selection")
+                            pendingCall?.resolve(
+                                JSObject()
+                                    .put("success", false)
+                                    .put("errorCode", -1)
+                                    .put("source", "picker_dismissed")
+                            )
+                            pendingUrl = null; pendingTitle = null; pendingCall = null
+                            notifyState()
+                        }
+                    }
+                    android.util.Log.i("NativeCast", "Showing MediaRouteChooserDialog for appId=$appId")
                     dialog.show()
                 }
             } catch (e: Exception) {
@@ -230,6 +263,8 @@ class NativeCastPlugin : Plugin() {
                     .put("castState",       currentStateString())
                     .put("appId",           appIdLocal)
                     .put("lastErrorCode",   lastErrorCode)
+                    .put("lastErrorSource", lastErrorSource)
+                    .put("pluginBuildId",   PLUGIN_BUILD_ID)
                 call.resolve(result)
             } catch (e: Exception) {
                 call.resolve(
