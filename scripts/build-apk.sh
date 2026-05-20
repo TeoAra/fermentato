@@ -192,13 +192,42 @@ inject_cast_plugin() {
   fi
 
   # ── 2. Registra il plugin in MainActivity ────────────────────────────────
-  local MAIN="$PKG_DIR/MainActivity.java"
-  if [ -f "$MAIN" ]; then
-    grep -q "NativeCastPlugin" "$MAIN" || \
-      sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport to.fermentato.app.NativeCastPlugin;/' "$MAIN"
-    grep -q "registerPlugin(NativeCastPlugin" "$MAIN" || \
-      sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN"
-    echo "    ✅ NativeCastPlugin registrato in MainActivity"
+  # Registra il plugin in MainActivity (gestisce Java legacy E Kotlin Capacitor 8+)
+  local MAIN_JAVA="$PKG_DIR/MainActivity.java"
+  local MAIN_KT="$PKG_DIR/MainActivity.kt"
+  if [ -f "$MAIN_JAVA" ]; then
+    grep -q "NativeCastPlugin" "$MAIN_JAVA" || \
+      sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport to.fermentato.app.NativeCastPlugin;/' "$MAIN_JAVA"
+    grep -q "registerPlugin(NativeCastPlugin" "$MAIN_JAVA" || \
+      sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_JAVA"
+    echo "    ✅ NativeCastPlugin registrato in MainActivity.java"
+  elif [ -f "$MAIN_KT" ]; then
+    grep -q "NativeCastPlugin" "$MAIN_KT" || \
+      sed -i 's/import com.getcapacitor.BridgeActivity/import com.getcapacitor.BridgeActivity\nimport to.fermentato.app.NativeCastPlugin/' "$MAIN_KT"
+    if ! grep -q "registerPlugin(NativeCastPlugin" "$MAIN_KT"; then
+      if grep -q "override fun onCreate" "$MAIN_KT"; then
+        sed -i 's/super.onCreate(savedInstanceState)/registerPlugin(NativeCastPlugin::class.java)\n        super.onCreate(savedInstanceState)/' "$MAIN_KT"
+      else
+        python3 - "$MAIN_KT" <<'PYEOF'
+import sys
+p = sys.argv[1]
+txt = open(p).read()
+inject = """
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        registerPlugin(NativeCastPlugin::class.java)
+        super.onCreate(savedInstanceState)
+    }
+"""
+idx = txt.rstrip().rfind("}")
+open(p, "w").write(txt[:idx] + inject + txt[idx:])
+PYEOF
+      fi
+    fi
+    echo "    ✅ NativeCastPlugin registrato in MainActivity.kt"
+  else
+    echo "    ❌ ERRORE: né MainActivity.java né MainActivity.kt trovate in $PKG_DIR"
+    ls -la "$PKG_DIR"
+    return 1
   fi
 
   # ── 3. Dipendenze Cast in build.gradle ───────────────────────────────────
