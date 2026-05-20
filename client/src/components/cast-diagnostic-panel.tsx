@@ -8,6 +8,7 @@ type Diag = {
   lastErrorSource?: string;
   pluginBuildId?: string;
   ctxInitError?: string;
+  manifestMeta?: string;
   appId?: string;
 } | null;
 
@@ -162,6 +163,13 @@ export function CastDiagnosticPanel() {
         <div className="pt-1.5 border-t border-stone-200 dark:border-stone-800">
           <p className="text-[11px] text-red-600 dark:text-red-400 font-mono leading-snug break-words">
             ❌ CastContext init: {diag.ctxInitError}
+          </p>
+        </div>
+      )}
+      {diag && diag.manifestMeta && (
+        <div className="pt-1.5 border-t border-stone-200 dark:border-stone-800">
+          <p className="text-[11px] text-stone-600 dark:text-stone-400 font-mono leading-snug break-words">
+            Manifest meta: <span className={diag.manifestMeta.includes("loadable") && !diag.manifestMeta.includes("NOT_LOADABLE") ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}>{diag.manifestMeta}</span>
           </p>
         </div>
       )}

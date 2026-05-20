@@ -41,7 +41,7 @@ class NativeCastPlugin : Plugin() {
         // getDiagnostics e visibile nel pannello diagnostica così l'utente
         // può verificare di avere installato l'APK aggiornato (non basta
         // ./deploy.sh per le modifiche Kotlin — serve ./scripts/build-apk.sh).
-        const val PLUGIN_BUILD_ID = "2026-05-20-v6-ctxerror"
+        const val PLUGIN_BUILD_ID = "2026-05-20-v7-manifest-introspect"
     }
 
     private var castContext: CastContext? = null
@@ -53,6 +53,35 @@ class NativeCastPlugin : Plugin() {
 
     // ── Lazy init helper — usa Activity context (richiesto da CastContext) ────
     private var lastCtxInitError: String? = null
+
+    // ── Manifest introspection (debug) ───────────────────────────────────────
+    // Legge il meta-data OPTIONS_PROVIDER_CLASS_NAME dall'AppInfo del manifest
+    // e verifica se la classe è caricabile. Ritorna "FQN | classLoadable"
+    // così possiamo distinguere: manifest mancante, FQN sbagliato, classe non
+    // trovata dal classloader (R8/ProGuard strip).
+    private fun introspectManifest(): String {
+        return try {
+            val pm = activity.packageManager
+            val ai = pm.getApplicationInfo(
+                activity.packageName,
+                PackageManager.GET_META_DATA
+            )
+            val meta = ai.metaData
+            if (meta == null) return "no-metadata-bundle"
+            val fqn = meta.getString(
+                "com.google.android.gms.cast.framework.OPTIONS_PROVIDER_CLASS_NAME"
+            )
+            if (fqn.isNullOrEmpty()) return "META MISSING (pkg=${activity.packageName})"
+            val loadable = try {
+                Class.forName(fqn); "loadable"
+            } catch (e: Throwable) {
+                "NOT_LOADABLE(${e.javaClass.simpleName})"
+            }
+            "$fqn | $loadable"
+        } catch (e: Exception) {
+            "introspect-error: ${e.message}"
+        }
+    }
 
     private fun getOrInitCastContext(): CastContext? {
         if (castContext != null) return castContext
@@ -325,6 +354,7 @@ class NativeCastPlugin : Plugin() {
                     .put("lastErrorSource", lastErrorSource)
                     .put("pluginBuildId",   PLUGIN_BUILD_ID)
                     .put("ctxInitError",    lastCtxInitError ?: "")
+                    .put("manifestMeta",    introspectManifest())
                 call.resolve(result)
             } catch (e: Exception) {
                 call.resolve(
