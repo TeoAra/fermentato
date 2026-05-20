@@ -41,7 +41,7 @@ class NativeCastPlugin : Plugin() {
         // getDiagnostics e visibile nel pannello diagnostica così l'utente
         // può verificare di avere installato l'APK aggiornato (non basta
         // ./deploy.sh per le modifiche Kotlin — serve ./scripts/build-apk.sh).
-        const val PLUGIN_BUILD_ID = "2026-05-20-v7-manifest-introspect"
+        const val PLUGIN_BUILD_ID = "2026-05-20-v8-manifest-rewrite"
     }
 
     private var castContext: CastContext? = null
