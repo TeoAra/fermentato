@@ -224,6 +224,19 @@ inject_cast_plugin() {
     echo "    ℹ️  Permessi mDNS/WiFi già presenti"
   fi
 
+  # NEARBY_WIFI_DEVICES: obbligatorio su Android 13+ (API 33+) per il
+  # discovery Chromecast via mDNS. Senza, il dialog Cast è vuoto.
+  if ! grep -q "NEARBY_WIFI_DEVICES" "$MANIFEST"; then
+    # Aggiungi xmlns:tools al <manifest> se manca (richiesto per tools:targetApi)
+    if ! grep -q 'xmlns:tools=' "$MANIFEST"; then
+      sed -i 's|<manifest |<manifest xmlns:tools="http://schemas.android.com/tools" |' "$MANIFEST"
+    fi
+    sed -i 's|</manifest>|    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" tools:targetApi="33" />\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />\n</manifest>|' "$MANIFEST"
+    echo "    ✅ Permesso NEARBY_WIFI_DEVICES aggiunto (Android 13+ Cast discovery)"
+  else
+    echo "    ℹ️  NEARBY_WIFI_DEVICES già presente"
+  fi
+
   # ── 6. Permessi Geolocalizzazione (per @capacitor/geolocation) ──────────
   # FINE = GPS preciso, COARSE = wifi/cell-tower fallback. Senza questi
   # il plugin non mostra il dialog di sistema "Consenti accesso posizione".

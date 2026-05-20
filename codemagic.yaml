@@ -562,6 +562,17 @@ workflows:
           # mDNS per Cast discovery su Android 12+
           grep -q "CHANGE_WIFI_MULTICAST_STATE" "$MANIFEST" || \
             sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>|' "$MANIFEST"
+          # NEARBY_WIFI_DEVICES: OBBLIGATORIO su Android 13+ (API 33+) per fare
+          # discovery dei Chromecast sulla rete locale via mDNS. Senza, il
+          # MediaRouteChooserDialog mostra "Nessun dispositivo trovato" anche
+          # se il Chromecast è acceso e sulla stessa wifi.
+          # usesPermissionFlags="neverForLocation" → evita di dover chiedere
+          # ACCESS_FINE_LOCATION runtime solo per Cast.
+          grep -q "NEARBY_WIFI_DEVICES" "$MANIFEST" || \
+            sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" tools:targetApi="33"/>\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>|' "$MANIFEST"
+          # Aggiungi xmlns:tools al tag <manifest> se manca (richiesto da tools:targetApi)
+          grep -q 'xmlns:tools=' "$MANIFEST" || \
+            sed -i 's|<manifest |<manifest xmlns:tools="http://schemas.android.com/tools" |' "$MANIFEST"
           # Geolocalizzazione (richiesta da @capacitor/geolocation per mostrare
           # il dialog di sistema su Android). Mettiamo entrambi i permessi:
           # FINE = GPS preciso, COARSE = wifi/cell-tower fallback.
