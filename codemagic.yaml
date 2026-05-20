@@ -530,17 +530,31 @@ workflows:
           cp android-native/CastOptionsProvider.kt "$PKG_DIR/"
 
           # ── 2. Registra il plugin in MainActivity (Java o Kotlin) ──────────
-          # Capacitor 8 genera MainActivity.kt (Kotlin) di default, ma versioni
-          # vecchie usavano .java. Gestiamo entrambi i casi.
-          MAIN_JAVA="$PKG_DIR/MainActivity.java"
-          MAIN_KT="$PKG_DIR/MainActivity.kt"
-          if [ -f "$MAIN_JAVA" ]; then
+          # Capacitor 8 genera MainActivity.kt (Kotlin) di default. Cerchiamo
+          # ovunque sotto android/app/src/main/java/ perché il package può
+          # differire dal nostro PKG_DIR. Se proprio non esiste, la generiamo.
+          MAIN_JAVA=$(find android/app/src/main/java -name MainActivity.java 2>/dev/null | head -1)
+          MAIN_KT=$(find android/app/src/main/java -name MainActivity.kt 2>/dev/null | head -1)
+          if [ -z "$MAIN_JAVA" ] && [ -z "$MAIN_KT" ]; then
+            echo "MainActivity non trovata: la genero in $PKG_DIR/MainActivity.kt"
+            cat > "$PKG_DIR/MainActivity.kt" <<'KTEOF'
+          package to.fermentato.app
+
+          import com.getcapacitor.BridgeActivity
+
+          class MainActivity : BridgeActivity()
+          KTEOF
+            # rimuove l'indentazione YAML che bash heredoc preserva
+            sed -i 's/^          //' "$PKG_DIR/MainActivity.kt"
+            MAIN_KT="$PKG_DIR/MainActivity.kt"
+          fi
+          if [ -n "$MAIN_JAVA" ]; then
             grep -q "NativeCastPlugin" "$MAIN_JAVA" || \
               sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport to.fermentato.app.NativeCastPlugin;/' "$MAIN_JAVA"
             grep -q "registerPlugin(NativeCastPlugin" "$MAIN_JAVA" || \
               sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_JAVA"
-            echo "MainActivity.java aggiornata con NativeCastPlugin"
-          elif [ -f "$MAIN_KT" ]; then
+            echo "MainActivity.java aggiornata con NativeCastPlugin ($MAIN_JAVA)"
+          elif [ -n "$MAIN_KT" ]; then
             # Kotlin: sintassi diversa per import e per registerPlugin
             grep -q "NativeCastPlugin" "$MAIN_KT" || \
               sed -i 's/import com.getcapacitor.BridgeActivity/import com.getcapacitor.BridgeActivity\nimport to.fermentato.app.NativeCastPlugin/' "$MAIN_KT"
@@ -568,9 +582,9 @@ open(p, "w").write(out)
 PYEOF
               fi
             fi
-            echo "MainActivity.kt aggiornata con NativeCastPlugin"
+            echo "MainActivity.kt aggiornata con NativeCastPlugin ($MAIN_KT)"
           else
-            echo "ERRORE: né MainActivity.java né MainActivity.kt trovate in $PKG_DIR"
+            echo "ERRORE: MainActivity non trovata e generazione fallita"
             ls -la "$PKG_DIR"
             exit 1
           fi

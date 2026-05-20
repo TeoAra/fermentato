@@ -193,15 +193,32 @@ inject_cast_plugin() {
 
   # ── 2. Registra il plugin in MainActivity ────────────────────────────────
   # Registra il plugin in MainActivity (gestisce Java legacy E Kotlin Capacitor 8+)
-  local MAIN_JAVA="$PKG_DIR/MainActivity.java"
-  local MAIN_KT="$PKG_DIR/MainActivity.kt"
-  if [ -f "$MAIN_JAVA" ]; then
+  # NB: cerchiamo MainActivity ovunque sotto app/src/main/java/ perché il package
+  # path effettivo può differire dal nostro PKG_DIR (es. Capacitor lo genera nel
+  # package di default io.ionic.starter o in un altro path).
+  local MAIN_JAVA
+  local MAIN_KT
+  MAIN_JAVA=$(find app/src/main/java -name MainActivity.java 2>/dev/null | head -1)
+  MAIN_KT=$(find app/src/main/java -name MainActivity.kt 2>/dev/null | head -1)
+  if [ -z "$MAIN_JAVA" ] && [ -z "$MAIN_KT" ]; then
+    # Nessun MainActivity trovato: lo creiamo noi nel package corretto
+    echo "    ⚠️  MainActivity non trovata: la genero in $PKG_DIR/MainActivity.kt"
+    cat > "$PKG_DIR/MainActivity.kt" <<'KTEOF'
+package to.fermentato.app
+
+import com.getcapacitor.BridgeActivity
+
+class MainActivity : BridgeActivity()
+KTEOF
+    MAIN_KT="$PKG_DIR/MainActivity.kt"
+  fi
+  if [ -n "$MAIN_JAVA" ]; then
     grep -q "NativeCastPlugin" "$MAIN_JAVA" || \
       sed -i 's/import com.getcapacitor.BridgeActivity;/import com.getcapacitor.BridgeActivity;\nimport to.fermentato.app.NativeCastPlugin;/' "$MAIN_JAVA"
     grep -q "registerPlugin(NativeCastPlugin" "$MAIN_JAVA" || \
       sed -i 's/super.onCreate(savedInstanceState);/super.onCreate(savedInstanceState);\n    registerPlugin(NativeCastPlugin.class);/' "$MAIN_JAVA"
     echo "    ✅ NativeCastPlugin registrato in MainActivity.java"
-  elif [ -f "$MAIN_KT" ]; then
+  elif [ -n "$MAIN_KT" ]; then
     grep -q "NativeCastPlugin" "$MAIN_KT" || \
       sed -i 's/import com.getcapacitor.BridgeActivity/import com.getcapacitor.BridgeActivity\nimport to.fermentato.app.NativeCastPlugin/' "$MAIN_KT"
     if ! grep -q "registerPlugin(NativeCastPlugin" "$MAIN_KT"; then
@@ -223,10 +240,9 @@ open(p, "w").write(txt[:idx] + inject + txt[idx:])
 PYEOF
       fi
     fi
-    echo "    ✅ NativeCastPlugin registrato in MainActivity.kt"
+    echo "    ✅ NativeCastPlugin registrato in $MAIN_KT"
   else
-    echo "    ❌ ERRORE: né MainActivity.java né MainActivity.kt trovate in $PKG_DIR"
-    ls -la "$PKG_DIR"
+    echo "    ❌ ERRORE: MainActivity non trovata e generazione fallita"
     return 1
   fi
 
