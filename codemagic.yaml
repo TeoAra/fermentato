@@ -608,6 +608,27 @@ workflows:
               ;;
           esac
 
+          # ── 4b. Registra NativeCast in capacitor.plugins.json (registry runtime) ──
+          PLUGINS_JSON="android/app/src/main/assets/capacitor.plugins.json"
+          mkdir -p "$(dirname "$PLUGINS_JSON")"
+          [ ! -f "$PLUGINS_JSON" ] && echo "[]" > "$PLUGINS_JSON"
+          PKG_FOR_PY="$PKG" python3 - "$PLUGINS_JSON" <<'PYEOF'
+          import json, os, sys
+          path = sys.argv[1]
+          pkg  = os.environ["PKG_FOR_PY"]
+          classpath = f"{pkg}.NativeCastPlugin"
+          try:
+              data = json.load(open(path))
+              if not isinstance(data, list):
+                  data = []
+          except Exception:
+              data = []
+          data = [p for p in data if p.get("classpath") != classpath]
+          data.append({"pkg": pkg, "classpath": classpath})
+          json.dump(data, open(path, "w"), indent=2)
+          print(f"NativeCast registrato in {path} → {classpath}")
+          PYEOF
+
           # ── 5. Dipendenze Cast in build.gradle ─────────────────────────────────────
           grep -q "play-services-cast-framework" "$APP_GRADLE" || \
             sed -i '/dependencies {/a\    implementation "com.google.android.gms:play-services-cast-framework:21.5.0"\n    implementation "androidx.mediarouter:mediarouter:1.7.0"' "$APP_GRADLE"

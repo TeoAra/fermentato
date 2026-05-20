@@ -279,6 +279,33 @@ PYEOF
         ;;
     esac
 
+    # ── 2b. Registra NativeCast in capacitor.plugins.json (registry runtime) ──
+    # In Capacitor 5+ la bridge Android al boot legge i plugin da
+    # android/app/src/main/assets/capacitor.plugins.json. I plugin di
+    # node_modules vengono inseriti automaticamente da `cap sync`, ma quelli
+    # LOCALI (come il nostro NativeCast) vanno aggiunti a mano qui — altrimenti
+    # JS riceve "plugin is not implemented on android" anche se MainActivity
+    # chiama registerPlugin().
+    local PLUGINS_JSON="app/src/main/assets/capacitor.plugins.json"
+    mkdir -p "$(dirname "$PLUGINS_JSON")"
+    [ ! -f "$PLUGINS_JSON" ] && echo "[]" > "$PLUGINS_JSON"
+    PKG_FOR_PY="$PKG" python3 - "$PLUGINS_JSON" <<'PYEOF'
+import json, os, sys
+path = sys.argv[1]
+pkg  = os.environ["PKG_FOR_PY"]
+classpath = f"{pkg}.NativeCastPlugin"
+try:
+    data = json.load(open(path))
+    if not isinstance(data, list):
+        data = []
+except Exception:
+    data = []
+data = [p for p in data if p.get("classpath") != classpath]
+data.append({"pkg": pkg, "classpath": classpath})
+json.dump(data, open(path, "w"), indent=2)
+print(f"    ✅ NativeCast registrato in {path} → {classpath}")
+PYEOF
+
     # ── 3. Dipendenze Cast in build.gradle ───────────────────────────────────
   local BUILD="app/build.gradle"
   grep -q "play-services-cast-framework" "$BUILD" || \
