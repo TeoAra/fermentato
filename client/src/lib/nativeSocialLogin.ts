@@ -54,10 +54,19 @@ async function ensureInit(): Promise<void> {
     const appleConfig = isNativeIos
       ? {}
       : { clientId: APPLE_SERVICE_ID, redirectUrl: APPLE_REDIRECT_URI };
+    // Android richiede `webClientId` (Web OAuth Client ID dello stesso
+    // progetto Google Cloud, lo stesso usato da Passport lato server per
+    // GOOGLE_CLIENT_ID). È pubblico, non è un segreto. Va impostato come
+    // VITE_GOOGLE_CLIENT_ID nell'.env del VPS (stesso valore di
+    // GOOGLE_CLIENT_ID) prima di buildare. Senza, il plugin Android
+    // rigetta con "google.clientId is null or empty".
+    const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as
+      | string
+      | undefined;
     await SocialLogin.initialize({
       google: {
         iOSClientId: GOOGLE_IOS_CLIENT_ID,
-        // webClientId verrà aggiunto quando configureremo Android
+        ...(googleWebClientId ? { webClientId: googleWebClientId } : {}),
         mode: "online",
       },
       apple: appleConfig,

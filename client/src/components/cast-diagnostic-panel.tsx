@@ -11,6 +11,8 @@ type Diag = {
 } | null;
 
 const ERR_LABELS: Record<number, string> = {
+  [-3]: "NO_CAST_CONTEXT (Google Play Services Cast mancanti o non aggiornati)",
+  [-2]: "SHOW_EXCEPTION (errore nel mostrare il picker — vedi logcat)",
   [-1]: "USER_CANCELLED (picker chiuso senza scegliere)",
   7:    "NETWORK_ERROR",
   15:   "TIMEOUT",

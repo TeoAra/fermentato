@@ -41,7 +41,7 @@ class NativeCastPlugin : Plugin() {
         // getDiagnostics e visibile nel pannello diagnostica così l'utente
         // può verificare di avere installato l'APK aggiornato (non basta
         // ./deploy.sh per le modifiche Kotlin — serve ./scripts/build-apk.sh).
-        const val PLUGIN_BUILD_ID = "2026-05-20-v4-prediscover+exception"
+        const val PLUGIN_BUILD_ID = "2026-05-20-v5-noctx-sentinel"
     }
 
     private var castContext: CastContext? = null
@@ -156,9 +156,19 @@ class NativeCastPlugin : Plugin() {
         val url   = call.getString("url")   ?: return call.reject("url required")
         val title = call.getString("title") ?: "Fermenta.to"
 
-        // Ritenta l'inizializzazione se la prima volta è fallita
+        // Ritenta l'inizializzazione se la prima volta è fallita.
+        // Se ancora null → Google Play Services Cast mancanti/non aggiornati.
+        // Sentinel -3 = NO_CAST_CONTEXT (così lastErrorCode non rimane 0).
         val ctx = getOrInitCastContext()
-            ?: return call.resolve(JSObject().put("success", false))
+        if (ctx == null) {
+            lastErrorCode = -3
+            return call.resolve(
+                JSObject()
+                    .put("success", false)
+                    .put("errorCode", -3)
+                    .put("reason", "no_cast_context")
+            )
+        }
 
         activity.runOnUiThread {
             try {
