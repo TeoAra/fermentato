@@ -516,7 +516,9 @@ workflows:
             echo "ERRORE: build.gradle non trovato dopo cap add android"
             exit 1
           fi
-          npx cap copy android
+          # cap sync (non solo copy) per fondere AndroidManifest dei plugin
+          # — necessario per @capacitor/geolocation che dichiara ACCESS_FINE_LOCATION
+          npx cap sync android
 
       - name: Inietta plugin NativeCast Android (Chromecast nativo)
         script: |
@@ -560,6 +562,11 @@ workflows:
           # mDNS per Cast discovery su Android 12+
           grep -q "CHANGE_WIFI_MULTICAST_STATE" "$MANIFEST" || \
             sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>|' "$MANIFEST"
+          # Geolocalizzazione (richiesta da @capacitor/geolocation per mostrare
+          # il dialog di sistema su Android). Mettiamo entrambi i permessi:
+          # FINE = GPS preciso, COARSE = wifi/cell-tower fallback.
+          grep -q "ACCESS_FINE_LOCATION" "$MANIFEST" || \
+            sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>|' "$MANIFEST"
           echo "AndroidManifest aggiornato:"
           grep "uses-permission" "$MANIFEST"
 
