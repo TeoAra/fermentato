@@ -181,21 +181,17 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
     if (isChunkError) {
       const attempts = parseInt(sessionStorage.getItem('_chunk_reload_attempts') || '0');
       if (attempts < 2) {
-        // 1° tentativo: semplice cache-busting URL (preserva il path corrente)
-        sessionStorage.setItem('_chunk_reload_attempts', String(attempts + 1));
-        window.location.replace(buildFreshUrl());
-        return;
-      }
-      if (attempts === 2) {
-        // 2° tentativo fallito → il SW vecchio sta servendo cache avvelenate.
-        // Forza la rimozione del SW e di tutte le cache, poi ricarica.
+        // Un chunk error su un HTML fresco significa quasi sempre che il vecchio
+        // service worker (v9 con cacheFirst rotto) sta intercettando le richieste
+        // /assets/* e servendo HTML cached come fosse JS. Nukiamo SW+cache SUBITO
+        // al 1° tentativo per sbloccare l'utente in un solo reload.
         sessionStorage.setItem('_chunk_reload_attempts', String(attempts + 1));
         nukeServiceWorkerAndCaches().then(() => {
           window.location.replace(buildFreshUrl());
         });
         return;
       }
-      // Dopo 3 tentativi: resetta e mostra schermata con pulsante manuale
+      // Dopo 2 tentativi: resetta e mostra schermata con pulsante manuale
       sessionStorage.removeItem('_chunk_reload_attempts');
     }
     console.error("[RouteErrorBoundary] ERROR:", error.message);
