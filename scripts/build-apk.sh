@@ -197,7 +197,7 @@ inject_cast_plugin() {
       PKG=$(grep -oP "applicationId\s+[\"']\K[^\"']+" app/build.gradle 2>/dev/null | head -1)
     fi
     if [ -z "$PKG" ]; then
-      PKG="to.fermentato.app"
+      PKG="to.fermenta.app"
     fi
     local PKG_PATH=${PKG//./\/}
     local PKG_DIR="app/src/main/java/$PKG_PATH"
@@ -442,6 +442,43 @@ build() {
     npx cap add android
   fi
   npx cap sync android
+
+  echo "    Forzo applicationId Android a to.fermenta.app (diverso da iOS)..."
+  sed -i 's/applicationId "[^"]*"/applicationId "to.fermenta.app"/' android/app/build.gradle
+  echo "    ✅ applicationId Android = to.fermenta.app"
+
+  echo "    Correggo package Java/Kotlin a to.fermenta.app..."
+  # Se la cartella android/ è già stata scaffoldata con to.fermentato.app (da
+  # capacitor.config.ts), il MainActivity.kt risiede nel package sbagliato.
+  # Spostiamolo/ricreiamolo nel package corretto.
+  OLD_PKG_DIR="android/app/src/main/java/to/fermentato/app"
+  NEW_PKG_DIR="android/app/src/main/java/to/fermenta/app"
+  if [ -d "$OLD_PKG_DIR" ] && [ ! -d "$NEW_PKG_DIR" ]; then
+    mkdir -p "$NEW_PKG_DIR"
+    if [ -f "$OLD_PKG_DIR/MainActivity.kt" ]; then
+      sed 's/package to\.fermentato\.app/package to.fermenta.app/' "$OLD_PKG_DIR/MainActivity.kt" > "$NEW_PKG_DIR/MainActivity.kt"
+      echo "    ✅ MainActivity.kt spostato e riscritto in to.fermenta.app"
+    else
+      # Genera MainActivity.kt pulita se manca
+      cat > "$NEW_PKG_DIR/MainActivity.kt" <<KTEOF
+package to.fermenta.app
+
+import android.content.Intent
+import com.getcapacitor.BridgeActivity
+
+class MainActivity : BridgeActivity() {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+}
+KTEOF
+      echo "    ✅ MainActivity.kt generata in to.fermenta.app"
+    fi
+    # Rimuovi la cartella del vecchio package (e qualsiasi file residuo)
+    rm -rf "$OLD_PKG_DIR"
+  elif [ -d "$NEW_PKG_DIR" ]; then
+    echo "    ℅  Package to.fermenta.app già presente"
+  fi
 
   echo "    Bump versione app..."
   NEW_VERSION=$(bash "$APP_DIR/scripts/bump-version.sh")

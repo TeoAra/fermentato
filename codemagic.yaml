@@ -493,7 +493,7 @@ workflows:
       node: "20"
       java: "21"
       vars:
-        PACKAGE_NAME: to.fermentato.app
+        PACKAGE_NAME: to.fermenta.app
         CAST_APP_ID: 6666EC62
 
     cache:
@@ -534,7 +534,7 @@ workflows:
             PKG=$(grep -oP "applicationId\s+[\"']\K[^\"']+" android/app/build.gradle 2>/dev/null | head -1)
           fi
           if [ -z "$PKG" ]; then
-            PKG="to.fermentato.app"
+            PKG="to.fermenta.app"
           fi
           PKG_PATH=${PKG//./\/}
           PKG_DIR="android/app/src/main/java/$PKG_PATH"

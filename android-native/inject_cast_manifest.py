@@ -16,7 +16,7 @@ import sys
 import re
 
 path = sys.argv[1]
-pkg = sys.argv[2] if len(sys.argv) > 2 else "to.fermentato.app"
+pkg = sys.argv[2] if len(sys.argv) > 2 else "to.fermenta.app"
 txt = open(path).read()
 correct_fqn = f"{pkg}.CastOptionsProvider"
 
