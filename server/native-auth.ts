@@ -111,7 +111,11 @@ async function findOrCreateUser(p: NormalizedUser): Promise<User> {
         roles: ["customer"],
         activeRole: "customer",
         isEmailVerified: p.emailVerified,
-        needsOnboarding: false,
+        // Nuovi utenti via Sign-In with Apple/Google: vanno mandati al form
+        // di onboarding per scegliere username, accettare i termini, ecc.
+        // (il middleware in client/src/pages/App.tsx redirige automaticamente
+        // a /onboarding finché questo flag resta true).
+        needsOnboarding: true,
       })
       .returning();
     if (!newUser) throw new Error("user_creation_failed");
