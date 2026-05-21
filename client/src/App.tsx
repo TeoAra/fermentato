@@ -225,7 +225,12 @@ function Router() {
     return () => document.body.classList.remove('menu-open');
   }, [isMobileMenuOpen]);
 
-  // Note: Google OAuth new users now go directly to /dashboard (no onboarding redirect)
+  // Redirect to onboarding for new users arriving via social login (Google/Apple)
+  useEffect(() => {
+    if (!isLoading && isAuthenticated && typedUser?.needsOnboarding && location !== "/onboarding") {
+      navigate("/onboarding");
+    }
+  }, [isLoading, isAuthenticated, typedUser?.needsOnboarding, location, navigate]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

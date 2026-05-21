@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -10,11 +10,23 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Beer, Store, Factory, User, ChevronRight, ChevronLeft, Check, Search } from "lucide-react";
+import { Beer, Store, Factory, User, ChevronRight, ChevronLeft, Check, Search, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { AddressAutocomplete, type AddressDetails } from "@/components/AddressAutocomplete";
+import { useAuth } from "@/hooks/useAuth";
 import type { Brewery } from "@shared/schema";
 
 type Role = "customer" | "pub_owner" | "brewery_owner";
+
+// ─── Schemas ─────────────────────────────────────────────────────────────────
+
+const profileSchema = z.object({
+  nickname: z.string()
+    .min(3, "Minimo 3 caratteri")
+    .max(30, "Massimo 30 caratteri")
+    .regex(/^[a-zA-Z0-9_.]+$/, "Solo lettere, numeri, punti e underscore"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+});
 
 const pubSchema = z.object({
   pubName: z.string().min(2, "Nome locale richiesto"),
@@ -42,17 +54,48 @@ const brewerySchema = z.object({
   path: ["breweryName"],
 });
 
+type ProfileForm = z.infer<typeof profileSchema>;
 type PubForm = z.infer<typeof pubSchema>;
 type BreweryForm = z.infer<typeof brewerySchema>;
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function Onboarding() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const [step, setStep] = useState<"role" | "details" | "done">("role");
+  const { user } = useAuth();
+
+  const [step, setStep] = useState<"profile" | "role" | "details" | "done">("profile");
   const [selectedRole, setSelectedRole] = useState<Role>("customer");
+  const [profileData, setProfileData] = useState<ProfileForm | null>(null);
   const [brewerySearch, setBrewerySearch] = useState("");
   const [selectedBrewery, setSelectedBrewery] = useState<Brewery | null>(null);
   const [newBrewery, setNewBrewery] = useState(false);
+
+  // Nickname availability state
+  const [nickStatus, setNickStatus] = useState<"idle" | "checking" | "ok" | "taken">("idle");
+  const [nickCheckTimeout, setNickCheckTimeout] = useState<ReturnType<typeof setTimeout> | null>(null);
+
+  const profileForm = useForm<ProfileForm>({
+    resolver: zodResolver(profileSchema) as any,
+    mode: "onChange",
+    defaultValues: {
+      nickname: user?.nickname ?? "",
+      firstName: user?.firstName ?? "",
+      lastName: user?.lastName ?? "",
+    },
+  });
+
+  // Pre-fill form when user data arrives
+  useEffect(() => {
+    if (user) {
+      profileForm.reset({
+        nickname: user.nickname ?? "",
+        firstName: user.firstName ?? "",
+        lastName: user.lastName ?? "",
+      });
+    }
+  }, [user?.id]);
 
   const pubForm = useForm<PubForm>({
     resolver: zodResolver(pubSchema) as any,
@@ -77,6 +120,32 @@ export default function Onboarding() {
     enabled: brewerySearch.length >= 2,
   });
 
+  // ─── Nickname availability check (debounced) ──────────────────────────────
+  const checkNickname = useCallback((value: string) => {
+    if (nickCheckTimeout) clearTimeout(nickCheckTimeout);
+    if (!value || value.length < 3 || !/^[a-zA-Z0-9_.]+$/.test(value)) {
+      setNickStatus("idle");
+      return;
+    }
+    // If same as current nickname, mark ok immediately
+    if (user?.nickname && value === user.nickname) {
+      setNickStatus("ok");
+      return;
+    }
+    setNickStatus("checking");
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/auth/check-nickname?nickname=${encodeURIComponent(value)}`);
+        const data = await res.json();
+        setNickStatus(data.available ? "ok" : "taken");
+      } catch {
+        setNickStatus("idle");
+      }
+    }, 500);
+    setNickCheckTimeout(t);
+  }, [user?.nickname, nickCheckTimeout]);
+
+  // ─── Mutation ─────────────────────────────────────────────────────────────
   const onboardingMutation = useMutation({
     mutationFn: async (data: any) => {
       return apiRequest("/api/auth/complete-onboarding", { method: "POST" }, data);
@@ -95,27 +164,39 @@ export default function Onboarding() {
     },
   });
 
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+
+  const handleProfileSubmit = (data: ProfileForm) => {
+    if (nickStatus === "taken") {
+      profileForm.setError("nickname", { message: "Username già in uso" });
+      return;
+    }
+    setProfileData(data);
+    setStep("role");
+  };
+
   const handleRoleSelect = (role: Role) => {
     setSelectedRole(role);
     if (role === "customer") {
-      onboardingMutation.mutate({ role: "customer" });
+      onboardingMutation.mutate({ ...profileData, role: "customer" });
     } else {
       setStep("details");
     }
   };
 
   const handlePubSubmit = (data: PubForm) => {
-    onboardingMutation.mutate({ role: "pub_owner", ...data });
+    onboardingMutation.mutate({ ...profileData, role: "pub_owner", ...data });
   };
 
   const handleBrewerySubmit = (data: BreweryForm) => {
     if (selectedBrewery) {
-      onboardingMutation.mutate({ role: "brewery_owner", breweryId: selectedBrewery.id });
+      onboardingMutation.mutate({ ...profileData, role: "brewery_owner", breweryId: selectedBrewery.id });
     } else {
-      onboardingMutation.mutate({ role: "brewery_owner", ...data });
+      onboardingMutation.mutate({ ...profileData, role: "brewery_owner", ...data });
     }
   };
 
+  // ─── Done screen ──────────────────────────────────────────────────────────
   if (step === "done") {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
@@ -142,9 +223,88 @@ export default function Onboarding() {
           <p className="text-muted-foreground mt-2">Completa il tuo profilo</p>
         </div>
 
-        {/* Step: Role Selection */}
+        {/* ── Step 1: Profile (nickname + name) ─────────────────────────── */}
+        {step === "profile" && (
+          <div>
+            <h2 className="text-xl font-semibold text-foreground text-center mb-2">Scegli il tuo username</h2>
+            <p className="text-muted-foreground text-center text-sm mb-8">
+              Lo useranno gli altri utenti per trovarti
+            </p>
+
+            <Form {...profileForm}>
+              <form onSubmit={profileForm.handleSubmit(handleProfileSubmit)} className="space-y-5">
+
+                {/* Nickname */}
+                <FormField control={profileForm.control} name="nickname" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username *</FormLabel>
+                    <div className="relative">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          placeholder="es. beergeek_42"
+                          autoCapitalize="none"
+                          autoCorrect="off"
+                          className="pr-10"
+                          onChange={(e) => {
+                            field.onChange(e);
+                            checkNickname(e.target.value);
+                          }}
+                        />
+                      </FormControl>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                        {nickStatus === "checking" && <Loader2 className="w-4 h-4 text-muted-foreground animate-spin" />}
+                        {nickStatus === "ok" && <CheckCircle2 className="w-4 h-4 text-emerald-500" />}
+                        {nickStatus === "taken" && <XCircle className="w-4 h-4 text-destructive" />}
+                      </div>
+                    </div>
+                    {nickStatus === "taken" && (
+                      <p className="text-xs text-destructive mt-1">Username già in uso, scegline un altro</p>
+                    )}
+                    {nickStatus === "ok" && (
+                      <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">Username disponibile!</p>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )} />
+
+                {/* First + Last name */}
+                <div className="grid grid-cols-2 gap-3">
+                  <FormField control={profileForm.control} name="firstName" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome</FormLabel>
+                      <FormControl><Input {...field} placeholder="Mario" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                  <FormField control={profileForm.control} name="lastName" render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cognome</FormLabel>
+                      <FormControl><Input {...field} placeholder="Rossi" /></FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
+
+                <Button
+                  type="submit"
+                  disabled={nickStatus === "taken" || nickStatus === "checking" || onboardingMutation.isPending}
+                  className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-semibold h-12"
+                >
+                  Continua
+                  <ChevronRight className="w-4 h-4 ml-2" />
+                </Button>
+              </form>
+            </Form>
+          </div>
+        )}
+
+        {/* ── Step 2: Role Selection ─────────────────────────────────────── */}
         {step === "role" && (
           <div>
+            <button onClick={() => setStep("profile")} className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-6 text-sm transition-colors">
+              <ChevronLeft className="w-4 h-4" /> Indietro
+            </button>
             <h2 className="text-xl font-semibold text-foreground text-center mb-2">Come utilizzerai la piattaforma?</h2>
             <p className="text-muted-foreground text-center text-sm mb-8">Scegli il tuo ruolo per personalizzare l'esperienza</p>
 
@@ -178,9 +338,7 @@ export default function Onboarding() {
             </p>
             <div className="text-center mt-3">
               <button
-                onClick={() => {
-                  onboardingMutation.mutate({ role: "customer" });
-                }}
+                onClick={() => onboardingMutation.mutate({ ...profileData, role: "customer" })}
                 className="text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors"
               >
                 Salta e vai al profilo
@@ -189,7 +347,7 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step: Pub Details */}
+        {/* ── Step 3a: Pub Details ───────────────────────────────────────── */}
         {step === "details" && selectedRole === "pub_owner" && (
           <div>
             <button onClick={() => setStep("role")} className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-6 text-sm transition-colors">
@@ -288,7 +446,7 @@ export default function Onboarding() {
           </div>
         )}
 
-        {/* Step: Brewery Details */}
+        {/* ── Step 3b: Brewery Details ───────────────────────────────────── */}
         {step === "details" && selectedRole === "brewery_owner" && (
           <div>
             <button onClick={() => setStep("role")} className="flex items-center gap-1 text-muted-foreground hover:text-foreground mb-6 text-sm transition-colors">
@@ -436,7 +594,7 @@ export default function Onboarding() {
               type={newBrewery ? "submit" : "button"}
               form={newBrewery ? "brewery-form" : undefined}
               disabled={onboardingMutation.isPending || (!selectedBrewery && !newBrewery)}
-              onClick={!newBrewery && selectedBrewery ? () => onboardingMutation.mutate({ role: "brewery_owner", breweryId: selectedBrewery.id }) : undefined}
+              onClick={!newBrewery && selectedBrewery ? () => onboardingMutation.mutate({ ...profileData, role: "brewery_owner", breweryId: selectedBrewery.id }) : undefined}
               className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold h-12 mt-2"
             >
               {onboardingMutation.isPending ? "Salvataggio..." : "Completa registrazione"}
@@ -448,6 +606,8 @@ export default function Onboarding() {
     </div>
   );
 }
+
+// ─── RoleCard ─────────────────────────────────────────────────────────────────
 
 function RoleCard({ icon, title, description, color, onClick, loading }: {
   icon: React.ReactNode;

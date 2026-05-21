@@ -220,14 +220,28 @@ export default function AuthPage() {
     onError: () => setForgotSent(true), // Always show success to avoid email enumeration
   });
 
+  const handleSocialLoginSuccess = async () => {
+    await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+    // Fetch fresh user data to check if onboarding is needed
+    try {
+      const userData = await queryClient.fetchQuery<any>({ queryKey: ["/api/auth/user"] });
+      if (userData?.needsOnboarding) {
+        setLocation("/onboarding");
+      } else {
+        setLocation("/dashboard");
+      }
+    } catch {
+      setLocation("/dashboard");
+    }
+  };
+
   const handleGoogleLogin = async () => {
     // Su native iOS/Android usa il plugin nativo (UI Google nativa, niente
     // WebView — Google blocca OAuth in WebView con errore disallowed_useragent).
     if (isNative) {
       const r = await loginGoogleNative();
       if (r.ok) {
-        await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-        setLocation("/dashboard");
+        await handleSocialLoginSuccess();
       } else {
         toast({
           title: "Login Google fallito",
@@ -252,8 +266,7 @@ export default function AuthPage() {
     }
     const r = await loginAppleNative();
     if (r.ok) {
-      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      setLocation("/dashboard");
+      await handleSocialLoginSuccess();
     } else {
       toast({
         title: "Login Apple fallito",

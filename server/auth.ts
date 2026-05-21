@@ -860,6 +860,27 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  // Check nickname availability (used during onboarding)
+  app.get('/api/auth/check-nickname', isAuthenticated, async (req: any, res) => {
+    try {
+      const nickname = (req.query.nickname as string || '').trim();
+      if (!nickname || nickname.length < 3) {
+        return res.json({ available: false, reason: 'too_short' });
+      }
+      if (!/^[a-zA-Z0-9_.]+$/.test(nickname)) {
+        return res.json({ available: false, reason: 'invalid_chars' });
+      }
+      const currentUser = req.user as User;
+      const [existing] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.nickname, nickname), sql`${users.id} != ${currentUser.id}`));
+      res.json({ available: !existing });
+    } catch (err) {
+      res.status(500).json({ available: false });
+    }
+  });
+
   // Legacy login endpoint (redirect)
   app.get('/api/login', (req, res) => {
     res.redirect('/login');
@@ -881,6 +902,8 @@ export async function setupAuth(app: Express) {
       const user = req.user as User;
       const {
         role, // 'customer' | 'pub_owner' | 'brewery_owner'
+        // profile fields (set during onboarding step 1)
+        nickname, firstName, lastName,
         // pub fields
         pubName, pubAddress, pubCity, pubRegion, vatNumber, phone, description,
         // brewery fields
@@ -949,8 +972,29 @@ export async function setupAuth(app: Express) {
         }
       }
 
+      // Validate nickname uniqueness if provided
+      if (nickname) {
+        const trimmedNick = nickname.trim();
+        if (trimmedNick.length >= 3 && /^[a-zA-Z0-9_.]+$/.test(trimmedNick)) {
+          const [nickTaken] = await db
+            .select({ id: users.id })
+            .from(users)
+            .where(and(eq(users.nickname, trimmedNick), sql`${users.id} != ${user.id}`));
+          if (nickTaken) {
+            return res.status(400).json({ message: 'Username già in uso, scegline un altro' });
+          }
+        }
+      }
+
+      // Build profile patch (only overwrite if value provided and field is currently empty)
+      const profilePatch: Record<string, any> = {};
+      if (nickname?.trim()) profilePatch.nickname = nickname.trim();
+      if (firstName?.trim() && !user.firstName) profilePatch.firstName = firstName.trim();
+      if (lastName?.trim() && !user.lastName) profilePatch.lastName = lastName.trim();
+
       // Update user record
       await db.update(users).set({
+        ...profilePatch,
         roles: newRoles,
         userType: newUserType,
         activeRole: 'customer',
