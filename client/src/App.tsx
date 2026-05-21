@@ -139,12 +139,24 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
     this.state = { hasError: false, error: null };
   }
   static getDerivedStateFromError(error: Error) {
+    // Per i chunk error su Safari/iOS non mostriamo la schermata di errore:
+    // componentDidCatch farà il reload in automatico.
+    const isChunkError = error.message?.includes('is not a valid JavaScript MIME type')
+      || error.message?.includes('Failed to fetch dynamically imported module')
+      || error.message?.includes('Loading chunk')
+      || error.message?.includes('Failed to load module script')
+      || error.name === 'ChunkLoadError';
+    if (isChunkError) return { hasError: false, error: null };
     return { hasError: true, error };
   }
   componentDidCatch(error: Error, info: any) {
-    // Chunk load error dopo un nuovo deploy → ricarica la pagina automaticamente
+    // Chunk load error dopo un nuovo deploy → ricarica la pagina automaticamente.
+    // Su Safari/iOS WebKit il chunk stale restituisce HTML al posto di JS
+    // e il browser lancia "'text/html' is not a valid JavaScript MIME type".
     const isChunkError = error.message?.includes('Failed to fetch dynamically imported module')
       || error.message?.includes('Loading chunk')
+      || error.message?.includes('is not a valid JavaScript MIME type')
+      || error.message?.includes('Failed to load module script')
       || error.name === 'ChunkLoadError';
     if (isChunkError) {
       const lastReload = sessionStorage.getItem('_chunk_reload');
