@@ -172,31 +172,62 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
     if (this.state.hasError) {
       const errMsg = this.state.error?.message || "Errore sconosciuto";
       const errStack = this.state.error?.stack || "";
+      const isChunkError = errMsg.includes('Failed to fetch dynamically imported module')
+        || errMsg.includes('Loading chunk')
+        || errMsg.includes('is not a valid JavaScript MIME type')
+        || errMsg.includes('Failed to load module script')
+        || this.state.error?.name === 'ChunkLoadError';
+      const handleForceReload = () => {
+        sessionStorage.removeItem('_chunk_reload_attempts');
+        window.location.replace(window.location.origin + '/?_v=' + Date.now());
+      };
       return (
         <div className="min-h-screen flex items-center justify-center bg-amber-50 dark:bg-[#15202B] p-6">
           <div className="text-center max-w-lg space-y-3">
             <p className="text-4xl">🍺</p>
-            <h2 className="text-xl font-bold text-gray-800 dark:text-white">Qualcosa è andato storto</h2>
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-left">
-              <p className="text-sm font-mono text-red-700 dark:text-red-300 break-all">{errMsg}</p>
-            </div>
-            <details className="text-left">
-              <summary className="text-xs text-gray-400 cursor-pointer">Dettagli tecnici</summary>
-              <pre className="mt-2 text-xs text-gray-500 dark:text-gray-400 overflow-auto max-h-40 bg-gray-100 dark:bg-[#1B2735] rounded p-2 whitespace-pre-wrap break-all">{errStack}</pre>
-            </details>
+            {isChunkError ? (
+              <>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white">Aggiornamento disponibile</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  L'app è stata aggiornata sul server. Tocca <strong>Ricarica</strong> per caricare la versione più recente.
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="text-xl font-bold text-gray-800 dark:text-white">Qualcosa è andato storto</h2>
+                <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 text-left">
+                  <p className="text-sm font-mono text-red-700 dark:text-red-300 break-all">{errMsg}</p>
+                </div>
+                <details className="text-left">
+                  <summary className="text-xs text-gray-400 cursor-pointer">Dettagli tecnici</summary>
+                  <pre className="mt-2 text-xs text-gray-500 dark:text-gray-400 overflow-auto max-h-40 bg-gray-100 dark:bg-[#1B2735] rounded p-2 whitespace-pre-wrap break-all">{errStack}</pre>
+                </details>
+              </>
+            )}
             <div className="flex gap-2 justify-center">
-              <button
-                className="mt-2 px-4 py-2 bg-gray-100 dark:bg-[#232F3D] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-[#2F3D4D]"
-                onClick={() => { navigator.clipboard?.writeText(errMsg + "\n\n" + errStack).catch(() => {}); }}
-              >
-                Copia errore
-              </button>
-              <button
-                className="mt-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600"
-                onClick={() => { this.setState({ hasError: false, error: null }); window.history.back(); }}
-              >
-                Torna indietro
-              </button>
+              {isChunkError ? (
+                <button
+                  className="mt-2 px-6 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600"
+                  onClick={handleForceReload}
+                >
+                  Ricarica
+                </button>
+              ) : (
+                <>
+                  <button
+                    className="mt-2 px-4 py-2 bg-gray-100 dark:bg-[#232F3D] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-[#2F3D4D]"
+                    onClick={() => { navigator.clipboard?.writeText(errMsg + "\n\n" + errStack).catch(() => {}); }}
+                  >
+                    Copia errore
+                  </button>
+                  <button
+                    className="mt-2 px-4 py-2 bg-amber-500 text-white rounded-lg text-sm font-medium hover:bg-amber-600"
+                    onClick={() => { this.setState({ hasError: false, error: null }); window.history.back(); }}
+                  >
+                    Torna indietro
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
