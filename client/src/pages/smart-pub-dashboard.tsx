@@ -868,6 +868,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                                     ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device · App ID ${(diag as any).appId ?? ""}${errLabel ? ` · ❌ ${errLabel}` : ""}`
                                     : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}${errLabel ? `\n❌ ${errLabel}` : ""}`
                                   : "📊 Diagnostica non disponibile";
+                                // ⚙️  errCode -1 = USER_CANCELLED (picker chiuso senza scegliere).
+                                // Con il fix delay 6s lato Kotlin, questo NON dovrebbe più
+                                // apparire quando il cast sta per partire. Ma se il picker
+                                // è stato davvero chiuso senza selezione, l'utente sa già
+                                // cosa ha fatto — non serve toast rosso aggressivo.
+                                if (errCode === -1) {
+                                  // Silenzioso: l'utente ha chiuduto il picker, nessun toast.
+                                  return;
+                                }
                                 const title = errCode === 2005 ? "Sessione Cast rifiutata" : "Nessun Chromecast trovato";
                                 toast({
                                   title,

@@ -41,7 +41,7 @@ class NativeCastPlugin : Plugin() {
         // getDiagnostics e visibile nel pannello diagnostica così l'utente
         // può verificare di avere installato l'APK aggiornato (non basta
         // ./deploy.sh per le modifiche Kotlin — serve ./scripts/build-apk.sh).
-        const val PLUGIN_BUILD_ID = "2026-05-21-v10-dismiss-delay"
+        const val PLUGIN_BUILD_ID = "2026-05-21-v11-6s-delay"
     }
 
     private var castContext: CastContext? = null
@@ -273,22 +273,24 @@ class NativeCastPlugin : Plugin() {
                     //
                     // Soluzione: puliamo solo il discovery callback e lasciamo che
                     // onSessionStarted/onSessionStartFailed gestiscano pendingCall.
-                    // Se entro 2s non succede nulla, allora risolviamo con USER_CANCELLED.
+                    // Se entro 6s non succede nulla, allora risolviamo con USER_CANCELLED.
                     dialog.setOnDismissListener {
                         try { router.removeCallback(discoveryCb) } catch (_: Exception) {}
                         android.util.Log.i(
                             "NativeCast",
-                            "Picker dismissed — waiting 2s for Cast SDK session event"
+                            "Picker dismissed — waiting 6s for Cast SDK session event"
                         )
-                        // Post delay 2s sul main thread: dà tempo a onSessionStarted/
-                        // onSessionStartFailed di consumare pendingCall.
+                        // Post delay 6s sul main thread: il Cast SDK impiega
+                        // tipicamente 3-5s da "device selezionato" a "sessione attiva".
+                        // Con 2s il pendingCall veniva risolto troppo presto → toast
+                        // "Nessun Chromecast trovato" anche se il cast stava per partire.
                         activity.window?.decorView?.postDelayed({
                             if (pendingCall != null) {
                                 lastErrorCode = -1
                                 lastErrorSource = "picker_dismissed(routes_at_open=$routesNow)"
                                 android.util.Log.w(
                                     "NativeCast",
-                                    "No session event after 2s — resolving USER_CANCELLED"
+                                    "No session event after 6s — resolving USER_CANCELLED"
                                 )
                                 pendingCall?.resolve(
                                     JSObject()
@@ -300,7 +302,7 @@ class NativeCastPlugin : Plugin() {
                                 pendingUrl = null; pendingTitle = null; pendingCall = null
                                 notifyState()
                             }
-                        }, 2000)
+                        }, 6000)
                     }
                     android.util.Log.i("NativeCast", "Showing MediaRouteChooserDialog")
                     dialog.show()
