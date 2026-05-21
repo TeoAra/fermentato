@@ -34,6 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 interface MenuCategoryManagerProps {
   pubId: number;
   categories: any[];
+  isLoading?: boolean;
 }
 
 // Helper function to get category icon based on name
@@ -50,7 +51,7 @@ const getCategoryIcon = (categoryName: string) => {
   return Utensils; // Default icon
 };
 
-export default function MenuCategoryManager({ pubId, categories }: MenuCategoryManagerProps) {
+export default function MenuCategoryManager({ pubId, categories, isLoading }: MenuCategoryManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -655,7 +656,20 @@ export default function MenuCategoryManager({ pubId, categories }: MenuCategoryM
 
       {/* Categories Grid */}
       <AnimatePresence>
-        {categories.length === 0 ? (
+        {isLoading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="p-4 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card space-y-3">
+                <div className="h-5 w-28 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                <div className="h-3 w-20 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                <div className="space-y-2 pt-2">
+                  <div className="h-3 w-full bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                  <div className="h-3 w-2/3 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : categories.length === 0 ? (
           <motion.div 
             className="text-center py-16"
             initial={{ opacity: 0, scale: 0.9 }}

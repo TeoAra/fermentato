@@ -57,9 +57,10 @@ interface BottleListManagerProps {
   pubId: number;
   bottleList: BottleItem[];
   tapList?: any[];
+  isLoading?: boolean;
 }
 
-export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleListManagerProps) {
+export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }: BottleListManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BottleItem | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
@@ -529,7 +530,20 @@ export function BottleListManager({ pubId, bottleList, tapList = [] }: BottleLis
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {bottleList.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3 py-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 p-4 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card">
+                <div className="w-12 h-12 rounded-lg bg-stone-100 dark:bg-[#1B2735] animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-32 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                  <div className="h-3 w-20 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                </div>
+                <div className="h-8 w-16 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+              </div>
+            ))}
+          </div>
+        ) : bottleList.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Wine className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>Nessuna birra in cantina.</p>

@@ -453,19 +453,19 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   }, [currentPub?.id]);
 
   // Fetch tap list
-  const { data: tapList = [] } = useQuery({
+  const { data: tapList = [], isLoading: taplistLoading } = useQuery({
     queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "taplist"],
     enabled: !!currentPub?.id,
   });
 
   // Fetch bottle list
-  const { data: bottleList = [] } = useQuery({
+  const { data: bottleList = [], isLoading: bottlesLoading } = useQuery({
     queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "bottles"],
     enabled: !!currentPub?.id,
   });
 
   // Fetch menu data
-  const { data: menuData = [] } = useQuery<any[]>({
+  const { data: menuData = [], isLoading: menuLoading } = useQuery<any[]>({
     queryKey: ["/api/pubs", String(currentPub?.id ?? ""), "menu"],
     enabled: !!currentPub?.id,
   });
@@ -1052,10 +1052,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       </div>
       
       <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-stone-100 dark:border-border">
-        <TapListManager 
-          pubId={currentPub?.id || 0} 
+        <TapListManager
+          pubId={currentPub?.id || 0}
           tapList={typedTapList}
           bottleList={typedBottleList}
+          isLoading={taplistLoading}
         />
       </div>
     </div>
@@ -1110,9 +1111,10 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.3 }}
       >
-        <MenuCategoryManager 
+        <MenuCategoryManager
           pubId={currentPub?.id || 0}
           categories={categoriesWithItems}
+          isLoading={menuLoading}
         />
       </motion.div>
     </motion.div>
@@ -1886,10 +1888,11 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       </div>
       
       <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-stone-100 dark:border-border">
-        <BottleListManager 
-          pubId={currentPub?.id || 0} 
+        <BottleListManager
+          pubId={currentPub?.id || 0}
           bottleList={typedBottleList}
           tapList={typedTapList}
+          isLoading={bottlesLoading}
         />
       </div>
     </div>

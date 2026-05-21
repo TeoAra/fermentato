@@ -155,7 +155,14 @@ function loginUser(req: any, user: User): Promise<void> {
 }
 
 export function registerNativeAuthRoutes(app: Express): void {
-  // ─── Google native login ────────────────────────────────────────────────
+  // ─── Config pubblica per il client nativo ───────────────────────────────
+  app.get("/api/client-config", (_req, res) => {
+    res.json({
+      googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+    });
+  });
+
+  // ─── Google native login ────────────────────────────────────────────────────
   app.post("/api/auth/google-native", async (req, res) => {
     try {
       const { idToken } = req.body as { idToken?: string };

@@ -74,9 +74,10 @@ interface TapListManagerProps {
   pubId: number;
   tapList: TapItem[];
   bottleList?: any[];
+  isLoading?: boolean;
 }
 
-export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManagerProps) {
+export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: TapListManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TapItem | null>(null);
   const [isChangingBeer, setIsChangingBeer] = useState(false);
@@ -1371,7 +1372,20 @@ export function TapListManager({ pubId, tapList, bottleList = [] }: TapListManag
         </CardDescription>
       </CardHeader>
       <CardContent>
-        {tapList.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3 py-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center gap-3 p-4 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card">
+                <div className="w-12 h-12 rounded-lg bg-stone-100 dark:bg-[#1B2735] animate-pulse" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-32 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                  <div className="h-3 w-20 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                </div>
+                <div className="h-8 w-16 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+              </div>
+            ))}
+          </div>
+        ) : tapList.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Beer className="w-12 h-12 mx-auto mb-4 text-stone-300" />
             <p>Nessuna birra alla spina.</p>

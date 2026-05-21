@@ -28,6 +28,25 @@ export const isNativeIos = isNative && Capacitor.getPlatform() === "ios";
 
 let initialized = false;
 let initPromise: Promise<void> | null = null;
+let cachedGoogleClientId: string | null | undefined = undefined;
+
+async function resolveGoogleClientId(): Promise<string | null> {
+  // 1. env build-time (Vite → VITE_GOOGLE_CLIENT_ID)
+  const envId = import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined;
+  if (envId) return envId;
+  // 2. cache runtime (fetchato dal server)
+  if (cachedGoogleClientId !== undefined) return cachedGoogleClientId;
+  // 3. fetch dal server — il server conosce GOOGLE_CLIENT_ID dalle env.
+  try {
+    const r = await fetch("/api/client-config", { credentials: "include" });
+    const cfg = await r.json();
+    cachedGoogleClientId = cfg.googleClientId || null;
+    return cachedGoogleClientId;
+  } catch {
+    cachedGoogleClientId = null;
+    return null;
+  }
+}
 
 /**
  * Inizializza il plugin SocialLogin una sola volta. Idempotente.
@@ -55,18 +74,17 @@ async function ensureInit(): Promise<void> {
       ? {}
       : { clientId: APPLE_SERVICE_ID, redirectUrl: APPLE_REDIRECT_URI };
     // Android richiede `webClientId` (Web OAuth Client ID dello stesso
-    // progetto Google Cloud, lo stesso usato da Passport lato server per
-    // GOOGLE_CLIENT_ID). È pubblico, non è un segreto. Va impostato come
-    // VITE_GOOGLE_CLIENT_ID nell'.env del VPS (stesso valore di
-    // GOOGLE_CLIENT_ID) prima di buildare. Senza, il plugin Android
-    // rigetta con "google.clientId is null or empty".
-    const googleWebClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID as
-      | string
-      | undefined;
+    // progetto Google Cloud). Prima prova l'env build-time, poi il server.
+    const googleWebClientId = await resolveGoogleClientId();
+    if (!googleWebClientId) {
+      throw new Error(
+        "Google clientId non disponibile. Verifica che GOOGLE_CLIENT_ID sia impostato nel server e VITE_GOOGLE_CLIENT_ID nel build."
+      );
+    }
     await SocialLogin.initialize({
       google: {
         iOSClientId: GOOGLE_IOS_CLIENT_ID,
-        ...(googleWebClientId ? { webClientId: googleWebClientId } : {}),
+        webClientId: googleWebClientId,
         mode: "online",
       },
       apple: appleConfig,
