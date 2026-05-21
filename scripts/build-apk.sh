@@ -424,12 +424,8 @@ build() {
   cd "$APP_DIR"
 
   echo "── 1/6 Pull ultimo codice ──"
-  # version.json viene bumped localmente; lo scartiamo prima del pull
-  git restore version.json 2>/dev/null \
-    || git checkout -- version.json 2>/dev/null \
-    || git checkout HEAD -- version.json 2>/dev/null \
-    || true
-  git pull
+  git fetch origin
+  git reset --hard origin/main
 
   echo "── 2/6 Installo dipendenze npm ──"
   npm install
@@ -655,11 +651,8 @@ aab() {
   cd "$APP_DIR"
 
   echo "── 1/6 Pull ultimo codice ──"
-  git restore version.json 2>/dev/null \
-    || git checkout -- version.json 2>/dev/null \
-    || git checkout HEAD -- version.json 2>/dev/null \
-    || true
-  git pull
+  git fetch origin
+  git reset --hard origin/main
 
   echo "── 2/6 Installo dipendenze npm ──"
   npm install
