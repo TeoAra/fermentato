@@ -1,0 +1,112 @@
+{
+  "appName": "Fermenta.to",
+  "themeId": "fermenta-orange",
+  "locales": ["it"],
+  "locale": "it",
+  "device": "android-7",
+  "orientation": "portrait",
+  "appIcon": "/app-icon.png",
+  "slidesByDevice": {
+    "android-7": [
+      {
+        "id": "t7_01",
+        "layout": "hero",
+        "label": { "it": "FERMENTA.TO" },
+        "headline": { "it": "Trova la birra\nperfetta." },
+        "screenshot": "/android/tablet-7/it/01.png"
+      },
+      {
+        "id": "t7_02",
+        "layout": "device-bottom",
+        "label": { "it": "PUB & LOCALI" },
+        "headline": { "it": "I migliori pub\nartigianali vicino a te." },
+        "screenshot": "/android/tablet-7/it/02.png"
+      },
+      {
+        "id": "t7_03",
+        "layout": "device-top",
+        "label": { "it": "CATALOGO" },
+        "headline": { "it": "Oltre 1 milione\ndi birre." },
+        "screenshot": "/android/tablet-7/it/03.png",
+        "inverted": true
+      },
+      {
+        "id": "t7_04",
+        "layout": "device-bottom",
+        "label": { "it": "EVENTI" },
+        "headline": { "it": "Mai più senza\nun evento." },
+        "screenshot": "/android/tablet-7/it/04.png"
+      },
+      {
+        "id": "t7_05",
+        "layout": "hero",
+        "label": { "it": "FESTIVAL MODE" },
+        "headline": { "it": "Il tuo festival\ndigitale." },
+        "screenshot": "/android/tablet-7/it/05.png"
+      },
+      {
+        "id": "t7_06",
+        "layout": "device-top",
+        "label": { "it": "OGNI BIRRA" },
+        "headline": { "it": "Recensisci,\nsalva, condividi." },
+        "screenshot": "/android/tablet-7/it/06.png",
+        "inverted": true
+      }
+    ],
+    "android-10": [
+      {
+        "id": "t10_01",
+        "layout": "hero",
+        "label": { "it": "FERMENTA.TO" },
+        "headline": { "it": "Trova la birra\nperfetta." },
+        "screenshot": "/android/tablet-10/it/01.png"
+      },
+      {
+        "id": "t10_02",
+        "layout": "device-bottom",
+        "label": { "it": "PUB & LOCALI" },
+        "headline": { "it": "I migliori pub\nartigianali vicino a te." },
+        "screenshot": "/android/tablet-10/it/02.png"
+      },
+      {
+        "id": "t10_03",
+        "layout": "device-top",
+        "label": { "it": "CATALOGO" },
+        "headline": { "it": "Oltre 1 milione\ndi birre." },
+        "screenshot": "/android/tablet-10/it/03.png",
+        "inverted": true
+      },
+      {
+        "id": "t10_04",
+        "layout": "device-bottom",
+        "label": { "it": "EVENTI" },
+        "headline": { "it": "Mai più senza\nun evento." },
+        "screenshot": "/android/tablet-10/it/04.png"
+      },
+      {
+        "id": "t10_05",
+        "layout": "hero",
+        "label": { "it": "FESTIVAL MODE" },
+        "headline": { "it": "Il tuo festival\ndigitale." },
+        "screenshot": "/android/tablet-10/it/05.png"
+      },
+      {
+        "id": "t10_06",
+        "layout": "device-top",
+        "label": { "it": "OGNI BIRRA" },
+        "headline": { "it": "Recensisci,\nsalva, condividi." },
+        "screenshot": "/android/tablet-10/it/06.png",
+        "inverted": true
+      }
+    ],
+    "feature-graphic": [
+      {
+        "id": "fg_01",
+        "layout": "feature-graphic",
+        "label": { "it": "" },
+        "headline": { "it": "Fermenta.to — la birra artigianale, in tasca." },
+        "screenshot": ""
+      }
+    ]
+  }
+}

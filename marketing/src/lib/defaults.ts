@@ -104,9 +104,47 @@ function ipadStarter(): Slide[] {
   ]);
 }
 
-function tabletStarter(): Slide[] {
+function tabletStarter(device: "tablet-7" | "tablet-10"): Slide[] {
+  const base = `/android/${device}/it`;
   return build([
-    { layout: "hero", label: "FERMENTA.TO", headline: "Trova la birra\nperfetta.", screenshot: "" },
+    {
+      layout: "hero",
+      label: "FERMENTA.TO",
+      headline: "Trova la birra\nperfetta.",
+      screenshot: `${base}/01.png`,
+    },
+    {
+      layout: "split-landscape",
+      label: "PUB & LOCALI",
+      headline: "I migliori pub\nartigianali vicino a te.",
+      screenshot: `${base}/02.png`,
+    },
+    {
+      layout: "device-top",
+      label: "CATALOGO",
+      headline: "Oltre 1 milione\ndi birre.",
+      screenshot: `${base}/03.png`,
+      inverted: true,
+    },
+    {
+      layout: "device-bottom",
+      label: "EVENTI",
+      headline: "Mai più senza\nun evento.",
+      screenshot: `${base}/04.png`,
+    },
+    {
+      layout: "hero",
+      label: "FESTIVAL MODE",
+      headline: "Il tuo festival\ndigitale.",
+      screenshot: `${base}/05.png`,
+    },
+    {
+      layout: "device-top",
+      label: "OGNI BIRRA",
+      headline: "Recensisci,\nsalva, condividi.",
+      screenshot: `${base}/06.png`,
+      inverted: true,
+    },
   ]);
 }
 
@@ -133,8 +171,8 @@ export const DEFAULT_PROJECT: ProjectState = {
     iphone: iphoneSlides(),
     android: androidSlides(),
     ipad: ipadStarter(),
-    "android-7": tabletStarter(),
-    "android-10": tabletStarter(),
+    "android-7": tabletStarter("tablet-7"),
+    "android-10": tabletStarter("tablet-10"),
     "feature-graphic": fgStarter(),
   },
 };
