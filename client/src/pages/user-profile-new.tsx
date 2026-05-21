@@ -985,7 +985,7 @@ export default function UserProfile() {
                                 title: "Account eliminato",
                                 description: "Il tuo account è stato eliminato con successo",
                               });
-                              setLocation("/");
+                              window.location.href = "/";
                             } catch (error) {
                               toast({
                                 title: "Errore",

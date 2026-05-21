@@ -29,6 +29,7 @@ import type { User } from "@shared/schema";
 
 // ─── Page lazy imports — loaded only when the route is visited ───────────────
 const NotFound           = lazy(() => import("@/pages/not-found"));
+const AccountDelete      = lazy(() => import("@/pages/account-delete"));
 const Landing            = lazy(() => import("@/pages/landing"));
 const Home               = lazy(() => import("@/pages/home"));
 const PubDetail          = lazy(() => import("@/pages/pub-detail"));
@@ -280,6 +281,7 @@ function Router() {
           <Route path="/" component={isLoading || !isAuthenticated ? Landing : Home} />
           <Route path="/login" component={AuthPage} />
           <Route path="/auth" component={AuthPage} />
+          <Route path="/account/delete" component={AccountDelete} />
           <Route path="/demo-login" component={DemoLoginPage} />
           <Route path="/pub/:id" component={PubDetail} />
           <Route path="/brewery/:id" component={BreweryDetail} />
