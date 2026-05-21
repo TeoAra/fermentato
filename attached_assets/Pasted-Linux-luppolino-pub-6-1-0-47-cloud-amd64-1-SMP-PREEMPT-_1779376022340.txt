@@ -1,0 +1,63 @@
+Linux luppolino.pub 6.1.0-47-cloud-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.1.170-3 (2026-05-08) x86_64
+
+The programs included with the Debian GNU/Linux system are free software;
+the exact distribution terms for each program are described in the
+individual files in /usr/share/doc/*/copyright.
+
+Debian GNU/Linux comes with ABSOLUTELY NO WARRANTY, to the extent
+permitted by applicable law.
+Last login: Thu May 21 09:34:11 2026 from 216.128.11.219
+root@luppolino:~# echo "=== Express diretto ==="
+curl -sI http://127.0.0.1:5000/assets/pub-detail-BTzW1H_T.js | head -10
+echo ""
+echo "=== Pubblico (Cloudflare+Nginx) ==="
+curl -sI "https://fermenta.to/assets/pub-detail-BTzW1H_T.js?bust=$(date +%s)" | head -15
+echo ""
+echo "=== HTML index ==="
+curl -sI "https://fermenta.to/?bust=$(date +%s)" | head -15
+=== Express diretto ===
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Permissions-Policy: display-capture=(self)
+Cache-Control: public, max-age=31536000, immutable
+Accept-Ranges: bytes
+Last-Modified: Thu, 21 May 2026 14:36:59 GMT
+ETag: W/"fd88-19e4af7e19b"
+Content-Type: text/javascript; charset=utf-8
+Content-Length: 64904
+Vary: Accept-Encoding
+
+=== Pubblico (Cloudflare+Nginx) ===
+HTTP/2 200 
+date: Thu, 21 May 2026 15:06:36 GMT
+content-type: text/javascript; charset=utf-8
+server: cloudflare
+x-powered-by: Express
+permissions-policy: display-capture=(self)
+cache-control: public, max-age=31536000, immutable
+last-modified: Thu, 21 May 2026 14:36:59 GMT
+etag: W/"fd88-19e4af7e19b"
+vary: Accept-Encoding
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=Ro1Ofxl2UeLD0VgUmV%2BupDf3XUhq%2FFS5eNyBajM4xyLFAaPdoq8QrKcNDKS0ULZ0stknrcQYXElknY8puUKioGVgWMFA4JAULrxiUy6Le09kbem4WbxyR7cmYnEWFyVZNYf6EsqQJIxUzg%3D%3D"}]}
+strict-transport-security: max-age=31536000
+alt-svc: h3=":443"; ma=86400
+cf-cache-status: MISS
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+
+=== HTML index ===
+HTTP/2 200 
+date: Thu, 21 May 2026 15:06:36 GMT
+content-type: text/html; charset=utf-8
+server: cloudflare
+x-powered-by: Express
+permissions-policy: display-capture=(self)
+cache-control: no-cache, no-store, must-revalidate
+pragma: no-cache
+expires: 0
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=t3Rk0TXDE4VH6f%2F3OFka5X1AgSvwumGRa9ISWQIkP4Q8g8FQRBbTLxtmSayn2WM9MdkVwx2Rp%2FNhnZ5t0fzkqp672FVMeLF%2BSD2%2BFWTZyO1O6K3qJXX0aq7CkEcWA9lcq%2Bpe61mUa2tftg%3D%3D"}]}
+last-modified: Thu, 21 May 2026 14:36:59 GMT
+vary: Accept-Encoding
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+strict-transport-security: max-age=31536000
+alt-svc: h3=":443"; ma=86400
+root@luppolino:~# 
