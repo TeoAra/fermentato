@@ -188,6 +188,14 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
+    // Asset hardening: una richiesta a /assets/<file> non esistente DEVE restituire 404,
+    // non il fallback SPA index.html. Altrimenti i service worker e i browser cachavano
+    // l'HTML come fosse un chunk JS → "Failed to fetch dynamically imported module".
+    const path = await import("path");
+    const distPublic = path.resolve(import.meta.dirname, "public");
+    const express = (await import("express")).default;
+    app.use("/assets", express.static(path.join(distPublic, "assets"), { immutable: true, maxAge: "1y" }));
+    app.use("/assets", (_req, res) => { res.status(404).type("text/plain").send("Asset not found"); });
     serveStatic(app);
   }
 

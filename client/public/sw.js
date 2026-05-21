@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'v9';
+const CACHE_VERSION = 'v10';
 const STATIC_CACHE = `fermenta-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `fermenta-pages-${CACHE_VERSION}`;
 const IMAGE_CACHE = `fermenta-images-${CACHE_VERSION}`;
@@ -112,11 +112,26 @@ function isMapTileRequest(url) {
 
 // ─── Strategies ───────────────────────────────────────────────────────────────
 
+// Verifica che la risposta sia davvero del tipo atteso dall'URL.
+// Es: una richiesta /assets/foo.js deve avere content-type JS, non text/html
+// (che indica un fallback SPA del server quando il file è stato eliminato/rinominato).
+function isValidAssetResponse(request, response) {
+  if (!response || !response.ok) return false;
+  const url = new URL(request.url);
+  const ct = (response.headers.get('content-type') || '').toLowerCase();
+  if (/\.js$/.test(url.pathname) && !ct.includes('javascript') && !ct.includes('ecmascript')) return false;
+  if (/\.css$/.test(url.pathname) && !ct.includes('css')) return false;
+  if (/\.(woff2?|ttf|eot)$/.test(url.pathname) && !ct.includes('font') && !ct.includes('octet-stream')) return false;
+  return true;
+}
+
 async function cacheFirst(request, cacheName) {
   const cached = await caches.match(request);
-  if (cached) return cached;
+  // Se la voce cached è invalida (es: HTML fallback salvato per errore in v9),
+  // la ignoriamo e proviamo la rete.
+  if (cached && isValidAssetResponse(request, cached)) return cached;
   const response = await fetch(request);
-  if (response.ok) {
+  if (isValidAssetResponse(request, response)) {
     const cache = await caches.open(cacheName);
     cache.put(request, response.clone());
   }
