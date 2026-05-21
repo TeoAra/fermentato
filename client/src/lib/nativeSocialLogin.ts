@@ -112,19 +112,11 @@ export interface NativeAuthResult {
  */
 export async function loginGoogleNative(): Promise<NativeAuthResult> {
   if (!isNative) return { ok: false, error: "not_native" };
-  try {
-    await ensureInit();
+
+  // ── Helper: esegue il login e invia il token al backend ──────────────────
+  async function doLogin(opts: Record<string, unknown>): Promise<NativeAuthResult> {
     const { SocialLogin } = await import("@capgo/capacitor-social-login");
-    // ⚙️  NOTA: non passiamo `scopes` espliciti.
-    // email+profile sono già gli scope di default di Google Sign-In.
-    // Passarli esplicitamente causa l'errore del plugin:
-    //   "You CANNOT use scopes without modifying the main activity"
-    // su APK Android quando la MainActivity non ha l'override onActivityResult.
-    const res = await SocialLogin.login({
-      provider: "google",
-      options: {},
-    });
-    // Il plugin ritorna res.result.idToken (JWT firmato da Google).
+    const res = await SocialLogin.login({ provider: "google", options: opts });
     // @ts-ignore — il tipo result varia per provider
     const idToken: string | undefined = res?.result?.idToken;
     if (!idToken) return { ok: false, error: "no_id_token" };
@@ -140,6 +132,30 @@ export async function loginGoogleNative(): Promise<NativeAuthResult> {
       return { ok: false, error: `backend_${r.status}: ${t.slice(0, 120)}` };
     }
     return { ok: true };
+  }
+
+  try {
+    await ensureInit();
+
+    // Tentativo 1: UI standard (GetSignInWithGoogleOption)
+    const r1 = await doLogin({});
+    if (r1.ok) return r1;
+
+    // ⚠️  Tentativo 2 (solo Android): se il primo è fallito con "cancelled",
+    // riproviamo con bottomUi=true (GetGoogleIdOption). Il CredentialManager
+    // di Android a volte ritorna "USER_CANCELLED" anche se l'utente ha
+    // selezionato l'account — un bug noto dello standard UI. La bottom UI
+    // usa un'API diversa e spesso funziona dove lo standard fallisce.
+    const isAndroid = Capacitor.getPlatform() === "android";
+    const wasCancelled = r1.error?.includes("cancelled") || r1.error?.includes("USER_CANCELLED");
+    if (isAndroid && wasCancelled) {
+      const r2 = await doLogin({ style: "bottom" });
+      if (r2.ok) return r2;
+      // Se anche bottom fallisce, ritorniamo l'errore del primo tentativo
+      // (più descrittivo per il troubleshooting).
+    }
+
+    return r1;
   } catch (e: any) {
     return { ok: false, error: e?.message || String(e) };
   }
