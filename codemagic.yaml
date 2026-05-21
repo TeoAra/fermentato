@@ -186,8 +186,9 @@ workflows:
       - name: Imposta versione e build number
         script: |
           set -e
-          VERSION=$(node -p "require('./package.json').version")
-          BUILD_NUM=$(date +%s)
+          VERSION=$(node -p "require('./version.json').version")
+          IFS='.' read -r VM_MAJOR VM_MINOR VM_PATCH <<< "$VERSION"
+          BUILD_NUM=$(( VM_MAJOR * 10000 + VM_MINOR * 100 + VM_PATCH ))
           cd ios/App
           sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = $VERSION;/g" App.xcodeproj/project.pbxproj
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9.]*;/CURRENT_PROJECT_VERSION = $BUILD_NUM;/g" App.xcodeproj/project.pbxproj
@@ -384,8 +385,9 @@ workflows:
       - name: Imposta versione e build number
         script: |
           set -e
-          VERSION=$(node -p "require('./package.json').version")
-          BUILD_NUM=$(date +%s)
+          VERSION=$(node -p "require('./version.json').version")
+          IFS='.' read -r VM_MAJOR VM_MINOR VM_PATCH <<< "$VERSION"
+          BUILD_NUM=$(( VM_MAJOR * 10000 + VM_MINOR * 100 + VM_PATCH ))
           cd ios/App
           sed -i '' "s/MARKETING_VERSION = [0-9.]*;/MARKETING_VERSION = $VERSION;/g" App.xcodeproj/project.pbxproj
           sed -i '' "s/CURRENT_PROJECT_VERSION = [0-9.]*;/CURRENT_PROJECT_VERSION = $BUILD_NUM;/g" App.xcodeproj/project.pbxproj
@@ -668,8 +670,9 @@ workflows:
 
       - name: Imposta versione e build number
         script: |
-          VERSION=$(node -p "require('./package.json').version")
-          BUILD_NUM=$(( $(date +%s) % 2000000000 ))
+          VERSION=$(node -p "require('./version.json').version")
+          IFS='.' read -r VM_MAJOR VM_MINOR VM_PATCH <<< "$VERSION"
+          BUILD_NUM=$(( VM_MAJOR * 10000 + VM_MINOR * 100 + VM_PATCH ))
           sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION\"/" android/app/build.gradle
           sed -i "s/versionCode [0-9]*/versionCode $BUILD_NUM/" android/app/build.gradle
           echo "Android $VERSION (versionCode $BUILD_NUM)"

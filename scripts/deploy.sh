@@ -48,11 +48,14 @@ if [[ "$MODE" == "pwa" ]]; then
   exit 0
 fi
 
-# ── 3. Git commit + push su main (triggera Codemagic: iOS TF + Android APK) ─
-step "git push origin main → build iOS TestFlight + Android APK"
+# ── 3. Bump versione app + push su main (triggera Codemagic: iOS TF + Android APK) ─
+step "Bump versione e push su main → build iOS TestFlight + Android APK"
+NEW_VERSION=$(bash "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/bump-version.sh")
+ok "Versione aggiornata: $NEW_VERSION"
+
 if [[ -n "$(git --no-optional-locks status --porcelain 2>/dev/null)" ]]; then
   git add -A -- ':!.env' ':!.env.*'
-  git commit -m "deploy: $(date '+%Y-%m-%d %H:%M')"
+  git commit -m "deploy: v$NEW_VERSION $(date '+%Y-%m-%d %H:%M')"
 fi
 git push origin main
 ok "Push su main — Codemagic avvierà ios-development + android-apk"
@@ -70,11 +73,11 @@ fi
 
 # ── 4. Tag per App Store (--release) ──────────────────────────────────────
 step "Creazione tag release per App Store"
-VERSION=$(node -p "require('./package.json').version")
+VERSION=$(node -p "require('./version.json').version")
 TAG="v${VERSION}"
 
 if git tag | grep -q "^${TAG}$"; then
-  fail "Tag ${TAG} esiste già. Aggiorna la versione in package.json prima."
+  fail "Tag ${TAG} esiste già. È già stato fatto un deploy con questa versione."
 fi
 
 git tag "$TAG"
