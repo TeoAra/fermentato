@@ -156,8 +156,11 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
       if (attempts < 3) {
         sessionStorage.setItem('_chunk_reload_attempts', String(attempts + 1));
         // Cache-busting URL: la WKWebView (iOS) non può riutilizzare l'HTML cached
-        // perché il query param è sempre diverso → fetcha l'index.html fresco dal server
-        const freshUrl = window.location.origin + '/?_v=' + Date.now();
+        // perché il query param è sempre diverso → fetcha l'index.html fresco dal server.
+        // PRESERVA il path corrente (es. /dashboard) così l'utente non viene buttato in home.
+        const pathname = window.location.pathname || '/';
+        const sep = window.location.search ? '&' : '?';
+        const freshUrl = window.location.origin + pathname + window.location.search + sep + '_v=' + Date.now() + window.location.hash;
         window.location.replace(freshUrl);
         return;
       }
@@ -179,7 +182,10 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
         || this.state.error?.name === 'ChunkLoadError';
       const handleForceReload = () => {
         sessionStorage.removeItem('_chunk_reload_attempts');
-        window.location.replace(window.location.origin + '/?_v=' + Date.now());
+        const pathname = window.location.pathname || '/';
+        const sep = window.location.search ? '&' : '?';
+        const freshUrl = window.location.origin + pathname + window.location.search + sep + '_v=' + Date.now() + window.location.hash;
+        window.location.replace(freshUrl);
       };
       return (
         <div className="min-h-screen flex items-center justify-center bg-amber-50 dark:bg-[#15202B] p-6">
