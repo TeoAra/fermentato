@@ -1,14 +1,41 @@
 import { Search, User, Home, Bell, Users } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, lazy, Suspense, type ReactNode } from "react";
+import { useState, useEffect, lazy, Suspense, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
+
+// Rileva se c'è un Dialog/Sheet/AlertDialog aperto controllando la presenza
+// di un overlay scuro fixed (backdrop Radix). Quando è aperto, nascondiamo
+// la bottom nav così il modale ha più spazio e non ci sono sovrapposizioni.
+function useAnyModalOpen(): boolean {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const check = () => {
+      const overlays = document.querySelectorAll('.fixed.inset-0');
+      for (const el of overlays) {
+        const cls = (el as HTMLElement).className || '';
+        if (cls.includes('bg-black/') || cls.includes('bg-black\\/')) {
+          setOpen(true);
+          return;
+        }
+      }
+      setOpen(false);
+    };
+    const observer = new MutationObserver(check);
+    observer.observe(document.body, { childList: true, subtree: true });
+    check();
+    return () => observer.disconnect();
+  }, []);
+  return open;
+}
 
 export function BottomNavigation() {
   const [location] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
+  const anyModalOpen = useAnyModalOpen();
 
   if (location.startsWith("/tv/") || location.startsWith("/festival-tv/")) return null;
 
@@ -77,7 +104,10 @@ export function BottomNavigation() {
       )}
 
       <nav
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#15202B] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)]"
+        className={cn(
+          "lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#15202B] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-transform duration-200",
+          anyModalOpen && "translate-y-[120%]"
+        )}
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
         <div className="relative flex items-stretch h-[64px] px-2">

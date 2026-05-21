@@ -46,6 +46,9 @@ if [ ! -d "ios" ]; then
 fi
 npx cap sync ios
 
+echo "    Genero splash screen native iOS (sovrascrivo il default Capacitor)..."
+node "$APP_DIR/scripts/generate-native-splash.js" || echo "    ⚠️  generate-native-splash.js fallito — splash di default resta in uso"
+
 echo "── 3/5 Genero asset iOS (icone + splash) ──"
 SOURCE_LOGO="capacitor-resources/icon-source.png"
 if [ ! -f "$SOURCE_LOGO" ]; then

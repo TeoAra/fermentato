@@ -406,6 +406,9 @@ build() {
   fi
   npx cap sync android
 
+  echo "    Genero splash screen native (sovrascrivo il default Capacitor)..."
+  node "$APP_DIR/scripts/generate-native-splash.js" || echo "    ⚠️  generate-native-splash.js fallito — splash di default resta in uso"
+
   echo "── 5/6 Applico icone, status bar e manifest patches ──"
   cd android
 
