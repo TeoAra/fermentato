@@ -424,6 +424,7 @@ build() {
   cd "$APP_DIR"
 
   echo "── 1/6 Pull ultimo codice ──"
+  git checkout version.json 2>/dev/null || true
   git pull
 
   echo "── 2/6 Installo dipendenze npm ──"
@@ -650,6 +651,9 @@ aab() {
   cd "$APP_DIR"
 
   echo "── 1/6 Pull ultimo codice ──"
+  # version.json viene modificato localmente da bump-version.sh ad ogni build;
+  # facciamo checkout prima del pull per evitare il conflitto di merge.
+  git checkout version.json 2>/dev/null || true
   git pull
 
   echo "── 2/6 Installo dipendenze npm ──"
