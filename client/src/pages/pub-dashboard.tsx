@@ -280,10 +280,11 @@ export default function PubDashboard() {
               <span className="sm:hidden">+ Pub</span>
             </a>
           </Button>
-          <Button asChild variant="outline" size="sm" className="text-xs sm:text-sm">
-            <a href="/api/logout">
-              Esci
-            </a>
+          <Button variant="outline" size="sm" className="text-xs sm:text-sm" onClick={() =>
+            fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+              .finally(() => { window.location.href = '/'; })
+          }>
+            Esci
           </Button>
         </div>
       </div>

@@ -295,21 +295,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
 
-  // Logout handler
+  // Logout handler — usa hard reload per azzerare la cache React Query
   const handleLogout = async () => {
     try {
-      // Call logout endpoint
       await apiRequest('/api/auth/logout', { method: 'POST' });
-      
-      // Clear query cache
-      queryClient.clear();
-      
-      // Redirect to home page
-      setLocation('/');
     } catch (error) {
       console.error('Logout error:', error);
-      // Even if logout fails, redirect to home
-      setLocation('/');
+    } finally {
+      window.location.href = '/';
     }
   };
   // ── Chromecast ───────────────────────────────────────────────────────────

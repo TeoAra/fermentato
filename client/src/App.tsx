@@ -232,6 +232,27 @@ function Router() {
     }
   }, [isLoading, isAuthenticated, typedUser?.needsOnboarding, location, navigate]);
 
+  // Su Android nativo (APK), i pub owner vengono portati direttamente alla
+  // pagina taplist TV del loro locale all'avvio — come su iOS.
+  // La pagina /tv/:id è più leggera della SmartPubDashboard e mostra subito
+  // la taplist senza dover aprire il pannello Cast manualmente.
+  useEffect(() => {
+    if (isLoading) return;
+    if (!isAuthenticated) return;
+    const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
+    if (!isNativeAndroid) return;
+    const isPubOwner = typedUser?.activeRole === "pub_owner"
+      || (typedUser?.roles || []).includes("pub_owner")
+      || typedUser?.userType === "pub_owner";
+    if (!isPubOwner) return;
+    const pubId = typedUser?.managedPubId;
+    if (!pubId) return;
+    // Solo se si è alla root (avvio app) — non sovrascrivere navigazioni esplicite
+    if (location === "/" || location === "") {
+      navigate(`/tv/${pubId}`);
+    }
+  }, [isLoading, isAuthenticated, typedUser?.activeRole, typedUser?.managedPubId, location, navigate]);
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Scroll to top on route change */}

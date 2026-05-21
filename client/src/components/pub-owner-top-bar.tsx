@@ -180,11 +180,16 @@ export function PubOwnerTopBar({
                   <span>Impostazioni</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <a href="/api/logout" className="cursor-pointer text-red-600 dark:text-red-400" data-testid="menu-logout">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Esci</span>
-                  </a>
+                <DropdownMenuItem
+                  className="cursor-pointer text-red-600 dark:text-red-400"
+                  data-testid="menu-logout"
+                  onClick={() =>
+                    fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+                      .finally(() => { window.location.href = '/'; })
+                  }
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Esci</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

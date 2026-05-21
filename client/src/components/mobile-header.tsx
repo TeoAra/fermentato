@@ -421,7 +421,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 onClick={() => {
                   onMenuToggle();
                   fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
-                    .then(() => setLocation('/'));
+                    .finally(() => { window.location.href = '/'; });
                 }}
                 data-testid="logout-button-mobile"
               >

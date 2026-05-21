@@ -241,8 +241,8 @@ export function DesktopSidebar() {
                   <DropdownMenuItem
                     className="flex items-center gap-2 text-[13px] text-red-600 dark:text-red-400 cursor-pointer"
                     onClick={() =>
-                      fetch("/api/auth/logout", { method: "POST", credentials: "include" }).then(
-                        () => setLocation("/")
+                      fetch("/api/auth/logout", { method: "POST", credentials: "include" }).finally(
+                        () => { window.location.href = "/"; }
                       )
                     }
                   >
