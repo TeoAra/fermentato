@@ -1,0 +1,53 @@
+/root/.pm2/logs/fermenta-error.log last 50 lines:
+0|fermenta | 2026-05-21T11:01:20: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T11:30:50: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T11:41:41: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T11:41:44: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T11:42:04: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T11:42:08: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T11:42:38: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T12:12:08: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T12:36:55: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T12:36:58: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T12:37:18: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T12:37:21: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T12:37:51: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T13:07:21: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T13:28:52: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T13:28:55: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T13:29:16: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T13:29:20: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T13:29:50: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T13:32:27: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T13:32:30: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T13:33:00: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T13:37:14: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T13:37:18: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T13:37:47: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T13:41:40: Error: ENOENT: no such file or directory, stat '/www/nodeapps/fermenta/dist/public/index.html'
+0|fermenta | 2026-05-21T13:41:48: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T13:41:52: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T13:42:21: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T13:42:22: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T13:42:26: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T13:42:55: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T13:49:52: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T13:49:55: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T13:50:25: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T13:52:47: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T13:52:50: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T13:53:20: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T13:55:29: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T13:55:32: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T13:56:02: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T14:01:07: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T14:01:10: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T14:01:40: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T14:02:22: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T14:02:25: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T14:02:55: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+0|fermenta | 2026-05-21T14:13:21: npm warn config init.module Use `--init-module` instead.
+0|fermenta | 2026-05-21T14:13:25: [indexes] migration soft-fail: column "slug" does not exist
+0|fermenta | 2026-05-21T14:13:54: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
+
+root@luppolino:/www/nodeapps/fermenta#
