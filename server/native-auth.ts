@@ -22,6 +22,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "./db";
 import { users, oauthAccounts } from "@shared/schema";
 import type { User } from "@shared/schema";
+import { sendWelcomeEmail } from "./email";
 
 // iOS OAuth Client ID Google (PUBBLICO, lo stesso usato dall'app iOS).
 // Web client ID se presente nelle env vars (per audience multipla).
@@ -120,6 +121,18 @@ async function findOrCreateUser(p: NormalizedUser): Promise<User> {
       .returning();
     if (!newUser) throw new Error("user_creation_failed");
     user = newUser;
+
+    // Mail di benvenuto per nuovi utenti via social login (Apple/Google).
+    // Coerente con la registrazione email/password che invia mail di
+    // verifica+benvenuto. Per Apple "Hide my email" l'indirizzo è il
+    // relay @privaterelay.appleid.com che inoltra al vero indirizzo.
+    if (newUser.email) {
+      const displayName =
+        [newUser.firstName, newUser.lastName].filter(Boolean).join(" ").trim();
+      sendWelcomeEmail(newUser.email, displayName).catch((err) => {
+        console.error("[native-auth] sendWelcomeEmail failed:", err?.message || err);
+      });
+    }
   }
 
   // 4. Linka OAuth account (se non già linkato)
