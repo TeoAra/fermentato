@@ -41,7 +41,7 @@ class NativeCastPlugin : Plugin() {
         // getDiagnostics e visibile nel pannello diagnostica così l'utente
         // può verificare di avere installato l'APK aggiornato (non basta
         // ./deploy.sh per le modifiche Kotlin — serve ./scripts/build-apk.sh).
-        const val PLUGIN_BUILD_ID = "2026-05-20-v8-manifest-rewrite"
+        const val PLUGIN_BUILD_ID = "2026-05-21-v9-uithread-fix"
     }
 
     private var castContext: CastContext? = null
@@ -165,6 +165,16 @@ class NativeCastPlugin : Plugin() {
 
     @PluginMethod
     fun initialize(call: PluginCall) {
+        // Capacitor esegue i @PluginMethod sul thread "CapacitorPlugins", ma
+        // l'intero Cast SDK (CastContext.getSharedInstance, ctx.castState,
+        // sessionManager.endCurrentSession, ecc.) richiede il main thread.
+        // Senza questo wrap → IllegalStateException("Must be called from the
+        // main thread") → FATAL EXCEPTION sul CapacitorPlugins thread → APK
+        // killed all'apertura della dashboard pub (dove useChromecast monta).
+        activity.runOnUiThread { initializeOnUiThread(call) }
+    }
+
+    private fun initializeOnUiThread(call: PluginCall) {
         // Su Android 13+ (API 33) NEARBY_WIFI_DEVICES è un runtime permission
         // OBBLIGATORIO per la discovery Chromecast via mDNS. Senza, il Cast SDK
         // non vede nessun device anche con manifest + Play Services OK.
@@ -298,15 +308,21 @@ class NativeCastPlugin : Plugin() {
 
     @PluginMethod
     fun endSession(call: PluginCall) {
-        try {
-            castContext?.sessionManager?.endCurrentSession(true)
-        } catch (_: Exception) {}
-        call.resolve(JSObject().put("success", true))
+        // sessionManager.endCurrentSession va invocato sul main thread.
+        activity.runOnUiThread {
+            try {
+                castContext?.sessionManager?.endCurrentSession(true)
+            } catch (_: Exception) {}
+            call.resolve(JSObject().put("success", true))
+        }
     }
 
     @PluginMethod
     fun getState(call: PluginCall) {
-        call.resolve(JSObject().put("state", currentStateString()))
+        // ctx.castState (dentro currentStateString) richiede il main thread.
+        activity.runOnUiThread {
+            call.resolve(JSObject().put("state", currentStateString()))
+        }
     }
 
     // ── Diagnostica: mirror della getDiagnostics iOS ──────────────────────────

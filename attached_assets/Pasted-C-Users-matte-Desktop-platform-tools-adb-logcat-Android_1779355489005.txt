@@ -1,0 +1,27 @@
+C:\Users\matte\Desktop\platform-tools>adb logcat AndroidRuntime:E *:S
+--------- beginning of crash
+05-21 11:24:33.643  1723  2050 E AndroidRuntime: FATAL EXCEPTION: CapacitorPlugins
+05-21 11:24:33.643  1723  2050 E AndroidRuntime: Process: to.fermenta.app, PID: 1723
+05-21 11:24:33.643  1723  2050 E AndroidRuntime: java.lang.RuntimeException: java.lang.reflect.InvocationTargetException
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at com.getcapacitor.Bridge.lambda$callPluginMethod$0(Bridge.java:850)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at com.getcapacitor.Bridge.$r8$lambda$FNYM7cvgeBk0k8YXQH7M96Mrf-c(Unknown Source:0)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at com.getcapacitor.Bridge$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at android.os.Handler.handleCallback(Handler.java:1027)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at android.os.Handler.dispatchMessage(Handler.java:108)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at android.os.Looper.loopOnce(Looper.java:298)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at android.os.Looper.loop(Looper.java:408)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at android.os.HandlerThread.run(HandlerThread.java:85)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime: Caused by: java.lang.reflect.InvocationTargetException
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at java.lang.reflect.Method.invoke(Native Method)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at com.getcapacitor.PluginHandle.invoke(PluginHandle.java:138)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at com.getcapacitor.Bridge.lambda$callPluginMethod$0(Bridge.java:841)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        ... 7 more
+05-21 11:24:33.643  1723  2050 E AndroidRuntime: Caused by: java.lang.IllegalStateException: Must be called from the main thread.
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at com.google.android.gms.common.internal.Preconditions.checkMainThread(com.google.android.gms:play-services-basement@@18.5.0:3)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at com.google.android.gms.cast.framework.CastContext.getCastState(com.google.android.gms:play-services-cast-framework@@21.4.0:1)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at to.fermenta.app.NativeCastPlugin.currentStateString(NativeCastPlugin.kt:391)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at to.fermenta.app.NativeCastPlugin.notifyState(NativeCastPlugin.kt:401)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        at to.fermenta.app.NativeCastPlugin.initialize(NativeCastPlugin.kt:187)
+05-21 11:24:33.643  1723  2050 E AndroidRuntime:        ... 10 more
+
+C:\Users\matte\Desktop\platform-tools>
