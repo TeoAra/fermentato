@@ -2,9 +2,11 @@ import { eq, count, desc, asc, sql, or, ilike, and } from "drizzle-orm";
 import { db, pool } from "./db";
 import { beers, breweries, users, pubs, publicanRequests, breweryRequests, reviewReports, userBeerTastings, pubEvents, breweryEvents, contentSuggestions, additionRequests, scanLogs, favorites } from "@shared/schema";
 import type { Express } from "express";
-import { isAuthenticated, isAdmin } from "./auth";
+import { isAuthenticated, isAdmin, hashPassword } from "./auth";
 import { sendPushToUser, sendPushToAdmins } from "./push-utils";
 import { storage } from "./storage";
+import { sendWelcomeEmail } from "./email";
+import { nanoid } from "nanoid";
 
 // In-memory TTL cache for read-heavy admin endpoints
 const _adminMemCache = new Map<string, { data: any; expires: number }>();
@@ -18,6 +20,96 @@ async function adminMemCached<T>(key: string, ttlMs: number, fetcher: () => Prom
 
 
 export function registerAdminRoutes(app: Express) {
+  // POST /api/admin/users — crea un nuovo utente manualmente da admin panel.
+  // L'admin può assegnare userType + ruoli, impostare una password iniziale
+  // (opzionale) e decidere se inviare la mail di benvenuto.
+  app.post('/api/admin/users', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const {
+        email,
+        nickname,
+        firstName,
+        lastName,
+        userType = 'customer',
+        password,
+        sendWelcome = true,
+      } = req.body || {};
+
+      const allowedTypes = ['customer', 'pub_owner', 'brewery_owner', 'admin'];
+      if (!allowedTypes.includes(userType)) {
+        return res.status(400).json({ message: "Tipo utente non valido" });
+      }
+      if (!email && !nickname) {
+        return res.status(400).json({ message: "Email o nickname obbligatori" });
+      }
+      if (email && typeof email === 'string') {
+        const existing = await db.select({ id: users.id }).from(users).where(eq(users.email, email.toLowerCase().trim())).limit(1);
+        if (existing.length > 0) {
+          return res.status(409).json({ message: "Esiste già un utente con questa email" });
+        }
+      }
+      if (nickname && typeof nickname === 'string') {
+        // Case-insensitive: coerente con login/registration (lower(nickname))
+        const existing = await db
+          .select({ id: users.id })
+          .from(users)
+          .where(sql`lower(${users.nickname}) = lower(${nickname.trim()})`)
+          .limit(1);
+        if (existing.length > 0) {
+          return res.status(409).json({ message: "Nickname già in uso" });
+        }
+      }
+
+      // roles array sempre include 'customer' + il ruolo aggiuntivo
+      const roles = userType === 'customer' ? ['customer'] : ['customer', userType];
+      const activeRole = userType;
+
+      const hashedPwd = password && typeof password === 'string' && password.length >= 6
+        ? await hashPassword(password)
+        : null;
+
+      const [newUser] = await db
+        .insert(users)
+        .values({
+          id: nanoid(),
+          email: email ? email.toLowerCase().trim() : null,
+          nickname: nickname ? nickname.trim() : null,
+          firstName: firstName || null,
+          lastName: lastName || null,
+          userType,
+          roles,
+          activeRole,
+          hashedPassword: hashedPwd,
+          isEmailVerified: !!email, // creato da admin = considerato verificato
+          needsOnboarding: false,
+        })
+        .returning();
+
+      if (!newUser) {
+        return res.status(500).json({ message: "Creazione utente fallita" });
+      }
+
+      if (sendWelcome && newUser.email) {
+        const displayName = [newUser.firstName, newUser.lastName].filter(Boolean).join(" ").trim();
+        sendWelcomeEmail(newUser.email, displayName).catch((err) => {
+          console.error("[admin create-user] sendWelcomeEmail failed:", err?.message || err);
+        });
+      }
+
+      // Mai esporre hashedPassword e token sensibili nella response.
+      const {
+        hashedPassword: _hp,
+        emailVerificationToken: _evt,
+        passwordResetToken: _prt,
+        ...safeUser
+      } = newUser as any;
+      res.status(201).json({ success: true, user: safeUser });
+    } catch (error: any) {
+      console.error("Error creating user:", error);
+      res.status(500).json({ message: error?.message || "Errore creazione utente" });
+    }
+  });
+
   // User management endpoints
   app.patch('/api/admin/users/:id/suspend', isAuthenticated, isAdmin, async (req, res) => {
     try {

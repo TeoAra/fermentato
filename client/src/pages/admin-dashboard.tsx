@@ -40,8 +40,11 @@ import {
   ChevronRight,
   Server,
   Wifi,
-  QrCode
+  QrCode,
+  UserPlus
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { Link } from "wouter";
@@ -75,6 +78,16 @@ export default function AdminDashboard() {
   const [unbanTarget, setUnbanTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
   const [activityFilter, setActivityFilter] = useState("all");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    email: "",
+    nickname: "",
+    firstName: "",
+    lastName: "",
+    userType: "customer",
+    password: "",
+    sendWelcome: true,
+  });
 
   useEffect(() => {
     if (!isLoading && (!isAuthenticated || user?.userType !== "admin")) {
@@ -109,6 +122,21 @@ export default function AdminDashboard() {
     },
     enabled: isAuthenticated && user?.userType === "admin",
     refetchInterval: 60000,
+  });
+
+  const createUserMutation = useMutation({
+    mutationFn: async (data: typeof createForm) =>
+      apiRequest("/api/admin/users", { method: "POST" }, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({ title: "Utente creato", description: "Nuovo utente aggiunto con successo" });
+      setCreateOpen(false);
+      setCreateForm({ email: "", nickname: "", firstName: "", lastName: "", userType: "customer", password: "", sendWelcome: true });
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err?.message || "Impossibile creare l'utente", variant: "destructive" });
+    },
   });
 
   const updateUserMutation = useMutation({
@@ -386,6 +414,15 @@ export default function AdminDashboard() {
                 />
               </div>
               <span className="text-sm text-muted-foreground">{filteredUsers.length} utenti</span>
+              <Button
+                size="sm"
+                className="ml-auto gap-2"
+                onClick={() => setCreateOpen(true)}
+                data-testid="button-create-user"
+              >
+                <UserPlus className="w-4 h-4" />
+                Crea utente
+              </Button>
             </div>
 
             <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm overflow-hidden">
@@ -634,6 +671,119 @@ export default function AdminDashboard() {
         </TabsContent>
       </Tabs>
       </PageContainer>
+
+      {/* ===== CREATE USER DIALOG ===== */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              Crea nuovo utente
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 pt-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label htmlFor="cu-firstName" className="text-xs">Nome</Label>
+                <Input
+                  id="cu-firstName"
+                  value={createForm.firstName}
+                  onChange={(e) => setCreateForm({ ...createForm, firstName: e.target.value })}
+                  data-testid="input-create-firstname"
+                />
+              </div>
+              <div>
+                <Label htmlFor="cu-lastName" className="text-xs">Cognome</Label>
+                <Input
+                  id="cu-lastName"
+                  value={createForm.lastName}
+                  onChange={(e) => setCreateForm({ ...createForm, lastName: e.target.value })}
+                  data-testid="input-create-lastname"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="cu-nickname" className="text-xs">Nickname *</Label>
+              <Input
+                id="cu-nickname"
+                value={createForm.nickname}
+                onChange={(e) => setCreateForm({ ...createForm, nickname: e.target.value })}
+                placeholder="es. mario.rossi"
+                data-testid="input-create-nickname"
+              />
+            </div>
+            <div>
+              <Label htmlFor="cu-email" className="text-xs">Email</Label>
+              <Input
+                id="cu-email"
+                type="email"
+                value={createForm.email}
+                onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                placeholder="opzionale, per email/password login"
+                data-testid="input-create-email"
+              />
+            </div>
+            <div>
+              <Label htmlFor="cu-password" className="text-xs">Password iniziale</Label>
+              <Input
+                id="cu-password"
+                type="text"
+                value={createForm.password}
+                onChange={(e) => setCreateForm({ ...createForm, password: e.target.value })}
+                placeholder="min. 6 caratteri (opzionale)"
+                data-testid="input-create-password"
+              />
+              <p className="text-xs text-muted-foreground mt-1">
+                Se vuota, l'utente potrà accedere solo via Google/Apple o reset password.
+              </p>
+            </div>
+            <div>
+              <Label htmlFor="cu-role" className="text-xs">Ruolo</Label>
+              <Select
+                value={createForm.userType}
+                onValueChange={(v) => setCreateForm({ ...createForm, userType: v })}
+              >
+                <SelectTrigger id="cu-role" data-testid="select-create-role">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="customer">Cliente</SelectItem>
+                  <SelectItem value="pub_owner">Pub Owner</SelectItem>
+                  <SelectItem value="brewery_owner">Brewery Owner</SelectItem>
+                  <SelectItem value="admin">Admin</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-center justify-between p-3 bg-stone-50 dark:bg-[#1B2735] rounded-lg">
+              <div>
+                <p className="text-sm font-medium">Invia email di benvenuto</p>
+                <p className="text-xs text-muted-foreground">Solo se l'email è compilata</p>
+              </div>
+              <Switch
+                checked={createForm.sendWelcome}
+                onCheckedChange={(v) => setCreateForm({ ...createForm, sendWelcome: v })}
+                data-testid="switch-create-welcome"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" className="flex-1" onClick={() => setCreateOpen(false)}>
+                Annulla
+              </Button>
+              <Button
+                className="flex-1"
+                disabled={
+                  createUserMutation.isPending ||
+                  (!createForm.email.trim() && !createForm.nickname.trim())
+                }
+                onClick={() => createUserMutation.mutate(createForm)}
+                data-testid="button-submit-create-user"
+              >
+                {createUserMutation.isPending ? "Creazione..." : "Crea utente"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* ===== EDIT ROLE DIALOG ===== */}
       <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
