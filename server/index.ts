@@ -195,7 +195,22 @@ app.use((req, res, next) => {
     const distPublic = path.resolve(import.meta.dirname, "public");
     const express = (await import("express")).default;
     app.use("/assets", express.static(path.join(distPublic, "assets"), { immutable: true, maxAge: "1y" }));
-    app.use("/assets", (_req, res) => { res.status(404).type("text/plain").send("Asset not found"); });
+    app.use("/assets", (_req, res) => {
+      // CRITICO: il middleware globale ha già impostato 'public, max-age=31536000, immutable'
+      // per qualunque path che inizia con /assets/. Lo SOVRASCRIVIAMO esplicitamente con
+      // no-store così Cloudflare e i browser NON cachano i 404 (altrimenti un chunk
+      // mancante anche solo per un istante diventa 404 cached per 1 anno).
+      res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+      res.setHeader("Pragma", "no-cache");
+      res.setHeader("Expires", "0");
+      res.setHeader("Surrogate-Control", "no-store");
+      res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      res.removeHeader("ETag");
+      // Usiamo res.end() invece di res.send() perché send() rigenera l'ETag
+      // (Express genera ETag automaticamente quando il body è una stringa),
+      // e un 404 cached con ETag potrebbe essere revalidato a 304 dalla CDN.
+      res.status(404).end("Asset not found");
+    });
     serveStatic(app);
   }
 
