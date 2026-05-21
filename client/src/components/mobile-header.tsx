@@ -239,13 +239,14 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
         <SheetContent
           side="right"
-          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#15202B] border-l border-stone-100/80 dark:border-white/[0.06] overflow-y-auto overscroll-contain touch-pan-y"
-          style={{ paddingTop: "env(safe-area-inset-top, 0px)", overflowY: "auto" }}
+          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#15202B] border-l border-stone-100/80 dark:border-white/[0.06] overflow-hidden"
+          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
         >
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
 
-          {/* ── User Profile Header ── */}
-          <div className="px-4 pt-6 pb-4 border-b border-stone-100 dark:border-white/[0.06]">
+          <div className="flex flex-col h-full overflow-hidden">
+            {/* ── User Profile Header (sticky in alto) ── */}
+            <div className="flex-shrink-0 px-4 pt-6 pb-4 border-b border-stone-100 dark:border-white/[0.06]">
             {isAuthenticated && typedUser ? (
               <>
                 <Link href="/dashboard" onClick={onMenuToggle}>
@@ -306,8 +307,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             )}
           </div>
 
-          {/* ── Nav items (non-scrollable; tutto il menu scorre come un'unica unità) ── */}
-          <div className="flex-1 py-2 space-y-0.5">
+          {/* ── Nav items: scrollabile, occupa tutto lo spazio rimanente ── */}
+          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain touch-pan-y py-2 space-y-0.5">
 
             <MenuItem href="/" icon={Home} label="Home" />
 
@@ -397,8 +398,8 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
           </div>
 
-          {/* ── Footer: tutorial + theme + logout (sticky al fondo) ── */}
-          <div className="sticky bottom-0 z-10 bg-white dark:bg-[#15202B] px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+4rem)]">
+          {/* ── Footer: tutorial + theme + logout (fisso in fondo) ── */}
+          <div className="flex-shrink-0 bg-white dark:bg-[#15202B] px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+4rem)]">
             <button
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground hover:bg-stone-50 dark:hover:bg-white/5 transition-colors tap-scale"
               onClick={() => {
@@ -436,6 +437,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 <span className="text-sm font-semibold">Accedi</span>
               </button>
             )}
+          </div>
           </div>
         </SheetContent>
       </Sheet>
