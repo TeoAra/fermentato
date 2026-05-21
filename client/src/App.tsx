@@ -133,6 +133,34 @@ const PageSkeleton = () => (
   </div>
 );
 
+// Helper: costruisce un URL cache-busting preservando il path corrente,
+// RIMUOVENDO eventuali parametri `_v` accumulati da reload precedenti.
+function buildFreshUrl(): string {
+  const pathname = window.location.pathname || '/';
+  const params = new URLSearchParams(window.location.search);
+  params.delete('_v');
+  params.set('_v', String(Date.now()));
+  return window.location.origin + pathname + '?' + params.toString() + window.location.hash;
+}
+
+// Helper: annulla la registrazione di tutti i service worker e cancella tutte
+// le cache (sia quelle del SW che le Cache Storage). Usato quando il SW vecchio
+// sta servendo risposte avvelenate (HTML cached come fosse un chunk JS).
+async function nukeServiceWorkerAndCaches(): Promise<void> {
+  try {
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map((r) => r.unregister().catch(() => false)));
+    }
+    if ('caches' in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((k) => caches.delete(k).catch(() => false)));
+    }
+  } catch (e) {
+    console.warn('[nukeServiceWorkerAndCaches]', e);
+  }
+}
+
 class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; error: Error | null }> {
   constructor(props: { children: ReactNode }) {
     super(props);
@@ -151,20 +179,23 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
       || error.message?.includes('Failed to load module script')
       || error.name === 'ChunkLoadError';
     if (isChunkError) {
-      // Contiamo i tentativi (max 3) per non looppare all'infinito
       const attempts = parseInt(sessionStorage.getItem('_chunk_reload_attempts') || '0');
-      if (attempts < 3) {
+      if (attempts < 2) {
+        // 1° tentativo: semplice cache-busting URL (preserva il path corrente)
         sessionStorage.setItem('_chunk_reload_attempts', String(attempts + 1));
-        // Cache-busting URL: la WKWebView (iOS) non può riutilizzare l'HTML cached
-        // perché il query param è sempre diverso → fetcha l'index.html fresco dal server.
-        // PRESERVA il path corrente (es. /dashboard) così l'utente non viene buttato in home.
-        const pathname = window.location.pathname || '/';
-        const sep = window.location.search ? '&' : '?';
-        const freshUrl = window.location.origin + pathname + window.location.search + sep + '_v=' + Date.now() + window.location.hash;
-        window.location.replace(freshUrl);
+        window.location.replace(buildFreshUrl());
         return;
       }
-      // Dopo 3 tentativi falliti: resetta il contatore e mostra la schermata di errore
+      if (attempts === 2) {
+        // 2° tentativo fallito → il SW vecchio sta servendo cache avvelenate.
+        // Forza la rimozione del SW e di tutte le cache, poi ricarica.
+        sessionStorage.setItem('_chunk_reload_attempts', String(attempts + 1));
+        nukeServiceWorkerAndCaches().then(() => {
+          window.location.replace(buildFreshUrl());
+        });
+        return;
+      }
+      // Dopo 3 tentativi: resetta e mostra schermata con pulsante manuale
       sessionStorage.removeItem('_chunk_reload_attempts');
     }
     console.error("[RouteErrorBoundary] ERROR:", error.message);
@@ -180,12 +211,12 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
         || errMsg.includes('is not a valid JavaScript MIME type')
         || errMsg.includes('Failed to load module script')
         || this.state.error?.name === 'ChunkLoadError';
-      const handleForceReload = () => {
+      const handleForceReload = async () => {
         sessionStorage.removeItem('_chunk_reload_attempts');
-        const pathname = window.location.pathname || '/';
-        const sep = window.location.search ? '&' : '?';
-        const freshUrl = window.location.origin + pathname + window.location.search + sep + '_v=' + Date.now() + window.location.hash;
-        window.location.replace(freshUrl);
+        // Annulla SW e cache PRIMA di ricaricare: l'auto-reload ha già fallito
+        // più volte, quindi il SW vecchio sta sicuramente servendo cache rotte.
+        await nukeServiceWorkerAndCaches();
+        window.location.replace(buildFreshUrl());
       };
       return (
         <div className="min-h-screen flex items-center justify-center bg-amber-50 dark:bg-[#15202B] p-6">
