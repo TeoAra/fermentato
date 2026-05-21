@@ -15,6 +15,11 @@ Per forzare l'aggiornamento in-app dopo un deploy importante:
 
 Questo trigger forza i client (PWA e APK) a ricaricare/aggiornare quando la versione installata è inferiore a `APP_MIN_VERSION`.
 
+### Nginx VPS — non riscrivere mai Cache-Control degli assets
+File: `/www/server/panel/vhost/nginx/proxy/fermenta.to/d6f6cb5cbb19f6acb9f6745957a7b2f2_fermenta.to.conf` (aaPanel/BT Panel).
+NON usare `expires Xm` né `add_header Cache-Control` né `add_header X-Cache` nel proxy verso `127.0.0.1:5000`. Express invia già gli header corretti (`immutable` per `/assets/*`, `no-store` per `/index.html` e API). Se Nginx li sovrascrive, Cloudflare può cachare HTML al posto di JS per ore causando "Expected JavaScript but got text/html" → "Failed to fetch dynamically imported module".
+Backup config corretto: `/root/proxy-fermenta-backup.conf` sul VPS.
+
 ## System Architecture
 
 ### Frontend
