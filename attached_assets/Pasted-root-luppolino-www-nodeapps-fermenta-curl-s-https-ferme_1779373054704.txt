@@ -1,0 +1,47 @@
+root@luppolino:/www/nodeapps/fermenta# curl -s https://fermenta.to/ | grep -oE 'assets/index-[A-Za-z0-9_-]+\.js'
+assets/index-hE2q8-Qt.js
+root@luppolino:/www/nodeapps/fermenta# ^C
+root@luppolino:/www/nodeapps/fermenta# sudo nginx -T 2>&1 | grep -E "(server_name|root|location|proxy_pass)" | head -40
+        server_names_hash_bucket_size 512;
+                limit_conn_zone $server_name zone=perserver:10m;
+        server_name phpmyadmin;
+        root  /www/server/phpmyadmin;
+            location ~ /tmp/ {
+        location ~ .*\.(gif|jpg|jpeg|png|bmp|swf)$
+        location ~ .*\.(js|css)?$
+        #location ~ /\.
+    location ~ [^/]\.php(/|$)
+fastcgi_param  SCRIPT_FILENAME    $document_root$fastcgi_script_name;
+fastcgi_param  DOCUMENT_ROOT      $document_root;
+fastcgi_param  SERVER_NAME        $server_name;
+    server_name _;
+    root /www/server/nginx/html;
+    server_name fermenta.to;
+    root /www/wwwroot/fermenta.to;
+    location ~ /purge(/.*) {
+    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|\.project|LICENSE|README.md)
+    location ~ \.well-known{
+      local filename = ngx.var.document_root .. m[0]
+            filename = "/www/wwwroot/java_node_ssl" ..  m[0]
+location /
+    proxy_pass http://127.0.0.1:5000;
+    server_name luppolino.pub www.luppolino.pub;
+    root /www/wwwroot/luppolino.pub/public;
+    location / {
+    location ~ \.php$ {
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+    location ~ ^/(\.user.ini|\.htaccess|\.git|\.env|\.svn|LICENSE|README.md) {
+    location ~* \.(?:ico|css|js|gif|jpe?g|png|woff2?|eot|ttf|svg)$ {
+    location ~ [^/]\.php(/|$)
+fastcgi_param SCRIPT_FILENAME $document_root$real_script_name;
+fastcgi_param  DOCUMENT_ROOT      $document_root;
+fastcgi_param  SERVER_NAME        $server_name;
+        server_name 127.0.0.1;
+        location /nginx_status {
+        location /phpfpm_52_status {
+        location /phpfpm_53_status {
+        location /phpfpm_54_status {
+        location /phpfpm_55_status {
+root@luppolino:/www/nodeapps/fermenta# ls /etc/nginx/conf.d/ 2>/dev/null
+root@luppolino:/www/nodeapps/fermenta# sudo find /etc/nginx -name "*.conf" 2>/dev/null
+root@luppolino:/www/nodeapps/fermenta#
