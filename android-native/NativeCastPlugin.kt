@@ -41,7 +41,7 @@ class NativeCastPlugin : Plugin() {
         // getDiagnostics e visibile nel pannello diagnostica così l'utente
         // può verificare di avere installato l'APK aggiornato (non basta
         // ./deploy.sh per le modifiche Kotlin — serve ./scripts/build-apk.sh).
-        const val PLUGIN_BUILD_ID = "2026-05-21-v9-uithread-fix"
+        const val PLUGIN_BUILD_ID = "2026-05-21-v10-dismiss-delay"
     }
 
     private var castContext: CastContext? = null
@@ -263,27 +263,44 @@ class NativeCastPlugin : Plugin() {
                     // Listener dismiss: se l'utente chiude il picker senza scegliere,
                     // la sessione non parte mai → onSessionStartFailed non viene chiamato →
                     // pendingCall resterebbe pending fino al timeout JS (30s).
-                    // Risolviamo subito con errorCode=-1 (sentinel USER_CANCELLED).
+                    //
+                    // ⚠️  FIX doppio-passaggio: non risolvere subito il pendingCall!
+                    // Quando l'utente seleziona un device, il dialog si chiude (dismiss)
+                    // PRIMA che onSessionStarted/onSessionStartFailed vengano chiamati
+                    // dal Cast SDK. Se risolviamo qui con false, la Promise JS ritorna
+                    // false anche se il cast sta per partire. La seconda volta la
+                    // sessione è già attiva e funziona — dà l'impressione del doppio passaggio.
+                    //
+                    // Soluzione: puliamo solo il discovery callback e lasciamo che
+                    // onSessionStarted/onSessionStartFailed gestiscano pendingCall.
+                    // Se entro 2s non succede nulla, allora risolviamo con USER_CANCELLED.
                     dialog.setOnDismissListener {
-                        // Rimuovi sempre il callback discovery per non sprecare batteria
                         try { router.removeCallback(discoveryCb) } catch (_: Exception) {}
-                        if (pendingCall != null) {
-                            lastErrorCode = -1
-                            lastErrorSource = "picker_dismissed(routes_at_open=$routesNow)"
-                            android.util.Log.w(
-                                "NativeCast",
-                                "Picker dismissed without selection — routes_at_open=$routesNow"
-                            )
-                            pendingCall?.resolve(
-                                JSObject()
-                                    .put("success", false)
-                                    .put("errorCode", -1)
-                                    .put("source", "picker_dismissed")
-                                    .put("routesAtOpen", routesNow)
-                            )
-                            pendingUrl = null; pendingTitle = null; pendingCall = null
-                            notifyState()
-                        }
+                        android.util.Log.i(
+                            "NativeCast",
+                            "Picker dismissed — waiting 2s for Cast SDK session event"
+                        )
+                        // Post delay 2s sul main thread: dà tempo a onSessionStarted/
+                        // onSessionStartFailed di consumare pendingCall.
+                        activity.window?.decorView?.postDelayed({
+                            if (pendingCall != null) {
+                                lastErrorCode = -1
+                                lastErrorSource = "picker_dismissed(routes_at_open=$routesNow)"
+                                android.util.Log.w(
+                                    "NativeCast",
+                                    "No session event after 2s — resolving USER_CANCELLED"
+                                )
+                                pendingCall?.resolve(
+                                    JSObject()
+                                        .put("success", false)
+                                        .put("errorCode", -1)
+                                        .put("source", "picker_dismissed")
+                                        .put("routesAtOpen", routesNow)
+                                )
+                                pendingUrl = null; pendingTitle = null; pendingCall = null
+                                notifyState()
+                            }
+                        }, 2000)
                     }
                     android.util.Log.i("NativeCast", "Showing MediaRouteChooserDialog")
                     dialog.show()

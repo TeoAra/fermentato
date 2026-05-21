@@ -115,9 +115,14 @@ export async function loginGoogleNative(): Promise<NativeAuthResult> {
   try {
     await ensureInit();
     const { SocialLogin } = await import("@capgo/capacitor-social-login");
+    // ⚙️  NOTA: non passiamo `scopes` espliciti.
+    // email+profile sono già gli scope di default di Google Sign-In.
+    // Passarli esplicitamente causa l'errore del plugin:
+    //   "You CANNOT use scopes without modifying the main activity"
+    // su APK Android quando la MainActivity non ha l'override onActivityResult.
     const res = await SocialLogin.login({
       provider: "google",
-      options: { scopes: ["email", "profile"] },
+      options: {},
     });
     // Il plugin ritorna res.result.idToken (JWT firmato da Google).
     // @ts-ignore — il tipo result varia per provider

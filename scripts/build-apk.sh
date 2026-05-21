@@ -238,9 +238,20 @@ inject_cast_plugin() {
       cat > "$PKG_DIR/MainActivity.kt" <<KTEOF
 package $PKG
 
+import android.content.Intent
 import com.getcapacitor.BridgeActivity
 
-class MainActivity : BridgeActivity()
+class MainActivity : BridgeActivity() {
+    // ── Richiesto da @capgo/capacitor-social-login per Google Sign-In ──
+    // Il plugin usa Google Sign-In SDK legacy che dipende da
+    // onActivityResult per restituire il token. BridgeActivity lo gestisce
+    // internamente, ma il plugin verifica esplicitamente che questa
+    // override esista — senza lancia "You CANNOT use scopes without
+    // modifying the main activity".
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+}
 KTEOF
       MAIN_FILE="$PKG_DIR/MainActivity.kt"
     fi
@@ -249,13 +260,22 @@ KTEOF
     sed -i '/registerPlugin(NativeCastPlugin/d' "$MAIN_FILE"
     case "$MAIN_FILE" in
       *.java)
-        sed -i "s|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport $PKG.NativeCastPlugin;|" "$MAIN_FILE"
+        sed -i "s|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport $PKG.NativeCastPlugin;\nimport android.content.Intent;|" "$MAIN_FILE"
         # IMPORTANTE: registerPlugin DEVE essere PRIMA di super.onCreate (Capacitor docs)
         sed -i 's/super.onCreate(savedInstanceState);/registerPlugin(NativeCastPlugin.class);\n        super.onCreate(savedInstanceState);/' "$MAIN_FILE"
+        # onActivityResult richiesto da @capgo/capacitor-social-login
+        if ! grep -q "void onActivityResult" "$MAIN_FILE"; then
+          sed -i 's/super.onActivityResult(requestCode, resultCode, data);/@Override\n    protected void onActivityResult(int requestCode, int resultCode, Intent data) {\n        super.onActivityResult(requestCode, resultCode, data);\n    }\n    \/\/ ----\n        super.onActivityResult(requestCode, resultCode, data);/' "$MAIN_FILE"
+          echo "    ✅ onActivityResult inserito in $MAIN_FILE"
+        fi
         echo "    ✅ NativeCastPlugin registrato in $MAIN_FILE (import → $PKG, prima di super.onCreate)"
         ;;
       *.kt)
         sed -i "s|import com.getcapacitor.BridgeActivity|import com.getcapacitor.BridgeActivity\nimport $PKG.NativeCastPlugin|" "$MAIN_FILE"
+        # Inserisci import Intent se manca (richiesto da onActivityResult)
+        if ! grep -q "import android.content.Intent" "$MAIN_FILE"; then
+          sed -i "s|import com.getcapacitor.BridgeActivity|import android.content.Intent\nimport com.getcapacitor.BridgeActivity|" "$MAIN_FILE"
+        fi
         if ! grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE"; then
           if grep -q "override fun onCreate" "$MAIN_FILE"; then
             sed -i 's/super.onCreate(savedInstanceState)/registerPlugin(NativeCastPlugin::class.java)\n        super.onCreate(savedInstanceState)/' "$MAIN_FILE"
@@ -274,6 +294,23 @@ idx = txt.rstrip().rfind("}")
 open(p, "w").write(txt[:idx] + inject + txt[idx:])
 PYEOF
           fi
+        fi
+        # Inserisci onActivityResult se manca (richiesto da @capgo/capacitor-social-login)
+        if ! grep -q "override fun onActivityResult" "$MAIN_FILE"; then
+          python3 - "$MAIN_FILE" <<'PYEOF'
+import sys
+p = sys.argv[1]
+txt = open(p).read()
+inject = """
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+"""
+# Inserisce prima dell'ultima graffa chiusa della classe
+idx = txt.rstrip().rfind("}")
+open(p, "w").write(txt[:idx] + inject + txt[idx:])
+PYEOF
+          echo "    ✅ onActivityResult inserito in $MAIN_FILE"
         fi
         echo "    ✅ NativeCastPlugin registrato in $MAIN_FILE"
         ;;
