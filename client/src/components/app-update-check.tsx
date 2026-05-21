@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Capacitor } from "@capacitor/core";
+import { App } from "@capacitor/app";
 import { APP_VERSION } from "@/lib/app-version";
 import { Button } from "@/components/ui/button";
-import { Download, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 
 interface VersionInfo {
   current: string;
@@ -23,7 +24,7 @@ function semverLt(a: string, b: string): boolean {
   return false;
 }
 
-// ── Banner leggero per web / PWA ─────────────────────────────────────────────
+// ── Banner leggero per web / PWA ────────────────────────────────────────────
 function WebUpdateBanner({ onDismiss }: { onDismiss: () => void }) {
   useEffect(() => {
     const t = setTimeout(() => window.location.reload(), 30_000);
@@ -57,11 +58,14 @@ function WebUpdateBanner({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
-// ── Schermata blocco per APK nativo datato ────────────────────────────────────
-function NativeUpdateBlock({ versionInfo, downloading, onDownload }: {
+// ── Dialog blocco per nativo (shell che carica JS da server.url) ────────────
+// Quando server.url è attivo in capacitor.config.ts, l'app è una shell:
+// il JS viene sempre caricato dal server, non dal bundle locale.
+// Quindi per aggiornare basta ricaricare la pagina — non serve scaricare
+// un nuovo APK. Il blocco mostra "Ricarica app" invece di "Scarica".
+function NativeReloadBlock({ versionInfo, onReload }: {
   versionInfo: VersionInfo;
-  downloading: boolean;
-  onDownload: () => void;
+  onReload: () => void;
 }) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/75 p-4">
@@ -80,38 +84,21 @@ function NativeUpdateBlock({ versionInfo, downloading, onDownload }: {
         </div>
 
         <div className="px-6 py-5 space-y-4">
-          {versionInfo.releaseNotes ? (
-            <p className="text-sm text-muted-foreground text-center leading-relaxed">
-              {versionInfo.releaseNotes}
-            </p>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center leading-relaxed">
-              È disponibile una nuova versione dell'app. Scaricala e installala per continuare.
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground text-center leading-relaxed">
+            {versionInfo.releaseNotes || "È disponibile una nuova versione. Ricarica l'app per aggiornare."}
+          </p>
 
           <Button
-            onClick={onDownload}
-            disabled={downloading}
+            onClick={onReload}
             className="w-full h-12 text-base font-bold"
             style={{ background: "linear-gradient(135deg, #f77104 0%, #e05a00 100%)" }}
           >
-            {downloading ? (
-              <>
-                <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
-                Apertura…
-              </>
-            ) : (
-              <>
-                <Download className="w-4 h-4 mr-2" />
-                Scarica aggiornamento
-              </>
-            )}
+            <RefreshCw className="w-5 h-5 mr-2" />
+            Ricarica app
           </Button>
 
           <p className="text-xs text-muted-foreground text-center">
-            Dopo il download, apri il file .apk per installarlo.{"\n"}
-            Potrebbe essere necessario abilitare le sorgenti sconosciute.
+            L'app si ricaricherà per scaricare la versione aggiornata dal server.
           </p>
         </div>
       </div>
@@ -119,66 +106,86 @@ function NativeUpdateBlock({ versionInfo, downloading, onDownload }: {
   );
 }
 
-// ── Componente principale ─────────────────────────────────────────────────────
+// ── Componente principale ───────────────────────────────────────────────────────────────
 export function AppUpdateCheck() {
   const isNative = Capacitor.isNativePlatform();
 
-  // Native: hard-block se versione APK < minimo richiesto dal server
+  // Native: hard-block se versione installata < minimo richiesto dal server
   const [updateRequired, setUpdateRequired] = useState(false);
   const [versionInfo, setVersionInfo] = useState<VersionInfo | null>(null);
-  const [downloading, setDownloading] = useState(false);
 
   // Web: banner leggero se la versione del server cambia dopo il caricamento
   const [webUpdateAvailable, setWebUpdateAvailable] = useState(false);
   const [webBannerDismissed, setWebBannerDismissed] = useState(false);
   const loadedVersionRef = useRef<string | null>(null);
+  const lastForegroundRef = useRef<number>(Date.now());
 
-  useEffect(() => {
-    const CHECK_INTERVAL = 5 * 60 * 1000; // 5 minuti
+  const check = useCallback(async () => {
+    try {
+      const res = await fetch("/api/app-version", { cache: "no-store" });
+      if (!res.ok) return;
+      const data: VersionInfo = await res.json();
 
-    const check = async () => {
-      try {
-        const res = await fetch("/api/app-version");
-        if (!res.ok) return;
-        const data: VersionInfo = await res.json();
-
-        if (isNative) {
-          // APK: blocco forzato se versione installata < minimo
-          if (semverLt(APP_VERSION, data.minimum)) {
-            setVersionInfo(data);
-            setUpdateRequired(true);
-          }
-        } else {
-          // Web: prima chiamata → memorizza versione corrente
-          if (loadedVersionRef.current === null) {
-            loadedVersionRef.current = data.current;
-          } else if (data.current !== loadedVersionRef.current) {
-            // Versione cambiata → nuovo deploy disponibile
-            setWebUpdateAvailable(true);
-          }
+      if (isNative) {
+        // APK: blocco forzato se versione installata < minimo
+        if (semverLt(APP_VERSION, data.minimum)) {
+          setVersionInfo(data);
+          setUpdateRequired(true);
         }
-      } catch {
-        // Rete non disponibile — ignora silenziosamente
+      } else {
+        // Web: prima chiamata → memorizza versione corrente
+        if (loadedVersionRef.current === null) {
+          loadedVersionRef.current = data.current;
+        } else if (data.current !== loadedVersionRef.current) {
+          // Versione cambiata → nuovo deploy disponibile
+          setWebUpdateAvailable(true);
+        }
       }
-    };
-
-    const t = setTimeout(check, 3000);
-    const interval = setInterval(check, CHECK_INTERVAL);
-    return () => { clearTimeout(t); clearInterval(interval); };
+    } catch {
+      // Rete non disponibile — ignora silenziosamente
+    }
   }, [isNative]);
 
-  const handleDownload = () => {
-    setDownloading(true);
-    window.open(versionInfo!.downloadUrl, "_blank");
-    setTimeout(() => setDownloading(false), 3000);
+  // Check periodico all'avvio e ogni 5 minuti
+  useEffect(() => {
+    const t = setTimeout(check, 3000);
+    const interval = setInterval(check, 5 * 60 * 1000);
+    return () => { clearTimeout(t); clearInterval(interval); };
+  }, [check]);
+
+  // Auto-reload quando l'app nativa torna in primo piano:
+  // se è stata in background per più di 5 min, ricarica per prendere
+  // eventuali aggiornamenti JS dal server (capacitor.config server.url).
+  useEffect(() => {
+    if (!isNative) return;
+    let listener: { remove: () => void } | null = null;
+
+    const setup = async () => {
+      listener = await App.addListener("appStateChange", ({ isActive }) => {
+        if (!isActive) return;
+        const now = Date.now();
+        // Se torna in primo piano dopo > 5 min in background, ricarica
+        if (now - lastForegroundRef.current > 5 * 60 * 1000) {
+          window.location.reload();
+        }
+        lastForegroundRef.current = now;
+        // Controlla anche se la versione minima è cambiata
+        check();
+      });
+    };
+    setup();
+    return () => { listener?.remove(); };
+  }, [isNative, check]);
+
+  const handleReload = () => {
+    window.location.reload();
   };
 
   if (isNative && updateRequired && versionInfo) {
     return (
-      <NativeUpdateBlock
+      <NativeReloadBlock
         versionInfo={versionInfo}
-        downloading={downloading}
-        onDownload={handleDownload}
+        onReload={handleReload}
       />
     );
   }
