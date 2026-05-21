@@ -24,28 +24,35 @@ function semverLt(a: string, b: string): boolean {
   return false;
 }
 
-// ── Banner leggero per web / PWA ────────────────────────────────────────────
-function WebUpdateBanner({ onDismiss }: { onDismiss: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(() => window.location.reload(), 30_000);
-    return () => clearTimeout(t);
-  }, []);
-
+// ── Banner morbido (non-bloccante) per web, PWA e iOS ──────────────────────────
+// Su iOS non blocchiamo mai l'utente: l'aggiornamento dipende da App Store
+// e non possiamo forzarlo. L'utente può ignorare il banner e continuare.
+function SoftUpdateBanner({
+  version,
+  onReload,
+  onDismiss,
+}: {
+  version: string;
+  onReload: () => void;
+  onDismiss: () => void;
+}) {
   return (
     <div className="fixed bottom-nav-above left-4 right-4 z-50 max-w-sm mx-auto">
       <div className="bg-white dark:bg-[#15202B] border border-amber-200 dark:border-amber-800 rounded-2xl px-4 py-3 shadow-2xl flex items-center gap-3">
         <div className="p-1.5 bg-gradient-to-br from-amber-500 to-orange-600 rounded-lg flex-shrink-0">
           <RefreshCw className="w-4 h-4 text-white" />
         </div>
-        <p className="flex-1 text-sm text-stone-700 dark:text-stone-300 leading-snug">
-          Nuova versione disponibile
-        </p>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm text-stone-700 dark:text-stone-300 leading-snug">
+            Nuova versione disponibile ({version})
+          </p>
+        </div>
         <Button
           size="sm"
-          onClick={() => window.location.reload()}
+          onClick={onReload}
           className="flex-shrink-0 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white text-xs h-8 px-3"
         >
-          Aggiorna
+          Ricarica
         </Button>
         <button
           onClick={onDismiss}
@@ -58,12 +65,11 @@ function WebUpdateBanner({ onDismiss }: { onDismiss: () => void }) {
   );
 }
 
-// ── Dialog blocco per nativo (shell che carica JS da server.url) ────────────
-// Quando server.url è attivo in capacitor.config.ts, l'app è una shell:
-// il JS viene sempre caricato dal server, non dal bundle locale.
-// Quindi per aggiornare basta ricaricare la pagina — non serve scaricare
-// un nuovo APK. Il blocco mostra "Ricarica app" invece di "Scarica".
-function NativeReloadBlock({ versionInfo, onReload }: {
+// ── Dialog blocco SOLO per Android ──────────────────────────────────────────────
+// Su Android tu controlli l'APK (build locale su VPS). Quando la versione
+// installata è obsoleta, blocchiamo con un reload — l'app è una shell che
+// carica JS dal server (capacitor.config server.url), quindi basta ricaricare.
+function AndroidHardBlock({ versionInfo, onReload }: {
   versionInfo: VersionInfo;
   onReload: () => void;
 }) {
@@ -107,16 +113,24 @@ function NativeReloadBlock({ versionInfo, onReload }: {
 }
 
 // ── Componente principale ───────────────────────────────────────────────────────────────
+// Strategia per piattaforma:
+//   • Android  → hard block (dialog modale) — tu controlli l'APK
+//   • iOS      → soft banner (ignorabile)   — aggiornamento via App Store
+//   • Web/PWA  → soft banner (ignorabile)   — reload quando l'utente vuole
 export function AppUpdateCheck() {
   const isNative = Capacitor.isNativePlatform();
+  const platform = isNative ? Capacitor.getPlatform() : null;
+  const isAndroid = platform === "android";
+  const isIOS = platform === "ios";
 
-  // Native: hard-block se versione installata < minimo richiesto dal server
-  const [updateRequired, setUpdateRequired] = useState(false);
-  const [versionInfo, setVersionInfo] = useState<VersionInfo | null>(null);
+  // Android: hard-block; iOS/Web: soft banner
+  const [androidBlocked, setAndroidBlocked] = useState(false);
+  const [androidVersionInfo, setAndroidVersionInfo] = useState<VersionInfo | null>(null);
 
-  // Web: banner leggero se la versione del server cambia dopo il caricamento
-  const [webUpdateAvailable, setWebUpdateAvailable] = useState(false);
-  const [webBannerDismissed, setWebBannerDismissed] = useState(false);
+  const [softUpdateVisible, setSoftUpdateVisible] = useState(false);
+  const [softUpdateVersion, setSoftUpdateVersion] = useState("");
+  const [softBannerDismissed, setSoftBannerDismissed] = useState(false);
+
   const loadedVersionRef = useRef<string | null>(null);
   const lastForegroundRef = useRef<number>(Date.now());
 
@@ -126,25 +140,25 @@ export function AppUpdateCheck() {
       if (!res.ok) return;
       const data: VersionInfo = await res.json();
 
-      if (isNative) {
-        // APK: blocco forzato se versione installata < minimo
+      if (isAndroid) {
+        // Android: blocco forzato se versione installata < minimo
         if (semverLt(APP_VERSION, data.minimum)) {
-          setVersionInfo(data);
-          setUpdateRequired(true);
+          setAndroidVersionInfo(data);
+          setAndroidBlocked(true);
         }
       } else {
-        // Web: prima chiamata → memorizza versione corrente
+        // iOS / Web: banner morbido quando la versione sul server cambia
         if (loadedVersionRef.current === null) {
           loadedVersionRef.current = data.current;
-        } else if (data.current !== loadedVersionRef.current) {
-          // Versione cambiata → nuovo deploy disponibile
-          setWebUpdateAvailable(true);
+        } else if (data.current !== loadedVersionRef.current && !softBannerDismissed) {
+          setSoftUpdateVersion(data.current);
+          setSoftUpdateVisible(true);
         }
       }
     } catch {
       // Rete non disponibile — ignora silenziosamente
     }
-  }, [isNative]);
+  }, [isAndroid, softBannerDismissed]);
 
   // Check periodico all'avvio e ogni 5 minuti
   useEffect(() => {
@@ -164,7 +178,7 @@ export function AppUpdateCheck() {
       listener = await App.addListener("appStateChange", ({ isActive }) => {
         if (!isActive) return;
         const now = Date.now();
-        // Se torna in primo piano dopo > 5 min in background, ricarica
+        // Torna in primo piano dopo > 5 min in background → ricarica
         if (now - lastForegroundRef.current > 5 * 60 * 1000) {
           window.location.reload();
         }
@@ -181,17 +195,25 @@ export function AppUpdateCheck() {
     window.location.reload();
   };
 
-  if (isNative && updateRequired && versionInfo) {
+  // Android: dialog bloccante
+  if (isAndroid && androidBlocked && androidVersionInfo) {
     return (
-      <NativeReloadBlock
-        versionInfo={versionInfo}
+      <AndroidHardBlock
+        versionInfo={androidVersionInfo}
         onReload={handleReload}
       />
     );
   }
 
-  if (!isNative && webUpdateAvailable && !webBannerDismissed) {
-    return <WebUpdateBanner onDismiss={() => setWebBannerDismissed(true)} />;
+  // iOS / Web: banner morbido non-bloccante
+  if (softUpdateVisible && !softBannerDismissed) {
+    return (
+      <SoftUpdateBanner
+        version={softUpdateVersion}
+        onReload={handleReload}
+        onDismiss={() => setSoftBannerDismissed(true)}
+      />
+    );
   }
 
   return null;
