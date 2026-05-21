@@ -7241,13 +7241,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       `, [beerId])).rows[0];
       if (!info) return res.status(404).json({ message: "beer not found" });
 
-      // Authorise: admin or owner of the beer's brewery
+      // Authorise: admin, brewery owner della birra, OR qualsiasi pub_owner.
+      // La preview è solo lettura (cerca un'immagine sul web e la restituisce
+      // senza salvarla in DB). I pub owner gestiscono i menù del loro locale
+      // e hanno bisogno di poter cercare le copertine delle birre che servono.
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       const effectiveRole = user?.activeRole || user?.userType;
-      const isAdminUser = effectiveRole === "admin";
-      const isOwner = user?.breweryId != null && user.breweryId === info.brewery_id;
-      if (!isAdminUser && !isOwner) {
+      const userRoles = user?.roles || [];
+      const isAdminUser = effectiveRole === "admin" || userRoles.includes("admin");
+      const isBreweryOwnerOfThis = user?.breweryId != null && user.breweryId === info.brewery_id;
+      const isPubOwner = effectiveRole === "pub_owner" || userRoles.includes("pub_owner");
+      const isBreweryOwner = effectiveRole === "brewery_owner" || userRoles.includes("brewery_owner");
+      if (!isAdminUser && !isBreweryOwnerOfThis && !isPubOwner && !isBreweryOwner) {
         return res.status(403).json({ message: "Not authorized" });
       }
 
