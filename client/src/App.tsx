@@ -151,13 +151,18 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
       || error.message?.includes('Failed to load module script')
       || error.name === 'ChunkLoadError';
     if (isChunkError) {
-      const lastReload = sessionStorage.getItem('_chunk_reload');
-      const now = Date.now();
-      if (!lastReload || now - parseInt(lastReload) > 10000) {
-        sessionStorage.setItem('_chunk_reload', String(now));
-        window.location.reload();
+      // Contiamo i tentativi (max 3) per non looppare all'infinito
+      const attempts = parseInt(sessionStorage.getItem('_chunk_reload_attempts') || '0');
+      if (attempts < 3) {
+        sessionStorage.setItem('_chunk_reload_attempts', String(attempts + 1));
+        // Cache-busting URL: la WKWebView (iOS) non può riutilizzare l'HTML cached
+        // perché il query param è sempre diverso → fetcha l'index.html fresco dal server
+        const freshUrl = window.location.origin + '/?_v=' + Date.now();
+        window.location.replace(freshUrl);
         return;
       }
+      // Dopo 3 tentativi falliti: resetta il contatore e mostra la schermata di errore
+      sessionStorage.removeItem('_chunk_reload_attempts');
     }
     console.error("[RouteErrorBoundary] ERROR:", error.message);
     console.error("[RouteErrorBoundary] STACK:", error.stack);
