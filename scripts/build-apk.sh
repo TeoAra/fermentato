@@ -585,12 +585,208 @@ KTEOF
   echo "════════════════════════════════════════════"
 }
 
+aab() {
+  echo "════════════════════════════════════════════"
+  echo "  Build AAB Fermenta.to (Google Play)        "
+  echo "════════════════════════════════════════════"
+
+  check_prereqs
+
+  # Carica SDKMAN e Java 21
+  # shellcheck disable=SC1090
+  source "$HOME/.sdkman/bin/sdkman-init.sh" 2>/dev/null || true
+  export JAVA_HOME="$HOME/.sdkman/candidates/java/current"
+  export ANDROID_HOME="$ANDROID_SDK_DIR"
+  export PATH="$JAVA_HOME/bin:$PATH:$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/build-tools/34.0.0"
+
+  if ! command -v java >/dev/null 2>&1; then
+    echo "❌ Java non trovato. Esegui prima: bash scripts/build-apk.sh setup"
+    exit 1
+  fi
+  if [ ! -d "$ANDROID_HOME" ]; then
+    echo "❌ Android SDK non trovato. Esegui prima: bash scripts/build-apk.sh setup"
+    exit 1
+  fi
+
+  echo "Java: $(java -version 2>&1 | head -1)"
+
+  # ── Keystore per firma release ──────────────────────────────────────────────
+  # Le credenziali si leggono da env; se assenti usano i default sicuri.
+  # Metti queste variabili nel .env del server VPS oppure esportale prima di
+  # lanciare lo script:
+  #   export FERMENTA_KEY_PASS="una-password-sicura"
+  #   export FERMENTA_KEY_ALIAS="fermenta"
+  KEYSTORE_DIR="$APP_DIR/keystore"
+  KEYSTORE_PATH="$KEYSTORE_DIR/fermenta-upload.jks"
+  KEY_ALIAS="${FERMENTA_KEY_ALIAS:-fermenta}"
+  KEY_PASS="${FERMENTA_KEY_PASS:-FermentaUpload2024!}"
+  STORE_PASS="$KEY_PASS"
+
+  mkdir -p "$KEYSTORE_DIR"
+  if [ ! -f "$KEYSTORE_PATH" ]; then
+    echo "── Genero keystore upload (prima volta) ──"
+    keytool -genkeypair \
+      -v \
+      -keystore "$KEYSTORE_PATH" \
+      -alias "$KEY_ALIAS" \
+      -keyalg RSA \
+      -keysize 2048 \
+      -validity 10000 \
+      -storepass "$STORE_PASS" \
+      -keypass "$KEY_PASS" \
+      -dname "CN=Fermenta.to, OU=Mobile, O=Fermenta, L=Italy, S=Italy, C=IT"
+    echo "✅ Keystore generato: $KEYSTORE_PATH"
+    echo ""
+    echo "⚠️  IMPORTANTE — esegui questi passi UNA SOLA VOLTA su Google Play Console:"
+    echo "   1. App → Release → Setup → App signing"
+    echo "   2. Carica il certificato upload (export dal keystore):"
+    echo "      keytool -export -rfc -keystore $KEYSTORE_PATH -alias $KEY_ALIAS -storepass $STORE_PASS -file upload-cert.pem"
+    echo "   3. Poi carica il file upload-cert.pem su Play Console."
+    echo ""
+  else
+    echo "    ✅ Keystore esistente: $KEYSTORE_PATH"
+  fi
+
+  cd "$APP_DIR"
+
+  echo "── 1/6 Pull ultimo codice ──"
+  git pull
+
+  echo "── 2/6 Installo dipendenze npm ──"
+  npm install
+
+  echo "── 3/6 Build Vite ──"
+  set -a; source .env.capacitor 2>/dev/null || true; set +a
+  npx vite build
+
+  echo "── 4/6 Sincronizzo piattaforma Android ──"
+  if [ ! -d "android" ]; then
+    npx cap add android
+  fi
+  npx cap sync android
+
+  echo "    Forzo applicationId a to.fermenta.app..."
+  sed -i 's/applicationId "[^"]*"/applicationId "to.fermenta.app"/' android/app/build.gradle
+
+  echo "    Correggo package Kotlin..."
+  OLD_PKG_DIR="android/app/src/main/java/to/fermentato/app"
+  NEW_PKG_DIR="android/app/src/main/java/to/fermenta/app"
+  if [ -d "$OLD_PKG_DIR" ] && [ ! -d "$NEW_PKG_DIR" ]; then
+    mkdir -p "$NEW_PKG_DIR"
+    if [ -f "$OLD_PKG_DIR/MainActivity.kt" ]; then
+      sed 's/package to\.fermentato\.app/package to.fermenta.app/' "$OLD_PKG_DIR/MainActivity.kt" > "$NEW_PKG_DIR/MainActivity.kt"
+    else
+      cat > "$NEW_PKG_DIR/MainActivity.kt" <<KTEOF
+package to.fermenta.app
+
+import android.content.Intent
+import com.getcapacitor.BridgeActivity
+
+class MainActivity : BridgeActivity() {
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+}
+KTEOF
+    fi
+    rm -rf "$OLD_PKG_DIR"
+  fi
+
+  echo "    Bump versione app..."
+  NEW_VERSION=$(bash "$APP_DIR/scripts/bump-version.sh")
+  echo "    ✅ Versione: $NEW_VERSION"
+
+  node "$APP_DIR/scripts/generate-native-splash.js" || true
+
+  echo "── 5/6 Applico icone, versione, status bar e manifest patches ──"
+  cd android
+
+  IFS='.' read -r VM_MAJOR VM_MINOR VM_PATCH <<< "$NEW_VERSION"
+  VERSION_CODE=$(( VM_MAJOR * 10000 + VM_MINOR * 100 + VM_PATCH ))
+  if [ -f "app/build.gradle" ]; then
+    sed -i "s/versionName \"[^\"]*\"/versionName \"$NEW_VERSION\"/" app/build.gradle
+    sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" app/build.gradle
+    echo "    ✅ versionName=$NEW_VERSION versionCode=$VERSION_CODE"
+  fi
+
+  ICONS_SRC="$APP_DIR/capacitor-resources/android"
+  if [ -d "$ICONS_SRC" ]; then
+    for dir in mipmap-mdpi mipmap-hdpi mipmap-xhdpi mipmap-xxhdpi mipmap-xxxhdpi; do
+      DEST="app/src/main/res/$dir"
+      mkdir -p "$DEST"
+      cp "$ICONS_SRC/$dir/ic_launcher.png"            "$DEST/ic_launcher.png"
+      cp "$ICONS_SRC/$dir/ic_launcher_round.png"       "$DEST/ic_launcher_round.png"
+      cp "$ICONS_SRC/$dir/ic_launcher_foreground.png"  "$DEST/ic_launcher_foreground.png"
+    done
+    ANYDPI_DEST="app/src/main/res/mipmap-anydpi-v26"
+    mkdir -p "$ANYDPI_DEST"
+    cp "$ICONS_SRC/mipmap-anydpi-v26/ic_launcher.xml"       "$ANYDPI_DEST/ic_launcher.xml"
+    cp "$ICONS_SRC/mipmap-anydpi-v26/ic_launcher_round.xml"  "$ANYDPI_DEST/ic_launcher_round.xml"
+    echo "    ✅ Icone copiate"
+  fi
+
+  STYLES_FILE="app/src/main/res/values/styles.xml"
+  if [ -f "$STYLES_FILE" ]; then
+    sed -i '/<item name="android:statusBarColor">/d' "$STYLES_FILE"
+    sed -i '/<item name="android:windowLightStatusBar">/d' "$STYLES_FILE"
+    sed -i '/<item name="android:navigationBarColor">/d' "$STYLES_FILE"
+    sed -i '/<item name="android:windowLightNavigationBar">/d' "$STYLES_FILE"
+    sed -i 's|</style>|    <item name="android:statusBarColor">#FFF7ED</item>\n    <item name="android:windowLightStatusBar">true</item>\n    <item name="android:navigationBarColor">#FFF7ED</item>\n    <item name="android:windowLightNavigationBar">true</item>\n</style>|' "$STYLES_FILE"
+    echo "    ✅ Status bar aggiornata"
+  fi
+
+  patch_android_manifest
+  disable_firebase_autoinit
+  inject_cast_plugin
+
+  echo "── 6/6 Compilo AAB release (firmato) ──"
+  chmod +x gradlew
+  echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+  sed -i "s/minSdkVersion = [0-9]*/minSdkVersion = 24/" variables.gradle
+  sed -i "s/compileSdkVersion = [0-9]*/compileSdkVersion = 36/" variables.gradle
+  sed -i "s/targetSdkVersion = [0-9]*/targetSdkVersion = 36/" variables.gradle
+  sed -i "s/com.android.tools.build:gradle:[0-9.]*/com.android.tools.build:gradle:8.9.1/" build.gradle
+  sed -i "s/gradle-[0-9.]*-bin.zip/gradle-8.12-bin.zip/" gradle/wrapper/gradle-wrapper.properties
+
+  ./gradlew bundleRelease \
+    -Pandroid.injected.signing.store.file="$KEYSTORE_PATH" \
+    -Pandroid.injected.signing.store.password="$STORE_PASS" \
+    -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+    -Pandroid.injected.signing.key.password="$KEY_PASS"
+
+  AAB_PATH="app/build/outputs/bundle/release/app-release.aab"
+
+  cd "$APP_DIR"
+  mkdir -p downloads
+  cp "android/$AAB_PATH" "downloads/fermenta.aab"
+
+  echo ""
+  echo "════════════════════════════════════════════"
+  echo "✅ AAB pronto per Google Play!"
+  echo "   $APP_DIR/android/$AAB_PATH"
+  echo ""
+  echo "Per scaricarlo sul PC:"
+  echo "   scp root@45.134.39.247:$APP_DIR/android/$AAB_PATH ~/fermenta.aab"
+  echo ""
+  echo "Poi caricalo su Google Play Console → Release → Production → Create release"
+  echo ""
+  echo "Se è la prima volta che usi Play App Signing, esporta anche il"
+  echo "certificato upload e caricalo su Play Console:"
+  echo "   keytool -export -rfc -keystore $KEYSTORE_PATH -alias $KEY_ALIAS \\"
+  echo "     -storepass $STORE_PASS -file upload-cert.pem"
+  echo "   scp root@45.134.39.247:$APP_DIR/upload-cert.pem ~/upload-cert.pem"
+  echo "════════════════════════════════════════════"
+}
+
 case "${1:-}" in
   setup) setup ;;
   build) build ;;
+  aab)   aab   ;;
   *)
-    echo "Uso: bash scripts/build-apk.sh [setup|build]"
+    echo "Uso: bash scripts/build-apk.sh [setup|build|aab]"
     echo "  setup  — installa Java 21 (SDKMAN) + Android SDK (solo prima volta)"
-    echo "  build  — compila l'APK"
+    echo "  build  — compila APK debug (per sideload / test)"
+    echo "  aab    — compila AAB release firmato (per Google Play Store)"
     ;;
 esac
