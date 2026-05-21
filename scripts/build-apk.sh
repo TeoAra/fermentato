@@ -406,11 +406,26 @@ build() {
   fi
   npx cap sync android
 
+  echo "    Bump versione app..."
+  NEW_VERSION=$(bash "$APP_DIR/scripts/bump-version.sh")
+  echo "    ✅ Versione: $NEW_VERSION"
+
   echo "    Genero splash screen native (sovrascrivo il default Capacitor)..."
   node "$APP_DIR/scripts/generate-native-splash.js" || echo "    ⚠️  generate-native-splash.js fallito — splash di default resta in uso"
 
-  echo "── 5/6 Applico icone, status bar e manifest patches ──"
+  echo "── 5/6 Applico icone, versione, status bar e manifest patches ──"
   cd android
+
+  # --- Versione Android (versionName + versionCode incrementale) ---
+  # versionCode = numero intero monotonico per Play Store. Lo ricaviamo da
+  # version.json: MAJOR*10000 + MINOR*100 + PATCH (es. 1.0.2 → 10002).
+  IFS='.' read -r VM_MAJOR VM_MINOR VM_PATCH <<< "$NEW_VERSION"
+  VERSION_CODE=$(( VM_MAJOR * 10000 + VM_MINOR * 100 + VM_PATCH ))
+  if [ -f "app/build.gradle" ]; then
+    sed -i "s/versionName \"[^\"]*\"/versionName \"$NEW_VERSION\"/" app/build.gradle
+    sed -i "s/versionCode [0-9]*/versionCode $VERSION_CODE/" app/build.gradle
+    echo "    ✅ Android versionName=$NEW_VERSION versionCode=$VERSION_CODE"
+  fi
 
   # --- Icone app (pre-generate dal repo, nessuna dipendenza esterna) ---
   ICONS_SRC="$APP_DIR/capacitor-resources/android"

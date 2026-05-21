@@ -46,6 +46,10 @@ if [ ! -d "ios" ]; then
 fi
 npx cap sync ios
 
+echo "    Bump versione app..."
+NEW_VERSION=$(bash "$APP_DIR/scripts/bump-version.sh")
+echo "    ✅ Versione: $NEW_VERSION"
+
 echo "    Genero splash screen native iOS (sovrascrivo il default Capacitor)..."
 node "$APP_DIR/scripts/generate-native-splash.js" || echo "    ⚠️  generate-native-splash.js fallito — splash di default resta in uso"
 
@@ -81,7 +85,12 @@ PLIST_DST="ios/App/App/Info.plist"
 PLIST_TPL="ios-template/App/App/Info.plist"
 if [ -f "$PLIST_TPL" ] && [ -d "ios/App/App" ]; then
   cp "$PLIST_TPL" "$PLIST_DST"
-  echo "    ✅ Info.plist aggiornato da template"
+  # Aggiorna versione nel plist (CFBundleShortVersionString + CFBundleVersion)
+  IFS='.' read -r VM_MAJOR VM_MINOR VM_PATCH <<< "$NEW_VERSION"
+  BUILD_NUM=$(( VM_MAJOR * 10000 + VM_MINOR * 100 + VM_PATCH ))
+  sed -i "s|<string>1.0.0</string>|<string>$NEW_VERSION</string>|" "$PLIST_DST" || true
+  sed -i "s|<string>1</string>|<string>$BUILD_NUM</string>|" "$PLIST_DST" || true
+  echo "    ✅ Info.plist aggiornato da template (versione=$NEW_VERSION build=$BUILD_NUM)"
 else
   echo "    ⚠️  Template Info.plist o cartella ios/App/App non trovata — salto"
 fi
