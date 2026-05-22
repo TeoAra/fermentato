@@ -719,13 +719,13 @@ function DoveBerleTab({
       {!userLocation ? (
         <div className="bg-white dark:bg-card rounded-3xl p-6 text-center border border-stone-100 dark:border-[#2F3D4D]/60">
           <Navigation className="w-10 h-10 text-primary mx-auto mb-3" />
-          <h3 className="text-[15px] font-extrabold text-foreground">Attiva la posizione</h3>
+          <h3 className="text-[15px] font-extrabold text-foreground">Posizione</h3>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">Per trovare pub che servono {styleLabel} vicino a te</p>
           <button
             onClick={onLocate}
             className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-primary text-white text-sm font-bold tap-scale shadow-sm"
           >
-            Usa la mia posizione
+            Continua
           </button>
         </div>
       ) : pubs.length === 0 ? (

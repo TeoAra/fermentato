@@ -424,7 +424,7 @@ export default function Landing() {
                 style={{ background: "linear-gradient(135deg,#F77104,#f5a623)" }}
               >
                 <Navigation className="w-4 h-4 mr-2" />
-                {locationStatus === 'requesting' ? 'Ricerca...' : 'Attiva GPS'}
+                {locationStatus === 'requesting' ? 'Ricerca...' : 'Continua'}
               </Button>
             )}
           </div>
@@ -448,7 +448,7 @@ export default function Landing() {
                 <MapPin className="w-7 h-7 text-primary" />
               </div>
               <div>
-                <p className="text-stone-700 dark:text-stone-300 font-semibold mb-1">Attiva la posizione per la mappa live</p>
+                <p className="text-stone-700 dark:text-stone-300 font-semibold mb-1">Mappa live nella tua zona</p>
                 <p className="text-stone-400 text-sm">Vedi pub e birrifici in tempo reale attorno a te</p>
               </div>
               <Button
@@ -458,7 +458,7 @@ export default function Landing() {
                 style={{ background: "linear-gradient(135deg,#F77104,#f5a623)" }}
               >
                 <Navigation className="w-4 h-4 mr-2" />
-                Attiva GPS
+                Continua
               </Button>
             </div>
           )}

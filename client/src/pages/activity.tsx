@@ -417,11 +417,11 @@ export default function Activity() {
             <Navigation className="h-5 w-5 text-stone-500 dark:text-stone-400" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-semibold text-foreground text-sm">Attiva la posizione</p>
+            <p className="font-semibold text-foreground text-sm">Posizione</p>
             <p className="text-xs text-muted-foreground mt-0.5">Per vedere pub, eventi e birre vicino a te</p>
           </div>
           <Button onClick={requestLocation} size="sm" className="bg-primary hover:bg-primary/90 text-white flex-shrink-0 rounded-xl h-8 px-3 text-xs font-bold">
-            Attiva
+            Continua
           </Button>
         </div>
       )}

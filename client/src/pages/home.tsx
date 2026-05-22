@@ -421,7 +421,7 @@ export default function Home() {
               className="tap-scale w-full mt-2.5 flex items-center justify-center gap-1.5 text-primary text-[13px] font-bold px-4 py-2 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-primary/15"
             >
               <Navigation className="w-3.5 h-3.5" />
-              Attiva la posizione
+              Usa la mia posizione
             </button>
           )}
 
@@ -436,7 +436,7 @@ export default function Home() {
           <div className="mb-5 p-4 rounded-2xl bg-card border border-border flex items-center justify-between shadow-card-sm">
             <div className="flex items-center gap-3">
               <Navigation className="w-5 h-5 text-primary flex-shrink-0" />
-              <p className="text-sm text-foreground/80">Attiva la posizione per vedere i locali più vicini</p>
+              <p className="text-sm text-foreground/80">Concedi la posizione nelle impostazioni per vedere i locali più vicini</p>
             </div>
             <Button variant="outline" size="sm" onClick={handleRequestLocation} className="border-border text-primary hover:bg-muted rounded-xl flex-shrink-0 ml-3">
               <Navigation className="w-4 h-4 mr-1" />

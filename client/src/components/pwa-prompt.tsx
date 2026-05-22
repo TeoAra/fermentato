@@ -456,15 +456,12 @@ export function CapacitorLocationPrompt() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground dark:text-white text-sm">
-              Attiva la posizione
+              Posizione
             </h3>
             <p className="text-xs text-muted-foreground dark:text-stone-400 mt-0.5">
               Per mostrare i pub e le birrerie vicino a te.
             </p>
           </div>
-          <button onClick={handleDismiss} className="text-stone-400 hover:text-muted-foreground">
-            <X className="w-4 h-4" />
-          </button>
         </div>
         <div className="flex gap-2 mt-3">
           <Button
@@ -472,11 +469,7 @@ export function CapacitorLocationPrompt() {
             size="sm"
             className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
           >
-            <MapPin className="w-4 h-4 mr-1" />
-            Attiva
-          </Button>
-          <Button onClick={handleDismiss} size="sm" variant="ghost" className="text-muted-foreground">
-            Non ora
+            Continua
           </Button>
         </div>
       </div>
