@@ -8,6 +8,15 @@ Fermenta.to is a full-stack web application designed to connect craft beer enthu
 
 Preferred communication style: Simple, everyday language.
 
+### iOS App Store — pattern B2B senza IAP (3.1.3(e))
+Per la conformità con le linee guida App Store 3.1.1 / 3.1.3(e) (Enterprise Services, come Shopify/Untappd/Slack), su iOS nativo NON mostriamo mai prezzi, pulsanti "Abbonati", checkout Stripe o link a pagine di acquisto per servizi B2B (abbonamento pub €65/anno, attivazione festival €50-99). I titolari devono completare il pagamento dal browser su fermenta.to.
+
+Helper centralizzato: `client/src/lib/platform.ts` esporta `isIosNative`, `isAndroidNative`, `isNativeApp`. Usare `{!isIosNative && (...)}` per nascondere UI di acquisto.
+
+Pagina placeholder: `client/src/pages/ios-web-only.tsx` mostrata al posto di `/prezzi`, `/attiva-pub`, `/festival` (creazione), `/registra-festival` quando si è su iOS (route swap in `client/src/App.tsx`).
+
+Punti già adattati (cercare `isIosNative`): `footer.tsx`, `landing.tsx`, `pub-dashboard.tsx` (3 banner abbonamento), `smart-pub-dashboard.tsx` (2 link riattiva), `festival-dashboard.tsx` (banner pagamento + rinnovo). Su Android resta tutto visibile (Google Play permette pagamenti B2B esterni).
+
 ### Force in-app update
 Per forzare l'aggiornamento in-app dopo un deploy importante:
 1. Imposta `APP_MIN_VERSION=<nuova_versione>` nell'ambiente del server (VPS).

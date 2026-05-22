@@ -15,6 +15,7 @@ import { lazy, Suspense } from "react";
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
 import { PageContainer } from "@/components/layout/page-container";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
+import { isIosNative } from "@/lib/platform";
 import NewsStrip from "@/components/news-strip";
 
 function useCountUp(target: number, duration = 1400, startDelay = 300) {
@@ -620,12 +621,14 @@ export default function Landing() {
                   Se produci e somministri, ottieni accesso a <strong className="text-white/80">entrambi i pannelli</strong> — birrificio verificato + gestione pub — al solo costo del Piano Pub Pro. Nessun extra.
                 </p>
               </div>
-              <Link href="/prezzi">
-                <Button className="w-full h-12 rounded-2xl font-bold text-base border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary shadow-none">
-                  <Building2 className="w-4 h-4 mr-2" />
-                  Registra il tuo birrificio gratis
-                </Button>
-              </Link>
+              {!isIosNative && (
+                <Link href="/prezzi">
+                  <Button className="w-full h-12 rounded-2xl font-bold text-base border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary shadow-none">
+                    <Building2 className="w-4 h-4 mr-2" />
+                    Registra il tuo birrificio gratis
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
 

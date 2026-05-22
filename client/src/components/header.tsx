@@ -7,6 +7,7 @@ import type { User as UserType } from "@shared/schema";
 import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { isIosNative } from "@/lib/platform";
 import SearchResults from "@/components/search-results";
 import FindBeerSheet from "@/components/FindBeerSheet";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
@@ -64,7 +65,7 @@ export default function Header() {
     { label: "Home", href: "/", isActive: location === "/", requiresAuth: false },
     { label: "Birrifici", href: "/explore/breweries", isActive: location.startsWith("/explore/breweries"), requiresAuth: false },
     { label: "Pub & Locali", href: "/explore/pubs", isActive: location.startsWith("/explore/pubs"), requiresAuth: false },
-    { label: "Festival", href: "/festival", isActive: location.startsWith("/festival") && !location.startsWith("/festival-dashboard") && !location.startsWith("/festival/"), requiresAuth: false },
+    ...(isIosNative ? [] : [{ label: "Festival", href: "/festival", isActive: location.startsWith("/festival") && !location.startsWith("/festival-dashboard") && !location.startsWith("/festival/"), requiresAuth: false }]),
   ];
 
   const navItems = allNavItems.filter(item => isAuthenticated || !item.requiresAuth);

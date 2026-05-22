@@ -4,6 +4,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { isIosNative } from "@/lib/platform";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -691,11 +692,17 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <p className="text-xs text-orange-700 dark:text-orange-300">Il profilo non è visibile. Riattiva l'abbonamento per riprendere.</p>
             </div>
           </div>
-          <Link href="/attiva-pub">
-            <Button size="sm" className="flex-shrink-0 bg-primary hover:bg-primary/90 text-white text-xs rounded-2xl font-bold">
-              Riattiva
-            </Button>
-          </Link>
+          {isIosNative ? (
+            <span className="text-xs text-muted-foreground flex-shrink-0 max-w-[160px] text-right">
+              Riattiva da <strong>fermenta.to</strong>
+            </span>
+          ) : (
+            <Link href="/attiva-pub">
+              <Button size="sm" className="flex-shrink-0 bg-primary hover:bg-primary/90 text-white text-xs rounded-2xl font-bold">
+                Riattiva
+              </Button>
+            </Link>
+          )}
         </div>
       );
     }
@@ -2144,11 +2151,17 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 <p className="text-muted-foreground dark:text-muted-foreground max-w-sm">
                   Questa sezione non è disponibile mentre l'abbonamento è sospeso. Riattiva il pub per continuare.
                 </p>
-                <Link href="/attiva-pub">
-                  <Button className="bg-orange-500 hover:bg-primary text-white">
-                    <RefreshCw className="w-4 h-4 mr-2" /> Riattiva abbonamento
-                  </Button>
-                </Link>
+                {isIosNative ? (
+                  <p className="text-sm text-muted-foreground max-w-sm">
+                    Per riattivare l'abbonamento, accedi a <strong>fermenta.to</strong> dal browser del computer o telefono.
+                  </p>
+                ) : (
+                  <Link href="/attiva-pub">
+                    <Button className="bg-orange-500 hover:bg-primary text-white">
+                      <RefreshCw className="w-4 h-4 mr-2" /> Riattiva abbonamento
+                    </Button>
+                  </Link>
+                )}
               </div>
             )}
 

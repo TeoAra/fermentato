@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { formatDistanceToNow, isAfter } from "date-fns";
 import { it } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
+import { isIosNative } from "@/lib/platform";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -345,9 +346,15 @@ export default function PubDashboard() {
                       <p className="font-semibold text-red-800 dark:text-red-200">⏱️ La tua prova gratuita è terminata</p>
                       <p className="text-sm text-red-700 dark:text-red-300">Abbonati per continuare a gestire il tuo pub su Fermenta.to.</p>
                     </div>
-                    <Button className="bg-primary hover:bg-primary/90 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
-                      Abbonati — €65/anno
-                    </Button>
+                    {isIosNative ? (
+                      <p className="text-xs text-red-700 dark:text-red-300 shrink-0 max-w-[200px] text-right">
+                        Per abbonarti, vai su <strong>fermenta.to</strong> dal browser.
+                      </p>
+                    ) : (
+                      <Button className="bg-primary hover:bg-primary/90 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
+                        Abbonati — €65/anno
+                      </Button>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -374,9 +381,11 @@ export default function PubDashboard() {
                     }} disabled={cancelTrialMutation.isPending}>
                       Annulla prova
                     </Button>
-                    <Button className="bg-primary hover:bg-primary/90 text-white" size="sm" onClick={() => setLocation('/attiva-pub')}>
-                      Abbonati — €65/anno
-                    </Button>
+                    {!isIosNative && (
+                      <Button className="bg-primary hover:bg-primary/90 text-white" size="sm" onClick={() => setLocation('/attiva-pub')}>
+                        Abbonati — €65/anno
+                      </Button>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -392,9 +401,15 @@ export default function PubDashboard() {
                     <p className="font-semibold text-foreground dark:text-gray-200">🔒 Attiva il tuo abbonamento</p>
                     <p className="text-sm text-muted-foreground dark:text-stone-400">Abbonati per rendere visibile il tuo pub su Fermenta.to.</p>
                   </div>
-                  <Button className="bg-primary hover:bg-primary/90 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
-                    Abbonati — €65/anno
-                  </Button>
+                  {isIosNative ? (
+                    <p className="text-xs text-muted-foreground shrink-0 max-w-[200px] text-right">
+                      Per abbonarti, vai su <strong>fermenta.to</strong> dal browser.
+                    </p>
+                  ) : (
+                    <Button className="bg-primary hover:bg-primary/90 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
+                      Abbonati — €65/anno
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

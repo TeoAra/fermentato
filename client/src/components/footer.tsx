@@ -1,6 +1,7 @@
 import { SiFacebook, SiInstagram } from "react-icons/si";
 import { Link } from "wouter";
 import { CookieSettingsButton } from "@/components/CookieBanner";
+import { isIosNative } from "@/lib/platform";
 
 export default function Footer() {
   return (
@@ -33,9 +34,11 @@ export default function Footer() {
                   Dashboard Gestione
                 </Link>
               </li>
-              <li>
-                <Link href="/prezzi" className="hover:text-primary transition-colors">Prezzi e Piani</Link>
-              </li>
+              {!isIosNative && (
+                <li>
+                  <Link href="/prezzi" className="hover:text-primary transition-colors">Prezzi e Piani</Link>
+                </li>
+              )}
               <li>
                 <Link href="/supporto" className="hover:text-primary transition-colors">Supporto</Link>
               </li>

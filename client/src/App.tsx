@@ -24,6 +24,7 @@ import { DesktopSidebar } from "@/components/desktop-sidebar";
 const CookieBanner = lazy(() => import("@/components/CookieBanner"));
 import { AppUpdateCheck } from "@/components/app-update-check";
 import { ThemeProvider } from "@/lib/theme";
+import { isIosNative } from "@/lib/platform";
 import { NativeSplashOverlay } from "@/components/native-splash-overlay";
 import type { User } from "@shared/schema";
 
@@ -79,6 +80,7 @@ const RegistraFestival   = lazy(() => import("@/pages/registra-festival"));
 const TermsOfService     = lazy(() => import("@/pages/tos"));
 const PrivacyPolicy      = lazy(() => import("@/pages/privacy"));
 const PrezziPageNew      = lazy(() => import("@/pages/prezzi"));
+const IosWebOnlyPage     = lazy(() => import("@/pages/ios-web-only"));
 const ResetPassword      = lazy(() => import("@/pages/reset-password"));
 const ContattiPage       = lazy(() => import("@/pages/static-page").then(m => ({ default: m.ContattiPage })));
 const ChiSiamoPage       = lazy(() => import("@/pages/static-page").then(m => ({ default: m.ChiSiamoPage })));
@@ -403,13 +405,13 @@ function Router() {
           <Route path="/my-stats" component={MyStats} />
           <Route path="/contatti" component={ContattiPage} />
           <Route path="/chi-siamo" component={ChiSiamoPage} />
-          <Route path="/prezzi" component={PrezziPageNew} />
-          <Route path="/attiva-pub" component={AttivaPub} />
+          <Route path="/prezzi" component={isIosNative ? IosWebOnlyPage : PrezziPageNew} />
+          <Route path="/attiva-pub" component={isIosNative ? IosWebOnlyPage : AttivaPub} />
           <Route path="/supporto" component={SupportoPage} />
           <Route path="/festival/:slug" component={FestivalPublic} />
           <Route path="/festival-dashboard" component={FestivalDashboard} />
-          <Route path="/festival" component={CreaFestival} />
-          <Route path="/registra-festival" component={RegistraFestival} />
+          <Route path="/festival" component={isIosNative ? IosWebOnlyPage : CreaFestival} />
+          <Route path="/registra-festival" component={isIosNative ? IosWebOnlyPage : RegistraFestival} />
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/scan/history" component={ScanHistory} />
           <Route path="/scan" component={Scan} />

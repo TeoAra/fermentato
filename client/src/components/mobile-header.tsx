@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { isIosNative } from "@/lib/platform";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { User as UserType } from "@shared/schema";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -316,7 +317,9 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             <MenuItem href="/explore/beers" icon={Beer} label="Catalogo birre" desc="Oltre 1M di birre" />
             <MenuItem href="/explore/breweries" icon={Building2Icon} label="Birrifici" desc="Artigianali italiani e internazionali" />
             <MenuItem href="/explore/pubs" icon={MapPin} label="Pub & Locali" desc="Dove bere artigianale in Italia" />
-            <MenuItem href="/festival" icon={QrCode} label="Festival" desc="Festival di birra artigianale" />
+            {!isIosNative && (
+              <MenuItem href="/festival" icon={QrCode} label="Festival" desc="Festival di birra artigianale" />
+            )}
 
             {isAuthenticated && (
               <>

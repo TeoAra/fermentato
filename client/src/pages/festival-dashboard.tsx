@@ -7,6 +7,7 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { isIosNative } from "@/lib/platform";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1718,37 +1719,45 @@ export default function FestivalDashboard() {
                         <CreditCard className="h-6 w-6 text-amber-600" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-foreground dark:text-gray-100">Attiva il festival con il pagamento</h3>
+                        <h3 className="font-semibold text-foreground dark:text-gray-100">
+                          {isIosNative ? "Festival in attesa di attivazione" : "Attiva il festival con il pagamento"}
+                        </h3>
                         <p className="text-sm text-muted-foreground dark:text-stone-400 mt-1">
-                          Per rendere il taplist pubblico e raccogliere valutazioni è necessario il pagamento una tantum.
+                          {isIosNative
+                            ? "Per attivare il taplist pubblico e raccogliere valutazioni, accedi a fermenta.to dal browser e completa l'attivazione."
+                            : "Per rendere il taplist pubblico e raccogliere valutazioni è necessario il pagamento una tantum."}
                         </p>
                       </div>
-                      <div className="text-3xl font-bold text-amber-600">€{selectedFest.priceEur ?? 99}</div>
-                      <div className="text-xs text-muted-foreground">Pagamento unico · accesso per tutta la durata del festival</div>
-                      <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                        <Button
-                          size="lg"
-                          className="bg-amber-500 hover:bg-amber-600 text-white"
-                          onClick={() => checkoutMutation.mutate({ festivalId: selectedFest.id })}
-                          disabled={checkoutMutation.isPending}
-                        >
-                          {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
-                          Paga e attiva · €{selectedFest.priceEur ?? 50}
-                        </Button>
-                        {user?.userType === "admin" && (
-                          <Button
-                            size="lg"
-                            variant="outline"
-                            className="border-green-400 text-green-700 hover:bg-green-50"
-                            onClick={() => adminActivateMutation.mutate(selectedFest.id)}
-                            disabled={adminActivateMutation.isPending}
-                          >
-                            {adminActivateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
-                            Attiva gratis (admin)
-                          </Button>
-                        )}
-                      </div>
-                      <p className="text-xs text-stone-400">Puoi configurare spine e menu anche ora, ma il QR sarà pubblico solo dopo il pagamento.</p>
+                      {!isIosNative && (
+                        <>
+                          <div className="text-3xl font-bold text-amber-600">€{selectedFest.priceEur ?? 99}</div>
+                          <div className="text-xs text-muted-foreground">Pagamento unico · accesso per tutta la durata del festival</div>
+                          <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                            <Button
+                              size="lg"
+                              className="bg-amber-500 hover:bg-amber-600 text-white"
+                              onClick={() => checkoutMutation.mutate({ festivalId: selectedFest.id })}
+                              disabled={checkoutMutation.isPending}
+                            >
+                              {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CreditCard className="h-4 w-4 mr-2" />}
+                              Paga e attiva · €{selectedFest.priceEur ?? 50}
+                            </Button>
+                            {user?.userType === "admin" && (
+                              <Button
+                                size="lg"
+                                variant="outline"
+                                className="border-green-400 text-green-700 hover:bg-green-50"
+                                onClick={() => adminActivateMutation.mutate(selectedFest.id)}
+                                disabled={adminActivateMutation.isPending}
+                              >
+                                {adminActivateMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+                                Attiva gratis (admin)
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-xs text-stone-400">Puoi configurare spine e menu anche ora, ma il QR sarà pubblico solo dopo il pagamento.</p>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 )}
@@ -1764,14 +1773,20 @@ export default function FestivalDashboard() {
                           <p className="text-sm text-muted-foreground">Il festival è scaduto il {selectedFest.endDate ? new Date(selectedFest.endDate).toLocaleDateString("it-IT") : "—"}. Rinnova per riattivarlo.</p>
                         </div>
                       </div>
-                      <Button
-                        className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
-                        onClick={() => checkoutMutation.mutate({ festivalId: selectedFest.id, isRenewal: true })}
-                        disabled={checkoutMutation.isPending}
-                      >
-                        {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
-                        Rinnova · €{selectedFest.priceEur ?? 99}
-                      </Button>
+                      {isIosNative ? (
+                        <p className="text-xs text-muted-foreground flex-shrink-0 max-w-[220px] text-right">
+                          Per rinnovare il festival, accedi a <strong>fermenta.to</strong> dal browser.
+                        </p>
+                      ) : (
+                        <Button
+                          className="bg-amber-500 hover:bg-amber-600 text-white flex-shrink-0"
+                          onClick={() => checkoutMutation.mutate({ festivalId: selectedFest.id, isRenewal: true })}
+                          disabled={checkoutMutation.isPending}
+                        >
+                          {checkoutMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                          Rinnova · €{selectedFest.priceEur ?? 99}
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 )}

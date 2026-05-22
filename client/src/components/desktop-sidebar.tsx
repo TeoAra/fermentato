@@ -8,6 +8,7 @@ import {
   DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { isIosNative } from "@/lib/platform";
 import { useState, lazy, Suspense } from "react";
 const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -66,7 +67,7 @@ export function DesktopSidebar() {
     { icon: Building2, label: "Birrifici", href: "/explore/breweries" },
     { icon: Store, label: "Pub", href: "/explore/pubs" },
     { icon: CalendarDays, label: "Eventi", href: "/eventi" },
-    { icon: QrCode, label: "Festival", href: "/festival" },
+    ...(isIosNative ? [] : [{ icon: QrCode, label: "Festival", href: "/festival" }]),
     { icon: Newspaper, label: "News", href: "/news" },
     { icon: UsersIcon, label: "Sociale", href: "/feed" },
   ];
