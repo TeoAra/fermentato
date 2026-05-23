@@ -58,6 +58,14 @@ interface EventForm {
   isPublished: boolean;
 }
 
+// Converte una data UTC (ISO string o Date) nel formato "YYYY-MM-DDTHH:mm"
+// in ora locale, adatto a <input type="datetime-local"> senza shift di fuso.
+function toLocalInputValue(d: string | Date): string {
+  const date = new Date(d);
+  const tzOffsetMs = date.getTimezoneOffset() * 60_000;
+  return new Date(date.getTime() - tzOffsetMs).toISOString().slice(0, 16);
+}
+
 const emptyForm: EventForm = {
   title: "",
   description: "",
@@ -239,8 +247,8 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
       title: event.title,
       description: event.description || "",
       category: event.category || "altro",
-      eventDate: event.eventDate ? new Date(event.eventDate).toISOString().slice(0, 16) : "",
-      endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : "",
+      eventDate: event.eventDate ? toLocalInputValue(event.eventDate) : "",
+      endDate: event.endDate ? toLocalInputValue(event.endDate) : "",
       imageUrl: event.imageUrl || "",
       isPublished: event.isPublished ?? true,
     });
@@ -626,8 +634,8 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
       title: event.title,
       description: event.description || "",
       category: event.category || "altro",
-      eventDate: event.eventDate ? new Date(event.eventDate).toISOString().slice(0, 16) : "",
-      endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : "",
+      eventDate: event.eventDate ? toLocalInputValue(event.eventDate) : "",
+      endDate: event.endDate ? toLocalInputValue(event.endDate) : "",
       imageUrl: event.imageUrl || "",
       isPublished: event.isPublished ?? true,
     });

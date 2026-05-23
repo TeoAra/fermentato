@@ -5920,7 +5920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           FROM pub_events e
           INNER JOIN pubs p ON p.id = e.pub_id
           WHERE e.is_published = true
-            AND COALESCE(e.end_date, e.event_date) >= ${fromDate}
+            AND COALESCE(e.end_date, e.event_date + INTERVAL '12 hours') >= ${fromDate}
             ${toDate    ? sql`AND e.event_date <= ${toDate}`           : sql``}
             ${qLike     ? sql`AND (LOWER(e.title) LIKE ${qLike} OR LOWER(COALESCE(e.description,'')) LIKE ${qLike} OR LOWER(p.name) LIKE ${qLike})` : sql``}
             ${cityLike  ? sql`AND LOWER(COALESCE(p.city,'')) LIKE ${cityLike}` : sql``}
@@ -5943,7 +5943,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           FROM brewery_events e
           INNER JOIN breweries br ON br.id = e.brewery_id
           WHERE e.is_published = true
-            AND COALESCE(e.end_date, e.event_date) >= ${fromDate}
+            AND COALESCE(e.end_date, e.event_date + INTERVAL '12 hours') >= ${fromDate}
             ${toDate    ? sql`AND e.event_date <= ${toDate}`           : sql``}
             ${qLike     ? sql`AND (LOWER(e.title) LIKE ${qLike} OR LOWER(COALESCE(e.description,'')) LIKE ${qLike} OR LOWER(br.name) LIKE ${qLike})` : sql``}
             ${cityLike  ? sql`AND LOWER(COALESCE(br.location,'')) LIKE ${cityLike}` : sql``}
