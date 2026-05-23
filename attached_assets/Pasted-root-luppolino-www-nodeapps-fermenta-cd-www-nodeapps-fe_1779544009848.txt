@@ -1,0 +1,68 @@
+root@luppolino:/www/nodeapps/fermenta# cd /www/nodeapps/fermenta
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# # 1. Annulla il commit locale ma mantieni i file sul disco
+root@luppolino:/www/nodeapps/fermenta# git reset --soft HEAD~1
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# # 2. Rimuovi dall'index i file segreti / inutili
+root@luppolino:/www/nodeapps/fermenta# git restore --staged keystore/fermenta-upload.jks upload_certificate.pem downloads/fermenta.aab
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# # 3. Aggiungili al .gitignore così non li riprendiamo mai piùroot@luppolino:/www/nodeapps/fermenta# cat >> .gitignore <<'EOF'
+>
+> # Secrets — MAI committare
+> keystore/
+> *.jks
+> *.keystore
+> upload_certificate.pem
+> *.p8
+> *.p12
+> *.mobileprovision
+>
+> # Build artifacts pesanti
+> downloads/
+> *.aab
+> *.ipa
+> *.apk
+> EOF
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# # 4. Allinea con il remoto (che contiene già il mio bump 1.0.7)
+root@luppolino:/www/nodeapps/fermenta# git fetch origin
+remote: Enumerating objects: 16, done.
+remote: Counting objects: 100% (16/16), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 9 (delta 6), reused 9 (delta 6), pack-reused 0 (from 0)
+Unpacking objects: 100% (9/9), 1.77 KiB | 301.00 KiB/s, done.
+From https://github.com/TeoAra/fermentato
+   f2848a0..5134e7f  main       -> origin/main
+root@luppolino:/www/nodeapps/fermenta# git pull --rebase origin main
+error: cannot pull with rebase: You have unstaged changes.
+error: please commit or stash them.
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# # 5. Ora committa solo .gitignore + eventuali altri file legittimi
+root@luppolino:/www/nodeapps/fermenta# git add .gitignore
+root@luppolino:/www/nodeapps/fermenta# git commit -m "chore: ignore keystore and build artifacts"
+[main f6724d2] chore: ignore keystore and build artifacts
+ Committer: root <root@luppolino.pub>
+Your name and email address were configured automatically based
+on your username and hostname. Please check that they are accurate.
+You can suppress this message by setting them explicitly. Run the
+following command and follow the instructions in your editor to edit
+your configuration file:
+
+    git config --global --edit
+
+After doing this, you may fix the identity used for this commit with:
+
+    git commit --amend --reset-author
+
+ 1 file changed, 15 insertions(+)
+root@luppolino:/www/nodeapps/fermenta# git push origin main
+To https://github.com/TeoAra/fermentato.git
+ ! [rejected]        main -> main (non-fast-forward)
+error: failed to push some refs to 'https://github.com/TeoAra/fermentato.git'
+hint: Updates were rejected because the tip of your current branch is behind
+hint: its remote counterpart. Integrate the remote changes (e.g.
+hint: 'git pull ...') before pushing again.
+hint: See the 'Note about fast-forwards' in 'git push --help' for details.
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# # 6. Deploy
+root@luppolino:/www/nodeapps/fermenta# sudo fermenta-deploy
