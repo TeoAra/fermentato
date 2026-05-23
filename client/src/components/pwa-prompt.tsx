@@ -413,39 +413,47 @@ export function PwaInstallPrompt() {
   );
 }
 
-// ── Prompt posizione GPS per APK Capacitor Android ────────────────────────────
-// Mostra un card esplicativo prima di richiedere il permesso sistema GPS.
+// ── Pre-prompt posizione GPS per app nativa (iOS + Android) ──────────────────
+// Conformità Apple 5.1.1(iv): un solo pulsante "Continua" che procede SEMPRE
+// alla richiesta di sistema, nessun pulsante di chiusura/dismiss, nessun
+// "Non ora". Se il permesso è già stato richiesto, il pre-prompt non appare.
 export function CapacitorLocationPrompt() {
   const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
   const { isAuthenticated } = useAuth();
   const [show, setShow] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (!isNative || !isAuthenticated) return;
     if (localStorage.getItem('capacitor-location-prompted')) return;
-    const timer = setTimeout(() => setShow(true), 3000);
-    return () => clearTimeout(timer);
+    // Se il permesso è già stato richiesto dal sistema (granted/denied), NON mostriamo
+    // il pre-prompt educativo — evita doppi dialog e conformità Apple 5.1.1(iv).
+    (async () => {
+      try {
+        const { Geolocation } = await import('@capacitor/geolocation');
+        const status = await Geolocation.checkPermissions();
+        if (status.location !== 'prompt' && status.location !== 'prompt-with-rationale') {
+          localStorage.setItem('capacitor-location-prompted', '1');
+          return;
+        }
+        const timer = setTimeout(() => setShow(true), 3000);
+        return () => clearTimeout(timer);
+      } catch {}
+    })();
   }, [isNative, isAuthenticated]);
 
-  const handleEnable = async () => {
+  // Apple 5.1.1(iv): il pre-prompt deve sempre proseguire alla richiesta di sistema.
+  // Nessun pulsante "Non ora" / X di chiusura.
+  const handleContinue = async () => {
     setShow(false);
     localStorage.setItem('capacitor-location-prompted', '1');
     try {
       const { Geolocation } = await import('@capacitor/geolocation');
       await Geolocation.requestPermissions();
     } catch {}
-    // Notifica home.tsx di avviare la geolocalizzazione
     window.dispatchEvent(new CustomEvent('capacitor-location-start'));
   };
 
-  const handleDismiss = () => {
-    setShow(false);
-    setDismissed(true);
-    localStorage.setItem('capacitor-location-prompted', 'dismissed');
-  };
-
-  if (!isNative || !show || dismissed) return null;
+  if (!isNative || !show) return null;
 
   return (
     <div className="fixed bottom-36 left-4 right-4 z-50">
@@ -465,7 +473,7 @@ export function CapacitorLocationPrompt() {
         </div>
         <div className="flex gap-2 mt-3">
           <Button
-            onClick={handleEnable}
+            onClick={handleContinue}
             size="sm"
             className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
           >

@@ -17,6 +17,13 @@ Pagina placeholder: `client/src/pages/ios-web-only.tsx` mostrata al posto di `/p
 
 Punti già adattati (cercare `isIosNative`): `footer.tsx`, `landing.tsx`, `pub-dashboard.tsx` (3 banner abbonamento), `smart-pub-dashboard.tsx` (2 link riattiva), `festival-dashboard.tsx` (banner pagamento + rinnovo). Su Android resta tutto visibile (Google Play permette pagamenti B2B esterni).
 
+### Apple App Review — 5.1.1(iv) Location pre-prompt
+Il pre-prompt posizione (`CapacitorLocationPrompt` in `client/src/components/pwa-prompt.tsx`) deve essere conforme:
+- UN SOLO pulsante con testo "Continua" (mai "Attiva"/"Abilita"/"Activate").
+- NESSUN pulsante di chiusura/dismiss/X né "Non ora" — l'utente deve sempre proseguire alla richiesta di sistema.
+- Se `Geolocation.checkPermissions()` ritorna stato diverso da `prompt`/`prompt-with-rationale`, il pre-prompt NON deve apparire (evita doppi dialog).
+Stessa regola vale per qualsiasi futuro pre-prompt (camera, foto, notifiche su iOS).
+
 ### Force in-app update
 Per forzare l'aggiornamento in-app dopo un deploy importante:
 1. Imposta `APP_MIN_VERSION=<nuova_versione>` nell'ambiente del server (VPS).
