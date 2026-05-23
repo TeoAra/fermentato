@@ -11,3 +11,18 @@ vite.config.ts.*
 # Capacitor native platform directories (generated on each machine)
 /android/
 /ios/
+
+# Secrets — MAI committare
+keystore/
+*.jks
+*.keystore
+upload_certificate.pem
+*.p8
+*.p12
+*.mobileprovision
+
+# Build artifacts pesanti
+downloads/
+*.aab
+*.ipa
+*.apk
