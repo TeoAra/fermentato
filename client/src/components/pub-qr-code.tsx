@@ -67,10 +67,15 @@ export function PubQRCode({ pubId, pubName, pubSlug, compact }: PubQRCodeProps) 
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {compact ? (
-          <Button variant="outline" size="sm" className="gap-2">
-            <QrCode className="h-4 w-4" />
-            QR
-          </Button>
+          <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all h-full">
+            <div className="p-2.5 bg-orange-50 dark:bg-orange-950/20 rounded-xl shrink-0">
+              <QrCode className="h-5 w-5 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-foreground leading-tight">QR Code</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Pagina pub</p>
+            </div>
+          </div>
         ) : (
           <Button variant="outline" className="gap-2 w-full">
             <QrCode className="h-4 w-4" />

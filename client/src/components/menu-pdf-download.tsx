@@ -121,10 +121,20 @@ export function MenuPdfDownload({ pubName, tapList = [], bottleList = [], menuCa
   };
 
   return compact ? (
-    <Button variant="outline" size="sm" onClick={generatePdf} disabled={generating} className="gap-2">
-      {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
-      PDF
-    </Button>
+    <button
+      type="button"
+      onClick={generatePdf}
+      disabled={generating}
+      className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all h-full text-left w-full disabled:opacity-60 disabled:cursor-not-allowed"
+    >
+      <div className="p-2.5 bg-stone-100 dark:bg-[#1B2735]/60 rounded-xl shrink-0">
+        {generating ? <Loader2 className="h-5 w-5 animate-spin text-foreground" /> : <FileDown className="h-5 w-5 text-foreground" />}
+      </div>
+      <div className="min-w-0">
+        <p className="font-semibold text-sm text-foreground leading-tight">{generating ? "Genero..." : "PDF Menu"}</p>
+        <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Scarica menu</p>
+      </div>
+    </button>
   ) : (
     <Button variant="outline" onClick={generatePdf} disabled={generating} className="gap-2 w-full">
       {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileDown className="h-4 w-4" />}
