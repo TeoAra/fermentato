@@ -1885,7 +1885,9 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(pubs, eq(pubEvents.pubId, pubs.id))
       .where(and(
         eq(pubEvents.isPublished, true),
-        sql`${pubEvents.eventDate} >= ${now}`
+        // Considera "upcoming" anche un evento già iniziato ma non ancora finito.
+        // Se end_date manca, lasciamo 12h di tolleranza dopo event_date.
+        sql`COALESCE(${pubEvents.endDate}, ${pubEvents.eventDate} + INTERVAL '12 hours') >= ${now}`
       ))
       .orderBy(asc(pubEvents.eventDate))
       .limit(limit);

@@ -268,8 +268,14 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
     }
   };
 
-  const upcomingEvents = (events as any[]).filter((e: any) => isFuture(new Date(e.eventDate)));
-  const pastEvents = (events as any[]).filter((e: any) => isPast(new Date(e.eventDate)));
+  // Un evento è "passato" solo quando la sua fine è prima di adesso.
+  // Se end_date manca, lasciamo 12h di tolleranza dopo event_date.
+  const isEventPast = (e: any) => {
+    const end = e.endDate ? new Date(e.endDate) : new Date(new Date(e.eventDate).getTime() + 12 * 60 * 60 * 1000);
+    return end.getTime() < Date.now();
+  };
+  const upcomingEvents = (events as any[]).filter((e: any) => !isEventPast(e));
+  const pastEvents = (events as any[]).filter((e: any) => isEventPast(e));
 
   return (
     <div className="space-y-6">
@@ -649,8 +655,14 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
     }
   };
 
-  const upcomingEvents = (events as any[]).filter((e: any) => isFuture(new Date(e.eventDate)));
-  const pastEvents = (events as any[]).filter((e: any) => isPast(new Date(e.eventDate)));
+  // Un evento è "passato" solo quando la sua fine è prima di adesso.
+  // Se end_date manca, lasciamo 12h di tolleranza dopo event_date.
+  const isEventPast = (e: any) => {
+    const end = e.endDate ? new Date(e.endDate) : new Date(new Date(e.eventDate).getTime() + 12 * 60 * 60 * 1000);
+    return end.getTime() < Date.now();
+  };
+  const upcomingEvents = (events as any[]).filter((e: any) => !isEventPast(e));
+  const pastEvents = (events as any[]).filter((e: any) => isEventPast(e));
 
   return (
     <div className="space-y-6">
