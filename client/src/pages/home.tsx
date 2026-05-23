@@ -979,36 +979,36 @@ export default function Home() {
             <p className="text-[11px] font-bold text-center text-muted-foreground mb-4 uppercase tracking-[0.14em]">
               La Community Fermenta.to
             </p>
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <div className="text-center">
-                <div className="text-2xl font-extrabold text-primary tabular-nums leading-tight">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 mb-4">
+              <div className="text-center min-w-0 px-1">
+                <div className="text-base sm:text-2xl font-extrabold text-primary tabular-nums leading-tight break-words">
                   {globalStats?.totalBeers != null ? globalStats.totalBeers.toLocaleString('it-IT') : '—'}
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-1 font-medium">Birre</div>
               </div>
-              <div className="text-center border-x border-border">
-                <div className="text-2xl font-extrabold text-primary tabular-nums leading-tight">
+              <div className="text-center min-w-0 px-1 border-x border-border">
+                <div className="text-base sm:text-2xl font-extrabold text-primary tabular-nums leading-tight break-words">
                   {globalStats?.totalBreweries != null ? globalStats.totalBreweries.toLocaleString('it-IT') : '—'}
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-1 font-medium">Birrifici</div>
               </div>
-              <div className="text-center">
-                <div className="text-2xl font-extrabold text-primary tabular-nums leading-tight">
+              <div className="text-center min-w-0 px-1">
+                <div className="text-base sm:text-2xl font-extrabold text-primary tabular-nums leading-tight break-words">
                   {globalStats?.uniqueStyles != null ? globalStats.uniqueStyles.toLocaleString('it-IT') : '—'}
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-1 font-medium">Stili</div>
               </div>
             </div>
             <div className="border-t border-border mb-4" />
-            <div className="flex justify-center gap-16">
-              <div className="text-center">
-                <div className="text-xl font-extrabold text-primary tabular-nums">
+            <div className="grid grid-cols-2 gap-4 sm:flex sm:justify-center sm:gap-16">
+              <div className="text-center min-w-0">
+                <div className="text-lg sm:text-xl font-extrabold text-primary tabular-nums leading-tight">
                   {globalStats?.totalUsers != null ? globalStats.totalUsers.toLocaleString('it-IT') : '—'}
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-1 font-medium">Utenti</div>
               </div>
-              <div className="text-center">
-                <div className="text-xl font-extrabold text-primary tabular-nums">
+              <div className="text-center min-w-0">
+                <div className="text-lg sm:text-xl font-extrabold text-primary tabular-nums leading-tight">
                   {globalStats?.totalPubs != null ? globalStats.totalPubs.toLocaleString('it-IT') : '—'}
                 </div>
                 <div className="text-[11px] text-muted-foreground mt-1 font-medium">Pub</div>

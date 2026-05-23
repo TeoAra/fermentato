@@ -142,11 +142,11 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
       <Card>
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
-            <CardTitle className="flex items-center gap-2 flex-1 min-w-0">
+            <CardTitle className="flex items-center gap-2 min-w-0 w-full sm:flex-1 sm:w-auto">
               <Beer className="w-5 h-5 flex-shrink-0" />
-              <span className="truncate">Recensioni ({beerTastings?.length || 0})</span>
+              <span className="min-w-0 break-words">Recensioni ({beerTastings?.length || 0})</span>
             </CardTitle>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 flex-shrink-0 ml-auto">
               <Button
                 variant={showFilters ? "default" : "outline"}
                 size="sm"

@@ -270,18 +270,18 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 </Link>
 
                 {/* Stats row */}
-                <div className="flex gap-3 mt-4">
-                  <div className="flex-1 bg-stone-50 dark:bg-white/5 rounded-2xl px-3 py-2.5 text-center">
-                    <div className="text-xl font-black text-foreground leading-none">
+                <div className="flex gap-2 mt-4">
+                  <div className="flex-1 min-w-0 bg-stone-50 dark:bg-white/5 rounded-2xl px-2 py-2.5 text-center">
+                    <div className="text-base font-black text-foreground leading-tight tabular-nums">
                       {userStats?.totalCheckins ?? (typedUser as any)?.checkinsCount ?? '–'}
                     </div>
-                    <div className="text-[10px] font-semibold text-muted-foreground mt-0.5">Bevute</div>
+                    <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight">Bevute</div>
                   </div>
-                  <div className="flex-1 bg-stone-50 dark:bg-white/5 rounded-2xl px-3 py-2.5 text-center">
-                    <div className="text-xl font-black text-foreground leading-none">
+                  <div className="flex-1 min-w-0 bg-stone-50 dark:bg-white/5 rounded-2xl px-2 py-2.5 text-center">
+                    <div className="text-base font-black text-foreground leading-tight tabular-nums">
                       {userStats?.totalReviews ?? (typedUser as any)?.reviewsCount ?? '–'}
                     </div>
-                    <div className="text-[10px] font-semibold text-muted-foreground mt-0.5">Recensioni</div>
+                    <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight">Recensioni</div>
                   </div>
                 </div>
 

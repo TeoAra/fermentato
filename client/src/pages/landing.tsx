@@ -574,9 +574,9 @@ export default function Landing() {
                 ))}
               </div>
               <Link href="/registra-pub">
-                <Button className="w-full h-12 rounded-2xl bg-white text-primary hover:bg-orange-50 font-bold text-base border-0 shadow-none">
-                  <Zap className="w-4 h-4 mr-2" />
-                  Registra il tuo pub — 15 giorni gratis
+                <Button className="w-full min-h-12 h-auto py-3 px-4 rounded-2xl bg-white text-primary hover:bg-orange-50 font-bold text-sm sm:text-base border-0 shadow-none whitespace-normal leading-tight text-center">
+                  <Zap className="w-4 h-4 mr-2 flex-shrink-0" />
+                  <span className="break-words">Registra il tuo pub — 15 giorni gratis</span>
                 </Button>
               </Link>
             </div>
@@ -625,9 +625,9 @@ export default function Landing() {
               </div>
               {!isIosNative && (
                 <Link href="/prezzi">
-                  <Button className="w-full h-12 rounded-2xl font-bold text-base border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary shadow-none">
-                    <Building2 className="w-4 h-4 mr-2" />
-                    Registra il tuo birrificio gratis
+                  <Button className="w-full min-h-12 h-auto py-3 px-4 rounded-2xl font-bold text-sm sm:text-base border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary shadow-none whitespace-normal leading-tight text-center">
+                    <Building2 className="w-4 h-4 mr-2 flex-shrink-0" />
+                    <span className="break-words">Registra il tuo birrificio gratis</span>
                   </Button>
                 </Link>
               )}
@@ -679,9 +679,9 @@ export default function Landing() {
                 Gratuito per sempre per gli appassionati. Registrati in 30 secondi con Google.
               </p>
               <Link href="/login">
-                <Button size="lg" className="h-14 px-10 text-base font-black rounded-2xl bg-white text-primary hover:bg-orange-50 border-0 shadow-xl shadow-black/20">
-                  <Users className="mr-2 w-5 h-5" />
-                  Registrati — è gratis
+                <Button size="lg" className="min-h-14 h-auto max-w-full py-3 px-6 sm:px-10 text-sm sm:text-base font-black rounded-2xl bg-white text-primary hover:bg-orange-50 border-0 shadow-xl shadow-black/20 whitespace-normal leading-tight text-center">
+                  <Users className="mr-2 w-5 h-5 flex-shrink-0" />
+                  <span className="break-words">Registrati — è gratis</span>
                 </Button>
               </Link>
               <p className="text-white/60 text-xs mt-4">Nessuna carta di credito · Nessuna email di spam</p>

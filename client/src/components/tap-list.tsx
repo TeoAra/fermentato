@@ -155,7 +155,7 @@ export default function TapList({ tapList, pub }: TapListProps) {
             {/* Name + meta */}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5 flex-wrap">
-                <p className="font-semibold text-[15px] text-stone-900 dark:text-white leading-snug truncate">
+                <p className="font-semibold text-[15px] text-stone-900 dark:text-white leading-snug break-words line-clamp-2">
                   {tap.beer.name}
                 </p>
                 {tap.beer.isGlutenFree && <GlutenFreeSmallBadge size={10} />}
