@@ -486,36 +486,43 @@ export function CapacitorLocationPrompt() {
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Prompt notifiche per APK Capacitor Android ────────────────────────────────
-// Usa @capacitor/push-notifications per mostrare il dialog di sistema Android.
+// ── Pre-prompt notifiche per app nativa (iOS + Android) ──────────────────────
+// Conformità Apple 5.1.1(iv) e Google Play User Data: un solo pulsante
+// "Continua" che procede SEMPRE alla richiesta di sistema, nessun pulsante
+// di chiusura / X / "Non ora". Se il permesso è già stato richiesto
+// (granted/denied), il pre-prompt non viene più mostrato.
 export function CapacitorPushPrompt() {
   const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
   const { isAuthenticated } = useAuth();
   const [show, setShow] = useState(false);
-  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Su Android 13+ il permesso notifiche va richiesto esplicitamente anche senza login
     if (!isNative) return;
 
     const status = localStorage.getItem('capacitor-push-permission');
-    if (status) return; // già gestito
+    if (status) return; // già gestito in una sessione precedente
 
-    const isDismissed = localStorage.getItem('capacitor-push-prompt-dismissed');
-    if (isDismissed) {
-      const dismissedAt = parseInt(isDismissed, 10);
-      if (Date.now() - dismissedAt < 7 * 24 * 60 * 60 * 1000) return;
-    }
+    // Verifica stato reale del permesso di sistema: se l'utente ha già risposto
+    // (granted o denied) non rimostriamo il pre-prompt — evita doppi dialog.
+    (async () => {
+      try {
+        const { PushNotifications } = await import('@capacitor/push-notifications');
+        const perm = await PushNotifications.checkPermissions();
+        if (perm.receive !== 'prompt' && perm.receive !== 'prompt-with-rationale') {
+          localStorage.setItem('capacitor-push-permission', perm.receive);
+          return;
+        }
+      } catch {}
 
-    // GPS prompt appare dopo 3s per auth utenti → push appare dopo 7s così
-    // non si sovrappongono entrambi i dialog nello stesso momento.
-    // Per non-autenticati 10s dà tempo al caricamento della pagina.
-    const delay = isAuthenticated ? 7000 : 10000;
-    const timer = setTimeout(() => setShow(true), delay);
-    return () => clearTimeout(timer);
+      // GPS prompt appare dopo 3s per auth utenti → push appare dopo 7s
+      // così non si sovrappongono. Per non-autenticati 10s.
+      const delay = isAuthenticated ? 7000 : 10000;
+      const timer = setTimeout(() => setShow(true), delay);
+      return () => clearTimeout(timer);
+    })();
   }, [isNative, isAuthenticated]);
 
-  const handleEnable = async () => {
+  const handleContinue = async () => {
     setShow(false);
     try {
       const { registerNativePush } = await import("@/services/capacitor-native");
@@ -526,13 +533,7 @@ export function CapacitorPushPrompt() {
     }
   };
 
-  const handleDismiss = () => {
-    setShow(false);
-    setDismissed(true);
-    localStorage.setItem('capacitor-push-prompt-dismissed', Date.now().toString());
-  };
-
-  if (!isNative || !show || dismissed) return null;
+  if (!isNative || !show) return null;
 
   return (
     <div className="fixed bottom-nav-above left-4 right-4 z-50">
@@ -543,27 +544,20 @@ export function CapacitorPushPrompt() {
           </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold text-foreground dark:text-white text-sm">
-              Attiva le notifiche
+              Notifiche
             </h3>
             <p className="text-xs text-muted-foreground dark:text-stone-400 mt-0.5">
-              Ricevi aggiornamenti sulle nuove birre alla spina nei tuoi pub preferiti.
+              Per ricevere aggiornamenti sulle nuove birre alla spina nei tuoi pub preferiti.
             </p>
           </div>
-          <button onClick={handleDismiss} className="text-stone-400 hover:text-muted-foreground">
-            <X className="w-4 h-4" />
-          </button>
         </div>
         <div className="flex gap-2 mt-3">
           <Button
-            onClick={handleEnable}
+            onClick={handleContinue}
             size="sm"
             className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white"
           >
-            <Bell className="w-4 h-4 mr-1" />
-            Attiva
-          </Button>
-          <Button onClick={handleDismiss} size="sm" variant="ghost" className="text-muted-foreground">
-            Non ora
+            Continua
           </Button>
         </div>
       </div>
