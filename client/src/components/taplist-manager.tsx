@@ -15,6 +15,7 @@ import { PriceFormatManager } from "@/components/price-format-manager";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
+import { WebImageSearchButton } from "@/components/web-image-search-button";
 import { 
   Beer, 
   Plus, 
@@ -828,13 +829,37 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     </div>
 
                     <div>
-                      <Label className="text-xs">Immagine birra</Label>
+                      <div className="flex items-center justify-between gap-2 mb-1">
+                        <Label className="text-xs">Immagine birra</Label>
+                        {newBeerData.name.trim().length >= 2 && newBeerData.breweryId && !beerImagePreview && (
+                          <WebImageSearchButton
+                            endpoint="/api/beer-images/search-by-name"
+                            responseKey="imageUrl"
+                            body={{
+                              beerName: newBeerData.name,
+                              breweryName: newBeerData.breweryName,
+                              breweryId: newBeerData.breweryId,
+                            }}
+                            onFound={(url) => {
+                              setBeerImageFile(null);
+                              setBeerImagePreview(url);
+                              setNewBeerData(prev => ({ ...prev, imageUrl: url }));
+                            }}
+                            label="Cerca sul web"
+                            previewTitle={`Anteprima per "${newBeerData.name}"`}
+                          />
+                        )}
+                      </div>
                       {beerImagePreview ? (
                         <div className="relative w-20 h-20 mt-1">
                           <img src={beerImagePreview} alt="Anteprima" className="w-20 h-20 object-cover rounded-lg border" />
                           <button
                             type="button"
-                            onClick={() => { setBeerImageFile(null); setBeerImagePreview(""); }}
+                            onClick={() => {
+                              setBeerImageFile(null);
+                              setBeerImagePreview("");
+                              setNewBeerData(prev => ({ ...prev, imageUrl: "" }));
+                            }}
                             className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                           >
                             <X className="h-3 w-3" />
@@ -847,6 +872,9 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                           <input type="file" accept="image/*" className="hidden" onChange={handleBeerImageChange} />
                         </label>
                       )}
+                      <p className="text-[11px] text-muted-foreground mt-1.5">
+                        Tip: prima inserisci nome e birrificio, poi prova "Cerca sul web" oppure carica un'immagine manualmente.
+                      </p>
                     </div>
 
                     <div className="flex justify-end gap-2 pt-2">

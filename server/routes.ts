@@ -7275,6 +7275,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/beer-images/search-by-name
+  // Used when creating a NEW beer (no id yet) — search by name + brewery name.
+  // Authorise admin / pub_owner / brewery_owner. Returns { imageUrl, confidence, source }.
+  app.post("/api/beer-images/search-by-name", isAuthenticated, async (req: any, res) => {
+    try {
+      const { beerName, breweryName, breweryId } = req.body || {};
+      if (!beerName || typeof beerName !== "string" || beerName.trim().length < 2) {
+        return res.status(400).json({ message: "beerName required" });
+      }
+
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      const effectiveRole = user?.activeRole || user?.userType;
+      const userRoles = user?.roles || [];
+      const isAdminUser = effectiveRole === "admin" || userRoles.includes("admin");
+      const isPubOwner = effectiveRole === "pub_owner" || userRoles.includes("pub_owner");
+      const isBreweryOwner = effectiveRole === "brewery_owner" || userRoles.includes("brewery_owner");
+      if (!isAdminUser && !isPubOwner && !isBreweryOwner) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+
+      // Lookup brewery website if id provided
+      let websiteUrl: string | null = null;
+      let resolvedBreweryName = breweryName || "";
+      if (breweryId) {
+        const br = (await pool.query(
+          `SELECT name, website_url FROM breweries WHERE id = $1`,
+          [parseInt(breweryId)],
+        )).rows[0];
+        if (br) {
+          websiteUrl = br.website_url ?? null;
+          if (!resolvedBreweryName) resolvedBreweryName = br.name;
+        }
+      }
+
+      const result = await findBestBeerImage(beerName.trim(), resolvedBreweryName, websiteUrl);
+      if (result.confidence !== "high" || !result.url) {
+        return res.json({ imageUrl: null, confidence: result.confidence, source: result.source });
+      }
+
+      const safeSlug = beerName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) || "beer";
+      const cloudUrl = await rehostImageOnCloudinary(result.url, "beer-images", `web_new_${safeSlug}`);
+      res.json({
+        imageUrl: cloudUrl ?? result.url,
+        confidence: "high",
+        source: result.source,
+      });
+    } catch (e: any) {
+      console.error("[search-by-name] error:", e?.message);
+      res.status(500).json({ message: e?.message ?? "search failed" });
+    }
+  });
+
   // POST /api/breweries/:id/find-logo-preview
   // Synchronous brewery logo search — same preview-then-confirm pattern as above.
   app.post("/api/breweries/:id/find-logo-preview", isAuthenticated, async (req: any, res) => {
