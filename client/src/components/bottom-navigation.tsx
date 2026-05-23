@@ -1,4 +1,4 @@
-import { Search, User, Home, Bell, Users } from "lucide-react";
+import { Search, User, Home, Bell, Activity as ActivityIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, lazy, Suspense, type ReactNode } from "react";
@@ -56,7 +56,7 @@ export function BottomNavigation() {
 
   const homeActive     = isActive("/");
   const notifActive    = isActive("/notifications");
-  const attivitaActive = isActive("/feed");
+  const attivitaActive = isActive("/activity");
   const cercaActive    = searchOpen;
   const accountActive  = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
 
@@ -154,13 +154,13 @@ export function BottomNavigation() {
           {/* Spacer for FAB Cerca */}
           <div className="w-16 flex-shrink-0" aria-hidden="true" />
 
-          {/* Sociale */}
-          <Link href="/feed" className="flex-1 flex">
+          {/* Attività */}
+          <Link href="/activity" className="flex-1 flex">
             <Tab
               active={attivitaActive}
-              label="Sociale"
+              label="Attività"
               icon={
-                <Users
+                <ActivityIcon
                   className="h-[22px] w-[22px]"
                   strokeWidth={attivitaActive ? 2.5 : 1.8}
                   fill={attivitaActive ? "currentColor" : "none"}

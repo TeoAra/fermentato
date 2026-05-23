@@ -1093,7 +1093,10 @@ export default function PubDetail() {
                 {/* Events Tab */}
                 <TabsContent value="events" className="px-4 lg:px-0 pt-4 space-y-4">
                   <div className="space-y-4">
-                    {Array.isArray(pubEvents) && pubEvents.filter((e: any) => isFuture(new Date(e.eventDate))).map((event: any) => (
+                    {Array.isArray(pubEvents) && pubEvents.filter((e: any) => {
+                      const end = e.endDate ? new Date(e.endDate) : new Date(new Date(e.eventDate).getTime() + 12 * 60 * 60 * 1000);
+                      return end.getTime() >= Date.now();
+                    }).map((event: any) => (
                       <Card key={event.id} className="overflow-hidden cursor-pointer hover:shadow-md transition-shadow" onClick={() => setSelectedEvent(event)}>
                         {event.imageUrl && (
                           <div className="h-40 bg-cover bg-center relative" style={{ backgroundImage: `url(${event.imageUrl})` }}>
