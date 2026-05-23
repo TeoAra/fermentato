@@ -385,8 +385,8 @@ function Router() {
           <Route path="/admin/pages" component={AdminPages} />
           <Route path="/admin/subscriptions" component={AdminSubscriptions} />
           <Route path="/admin/festivals" component={AdminFestivals} />
-          <Route path="/registra-pub" component={RegistraPub} />
-          <Route path="/pub-registration" component={RegistraPub} />
+          <Route path="/registra-pub" component={isIosNative ? IosWebOnlyPage : RegistraPub} />
+          <Route path="/pub-registration" component={isIosNative ? IosWebOnlyPage : RegistraPub} />
           <Route path="/become-publican" component={BecomePublican} />
           <Route path="/brewery-dashboard" component={BreweryDashboard as any} />
           <Route path="/onboarding" component={Onboarding} />

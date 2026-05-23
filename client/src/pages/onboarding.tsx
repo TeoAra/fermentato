@@ -13,6 +13,7 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Beer, Store, Factory, User, ChevronRight, ChevronLeft, Check, Search, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { AddressAutocomplete, type AddressDetails } from "@/components/AddressAutocomplete";
 import { useAuth } from "@/hooks/useAuth";
+import { isIosNative } from "@/lib/platform";
 import type { Brewery } from "@shared/schema";
 
 type Role = "customer" | "pub_owner" | "brewery_owner";
@@ -362,9 +363,11 @@ export default function Onboarding() {
                 <p className="text-sm text-muted-foreground">Inserisci i dati del tuo locale</p>
               </div>
             </div>
-            <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-lg px-3 py-2 mb-6">
-              Dopo il salvataggio, completerai l'attivazione con Stripe — 15 giorni gratuiti, poi €65/anno IVA inclusa.
-            </p>
+            {!isIosNative && (
+              <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-500/10 rounded-lg px-3 py-2 mb-6">
+                Dopo il salvataggio, completerai l'attivazione con Stripe — 15 giorni gratuiti, poi €65/anno IVA inclusa.
+              </p>
+            )}
 
             <Form {...pubForm}>
               <form onSubmit={pubForm.handleSubmit(handlePubSubmit)} className="space-y-4">

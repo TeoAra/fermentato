@@ -540,8 +540,9 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {/* Pub plan */}
+          <div className={`grid grid-cols-1 ${isIosNative ? '' : 'md:grid-cols-2'} gap-6 max-w-4xl mx-auto`}>
+            {/* Pub plan — hidden on iOS native (App Store guideline 3.1.3(e), B2B) */}
+            {!isIosNative && (
             <div className="rounded-3xl p-8 text-white shadow-xl shadow-orange-200/50 dark:shadow-orange-900/30 flex flex-col"
               style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 60%, #f5a623 100%)" }}>
               <div className="flex items-center gap-3 mb-6">
@@ -579,6 +580,7 @@ export default function Landing() {
                 </Button>
               </Link>
             </div>
+            )}
 
             {/* Brewery plan — free */}
             <div className="rounded-3xl p-8 text-white shadow-xl border border-stone-700 flex flex-col"
