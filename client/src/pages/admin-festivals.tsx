@@ -262,7 +262,7 @@ export default function AdminFestivals() {
     <div className="min-h-screen bg-background">
       <PageContainer variant="standard" className="py-6">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6 bg-white dark:bg-card border-b border-stone-200 dark:border-border p-4 -mx-4 sm:mx-0 rounded-t-2xl">
+        <div className="flex items-center gap-3 mb-6 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 -mx-4 sm:mx-0 rounded-2xl">
           <Link href="/admin">
             <button className="p-2 border border-stone-200 hover:bg-stone-50 rounded-xl text-muted-foreground transition-colors">
               <ArrowLeft className="h-5 w-5" />
@@ -300,7 +300,7 @@ export default function AdminFestivals() {
         ) : (
           <div className="space-y-3">
             {filteredFestivals.map(fest => (
-              <Card key={fest.id} className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm">
+              <Card key={fest.id} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30">
                 <CardContent className="p-4">
                   <div className="flex items-start gap-4">
                     {/* Logo */}

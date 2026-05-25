@@ -188,7 +188,7 @@ export default function AdminDashboardNew() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-foreground">
                 <Activity className="w-5 h-5 text-emerald-600" />
@@ -196,7 +196,7 @@ export default function AdminDashboardNew() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex items-center justify-between p-4 rounded-xl bg-stone-50/40 dark:bg-[#15202B]/10 border border-stone-100 dark:border-border">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-emerald-600 rounded-full animate-pulse"></div>
                   <div>
@@ -211,7 +211,7 @@ export default function AdminDashboardNew() {
                 </Badge>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-stone-50/40 dark:bg-[#15202B]/10 border border-stone-100 dark:border-border">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-blue-600 rounded-full animate-pulse"></div>
                   <div>
@@ -224,7 +224,7 @@ export default function AdminDashboardNew() {
                 </Badge>
               </div>
 
-              <div className="flex items-center justify-between p-4 rounded-xl bg-stone-50/40 dark:bg-[#15202B]/10 border border-stone-100 dark:border-border">
+              <div className="flex items-center justify-between p-4 rounded-xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <div className="flex items-center gap-3">
                   <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse"></div>
                   <div>
@@ -239,7 +239,7 @@ export default function AdminDashboardNew() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardHeader>
               <CardTitle className="flex items-center justify-between gap-2 text-foreground">
                 <div className="flex items-center gap-2">
@@ -278,7 +278,7 @@ export default function AdminDashboardNew() {
         </div>
 
         {/* Translation Tool */}
-        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+        <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-foreground">
               <Languages className="w-5 h-5 text-teal-500" />
@@ -330,7 +330,7 @@ export default function AdminDashboardNew() {
           </CardContent>
         </Card>
 
-        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+        <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 text-foreground">

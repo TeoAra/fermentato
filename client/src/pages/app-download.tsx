@@ -43,7 +43,7 @@ export default function AppDownload() {
         {/* Android — APK diretto */}
         {(platform === "android" || platform === "desktop") && (
           <div className="space-y-3">
-            <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+            <div className="rounded-2xl p-4 space-y-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center shrink-0">
                   <Smartphone className="h-5 w-5 text-green-600 dark:text-green-400" />
@@ -95,7 +95,7 @@ export default function AppDownload() {
             </div>
 
             {/* PWA alternativa */}
-            <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+            <div className="rounded-2xl p-4 space-y-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
                   <Globe className="h-5 w-5 text-blue-600 dark:text-blue-400" />
@@ -120,7 +120,7 @@ export default function AppDownload() {
         {/* iOS */}
         {platform === "ios" && (
           <div className="space-y-3">
-            <div className="bg-card border border-border rounded-2xl p-4 space-y-3">
+            <div className="rounded-2xl p-4 space-y-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-stone-500/10 flex items-center justify-center shrink-0">
                   <Apple className="h-5 w-5 text-foreground" />
@@ -144,7 +144,7 @@ export default function AppDownload() {
               </Button>
             </div>
 
-            <div className="bg-card border border-border rounded-2xl p-4 space-y-2">
+            <div className="rounded-2xl p-4 space-y-2 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <p className="text-xs font-medium text-muted-foreground">Come salvarla sullo schermo home:</p>
               {[
                 "Apri fermenta.to in Chrome o Safari",

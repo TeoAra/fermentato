@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
           </Button>
         </Link>
 
-        <div className="bg-white dark:bg-[#15202B] rounded-lg shadow-sm p-8">
+        <div className="rounded-2xl p-8 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Privacy Policy</h1>
           <p className="text-gray-500 dark:text-gray-400 mb-8">Ultimo aggiornamento: 24 Dicembre 2024</p>
 

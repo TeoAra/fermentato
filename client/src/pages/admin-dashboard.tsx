@@ -228,7 +228,7 @@ export default function AdminDashboard() {
             { label: "Eventi", value: adminStats?.totalEvents ?? 0, icon: CalendarDays, color: "text-purple-500", border: "border-stone-100 dark:border-border" },
             { label: "Festival", value: adminStats?.totalFestivals ?? 0, icon: QrCode, color: "text-pink-500", border: "border-stone-100 dark:border-border" },
           ].map(({ label, value, icon: Icon, color, border }) => (
-            <Card key={label} className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-0 overflow-hidden`}>
+            <Card key={label} className={`bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-0 overflow-hidden`}>
               <CardContent className="p-3">
                 <div className="flex items-center justify-between">
                   <div>
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
         {/* ===== RECENT ACTIVITY + QUICK LINKS ===== */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Recent Activity */}
-          <Card className="lg:col-span-2 bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <Card className="lg:col-span-2 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2 text-base">
@@ -326,7 +326,7 @@ export default function AdminDashboard() {
 
           {/* Quick Links + System Status */}
           <div className="space-y-4">
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <ChevronRight className="w-4 h-4 text-primary" />
@@ -354,7 +354,7 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
                   <Server className="w-4 h-4 text-emerald-500" />
@@ -425,7 +425,7 @@ export default function AdminDashboard() {
               </Button>
             </div>
 
-            <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm overflow-hidden">
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-hidden">
               <CardContent className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -558,7 +558,7 @@ export default function AdminDashboard() {
         {/* ===== ANALYTICS TAB ===== */}
         <TabsContent value="analytics" className="space-y-6 mt-4">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <TrendingUp className="w-4 h-4 text-amber-500" />
@@ -592,7 +592,7 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Building2 className="w-4 h-4 text-blue-500" />
@@ -623,7 +623,7 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          <Card>
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
                 <BarChart3 className="w-4 h-4 text-green-500" />
@@ -649,7 +649,7 @@ export default function AdminDashboard() {
           </Card>
 
           {globalStats?.countries && globalStats.countries.length > 0 && (
-            <Card>
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Database className="w-4 h-4 text-indigo-500" />

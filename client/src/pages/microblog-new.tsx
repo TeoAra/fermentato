@@ -124,7 +124,7 @@ export default function MicroblogNew() {
 
       <div className="max-w-xl mx-auto px-4 pt-4 space-y-4">
         {hasTag && (
-          <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-3 shadow-sm">
+          <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <p className="text-[11px] font-bold uppercase tracking-wider text-stone-400 mb-2">Tag allegato</p>
             <div className="flex flex-wrap gap-1.5" data-testid="prefill-tags">
               {tag.beerId && tag.beerName && (

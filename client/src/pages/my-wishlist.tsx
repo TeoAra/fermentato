@@ -53,7 +53,7 @@ export default function MyWishlist() {
         </div>
       ) : wishlist.length === 0 ? (
         <div className="flex flex-col items-center justify-center pt-24 px-6 text-center gap-4">
-          <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[#1B2735] flex items-center justify-center shadow-sm">
+          <div className="w-20 h-20 rounded-3xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <Heart className="w-9 h-9 text-stone-300" />
           </div>
           <p className="font-semibold text-stone-700 dark:text-stone-300 font-poppins">Wishlist vuota</p>
@@ -67,7 +67,7 @@ export default function MyWishlist() {
           {wishlist.map((item: any) => (
             <div
               key={item.beer_id}
-              className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm flex items-center gap-3 p-3"
+              className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 flex items-center gap-3 p-3"
             >
               {item.beer_image ? (
                 <img src={item.beer_image} alt={item.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[#232F3D]" />

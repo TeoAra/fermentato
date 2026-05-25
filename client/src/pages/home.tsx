@@ -433,7 +433,7 @@ export default function Home() {
 
         {/* GPS denied banner */}
         {locationStatus === 'denied' && (
-          <div className="mb-5 p-4 rounded-2xl bg-card border border-border flex items-center justify-between shadow-card-sm">
+          <div className="mb-5 p-4 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <div className="flex items-center gap-3">
               <Navigation className="w-5 h-5 text-primary flex-shrink-0" />
               <p className="text-sm text-foreground/80">Concedi la posizione nelle impostazioni per vedere i locali più vicini</p>
@@ -464,7 +464,7 @@ export default function Home() {
             ) : Array.isArray(myPubs) && (myPubs as any[]).length > 0 ? (
               <div className="space-y-3">
                 {(myPubs as any[]).map((pub: any) => (
-                  <div key={pub.id} className="tap-scale bg-card border border-border rounded-2xl p-4 flex items-center gap-4 shadow-card">
+                  <div key={pub.id} className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                     <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
                       {pub.logoUrl ? <img src={pub.logoUrl} alt={pub.name} className="w-14 h-14 object-cover" /> : <Store className="w-6 h-6 text-primary/40" />}
                     </div>
@@ -480,7 +480,7 @@ export default function Home() {
                 ))}
               </div>
             ) : (
-              <div className="bg-card rounded-2xl border border-border p-6 text-center shadow-card-sm">
+              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] p-6 text-center shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <p className="text-muted-foreground text-sm mb-3">Non hai ancora registrato nessun pub</p>
                 <Link href="/registra-pub"><Button size="sm">Registra il tuo pub</Button></Link>
               </div>
@@ -499,7 +499,7 @@ export default function Home() {
                 <Button size="sm" variant="ghost" className="text-primary font-semibold text-sm">Gestisci →</Button>
               </Link>
             </div>
-            <div className="tap-scale bg-card border border-border rounded-2xl p-4 flex items-center gap-4 shadow-card">
+            <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
                 {myBreweryData.brewery.logoUrl
                   ? <img src={myBreweryData.brewery.logoUrl} alt={myBreweryData.brewery.name} className="w-14 h-14 object-contain" />
@@ -527,7 +527,7 @@ export default function Home() {
           <div className="grid grid-cols-3 gap-3 mb-6">
             {/* Bevute */}
             <Link href="/dashboard?tab=tastings">
-              <div className="tap-scale bg-card border border-border rounded-2xl p-3.5 shadow-card text-center cursor-pointer">
+              <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-center cursor-pointer transition-all duration-200">
                 <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/25 flex items-center justify-center mx-auto mb-2">
                   <Beer className="w-4.5 h-4.5 text-primary" style={{ width: 18, height: 18 }} />
                 </div>
@@ -541,7 +541,7 @@ export default function Home() {
 
             {/* Salvate */}
             <Link href="/dashboard?tab=favorites">
-              <div className="tap-scale bg-card border border-border rounded-2xl p-3.5 shadow-card text-center cursor-pointer">
+              <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-center cursor-pointer transition-all duration-200">
                 <div className="w-9 h-9 rounded-full bg-amber-100 dark:bg-amber-900/25 flex items-center justify-center mx-auto mb-2">
                   <Star className="w-4.5 h-4.5 text-amber-500" style={{ width: 18, height: 18 }} fill="currentColor" />
                 </div>
@@ -553,7 +553,7 @@ export default function Home() {
 
             {/* Check-in / XP */}
             <Link href="/dashboard">
-              <div className="tap-scale bg-card border border-border rounded-2xl p-3.5 shadow-card text-center cursor-pointer">
+              <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-center cursor-pointer transition-all duration-200">
                 <div className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-900/25 flex items-center justify-center mx-auto mb-2">
                   <Zap className="w-4.5 h-4.5 text-red-500" style={{ width: 18, height: 18 }} />
                 </div>
@@ -670,7 +670,7 @@ export default function Home() {
                 <button className="text-sm font-semibold text-primary">Vedi tutto →</button>
               </Link>
             </div>
-            <div className="bg-card rounded-2xl overflow-hidden border border-border shadow-card">
+            <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl overflow-hidden border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               {sortedPubs.slice(0, 4).map((pub: any, idx: number) => {
                 const tap = (taplistActivity as any[]).find((t: any) => t.pub_id === pub.id);
                 const isLast = idx === Math.min(3, sortedPubs.length - 1);
@@ -724,7 +724,7 @@ export default function Home() {
           <div className={`grid gap-3 mb-6 ${isAuthenticated ? 'grid-cols-2' : 'grid-cols-1'}`}>
 
             {/* Trend del momento */}
-            <div className="bg-card border border-border rounded-2xl p-4 shadow-card">
+            <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[14px] font-bold text-foreground flex items-center gap-1.5">
                   <TrendingUp className="w-4 h-4 text-primary" />
@@ -763,7 +763,7 @@ export default function Home() {
 
             {/* Il tuo profilo (only if authenticated) */}
             {isAuthenticated && (
-              <div className="bg-card border border-border rounded-2xl p-4 shadow-card flex flex-col">
+              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 flex flex-col">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-[14px] font-bold text-foreground">Profilo</h3>
                   <Link href="/dashboard">
@@ -831,7 +831,7 @@ export default function Home() {
                 <Button variant="ghost" size="sm" className="text-primary font-semibold text-sm">Vedi tutti →</Button>
               </Link>
             </div>
-            <div className="bg-card rounded-2xl overflow-hidden border border-border shadow-card">
+            <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl overflow-hidden border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               {breweries.slice(0, 5).map((brewery: any, idx: number) => (
                 <BreweryCard key={brewery.id} brewery={brewery} isLast={idx === Math.min(4, breweries.length - 1)} />
               ))}
@@ -856,7 +856,7 @@ export default function Home() {
             <div className="space-y-2">
               {(taplistActivity as any[]).slice(0, 4).map((item: any) => (
                 <Link key={item.id} href={`/pub/${item.pub_slug || item.pub_id}`}>
-                  <div className="tap-scale flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3 shadow-card-sm">
+                  <div className="tap-scale flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                     {item.beer_image ? (
                       <img src={item.beer_image} alt={item.beer_name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
                     ) : (
@@ -883,7 +883,7 @@ export default function Home() {
               ))}
               {homeAnnouncements.slice(0, 2).map((ann: any) => (
                 <Link key={ann.id} href={`/brewery/${ann.breweryId}`}>
-                  <div className="tap-scale flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3 shadow-card-sm">
+                  <div className="tap-scale flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                     {ann.breweryLogo ? (
                       <img src={ann.breweryLogo} alt={ann.breweryName} className="w-10 h-10 rounded-full object-contain bg-muted flex-shrink-0 p-1" />
                     ) : (
@@ -928,7 +928,7 @@ export default function Home() {
                 const TypeIcon = favorite.itemType === 'pub' ? Store : Beer;
                 return (
                   <Link key={favorite.id} href={href}>
-                    <div className="tap-scale bg-card border border-border rounded-2xl p-3 shadow-card-sm cursor-pointer text-center">
+                    <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] cursor-pointer text-center transition-all duration-200">
                       {favorite.itemImageUrl ? (
                         <img src={favorite.itemImageUrl} alt={favorite.itemName} className="w-10 h-10 rounded-full object-cover mx-auto mb-2 ring-2 ring-orange-100 dark:ring-orange-900/30" />
                       ) : (
@@ -975,7 +975,7 @@ export default function Home() {
             COMMUNITY STATS
         ═══════════════════════════════════════════════════════════════ */}
         <section className="mb-6">
-          <div className="bg-card border border-border rounded-2xl p-5 shadow-card">
+          <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <p className="text-[11px] font-bold text-center text-muted-foreground mb-4 uppercase tracking-[0.14em]">
               La Community Fermenta.to
             </p>

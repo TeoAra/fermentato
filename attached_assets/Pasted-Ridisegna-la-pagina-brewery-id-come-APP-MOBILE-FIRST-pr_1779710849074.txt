@@ -1,0 +1,120 @@
+Ridisegna la pagina /brewery/[id] come APP MOBILE-FIRST premium, non come normale pagina web.
+
+IMPORTANTE:
+- Deve sembrare una schermata app iOS/Android.
+- Layout verticale unico della pagina pub.
+- Non creare pagine separate per Taplist e Bottiglie: devono essere sezioni della stessa pagina pub.
+- Il Menù Cibo deve essere una sezione dedicata separata dalla birra.
+- Rimuovi “recensioni” come sezione pub: le valutazioni appartengono solo alle birre.
+
+STILE:
+- Light mode premium.
+- Sfondo #FAF7F1 / crema caldo, non bianco puro.
+- Card bianche morbide con bordo #E8DED1.
+- Accento principale amber/orange #F59E0B.
+- Testo principale #151515.
+- Radius 20-28px.
+- Shadow morbide.
+- Font moderno tipo Inter/SF Pro.
+- Spaziature ampie, touch friendly.
+
+STRUTTURA PAGINA:
+
+1. Hero pub
+- Foto grande con angoli arrotondati.
+- Badge “Aperto ora”.
+- Nome pub.
+- Logo pub sovrapposto.
+- Posizione.
+- Orario chiusura.
+- Valutazione SOLO riferita alle birre: “4.6 • birre valutate”.
+- Bottoni: Chiama, Indicazioni, Salva.
+
+2. Tab bar sticky
+- Panoramica
+- Taplist
+- Bottiglie
+- Menù
+- Info
+Deve rimanere sticky durante lo scroll.
+
+3. Panoramica
+- Card “Chi siamo”.
+- Card mappa.
+- Card orari.
+- Card contatti.
+- Info chip: Wi-Fi, Pet Friendly, Dehor, Carte, Parcheggio.
+
+4. Taplist — Birre alla spina
+- Titolo “Taplist”.
+- Sottotitolo “20 spine disponibili”.
+- Filtri pill: Tutte, Pils, IPA, Stout, Sour, Altro.
+- Lista verticale card.
+Ogni birra deve avere:
+  - numero spina
+  - logo birrificio
+  - nome birra
+  - birrificio
+  - stile
+  - ABV
+  - nazione
+  - prezzi 0.30L, 0.50L, 1L
+  - cuore preferiti
+Card alte circa 92-110px, non troppo compatte.
+
+5. Bottiglie & Lattine
+- Sezione distinta dalla taplist.
+- Grid orizzontale scrollabile.
+Ogni item:
+  - immagine bottiglia/lattina
+  - nome birra
+  - stile
+  - formato 33cl/44cl/75cl
+  - prezzo
+  - cuore preferiti.
+
+6. Menù Cibo
+- Sezione separata.
+- Categorie pill: Tutti, Panini, Piatti, Taglieri, Snack, Dolci.
+Ogni prodotto:
+  - foto
+  - titolo
+  - descrizione breve
+  - prezzo
+  - allergeni con icone
+  - pairing consigliato con una birra.
+Aggiungi box “Hai allergie?” con testo informativo.
+
+7. Info finali
+- Beer shop
+- Eventi
+- Feste private
+- Gift card
+- Accessibilità
+
+BOTTOM NAV APP:
+- Home
+- Esplora
+- Preferiti
+- Eventi
+- Profilo
+Deve essere fixed in basso, stile app, con blur leggero.
+
+ANIMAZIONI:
+- Usa Framer Motion.
+- Fade/slide entrance delle sezioni.
+- Micro animazione sulle card al tap.
+- Scroll smooth.
+- Tab sticky con active indicator animato.
+
+RESPONSIVE:
+- Mobile 360px perfetto.
+- iPhone safe-area bottom.
+- Tablet: max-width 720px centrato.
+- Desktop: mostra la pagina come app container centrato, non full width.
+
+NON usare layout generico da sito.
+NON usare tabelle.
+NON usare card grigie piatte.
+NON mettere recensioni pub.
+NON separare taplist e bottiglie in pagine diverse.

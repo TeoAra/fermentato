@@ -26,7 +26,7 @@ const BADGE_DEFS = [
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm text-center">
+    <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 text-center">
       <p className="text-2xl font-bold text-stone-900 dark:text-stone-50 font-poppins">{value}</p>
       <p className="text-xs text-stone-500 mt-0.5 font-medium">{label}</p>
       {sub && <p className="text-xs text-primary mt-0.5">{sub}</p>}
@@ -98,7 +98,7 @@ export default function MyStats() {
 
         {/* Top styles */}
         {!statsLoading && stats?.topStyles?.length > 0 && (
-          <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-hidden">
             <div className="px-4 pt-4 pb-2">
               <h2 className="font-semibold text-sm text-stone-700 dark:text-stone-300 font-poppins flex items-center gap-2">
                 <TrendingUp className="w-4 h-4 text-primary" /> Stili preferiti
@@ -128,7 +128,7 @@ export default function MyStats() {
 
         {/* Format breakdown */}
         {!statsLoading && stats?.formatBreakdown?.length > 0 && (
-          <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-hidden">
             <div className="px-4 pt-4 pb-2">
               <h2 className="font-semibold text-sm text-stone-700 dark:text-stone-300 font-poppins">Formato preferito</h2>
             </div>
@@ -145,7 +145,7 @@ export default function MyStats() {
 
         {/* Top breweries */}
         {!statsLoading && stats?.topBreweries?.length > 0 && (
-          <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-hidden">
             <div className="px-4 pt-4 pb-2">
               <h2 className="font-semibold text-sm text-stone-700 dark:text-stone-300 font-poppins flex items-center gap-2">
                 <Star className="w-4 h-4 text-primary" /> Birrifici preferiti
@@ -169,7 +169,7 @@ export default function MyStats() {
         )}
 
         {/* Badges */}
-        <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-hidden">
           <div className="px-4 pt-4 pb-2 flex items-center justify-between">
             <h2 className="font-semibold text-sm text-stone-700 dark:text-stone-300 font-poppins flex items-center gap-2">
               <Award className="w-4 h-4 text-primary" /> Badge
@@ -198,7 +198,7 @@ export default function MyStats() {
 
         {/* AI Sommelier recommendations */}
         {!recsLoading && recs?.recommendations?.length > 0 && (
-          <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-hidden">
             <div className="px-4 pt-4 pb-2">
               <h2 className="font-semibold text-sm text-stone-700 dark:text-stone-300 font-poppins flex items-center gap-2">
                 🤖 Sommelier AI
@@ -228,7 +228,7 @@ export default function MyStats() {
 
         {/* Top beers */}
         {!statsLoading && stats?.topBeers?.length > 0 && (
-          <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm overflow-hidden">
+          <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-hidden">
             <div className="px-4 pt-4 pb-2">
               <h2 className="font-semibold text-sm text-stone-700 dark:text-stone-300 font-poppins flex items-center gap-2">
                 <Flame className="w-4 h-4 text-primary" /> Le mie preferite

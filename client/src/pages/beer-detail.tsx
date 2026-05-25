@@ -41,9 +41,12 @@ import {
   Trash2,
   AlertTriangle,
   Bookmark,
-  MoreHorizontal
+  MoreHorizontal,
+  Home as HomeIcon,
+  Info as InfoIcon,
 } from "lucide-react";
 import Footer from "@/components/footer";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 import { Badge } from "@/components/ui/badge";
@@ -162,6 +165,24 @@ export default function BeerDetail() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // SSR-safe: start with a non-overview tab (valid on desktop where Tabs
+  // are not used). On mobile we switch to "overview" in a client effect.
+  const [activeTab, setActiveTab] = useState<string>("info");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setActiveTab((prev) => (!mq.matches && prev === "info" ? "overview" : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveTab((prev) => {
+        if (e.matches && prev === "overview") return "info";
+        return prev;
+      });
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+  const isBeerModalOpen = useAnyModalOpen();
 
   // ── Scan redirect banner ─────────────────────────────────────────────────
   const [scanCtx, setScanCtx] = useState<ScanRedirectContext | null>(null);
@@ -750,7 +771,7 @@ export default function BeerDetail() {
       {/* ═══════════════════════════════════════════════════════════
            HERO — full-bleed artwork + curved white edge (mockup spec)
          ═══════════════════════════════════════════════════════════ */}
-      <div className="relative">
+      <div className={`relative ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
         {/* Cover image container — overflow-hidden so blur doesn't bleed outside */}
         {/* Priority: logoUrl (etichetta) → imageUrl — stessa gerarchia del
             cerchio avatar, così cover e logo mostrano sempre la stessa immagine
@@ -805,7 +826,7 @@ export default function BeerDetail() {
       </div>
 
       {/* White card with rounded top — hero transitions cleanly into content */}
-      <div className="bg-background rounded-t-[32px] -mt-8 relative z-10">
+      <div className={`bg-background rounded-t-[32px] -mt-8 relative z-10 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
         {/* Logo overlap + floating bookmark */}
         <PageContainer variant="wide">
           <div className="flex items-end justify-between -mt-4 relative z-10">
@@ -832,7 +853,16 @@ export default function BeerDetail() {
         </PageContainer>
       </div>
 
-      <PageContainer as="main" variant="wide" className="pb-24">
+      <PageContainer
+        as="main"
+        variant="wide"
+        className={`pb-24 ${activeTab !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : ''}`}
+        style={{
+          paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+          paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
+        }}
+      >
+        <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
           {/* ═══════════ Title block ═══════════ */}
           <div className="mt-2.5">
             <h1 className="text-[26px] md:text-[30px] font-extrabold text-foreground leading-tight tracking-tight" data-testid="text-beer-name">
@@ -1038,7 +1068,9 @@ export default function BeerDetail() {
               )}
             </div>
           )}
+        </div>
 
+        <div className={`${activeTab === 'disponibilita' ? '' : 'hidden'} lg:!block`}>
           {/* ═══════════ Dove puoi berla ═══════════ */}
           {availabilityLoading ? (
             <div className="mt-5 rounded-2xl border border-stone-100 dark:border-border bg-card p-4">
@@ -1116,7 +1148,9 @@ export default function BeerDetail() {
               </div>
             );
           })() : null}
+        </div>
 
+        <div className={`${activeTab === 'info' ? '' : 'hidden'} lg:!block`}>
           {/* ═══════════ Descrizione ═══════════ */}
           {beer?.description && (
             <div className="mt-6">
@@ -1151,7 +1185,9 @@ export default function BeerDetail() {
               )}
             </div>
           )}
+        </div>
 
+        <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
           {/* ═══════════ Brewery card ═══════════ */}
           {beer?.brewery && (
             <div className="mt-6">
@@ -1178,7 +1214,9 @@ export default function BeerDetail() {
               </Link>
             </div>
           )}
+        </div>
 
+        <div className={`${activeTab === 'info' ? '' : 'hidden'} lg:!block`}>
           {/* Awards */}
           {(beer as any)?.awards && (beer as any).awards.length > 0 && (
             <div className="mt-6">
@@ -1199,7 +1237,9 @@ export default function BeerDetail() {
               </div>
             </div>
           )}
+        </div>
 
+        <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
           {/* ═══════════ Potrebbe piacerti anche ═══════════ */}
           {suggestedBeers.length > 0 && (
             <div className="mt-6">
@@ -1240,7 +1280,9 @@ export default function BeerDetail() {
               </div>
             </div>
           )}
+        </div>
 
+        <div className={`${activeTab === 'recensioni' ? '' : 'hidden'} lg:!block`}>
           {/* ═══════════ Reviews section ═══════════ */}
           <div id="beer-reviews" className="mt-8 space-y-6 scroll-mt-20">
             {/* My tasting note */}
@@ -1476,6 +1518,7 @@ export default function BeerDetail() {
               />
             )}
           </div>
+        </div>
         </PageContainer>
 
       {/* Admin Edit Dialog */}
@@ -1829,6 +1872,116 @@ export default function BeerDetail() {
           />
         </Suspense>
       )}
+
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+      {activeTab !== 'overview' && !isBeerModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
+              <button
+                onClick={() => setActiveTab('overview')}
+                aria-label="Torna alla panoramica"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {(beer?.logoUrl || beer?.imageUrl) && (
+                  <img
+                    src={beer?.logoUrl || beer?.imageUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">{beer?.name}</div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {activeTab === 'recensioni' && 'Recensioni'}
+                    {activeTab === 'disponibilita' && 'Disponibilità'}
+                    {activeTab === 'info' && 'Info'}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleShare}
+                aria-label="Condividi"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <Share2 className="h-[18px] w-[18px] text-foreground" />
+              </button>
+              <button
+                onClick={handleFavoriteToggle}
+                disabled={favoriteMutation.isPending}
+                aria-label={isBeerFavorited ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
+                className={`w-10 h-10 rounded-full flex items-center justify-center tap-scale active:scale-95 ${
+                  isBeerFavorited
+                    ? 'bg-primary/15 text-primary'
+                    : 'bg-stone-100 dark:bg-white/[0.06] text-foreground'
+                }`}
+              >
+                <Heart className={`h-[18px] w-[18px] ${isBeerFavorited ? 'fill-primary' : ''}`} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      <nav
+        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          isBeerModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        aria-label="Navigazione della birra"
+      >
+        <div className="mx-auto max-w-md px-4">
+          <div
+            role="tablist"
+            aria-label="Sezioni della birra"
+            className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]"
+          >
+            <div className="flex items-stretch justify-between p-1.5 gap-1">
+              {[
+                { id: 'overview',      label: 'Overview',      Icon: HomeIcon },
+                { id: 'recensioni',    label: 'Recensioni',    Icon: Star },
+                { id: 'disponibilita', label: 'Disponibilità', Icon: MapPin },
+                { id: 'info',          label: 'Info',          Icon: InfoIcon },
+              ].map(({ id, label, Icon }) => {
+                const active = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    role="tab"
+                    aria-selected={active}
+                    aria-current={active ? 'page' : undefined}
+                    aria-label={label}
+                    data-testid={`beer-dock-${id}`}
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                      active
+                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                    }`}
+                  >
+                    <Icon
+                      className="h-[20px] w-[20px]"
+                      strokeWidth={active ? 2.6 : 1.8}
+                      fill={active ? 'currentColor' : 'none'}
+                      style={active ? { fillOpacity: 0.18 } : {}}
+                    />
+                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

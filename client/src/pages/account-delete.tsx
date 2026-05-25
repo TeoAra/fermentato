@@ -36,7 +36,7 @@ export default function AccountDeletePage() {
         </div>
 
         {step === "done" ? (
-          <Card>
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardContent className="pt-6 text-center space-y-4">
               <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
               <p className="font-medium">Account eliminato con successo.</p>
@@ -47,7 +47,7 @@ export default function AccountDeletePage() {
           </Card>
         ) : (
           <>
-            <Card>
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
                   <AlertTriangle className="h-5 w-5 text-amber-500" />
@@ -70,7 +70,7 @@ export default function AccountDeletePage() {
             </Card>
 
             {isLoading ? null : !isAuthenticated ? (
-              <Card>
+              <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <CardContent className="pt-6 space-y-4 text-center">
                   <p className="text-sm text-muted-foreground">
                     Devi essere loggato per eliminare il tuo account.
@@ -84,7 +84,7 @@ export default function AccountDeletePage() {
                 </CardContent>
               </Card>
             ) : step === "info" ? (
-              <Card>
+              <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <CardContent className="pt-6 space-y-4">
                   <p className="text-sm">
                     Sei loggato come <strong>{(user as any)?.displayName || (user as any)?.email || "utente"}</strong>.

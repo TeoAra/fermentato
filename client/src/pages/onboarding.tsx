@@ -482,7 +482,7 @@ export default function Onboarding() {
                   />
                 </div>
                 {breweryResults.length > 0 && !selectedBrewery && (
-                  <div className="mt-2 bg-card border border-border rounded-lg overflow-hidden max-h-48 overflow-y-auto">
+                  <div className="mt-2 rounded-lg overflow-hidden max-h-48 overflow-y-auto bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                     {breweryResults.map((b: Brewery) => (
                       <button key={b.id} onClick={() => { setSelectedBrewery(b); setBrewerySearch(b.name); }}
                         className="w-full text-left px-4 py-3 hover:bg-accent flex items-center gap-3 transition-colors">

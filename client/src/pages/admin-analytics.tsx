@@ -219,7 +219,7 @@ export default function AdminAnalytics() {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 border-l-blue-500">
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 border-l-4 border-l-blue-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -241,7 +241,7 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 border-l-emerald-500">
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 border-l-4 border-l-emerald-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -256,7 +256,7 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 border-l-primary">
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 border-l-4 border-l-primary">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -277,7 +277,7 @@ export default function AdminAnalytics() {
             </CardContent>
           </Card>
 
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 border-l-purple-500">
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 border-l-4 border-l-purple-500">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -295,7 +295,7 @@ export default function AdminAnalytics() {
         </div>
 
         {/* ===== ATTIVITÀ RECENTI ===== */}
-        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+        <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader className="pb-3 border-b border-stone-100 dark:border-border">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
@@ -405,7 +405,7 @@ export default function AdminAnalytics() {
         {/* Top Performance Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Top Stili Birre */}
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardHeader className="border-b border-stone-100 dark:border-border">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <BarChart3 className="w-5 h-5 text-primary" />
@@ -433,7 +433,7 @@ export default function AdminAnalytics() {
           </Card>
 
           {/* Top Birrifici */}
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardHeader className="border-b border-stone-100 dark:border-border">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
                 <Globe className="w-5 h-5 text-primary" />
@@ -465,7 +465,7 @@ export default function AdminAnalytics() {
         </div>
 
         {/* Crescita Piattaforma (real time-series) */}
-        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+        <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader className="border-b border-stone-100 dark:border-border">
             <div className="flex items-center justify-between">
               <CardTitle className="flex items-center gap-2 font-bold text-foreground">
@@ -508,7 +508,7 @@ export default function AdminAnalytics() {
         </Card>
 
         {/* Birre più recensite */}
-        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+        <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader className="border-b border-stone-100 dark:border-border">
             <CardTitle className="flex items-center gap-2 font-bold text-foreground">
               <Beer className="w-5 h-5 text-primary" />
@@ -553,7 +553,7 @@ export default function AdminAnalytics() {
         </Card>
 
         {/* Database Global Overview */}
-        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+        <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader className="border-b border-stone-100 dark:border-border">
             <CardTitle className="flex items-center gap-2 font-bold text-foreground">
               <Globe className="w-5 h-5 text-primary" />

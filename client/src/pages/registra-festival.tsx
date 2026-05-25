@@ -435,7 +435,7 @@ export default function RegistraFestivalPage() {
   return (
     <div className="min-h-screen bg-[hsl(38,14%,97%)] dark:bg-gray-950 flex flex-col">
       {/* Minimal header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-[#2F3D4D] bg-white dark:bg-[#15202B]">
+      <header className="flex items-center justify-between px-6 py-4 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-b border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
         <Link href="/" className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center">
             <Beer className="w-4 h-4 text-white" />

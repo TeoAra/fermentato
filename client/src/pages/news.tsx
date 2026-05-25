@@ -50,7 +50,7 @@ export default function NewsPage() {
         ) : (
           items.map((it) => (
             <a key={it.id} href={it.link} target="_blank" rel="noopener noreferrer"
-              className="block bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+              className="block bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-200 hover:border-primary/30 active:scale-[0.99]">
               <div className="flex gap-0">
                 {it.image_url && (
                   <img src={it.image_url} alt="" loading="lazy"

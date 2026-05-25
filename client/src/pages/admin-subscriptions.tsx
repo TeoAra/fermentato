@@ -135,7 +135,7 @@ export default function AdminSubscriptions() {
             { label: "In scadenza (30gg)", value: stats.expiringSoon, color: "text-primary", border: "border-l-primary" },
             { label: "Scaduti", value: stats.expired, color: "text-destructive", border: "border-l-destructive" },
           ].map(({ label, value, color, border }) => (
-            <Card key={label} className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 ${border}`}>
+            <Card key={label} className={`bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 border-l-4 ${border}`}>
               <CardContent className="p-4">
                 <p className={`text-2xl font-bold ${color}`}>{value}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
@@ -171,7 +171,7 @@ export default function AdminSubscriptions() {
         </div>
 
         {/* Table */}
-        <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm overflow-hidden">
+        <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-hidden">
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full">

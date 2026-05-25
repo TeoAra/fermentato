@@ -150,7 +150,7 @@ const BADGE_DEFS = [
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm text-center">
+    <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 text-center">
       <p className="text-2xl font-bold text-stone-900 dark:text-stone-50 font-poppins">{value}</p>
       <p className="text-xs text-stone-500 mt-0.5 font-medium">{label}</p>
       {sub && <p className="text-xs text-primary mt-0.5">{sub}</p>}
@@ -327,7 +327,7 @@ export default function Activity() {
   };
 
   const TapChangeCard = ({ tc, showDismiss = false }: { tc: any; showDismiss?: boolean }) => (
-    <Card key={tc.id} className="hover:shadow-sm transition-shadow group">
+    <Card key={tc.id} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 group">
       <CardContent className="p-4">
         <div className="flex items-start gap-3">
           <div className={`w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 ${tc.type === 'beer_removed' ? 'bg-red-100 dark:bg-red-900/20' : 'bg-stone-100 dark:bg-orange-900/20'}`}>
@@ -412,7 +412,7 @@ export default function Activity() {
       )}
 
       {!userLocation && !requestingLocation && !locationError && (
-        <div className="mb-4 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border flex items-center gap-3 shadow-sm">
+        <div className="mb-4 p-4 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] flex items-center gap-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <div className="w-10 h-10 rounded-full bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center flex-shrink-0">
             <Navigation className="h-5 w-5 text-stone-500 dark:text-stone-400" />
           </div>

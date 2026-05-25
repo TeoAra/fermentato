@@ -1,11 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
 import { Link, useParams } from "wouter";
 import { Helmet } from "react-helmet-async";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import {
-  CalendarDays, MapPin, Clock, Beer, Building2, ArrowLeft, ChevronRight, Loader2,
+  CalendarDays,
+  MapPin,
+  Clock,
+  Beer,
+  Building2,
+  ArrowLeft,
+  ChevronRight,
+  Loader2,
+  Home as HomeIcon,
+  Info as InfoIcon,
+  Share2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +27,7 @@ import {
   EventShareButtons,
 } from "@/components/events-manager";
 import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 
 type EventDetail = {
   sourceType: "pub" | "brewery";
@@ -36,12 +48,33 @@ type EventDetail = {
   venueLongitude: string | null;
 };
 
+const GLASS_CARD =
+  "bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:bg-white/[0.04] dark:border-white/[0.06] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]";
+
 export default function EventDetailPage() {
   const params = useParams<{ type: string; id: string }>();
   const type = params.type as "pub" | "brewery";
   const id = parseInt(params.id);
 
   const validType = type === "pub" || type === "brewery";
+
+  // SSR-safe: parte da "info" (valida e neutra). In effect client, switch a
+  // "overview" su mobile e back a "info" su desktop.
+  const [activeTab, setActiveTab] = useState<"overview" | "info" | "mappa">("info");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setActiveTab((prev) => (!mq.matches && prev === "info" ? "overview" : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveTab((prev) => {
+        if (e.matches && prev === "overview") return "info";
+        return prev;
+      });
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+  const isModalOpen = useAnyModalOpen();
 
   const { data: ev, isLoading, error } = useQuery<EventDetail>({
     queryKey: ["/api/events", type, String(id)],
@@ -102,6 +135,91 @@ export default function EventDetailPage() {
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.venueAddress + " " + (ev.venueCity || ""))}`
       : null;
 
+  const handleShare = async () => {
+    const currentUrl = window.location.href;
+    const shareData = {
+      title: `${ev.title} - Fermenta.to`,
+      text: `${ev.title} · ${ev.venueName}`,
+      url: currentUrl,
+    };
+    try {
+      if (navigator.share && typeof navigator.share === "function") {
+        await navigator.share(shareData);
+        return;
+      }
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(currentUrl);
+      }
+    } catch (e: any) {
+      if (e?.name === "AbortError") return;
+    }
+  };
+
+  const VenueBlock = (
+    <div>
+      <h2 className="text-xs uppercase tracking-wider font-bold text-stone-500 dark:text-stone-400 mb-3">
+        {ev.sourceType === "brewery" ? "Birrificio" : "Locale"}
+      </h2>
+      <Link href={venueHref}>
+        <a className="block group" data-testid="link-event-venue">
+          <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition">
+            {ev.venueLogoUrl ? (
+              <img src={ev.venueLogoUrl} alt={ev.venueName} className="h-12 w-12 rounded-lg object-cover" />
+            ) : (
+              <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                <SourceIcon className="h-6 w-6 text-white" />
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-foreground dark:text-white truncate group-hover:text-purple-700 dark:group-hover:text-purple-400 transition-colors">
+                {ev.venueName}
+              </p>
+              {(ev.venueAddress || ev.venueCity) && (
+                <p className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                  <MapPin className="h-3 w-3" />
+                  {[ev.venueAddress, ev.venueCity].filter(Boolean).join(", ")}
+                </p>
+              )}
+            </div>
+            <ChevronRight className="h-5 w-5 text-stone-400 flex-shrink-0" />
+          </div>
+        </a>
+      </Link>
+      {mapsUrl && (
+        <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
+          <Button variant="outline" className="w-full mt-3 gap-2" data-testid="btn-event-directions">
+            <MapPin className="h-4 w-4" />
+            Indicazioni stradali
+          </Button>
+        </a>
+      )}
+    </div>
+  );
+
+  const DateTimeBlock = (
+    <div className="space-y-1.5 text-sm text-foreground/80 dark:text-stone-300">
+      <div className="flex items-center gap-2">
+        <CalendarDays className="h-4 w-4 text-purple-600" />
+        <span className="font-medium">
+          {format(start, "EEEE d MMMM yyyy", { locale: it })}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <Clock className="h-4 w-4 text-purple-600" />
+        <span>
+          {format(start, "HH:mm")}
+          {end && ` - ${format(end, "HH:mm")}`}
+        </span>
+      </div>
+    </div>
+  );
+
+  const tabLabel: Record<typeof activeTab, string> = {
+    overview: "Overview",
+    info: "Info",
+    mappa: "Mappa",
+  };
+
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-[#0F1820]">
       <Helmet>
@@ -111,8 +229,8 @@ export default function EventDetailPage() {
         {ev.imageUrl && <meta property="og:image" content={ev.imageUrl} />}
       </Helmet>
 
-      {/* Cover */}
-      <div className="relative">
+      {/* Cover — desktop sempre, mobile solo su overview */}
+      <div className={`relative ${activeTab !== "overview" ? "hidden lg:block" : ""}`}>
         {ev.imageUrl ? (
           <div className="relative h-64 sm:h-80 lg:h-96 bg-stone-200 dark:bg-[#15202B]">
             <img src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover" />
@@ -131,9 +249,55 @@ export default function EventDetailPage() {
         </button>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 -mt-16 relative z-10 pb-16">
-        <Card className="border-stone-200 dark:border-white/10 shadow-xl">
-          <CardContent className="p-6 sm:p-8">
+      <div
+        className={`max-w-3xl mx-auto px-4 sm:px-6 relative z-10 ${
+          activeTab !== "overview" ? "lg:-mt-16 pt-2" : "-mt-16"
+        }`}
+        style={{
+          paddingBottom: "calc(96px + env(safe-area-inset-bottom))",
+          paddingTop:
+            activeTab !== "overview"
+              ? "calc(56px + env(safe-area-inset-top))"
+              : undefined,
+        }}
+      >
+        {/* ── DESKTOP: layout originale invariato ── */}
+        <div className="hidden lg:block">
+          <Card className="border-stone-200 dark:border-white/10 shadow-xl">
+            <CardContent className="p-6 sm:p-8">
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Badge variant="secondary" className="gap-1">
+                  <SourceIcon className="h-3 w-3" />
+                  {ev.sourceType === "brewery" ? "Birrificio" : "Pub"}
+                </Badge>
+                {ev.category && <EventCategoryBadge category={ev.category} />}
+              </div>
+
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground dark:text-white">{ev.title}</h1>
+
+              <div className="mt-3">{DateTimeBlock}</div>
+
+              <div className="mt-5 flex flex-wrap items-center gap-2">
+                <EventInterestButton eventId={ev.id} type={ev.sourceType} />
+                <EventShareButtons event={{ ...ev, eventDate: ev.eventDate }} pubId={ev.venueId} size="default" />
+              </div>
+
+              {!isRichContentEmpty(ev.description) && (
+                <div className="mt-6">
+                  <RichTextDisplay html={ev.description ?? ""} />
+                </div>
+              )}
+
+              <div className="mt-8 pt-6 border-t border-stone-200 dark:border-white/10">
+                {VenueBlock}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* ── MOBILE: overview tab ── */}
+        <div className={`lg:hidden ${activeTab === "overview" ? "block" : "hidden"} space-y-4`}>
+          <div className={`rounded-2xl ${GLASS_CARD} p-5`}>
             <div className="flex flex-wrap gap-2 mb-3">
               <Badge variant="secondary" className="gap-1">
                 <SourceIcon className="h-3 w-3" />
@@ -141,86 +305,221 @@ export default function EventDetailPage() {
               </Badge>
               {ev.category && <EventCategoryBadge category={ev.category} />}
             </div>
-
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground dark:text-white">{ev.title}</h1>
-
-            <div className="mt-3 space-y-1.5 text-sm text-foreground/80 dark:text-stone-300">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-purple-600" />
-                <span className="font-medium">
-                  {format(start, "EEEE d MMMM yyyy", { locale: it })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-purple-600" />
-                <span>
-                  {format(start, "HH:mm")}
-                  {end && ` - ${format(end, "HH:mm")}`}
-                </span>
-              </div>
-            </div>
-
-            {/* Actions */}
+            <h1 className="text-2xl font-extrabold text-foreground dark:text-white leading-tight">
+              {ev.title}
+            </h1>
+            <div className="mt-3">{DateTimeBlock}</div>
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <EventInterestButton eventId={ev.id} type={ev.sourceType} />
               <EventShareButtons event={{ ...ev, eventDate: ev.eventDate }} pubId={ev.venueId} size="default" />
             </div>
+          </div>
 
-            {/* Description */}
-            {!isRichContentEmpty(ev.description) && (
-              <div className="mt-6">
-                <RichTextDisplay html={ev.description} />
+          {!isRichContentEmpty(ev.description) && (
+            <div className={`rounded-2xl ${GLASS_CARD} p-5`}>
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xs uppercase tracking-wider font-bold text-stone-500 dark:text-stone-400">
+                  Descrizione
+                </h2>
+                <button
+                  onClick={() => setActiveTab("info")}
+                  className="text-xs font-bold text-primary tap-scale"
+                  data-testid="event-overview-info-link"
+                >
+                  Leggi tutto →
+                </button>
               </div>
-            )}
+              <div className="line-clamp-4 text-sm text-foreground/80 dark:text-stone-300">
+                <RichTextDisplay html={ev.description ?? ""} />
+              </div>
+            </div>
+          )}
 
-            {/* Venue card */}
-            <div className="mt-8 pt-6 border-t border-stone-200 dark:border-white/10">
-              <h2 className="text-xs uppercase tracking-wider font-bold text-stone-500 dark:text-stone-400 mb-3">
+          <div className={`rounded-2xl ${GLASS_CARD} p-5`}>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-xs uppercase tracking-wider font-bold text-stone-500 dark:text-stone-400">
                 {ev.sourceType === "brewery" ? "Birrificio" : "Locale"}
               </h2>
-              <Link href={venueHref}>
-                <a className="block group" data-testid="link-event-venue">
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition">
-                    {ev.venueLogoUrl ? (
-                      <img src={ev.venueLogoUrl} alt={ev.venueName} className="h-12 w-12 rounded-lg object-cover" />
-                    ) : (
-                      <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                        <SourceIcon className="h-6 w-6 text-white" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-foreground dark:text-white truncate group-hover:text-purple-700 dark:group-hover:text-purple-400 transition-colors">
-                        {ev.venueName}
-                      </p>
-                      {(ev.venueAddress || ev.venueCity) && (
-                        <p className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5">
-                          <MapPin className="h-3 w-3" />
-                          {[ev.venueAddress, ev.venueCity].filter(Boolean).join(", ")}
-                        </p>
-                      )}
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-stone-400 flex-shrink-0" />
-                  </div>
-                </a>
-              </Link>
-              {mapsUrl && (
-                <a href={mapsUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="w-full mt-3 gap-2" data-testid="btn-event-directions">
-                    <MapPin className="h-4 w-4" />
-                    Indicazioni stradali
-                  </Button>
-                </a>
-              )}
+              <button
+                onClick={() => setActiveTab("mappa")}
+                className="text-xs font-bold text-primary tap-scale"
+                data-testid="event-overview-mappa-link"
+              >
+                Vedi mappa →
+              </button>
             </div>
-          </CardContent>
-        </Card>
+            <Link href={venueHref}>
+              <a className="block group" data-testid="link-event-venue-overview">
+                <div className="flex items-center gap-3">
+                  {ev.venueLogoUrl ? (
+                    <img src={ev.venueLogoUrl} alt={ev.venueName} className="h-12 w-12 rounded-lg object-cover" />
+                  ) : (
+                    <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                      <SourceIcon className="h-6 w-6 text-white" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-foreground dark:text-white truncate">
+                      {ev.venueName}
+                    </p>
+                    {(ev.venueAddress || ev.venueCity) && (
+                      <p className="text-xs text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                        <MapPin className="h-3 w-3" />
+                        {[ev.venueAddress, ev.venueCity].filter(Boolean).join(", ")}
+                      </p>
+                    )}
+                  </div>
+                  <ChevronRight className="h-5 w-5 text-stone-400 flex-shrink-0" />
+                </div>
+              </a>
+            </Link>
+          </div>
+        </div>
 
-        {/* ── Community posts ── */}
-        <CommunityPostsSection
-          entity={{ kind: "event", id: ev.id, sourceType: ev.sourceType, name: ev.title }}
-          title="Post della community su questo evento"
-        />
+        {/* ── MOBILE: info tab ── */}
+        <div className={`lg:hidden ${activeTab === "info" ? "block" : "hidden"} space-y-4`}>
+          <div className={`rounded-2xl ${GLASS_CARD} p-5`}>
+            <div className="flex flex-wrap gap-2 mb-3">
+              <Badge variant="secondary" className="gap-1">
+                <SourceIcon className="h-3 w-3" />
+                {ev.sourceType === "brewery" ? "Birrificio" : "Pub"}
+              </Badge>
+              {ev.category && <EventCategoryBadge category={ev.category} />}
+            </div>
+            <h1 className="text-xl font-extrabold text-foreground dark:text-white leading-tight">
+              {ev.title}
+            </h1>
+            <div className="mt-3">{DateTimeBlock}</div>
+          </div>
+
+          {!isRichContentEmpty(ev.description) ? (
+            <div className={`rounded-2xl ${GLASS_CARD} p-5`}>
+              <h2 className="text-xs uppercase tracking-wider font-bold text-stone-500 dark:text-stone-400 mb-3">
+                Descrizione
+              </h2>
+              <RichTextDisplay html={ev.description ?? ""} />
+            </div>
+          ) : (
+            <div className={`rounded-2xl ${GLASS_CARD} p-6 text-center`}>
+              <InfoIcon className="h-8 w-8 text-stone-300 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">Nessuna descrizione disponibile.</p>
+            </div>
+          )}
+        </div>
+
+        {/* ── MOBILE: mappa tab ── */}
+        <div className={`lg:hidden ${activeTab === "mappa" ? "block" : "hidden"} space-y-4`}>
+          <div className={`rounded-2xl ${GLASS_CARD} p-5`}>
+            {VenueBlock}
+          </div>
+        </div>
+
+        {/* ── Community posts — visibile in tutte le viste ── */}
+        <div className={activeTab === "info" || activeTab === "mappa" ? "lg:mt-0 mt-4" : ""}>
+          <CommunityPostsSection
+            entity={{ kind: "event", id: ev.id, sourceType: ev.sourceType, name: ev.title }}
+            title="Post della community su questo evento"
+          />
+        </div>
       </div>
+
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+      {activeTab !== "overview" && !isModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: "env(safe-area-inset-top)" }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
+              <button
+                onClick={() => setActiveTab("overview")}
+                aria-label="Torna alla home dell'evento"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {ev.venueLogoUrl ? (
+                  <img
+                    src={ev.venueLogoUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                    <SourceIcon className="h-3.5 w-3.5 text-white" />
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">
+                    {ev.title}
+                  </div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {tabLabel[activeTab]}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleShare}
+                aria-label="Condividi"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <Share2 className="h-[18px] w-[18px] text-foreground" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      <nav
+        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          isModalOpen ? "opacity-0 pointer-events-none" : "opacity-100"
+        }`}
+        style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+        aria-label="Navigazione dell'evento"
+        role="tablist"
+      >
+        <div className="mx-auto max-w-md px-4">
+          <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
+            <div className="flex items-stretch justify-between p-1.5 gap-1">
+              {([
+                { id: "overview", label: "Overview", Icon: HomeIcon },
+                { id: "info", label: "Info", Icon: InfoIcon },
+                { id: "mappa", label: "Mappa", Icon: MapPin },
+              ] as const).map(({ id, label, Icon }) => {
+                const active = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    data-testid={`event-dock-${id}`}
+                    role="tab"
+                    aria-selected={active}
+                    aria-current={active ? "page" : undefined}
+                    aria-label={label}
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                      active
+                        ? "bg-primary/10 dark:bg-primary/15 text-primary"
+                        : "text-stone-500 dark:text-stone-400 hover:text-foreground"
+                    }`}
+                  >
+                    <Icon
+                      className="h-[20px] w-[20px]"
+                      strokeWidth={active ? 2.6 : 1.8}
+                      fill={active ? "currentColor" : "none"}
+                      style={active ? { fillOpacity: 0.18 } : {}}
+                    />
+                    <span className={`text-[10px] leading-none tracking-tight ${active ? "font-bold" : "font-semibold"}`}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

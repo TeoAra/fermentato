@@ -10,7 +10,7 @@ export default function AdminEditPub() {
 
   return (
     <div>
-      <div className="p-4 border-b bg-background border-stone-200 dark:border-border">
+      <div className="p-4 border-b bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
         <Button
           variant="ghost"
           size="sm"

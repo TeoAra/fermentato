@@ -119,7 +119,7 @@ export default function AdminAdditionRequests() {
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
           </div>
         ) : requests.length === 0 ? (
-          <div className="text-center py-20 bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <div className="text-center py-20 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CheckCircle className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground font-medium">Nessuna richiesta {statusFilter === 'pending' ? 'in attesa' : statusFilter === 'approved' ? 'approvata' : 'rifiutata'}</p>
           </div>
@@ -129,7 +129,7 @@ export default function AdminAdditionRequests() {
               const isExpanded = expandedId === r.id;
               const name = getName(r);
               return (
-                <div key={r.id} className="bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm overflow-hidden transition-all">
+                <div key={r.id} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-200">
                   <div className="p-4">
                     <div className="flex items-start gap-3">
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-stone-100 dark:border-[#2F3D4D]/50 ${r.type === 'beer' ? 'bg-stone-50 dark:bg-[#15202B]/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>

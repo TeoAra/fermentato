@@ -180,7 +180,7 @@ export default function EventiPage() {
       <div className="max-w-5xl mx-auto px-5 py-6">
         {/* Advanced filters */}
         {showFilters && (
-          <Card className="mb-5 border-stone-200 dark:border-white/10">
+          <Card className="mb-5 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardContent className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label className="text-xs font-medium text-stone-600 dark:text-stone-400 mb-1 block">Città</label>
@@ -246,7 +246,7 @@ export default function EventiPage() {
             <Loader2 className="h-7 w-7 animate-spin text-purple-600" />
           </div>
         ) : events.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="border-dashed bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardContent className="py-16 text-center">
               <CalendarDays className="h-10 w-10 text-stone-300 mx-auto mb-3" />
               <h3 className="font-semibold text-foreground dark:text-white">Nessun evento trovato</h3>
@@ -289,7 +289,7 @@ function EventCard({ ev }: { ev: PublicEvent }) {
   return (
     <Link href={href}>
       <a className="block group" data-testid={`card-event-${ev.sourceType}-${ev.id}`}>
-        <Card className="overflow-hidden border-stone-200 dark:border-white/10 hover:shadow-lg transition-shadow h-full">
+        <Card className="overflow-hidden bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] h-full">
           {ev.imageUrl ? (
             <div className="relative h-40 bg-stone-100 dark:bg-[#1B2735]">
               <img src={ev.imageUrl} alt={ev.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />

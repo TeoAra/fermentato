@@ -228,7 +228,7 @@ export default function RegistraPub() {
   if (pendingEmail) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-orange-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center px-4 pt-20">
-        <Card className="w-full max-w-md shadow-xl">
+        <Card className="w-full max-w-md bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardContent className="p-8 text-center space-y-5">
             <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto">
               <MailCheck className="w-8 h-8 text-amber-600" />
@@ -284,7 +284,7 @@ export default function RegistraPub() {
             { icon: "💳", title: "€65/anno", desc: "IVA inclusa, poi all'anno" },
             { icon: "❌", title: "Annulla quando vuoi", desc: "Nessun vincolo" },
           ].map(({ icon, title, desc }) => (
-            <div key={title} className="bg-white dark:bg-[#1B2735] rounded-xl border border-gray-100 dark:border-[#2F3D4D] p-3 shadow-sm">
+            <div key={title} className="rounded-xl p-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <div className="text-xl mb-1">{icon}</div>
               <p className="font-semibold text-foreground dark:text-gray-200 leading-tight">{title}</p>
               <p className="text-muted-foreground dark:text-stone-400 leading-tight mt-0.5">{desc}</p>
@@ -296,7 +296,7 @@ export default function RegistraPub() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
             {/* Section 1: User account */}
-            <Card className="shadow-sm">
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <User className="w-4 h-4 text-amber-500" />
@@ -368,7 +368,7 @@ export default function RegistraPub() {
             </Card>
 
             {/* Section 2: Pub details */}
-            <Card className="shadow-sm">
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardHeader className="pb-4">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <Store className="w-4 h-4 text-amber-500" />
@@ -492,7 +492,7 @@ export default function RegistraPub() {
             </Card>
 
             {/* Section 3: Brewpub toggle */}
-            <Card className="shadow-sm">
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardContent className="pt-6">
                 <FormField control={form.control} name="isBrewpub" render={({ field }) => (
                   <FormItem className="flex flex-row items-center justify-between">
@@ -528,7 +528,7 @@ export default function RegistraPub() {
 
             {/* Section 4: Brewery details (if brewpub) */}
             {isBrewpub && (
-              <Card className="shadow-sm border-stone-300 dark:border-[#2F3D4D]">
+              <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <CardHeader className="pb-4">
                   <CardTitle className="flex items-center gap-2 text-base text-orange-800 dark:text-orange-200">
                     <Factory className="w-4 h-4" />

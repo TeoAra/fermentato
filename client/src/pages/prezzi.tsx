@@ -120,7 +120,7 @@ export default function PrezziPage() {
           </div>
 
           {/* Feature table */}
-          <Card>
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardContent className="p-6">
               <h3 className="font-bold text-foreground dark:text-white mb-4 text-base">Cosa include il piano</h3>
               <div className="text-xs font-bold text-stone-400 uppercase tracking-wide pt-2 pb-1">Profilo e Visibilità</div>
@@ -227,7 +227,7 @@ export default function PrezziPage() {
           </div>
 
           {/* Feature table */}
-          <Card>
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardContent className="p-6">
               <h3 className="font-bold text-foreground dark:text-white mb-4 text-base">Cosa include la verifica</h3>
               <div className="text-xs font-bold text-stone-400 uppercase tracking-wide pt-2 pb-1">Profilo e Catalogo</div>
@@ -289,7 +289,7 @@ export default function PrezziPage() {
         <div className="mb-16">
           <h2 className="text-2xl font-bold text-center text-foreground mb-2">Domande frequenti</h2>
           <p className="text-center text-muted-foreground text-sm mb-8">Tutto quello che devi sapere su Fermenta.to</p>
-          <div className="max-w-2xl mx-auto bg-white dark:bg-card rounded-3xl border border-stone-100 dark:border-border shadow-sm overflow-hidden">
+          <div className="max-w-2xl mx-auto rounded-3xl overflow-hidden bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <Accordion type="single" collapsible className="divide-y divide-stone-100 dark:divide-stone-700/30">
               {[
                 { q: "Come si attiva il piano pub?", a: "Registra il tuo pub e attiva subito il periodo di prova gratuito di 15 giorni — senza carta di credito. Al termine, puoi continuare con il piano completo a €65/anno (IVA inclusa) tramite carta, PayPal o altri metodi online. L'abbonamento si rinnova automaticamente salvo disdetta anticipata." },

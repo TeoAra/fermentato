@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,10 @@ import {
   Gift,
   Sparkles,
   MessageCircle,
-  ThumbsUp
+  ThumbsUp,
+  Home as HomeIcon,
+  Info as InfoIcon,
+  Share2,
 } from "lucide-react";
 import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
@@ -47,7 +51,23 @@ type DashboardSection = 'overview' | 'favorites' | 'activity' | 'profile' | 'set
 
 export default function UserDashboard() {
   const { user, isAuthenticated } = useAuth();
-  const [currentSection, setCurrentSection] = useState<DashboardSection>('overview');
+  // SSR-safe: parte da "favorites" (valida su desktop e mobile). In effect
+  // client switchiamo a "overview" se siamo su mobile.
+  const [activeTab, setActiveTab] = useState<DashboardSection>('favorites');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setActiveTab((prev) => (!mq.matches && prev === 'favorites' ? 'overview' : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveTab((prev) => {
+        if (e.matches && prev === 'overview') return 'favorites';
+        return prev;
+      });
+    };
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+  const isUserModalOpen = useAnyModalOpen();
 
   // Fetch user data
   const { data: favorites = [] } = useQuery<any[]>({
@@ -402,7 +422,7 @@ export default function UserDashboard() {
             <div
               key={section.id}
               className="glass-card rounded-xl p-6 text-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200"
-              onClick={() => setCurrentSection(section.id as DashboardSection)}
+              onClick={() => setActiveTab(section.id as DashboardSection)}
             >
               <div className={`w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br ${section.gradient} flex items-center justify-center`}>
                 <Icon className="h-6 w-6 text-white" />
@@ -562,24 +582,24 @@ export default function UserDashboard() {
   // Modern Mobile Header
   const renderMobileHeader = () => (
     <div className="md:hidden glass-card border-b p-4 flex items-center gap-3 sticky top-0 z-50">
-      {currentSection !== 'overview' && (
+      {activeTab !== 'overview' && (
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setCurrentSection('overview')}
+          onClick={() => setActiveTab('overview')}
           className="text-primary hover:text-primary/80"
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
       )}
       <div className="flex items-center space-x-3">
-        <div className={`p-2 rounded-lg bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient || 'from-blue-500 to-purple-600'}`}>
-          {sections.find(s => s.id === currentSection)?.icon && 
-            React.createElement(sections.find(s => s.id === currentSection)!.icon, { className: "w-5 h-5 text-white" })
+        <div className={`p-2 rounded-lg bg-gradient-to-br ${sections.find(s => s.id === activeTab)?.gradient || 'from-blue-500 to-purple-600'}`}>
+          {sections.find(s => s.id === activeTab)?.icon && 
+            React.createElement(sections.find(s => s.id === activeTab)!.icon, { className: "w-5 h-5 text-white" })
           }
         </div>
         <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {sections.find(s => s.id === currentSection)?.name || 'Dashboard'}
+          {sections.find(s => s.id === activeTab)?.name || 'Dashboard'}
         </h1>
       </div>
     </div>
@@ -604,11 +624,11 @@ export default function UserDashboard() {
           <nav className="flex-1 px-4 space-y-2">
             {sections.map((section) => {
               const Icon = section.icon;
-              const isActive = currentSection === section.id;
+              const isActive = activeTab === section.id;
               return (
                 <button
                   key={section.id}
-                  onClick={() => setCurrentSection(section.id as DashboardSection)}
+                  onClick={() => setActiveTab(section.id as DashboardSection)}
                   className={`group flex items-center px-4 py-3 text-sm font-medium rounded-xl w-full text-left transition-all duration-200 ${
                     isActive
                       ? `bg-gradient-to-r ${section.gradient} text-white shadow-lg transform scale-105`
@@ -665,31 +685,40 @@ export default function UserDashboard() {
     );
   }
 
+  const dockTabs: { id: DashboardSection; label: string; Icon: any }[] = [
+    { id: 'overview', label: 'Home', Icon: HomeIcon },
+    { id: 'discoveries', label: 'Scoperte', Icon: Compass },
+    { id: 'favorites', label: 'Preferiti', Icon: Heart },
+    { id: 'activity', label: 'Attività', Icon: Activity },
+    { id: 'profile', label: 'Profilo', Icon: User },
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
-      {renderMobileHeader()}
-      
       <div className="flex">
         {renderSidebar()}
-        
+
         {/* Main Content */}
         <div className="flex-1 md:ml-64">
-          <div className="py-6 md:py-8">
+          <div className="py-6 md:py-8 lg:!pt-8 lg:!pb-8" style={{
+            paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+            paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
+          }}>
             <PageContainer variant="wide">
-              {currentSection === 'overview' && renderOverview()}
-              {currentSection === 'favorites' && renderFavorites()}
-              
+              {activeTab === 'overview' && renderOverview()}
+              {activeTab === 'favorites' && renderFavorites()}
+
               {/* Placeholder for other sections */}
-              {!['overview', 'favorites'].includes(currentSection) && (
+              {!['overview', 'favorites'].includes(activeTab) && (
                 <div className="text-center py-16">
                   <div className="space-y-4">
-                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient} mx-auto flex items-center justify-center`}>
-                      {sections.find(s => s.id === currentSection)?.icon && 
-                        React.createElement(sections.find(s => s.id === currentSection)!.icon, { className: "w-8 h-8 text-white" })
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${sections.find(s => s.id === activeTab)?.gradient} mx-auto flex items-center justify-center`}>
+                      {sections.find(s => s.id === activeTab)?.icon &&
+                        React.createElement(sections.find(s => s.id === activeTab)!.icon, { className: "w-8 h-8 text-white" })
                       }
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
-                      {sections.find(s => s.id === currentSection)?.name}
+                      {sections.find(s => s.id === activeTab)?.name}
                     </h2>
                     <p className="text-muted-foreground dark:text-stone-400">
                       Sezione in fase di sviluppo con il nuovo design system.
@@ -702,30 +731,95 @@ export default function UserDashboard() {
         </div>
       </div>
 
-      {/* Mobile Bottom Navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 glass-card border-t safe-area-pb">
-        <div className="grid grid-cols-3 gap-1 p-2">
-          {sections.slice(0, 3).map((section) => {
-            const Icon = section.icon;
-            const isActive = currentSection === section.id;
-            return (
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+      {activeTab !== 'overview' && !isUserModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
               <button
-                key={section.id}
-                onClick={() => setCurrentSection(section.id as DashboardSection)}
-                className={`flex flex-col items-center py-3 px-2 text-xs rounded-xl transition-all duration-200 ${
-                  isActive
-                    ? `bg-gradient-to-t ${section.gradient} text-white shadow-lg scale-105`
-                    : 'text-muted-foreground dark:text-stone-400 hover:text-gray-900 dark:hover:text-white hover:bg-stone-100 dark:hover:bg-[#1B2735]'
-                }`}
-                data-testid={`mobile-nav-${section.id}`}
+                onClick={() => setActiveTab('overview')}
+                aria-label="Torna alla home"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
               >
-                <Icon className={`w-5 h-5 mb-1 transition-transform ${isActive ? 'scale-110' : ''}`} />
-                <span className="truncate font-medium">{section.name}</span>
+                <ArrowLeft className="h-5 w-5 text-foreground" />
               </button>
-            );
-          })}
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                <Avatar className="w-7 h-7 flex-shrink-0">
+                  <AvatarImage src={user?.profileImageUrl || ''} />
+                  <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white text-[10px]">
+                    {user?.firstName?.[0] || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">
+                    {user?.firstName || 'Profilo'}
+                  </div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {sections.find(s => s.id === activeTab)?.name}
+                  </div>
+                </div>
+              </div>
+              <Link href="/notifications">
+                <button
+                  aria-label="Notifiche"
+                  className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+                >
+                  <Bell className="h-[18px] w-[18px] text-foreground" />
+                </button>
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      <nav
+        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          isUserModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        aria-label="Navigazione dashboard utente"
+        role="tablist"
+      >
+        <div className="mx-auto max-w-md px-4">
+          <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
+            <div className="flex items-stretch justify-between p-1.5 gap-1">
+              {dockTabs.map(({ id, label, Icon }) => {
+                const active = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    role="tab"
+                    aria-selected={active}
+                    aria-current={active ? 'page' : undefined}
+                    aria-label={label}
+                    onClick={() => setActiveTab(id)}
+                    data-testid={`userdash-dock-${id}`}
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                      active
+                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                    }`}
+                  >
+                    <Icon
+                      className="h-[20px] w-[20px]"
+                      strokeWidth={active ? 2.6 : 1.8}
+                      fill={active ? 'currentColor' : 'none'}
+                      style={active ? { fillOpacity: 0.18 } : {}}
+                    />
+                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

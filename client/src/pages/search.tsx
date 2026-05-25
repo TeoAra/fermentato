@@ -202,7 +202,7 @@ export default function SearchPage() {
 
         {/* Advanced filters panel */}
         {showFilters && (
-          <div className="mb-4 p-4 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border shadow-sm space-y-3">
+          <div className="mb-4 p-4 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-semibold text-foreground flex items-center gap-1.5">
                 <SlidersHorizontal className="w-4 h-4 text-primary" />
@@ -297,7 +297,7 @@ export default function SearchPage() {
                 </div>
                 <div className="space-y-1.5">
                   {recentSearches.map(s => (
-                    <div key={s} className="flex items-center gap-2 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border shadow-sm hover:shadow-md hover:border-primary/20 transition-all group">
+                    <div key={s} className="flex items-center gap-2 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] group">
                       <Clock className="w-4 h-4 text-primary opacity-40 flex-shrink-0" />
                       <button
                         className="flex-1 text-left text-sm text-foreground hover:text-primary transition-colors"
@@ -344,7 +344,7 @@ export default function SearchPage() {
         {!isLoading && results && query.length > 1 && (
           <div className="space-y-4">
             {/* Tab bar */}
-            <div className="flex gap-1 p-1 bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm overflow-x-auto scrollbar-hide">
+            <div className="flex gap-1 p-1 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-x-auto scrollbar-hide">
               {tabs.map(tab => {
                 const count = tabCounts[tab.id];
                 const Icon = tab.icon;
@@ -411,7 +411,7 @@ export default function SearchPage() {
                 <div className="space-y-2">
                   {filteredBeers.map((beer: any) => (
                     <Link key={beer.id} href={`/beer/${beer.id}`}>
-                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border shadow-sm hover:shadow-md hover:border-primary/20 transition-all cursor-pointer group">
+                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] cursor-pointer group">
                         <ImageWithFallback
                           src={beer.imageUrl}
                           alt={beer.name}
@@ -462,7 +462,7 @@ export default function SearchPage() {
                 <div className="space-y-2">
                   {filteredBreweries.map((brewery: any) => (
                     <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
-                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border shadow-sm hover:shadow-md hover:border-primary/20 transition-all cursor-pointer group">
+                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] cursor-pointer group">
                         <ImageWithFallback
                           src={brewery.logoUrl}
                           alt={brewery.name}
@@ -498,7 +498,7 @@ export default function SearchPage() {
                 <div className="space-y-2">
                   {filteredPubs.map((pub: any) => (
                     <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
-                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-border shadow-sm hover:shadow-md hover:border-primary/20 transition-all cursor-pointer group">
+                      <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] cursor-pointer group">
                         <ImageWithFallback
                           src={pub.logoUrl}
                           alt={pub.name}

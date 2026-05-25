@@ -81,6 +81,7 @@ import MenuCategoryManager from "@/components/menu-category-manager";
 import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
 import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
@@ -360,7 +361,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     }
   }, []);
 
-  const [currentSection, setCurrentSection] = useState<DashboardSection>('overview');
+  const [currentSection, setCurrentSection] = useState<DashboardSection>('taplist');
+  const isAnyModalOpen = useAnyModalOpen();
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setCurrentSection((prev) => (!mq.matches && prev === 'taplist' ? 'overview' : prev));
+  }, []);
   const [editingItem, setEditingItem] = useState<number | string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [editData, setEditData] = useState<any>({});
@@ -772,7 +780,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
           {/* Festival Mode */}
           <Link href="/festival">
-            <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all h-full">
+            <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99] h-full">
               <div className="p-2.5 bg-orange-50 dark:bg-orange-950/20 rounded-xl shrink-0">
                 <QrCode className="h-5 w-5 text-primary" />
               </div>
@@ -786,7 +794,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           {/* TV Mode */}
           <Sheet>
             <SheetTrigger asChild>
-              <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all">
+              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99]">
                 <div className="p-2.5 bg-stone-100 dark:bg-[#1B2735]/60 rounded-xl shrink-0">
                   <Cast className="h-5 w-5 text-foreground" />
                 </div>
@@ -1018,7 +1026,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
           {/* Pagina Pub */}
           <div
-            className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all"
+            className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99]"
             onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
           >
             <div className="p-2.5 bg-stone-100 dark:bg-[#1B2735]/60 rounded-xl shrink-0">
@@ -1032,7 +1040,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
           {/* Bot Manager */}
           <div
-            className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all"
+            className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99]"
             onClick={() => setCurrentSection('bot')}
           >
             <div className="p-2.5 bg-violet-50 dark:bg-violet-950/20 rounded-xl shrink-0">
@@ -1060,7 +1068,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </div>
       </div>
       
-      <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-stone-100 dark:border-border">
+      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] transition-all duration-200">
         <TapListManager
           pubId={currentPub?.id || 0}
           tapList={typedTapList}
@@ -1209,7 +1217,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <p className="text-sm text-muted-foreground text-center py-4">Nessuna birra alla spina</p>
             ) : (
               typedTapList.map((beer: any, index: number) => (
-                <div key={beer.id} className="flex items-center justify-between p-3 bg-white dark:bg-card rounded-xl">
+                <div key={beer.id} className="flex items-center justify-between p-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
                   <div className="flex items-center space-x-3">
                     <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                       {beer.tapNumber || index + 1}
@@ -1240,7 +1248,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
               <p className="text-sm text-muted-foreground text-center py-4">Nessuna bottiglia</p>
             ) : (
               typedBottleList.slice(0, 10).map((bottle: any, index: number) => (
-                <div key={bottle.id} className="flex items-center justify-between p-3 bg-white dark:bg-card rounded-xl">
+                <div key={bottle.id} className="flex items-center justify-between p-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
                   <div className="flex items-center space-x-3">
                     <div className="w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
                       {index + 1}
@@ -1270,7 +1278,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </h3>
           <div className="space-y-3">
             {typedEvents.slice(0, 5).map((event: any) => (
-              <div key={event.id} className="flex items-center justify-between p-3 bg-white dark:bg-card rounded-xl">
+              <div key={event.id} className="flex items-center justify-between p-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
                 <div>
                   <p className="font-medium text-sm">{event.title}</p>
                   <p className="text-xs text-muted-foreground">
@@ -1788,7 +1796,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             Visibilità e Privacy
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-white dark:bg-card rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
               <div>
                 <p className="font-medium">Pub Attivo</p>
                 <p className="text-sm text-muted-foreground">Il pub è operativo e visibile al pubblico</p>
@@ -1799,7 +1807,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 data-testid="switch-pub-active"
               />
             </div>
-            <div className="flex items-center justify-between p-4 bg-white dark:bg-card rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
               <div>
                 <p className="font-medium">Listato nei Risultati</p>
                 <p className="text-sm text-muted-foreground">Il pub appare nelle ricerche e nelle mappe</p>
@@ -1896,7 +1904,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </div>
       </div>
       
-      <div className="bg-white dark:bg-card rounded-2xl shadow-sm border border-stone-100 dark:border-border">
+      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] transition-all duration-200">
         <BottleListManager
           pubId={currentPub?.id || 0}
           bottleList={typedBottleList}
@@ -2126,19 +2134,34 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
-      <PubOwnerTopBar 
-        currentSection={currentSection}
-        setCurrentSection={setCurrentSection}
-        sections={sections as any}
-        currentPub={currentPub}
-        user={user}
-        onLogout={handleLogout}
-      />
+      <div className={currentSection !== 'overview' ? 'hidden lg:block' : ''}>
+        <PubOwnerTopBar 
+          currentSection={currentSection as any}
+          setCurrentSection={setCurrentSection as any}
+          sections={sections as any}
+          currentPub={currentPub}
+          user={user}
+          onLogout={handleLogout}
+        />
+      </div>
       
       {/* Main Content */}
       <div className="flex-1">
         <div className="py-4 sm:py-6 md:py-8">
-          <PageContainer variant="wide">
+          <PageContainer
+            variant="wide"
+            className={currentSection !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : undefined}
+            style={
+              currentSection !== 'overview'
+                ? {
+                    paddingTop: 'calc(56px + env(safe-area-inset-top))',
+                    paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+                  }
+                : {
+                    paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+                  }
+            }
+          >
 
             {/* Subscription banner — always visible */}
             {renderSubscriptionBanner()}
@@ -2199,6 +2222,102 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </PageContainer>
         </div>
       </div>
+
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+      {currentSection !== 'overview' && !isAnyModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
+              <button
+                onClick={() => setCurrentSection('overview')}
+                aria-label="Torna alla panoramica"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+                data-testid="smartpub-mini-back"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {currentPub?.logoUrl && (
+                  <img
+                    src={currentPub.logoUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">
+                    {currentPub?.name || 'Dashboard Pub'}
+                  </div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {sections.find((s) => s.id === currentSection)?.name || 'Dashboard'}
+                  </div>
+                </div>
+              </div>
+              {currentPub && (
+                <a
+                  href={`/pub/${currentPub.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Vai alla pagina pubblica"
+                  className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+                >
+                  <Eye className="h-[18px] w-[18px] text-foreground" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      <nav
+        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        aria-label="Navigazione dashboard pub"
+        role="tablist"
+      >
+        <div className="mx-auto max-w-md px-4">
+          <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
+            <div className="flex items-stretch justify-between p-1.5 gap-1">
+              {sections.map((section) => {
+                const Icon = section.icon;
+                const active = currentSection === section.id;
+                return (
+                  <button
+                    key={section.id}
+                    onClick={() => setCurrentSection(section.id as DashboardSection)}
+                    role="tab"
+                    aria-selected={active}
+                    aria-current={active ? 'page' : undefined}
+                    aria-label={section.name}
+                    data-testid={`smartpub-dock-${section.id}`}
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                      active
+                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                    }`}
+                  >
+                    <Icon
+                      className="h-[20px] w-[20px]"
+                      strokeWidth={active ? 2.6 : 1.8}
+                      fill={active ? 'currentColor' : 'none'}
+                      style={active ? { fillOpacity: 0.18 } : {}}
+                    />
+                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                      {section.name}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
 
       {/* Cancel subscription confirmation dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>

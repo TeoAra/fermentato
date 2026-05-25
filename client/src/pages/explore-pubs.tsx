@@ -195,11 +195,11 @@ export default function ExplorePubs() {
         <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
           <button
             onClick={() => setViewMode("list")}
-            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-bold bg-white dark:bg-card shadow-lg border border-stone-100 dark:border-border text-foreground tap-scale"
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-bold bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-foreground tap-scale hover:border-primary/30 active:scale-[0.99] transition-all duration-200"
           >
             ← Lista
           </button>
-          <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white dark:bg-card shadow-lg border border-stone-100 dark:border-border">
+          <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <Store className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="text-sm font-bold text-foreground">{pubsArr.length} locali</span>
           </div>
@@ -239,7 +239,7 @@ export default function ExplorePubs() {
           </div>
 
           {/* Search bar */}
-          <div className="flex items-center gap-2 bg-stone-100 dark:bg-[#1B2735] rounded-2xl px-3 py-2.5 mb-3">
+          <div className="flex items-center gap-2 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] rounded-2xl px-3 py-2.5 mb-3 transition-all duration-200">
             <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
             <input
               ref={inputRef}
@@ -273,10 +273,10 @@ export default function ExplorePubs() {
             <div className="relative flex-shrink-0">
               <button
                 onClick={() => setShowDistPicker(v => !v)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
                   quickFilter === "nearby"
                     ? "bg-primary text-white border-primary"
-                    : "bg-white dark:bg-[#1B2735] text-stone-700 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
+                    : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-700 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
                 }`}
               >
                 Entro {distanceKm} km ▾
@@ -284,7 +284,7 @@ export default function ExplorePubs() {
               {showDistPicker && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
-                  <div className="absolute top-9 left-0 z-50 bg-card border border-border rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
+                  <div className="absolute top-9 left-0 z-50 bg-white/90 dark:bg-white/[0.06] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden min-w-[110px]">
                     {[1, 5, 10, 15, 20, 30, 50].map(d => (
                       <button
                         key={d}
@@ -304,10 +304,10 @@ export default function ExplorePubs() {
               <button
                 onClick={() => setUseRealRoute(v => !v)}
                 title={useRealRoute ? "Distanza calcolata sul percorso stradale reale" : "Distanza in linea d'aria"}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
                   useRealRoute
                     ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
+                    : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
                 }`}
                 data-testid="toggle-real-route"
               >
@@ -324,10 +324,10 @@ export default function ExplorePubs() {
               <button
                 key={f.key}
                 onClick={() => { setQuickFilter(prev => prev === f.key ? "all" : f.key); if (f.key === "nearby" && !userLocation) handleLocate(); }}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
+                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
                   quickFilter === f.key
                     ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
+                    : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
                 }`}
               >
                 {f.icon}
@@ -463,7 +463,7 @@ function PubListCard({ pub, showDist, userLocation }: { pub: any; showDist: bool
 
   return (
     <Link href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}>
-      <div className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl p-3 shadow-sm border border-stone-100 dark:border-[#2F3D4D]/60 active:scale-[0.98] transition-transform cursor-pointer">
+      <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl p-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] hover:border-primary/30 active:scale-[0.99] transition-all duration-200 cursor-pointer">
         {/* Cover / Logo */}
         <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 dark:bg-[#1B2735] flex-shrink-0">
           {!imgErr && (pub.coverImageUrl || pub.logoUrl) ? (

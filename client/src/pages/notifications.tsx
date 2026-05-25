@@ -407,10 +407,10 @@ export default function Notifications() {
                   <div
                     key={n.id}
                     onClick={() => handleClick(n)}
-                    className={`rounded-2xl border cursor-pointer transition-all duration-200 ease-out active:scale-[0.98] ${
+                    className={`rounded-2xl border cursor-pointer transition-all duration-200 ease-out active:scale-[0.99] backdrop-blur-xl hover:border-primary/30 ${
                       !n.isRead
-                        ? 'bg-white dark:bg-card border-stone-200 dark:border-[#2F3D4D]/40 shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
-                        : 'bg-white dark:bg-card border-stone-100 dark:border-border'
+                        ? 'bg-white/70 dark:bg-white/[0.04] border-white/40 dark:border-white/[0.06] shadow-[0_2px_12px_rgba(247,113,4,0.08)]'
+                        : 'bg-white/70 dark:bg-white/[0.04] border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]'
                     } hover:shadow-[0_4px_20px_rgba(247,113,4,0.1)]`}
                     data-testid={`notif-card-${n.id}`}
                   >

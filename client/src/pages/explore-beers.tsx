@@ -251,11 +251,11 @@ export default function ExploreBeers() {
         <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
           <button
             onClick={() => setViewMode("list")}
-            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-bold bg-white dark:bg-card shadow-lg border border-stone-100 dark:border-border text-foreground tap-scale"
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-bold bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-foreground tap-scale hover:border-primary/30 active:scale-[0.99] transition-all duration-200"
           >
             ← Lista
           </button>
-          <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white dark:bg-card shadow-lg border border-stone-100 dark:border-border">
+          <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="text-sm font-bold text-foreground truncate">{filteredPubs.length} pub · {styleMeta?.label}</span>
           </div>
@@ -286,7 +286,7 @@ export default function ExploreBeers() {
           style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
         >
           <PageContainer variant="wide" className="py-2.5 space-y-2.5">
-            <div className="flex items-center gap-2 bg-white dark:bg-card rounded-2xl px-4 py-2.5 border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm">
+            <div className="flex items-center gap-2 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl px-4 py-2.5 border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
               <input
                 value={inputValue}
@@ -516,7 +516,7 @@ function StyleCard({ meta, count, onClick }: { meta: StyleMeta; count: number; o
   return (
     <button
       onClick={onClick}
-      className={`w-full flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm tap-scale hover:border-primary/30 hover:shadow-md transition-all`}
+      className={`w-full flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale hover:border-primary/30 active:scale-[0.99] transition-all duration-200`}
     >
       <div className={`w-11 h-11 rounded-xl ${meta.bg} ring-1 ${meta.ring} flex items-center justify-center text-xl`}>
         {meta.emoji}
@@ -666,14 +666,14 @@ function DoveBerleTab({
         <div className="relative flex-shrink-0">
           <button
             onClick={() => setShowDistPicker(v => !v)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border bg-white dark:bg-[#1B2735] text-stone-700 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D] tap-scale"
+            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-700 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale hover:border-primary/30 active:scale-[0.99] transition-all duration-200"
           >
             Entro {distanceKm} km ▾
           </button>
           {showDistPicker && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
-              <div className="absolute top-9 left-0 z-50 bg-card border border-border rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
+              <div className="absolute top-9 left-0 z-50 bg-white/90 dark:bg-white/[0.06] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden min-w-[110px]">
                 {[1, 5, 10, 15, 20, 30, 50].map(d => (
                   <button
                     key={d}
@@ -689,10 +689,10 @@ function DoveBerleTab({
         </div>
         <button
           onClick={() => setPubFilter(pubFilter === "open" ? "all" : "open")}
-          className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
+          className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
             pubFilter === "open"
               ? "bg-primary text-white border-primary shadow-sm"
-              : "bg-white dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
+              : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
           }`}
         >
           <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
@@ -717,7 +717,7 @@ function DoveBerleTab({
       </div>
 
       {!userLocation ? (
-        <div className="bg-white dark:bg-card rounded-3xl p-6 text-center border border-stone-100 dark:border-[#2F3D4D]/60">
+        <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-3xl p-6 text-center border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <Navigation className="w-10 h-10 text-primary mx-auto mb-3" />
           <h3 className="text-[15px] font-extrabold text-foreground">Posizione</h3>
           <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">Per trovare pub che servono {styleLabel} vicino a te</p>
@@ -747,7 +747,7 @@ function BeerListRow({ beer }: { beer: any }) {
   const abv = beer.abv != null ? `${beer.abv}%` : null;
   return (
     <Link href={`/beer/${beer.id}`}>
-      <div className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl p-2.5 border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm active:scale-[0.98] transition-transform cursor-pointer">
+      <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl p-2.5 border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99] transition-all duration-200 cursor-pointer">
         <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1B2735] flex-shrink-0 overflow-hidden flex items-center justify-center">
           {!imgErr && (beer.imageUrl || beer.breweryLogoUrl) ? (
             <img
@@ -818,7 +818,7 @@ function PubListRow({ pub }: { pub: any }) {
   const tapCount = pub.tapCount ?? pub.taplistCount ?? null;
   return (
     <Link href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}>
-      <div className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl p-3 border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm active:scale-[0.98] transition-transform cursor-pointer">
+      <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl p-3 border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99] transition-all duration-200 cursor-pointer">
         <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1B2735] flex-shrink-0 overflow-hidden flex items-center justify-center">
           {!imgErr && (pub.coverImageUrl || pub.logoUrl) ? (
             <img src={pub.coverImageUrl || pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={() => setImgErr(true)} />

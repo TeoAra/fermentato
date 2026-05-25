@@ -9,7 +9,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -26,7 +28,8 @@ import {
   Globe, Phone, FileText, Camera, Clock, AlertTriangle, Building,
   Target, Sparkles, Save, X, Share2, ExternalLink, Mail,
   Megaphone, Store, Newspaper, Rocket, Users, QrCode,
-  Star, Eye, Heart, MessageSquare, TrendingUp, Send
+  Star, Eye, Heart, MessageSquare, TrendingUp, Send,
+  Home as HomeIcon, Info as InfoIcon, Calendar as CalendarIcon, ArrowLeft, ChevronRight
 } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -459,6 +462,23 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   const { user, isLoading: authLoading } = useAuth();
   const isAdminMode = !!adminBreweryId;
   const [dialogOpen, setDialogOpen] = useState(false);
+  // SSR-safe: parte da "birre" (tab principale desktop). In effetto client,
+  // se siamo su mobile passiamo a "overview" e gestiamo i resize.
+  const [activeTab, setActiveTab] = useState<string>("birre");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setActiveTab((prev) => (!mq.matches && prev === "birre" ? "overview" : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveTab((prev) => {
+        if (e.matches && prev === "overview") return "birre";
+        return prev;
+      });
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+  const isAnyModalOpen = useAnyModalOpen();
 
   useEffect(() => {
     if (isAdminMode) return;
@@ -775,11 +795,21 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   const displayedBeers = showAllBeers ? beers : beers.slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-background pb-12">
-      {!isAdminMode && <RoleSwitcherBanner currentView="brewery" />}
+    <div
+      className="min-h-screen bg-background"
+      style={{
+        paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+        paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
+      }}
+    >
+      {!isAdminMode && (
+        <div className={activeTab !== 'overview' ? 'hidden lg:block' : ''}>
+          <RoleSwitcherBanner currentView="brewery" />
+        </div>
+      )}
       
       {/* Header Bar */}
-      <header className="sticky top-0 z-30 bg-white dark:bg-card border-b border-stone-100 dark:border-border shadow-sm">
+      <header className={`sticky top-0 z-30 bg-white dark:bg-card border-b border-stone-100 dark:border-border shadow-sm ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link href="/">
@@ -830,7 +860,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         {/* Hero / Cover Section */}
-        <div className="relative h-48 sm:h-64 rounded-2xl overflow-hidden mb-8 border border-stone-100 dark:border-border shadow-sm group">
+        <div className={`relative h-48 sm:h-64 rounded-2xl overflow-hidden mb-8 border border-stone-100 dark:border-border shadow-sm group ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
           <ImageWithFallback
             src={brewery.coverImageUrl || "/brewery-cover.jpg"}
             alt={brewery.name}
@@ -880,7 +910,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </div>
 
         {/* Stats Grid — uniformata su tutte le dashboard */}
-        <div className="mb-8">
+        <div className={`mb-8 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
           <StatsGrid
             cols={5}
             items={[
@@ -894,7 +924,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </div>
 
         {/* Info section with contact details */}
-        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
+        <div className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
           <div className="flex items-center gap-2 mb-4">
             <Building className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-bold text-foreground">Il Birrificio</h3>
@@ -972,7 +1002,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
         {/* Festival Mode CTA */}
         <Link href="/festival">
-          <div className="bg-white dark:bg-card border border-primary/20 dark:border-primary/20 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/10 dark:to-card rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group">
+          <div className={`bg-white dark:bg-card border border-primary/20 dark:border-primary/20 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/10 dark:to-card rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group ${activeTab !== 'overview' ? 'hidden lg:flex' : ''}`}>
             <div className="flex items-center gap-4 min-w-0">
               <div className="p-3 bg-primary rounded-xl shrink-0 shadow-sm group-hover:scale-110 transition-transform">
                 <QrCode className="h-6 w-6 text-white" />
@@ -986,6 +1016,83 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           </div>
         </Link>
 
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="hidden lg:grid w-full grid-cols-5 h-auto gap-1">
+            <TabsTrigger value="birre" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+              <BeerIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Birre ({beers.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="eventi" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+              <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Eventi</span>
+            </TabsTrigger>
+            <TabsTrigger value="distribuzione" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+              <Store className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Distribuzione</span>
+            </TabsTrigger>
+            <TabsTrigger value="annunci" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+              <Megaphone className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Annunci</span>
+            </TabsTrigger>
+            <TabsTrigger value="info" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+              <InfoIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Info</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Overview Tab (solo mobile) — quick stats + shortcut */}
+          <TabsContent value="overview" className="lg:hidden space-y-6">
+            <section>
+              <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-3">Panoramica</h2>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { label: 'Birre', value: beers.length, icon: BeerIcon, tab: 'birre' },
+                  { label: 'Visite 7g', value: stats?.viewsWeek ?? '—', icon: Eye, tab: 'birre' },
+                  { label: 'Recensioni', value: stats?.totalReviews ?? '—', icon: Star, tab: 'birre' },
+                ].map(({ label, value, icon: Icon, tab }) => (
+                  <button
+                    key={label}
+                    onClick={() => setActiveTab(tab)}
+                    className="flex flex-col items-start gap-1 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.98] transition-all"
+                  >
+                    <Icon className="h-4 w-4 text-primary" />
+                    <div className="text-2xl font-black text-foreground leading-none">{value}</div>
+                    <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{label}</div>
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section>
+              <h3 className="text-sm font-bold text-foreground tracking-tight mb-2">Gestisci</h3>
+              <div className="space-y-2">
+                {[
+                  { label: 'Catalogo Birre', sub: `${beers.length} birre in catalogo`, icon: BeerIcon, tab: 'birre' },
+                  { label: 'Eventi', sub: 'Gestisci gli eventi del birrificio', icon: CalendarIcon, tab: 'eventi' },
+                  { label: 'Distribuzione', sub: 'Dove siamo in spina', icon: Store, tab: 'distribuzione' },
+                  { label: 'Annunci & Uscite', sub: 'Novità, release, collaborazioni', icon: Megaphone, tab: 'annunci' },
+                  { label: 'Info Birrificio', sub: 'Profilo, contatti, sito web', icon: InfoIcon, tab: 'info' },
+                ].map(({ label, sub, icon: Icon, tab }) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.99] transition-all text-left"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/15 flex items-center justify-center flex-shrink-0">
+                      <Icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-foreground leading-tight">{label}</div>
+                      <div className="text-[11px] text-muted-foreground truncate mt-0.5">{sub}</div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-stone-400 flex-shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </section>
+          </TabsContent>
+
+          <TabsContent value="birre">
         {/* Beers Section */}
         <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
           <div className="flex items-center justify-between gap-2 mb-6">
@@ -1107,14 +1214,6 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           )}
         </div>
 
-        {/* Events Section */}
-        <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
-          <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
-        </div>
-
-        {/* Reports Section */}
-        <OwnerReportsSection ownerType="brewery" ownerId={brewery.id} />
-
         {/* Reviews Section */}
         {showReviewsSection && (
           <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
@@ -1215,28 +1314,170 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             )}
           </div>
         )}
+          </TabsContent>
 
-        {/* ─── Annunci & Release ──────────────────────────────────────────────── */}
-        <AnnouncementsManager breweryId={brewery.id} />
+          <TabsContent value="eventi">
+            <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
+              <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
+            </div>
+            <OwnerReportsSection ownerType="brewery" ownerId={brewery.id} />
+          </TabsContent>
 
-        {/* ─── Mappa Distribuzione ─────────────────────────────────────────────── */}
-        <DistributionSection breweryId={brewery.id} />
+          <TabsContent value="distribuzione">
+            <DistributionSection breweryId={brewery.id} />
+          </TabsContent>
 
-        {/* Website Link */}
-        {brewery.websiteUrl && (
-          <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 text-center">
-            <a
-              href={brewery.websiteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center px-8 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-300 font-bold shadow-md hover:shadow-lg active:scale-95"
-            >
-              <Globe className="h-5 w-5 mr-2" />
-              Visita il Sito Web Ufficiale
-            </a>
-          </div>
-        )}
+          <TabsContent value="annunci">
+            <AnnouncementsManager breweryId={brewery.id} />
+          </TabsContent>
+
+          <TabsContent value="info">
+            <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8 lg:hidden">
+              <div className="flex items-center gap-2 mb-4">
+                <Building className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-bold text-foreground">Il Birrificio</h3>
+              </div>
+              <div className="space-y-4 text-left">
+                {brewery.descriptionHtml ? (
+                  <RichTextDisplay html={brewery.descriptionHtml} className="text-sm" />
+                ) : !isRichContentEmpty(brewery.description) ? (
+                  <RichTextDisplay html={brewery.description} className="text-sm" />
+                ) : (
+                  <p className="text-sm text-muted-foreground italic">Nessuna descrizione impostata.</p>
+                )}
+                <div className="flex flex-col gap-3 pt-4 border-t border-stone-100 dark:border-border">
+                  <Button onClick={openProfileEdit} className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl">
+                    <Pencil className="w-4 h-4 mr-2" />
+                    Modifica Profilo
+                  </Button>
+                  <Button onClick={() => setIsEditingImages(true)} variant="outline" className="w-full border-stone-200 dark:border-border rounded-xl">
+                    <Camera className="w-4 h-4 mr-2" />
+                    Modifica Immagini
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {brewery.websiteUrl && (
+              <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 text-center">
+                <a
+                  href={brewery.websiteUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center px-8 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-300 font-bold shadow-md hover:shadow-lg active:scale-95"
+                >
+                  <Globe className="h-5 w-5 mr-2" />
+                  Visita il Sito Web Ufficiale
+                </a>
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </main>
+
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+      {activeTab !== 'overview' && !isAnyModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
+              <button
+                onClick={() => setActiveTab('overview')}
+                aria-label="Torna alla panoramica"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {brewery?.logoUrl && (
+                  <img
+                    src={brewery.logoUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">
+                    {brewery?.name || 'Dashboard Birrificio'}
+                  </div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {activeTab === 'birre' && 'Catalogo Birre'}
+                    {activeTab === 'eventi' && 'Eventi'}
+                    {activeTab === 'distribuzione' && 'Distribuzione'}
+                    {activeTab === 'annunci' && 'Annunci & Uscite'}
+                    {activeTab === 'info' && 'Info Birrificio'}
+                  </div>
+                </div>
+              </div>
+              {brewery && !isAdminMode && (
+                <a
+                  href={`/brewery/${brewery.slug || brewery.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Vai alla pagina pubblica"
+                  className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+                >
+                  <Eye className="h-[18px] w-[18px] text-foreground" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      <nav
+        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        aria-label="Navigazione dashboard birrificio"
+        role="tablist"
+      >
+        <div className="mx-auto max-w-md px-4">
+          <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
+            <div className="flex items-stretch justify-between p-1.5 gap-1">
+              {[
+                { id: 'overview',      label: 'Home',    Icon: HomeIcon },
+                { id: 'birre',         label: 'Birre',   Icon: BeerIcon },
+                { id: 'eventi',        label: 'Eventi',  Icon: CalendarIcon },
+                { id: 'distribuzione', label: 'Distrib.',Icon: Store },
+                { id: 'info',          label: 'Info',    Icon: InfoIcon },
+              ].map(({ id, label, Icon }) => {
+                const active = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    role="tab"
+                    aria-selected={active}
+                    aria-current={active ? 'page' : undefined}
+                    aria-label={label}
+                    data-testid={`brewerydash-dock-${id}`}
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                      active
+                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                    }`}
+                  >
+                    <Icon
+                      className="h-[20px] w-[20px]"
+                      strokeWidth={active ? 2.6 : 1.8}
+                      fill={active ? 'currentColor' : 'none'}
+                      style={active ? { fillOpacity: 0.18 } : {}}
+                    />
+                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
 
       {/* Profile Edit Dialog */}
       <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile} modal={false}>

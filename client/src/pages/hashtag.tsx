@@ -56,7 +56,7 @@ export default function HashtagPage() {
         {isLoading ? (
           <>{[0, 1, 2].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}</>
         ) : posts.length === 0 ? (
-          <div className="bg-white dark:bg-[#1B2735] rounded-2xl border border-dashed border-stone-200 dark:border-[#2F3D4D] p-8 text-center">
+          <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-dashed border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-8 text-center">
             <Users className="w-10 h-10 mx-auto text-stone-300 mb-2" />
             <p className="text-sm text-stone-500 dark:text-stone-400">
               Nessun post con <span className="font-semibold text-primary">#{tag}</span> per ora.
@@ -67,7 +67,7 @@ export default function HashtagPage() {
           </div>
         ) : (
           posts.map((post: any) => (
-            <div key={post.id} className="bg-white dark:bg-[#1B2735] rounded-2xl border border-stone-100 dark:border-[#2F3D4D] shadow-sm p-4" data-testid={`hashtag-post-${post.id}`}>
+            <div key={post.id} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4" data-testid={`hashtag-post-${post.id}`}>
               <div className="flex items-center gap-2 mb-2">
                 <Link href={`/user/${post.username}`}><PostAvatar post={post} /></Link>
                 <div className="flex-1 min-w-0">

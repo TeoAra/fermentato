@@ -157,7 +157,7 @@ export default function AdminDuplicates() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-neutral-900 pb-20">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white dark:bg-neutral-900 border-b border-gray-200 dark:border-neutral-700 px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-10 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-b border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 px-4 py-3 flex items-center gap-3">
         <Link href="/admin/content">
           <Button variant="ghost" size="sm" className="p-1.5">
             <ArrowLeft className="h-4 w-4" />
@@ -171,7 +171,7 @@ export default function AdminDuplicates() {
 
       <PageContainer variant="standard" className="py-6 space-y-6">
         {/* Search controls */}
-        <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-5 space-y-4">
+        <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-5 space-y-4">
           <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300">
             <SlidersHorizontal className="h-4 w-4 text-amber-500" />
             Parametri di ricerca
@@ -261,7 +261,7 @@ export default function AdminDuplicates() {
             {visiblePairs.map((pair) => {
               const key = `${Math.min(pair.id1, pair.id2)}_${Math.max(pair.id1, pair.id2)}`;
               return (
-                <div key={key} className="bg-white dark:bg-neutral-800 rounded-2xl border border-gray-200 dark:border-neutral-700 p-4 space-y-3">
+                <div key={key} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 space-y-3">
                   {/* Similarity badge */}
                   <div className="flex items-center justify-between">
                     <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${simColor(pair.sim)}`}>

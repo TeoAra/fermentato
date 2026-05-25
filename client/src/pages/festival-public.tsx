@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,10 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 import {
   Droplets, Search, Star, UtensilsCrossed, Beer, ChevronDown, ChevronUp,
   MapPin, CheckCircle2, XCircle, Loader2, Clock, Calendar, Trophy, Info,
   Pencil, ExternalLink, MessageSquare, Reply, Send, ArrowLeft,
+  Home as HomeIcon, Share2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -644,6 +646,36 @@ export default function FestivalPublic() {
   const [search, setSearch] = useState("");
   const [showUnavailable, setShowUnavailable] = useState(true);
   const [descExpanded, setDescExpanded] = useState(false);
+  // SSR-safe: parte da "taps" (vista valida sia su desktop che mobile);
+  // su mobile switchiamo a "overview" tramite useEffect.
+  const [activeTab, setActiveTab] = useState<string>("taps");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setActiveTab((prev) => (!mq.matches && prev === "taps" ? "overview" : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveTab((prev) => {
+        if (e.matches && prev === "overview") return "taps";
+        return prev;
+      });
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+  const isFestivalModalOpen = useAnyModalOpen();
+
+  const handleFestivalShare = async () => {
+    const url = typeof window !== "undefined" ? window.location.href : "";
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: document.title, url });
+        return;
+      }
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+      }
+    } catch {}
+  };
 
   const { data, isLoading, isError, error } = useQuery<FestivalData, { status: number; message: string }>({
     queryKey: ["/api/festivals", slug],
@@ -793,7 +825,7 @@ export default function FestivalPublic() {
         ])}</script>
       </Helmet>
       {/* Hero section with gradient and decorative circles */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:to-[hsl(20,75%,20%)] pt-12 pb-20 px-4">
+      <div className={`relative overflow-hidden bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:to-[hsl(20,75%,20%)] pt-12 pb-20 px-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
         <button
           onClick={() => window.history.back()}
           className="absolute top-3 left-4 lg:hidden w-10 h-10 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/50 transition tap-scale z-20"
@@ -844,9 +876,15 @@ export default function FestivalPublic() {
       </div>
 
       {/* Main content with rounded corners overlap */}
-      <div className="max-w-2xl mx-auto bg-white dark:bg-card rounded-t-3xl -mt-8 relative z-10 px-4 pt-6 min-h-[calc(100dvh-200px)]">
-        {/* Info content */}
-        <div className="space-y-4">
+      <div
+        className={`max-w-2xl mx-auto bg-white dark:bg-card rounded-t-3xl relative z-10 px-4 min-h-[calc(100dvh-200px)] ${activeTab !== 'overview' ? 'mt-0 pt-0 lg:-mt-8 lg:pt-6' : '-mt-8 pt-6'}`}
+        style={{
+          paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+          paddingTop: activeTab !== 'overview' ? 'calc(64px + env(safe-area-inset-top))' : undefined,
+        }}
+      >
+        {/* Info content (overview-only su mobile, sempre visibile su desktop) */}
+        <div className={`space-y-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
           {/* Schedule */}
           {festival.schedule && festival.schedule.length > 0 && (
             <div className="bg-stone-50 dark:bg-[#15202B]/20 rounded-2xl border border-primary/10 px-4 py-4 shadow-sm">
@@ -919,9 +957,9 @@ export default function FestivalPublic() {
         </div>
 
         {/* Content tabs */}
-        <div className="mt-8">
-          <Tabs defaultValue="taps">
-            <TabsList className="w-full mb-6 bg-stone-50/50 dark:bg-[#15202B]/10 p-1 rounded-xl h-12">
+        <div className={activeTab !== 'overview' ? 'mt-0 lg:mt-8' : 'mt-8'}>
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
+            <TabsList className="hidden lg:flex w-full mb-6 bg-stone-50/50 dark:bg-[#15202B]/10 p-1 rounded-xl h-12">
               <TabsTrigger value="taps" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-bold h-10">
                 <Beer className="h-4 w-4" />
                 Birre ({availableCount}/{taps.length})
@@ -937,6 +975,121 @@ export default function FestivalPublic() {
                 Classifica
               </TabsTrigger>
             </TabsList>
+
+            {/* Overview tab: SOLO mobile. Card glass con riepilogo delle sezioni. */}
+            <TabsContent value="overview" className="lg:hidden space-y-4 mt-0 focus-visible:outline-none">
+              {/* Top birre */}
+              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Beer className="h-4 w-4 text-primary" /> Taplist
+                    <span className="text-xs font-medium text-muted-foreground">({availableCount}/{taps.length})</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('taps')}
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
+                    Vedi tutte →
+                  </button>
+                </div>
+                {taps.filter(t => t.isAvailable).slice(0, 3).length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nessuna birra disponibile al momento.</p>
+                ) : (
+                  <div className="space-y-2.5">
+                    {taps.filter(t => t.isAvailable).slice(0, 3).map(t => {
+                      const beerName = t.beerName || t.customBeerName || `Spina ${t.tapNumber}`;
+                      const breweryName = t.breweryName || t.customBreweryName;
+                      return (
+                        <div key={t.id} className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-bold text-xs flex-shrink-0">
+                            {t.tapNumber}
+                          </div>
+                          {t.beerImageUrl ? (
+                            <img src={t.beerImageUrl} alt={beerName} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
+                          ) : (
+                            <div className="w-9 h-9 rounded-xl bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center flex-shrink-0">
+                              <Beer className="h-4 w-4 text-primary" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-foreground truncate">{beerName}</div>
+                            {breweryName && (
+                              <div className="text-xs text-primary dark:text-orange-400 truncate">{breweryName}</div>
+                            )}
+                          </div>
+                          {t.avgRating !== null && t.ratingCount > 0 && (
+                            <div className="text-xs font-bold text-primary flex items-center gap-0.5 flex-shrink-0">
+                              <Star className="h-3 w-3 fill-current" /> {t.avgRating.toFixed(1)}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Food preview */}
+              {festival.showFood && data.food.length > 0 && (
+                <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] rounded-2xl p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <UtensilsCrossed className="h-4 w-4 text-primary" /> Food
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('food')}
+                      className="text-xs font-semibold text-primary hover:underline"
+                    >
+                      Vedi menu →
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {data.food.length} {data.food.length === 1 ? 'portata disponibile' : 'portate disponibili'}.
+                  </p>
+                </div>
+              )}
+
+              {/* Classifica preview */}
+              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] rounded-2xl p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="text-sm font-bold text-foreground flex items-center gap-2">
+                    <Trophy className="h-4 w-4 text-primary" /> Classifica
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('rankings')}
+                    className="text-xs font-semibold text-primary hover:underline"
+                  >
+                    Vedi tutta →
+                  </button>
+                </div>
+                {rankings.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Ancora nessun voto. Vota le birre per popolare la classifica!</p>
+                ) : (
+                  <div className="space-y-2">
+                    {rankings.slice(0, 3).map((r, i) => (
+                      <div key={r.tapNumber} className="flex items-center gap-3">
+                        <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                          i === 0 ? 'bg-primary text-white' :
+                          i === 1 ? 'bg-stone-200 dark:bg-white/10 text-foreground' :
+                          'bg-stone-100 dark:bg-white/[0.06] text-foreground'
+                        }`}>{i + 1}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-foreground truncate">{r.beerName}</div>
+                          {r.breweryName && (
+                            <div className="text-xs text-primary dark:text-orange-400 truncate">{r.breweryName}</div>
+                          )}
+                        </div>
+                        <div className="text-sm font-bold text-primary flex-shrink-0">{r.avg.toFixed(1)}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+
 
             <TabsContent value="taps" className="space-y-4">
               {/* Search + filter */}
@@ -1012,6 +1165,106 @@ export default function FestivalPublic() {
           Aggiornato ogni 30 secondi
         </div>
       </div>
+
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+      {activeTab !== 'overview' && !isFestivalModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
+              <button
+                type="button"
+                onClick={() => setActiveTab('overview')}
+                aria-label="Torna alla home del festival"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {festival.logoUrl && (
+                  <img
+                    src={festival.logoUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">{festival.name}</div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {activeTab === 'taps' && 'Taplist'}
+                    {activeTab === 'food' && 'Food'}
+                    {activeTab === 'rankings' && 'Classifica'}
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleFestivalShare}
+                aria-label="Condividi"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+              >
+                <Share2 className="h-[18px] w-[18px] text-foreground" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      <nav
+        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          isFestivalModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        aria-label="Navigazione del festival"
+        role="tablist"
+      >
+        <div className="mx-auto max-w-md px-4">
+          <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
+            <div className="flex items-stretch justify-between p-1.5 gap-1">
+              {[
+                { id: 'overview', label: 'Overview', Icon: HomeIcon },
+                { id: 'taps', label: 'Taplist', Icon: Beer },
+                ...(festival.showFood && data.food.length > 0
+                  ? [{ id: 'food', label: 'Food', Icon: UtensilsCrossed }]
+                  : []),
+                { id: 'rankings', label: 'Classifica', Icon: Trophy },
+              ].map(({ id, label, Icon }) => {
+                const active = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    aria-current={active ? 'page' : undefined}
+                    aria-label={label}
+                    onClick={() => setActiveTab(id)}
+                    data-testid={`festival-dock-${id}`}
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                      active
+                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                    }`}
+                  >
+                    <Icon
+                      className="h-[20px] w-[20px]"
+                      strokeWidth={active ? 2.6 : 1.8}
+                      fill={active ? 'currentColor' : 'none'}
+                      style={active ? { fillOpacity: 0.18 } : {}}
+                    />
+                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

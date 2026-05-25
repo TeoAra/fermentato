@@ -156,7 +156,7 @@ export default function AdminModeration() {
           ].map(({ label, value, color, icon: Icon, iconColor }) => (
             <Card
               key={value}
-              className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm border-l-4 ${color} cursor-pointer transition-shadow hover:shadow-md ${statusFilter === value ? "ring-2 ring-offset-1 ring-primary" : ""}`}
+              className={`bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border-l-4 ${color} cursor-pointer transition-all duration-200 hover:border-primary/30 active:scale-[0.99] ${statusFilter === value ? "ring-2 ring-offset-1 ring-primary" : ""}`}
               onClick={() => setStatusFilter(value)}
             >
               <CardContent className="p-4 flex items-center justify-between">
@@ -185,7 +185,7 @@ export default function AdminModeration() {
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 statusFilter === value
                   ? "bg-primary text-white"
-                  : "bg-stone-50 dark:bg-[#15202B]/20 text-primary hover:bg-stone-100"
+                  : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] text-primary hover:border-primary/30"
               }`}
             >
               {label}
@@ -199,7 +199,7 @@ export default function AdminModeration() {
             <p className="text-muted-foreground">Caricamento segnalazioni...</p>
           </div>
         ) : reports.length === 0 ? (
-          <Card className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm">
+          <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <CardContent className="p-12 text-center">
               <Shield className="w-16 h-16 mx-auto text-emerald-500 mb-4" />
               <h3 className="text-lg font-semibold mb-2 text-foreground">
@@ -218,7 +218,7 @@ export default function AdminModeration() {
               const reporterName = report.reporterNickname || report.reporterFirstName || `Utente ${report.reporterId.slice(0, 6)}`;
               const reasonLabel = reasonLabels[report.reason] || report.reason;
               return (
-                <Card key={report.id} className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-shadow">
+                <Card key={report.id} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between gap-4">
                       <div className="flex-1 space-y-3">

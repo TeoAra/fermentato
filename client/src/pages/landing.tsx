@@ -303,7 +303,7 @@ export default function Landing() {
                 { icon: Store, val: animPubs.toLocaleString("it-IT"), label: "pub" },
                 { icon: Beer, val: (() => { if (!animBeers) return "—"; if (animBeers < 1000) return animBeers.toString(); const k = Math.round(animBeers / 100) / 10; return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + "k"; })(), label: "birre" },
               ].map(({ icon: Icon, val, label }) => (
-                <div key={label} className="flex items-center gap-2 px-4 py-2.5 bg-white dark:bg-white/8 rounded-full border border-stone-100 dark:border-[#2F3D4D] shadow-sm tabular-nums">
+                <div key={label} className="flex items-center gap-2 px-4 py-2.5 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-full border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tabular-nums transition-all duration-200">
                   <Icon className="w-4 h-4 text-primary flex-shrink-0" />
                   <span className="font-bold text-stone-900 dark:text-white text-sm min-w-[2.5rem] text-right">{val}</span>
                   <span className="text-stone-400 dark:text-stone-500 text-sm">{label}</span>
@@ -364,7 +364,6 @@ export default function Landing() {
                 desc: "Geolocalizzazione in tempo reale con taplist aggiornata e orari. Sai già cosa berrai prima di uscire di casa.",
                 cta: "Cerca pub vicini",
                 href: "/explore/pubs",
-                accent: "bg-orange-50 dark:bg-orange-900/15 border-orange-100 dark:border-orange-900/30",
                 ctaClass: "text-primary",
               },
               {
@@ -373,7 +372,6 @@ export default function Landing() {
                 desc: "Stile, ABV, IBU, birrificio di origine e disponibilità locale. Migliaia di etichette da esplorare e scoprire.",
                 cta: "Esplora il catalogo",
                 href: "/search",
-                accent: "bg-amber-50 dark:bg-amber-900/15 border-amber-100 dark:border-amber-900/30",
                 ctaClass: "text-amber-600 dark:text-amber-400",
               },
               {
@@ -382,13 +380,12 @@ export default function Landing() {
                 desc: "Oltre 50.000 birrifici mappati in tutto il mondo. Visita i più vicini, segui le uscite stagionali e scopri nuovi produttori.",
                 cta: "Esplora birrifici",
                 href: "/explore/breweries",
-                accent: "bg-stone-50 dark:bg-[#1B2735]/50 border-stone-100 dark:border-[#2F3D4D]",
                 ctaClass: "text-stone-700 dark:text-stone-300",
               },
             ].map((card, i) => (
               <Link key={card.title} href={card.href}>
                 <div
-                  className={`interactive-card rounded-3xl p-8 border ${card.accent} flex flex-col h-full group`}
+                  className="interactive-card rounded-3xl p-8 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex flex-col h-full group transition-all duration-200 hover:bg-white/80 dark:hover:bg-white/[0.06]"
                   style={{ transitionDelay: `${i * 60}ms` }}
                 >
                   <div className="text-5xl mb-5">{card.emoji}</div>
@@ -431,7 +428,7 @@ export default function Landing() {
           </div>
 
           {locationStatus === 'granted' ? (
-            <div className="relative w-full h-[420px] rounded-3xl overflow-hidden bg-stone-100 dark:bg-[#15202B]" style={{ maxHeight: 420 }}>
+            <div className="relative w-full h-[420px] rounded-3xl overflow-hidden bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200" style={{ maxHeight: 420 }}>
               <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}>
                 <HomepageMap
                   pubs={Array.isArray(pubs) ? pubs : []}
@@ -444,7 +441,7 @@ export default function Landing() {
               </Suspense>
             </div>
           ) : (
-            <div className="rounded-3xl overflow-hidden border border-stone-100 dark:border-[#2F3D4D] bg-stone-50 dark:bg-[#15202B]/50 h-80 flex flex-col items-center justify-center text-center gap-4 p-8">
+            <div className="rounded-3xl overflow-hidden bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] h-80 flex flex-col items-center justify-center text-center gap-4 p-8 transition-all duration-200">
               <div className="w-16 h-16 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
                 <MapPin className="w-7 h-7 text-primary" />
               </div>
@@ -635,7 +632,7 @@ export default function Landing() {
           </div>
 
           {/* ── Festival Mode — full-width banner below both cards ── */}
-          <div className="mt-6 rounded-3xl border border-stone-200 dark:border-[#2F3D4D] bg-white dark:bg-[#15202B] overflow-hidden">
+          <div className="mt-6 rounded-3xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-200">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-0">
               <div className="p-8">
                 <p className="text-xs font-black text-primary uppercase tracking-widest mb-3">🎪 Festival Mode</p>

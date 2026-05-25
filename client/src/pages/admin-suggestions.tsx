@@ -126,7 +126,7 @@ function SuggestionCard({ suggestion, onApprove, onReject, isProcessing }: {
   };
 
   return (
-    <Card className="border border-gray-200 dark:border-[#2F3D4D] shadow-sm hover:shadow-md transition-shadow">
+    <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">

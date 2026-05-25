@@ -87,7 +87,7 @@ export default function ScanHistoryPage() {
           </div>
         ) : logs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
-            <div className="w-16 h-16 rounded-full bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <Camera className="h-8 w-8 text-stone-400" />
             </div>
             <div>
@@ -110,7 +110,7 @@ export default function ScanHistoryPage() {
               const hasResult = log.chosenBeerId || log.chosenBreweryId;
 
               return (
-                <div key={log.id} className="bg-white dark:bg-[#15202B] rounded-2xl border border-gray-100 dark:border-[#2F3D4D] overflow-hidden shadow-sm">
+                <div key={log.id} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30">
                   <div className="flex gap-3 p-3">
                     {/* Scanned image or placeholder */}
                     <div className="w-16 h-16 rounded-xl bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center overflow-hidden shrink-0">

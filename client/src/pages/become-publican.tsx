@@ -79,7 +79,7 @@ export default function BecomePublican() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader className="text-center">
             <Beer className="h-12 w-12 text-amber-600 mx-auto mb-4" />
             <CardTitle>Accedi per continuare</CardTitle>
@@ -104,7 +104,7 @@ export default function BecomePublican() {
   if (user.roles?.includes("pub_owner")) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader className="text-center">
             <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
             <CardTitle>Sei già un Publican!</CardTitle>
@@ -129,7 +129,7 @@ export default function BecomePublican() {
   if (success) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
+        <Card className="w-full max-w-md bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader className="text-center">
             <CheckCircle className="h-12 w-12 text-green-600 mx-auto mb-4" />
             <CardTitle>Benvenuto tra i Publican!</CardTitle>
@@ -173,7 +173,7 @@ export default function BecomePublican() {
           Indietro
         </Button>
 
-        <Card className="backdrop-blur-sm bg-white/80 dark:bg-[#1B2735]/80 border-amber-200 dark:border-amber-800">
+        <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <div className="p-4 bg-amber-100 dark:bg-amber-900/30 rounded-full">

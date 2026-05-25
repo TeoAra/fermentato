@@ -331,7 +331,7 @@ export default function AttivaPub() {
           </div>
 
           <div className="space-y-4">
-            <Card>
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <span className="font-semibold text-foreground dark:text-white">Piano Pub Pro — annuale</span>
@@ -415,7 +415,7 @@ export default function AttivaPub() {
           </div>
 
           {eligiblePubs.length === 0 ? (
-            <Card>
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <CardContent className="p-6 text-center space-y-4">
                 <p className="text-muted-foreground dark:text-stone-400">
                   {!isAuthenticated
@@ -580,7 +580,7 @@ export default function AttivaPub() {
           </div>
         )}
 
-        <Card className="mb-10">
+        <Card className="mb-10 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <CardContent className="p-6">
             <h2 className="font-bold text-foreground dark:text-white text-base mb-4">Tutto incluso nel Piano Pub Pro</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">

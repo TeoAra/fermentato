@@ -87,7 +87,7 @@ const BADGE_DEFS = [
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm text-center">
+    <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 text-center">
       <p className="text-2xl font-bold text-stone-900 dark:text-stone-50 font-poppins">{value}</p>
       <p className="text-xs text-stone-500 mt-0.5 font-medium">{label}</p>
       {sub && <p className="text-xs text-primary mt-0.5">{sub}</p>}
@@ -337,7 +337,7 @@ function MicroblogPostCard({ post }: { post: any }) {
     },
   });
   return (
-    <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm p-4">
+    <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4">
       <div className="flex items-center gap-2 mb-2">
         <UserAvatar user={post} size={8} />
         <div className="flex-1 min-w-0">
@@ -377,7 +377,7 @@ function MicroblogPostCard({ post }: { post: any }) {
 
 // ─── Main component ─────────────────────────────────────────────────────────
 export default function SocialFeed() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -509,7 +509,7 @@ export default function SocialFeed() {
             ) : (
               <div className="p-4 space-y-3">
                 {/* Compose CTA + News strip */}
-                <div className="flex items-center gap-2 bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm p-3">
+                <div className="flex items-center gap-2 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-3">
                   <UserAvatar user={user as any} size={9} />
                   <Link href="/microblog/nuovo" className="flex-1">
                     <button className="w-full text-left text-sm text-stone-400 bg-stone-50 dark:bg-[#1B2735] rounded-full px-4 py-2.5 hover:bg-stone-100 dark:hover:bg-[#232F3D] transition">
@@ -522,7 +522,7 @@ export default function SocialFeed() {
                 </div>
 
                 {news.length > 0 && (
-                  <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm p-3">
+                  <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-3">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-[11px] font-black uppercase tracking-wider text-stone-400 flex items-center gap-1.5">
                         <Newspaper className="w-3 h-3" /> News birra
@@ -547,7 +547,7 @@ export default function SocialFeed() {
                 {timeline.map((entry) => entry.kind === "post" ? (
                   <MicroblogPostCard key={`p-${entry.data.id}`} post={entry.data} />
                 ) : (
-                  <div key={`c-${entry.data.id}`} className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm p-4">
+                  <div key={`c-${entry.data.id}`} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4">
                     <div className="flex items-center gap-2 mb-3">
                       <UserAvatar user={{ profile_image_url: entry.data.profile_image_url, display_name: entry.data.display_name ?? entry.data.username, nickname: entry.data.username }} size={8} />
                       <div className="flex-1 min-w-0">
@@ -610,7 +610,7 @@ export default function SocialFeed() {
                 </div>
 
                 {debouncedSearch.length >= 2 && (
-                  <div className="mt-3 bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm px-4 divide-y divide-stone-100 dark:divide-stone-700/30">
+                  <div className="mt-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 px-4 divide-y divide-stone-100 dark:divide-stone-700/30">
                     {searchLoading ? (
                       <div className="py-4 space-y-3">
                         {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 rounded-xl" />)}
@@ -641,12 +641,12 @@ export default function SocialFeed() {
                     {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-14 rounded-xl" />)}
                   </div>
                 ) : following.length === 0 ? (
-                  <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-6 text-center shadow-sm">
+                  <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-6 text-center shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                     <Users className="w-8 h-8 mx-auto text-stone-300 mb-2" />
                     <p className="text-sm text-stone-400">Cerca in alto per trovare persone da seguire</p>
                   </div>
                 ) : (
-                  <div className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm px-4 divide-y divide-stone-100 dark:divide-stone-700/30">
+                  <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 px-4 divide-y divide-stone-100 dark:divide-stone-700/30">
                     {(following as any[]).map((u: any) => (
                       <UserRow
                         key={u.id}
@@ -684,7 +684,7 @@ export default function SocialFeed() {
 
                 {/* Top styles */}
                 {stats.topStyles?.length > 0 && (
-                  <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm">
+                  <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                     <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3 flex items-center gap-1.5">
                       <TrendingUp className="w-3.5 h-3.5" /> Stili preferiti
                     </p>
@@ -709,7 +709,7 @@ export default function SocialFeed() {
 
                 {/* Format breakdown */}
                 {stats.formatBreakdown?.length > 0 && (
-                  <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm">
+                  <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                     <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Come bevi</p>
                     <div className="flex flex-wrap gap-2">
                       {stats.formatBreakdown.map((f: any) => (
@@ -724,7 +724,7 @@ export default function SocialFeed() {
 
                 {/* Top breweries */}
                 {stats.topBreweries?.length > 0 && (
-                  <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm">
+                  <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                     <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3 flex items-center gap-1.5">
                       <Star className="w-3.5 h-3.5" /> Birrifici preferiti
                     </p>
@@ -742,7 +742,7 @@ export default function SocialFeed() {
 
                 {/* Badges */}
                 {BADGE_DEFS.length > 0 && (
-                  <div className="bg-white dark:bg-[#1B2735] rounded-2xl p-4 shadow-sm">
+                  <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                     <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3 flex items-center gap-1.5">
                       <Award className="w-3.5 h-3.5" /> Badge · {earnedBadges.length}/{BADGE_DEFS.length}
                     </p>

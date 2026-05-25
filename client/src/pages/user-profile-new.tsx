@@ -38,13 +38,21 @@ import {
   Star,
   Beer as BeerIcon,
   ChevronDown,
+  ChevronRight,
   TrendingUp,
   Camera,
   CalendarDays,
   MapPin,
+  Home as HomeIcon,
+  Info as InfoIcon,
+  Shield,
+  MoreHorizontal,
+  ArrowLeft,
+  Lock,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import { FestivalLikeButton } from "@/components/festival-like-button";
@@ -196,7 +204,24 @@ export default function UserProfile() {
   const [tempEmail, setTempEmail] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isPublicProfile, setIsPublicProfile] = useState<boolean>(true);
-  const [activeProfileTab, setActiveProfileTab] = useState<'overview' | 'favorites' | 'settings'>('overview');
+  type ProfileTab = 'overview' | 'favorites' | 'info' | 'security' | 'more';
+  // SSR-safe: parte da "favorites" (valida desktop e mobile). In effect
+  // client switchiamo a "overview" se siamo su mobile e gestiamo i resize.
+  const [activeProfileTab, setActiveProfileTab] = useState<ProfileTab>('favorites');
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mq = window.matchMedia('(min-width: 1024px)');
+    setActiveProfileTab((prev) => (!mq.matches && prev === 'favorites' ? 'overview' : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveProfileTab((prev) => {
+        if (e.matches && prev === 'overview') return 'favorites';
+        return prev;
+      });
+    };
+    mq.addEventListener?.('change', handler);
+    return () => mq.removeEventListener?.('change', handler);
+  }, []);
+  const isProfileModalOpen = useAnyModalOpen();
   
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -461,13 +486,21 @@ export default function UserProfile() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-background">
-    <div className="container mx-auto px-4 py-8 max-w-4xl">
+    <div
+      className={`container mx-auto px-4 py-8 max-w-4xl ${activeProfileTab !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : ''}`}
+      style={{
+        paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+        paddingTop: activeProfileTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
+      }}
+    >
       <div className="space-y-6">
         {/* Role switcher banner for pub/brewery owners */}
-        <RoleSwitcherBanner currentView="profile" />
+        <div className={activeProfileTab !== 'overview' ? 'hidden lg:block' : ''}>
+          <RoleSwitcherBanner currentView="profile" />
+        </div>
 
         {/* Header Card */}
-        <Card className="border-0 shadow-xl text-white overflow-hidden relative" style={{ background: 'linear-gradient(135deg, hsl(25,18%,10%) 0%, hsl(20,15%,18%) 50%, hsl(30,12%,24%) 100%)' }}>
+        <Card className={`border-0 shadow-xl text-white overflow-hidden relative ${activeProfileTab !== 'overview' ? 'hidden lg:block' : ''}`} style={{ background: 'linear-gradient(135deg, hsl(25,18%,10%) 0%, hsl(20,15%,18%) 50%, hsl(30,12%,24%) 100%)' }}>
           <div className="absolute inset-0 bg-gradient-to-tr from-white/5 via-transparent to-white/10" />
           <CardContent className="pt-8 pb-8 relative z-10">
             <div className="flex flex-col md:flex-row items-center gap-6">
@@ -545,16 +578,17 @@ export default function UserProfile() {
         </Card>
 
         {/* Main Content */}
-        <Tabs value={activeProfileTab} onValueChange={(v) => setActiveProfileTab(v as any)} className="w-full">
-          <div className="flex gap-1 bg-white dark:bg-card rounded-2xl p-1 border border-stone-100 dark:border-border shadow-sm mb-4">
+        <Tabs value={activeProfileTab} onValueChange={(v) => setActiveProfileTab(v as ProfileTab)} className="w-full">
+          <div className="hidden lg:flex gap-1 bg-white dark:bg-card rounded-2xl p-1 border border-stone-100 dark:border-border shadow-sm mb-4">
             {[
-              { value: 'overview', label: 'Panoramica' },
               { value: 'favorites', label: 'Preferiti' },
-              { value: 'settings', label: 'Impostazioni' },
+              { value: 'info', label: 'Info' },
+              { value: 'security', label: 'Sicurezza' },
+              { value: 'more', label: 'Altro' },
             ].map(({ value, label }) => (
               <button
                 key={value}
-                onClick={() => setActiveProfileTab(value as any)}
+                onClick={() => setActiveProfileTab(value as ProfileTab)}
                 className={`flex-1 px-3 py-2 rounded-xl text-sm font-bold transition-all ${activeProfileTab === value ? 'bg-background dark:bg-[#1B2735] text-primary dark:text-orange-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
               >
                 {label}
@@ -588,7 +622,7 @@ export default function UserProfile() {
               const nextBadge = getNextBadge(reviewCount);
               const progress = getProgressToNextBadge(reviewCount);
               return nextBadge ? (
-                <Card className="border-0 shadow-md bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
+                <Card className="border-0 shadow-md bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
@@ -635,7 +669,7 @@ export default function UserProfile() {
             </div>
 
             {/* Bio */}
-            <Card className="border-0 shadow-md bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
+            <Card className="border-0 shadow-md bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center justify-between text-base">
                   <div className="flex items-center gap-2 text-foreground dark:text-white">
@@ -685,7 +719,7 @@ export default function UserProfile() {
             </Card>
 
             {/* Stili Preferiti */}
-            <Card className="border-0 shadow-md bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
+            <Card className="border-0 shadow-md bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               <CardContent className="p-5">
                 <StylesPickerOverview
                   current={editedProfile.favoriteStyles}
@@ -702,7 +736,7 @@ export default function UserProfile() {
           <TabsContent value="favorites" className="space-y-4">
             {/* Festival preferiti */}
             {Array.isArray(festivalFavorites) && festivalFavorites.length > 0 && (
-              <Card className="border-0 shadow-lg bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
+              <Card className="border-0 shadow-lg bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-foreground dark:text-white text-base">
                     <div className="p-2 bg-stone-100 dark:bg-[#1B2735]/50 rounded-lg">
@@ -782,7 +816,7 @@ export default function UserProfile() {
             )}
 
             {/* Preferiti pub/birrificio/birra */}
-            <Card className="border-0 shadow-lg bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
+            <Card className="border-0 shadow-lg bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
                   <div className="p-2 bg-stone-100 dark:bg-[#1B2735]/50 rounded-lg">
@@ -797,14 +831,14 @@ export default function UserProfile() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="settings" className="space-y-6">
-            <Card className="border-0 shadow-lg bg-white/80 dark:bg-[#15202B]/80 backdrop-blur-xl">
+          <TabsContent value="info" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
                   <div className="p-2 bg-stone-100 dark:bg-[#1B2735]/50 rounded-lg">
-                    <Settings className="w-5 h-5 text-orange-600" />
+                    <InfoIcon className="w-5 h-5 text-orange-600" />
                   </div>
-                  Impostazioni Account
+                  Info personali
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -955,12 +989,38 @@ export default function UserProfile() {
                   )}
                 </div>
 
-                <div className="border-t border-stone-200 dark:border-[#2F3D4D] pt-4">
-                  <h3 className="text-sm font-medium mb-4 text-muted-foreground dark:text-stone-300">Sicurezza</h3>
-                  <PasswordChangeForm />
-                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-                <div className="border-t border-stone-200 dark:border-[#2F3D4D] pt-4">
+          <TabsContent value="security" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
+                  <div className="p-2 bg-stone-100 dark:bg-[#1B2735]/50 rounded-lg">
+                    <Shield className="w-5 h-5 text-orange-600" />
+                  </div>
+                  Sicurezza
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <PasswordChangeForm />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="more" className="space-y-6">
+            <Card className="border-0 shadow-lg bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
+                  <div className="p-2 bg-stone-100 dark:bg-[#1B2735]/50 rounded-lg">
+                    <MoreHorizontal className="w-5 h-5 text-red-600" />
+                  </div>
+                  Altro
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div>
                   <h3 className="text-sm font-medium mb-4 text-red-600">Zona Pericolo</h3>
                   {!showDeleteConfirm ? (
                     <Button
@@ -1013,6 +1073,102 @@ export default function UserProfile() {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+        {activeProfileTab !== 'overview' && !isProfileModalOpen && (
+          <div
+            className="lg:hidden fixed top-0 inset-x-0 z-30"
+            style={{ paddingTop: 'env(safe-area-inset-top)' }}
+          >
+            <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+              <div className="flex items-center gap-3 px-3 h-14">
+                <button
+                  onClick={() => setActiveProfileTab('overview')}
+                  aria-label="Torna alla panoramica"
+                  className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+                >
+                  <ArrowLeft className="h-5 w-5 text-foreground" />
+                </button>
+                <div className="flex-1 min-w-0 flex items-center gap-2">
+                  {typedUser?.profileImageUrl ? (
+                    <img
+                      src={typedUser.profileImageUrl}
+                      alt=""
+                      className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-full bg-primary text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+                      {(typedUser.nickname || typedUser.firstName || 'U')[0].toUpperCase()}
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <div className="text-sm font-extrabold text-foreground truncate leading-tight">
+                      {typedUser?.nickname || 'Profilo'}
+                    </div>
+                    <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                      {activeProfileTab === 'favorites' && 'Preferiti'}
+                      {activeProfileTab === 'info' && 'Info personali'}
+                      {activeProfileTab === 'security' && 'Sicurezza'}
+                      {activeProfileTab === 'more' && 'Altro'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+        <nav
+          className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+            isProfileModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+          aria-label="Navigazione profilo"
+          role="tablist"
+        >
+          <div className="mx-auto max-w-md px-4">
+            <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
+              <div className="flex items-stretch justify-between p-1.5 gap-1">
+                {([
+                  { id: 'overview',  label: 'Home',      Icon: HomeIcon },
+                  { id: 'favorites', label: 'Preferiti', Icon: Heart },
+                  { id: 'info',      label: 'Info',      Icon: InfoIcon },
+                  { id: 'security',  label: 'Sicurezza', Icon: Lock },
+                  { id: 'more',      label: 'Altro',     Icon: MoreHorizontal },
+                ] as { id: ProfileTab; label: string; Icon: any }[]).map(({ id, label, Icon }) => {
+                  const active = activeProfileTab === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setActiveProfileTab(id)}
+                      role="tab"
+                      aria-selected={active}
+                      aria-current={active ? 'page' : undefined}
+                      aria-label={label}
+                      data-testid={`profile-dock-${id}`}
+                      className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                        active
+                          ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                          : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                      }`}
+                    >
+                      <Icon
+                        className="h-[20px] w-[20px]"
+                        strokeWidth={active ? 2.6 : 1.8}
+                        fill={active ? 'currentColor' : 'none'}
+                        style={active ? { fillOpacity: 0.18 } : {}}
+                      />
+                      <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </nav>
       </div>
     </div>
     </div>

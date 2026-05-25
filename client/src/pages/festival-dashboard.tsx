@@ -25,7 +25,9 @@ import {
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
   X, Search, ChevronDown, Clock, Monitor, Copy, Heart, MessageSquare, Reply, Send, Tv,
+  Home as HomeIcon, Info as InfoIcon, ArrowLeft, Share2, ChevronRight,
 } from "lucide-react";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 import { Capacitor } from "@capacitor/core";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -1461,7 +1463,23 @@ export default function FestivalDashboard() {
   const [showQR, setShowQR] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingTap, setEditingTap] = useState<{ tapNumber: number; existing?: FestivalTap } | null>(null);
+  // SSR-safe: parte da "taps" (valida sia su desktop che mobile). In effect
+  // client switchiamo a "overview" solo se siamo su mobile.
   const [activeTab, setActiveTab] = useState("taps");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setActiveTab((prev) => (!mq.matches && prev === "taps" ? "overview" : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveTab((prev) => {
+        if (e.matches && prev === "overview") return "taps";
+        return prev;
+      });
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+  const isFestModalOpen = useAnyModalOpen();
 
   // List of managed festivals
   const { data: festList = [], isLoading: listLoading } = useQuery<Festival[]>({
@@ -1600,7 +1618,7 @@ export default function FestivalDashboard() {
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-[#15202B]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4">
+      <div className={`bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
         <PageContainer variant="standard" className="flex items-center justify-between gap-4 flex-wrap">
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2">
@@ -1630,7 +1648,14 @@ export default function FestivalDashboard() {
         </PageContainer>
       </div>
 
-      <PageContainer variant="standard" className="py-6 space-y-6">
+      <PageContainer
+        variant="standard"
+        className="space-y-6 lg:!pt-6 lg:!pb-6"
+        style={{
+          paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+          paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : '24px',
+        }}
+      >
         {/* Festival selector */}
         {listLoading ? (
           <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Caricamento...</div>
@@ -1811,13 +1836,70 @@ export default function FestivalDashboard() {
 
                 {/* Main tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="w-full">
+                  <TabsList className="hidden lg:flex w-full">
                     <TabsTrigger value="taps" className="flex-1 gap-1"><Beer className="h-4 w-4" />Spine</TabsTrigger>
                     <TabsTrigger value="food" className="flex-1 gap-1"><UtensilsCrossed className="h-4 w-4" />Cibo</TabsTrigger>
                     <TabsTrigger value="stats" className="flex-1 gap-1"><BarChart3 className="h-4 w-4" />Classifiche</TabsTrigger>
                     <TabsTrigger value="comments" className="flex-1 gap-1" data-testid="tab-comments"><MessageSquare className="h-4 w-4" />Commenti</TabsTrigger>
                     <TabsTrigger value="settings" className="flex-1 gap-1"><Settings className="h-4 w-4" />Info</TabsTrigger>
                   </TabsList>
+
+                  {/* OVERVIEW tab (solo mobile) — quick stats + shortcuts */}
+                  <TabsContent value="overview" className="lg:hidden m-0 focus-visible:outline-none space-y-4">
+                    <div className="rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] p-4">
+                      <div className="flex items-center gap-3">
+                        {selectedFest.logoUrl ? (
+                          <img src={selectedFest.logoUrl} alt="" className="w-12 h-12 rounded-xl object-cover border border-stone-200 dark:border-white/10" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                            <Beer className="h-6 w-6 text-amber-600" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-base font-extrabold text-foreground truncate">{selectedFest.name}</div>
+                          <div className="text-[11px] font-semibold text-muted-foreground capitalize">
+                            {status === 'unpaid' ? 'Non pagato' : status === 'expired' ? 'Scaduto' : 'Attivo'}
+                            {selectedFest.location ? ` · ${selectedFest.location}` : ''}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 mt-3">
+                        <Button size="sm" variant="outline" className="w-full" onClick={() => setShowQR(true)}>
+                          <QrCode className="h-4 w-4 mr-1" />QR Code
+                        </Button>
+                        <Button size="sm" variant="outline" className="w-full" onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
+                          <ExternalLink className="h-4 w-4 mr-1" />Anteprima
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Shortcut cards */}
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'taps',     label: 'Spine',       Icon: Beer,             color: 'text-amber-600',  count: taps.length },
+                        { id: 'food',     label: 'Cibo',        Icon: UtensilsCrossed,  color: 'text-orange-600', count: null },
+                        { id: 'stats',    label: 'Classifiche', Icon: BarChart3,        color: 'text-yellow-600', count: stats?.totalRatings ?? null },
+                        { id: 'comments', label: 'Commenti',    Icon: MessageSquare,    color: 'text-blue-600',   count: null },
+                        { id: 'settings', label: 'Info',        Icon: Settings,         color: 'text-stone-600',  count: null },
+                      ].map(({ id, label, Icon, color, count }) => (
+                        <button
+                          key={id}
+                          onClick={() => setActiveTab(id)}
+                          className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.98] transition-all text-left"
+                          data-testid={`festdash-shortcut-${id}`}
+                        >
+                          <Icon className={`h-5 w-5 ${color} flex-shrink-0`} />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-sm text-foreground">{label}</div>
+                            {count !== null && (
+                              <div className="text-[11px] text-muted-foreground">{count} {count === 1 ? 'voce' : 'voci'}</div>
+                            )}
+                          </div>
+                          <ChevronRight className="h-4 w-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />
+                        </button>
+                      ))}
+                    </div>
+                  </TabsContent>
 
                   {/* TAPS tab */}
                   <TabsContent value="taps" className="space-y-4">
@@ -2003,6 +2085,109 @@ export default function FestivalDashboard() {
           existing={editingTap.existing}
           onClose={() => setEditingTap(null)}
         />
+      )}
+
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+      {selectedFest && activeTab !== 'overview' && !isFestModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
+              <button
+                onClick={() => setActiveTab('overview')}
+                aria-label="Torna alla panoramica festival"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {selectedFest.logoUrl && (
+                  <img
+                    src={selectedFest.logoUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">{selectedFest.name}</div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {activeTab === 'taps' && 'Spine'}
+                    {activeTab === 'food' && 'Cibo'}
+                    {activeTab === 'stats' && 'Classifiche'}
+                    {activeTab === 'comments' && 'Commenti'}
+                    {activeTab === 'settings' && 'Info'}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowQR(true)}
+                aria-label="QR Code"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <QrCode className="h-[18px] w-[18px] text-foreground" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      {selectedFest && (
+        <nav
+          className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+            isFestModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
+          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+          aria-label="Navigazione del festival"
+        >
+          <div className="mx-auto max-w-md px-4">
+            <div
+              role="tablist"
+              aria-label="Sezioni del festival"
+              className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]"
+            >
+              <div className="flex items-stretch justify-between p-1.5 gap-1">
+                {[
+                  { id: 'overview', label: 'Overview', Icon: HomeIcon },
+                  { id: 'taps',     label: 'Spine',    Icon: Beer },
+                  { id: 'food',     label: 'Cibo',     Icon: UtensilsCrossed },
+                  { id: 'stats',    label: 'Classifiche', Icon: BarChart3 },
+                  { id: 'settings', label: 'Info',     Icon: InfoIcon },
+                ].map(({ id, label, Icon }) => {
+                  const active = activeTab === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => setActiveTab(id)}
+                      role="tab"
+                      aria-selected={active}
+                      aria-current={active ? 'page' : undefined}
+                      aria-label={label}
+                      data-testid={`festdash-dock-${id}`}
+                      className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                        active
+                          ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                          : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                      }`}
+                    >
+                      <Icon
+                        className="h-[20px] w-[20px]"
+                        strokeWidth={active ? 2.6 : 1.8}
+                        fill={active ? 'currentColor' : 'none'}
+                        style={active ? { fillOpacity: 0.18 } : {}}
+                      />
+                      <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </nav>
       )}
     </div>
   );

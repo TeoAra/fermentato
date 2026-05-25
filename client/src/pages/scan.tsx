@@ -522,7 +522,7 @@ export default function ScanPage() {
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="sticky top-0 z-20 bg-white dark:bg-[#15202B] border-b border-gray-200 dark:border-[#2F3D4D] shadow-sm">
+      <div className="sticky top-0 z-20 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-b border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={handleRescan}
@@ -797,7 +797,7 @@ export default function ScanPage() {
               </div>
             ) : showManualSearch ? (
               /* Search panel */
-              <div className="bg-white dark:bg-[#15202B] border border-gray-200 dark:border-[#2F3D4D] rounded-2xl p-3 shadow-sm">
+              <div className="rounded-2xl p-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <div className="flex items-center gap-2 mb-3">
                   <p className="text-xs font-semibold text-foreground dark:text-white flex-1">Cerca la birra giusta</p>
                   <button onClick={() => { setShowManualSearch(false); setManualQuery(""); setManualResults([]); }} className="text-muted-foreground hover:text-foreground">

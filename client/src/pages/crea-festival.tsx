@@ -460,7 +460,7 @@ export default function CreaFestival() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {FEATURES.map(({ icon: Icon, title, desc }) => (
-              <Card key={title}>
+              <Card key={title} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <CardContent className="p-5">
                   <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3">
                     <Icon className="h-5 w-5 text-amber-600" />
@@ -527,7 +527,7 @@ export default function CreaFestival() {
               a: `Sì, ogni edizione è un festival separato. Il rinnovo costa €${PRICE} per ogni nuova edizione.`
             },
           ].map(({ q, a }) => (
-            <div key={q} className="bg-white dark:bg-[#1B2735] rounded-xl p-5 border border-gray-100 dark:border-[#2F3D4D]">
+            <div key={q} className="rounded-xl p-5 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <h3 className="font-semibold text-foreground dark:text-gray-100 mb-1">{q}</h3>
               <p className="text-sm text-muted-foreground dark:text-stone-400">{a}</p>
             </div>

@@ -282,7 +282,7 @@ export default function AuthPage() {
   if (pendingVerificationEmail) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-sm bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-8 text-center space-y-6">
+        <div className="w-full max-w-sm bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-8 text-center space-y-6">
           <div className="mx-auto w-16 h-16 bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl flex items-center justify-center">
             <MailCheck className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
           </div>
@@ -311,7 +311,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
-      <div className="w-full max-w-md bg-white dark:bg-card rounded-3xl border border-stone-100 dark:border-border shadow-sm p-6 md:p-8">
+      <div className="w-full max-w-md bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-3xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-6 md:p-8">
           {/* Logo */}
           <div className="flex items-center gap-2.5 mb-8">
             <div className="w-9 h-9 bg-gradient-to-br from-[hsl(24,78%,51%)] to-[hsl(20,82%,44%)] rounded-xl flex items-center justify-center">

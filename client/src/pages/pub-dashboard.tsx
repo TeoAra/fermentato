@@ -25,9 +25,11 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { 
   Beer, Wine, Utensils, Building2, Plus, AlertCircle, LogIn,
   X as Twitter, Music, Clock, MapPin, Phone, Globe, Camera,
-  TrendingUp, Eye, CalendarDays
+  TrendingUp, Eye, CalendarDays,
+  Home as HomeIcon, Info as InfoIcon, ArrowLeft, Share2, ChevronRight
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 
 interface Pub {
   id: number;
@@ -124,6 +126,23 @@ export default function PubDashboard() {
   const [, setLocation] = useLocation();
   const [selectedPub, setSelectedPub] = useState<Pub | null>(null);
   const [showTrialWelcome, setShowTrialWelcome] = useState(false);
+  // SSR-safe: parte da "taplist" (valida desktop e mobile). In effetto client,
+  // se siamo su mobile passiamo a "overview" e gestiamo i resize.
+  const [activeTab, setActiveTab] = useState<string>("taplist");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setActiveTab((prev) => (!mq.matches && prev === "taplist" ? "overview" : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveTab((prev) => {
+        if (e.matches && prev === "overview") return "taplist";
+        return prev;
+      });
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+  const isAnyModalOpen = useAnyModalOpen();
 
   // Show welcome message if redirected from email verification
   useEffect(() => {
@@ -258,8 +277,14 @@ export default function PubDashboard() {
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 py-4 sm:py-8">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8 gap-4">
+    <div
+      className={`container mx-auto px-2 sm:px-4 py-4 sm:py-8 ${activeTab !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : ''}`}
+      style={{
+        paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+        paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
+      }}
+    >
+      <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-8 gap-4 ${activeTab !== 'overview' ? 'hidden lg:flex' : ''}`}>
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">
             Dashboard Pub
@@ -292,7 +317,7 @@ export default function PubDashboard() {
 
       {/* Selezione Pub */}
       {pubs.length > 1 && (
-        <Card className="mb-6">
+        <Card className={`mb-6 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
           <CardContent className="pt-6">
             <div className="flex items-center gap-4">
               <span className="font-medium">Pub selezionato:</span>
@@ -315,7 +340,7 @@ export default function PubDashboard() {
 
       {/* Trial welcome banner */}
       {showTrialWelcome && (
-        <Card className="border-border bg-muted/40 mb-2">
+        <Card className={`border-border bg-muted/40 mb-2 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <span className="text-2xl">🎉</span>
@@ -330,6 +355,7 @@ export default function PubDashboard() {
       )}
 
       {/* Subscription status banner */}
+      <div className={activeTab !== 'overview' ? 'hidden lg:block' : ''}>
       {pubs.length > 0 && (() => {
         const pub = selectedPub || pubs[0];
         const status = pub.subscriptionStatus || 'none';
@@ -417,11 +443,12 @@ export default function PubDashboard() {
         }
         return null;
       })()}
+      </div>
 
       {selectedPub && (
         <div className="space-y-6">
           {/* Info Pub */}
-          <Card>
+          <Card className={activeTab !== 'overview' ? 'hidden lg:block' : ''}>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                 <div className="flex-1">
@@ -495,8 +522,8 @@ export default function PubDashboard() {
           </Card>
 
           {/* Tabs per gestione */}
-          <Tabs defaultValue="taplist" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 h-auto gap-1">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="hidden lg:grid w-full grid-cols-6 h-auto gap-1">
               <TabsTrigger value="info" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
                 <Building2 className="w-3 h-3 sm:w-4 sm:h-4" />
                 <span className="hidden sm:inline">Info Pub</span>
@@ -529,6 +556,61 @@ export default function PubDashboard() {
               </TabsTrigger>
             </TabsList>
 
+            {/* Overview Tab (solo mobile) — preview quick stats + shortcut alle sezioni */}
+            <TabsContent value="overview" className="lg:hidden space-y-6">
+              {/* Quick stats */}
+              <section>
+                <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-3">Panoramica</h2>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    { label: 'Spine', value: tapList.length, icon: Beer, tab: 'taplist' },
+                    { label: 'Cantina', value: bottleList.length, icon: Wine, tab: 'bottles' },
+                    { label: 'Menu', value: menu.length, icon: Utensils, tab: 'menu' },
+                  ].map(({ label, value, icon: Icon, tab }) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className="flex flex-col items-start gap-1 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.98] transition-all"
+                    >
+                      <Icon className="h-4 w-4 text-primary" />
+                      <div className="text-2xl font-black text-foreground leading-none">{value}</div>
+                      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide">{label}</div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+
+              {/* Shortcut sezioni */}
+              <section>
+                <h3 className="text-sm font-bold text-foreground tracking-tight mb-2">Gestisci</h3>
+                <div className="space-y-2">
+                  {[
+                    { label: 'Info Pub', sub: 'Nome, descrizione, immagini, social', icon: Building2, tab: 'info' },
+                    { label: 'Tap List', sub: `${tapList.length} birre alla spina`, icon: Beer, tab: 'taplist' },
+                    { label: 'Cantina', sub: `${bottleList.length} birre disponibili`, icon: Wine, tab: 'bottles' },
+                    { label: 'Menu cibo', sub: `${menu.length} categorie`, icon: Utensils, tab: 'menu' },
+                    { label: 'Orari di apertura', sub: 'Configura gli orari della settimana', icon: Clock, tab: 'orari' },
+                    { label: 'Analitiche', sub: 'Visite e statistiche', icon: TrendingUp, tab: 'analytics' },
+                  ].map(({ label, sub, icon: Icon, tab }) => (
+                    <button
+                      key={tab}
+                      onClick={() => setActiveTab(tab)}
+                      className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.99] transition-all text-left"
+                    >
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/15 flex items-center justify-center flex-shrink-0">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-foreground leading-tight">{label}</div>
+                        <div className="text-[11px] text-muted-foreground truncate mt-0.5">{sub}</div>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-stone-400 flex-shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </section>
+            </TabsContent>
+
             {/* Info Pub Tab */}
             <TabsContent value="info">
               <PubInfoTab pub={selectedPub} />
@@ -560,11 +642,116 @@ export default function PubDashboard() {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-6">
+          <div className={`mt-6 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
             <OwnerReportsSection ownerType="pub" ownerId={selectedPub.id} />
           </div>
         </div>
       )}
+
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+      {activeTab !== 'overview' && !isAnyModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
+              <button
+                onClick={() => setActiveTab('overview')}
+                aria-label="Torna alla panoramica"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {selectedPub?.logoUrl && (
+                  <img
+                    src={selectedPub.logoUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">
+                    {selectedPub?.name || 'Dashboard Pub'}
+                  </div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {activeTab === 'info' && 'Info Pub'}
+                    {activeTab === 'taplist' && 'Tap List'}
+                    {activeTab === 'bottles' && 'Cantina'}
+                    {activeTab === 'menu' && 'Menu'}
+                    {activeTab === 'orari' && 'Orari'}
+                    {activeTab === 'analytics' && 'Analitiche'}
+                  </div>
+                </div>
+              </div>
+              {selectedPub && (
+                <a
+                  href={`/pub/${selectedPub.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Vai alla pagina pubblica"
+                  className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+                >
+                  <Eye className="h-[18px] w-[18px] text-foreground" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      <nav
+        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        aria-label="Navigazione dashboard pub"
+        role="tablist"
+      >
+        <div className="mx-auto max-w-md px-4">
+          <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
+            <div className="flex items-stretch justify-between p-1.5 gap-1">
+              {[
+                { id: 'overview', label: 'Home', Icon: HomeIcon },
+                { id: 'taplist',  label: 'Spine', Icon: Beer },
+                { id: 'bottles',  label: 'Cantina', Icon: Wine },
+                { id: 'menu',     label: 'Menu', Icon: Utensils },
+                { id: 'analytics',label: 'Stats', Icon: TrendingUp },
+              ].map(({ id, label, Icon }) => {
+                const active = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    role="tab"
+                    aria-selected={active}
+                    aria-current={active ? 'page' : undefined}
+                    aria-label={label}
+                    data-testid={`pub-dock-${id}`}
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                      active
+                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                    }`}
+                  >
+                    <Icon
+                      className="h-[20px] w-[20px]"
+                      strokeWidth={active ? 2.6 : 1.8}
+                      fill={active ? 'currentColor' : 'none'}
+                      style={active ? { fillOpacity: 0.18 } : {}}
+                    />
+                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }
@@ -653,6 +840,7 @@ function PubAnalyticsTab({ pubId }: { pubId: number }) {
 }
 
 function PubInfoTab({ pub }: { pub: Pub }) {
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
@@ -907,6 +1095,7 @@ function PubInfoTab({ pub }: { pub: Pub }) {
 
 // Componente per gestire gli orari di apertura
 function OpeningHoursManager({ pub }: { pub: Pub }) {
+  const [, setLocation] = useLocation();
   const [openingHours, setOpeningHours] = useState<any>(pub.openingHours || {});
   const { toast } = useToast();
   const queryClient = useQueryClient();

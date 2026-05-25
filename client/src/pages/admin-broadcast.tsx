@@ -126,7 +126,7 @@ export default function AdminBroadcast() {
     <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] pb-24">
       <Helmet><title>Broadcast | Admin</title></Helmet>
 
-      <header className="bg-white dark:bg-[#1B2735] border-b border-stone-100 dark:border-[#2F3D4D] py-5">
+      <header className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-b border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 py-5">
         <PageContainer variant="narrow" className="flex items-center gap-3">
           <Megaphone className="w-6 h-6 text-primary" />
           <h1 className="text-xl font-black font-poppins">Push broadcast & News</h1>
@@ -136,7 +136,7 @@ export default function AdminBroadcast() {
       <PageContainer variant="narrow" as="main" className="py-4 space-y-6">
 
         {/* ── Compose broadcast ────────────────────────────────────────── */}
-        <section className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm p-5 space-y-4">
+        <section className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 rounded-2xl p-5 space-y-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-stone-500">Nuova notifica</h2>
 
           <div>
@@ -233,7 +233,7 @@ export default function AdminBroadcast() {
         </AlertDialog>
 
         {/* ── History ──────────────────────────────────────────────────── */}
-        <section className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm p-5">
+        <section className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 rounded-2xl p-5">
           <h2 className="text-sm font-bold uppercase tracking-wider text-stone-500 mb-3">
             Storico invii {history.length > 0 && <span className="text-stone-400">· {history.length}</span>}
           </h2>
@@ -267,7 +267,7 @@ export default function AdminBroadcast() {
         </section>
 
         {/* ── RSS Sources ──────────────────────────────────────────────── */}
-        <section className="bg-white dark:bg-[#1B2735] rounded-2xl shadow-sm p-5">
+        <section className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-bold uppercase tracking-wider text-stone-500 flex items-center gap-2">
               <Rss className="w-4 h-4" /> Fonti RSS news
