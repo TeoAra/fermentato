@@ -42,12 +42,16 @@ import {
   ChevronRight,
   Navigation,
   SlidersHorizontal,
+  Home as HomeIcon,
+  Info as InfoIcon,
+  Wine,
 } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { EventCategoryBadge, EventInterestButton } from "@/components/events-manager";
 import { format, isFuture } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
 import Footer from "@/components/footer";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -132,7 +136,23 @@ export default function BreweryDetail() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  // SSR-safe: parte da "birre" (valido su desktop e mobile). In effect
+  // client switchiamo a "overview" solo se siamo su mobile.
   const [activeTab, setActiveTab] = useState("birre");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    setActiveTab((prev) => (!mq.matches && prev === "birre" ? "overview" : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveTab((prev) => {
+        if (e.matches && prev === "overview") return "birre";
+        return prev;
+      });
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+  const isBreweryModalOpen = useAnyModalOpen();
   const [visibleCount, setVisibleCount] = useState(9);
   const [activeStyleFilter, setActiveStyleFilter] = useState<string>("");
   const [descExpanded, setDescExpanded] = useState(false);
@@ -614,7 +634,7 @@ export default function BreweryDetail() {
       </Helmet>
       
       {/* ── HERO — full-bleed cover with rounded-card transition ── */}
-      <div className="relative lg:hidden">
+      <div className={`relative lg:hidden ${activeTab !== 'overview' ? 'hidden' : ''}`}>
         {/* Cover image container — overflow-hidden so blur doesn't bleed */}
         <div className="relative h-72 overflow-hidden">
           {brewery?.coverImageUrl ? (
@@ -824,13 +844,21 @@ export default function BreweryDetail() {
       </div>
 
         {/* ── MAIN CONTENT ── */}
-        <PageContainer as="main" variant="wide" className="pb-20 lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:pt-8 lg:items-start lg:min-h-0">
+        <PageContainer
+          as="main"
+          variant="wide"
+          className={`lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:pt-8 lg:pb-8 lg:items-start lg:min-h-0 ${activeTab !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : ''}`}
+          style={{
+            paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+            paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
+          }}
+        >
           <div className="bg-white dark:bg-card min-h-0 lg:rounded-2xl lg:shadow-sm lg:border lg:border-stone-100 dark:lg:border-stone-800 lg:overflow-hidden">
 
 
-            {/* Tabs Section — underline style per mockup */}
+            {/* Tabs Section — underline style per mockup (desktop only; mobile usa il dock contestuale) */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="border-b border-stone-200 dark:border-[#2F3D4D] px-4 md:px-8">
+              <div className="hidden lg:block border-b border-stone-200 dark:border-[#2F3D4D] px-4 md:px-8">
                 <TabsList className="bg-transparent dark:bg-transparent rounded-none p-0 h-auto gap-6 w-full justify-start">
                   <TabsTrigger
                     value="birre"
@@ -864,6 +892,95 @@ export default function BreweryDetail() {
               </div>
 
               <div className="px-4 md:px-8 pt-4 pb-8">
+                {/* ── TAB: OVERVIEW (solo mobile) — preview di birre + eventi ── */}
+                <TabsContent value="overview" className="lg:hidden m-0 focus-visible:outline-none space-y-6">
+                  {/* Preview "Birre top" */}
+                  {beers.length > 0 && (
+                    <section>
+                      <div className="flex items-end justify-between mb-3">
+                        <h2 className="text-lg font-extrabold text-foreground tracking-tight">Birre</h2>
+                        <button
+                          onClick={() => setActiveTab('birre')}
+                          className="text-xs font-bold text-primary tap-scale"
+                        >
+                          {beers.length} totali →
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {beers.slice(0, 3).map((b: any) => (
+                          <Link
+                            key={b.id}
+                            href={`/beer/${b.id}`}
+                            className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.99] transition-all"
+                          >
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-50 dark:bg-[#15202B] border border-stone-100 dark:border-[#2F3D4D] flex-shrink-0 flex items-center justify-center">
+                              {b.imageUrl || b.logoUrl ? (
+                                <img src={b.imageUrl || b.logoUrl} alt={b.name} className="w-full h-full object-cover" loading="lazy" />
+                              ) : (
+                                <Beer className="h-5 w-5 text-stone-400" />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-bold text-sm text-foreground truncate">{b.name}</div>
+                              <div className="text-[11px] text-muted-foreground truncate mt-0.5">
+                                {b.style || '—'}{b.abv ? ` · ${b.abv}% ABV` : ''}
+                              </div>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />
+                          </Link>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Preview eventi prossimi */}
+                  {breweryEvents.filter((e: any) => isFuture(new Date(e.eventDate))).length > 0 && (
+                    <section>
+                      <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-3">Prossimi eventi</h2>
+                      <div className="space-y-3">
+                        {breweryEvents.filter((e: any) => isFuture(new Date(e.eventDate))).slice(0, 2).map((event: any) => (
+                          <div
+                            key={event.id}
+                            className="overflow-hidden rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+                          >
+                            {event.imageUrl && (
+                              <div className="h-32 bg-cover bg-center" style={{ backgroundImage: `url(${event.imageUrl})` }} />
+                            )}
+                            <div className="p-3">
+                              <div className="mb-1.5">
+                                <EventCategoryBadge category={event.category} />
+                              </div>
+                              <h3 className="font-bold text-base text-foreground leading-snug">{event.title}</h3>
+                              <div className="flex items-center gap-1.5 text-xs text-primary mt-1.5">
+                                <Calendar className="h-3.5 w-3.5" />
+                                <span className="capitalize">{format(new Date(event.eventDate), "EEE d MMM 'alle' HH:mm", { locale: itLocale })}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Annunci recenti */}
+                  {announcements.length > 0 && (
+                    <section>
+                      <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-3">Ultime novità</h2>
+                      <div className="space-y-2">
+                        {announcements.slice(0, 2).map((a: any) => (
+                          <div key={a.id} className="p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06]">
+                            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-1">
+                              <Megaphone className="h-3.5 w-3.5" />
+                              <span>{format(new Date(a.createdAt), "d MMM", { locale: itLocale })}</span>
+                            </div>
+                            <h4 className="font-bold text-sm text-foreground">{a.title}</h4>
+                          </div>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+                </TabsContent>
+
                 {/* ── TAB: BIRRE ── */}
                 <TabsContent value="birre" className="m-0 focus-visible:outline-none">
                   <div className="space-y-4">
@@ -1784,6 +1901,118 @@ export default function BreweryDetail() {
       )}
 
       <Footer />
+
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+      {activeTab !== 'overview' && !isBreweryModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
+              <button
+                onClick={() => setActiveTab('overview')}
+                aria-label="Torna alla home del birrificio"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {brewery?.logoUrl && (
+                  <img
+                    src={brewery.logoUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">{brewery?.name}</div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {activeTab === 'birre' && 'Birre'}
+                    {activeTab === 'serate' && 'Eventi'}
+                    {activeTab === 'distribuzione' && 'Dove trovarci'}
+                    {activeTab === 'info' && 'Info'}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleShare}
+                aria-label="Condividi"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <Share2 className="h-[18px] w-[18px] text-foreground" />
+              </button>
+              <button
+                onClick={handleFavoriteToggle}
+                disabled={favoriteMutation.isPending}
+                aria-label={isBreweryFavorited ? 'Smetti di seguire' : 'Segui'}
+                className={`w-10 h-10 rounded-full flex items-center justify-center tap-scale active:scale-95 ${
+                  isBreweryFavorited
+                    ? 'bg-primary/15 text-primary'
+                    : 'bg-stone-100 dark:bg-white/[0.06] text-foreground'
+                }`}
+              >
+                <Heart className={`h-[18px] w-[18px] ${isBreweryFavorited ? 'fill-primary' : ''}`} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      <nav
+        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          isBreweryModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        aria-label="Navigazione del birrificio"
+      >
+        <div className="mx-auto max-w-md px-4">
+          <div
+            role="tablist"
+            aria-label="Sezioni del birrificio"
+            className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]"
+          >
+            <div className="flex items-stretch justify-between p-1.5 gap-1">
+              {[
+                { id: 'overview',     label: 'Overview', Icon: HomeIcon },
+                { id: 'birre',        label: 'Birre',    Icon: Beer },
+                { id: 'serate',       label: 'Eventi',   Icon: Calendar },
+                { id: 'distribuzione',label: 'Dove',     Icon: Store },
+                { id: 'info',         label: 'Info',     Icon: InfoIcon },
+              ].map(({ id, label, Icon }) => {
+                const active = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    role="tab"
+                    aria-selected={active}
+                    aria-current={active ? 'page' : undefined}
+                    aria-label={label}
+                    data-testid={`brewery-dock-${id}`}
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                      active
+                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                    }`}
+                  >
+                    <Icon
+                      className="h-[20px] w-[20px]"
+                      strokeWidth={active ? 2.6 : 1.8}
+                      fill={active ? 'currentColor' : 'none'}
+                      style={active ? { fillOpacity: 0.18 } : {}}
+                    />
+                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

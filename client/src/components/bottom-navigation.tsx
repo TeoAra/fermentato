@@ -38,8 +38,18 @@ export function BottomNavigation() {
   const anyModalOpen = useAnyModalOpen();
 
   if (location.startsWith("/tv/") || location.startsWith("/festival-tv/")) return null;
-  // Dentro un pub la bottom bar globale viene sostituita dal dock contestuale del pub
-  if (location.startsWith("/pub/") || location.startsWith("/pubs/")) return null;
+  // Pagine di dettaglio: la bottom bar globale viene sostituita dal dock
+  // contestuale specifico della pagina (pub, birrificio, birra, festival, evento, utente).
+  if (
+    location.startsWith("/pub/") ||
+    location.startsWith("/pubs/") ||
+    location.startsWith("/brewery/") ||
+    location.startsWith("/breweries/") ||
+    location.startsWith("/beer/") ||
+    location.startsWith("/festival/") ||
+    location.startsWith("/event/") ||
+    location.startsWith("/user/")
+  ) return null;
 
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
