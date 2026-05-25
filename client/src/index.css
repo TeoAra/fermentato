@@ -184,6 +184,32 @@ html.dark {
    DARK MODE — COLOUR PALETTE
    ============================ */
 .dark {
+  /* ── Fermenta dark palette (true-black premium craft) ──
+     Surfaces (mai #000 puro):  bg #0B0D10, secondary #12151A,
+     card #1A1D24, elevated #23262E, hover #2C3038.
+     Testi (mai #FFF puro): primary #F5F5F5, secondary #B7BDC7, muted #7E8795.
+     Brand amber #F59E0B, hop green #5C7A29. */
+  --bg-main: #0B0D10;
+  --bg-secondary: #12151A;
+  --bg-card: #1A1D24;
+  --bg-elevated: #23262E;
+  --bg-hover: #2C3038;
+  --text-primary: #F5F5F5;
+  --text-secondary: #B7BDC7;
+  --text-muted: #7E8795;
+  --accent-primary: #F59E0B;
+  --accent-hover: #FFB74D;
+  --accent-dark: #D97706;
+  --accent-hop: #5C7A29;
+  --accent-hop-light: #22C55E;
+  --border-soft: rgba(255, 255, 255, 0.06);
+  --border-medium: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.18);
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.25);
+  --shadow-elevated: 0 10px 40px rgba(0, 0, 0, 0.45);
+  --shadow-amber: 0 0 30px rgba(245, 158, 11, 0.15);
+  --app-chrome-dark: #0B0D10;
+
   /* Base surfaces — slate navy moderno (Twitter/Tweetbot dark), tono blu-grigio
      opaco che fa risaltare l'arancione craft. Più caldo dei classic dark grigi. */
   --background: hsl(213, 35%, 12%);          /* #15202B */

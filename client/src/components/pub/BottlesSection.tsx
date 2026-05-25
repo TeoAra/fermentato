@@ -30,8 +30,8 @@ export default function BottlesSection({
       data-testid="bottles-section"
     >
       <div>
-        <h2 className="text-xl font-black text-[#151515]">Bottiglie & Lattine</h2>
-        <p className="text-xs text-[#6B6357] mt-0.5">
+        <h2 className="text-xl font-black text-[#151515] dark:text-[#F5F5F5]">Bottiglie & Lattine</h2>
+        <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5">
           {bottles.length} {bottles.length === 1 ? "referenza" : "referenze"} in cantina
         </p>
       </div>
@@ -43,11 +43,11 @@ export default function BottlesSection({
           return (
             <div
               key={b.id}
-              className="relative bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex items-center gap-3"
+              className="relative bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex items-center gap-3"
               data-testid={`bottle-${b.id}`}
             >
               <Link href={`/beer/${b.beer.id}`} className="flex-shrink-0">
-                <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#FAF7F1] border border-[#E8DED1]">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#FAF7F1] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06]">
                   <ImageWithFallback
                     src={b.imageUrl || b.beer.imageUrl || b.beer.logoUrl}
                     alt={b.beer.name}
@@ -61,7 +61,7 @@ export default function BottlesSection({
 
               <div className="flex-1 min-w-0">
                 <Link href={`/beer/${b.beer.id}`}>
-                  <p className="font-bold text-sm text-[#151515] truncate hover:text-[#F59E0B] transition-colors">
+                  <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] truncate hover:text-[#F59E0B] transition-colors">
                     {b.beer.name}
                   </p>
                 </Link>
@@ -72,18 +72,18 @@ export default function BottlesSection({
                 )}
                 <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                   {b.beer.style && (
-                    <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF7EA] text-[#C77800]">
+                    <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF7EA] dark:bg-[#F59E0B]/15 text-[#C77800] dark:text-[#FFB74D]">
                       {b.beer.style}
                     </span>
                   )}
                   {formatLabel && (
-                    <span className="text-[10px] text-[#6B6357] font-medium">{formatLabel}</span>
+                    <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] font-medium">{formatLabel}</span>
                   )}
                 </div>
               </div>
 
               <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                <span className="text-base font-black text-[#151515] tabular-nums">
+                <span className="text-base font-black text-[#151515] dark:text-[#F5F5F5] tabular-nums">
                   {b.price ? `€ ${parseFloat(b.price).toFixed(2).replace(".", ",")}` : "—"}
                 </span>
               </div>
@@ -96,11 +96,11 @@ export default function BottlesSection({
                     e.stopPropagation();
                     onToggleFavorite(b.beer.id);
                   }}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-[#FFF7EA] active:scale-95 transition-all"
+                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 dark:bg-[#1A1D24]/80 backdrop-blur-sm flex items-center justify-center hover:bg-[#FFF7EA] dark:bg-[#F59E0B]/15 active:scale-95 transition-all"
                   aria-label={isFav ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
                 >
                   <Heart
-                    className={`w-3.5 h-3.5 ${isFav ? "text-[#F59E0B]" : "text-[#6B6357]"}`}
+                    className={`w-3.5 h-3.5 ${isFav ? "text-[#F59E0B]" : "text-[#6B6357] dark:text-[#B7BDC7]"}`}
                     fill={isFav ? "currentColor" : "none"}
                   />
                 </button>

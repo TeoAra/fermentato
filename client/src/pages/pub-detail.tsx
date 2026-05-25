@@ -330,7 +330,7 @@ export default function PubDetail() {
   // Loading / 404
   if (pubLoading) {
     return (
-      <div className="min-h-screen bg-[#FAF7F1]">
+      <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#12151A] dark:bg-[#0B0D10]">
         <div className="max-w-[720px] mx-auto px-4 py-8 space-y-4">
           <div className="h-[260px] rounded-2xl bg-stone-200 animate-pulse" />
           <div className="h-32 rounded-2xl bg-stone-200 animate-pulse" />
@@ -342,13 +342,13 @@ export default function PubDetail() {
 
   if (!pub) {
     return (
-      <div className="min-h-screen bg-[#FAF7F1] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#12151A] dark:bg-[#0B0D10] flex items-center justify-center px-4">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-red-500 mx-auto flex items-center justify-center">
             <XCircle className="w-8 h-8 text-white" />
           </div>
-          <h2 className="text-2xl font-bold text-[#151515]">Pub non trovato</h2>
-          <p className="text-[#6B6357]">Il pub che stai cercando non esiste o è stato rimosso.</p>
+          <h2 className="text-2xl font-bold text-[#151515] dark:text-[#F5F5F5]">Pub non trovato</h2>
+          <p className="text-[#6B6357] dark:text-[#B7BDC7]">Il pub che stai cercando non esiste o è stato rimosso.</p>
           <Button asChild>
             <Link href="/">Torna alla Home</Link>
           </Button>
@@ -398,7 +398,7 @@ export default function PubDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F1]">
+    <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#12151A] dark:bg-[#0B0D10]">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -504,7 +504,7 @@ export default function PubDetail() {
           <div className="pt-3">
             <Link
               href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}
-              className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full bg-white border border-[#E8DED1] text-xs font-bold text-[#151515] hover:border-[#F59E0B] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] text-xs font-bold text-[#151515] dark:text-[#F5F5F5] hover:border-[#F59E0B] transition-colors"
               data-testid="button-manage"
             >
               Gestisci pub

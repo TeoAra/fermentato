@@ -73,16 +73,16 @@ export default function OverviewSection({
       {(pub?.description || !isRichContentEmpty(pub?.richContent)) && (
         <motion.div
           variants={item}
-          className="bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
+          className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
         >
-          <h3 className="text-base font-black text-[#151515] mb-2">Chi siamo</h3>
+          <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5] mb-2">Chi siamo</h3>
           {!isRichContentEmpty(pub?.richContent) ? (
             <RichTextDisplay
               html={typeof pub?.richContent === "string" ? pub.richContent : ""}
-              className="text-sm text-[#6B6357] leading-relaxed"
+              className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed"
             />
           ) : (
-            <p className="text-sm text-[#6B6357] leading-relaxed whitespace-pre-line">{pub?.description}</p>
+            <p className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed whitespace-pre-line">{pub?.description}</p>
           )}
         </motion.div>
       )}
@@ -94,7 +94,7 @@ export default function OverviewSection({
             {amenities.map((a) => (
               <span
                 key={a}
-                className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-[#E8DED1] text-xs font-semibold text-[#151515] shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
+                className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] text-xs font-semibold text-[#151515] dark:text-[#F5F5F5] shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
               >
                 {a}
               </span>
@@ -107,7 +107,7 @@ export default function OverviewSection({
       {hasMap && (
         <motion.div
           variants={item}
-          className="bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden"
+          className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden"
         >
           <div className="h-[180px] relative">
             <PigeonMap
@@ -127,7 +127,7 @@ export default function OverviewSection({
           <button
             type="button"
             onClick={onDirections}
-            className="w-full flex items-center justify-center gap-1.5 py-3 text-sm font-semibold text-[#F59E0B] hover:bg-[#FAF7F1] transition-colors"
+            className="w-full flex items-center justify-center gap-1.5 py-3 text-sm font-semibold text-[#F59E0B] hover:bg-[#FAF7F1] dark:bg-[#12151A] transition-colors"
             data-testid="overview-directions"
           >
             <NavIcon className="w-4 h-4" />
@@ -140,10 +140,10 @@ export default function OverviewSection({
       {pub?.openingHours && (
         <motion.div
           variants={item}
-          className="bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
+          className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
         >
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-black text-[#151515] flex items-center gap-2">
+            <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5] flex items-center gap-2">
               <Clock className="w-4 h-4 text-[#F59E0B]" />
               Orari di apertura
             </h3>
@@ -166,14 +166,14 @@ export default function OverviewSection({
                 <div
                   key={d.key}
                   className={`flex justify-between items-center py-2 text-sm ${
-                    isToday ? "rounded-lg bg-[#FFF7EA] px-2 -mx-2 my-0.5" : ""
+                    isToday ? "rounded-lg bg-[#FFF7EA] dark:bg-[#F59E0B]/15 px-2 -mx-2 my-0.5" : ""
                   }`}
                 >
-                  <span className={`font-medium ${isToday ? "text-[#F59E0B] font-bold" : "text-[#151515]"}`}>
+                  <span className={`font-medium ${isToday ? "text-[#F59E0B] font-bold" : "text-[#151515] dark:text-[#F5F5F5]"}`}>
                     {d.label}
                     {isToday && <span className="ml-1.5 text-[10px] font-bold uppercase">Oggi</span>}
                   </span>
-                  <span className={`tabular-nums ${isClosed ? "text-red-500" : "text-[#6B6357]"}`}>
+                  <span className={`tabular-nums ${isClosed ? "text-red-500" : "text-[#6B6357] dark:text-[#B7BDC7]"}`}>
                     {isClosed ? "Chiuso" : `${h.open} – ${h.close}`}
                   </span>
                 </div>
@@ -187,28 +187,28 @@ export default function OverviewSection({
       {(pub?.phone || pub?.email || pub?.websiteUrl || pub?.facebookUrl || pub?.instagramUrl) && (
         <motion.div
           variants={item}
-          className="bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
+          className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
         >
-          <h3 className="text-base font-black text-[#151515] mb-3">Contatti</h3>
+          <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5] mb-3">Contatti</h3>
           <div className="space-y-2">
             {pub.phone && (
               <button
                 type="button"
                 onClick={onCall}
-                className="w-full flex items-center gap-3 py-2 text-sm text-[#151515] hover:text-[#F59E0B] transition-colors"
+                className="w-full flex items-center gap-3 py-2 text-sm text-[#151515] dark:text-[#F5F5F5] hover:text-[#F59E0B] transition-colors"
               >
                 <Phone className="w-4 h-4 text-[#F59E0B]" />
                 <span className="font-medium">{pub.phone}</span>
               </button>
             )}
             {pub.email && (
-              <a href={`mailto:${pub.email}`} className="flex items-center gap-3 py-2 text-sm text-[#151515] hover:text-[#F59E0B] transition-colors">
+              <a href={`mailto:${pub.email}`} className="flex items-center gap-3 py-2 text-sm text-[#151515] dark:text-[#F5F5F5] hover:text-[#F59E0B] transition-colors">
                 <Mail className="w-4 h-4 text-[#F59E0B]" />
                 <span className="font-medium truncate">{pub.email}</span>
               </a>
             )}
             {pub.websiteUrl && (
-              <a href={pub.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2 text-sm text-[#151515] hover:text-[#F59E0B] transition-colors">
+              <a href={pub.websiteUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 py-2 text-sm text-[#151515] dark:text-[#F5F5F5] hover:text-[#F59E0B] transition-colors">
                 <Globe className="w-4 h-4 text-[#F59E0B]" />
                 <span className="font-medium truncate">{pub.websiteUrl.replace(/^https?:\/\//, "")}</span>
               </a>
@@ -221,7 +221,7 @@ export default function OverviewSection({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Facebook"
-                    className="w-9 h-9 rounded-full bg-[#FAF7F1] border border-[#E8DED1] flex items-center justify-center text-[#1877F2] hover:bg-white transition-colors"
+                    className="w-9 h-9 rounded-full bg-[#FAF7F1] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center text-[#1877F2] hover:bg-white dark:bg-[#1A1D24] transition-colors"
                   >
                     <SiFacebook className="w-4 h-4" />
                   </a>
@@ -232,7 +232,7 @@ export default function OverviewSection({
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label="Instagram"
-                    className="w-9 h-9 rounded-full bg-[#FAF7F1] border border-[#E8DED1] flex items-center justify-center text-[#E1306C] hover:bg-white transition-colors"
+                    className="w-9 h-9 rounded-full bg-[#FAF7F1] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center text-[#E1306C] hover:bg-white dark:bg-[#1A1D24] transition-colors"
                   >
                     <SiInstagram className="w-4 h-4" />
                   </a>
@@ -247,9 +247,9 @@ export default function OverviewSection({
       {upcomingEvents.length > 0 && (
         <motion.div
           variants={item}
-          className="bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
+          className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
         >
-          <h3 className="text-base font-black text-[#151515] mb-3 flex items-center gap-2">
+          <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5] mb-3 flex items-center gap-2">
             <Calendar className="w-4 h-4 text-[#F59E0B]" />
             Prossimi eventi
           </h3>
@@ -258,20 +258,20 @@ export default function OverviewSection({
               <Link
                 key={e.id}
                 href={`/event/${e.id}`}
-                className="flex items-center gap-3 py-2 rounded-xl hover:bg-[#FAF7F1] transition-colors px-2 -mx-2"
+                className="flex items-center gap-3 py-2 rounded-xl hover:bg-[#FAF7F1] dark:bg-[#12151A] transition-colors px-2 -mx-2"
               >
-                <div className="w-12 h-12 rounded-xl bg-[#FFF7EA] border border-[#F59E0B]/30 flex flex-col items-center justify-center flex-shrink-0">
+                <div className="w-12 h-12 rounded-xl bg-[#FFF7EA] dark:bg-[#F59E0B]/15 border border-[#F59E0B]/30 flex flex-col items-center justify-center flex-shrink-0">
                   <span className="text-[10px] font-bold text-[#F59E0B] uppercase leading-none">
                     {e.eventDate ? new Date(e.eventDate).toLocaleDateString("it-IT", { month: "short" }).replace(".", "") : "—"}
                   </span>
-                  <span className="text-base font-black text-[#151515] leading-tight">
+                  <span className="text-base font-black text-[#151515] dark:text-[#F5F5F5] leading-tight">
                     {e.eventDate ? new Date(e.eventDate).getDate() : "—"}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm text-[#151515] truncate">{e.title || e.name}</p>
+                  <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] truncate">{e.title || e.name}</p>
                   {e.description && (
-                    <p className="text-xs text-[#6B6357] truncate">{e.description}</p>
+                    <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] truncate">{e.description}</p>
                   )}
                 </div>
               </Link>

@@ -1,5 +1,6 @@
+import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
-import type { ReactNode } from "react";
 import { useAnyModalOpen } from "@/components/bottom-navigation";
 
 export interface StickyTabDef {
@@ -16,9 +17,17 @@ interface StickyPubTabsProps {
 
 export default function StickyPubTabs({ tabs, activeTab, onTabChange }: StickyPubTabsProps) {
   const isAnyModalOpen = useAnyModalOpen();
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || typeof document === "undefined") return null;
+
+  const node = (
     <nav
-      className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-[#E8DED1] shadow-[0_-4px_20px_rgba(0,0,0,0.04)] transition-opacity duration-200 ${
+      className={`fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#12151A] border-t border-[#E8DED1] dark:border-white/[0.06] shadow-[0_-4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.45)] transition-opacity duration-200 ${
         isAnyModalOpen ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
@@ -40,13 +49,15 @@ export default function StickyPubTabs({ tabs, activeTab, onTabChange }: StickyPu
               onClick={() => onTabChange(tab.value)}
               data-testid={`pub-tab-${tab.value}`}
               className={`relative flex-1 flex flex-col items-center justify-center gap-1 py-1.5 px-1 rounded-2xl transition-colors duration-200 active:scale-95 ${
-                isActive ? "text-[#F59E0B]" : "text-[#6B6357] hover:text-[#151515]"
+                isActive
+                  ? "text-[#F59E0B]"
+                  : "text-[#6B6357] dark:text-[#B7BDC7] hover:text-[#151515] dark:hover:text-[#F5F5F5]"
               }`}
             >
               {isActive && (
                 <motion.span
                   layoutId="pub-tab-pill"
-                  className="absolute inset-0 rounded-2xl bg-[#FFF7EA]"
+                  className="absolute inset-0 rounded-2xl bg-[#FFF7EA] dark:bg-[#F59E0B]/15"
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
@@ -66,4 +77,6 @@ export default function StickyPubTabs({ tabs, activeTab, onTabChange }: StickyPu
       </div>
     </nav>
   );
+
+  return createPortal(node, document.body);
 }

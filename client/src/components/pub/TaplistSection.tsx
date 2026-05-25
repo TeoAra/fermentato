@@ -51,21 +51,21 @@ export default function TaplistSection({
       data-testid="taplist-section"
     >
       <div>
-        <h2 className="text-xl font-black text-[#151515]">Taplist</h2>
-        <p className="text-xs text-[#6B6357] mt-0.5">
+        <h2 className="text-xl font-black text-[#151515] dark:text-[#F5F5F5]">Taplist</h2>
+        <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5">
           {sorted.length} {sorted.length === 1 ? "spina disponibile" : "spine disponibili"}
         </p>
       </div>
 
       {sorted.length === 0 ? (
-        <div className="bg-white rounded-[20px] border border-[#E8DED1] py-16 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#FAF7F1] mx-auto mb-4 flex items-center justify-center">
+        <div className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] py-16 text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[#FAF7F1] dark:bg-[#12151A] mx-auto mb-4 flex items-center justify-center">
             <BeerIcon className="w-8 h-8 text-[#F59E0B]" />
           </div>
-          <p className="text-sm font-semibold text-[#151515]">
+          <p className="text-sm font-semibold text-[#151515] dark:text-[#F5F5F5]">
             Nessuna birra alla spina al momento
           </p>
-          <p className="text-xs text-[#6B6357] mt-1">Torna presto per le novità</p>
+          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-1">Torna presto per le novità</p>
         </div>
       ) : (
         <div className="space-y-2.5">
@@ -75,12 +75,12 @@ export default function TaplistSection({
             return (
               <div
                 key={tap.id}
-                className="relative bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex items-center gap-3"
+                className="relative bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex items-center gap-3"
                 data-testid={`taplist-tap-${tap.id}`}
               >
                 {/* Logo */}
                 <Link href={`/beer/${tap.beer.id}`} className="flex-shrink-0">
-                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#FAF7F1] border border-[#E8DED1]">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#FAF7F1] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06]">
                     <ImageWithFallback
                       src={tap.beer.imageUrl || tap.beer.logoUrl || tap.beer.brewery?.logoUrl}
                       alt={tap.beer.name}
@@ -95,7 +95,7 @@ export default function TaplistSection({
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   <Link href={`/beer/${tap.beer.id}`}>
-                    <p className="font-bold text-sm text-[#151515] truncate hover:text-[#F59E0B] transition-colors">
+                    <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] truncate hover:text-[#F59E0B] transition-colors">
                       {tap.beer.name}
                     </p>
                   </Link>
@@ -106,12 +106,12 @@ export default function TaplistSection({
                   )}
                   <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                     {tap.beer.style && (
-                      <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF7EA] text-[#C77800]">
+                      <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF7EA] dark:bg-[#F59E0B]/15 text-[#C77800] dark:text-[#FFB74D]">
                         {tap.beer.style}
                       </span>
                     )}
                     {tap.beer.abv && parseFloat(String(tap.beer.abv)) > 0 && (
-                      <span className="text-[10px] text-[#6B6357] font-medium">
+                      <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] font-medium">
                         {tap.beer.isAlcoholFree ? "0,0%" : `${tap.beer.abv}%`}
                       </span>
                     )}
@@ -128,8 +128,8 @@ export default function TaplistSection({
                   <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
                     {prices.map((p, i) => (
                       <div key={i} className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-[#6B6357] tabular-nums">{p.size}</span>
-                        <span className="text-xs font-black text-[#151515] tabular-nums">
+                        <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] tabular-nums">{p.size}</span>
+                        <span className="text-xs font-black text-[#151515] dark:text-[#F5F5F5] tabular-nums">
                           € {p.price.replace(".", ",")}
                         </span>
                       </div>
@@ -146,11 +146,11 @@ export default function TaplistSection({
                       e.stopPropagation();
                       onToggleFavorite(tap.beer.id);
                     }}
-                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 backdrop-blur-sm flex items-center justify-center hover:bg-[#FFF7EA] active:scale-95 transition-all"
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 dark:bg-[#1A1D24]/80 backdrop-blur-sm flex items-center justify-center hover:bg-[#FFF7EA] dark:bg-[#F59E0B]/15 active:scale-95 transition-all"
                     aria-label={isFav ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
                   >
                     <Heart
-                      className={`w-3.5 h-3.5 ${isFav ? "text-[#F59E0B]" : "text-[#6B6357]"}`}
+                      className={`w-3.5 h-3.5 ${isFav ? "text-[#F59E0B]" : "text-[#6B6357] dark:text-[#B7BDC7]"}`}
                       fill={isFav ? "currentColor" : "none"}
                     />
                   </button>

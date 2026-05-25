@@ -69,8 +69,8 @@ export default function InfoCards({ pub, onTabChange }: InfoCardsProps) {
       data-testid="info-cards-section"
     >
       <div>
-        <h2 className="text-xl font-black text-[#151515]">Info utili</h2>
-        <p className="text-xs text-[#6B6357] mt-0.5">Servizi e informazioni aggiuntive</p>
+        <h2 className="text-xl font-black text-[#151515] dark:text-[#F5F5F5]">Info utili</h2>
+        <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5">Servizi e informazioni aggiuntive</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
@@ -81,23 +81,23 @@ export default function InfoCards({ pub, onTabChange }: InfoCardsProps) {
               key={c.key}
               type="button"
               onClick={c.onClick}
-              className="text-left bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3.5 flex items-center gap-2.5 active:scale-[0.98] transition-transform"
+              className="text-left bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3.5 flex items-center gap-2.5 active:scale-[0.98] transition-transform"
               data-testid={`info-card-${c.key}`}
             >
               <div
                 className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  c.available ? "bg-[#FFF7EA] text-[#F59E0B]" : "bg-[#FAF7F1] text-[#6B6357]"
+                  c.available ? "bg-[#FFF7EA] dark:bg-[#F59E0B]/15 text-[#F59E0B]" : "bg-[#FAF7F1] dark:bg-[#12151A] text-[#6B6357] dark:text-[#B7BDC7]"
                 }`}
               >
                 <Icon className="w-4.5 h-4.5" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-[#151515] leading-tight">{c.label}</p>
-                <p className={`text-[10px] mt-0.5 font-semibold ${c.available ? "text-[#F59E0B]" : "text-[#6B6357]"}`}>
+                <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] leading-tight">{c.label}</p>
+                <p className={`text-[10px] mt-0.5 font-semibold ${c.available ? "text-[#F59E0B]" : "text-[#6B6357] dark:text-[#B7BDC7]"}`}>
                   {c.available ? "Disponibile" : "Non disponibile"}
                 </p>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#6B6357] flex-shrink-0" />
+              <ChevronRight className="w-4 h-4 text-[#6B6357] dark:text-[#B7BDC7] flex-shrink-0" />
             </button>
           );
         })}
