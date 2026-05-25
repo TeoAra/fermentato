@@ -47,13 +47,13 @@ export default function BottlesSection({
               data-testid={`bottle-${b.id}`}
             >
               <Link href={`/beer/${b.beer.id}`} className="flex-shrink-0">
-                <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#FAF7F1] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06]">
+                <div className="w-14 h-14 rounded-full overflow-hidden bg-white dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] shadow-sm flex items-center justify-center">
                   <ImageWithFallback
                     src={b.imageUrl || b.beer.imageUrl || b.beer.logoUrl}
                     alt={b.beer.name}
                     imageType="bottle"
                     containerClassName="w-full h-full"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain p-1"
                     iconSize="sm"
                   />
                 </div>

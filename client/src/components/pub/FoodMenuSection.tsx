@@ -1,5 +1,6 @@
-import { motion } from "framer-motion";
-import { ShieldCheck, Plus, Utensils } from "lucide-react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { ShieldCheck, Plus, Utensils, ChevronDown } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import type { FoodMenu, MenuCategory, MenuItem, MenuItemAllergen } from "./types";
 import { MOCK_FOOD_MENU, ALLERGEN_LEGEND } from "./mock-data";
@@ -46,6 +47,18 @@ export default function FoodMenuSection({
   const categories: MenuCategory[] = (data.categories || []).filter((c) => c.items && c.items.length > 0);
   const totalItems = categories.reduce((acc, c) => acc + c.items.length, 0);
 
+  // Espandibile: di default solo la prima categoria è aperta
+  const [expanded, setExpanded] = useState<Set<string | number>>(
+    () => new Set(categories.length > 0 ? [categories[0].id] : [])
+  );
+  const toggleCat = (id: string | number) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 8 }}
@@ -87,27 +100,55 @@ export default function FoodMenuSection({
           <p className="text-sm font-semibold text-[#151515] dark:text-[#F5F5F5]">Nessun piatto disponibile</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {categories.map((cat) => (
+        <div className="space-y-3">
+          {categories.map((cat) => {
+            const isOpen = expanded.has(cat.id);
+            return (
             <section
               key={cat.id}
               data-testid={`menu-cat-${cat.id}`}
               className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden"
             >
-              <header className="flex items-baseline gap-2 px-4 pt-4 pb-2 border-b border-[#E8DED1] dark:border-white/[0.06]">
-                <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5]">
-                  {cat.name}
-                </h3>
-                <span className="text-[10px] font-bold text-[#F59E0B] tabular-nums">
-                  {cat.items.length} {cat.items.length === 1 ? "piatto" : "piatti"}
-                </span>
-              </header>
-              {cat.description && (
-                <p className="px-4 pt-2 text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed">
-                  {cat.description}
-                </p>
-              )}
-              <div className="divide-y divide-[#E8DED1] dark:divide-white/[0.06]">
+              <button
+                type="button"
+                onClick={() => toggleCat(cat.id)}
+                aria-expanded={isOpen}
+                aria-controls={`menu-cat-panel-${cat.id}`}
+                className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#FAF7F1] dark:active:bg-white/[0.03] transition-colors"
+                data-testid={`menu-cat-toggle-${cat.id}`}
+              >
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5]">
+                      {cat.name}
+                    </h3>
+                    <span className="text-[10px] font-bold text-[#F59E0B] tabular-nums">
+                      {cat.items.length} {cat.items.length === 1 ? "piatto" : "piatti"}
+                    </span>
+                  </div>
+                  {cat.description && (
+                    <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed mt-1">
+                      {cat.description}
+                    </p>
+                  )}
+                </div>
+                <ChevronDown
+                  className={`w-5 h-5 text-[#6B6357] dark:text-[#B7BDC7] flex-shrink-0 transition-transform duration-300 ${
+                    isOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <motion.div
+                    id={`menu-cat-panel-${cat.id}`}
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.25, ease: "easeOut" }}
+                    className="overflow-hidden"
+                  >
+                    <div className="divide-y divide-[#E8DED1] dark:divide-white/[0.06] border-t border-[#E8DED1] dark:border-white/[0.06]">
                 {cat.items.map((item) => {
                   const allergens = resolveAllergens(item.allergens, allergensIndex);
                   return (
@@ -176,9 +217,13 @@ export default function FoodMenuSection({
                     </div>
                   );
                 })}
-              </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </section>
-          ))}
+            );
+          })}
         </div>
       )}
 

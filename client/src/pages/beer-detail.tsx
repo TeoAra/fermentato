@@ -68,6 +68,10 @@ import { WebImageSearchButton } from "@/components/web-image-search-button";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import { PageContainer } from "@/components/layout/page-container";
 import StickyPubTabs from "@/components/pub/StickyPubTabs";
+import BeerHero from "@/components/beer/BeerHero";
+import BeerStatsStrip from "@/components/beer/BeerStatsStrip";
+import BeerAvailabilitySection from "@/components/beer/BeerAvailabilitySection";
+import BeerInfoSection from "@/components/beer/BeerInfoSection";
 
 function getBeerStyleColor(style: string): { bg: string; text: string } {
   const s = style?.toLowerCase() || '';
@@ -769,90 +773,16 @@ export default function BeerDetail() {
         </div>
       )}
 
-      {/* ═══════════════════════════════════════════════════════════
-           HERO — full-bleed artwork + curved white edge (mockup spec)
-         ═══════════════════════════════════════════════════════════ */}
-      <div className="relative">
-        {/* Cover image container — overflow-hidden so blur doesn't bleed outside */}
-        {/* Priority: logoUrl (etichetta) → imageUrl — stessa gerarchia del
-            cerchio avatar, così cover e logo mostrano sempre la stessa immagine
-            anche dopo "Re-cerca img". */}
-        <div className="relative w-full h-72 lg:h-80 bg-stone-900 overflow-hidden">
-          {(beer?.logoUrl || beer?.imageUrl) ? (
-            <>
-              <img src={beer?.logoUrl || beer?.imageUrl} alt=""
-                className="absolute inset-0 w-full h-full object-cover blur-2xl scale-110 opacity-50" />
-              <button
-                onClick={() => { const s = beer?.logoUrl || beer?.imageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
-                className="absolute inset-0 w-full h-full"
-                aria-label="Espandi immagine"
-              >
-                <img src={beer?.logoUrl || beer?.imageUrl} alt={beer?.name}
-                  className="w-full h-full object-contain" />
-              </button>
-            </>
-          ) : isSearchingImage ? (
-            <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #1a0e05 0%, #4a2810 50%, #c95000 100%)' }}>
-              <Loader2 className="h-10 w-10 text-amber-300/70 animate-spin" />
-            </div>
-          ) : (
-            <div className="absolute inset-0 flex items-center justify-center" style={{ background: 'linear-gradient(145deg, #1a0e05 0%, #4a2810 50%, #c95000 100%)' }}>
-              <BeerIcon className="h-24 w-24 text-amber-300/40" />
-            </div>
-          )}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/30" />
-
-          {/* Top action bar */}
-          <button onClick={() => window.history.back()}
-            className="absolute top-3 left-4 w-10 h-10 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center tap-scale z-10"
-            aria-label="Indietro">
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </button>
-          <div className="absolute top-3 right-4 flex items-center gap-2 z-10">
-            <button onClick={handleShare} data-testid="button-share"
-              className="w-10 h-10 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center tap-scale"
-              aria-label="Condividi">
-              <Share2 className="h-5 w-5 text-white" />
-            </button>
-            {isAdmin && (
-              <button onClick={openEditDialog} data-testid="button-admin-edit-hero"
-                className="w-10 h-10 rounded-full bg-black/45 backdrop-blur-md flex items-center justify-center tap-scale"
-                aria-label="Altro">
-                <MoreHorizontal className="h-5 w-5 text-white" />
-              </button>
-            )}
-          </div>
-        </div>
-
-      </div>
-
-      {/* White card with rounded top — hero transitions cleanly into content */}
-      <div className="bg-background rounded-t-[32px] -mt-8 relative z-10">
-        {/* Logo overlap + floating bookmark */}
-        <PageContainer variant="wide">
-          <div className="flex items-end justify-between -mt-4 relative z-10">
-          <button
-            onClick={() => { const s = beer?.logoUrl || beer?.imageUrl; if (s) (window as any).__lightboxOpen?.(s); }}
-            className="h-[88px] w-[88px] rounded-full overflow-hidden border-4 border-background bg-white shadow-xl flex-shrink-0 tap-scale"
-            aria-label="Logo birra"
-          >
-            {(beer?.logoUrl || beer?.imageUrl) ? (
-              <img src={beer?.logoUrl || beer?.imageUrl} alt={beer?.name} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-stone-100">
-                <BeerIcon className="h-9 w-9 text-primary/60" />
-              </div>
-            )}
-          </button>
-          <button onClick={handleFavoriteToggle} disabled={favoriteMutation.isPending}
-            data-testid="button-bookmark"
-            className={`mb-3 w-10 h-10 rounded-full bg-card border border-[#E8DED1] dark:border-white/[0.06] shadow-md flex items-center justify-center tap-scale transition-colors ${isBeerFavorited ? 'text-primary' : 'text-[#6B6357] dark:text-[#B7BDC7]'}`}
-            aria-label="Salva">
-            <Bookmark className={`h-5 w-5 ${isBeerFavorited ? 'fill-current' : ''}`} />
-          </button>
-          </div>
-        </PageContainer>
-      </div>
+      <BeerHero
+        beer={beer}
+        isAdmin={isAdmin}
+        isSearchingImage={isSearchingImage}
+        isBeerFavorited={isBeerFavorited}
+        favoritePending={favoriteMutation.isPending}
+        onShare={handleShare}
+        onOpenEditDialog={openEditDialog}
+        onToggleFavorite={handleFavoriteToggle}
+      />
 
       <PageContainer
         as="main"
@@ -942,25 +872,7 @@ export default function BeerDetail() {
             )}
           </div>
 
-          {/* ═══════════ 4 Stat cards ═══════════ */}
-          <div className="grid grid-cols-4 gap-2 mt-5">
-            <div className="bg-[#FAF7F1] dark:bg-[#1A1D24] rounded-2xl px-2 py-3 flex flex-col items-center text-center">
-              <span className="text-base font-extrabold text-foreground leading-tight">{beer?.abv ? `${beer.abv}%` : '—'}</span>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-0.5">ABV</span>
-            </div>
-            <div className="bg-[#FAF7F1] dark:bg-[#1A1D24] rounded-2xl px-2 py-3 flex flex-col items-center text-center">
-              <span className="text-sm font-extrabold text-foreground leading-tight line-clamp-1 px-1">{beer?.color || '—'}</span>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-0.5">Colore</span>
-            </div>
-            <div className="bg-[#FAF7F1] dark:bg-[#1A1D24] rounded-2xl px-2 py-3 flex flex-col items-center text-center">
-              <span className="text-sm font-extrabold text-foreground leading-tight line-clamp-1 px-1">{beer?.style?.split(/\s*[-–\/]\s*/)[0] || '—'}</span>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-0.5">Stile</span>
-            </div>
-            <div className="bg-[#FAF7F1] dark:bg-[#1A1D24] rounded-2xl px-2 py-3 flex flex-col items-center text-center">
-              <span className="text-base font-extrabold text-foreground leading-tight">{beer?.ibu ? String(beer.ibu) : '—'}</span>
-              <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground mt-0.5">{beer?.ibu ? 'IBU' : 'Profilo'}</span>
-            </div>
-          </div>
+          <BeerStatsStrip beer={beer} />
 
           {/* ═══════════ 4 Action buttons ═══════════ */}
           <div className="grid grid-cols-4 gap-2 mt-3">
@@ -1071,120 +983,24 @@ export default function BeerDetail() {
         </div>
 
         <div className={`${activeTab === 'disponibilita' ? '' : 'hidden'} lg:!block`}>
-          {/* ═══════════ Dove puoi berla ═══════════ */}
-          {availabilityLoading ? (
-            <div className="mt-5 rounded-2xl border border-stone-100 dark:border-border bg-card p-4">
-              <div className="skeleton h-5 w-40 mb-3 rounded" />
-              <div className="space-y-2">
-                {[...Array(2)].map((_, i) => <div key={i} className="skeleton h-12 rounded-xl" />)}
-              </div>
-            </div>
-          ) : totalLocations > 0 ? (() => {
-            const allLocs = [
-              ...tapLocations.map((l: any) => ({ pub: l.pub, price: l.tapItem?.price, type: 'tap' as const })),
-              ...bottleLocations.map((l: any) => ({ pub: l.pub, price: l.bottleItem?.price, type: 'bottle' as const })),
-            ];
-            const visible = showAllPubs ? allLocs : allLocs.slice(0, 3);
-            return (
-              <div className="mt-5 rounded-2xl border border-stone-100 dark:border-border bg-card overflow-hidden">
-                <div className="flex items-center justify-between px-4 pt-3 pb-2">
-                  <p className="text-sm font-bold text-foreground flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-primary" />
-                    Dove puoi berla
-                  </p>
-                  {allLocs.length > 3 && (
-                    <button onClick={() => setShowAllPubs(!showAllPubs)} className="text-xs font-bold text-primary inline-flex items-center gap-0.5 tap-scale">
-                      {showAllPubs ? 'Mostra meno' : `Vedi tutti i ${allLocs.length} locali`}
-                      <ChevronDown className={`h-3.5 w-3.5 transition-transform ${showAllPubs ? 'rotate-180' : ''}`} />
-                    </button>
-                  )}
-                </div>
-                <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-                  {visible.map((loc: any, i: number) => (
-                    <li key={`${loc.type}-${loc.pub.id}-${i}`}>
-                      <Link href={`/pub/${loc.pub.id}`}>
-                        <div className="flex items-center gap-3 px-4 py-3 active:bg-muted/40 transition-colors">
-                          <Avatar className="h-10 w-10 flex-shrink-0">
-                            <AvatarFallback className="bg-[#FAF7F1] dark:bg-[#23262E] text-[#6B6357] dark:text-[#B7BDC7] text-xs font-bold">
-                              {loc.pub.name?.charAt(0)?.toUpperCase() || 'P'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-foreground line-clamp-1">{loc.pub.name}</p>
-                            <p className="text-xs text-muted-foreground line-clamp-1 flex items-center gap-1.5">
-                              <span className="truncate">{loc.pub.city || loc.pub.address || ''}</span>
-                              {loc.type === 'tap' ? (
-                                <span className="inline-flex items-center gap-1 text-primary font-semibold flex-shrink-0">
-                                  · <Wine className="h-3 w-3" /> Spina
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1 text-stone-500 font-semibold flex-shrink-0">
-                                  · <BeerIcon className="h-3 w-3" /> Bottiglia
-                                </span>
-                              )}
-                            </p>
-                          </div>
-                          {loc.price && (
-                            <span className="text-sm font-extrabold text-foreground flex-shrink-0">
-                              €{Number(loc.price).toFixed(2).replace('.', ',')}
-                            </span>
-                          )}
-                          <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                        </div>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-                {allLocs.length > 3 && !showAllPubs && (
-                  <button onClick={() => setShowAllPubs(true)}
-                    className="w-full px-4 py-3 bg-orange-50/50 dark:bg-orange-950/10 border-t border-stone-100 dark:border-border flex items-center justify-between text-sm font-bold text-foreground tap-scale">
-                    <span className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      Vedi tutti i {allLocs.length} locali
-                    </span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </button>
-                )}
-              </div>
-            );
-          })() : null}
+          <BeerAvailabilitySection
+            isLoading={availabilityLoading}
+            totalLocations={totalLocations}
+            tapLocations={tapLocations}
+            bottleLocations={bottleLocations}
+            showAllPubs={showAllPubs}
+            onToggleShowAll={() => setShowAllPubs(!showAllPubs)}
+          />
         </div>
 
         <div className={`${activeTab === 'info' ? '' : 'hidden'} lg:!block`}>
-          {/* ═══════════ Descrizione ═══════════ */}
-          {beer?.description && (
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-2">
-                <p className="text-sm font-bold text-foreground">Descrizione</p>
-                {translating && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Loader2 className="h-3 w-3 animate-spin" />Traduzione…
-                  </span>
-                )}
-                {translatedDesc && !translating && (
-                  <span className="text-[10px] font-semibold bg-stone-50 text-primary px-2 py-0.5 rounded-full">Tradotto</span>
-                )}
-              </div>
-              <div className={`text-sm ${descExpanded ? '' : 'line-clamp-3'}`}>
-                <RichTextDisplay html={String(translatedDesc || beer.description || '')} />
-              </div>
-              {String(translatedDesc || beer.description || '').length > 160 && (
-                <button onClick={() => setDescExpanded(!descExpanded)} className="text-sm font-bold text-primary mt-1 tap-scale">
-                  {descExpanded ? 'Mostra meno' : 'Leggi di più'}
-                </button>
-              )}
-              {translatedDesc && beer.description && (
-                <details className="mt-3">
-                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none transition-colors">
-                    Testo originale
-                  </summary>
-                  <div className="mt-2 border-t border-stone-100 pt-2">
-                    <RichTextDisplay html={String(beer.description)} className="text-sm" />
-                  </div>
-                </details>
-              )}
-            </div>
-          )}
+          <BeerInfoSection
+            beer={beer}
+            translatedDesc={translatedDesc}
+            translating={translating}
+            descExpanded={descExpanded}
+            onToggleExpand={() => setDescExpanded(!descExpanded)}
+          />
         </div>
 
         <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
@@ -1212,29 +1028,6 @@ export default function BeerDetail() {
                   <ChevronRight className="h-5 w-5 text-muted-foreground" />
                 </div>
               </Link>
-            </div>
-          )}
-        </div>
-
-        <div className={`${activeTab === 'info' ? '' : 'hidden'} lg:!block`}>
-          {/* Awards */}
-          {(beer as any)?.awards && (beer as any).awards.length > 0 && (
-            <div className="mt-6">
-              <div className="flex items-center gap-2 mb-3">
-                <Trophy className="h-4 w-4 text-amber-500 fill-amber-500" />
-                <h3 className="text-sm font-bold text-foreground">Premi e Riconoscimenti</h3>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {(beer as any).awards.map((award: any, i: number) => (
-                  <div key={i} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card border border-[#E8DED1] dark:border-white/[0.06]/50 shadow-sm text-sm">
-                    <Trophy className={`h-3.5 w-3.5 flex-shrink-0 ${award.type === 'gold' ? 'text-yellow-500' : award.type === 'silver' ? 'text-muted-foreground' : 'text-primary'}`} />
-                    <span className="font-semibold text-foreground">{award.name}</span>
-                    <span className="text-muted-foreground">·</span>
-                    <span className="text-muted-foreground text-xs">{award.competition}</span>
-                    <span className="text-muted-foreground text-xs">({award.year})</span>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
         </div>
