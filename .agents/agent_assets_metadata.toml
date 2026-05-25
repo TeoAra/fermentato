@@ -221,3 +221,9 @@ id = "F_yxQvQQCP6ohvMC4lAYU"
 uri = "file://screenshots/app-store/06-beer-detail.jpg"
 type = "image"
 title = "Dettaglio Birra - Spaceman (Brewfist)"
+
+[[outputs]]
+id = "Jwu1F3zsNawBUfq5y_00h"
+uri = "file://screenshots/pub-7-proof.jpg"
+type = "image"
+title = "/pub/7 sul dev preview adesso (Luppolino Pub)"
