@@ -41,7 +41,6 @@ export function BottomNavigation() {
   // Pagine di dettaglio: la bottom bar globale viene sostituita dal dock
   // contestuale specifico della pagina (pub, birrificio, birra, festival, evento, utente).
   if (
-    location.startsWith("/pub/") ||
     location.startsWith("/pubs/") ||
     location.startsWith("/brewery/") ||
     location.startsWith("/breweries/") ||
