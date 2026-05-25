@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
   Share2,
@@ -7,14 +8,14 @@ import {
   Lightbulb,
   Star,
   MapPin,
-  Beer,
+  Beer as BeerIcon,
   ShieldCheck,
   Heart,
   Navigation,
   Globe,
   ChevronRight,
 } from "lucide-react";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import ImageWithFallback from "@/components/image-with-fallback";
 import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
 
 interface BreweryHeroProps {
@@ -33,11 +34,9 @@ interface BreweryHeroProps {
 }
 
 /**
- * Hero per /brewery/:id — mobile (full-bleed cover + identity card) e
- * desktop (cover compatta). Coerente con pattern pub-detail:
- * crema #FAF7F1 light / true-black dark, amber #F59E0B.
- *
- * Lo stato `descExpanded` è locale: usato solo qui.
+ * Hero per /brewery/:id — visivamente IDENTICO a PubHero:
+ * cover con rounded-b, card bianca overlappante, logo top-left,
+ * 3 action pills rounded-full bordo amber.
  */
 export default function BreweryHero({
   brewery,
@@ -53,139 +52,193 @@ export default function BreweryHero({
   onToggleFavorite,
   onOpenSuggest,
 }: BreweryHeroProps) {
+  const [, setLocation] = useLocation();
   const [descExpanded, setDescExpanded] = useState(false);
+  const cover = brewery?.coverImageUrl || brewery?.logoUrl || "";
+  const hasRating = !!(breweryRating?.avgRating && breweryRating?.reviewCount);
+  const hasWebsite = !!brewery?.websiteUrl;
+  const hasLocation = !!brewery?.location;
 
   return (
-    <>
-      {/* ── MOBILE — full-bleed cover with rounded-card transition ── */}
-      <div className="relative lg:hidden">
-        <div className="relative h-72 overflow-hidden">
-          {brewery?.coverImageUrl ? (
-            <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-          ) : brewery?.logoUrl ? (
-            <img src={brewery.logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-40" loading="lazy" decoding="async" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-black/40" />
+    <motion.section
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="relative max-w-[720px] mx-auto"
+      data-testid="brewery-hero"
+    >
+      {/* Cover */}
+      <div className="relative h-[260px] sm:h-[300px] overflow-hidden rounded-b-[28px] bg-stone-200 dark:bg-stone-900">
+        {brewery?.coverImageUrl ? (
+          <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
+        ) : brewery?.logoUrl ? (
+          <img
+            src={brewery.logoUrl}
+            alt=""
+            className="w-full h-full object-cover blur-2xl scale-110 opacity-40"
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
+        )}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/30 pointer-events-none" />
 
-          <Link
-            href="/explore/breweries"
-            className="absolute top-3 left-4 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale"
+        {/* Top bar */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window !== "undefined" && window.history.length > 1) window.history.back();
+              else setLocation("/explore/breweries");
+            }}
+            aria-label="Indietro"
+            className="w-10 h-10 rounded-full bg-white/90 dark:bg-[#1A1D24]/90 backdrop-blur-sm flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] active:scale-95 transition-transform"
+            data-testid="brewery-hero-back"
           >
-            <ArrowLeft className="h-5 w-5 text-white" />
-          </Link>
-          <div className="absolute top-3 right-4 flex items-center gap-2">
+            <ArrowLeft className="w-5 h-5 text-[#151515] dark:text-[#F5F5F5]" />
+          </button>
+          <div className="flex items-center gap-2">
             <button
+              type="button"
               onClick={onShare}
-              className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale"
               aria-label="Condividi"
+              className="w-10 h-10 rounded-full bg-white/90 dark:bg-[#1A1D24]/90 backdrop-blur-sm flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] active:scale-95 transition-transform"
+              data-testid="brewery-hero-share"
             >
-              <Share2 className="h-[18px] w-[18px] text-white" />
+              <Share2 className="w-4 h-4 text-[#151515] dark:text-[#F5F5F5]" />
             </button>
             {isAdmin ? (
               <Link href={`/admin/edit-brewery/${breweryId}`}>
                 <button
-                  className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale"
+                  type="button"
                   aria-label="Modifica birrificio"
+                  className="w-10 h-10 rounded-full bg-white/90 dark:bg-[#1A1D24]/90 backdrop-blur-sm flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] active:scale-95 transition-transform"
                 >
-                  <Settings className="h-[18px] w-[18px] text-white" />
+                  <Settings className="w-4 h-4 text-[#151515] dark:text-[#F5F5F5]" />
                 </button>
               </Link>
             ) : isAuthenticated ? (
               <button
+                type="button"
                 onClick={onOpenSuggest}
-                className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale"
                 aria-label="Suggerisci modifica"
+                className="w-10 h-10 rounded-full bg-white/90 dark:bg-[#1A1D24]/90 backdrop-blur-sm flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] active:scale-95 transition-transform"
               >
-                <Lightbulb className="h-[18px] w-[18px] text-white" />
+                <Lightbulb className="w-4 h-4 text-[#151515] dark:text-[#F5F5F5]" />
               </button>
             ) : null}
           </div>
         </div>
+      </div>
 
-        {/* Identity block — white card with rounded top corners */}
-        <div className="bg-background dark:bg-background relative px-4 pb-2 rounded-t-[32px] -mt-8 z-10">
-          <div className="flex items-end gap-3 -mt-12 relative z-10">
+      {/* Overlapping card */}
+      <div className="relative px-4 -mt-10 pb-2">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
+          className="relative bg-white dark:bg-[#1A1D24] rounded-[24px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_8px_30px_rgba(0,0,0,0.06)] px-5 pt-10 pb-5"
+        >
+          {/* Logo */}
+          <div className="absolute -top-8 left-5">
             <button
+              type="button"
               onClick={() => {
-                const s = brewery?.logoUrl;
-                if (s) (window as any).__lightboxOpen?.(s);
+                if (brewery?.logoUrl) (window as any).__lightboxOpen?.(brewery.logoUrl);
               }}
-              className="flex-shrink-0 tap-scale"
+              className="w-16 h-16 rounded-full bg-white dark:bg-[#1A1D24] border-2 border-white shadow-[0_4px_16px_rgba(0,0,0,0.12)] overflow-hidden tap-scale flex items-center justify-center"
               aria-label="Apri logo"
             >
-              <Avatar className="h-24 w-24 rounded-full border-4 border-background dark:border-background shadow-lg bg-stone-800">
-                <AvatarImage src={brewery?.logoUrl} alt={brewery?.name} className="object-cover" />
-                <AvatarFallback className="bg-stone-700 text-white text-3xl font-bold">
+              {brewery?.logoUrl ? (
+                <ImageWithFallback
+                  src={brewery.logoUrl}
+                  alt={brewery?.name || "Logo"}
+                  imageType="brewery"
+                  containerClassName="w-full h-full"
+                  className="w-full h-full object-cover"
+                  iconSize="md"
+                />
+              ) : (
+                <span className="text-2xl font-black text-[#6B6357]">
                   {brewery?.name?.[0] || "B"}
-                </AvatarFallback>
-              </Avatar>
+                </span>
+              )}
             </button>
           </div>
 
-          <div className="mt-3 space-y-2">
+          <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-extrabold text-foreground leading-tight tracking-tight">{brewery?.name}</h1>
+              <h1
+                className="text-2xl font-black text-[#151515] dark:text-[#F5F5F5] leading-tight"
+                data-testid="brewery-hero-name"
+              >
+                {brewery?.name || "Birrificio"}
+              </h1>
               {brewery?.hasOwner && (
                 <div
                   title="Birrificio Verificato"
-                  className="flex items-center justify-center bg-primary rounded-full w-5 h-5 flex-shrink-0 shadow-sm"
+                  className="flex items-center justify-center bg-[#F59E0B] rounded-full w-5 h-5 flex-shrink-0 shadow-sm"
                 >
                   <ShieldCheck className="h-3 w-3 text-white" />
                 </div>
               )}
             </div>
 
-            <div className="flex items-center gap-2 text-sm text-[#6B6357] dark:text-[#B7BDC7] flex-wrap">
-              {breweryRating?.avgRating ? (
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                  <span className="font-bold text-foreground">
-                    {breweryRating.avgRating.toFixed(1).replace(".", ",")}
+            {hasLocation && (
+              <div className="flex items-center gap-1.5 text-[#6B6357] dark:text-[#B7BDC7] text-sm">
+                <MapPin className="w-3.5 h-3.5 text-[#F59E0B]" />
+                <span className="truncate">
+                  {brewery.location}
+                  {brewery.region ? ` (${brewery.region})` : ""}
+                  {brewery?.country ? `, ${brewery.country}` : ""}
+                </span>
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 text-sm pt-0.5 flex-wrap">
+              {hasRating && (
+                <span className="inline-flex items-center gap-1">
+                  <Star className="w-4 h-4 text-[#F59E0B]" fill="#F59E0B" />
+                  <span className="font-bold text-[#151515] dark:text-[#F5F5F5]">
+                    {breweryRating!.avgRating!.toFixed(1).replace(".", ",")}
                   </span>
-                  <span className="text-[#6B6357] dark:text-[#B7BDC7]">({breweryRating.reviewCount})</span>
-                </div>
-              ) : null}
-              {breweryRating?.avgRating && brewery?.location && (
-                <span className="text-[#7E8795] dark:text-[#7E8795]">·</span>
+                  <span className="text-[#6B6357] dark:text-[#B7BDC7] text-xs">({breweryRating!.reviewCount})</span>
+                </span>
               )}
-              {brewery?.location && (
-                <div className="flex items-center gap-1 min-w-0">
-                  <MapPin className="h-3.5 w-3.5 text-[#6B6357] dark:text-[#B7BDC7] flex-shrink-0" />
-                  <span className="truncate">
-                    {brewery.location}
-                    {brewery.region ? ` (${brewery.region})` : ""}
-                    {brewery?.country ? `, ${brewery.country}` : ""}
-                  </span>
-                </div>
+              <span className="inline-flex items-center gap-1 text-xs text-[#6B6357] dark:text-[#B7BDC7]">
+                <Heart className="w-3.5 h-3.5 text-[#F59E0B]" fill="#F59E0B" />
+                <span className="font-bold text-[#151515] dark:text-[#F5F5F5]">{favCount}</span>
+                <span>{favCount === 1 ? "follower" : "follower"}</span>
+              </span>
+              {beersCount > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs text-[#6B6357] dark:text-[#B7BDC7]">
+                  <BeerIcon className="w-3.5 h-3.5 text-[#F59E0B]" />
+                  <span className="font-bold text-[#151515] dark:text-[#F5F5F5]">{beersCount}</span>
+                  <span>{beersCount === 1 ? "birra" : "birre"}</span>
+                </span>
               )}
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap pt-1">
-              {beersCount > 0 && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-orange-50 dark:bg-orange-950/30 text-primary border border-orange-100 dark:border-orange-900/40">
-                  <Beer className="h-3.5 w-3.5" />
-                  {beersCount} {beersCount === 1 ? "birra" : "birre"}
-                </span>
-              )}
-              {!brewery?.parentCompany && (
-                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
+            {!brewery?.parentCompany && (
+              <div className="pt-1">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/40">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   Birrificio indipendente
                 </span>
-              )}
-            </div>
+              </div>
+            )}
 
             {!isRichContentEmpty(brewery?.description) && (
               <div className="pt-2">
-                <div className={`text-sm ${descExpanded ? "" : "line-clamp-3"}`}>
+                <div className={`text-sm text-[#6B6357] dark:text-[#B7BDC7] ${descExpanded ? "" : "line-clamp-3"}`}>
                   <RichTextDisplay html={brewery.description} />
                 </div>
-                {(brewery.description as string).length > 140 && (
+                {(brewery.description as string)?.length > 140 && (
                   <button
+                    type="button"
                     onClick={() => setDescExpanded((v) => !v)}
-                    className="mt-1 text-sm font-bold text-primary inline-flex items-center gap-0.5 tap-scale"
+                    className="mt-1 text-sm font-bold text-[#F59E0B] inline-flex items-center gap-0.5 tap-scale"
                   >
                     {descExpanded ? "Mostra meno" : "Leggi di più"}
                     <ChevronRight
@@ -197,108 +250,75 @@ export default function BreweryHero({
             )}
           </div>
 
-          {/* 4 action cards row */}
-          <div className="grid grid-cols-4 gap-2 mt-4">
+          {/* Action pills — IDENTICO a PubHero */}
+          <div className="grid grid-cols-3 gap-2 mt-4">
             <button
+              type="button"
               onClick={onToggleFavorite}
               disabled={favoritePending}
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 transition-all tap-scale border ${
+              className={`flex items-center justify-center gap-1.5 px-3 h-11 rounded-full border font-semibold text-sm active:scale-95 transition-all disabled:opacity-60 disabled:active:scale-100 ${
                 isBreweryFavorited
-                  ? "bg-primary/5 border-primary/30"
-                  : "bg-[#FAF7F1] dark:bg-[#1A1D24] border-[#E8DED1] dark:border-white/[0.06] hover:border-primary/30"
+                  ? "bg-[#F59E0B] border-[#F59E0B] text-white"
+                  : "border-[#F59E0B] bg-white dark:bg-[#1A1D24] text-[#F59E0B]"
               }`}
               data-testid="button-follow-brewery"
+              aria-label={isBreweryFavorited ? "Smetti di seguire" : "Segui birrificio"}
             >
-              <Heart className={`h-5 w-5 ${isBreweryFavorited ? "fill-primary text-primary" : "text-foreground"}`} />
-              <span className="text-[11px] font-bold text-foreground leading-tight">
-                {isBreweryFavorited ? "Seguendo" : "Segui"}
-              </span>
-              <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] leading-tight">
-                {favCount > 0 ? `${favCount} follower` : "Aggiungi"}
-              </span>
+              <Heart className="w-4 h-4" fill={isBreweryFavorited ? "currentColor" : "none"} />
+              <span>{isBreweryFavorited ? "Seguendo" : "Segui"}</span>
             </button>
 
-            {brewery?.location ? (
+            {hasLocation ? (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
                   (brewery.name || "") + " " + brewery.location
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-[#FAF7F1] dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] hover:border-primary/30 transition-all tap-scale"
+                className="flex items-center justify-center gap-1.5 px-3 h-11 rounded-full border border-[#F59E0B] bg-white dark:bg-[#1A1D24] text-[#F59E0B] font-semibold text-sm active:scale-95 transition-all"
                 data-testid="link-directions"
+                aria-label="Indicazioni"
               >
-                <Navigation className="h-5 w-5 text-foreground" />
-                <span className="text-[11px] font-bold text-foreground leading-tight">Indicazioni</span>
-                <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] leading-tight">Maps</span>
+                <Navigation className="w-4 h-4" />
+                <span>Indicazioni</span>
               </a>
-            ) : (
-              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-[#0B0D10]/20 border border-[#E8DED1] dark:border-white/[0.06] opacity-50">
-                <Navigation className="h-5 w-5 text-stone-400" />
-                <span className="text-[11px] font-bold text-stone-400 leading-tight">Indicazioni</span>
-                <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
-              </div>
-            )}
-
-            {brewery?.websiteUrl ? (
+            ) : hasWebsite ? (
               <a
                 href={brewery.websiteUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-[#FAF7F1] dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] hover:border-primary/30 transition-all tap-scale"
+                className="flex items-center justify-center gap-1.5 px-3 h-11 rounded-full border border-[#F59E0B] bg-white dark:bg-[#1A1D24] text-[#F59E0B] font-semibold text-sm active:scale-95 transition-all"
                 data-testid="link-website"
+                aria-label="Sito web"
               >
-                <Globe className="h-5 w-5 text-foreground" />
-                <span className="text-[11px] font-bold text-foreground leading-tight">Sito web</span>
-                <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] leading-tight truncate max-w-full px-1">
-                  {brewery.websiteUrl.replace(/^https?:\/\//, "").replace(/^www\./, "").split("/")[0]}
-                </span>
+                <Globe className="w-4 h-4" />
+                <span>Sito</span>
               </a>
             ) : (
-              <div className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-stone-50/40 dark:bg-[#0B0D10]/20 border border-[#E8DED1] dark:border-white/[0.06] opacity-50">
-                <Globe className="h-5 w-5 text-stone-400" />
-                <span className="text-[11px] font-bold text-stone-400 leading-tight">Sito web</span>
-                <span className="text-[10px] text-stone-400 leading-tight">N/D</span>
-              </div>
+              <button
+                type="button"
+                disabled
+                className="flex items-center justify-center gap-1.5 px-3 h-11 rounded-full border border-[#F59E0B] bg-white dark:bg-[#1A1D24] text-[#F59E0B] font-semibold text-sm opacity-40"
+                aria-label="Indicazioni non disponibili"
+              >
+                <Navigation className="w-4 h-4" />
+                <span>Indicazioni</span>
+              </button>
             )}
 
             <button
+              type="button"
               onClick={onShare}
-              className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 px-1 bg-[#FAF7F1] dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] hover:border-primary/30 transition-all tap-scale"
+              className="flex items-center justify-center gap-1.5 px-3 h-11 rounded-full border border-[#F59E0B] bg-white dark:bg-[#1A1D24] text-[#F59E0B] font-semibold text-sm active:scale-95 transition-all"
               data-testid="button-share-brewery"
+              aria-label="Condividi"
             >
-              <Share2 className="h-5 w-5 text-foreground" />
-              <span className="text-[11px] font-bold text-foreground leading-tight">Condividi</span>
-              <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] leading-tight">Con amici</span>
+              <Share2 className="w-4 h-4" />
+              <span>Condividi</span>
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
-
-      {/* ── DESKTOP — cover compatta, identity gestita da sidebar ── */}
-      <div className="relative h-80 overflow-hidden bg-stone-900 hidden lg:block">
-        {brewery?.coverImageUrl ? (
-          <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
-        ) : brewery?.logoUrl ? (
-          <img src={brewery.logoUrl} alt="" className="w-full h-full object-cover blur-2xl scale-110 opacity-40" loading="lazy" decoding="async" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-stone-800 via-stone-700 to-stone-900" />
-        )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/30" />
-        <Link
-          href="/explore/breweries"
-          className="absolute top-4 left-6 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale"
-        >
-          <ArrowLeft className="h-5 w-5 text-white" />
-        </Link>
-        <button
-          onClick={onShare}
-          className="absolute top-4 right-6 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center tap-scale"
-          aria-label="Condividi"
-        >
-          <Share2 className="h-[18px] w-[18px] text-white" />
-        </button>
-      </div>
-    </>
+    </motion.section>
   );
 }

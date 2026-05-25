@@ -775,13 +775,23 @@ export default function BeerDetail() {
 
       <BeerHero
         beer={beer}
+        beerCollabs={beerCollabs}
+        reviewsData={reviewsData}
+        totalLocations={totalLocations}
         isAdmin={isAdmin}
+        isAuthenticated={isAuthenticated}
         isSearchingImage={isSearchingImage}
         isBeerFavorited={isBeerFavorited}
         favoritePending={favoriteMutation.isPending}
         onShare={handleShare}
         onOpenEditDialog={openEditDialog}
         onToggleFavorite={handleFavoriteToggle}
+        onCheckin={() => isAuthenticated ? setCheckinOpen(true) : toast({ title: 'Accedi per registrare il check-in', variant: 'destructive' })}
+        onReview={() => {
+          if (!isAuthenticated) { toast({ title: 'Accedi per recensire', variant: 'destructive' }); return; }
+          setShowTastingForm(true);
+          setTimeout(() => document.getElementById('beer-reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+        }}
       />
 
       <PageContainer
@@ -793,127 +803,23 @@ export default function BeerDetail() {
         }}
       >
         <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
-          {/* ═══════════ Title block ═══════════ */}
-          <div className="mt-2.5">
-            <h1 className="text-[26px] md:text-[30px] font-extrabold text-foreground leading-tight tracking-tight" data-testid="text-beer-name">
-              {beer?.name}
-            </h1>
-
-            {beer?.style && (() => {
-              const sc = getBeerStyleColor(beer.style);
-              return (
-                <Link href={`/search?q=${encodeURIComponent(beer.style)}`}>
-                  <span className="inline-block text-sm font-bold mt-0.5 tap-scale" style={{ color: sc.text }}>
-                    {beer.style}
-                  </span>
-                </Link>
-              );
-            })()}
-
-            {beer?.brewery && (
-              <div className="mt-1 flex items-center gap-1.5 flex-wrap">
-                <Link href={`/brewery/${beer.brewery.id}`}>
-                  <span className="inline-flex items-center gap-0.5 text-sm font-semibold text-foreground/85 hover:text-primary transition-colors tap-scale">
-                    {beer.brewery.name}
-                    <ChevronRight className="h-4 w-4" />
-                  </span>
-                </Link>
-                {beerCollabs.length > 0 && beerCollabs.map((b) => (
-                  <span key={b.id} className="inline-flex items-center gap-0.5">
-                    <span className="text-[#7E8795] dark:text-[#7E8795] text-xs">×</span>
-                    <Link href={`/brewery/${b.id}`}>
-                      <span className="text-sm font-semibold text-foreground/85 hover:text-primary">{b.name}</span>
-                    </Link>
-                  </span>
-                ))}
-                {beerCollabs.length > 0 && (
-                  <span className="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-0.5 rounded-full">collab</span>
-                )}
-              </div>
-            )}
-
-            {/* Rating row */}
-            {(reviewsData?.reviewCount ?? 0) > 0 && reviewsData?.avgRating != null && (
-              <div className="flex items-center gap-1.5 text-sm mt-2 flex-wrap">
-                <Star className="h-4 w-4 text-amber-500 fill-current" />
-                <span className="font-bold text-foreground">
-                  {Number(reviewsData.avgRating).toFixed(1).replace('.', ',')}
-                </span>
-                <span className="text-muted-foreground">({reviewsData.reviewCount})</span>
-                <span className="text-muted-foreground">·</span>
-                <span className="text-muted-foreground">
-                  {reviewsData.reviewCount} {reviewsData.reviewCount === 1 ? 'valutazione' : 'valutazioni'}
-                </span>
-              </div>
-            )}
-
-            {/* Availability badge */}
-            {totalLocations > 0 && (
-              <div className="mt-3">
-                <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-green-50 dark:bg-green-950/30 text-green-700 dark:text-green-400 border border-green-200/60 dark:border-green-700/40 px-3 py-1.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                  Disponibile in {totalLocations} {totalLocations === 1 ? 'locale' : 'locali'}
-                </span>
-              </div>
-            )}
-
-            {/* Flags row */}
-            {(beer?.isGlutenFree || beer?.isAlcoholFree) && (
-              <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-                {beer?.isGlutenFree && (
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full">
-                    <GlutenFreeIcon size={10} className="text-green-600" /> Gluten Free
-                  </span>
-                )}
-                {beer?.isAlcoholFree && (
-                  <span className="text-[10px] font-bold text-[#6B6357] dark:text-[#B7BDC7] bg-[#FAF7F1] dark:bg-[#23262E] px-2 py-1 rounded-full">0.0% Analcolica</span>
-                )}
-              </div>
-            )}
+          <div className="mt-3">
+            <BeerStatsStrip beer={beer} />
           </div>
 
-          <BeerStatsStrip beer={beer} />
-
-          {/* ═══════════ 4 Action buttons ═══════════ */}
-          <div className="grid grid-cols-4 gap-2 mt-3">
-            <button
-              onClick={() => isAuthenticated ? setCheckinOpen(true) : toast({ title: 'Accedi per registrare il check-in', variant: 'destructive' })}
-              data-testid="button-checkin"
-              className="flex flex-col items-center justify-center gap-1 bg-primary text-white rounded-2xl py-3 text-xs font-bold tap-scale shadow-sm btn-orange-glow"
-            >
-              <BeerIcon className="h-4 w-4" />
-              Check in
-            </button>
-            <button
-              onClick={handleFavoriteToggle}
-              disabled={favoriteMutation.isPending}
-              data-testid="button-favorite"
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold border tap-scale ${isBeerFavorited ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800 text-red-500' : 'bg-card border-[#E8DED1] dark:border-white/[0.06] text-stone-700 dark:text-stone-300'}`}
-            >
-              <Heart className={`h-4 w-4 ${isBeerFavorited ? 'fill-current' : ''}`} />
-              {isBeerFavorited ? 'Salvata' : 'Salva'}
-            </button>
-            <button
-              onClick={() => {
-                if (!isAuthenticated) { toast({ title: 'Accedi per recensire', variant: 'destructive' }); return; }
-                setShowTastingForm(true);
-                setTimeout(() => document.getElementById('beer-reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-              }}
-              data-testid="button-review"
-              className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold border bg-card border-[#E8DED1] dark:border-white/[0.06] text-stone-700 dark:text-stone-300 tap-scale"
-            >
-              <Star className="h-4 w-4" />
-              Recensisci
-            </button>
-            <button
-              onClick={handleShare}
-              data-testid="button-share-bottom"
-              className="flex flex-col items-center justify-center gap-1 rounded-2xl py-3 text-xs font-bold border bg-card border-[#E8DED1] dark:border-white/[0.06] text-stone-700 dark:text-stone-300 tap-scale"
-            >
-              <Share2 className="h-4 w-4" />
-              Condividi
-            </button>
-          </div>
+          {/* Flags row */}
+          {(beer?.isGlutenFree || beer?.isAlcoholFree) && (
+            <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+              {beer?.isGlutenFree && (
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-1 rounded-full">
+                  <GlutenFreeIcon size={10} className="text-green-600" /> Gluten Free
+                </span>
+              )}
+              {beer?.isAlcoholFree && (
+                <span className="text-[10px] font-bold text-[#6B6357] dark:text-[#B7BDC7] bg-[#FAF7F1] dark:bg-[#23262E] px-2 py-1 rounded-full">0.0% Analcolica</span>
+              )}
+            </div>
+          )}
 
           {/* ═══════════ Secondary actions (Wishlist · Cantina · Suggerisci) ═══════════ */}
           {(isAuthenticated || isAdmin) && (
