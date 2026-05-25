@@ -295,12 +295,12 @@ export function IosInstallGuide({ onClose }: { onClose: () => void }) {
 }
 
 export function PwaInstallPrompt() {
-  if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) return null;
   const { isAuthenticated } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstall, setShowInstall] = useState(false);
   const [showIosGuide, setShowIosGuide] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -343,7 +343,7 @@ export function PwaInstallPrompt() {
     localStorage.setItem('pwa-install-dismissed', Date.now().toString());
   };
 
-  if (!showInstall || dismissed) return null;
+  if (isNative || !showInstall || dismissed) return null;
 
   const device = getDeviceType();
 
@@ -567,10 +567,10 @@ export function CapacitorPushPrompt() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function PushNotificationPrompt() {
-  if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) return null;
   const { isAuthenticated } = useAuth();
   const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -603,7 +603,7 @@ export function PushNotificationPrompt() {
     localStorage.setItem('push-prompt-dismissed', Date.now().toString());
   };
 
-  if (!show || dismissed) return null;
+  if (isNative || !show || dismissed) return null;
 
   return (
     <div className="fixed bottom-nav-above left-4 right-4 lg:left-auto lg:right-4 lg:w-96 z-50 animate-in slide-in-from-bottom-5">
