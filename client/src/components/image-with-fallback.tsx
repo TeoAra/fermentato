@@ -75,7 +75,7 @@ export default function ImageWithFallback({
 
   if (shouldShowFallback) {
     return (
-      <div className={`flex items-center justify-center bg-stone-100 dark:bg-[#1B2735] ${containerClassName} ${iconClassName}`}>
+      <div className={`flex items-center justify-center bg-stone-100 dark:bg-[#1A1D24] ${containerClassName} ${iconClassName}`}>
         {getFallbackIcon(imageType, iconSize)}
       </div>
     );
@@ -103,7 +103,7 @@ export default function ImageWithFallback({
         style={{ display: imageError ? 'none' : 'block' }}
       />
       {isLoading && (
-        <div className={`flex items-center justify-center bg-stone-100 dark:bg-[#1B2735] ${className}`}>
+        <div className={`flex items-center justify-center bg-stone-100 dark:bg-[#1A1D24] ${className}`}>
           <div className="animate-pulse">
             {getFallbackIcon(imageType, iconSize)}
           </div>

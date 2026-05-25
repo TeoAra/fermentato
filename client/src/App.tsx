@@ -99,7 +99,7 @@ const AppDownload        = lazy(() => import("@/pages/app-download"));
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PageSkeleton = () => (
-  <div className="min-h-screen bg-background dark:bg-[#15202B] overflow-hidden fade-in">
+  <div className="min-h-screen bg-background dark:bg-[#0B0D10] overflow-hidden fade-in">
     <div className="max-w-2xl mx-auto px-6 pt-20 pb-12 text-center space-y-5">
       {/* Brand identity: hop icon + wordmark shimmer */}
       <div className="flex items-center justify-center gap-2 mb-2">
@@ -209,7 +209,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
         window.location.replace(buildFreshUrl());
       };
       return (
-        <div className="min-h-screen flex items-center justify-center bg-amber-50 dark:bg-[#15202B] p-6">
+        <div className="min-h-screen flex items-center justify-center bg-amber-50 dark:bg-[#0B0D10] p-6">
           <div className="text-center max-w-lg space-y-3">
             <p className="text-4xl">🍺</p>
             {isChunkError ? (
@@ -227,7 +227,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
                 </div>
                 <details className="text-left">
                   <summary className="text-xs text-gray-400 cursor-pointer">Dettagli tecnici</summary>
-                  <pre className="mt-2 text-xs text-gray-500 dark:text-gray-400 overflow-auto max-h-40 bg-gray-100 dark:bg-[#1B2735] rounded p-2 whitespace-pre-wrap break-all">{errStack}</pre>
+                  <pre className="mt-2 text-xs text-gray-500 dark:text-gray-400 overflow-auto max-h-40 bg-gray-100 dark:bg-[#1A1D24] rounded p-2 whitespace-pre-wrap break-all">{errStack}</pre>
                 </details>
               </>
             )}
@@ -242,7 +242,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
               ) : (
                 <>
                   <button
-                    className="mt-2 px-4 py-2 bg-gray-100 dark:bg-[#232F3D] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-[#2F3D4D]"
+                    className="mt-2 px-4 py-2 bg-gray-100 dark:bg-[#12151A] text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-[#23262E]"
                     onClick={() => { navigator.clipboard?.writeText(errMsg + "\n\n" + errStack).catch(() => {}); }}
                   >
                     Copia errore

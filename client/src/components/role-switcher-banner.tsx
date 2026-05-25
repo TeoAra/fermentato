@@ -52,7 +52,7 @@ export function RoleSwitcherBanner({ currentView }: RoleSwitcherBannerProps) {
   const bgClass = {
     profile:  "bg-neutral-50 dark:bg-neutral-800/50 border-neutral-200 dark:border-neutral-700/60",
     pub:      "bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800/40",
-    brewery:  "bg-stone-50 dark:bg-orange-900/20 border-stone-300 dark:border-[#2F3D4D]/40",
+    brewery:  "bg-stone-50 dark:bg-orange-900/20 border-stone-300 dark:border-[#23262E]/40",
   }[currentView];
 
   const textClass = {

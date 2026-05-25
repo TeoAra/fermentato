@@ -261,9 +261,9 @@ export default function ExploreBreweries() {
           </div>
         </div>
         {isLoading ? (
-          <div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />
+          <div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />
         ) : (
-          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}><PubMap pins={breweryMapPins} height="100%" /></Suspense>
+          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}><PubMap pins={breweryMapPins} height="100%" /></Suspense>
         )}
       </div>
     );
@@ -277,7 +277,7 @@ export default function ExploreBreweries() {
       </Helmet>
 
       {/* ── Header (scorre con la pagina) ── */}
-      <div className="bg-white/95 dark:bg-[#15202B]/95 backdrop-blur-md border-b border-stone-100 dark:border-[#2F3D4D]">
+      <div className="bg-white/95 dark:bg-[#0B0D10]/95 backdrop-blur-md border-b border-stone-100 dark:border-[#23262E]">
         <PageContainer variant="wide" className="pt-3 pb-2">
           {/* Title row */}
           <div className="flex items-center justify-between mb-3">
@@ -311,8 +311,8 @@ export default function ExploreBreweries() {
 
           {/* Mini mappa — si nasconde se WebGL non è disponibile */}
           {mapVisible && (
-            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-[#1B2735] mb-3">
-              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}>
+            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-[#23262E]/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-[#1A1D24] mb-3">
+              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
                 <PubMap pins={breweryMapPins} height="100%" onError={() => setMapVisible(false)} label="birrifici" />
               </Suspense>
             </div>
@@ -510,7 +510,7 @@ function FeaturedCard({ brewery }: { brewery: any }) {
   return (
     <Link href={`/brewery/${brewery.id}`}>
       <div className="flex-shrink-0 w-40 cursor-pointer">
-        <div className="relative w-40 h-28 rounded-2xl overflow-hidden bg-stone-200 dark:bg-[#1B2735] mb-2">
+        <div className="relative w-40 h-28 rounded-2xl overflow-hidden bg-stone-200 dark:bg-[#1A1D24] mb-2">
           {!imgErr && (brewery.coverImageUrl || brewery.logoUrl) ? (
             <img
               src={brewery.coverImageUrl || brewery.logoUrl}
@@ -593,7 +593,7 @@ function BreweryListCard({ brewery, showDist, userLocation }: { brewery: any; sh
     <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] overflow-hidden hover:border-primary/30 active:scale-[0.99] transition-all duration-200">
       {/* Logo */}
       <Link href={`/brewery/${brewery.id}`} className="flex-shrink-0">
-        <div className="w-16 h-16 bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center">
+        <div className="w-16 h-16 bg-stone-100 dark:bg-[#1A1D24] flex items-center justify-center">
           {!imgErr && brewery.logoUrl ? (
             <img
               src={brewery.logoUrl}
@@ -657,8 +657,8 @@ function BreweryListCard({ brewery, showDist, userLocation }: { brewery: any; sh
             onClick={e => { e.preventDefault(); e.stopPropagation(); favMut.mutate({ action: isFav ? "remove" : "add" }); }}
             className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all tap-scale ${
               isFav
-                ? "bg-stone-100 dark:bg-[#1B2735] text-stone-500 border-stone-200 dark:border-[#2F3D4D]"
-                : "bg-white dark:bg-[#1B2735]/60 text-stone-500 border-stone-200 dark:border-[#2F3D4D]"
+                ? "bg-stone-100 dark:bg-[#1A1D24] text-stone-500 border-stone-200 dark:border-[#23262E]"
+                : "bg-white dark:bg-[#1A1D24]/60 text-stone-500 border-stone-200 dark:border-[#23262E]"
             }`}
           >
             {isFav ? "✓ Seguito" : "👤 Segui"}

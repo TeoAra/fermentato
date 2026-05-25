@@ -230,7 +230,7 @@ export default function AdminModeration() {
                           <Badge
                             className={`text-xs rounded-full px-2.5 py-0.5 font-medium ${
                               report.status === "resolved" ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400" :
-                              report.status === "pending" ? "bg-stone-50 text-primary dark:bg-[#15202B]/20 dark:text-orange-400" :
+                              report.status === "pending" ? "bg-stone-50 text-primary dark:bg-[#0B0D10]/20 dark:text-orange-400" :
                               report.status === "escalated" ? "bg-red-50 text-red-700 dark:bg-red-950/20 dark:text-red-400" :
                               "bg-muted text-muted-foreground"
                             }`}
@@ -253,10 +253,10 @@ export default function AdminModeration() {
                           const text = isComment ? report.commentText : report.reviewText;
                           if (!text && !beerName) return null;
                           return (
-                            <div className="bg-stone-50 dark:bg-[#15202B]/20 border border-stone-200 dark:border-[#2F3D4D]/50 rounded-xl p-3">
+                            <div className="bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-200 dark:border-[#23262E]/50 rounded-xl p-3">
                               <div className="flex items-center gap-2 mb-2">
                                 {isComment ? <MessageSquare className="w-3.5 h-3.5 text-primary" /> : <BeerIcon className="w-3.5 h-3.5 text-primary" />}
-                                <Badge className="text-[10px] rounded-full bg-stone-100 dark:bg-[#1B2735] text-stone-700 dark:text-stone-300 border-0 px-1.5 py-0">
+                                <Badge className="text-[10px] rounded-full bg-stone-100 dark:bg-[#1A1D24] text-stone-700 dark:text-stone-300 border-0 px-1.5 py-0">
                                   {isComment ? "Commento check-in" : "Recensione"}
                                 </Badge>
                                 <span className="text-xs font-medium text-primary dark:text-orange-400">

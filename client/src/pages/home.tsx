@@ -289,9 +289,9 @@ export default function Home() {
       ═══════════════════════════════════════════════════════════════ */}
       <PageContainer as="main" variant="wide" className="pt-4 pb-28">
         {/* Map card — taller on mobile, more compact on desktop */}
-        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-[#15202B] shadow-card h-[300px] lg:h-[240px]" style={{ maxHeight: 300 }}>
+        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-[#0B0D10] shadow-card h-[300px] lg:h-[240px]" style={{ maxHeight: 300 }}>
           <div className="absolute inset-0 overflow-hidden" style={{ maxHeight: '100%' }}>
-            <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-[#1B2735]" />}>
+            <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-[#1A1D24]" />}>
               <HomepageMap
                 pubs={Array.isArray(pubs) ? pubs as any[] : []}
                 breweries={(() => {

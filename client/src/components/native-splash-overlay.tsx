@@ -39,7 +39,7 @@ export function NativeSplashOverlay() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        backgroundColor: isDark ? "#15202B" : "#FFFFFF",
+        backgroundColor: isDark ? "#0B0D10" : "#FFFFFF",
         transition: "opacity 0.32s cubic-bezier(0.4, 0, 0.2, 1)",
         opacity: fading ? 0 : 1,
         pointerEvents: fading ? "none" : "auto",

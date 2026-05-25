@@ -52,7 +52,7 @@ export default function MyCellar() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] flex items-center justify-center p-6">
         <div className="text-center space-y-3">
           <Wine className="w-12 h-12 mx-auto text-stone-300" />
           <p className="text-stone-500">Accedi per gestire la tua cantina</p>
@@ -65,11 +65,11 @@ export default function MyCellar() {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] pb-24">
+    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] pb-24">
       <Helmet><title>La mia cantina | Fermenta.to</title></Helmet>
 
       {/* Header */}
-      <div className="bg-white dark:bg-[#1B2735] border-b border-stone-100 dark:border-[hsl(220,5%,27%)] px-4 py-5">
+      <div className="bg-white dark:bg-[#1A1D24] border-b border-stone-100 dark:border-[hsl(220,5%,27%)] px-4 py-5">
         <h1 className="text-xl font-bold text-stone-900 dark:text-stone-50 font-poppins">La mia cantina</h1>
         <p className="text-sm text-stone-500 mt-0.5">
           {totalBottles} {totalBottles === 1 ? "bottiglia" : "bottiglie"} · {cellar.length} {cellar.length === 1 ? "etichetta" : "etichette"}
@@ -102,9 +102,9 @@ export default function MyCellar() {
             >
               <div className="flex items-center gap-3 p-3">
                 {item.beer_image ? (
-                  <img src={item.beer_image} alt={item.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[#232F3D]" />
+                  <img src={item.beer_image} alt={item.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[#12151A]" />
                 ) : (
-                  <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#232F3D] flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#12151A] flex items-center justify-center">
                     <Package className="w-6 h-6 text-stone-300" />
                   </div>
                 )}
@@ -116,7 +116,7 @@ export default function MyCellar() {
                   {item.vintage && <p className="text-xs text-primary font-medium mt-0.5">Annata {item.vintage}</p>}
                 </div>
                 <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-2 bg-stone-50 dark:bg-[#232F3D] rounded-xl px-2 py-1">
+                  <div className="flex items-center gap-2 bg-stone-50 dark:bg-[#12151A] rounded-xl px-2 py-1">
                     <button
                       className="w-6 h-6 flex items-center justify-center text-stone-500 active:scale-90 transition-transform"
                       onClick={() => {
@@ -139,23 +139,23 @@ export default function MyCellar() {
               </div>
 
               {/* Bottom actions */}
-              <div className="border-t border-stone-50 dark:border-[#232F3D] flex divide-x divide-stone-50 dark:divide-[#232F3D]">
+              <div className="border-t border-stone-50 dark:border-[#12151A] flex divide-x divide-stone-50 dark:divide-[#12151A]">
                 <button
-                  className="flex-1 py-2.5 text-xs text-stone-500 flex items-center justify-center gap-1.5 active:bg-stone-50 dark:active:bg-[#232F3D]"
+                  className="flex-1 py-2.5 text-xs text-stone-500 flex items-center justify-center gap-1.5 active:bg-stone-50 dark:active:bg-[#12151A]"
                   onClick={() => setCheckinItem(item)}
                 >
                   <Beer className="w-3.5 h-3.5" />
                   Check-in
                 </button>
                 <button
-                  className="flex-1 py-2.5 text-xs text-stone-500 flex items-center justify-center gap-1.5 active:bg-stone-50 dark:active:bg-[#232F3D]"
+                  className="flex-1 py-2.5 text-xs text-stone-500 flex items-center justify-center gap-1.5 active:bg-stone-50 dark:active:bg-[#12151A]"
                   onClick={() => setEditItem(item)}
                 >
                   <ChevronRight className="w-3.5 h-3.5" />
                   Modifica
                 </button>
                 <button
-                  className="flex-1 py-2.5 text-xs text-red-400 flex items-center justify-center gap-1.5 active:bg-red-50 dark:active:bg-[#232F3D]"
+                  className="flex-1 py-2.5 text-xs text-red-400 flex items-center justify-center gap-1.5 active:bg-red-50 dark:active:bg-[#12151A]"
                   onClick={() => removeMutation.mutate(item.beer_id)}
                 >
                   <Trash2 className="w-3.5 h-3.5" />

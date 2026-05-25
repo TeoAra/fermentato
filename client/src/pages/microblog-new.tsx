@@ -108,11 +108,11 @@ export default function MicroblogNew() {
   const hasTag = !!(tag.pubId || tag.breweryId || tag.beerId || tag.eventId);
 
   return (
-    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] pb-24">
+    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] pb-24">
       <Helmet><title>Nuovo post | Fermenta.to</title></Helmet>
 
-      <header className="sticky top-0 z-10 bg-white/95 dark:bg-[#1B2735]/95 backdrop-blur-xl border-b border-stone-100 dark:border-[#2F3D4D] px-4 py-3 flex items-center gap-3">
-        <button onClick={() => window.history.length > 1 ? window.history.back() : navigate("/feed")} className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-[#1B2735]" data-testid="btn-back">
+      <header className="sticky top-0 z-10 bg-white/95 dark:bg-[#1A1D24]/95 backdrop-blur-xl border-b border-stone-100 dark:border-[#23262E] px-4 py-3 flex items-center gap-3">
+        <button onClick={() => window.history.length > 1 ? window.history.back() : navigate("/feed")} className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-[#1A1D24]" data-testid="btn-back">
           <ArrowLeft className="w-5 h-5" />
         </button>
         <h1 className="text-base font-bold flex-1 font-poppins">Nuovo post</h1>
@@ -135,13 +135,13 @@ export default function MicroblogNew() {
               )}
               {tag.pubId && tag.pubName && (
                 <button onClick={() => setTag(t => ({ ...t, pubId: undefined, pubName: undefined }))}
-                  className="inline-flex items-center gap-1 text-xs bg-stone-100 dark:bg-[#1B2735] text-stone-700 dark:text-stone-200 px-2.5 py-1 rounded-full font-medium hover:bg-stone-200 dark:hover:bg-[#232F3D] transition" data-testid="tag-chip-pub">
+                  className="inline-flex items-center gap-1 text-xs bg-stone-100 dark:bg-[#1A1D24] text-stone-700 dark:text-stone-200 px-2.5 py-1 rounded-full font-medium hover:bg-stone-200 dark:hover:bg-[#12151A] transition" data-testid="tag-chip-pub">
                   <MapPin className="w-3 h-3" /> {tag.pubName} <X className="w-3 h-3 opacity-70" />
                 </button>
               )}
               {tag.breweryId && tag.breweryName && (
                 <button onClick={() => setTag(t => ({ ...t, breweryId: undefined, breweryName: undefined }))}
-                  className="inline-flex items-center gap-1 text-xs bg-stone-100 dark:bg-[#1B2735] text-stone-700 dark:text-stone-200 px-2.5 py-1 rounded-full font-medium hover:bg-stone-200 dark:hover:bg-[#232F3D] transition" data-testid="tag-chip-brewery">
+                  className="inline-flex items-center gap-1 text-xs bg-stone-100 dark:bg-[#1A1D24] text-stone-700 dark:text-stone-200 px-2.5 py-1 rounded-full font-medium hover:bg-stone-200 dark:hover:bg-[#12151A] transition" data-testid="tag-chip-brewery">
                   <Building2 className="w-3 h-3" /> {tag.breweryName} <X className="w-3 h-3 opacity-70" />
                 </button>
               )}

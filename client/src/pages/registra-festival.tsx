@@ -218,7 +218,7 @@ function StepAccount({ onDone }: { onDone: () => void }) {
                         : passStrength <= 2 ? "bg-orange-400"
                         : passStrength <= 3 ? "bg-amber-400"
                         : "bg-green-500"
-                        : "bg-gray-200 dark:bg-[#232F3D]"
+                        : "bg-gray-200 dark:bg-[#12151A]"
                     }`} />
                   ))}
                 </div>

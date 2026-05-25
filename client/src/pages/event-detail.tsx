@@ -232,7 +232,7 @@ export default function EventDetailPage() {
       {/* Cover — desktop sempre, mobile solo su overview */}
       <div className={`relative ${activeTab !== "overview" ? "hidden lg:block" : ""}`}>
         {ev.imageUrl ? (
-          <div className="relative h-64 sm:h-80 lg:h-96 bg-stone-200 dark:bg-[#15202B]">
+          <div className="relative h-64 sm:h-80 lg:h-96 bg-stone-200 dark:bg-[#0B0D10]">
             <img src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           </div>

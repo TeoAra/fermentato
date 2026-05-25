@@ -56,7 +56,7 @@ function UserRow({ user, followingIds, onToggle }: { user: any; followingIds: Se
         onClick={() => onToggle(user.id, isFollowing)}
         className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
           isFollowing
-            ? "bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300"
+            ? "bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300"
             : "bg-primary text-white"
         }`}
       >
@@ -172,7 +172,7 @@ function CheckinCommentRow({ comment, tastingId, onReport }: { comment: any; tas
     <div className="flex gap-2 items-start group">
       <UserAvatar user={comment} size={6} />
       <div className="flex-1 min-w-0">
-        <div className="bg-stone-50 dark:bg-[#1B2735] rounded-2xl px-3 py-1.5 relative">
+        <div className="bg-stone-50 dark:bg-[#1A1D24] rounded-2xl px-3 py-1.5 relative">
           <Link href={`/user/${comment.username}`}>
             <p className="text-[11px] font-bold text-stone-700 dark:text-stone-200">{comment.display_name ?? comment.username}</p>
           </Link>
@@ -201,10 +201,10 @@ function CheckinCommentRow({ comment, tastingId, onReport }: { comment: any; tas
                 <MoreHorizontal className="w-3 h-3" />
               </button>
               {menuOpen && (
-                <div className="absolute left-0 top-full mt-1 z-10 bg-white dark:bg-[#1B2735] border border-stone-200 dark:border-[#2F3D4D] rounded-lg shadow-lg py-1 min-w-[120px]">
+                <div className="absolute left-0 top-full mt-1 z-10 bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-[#23262E] rounded-lg shadow-lg py-1 min-w-[120px]">
                   <button
                     onMouseDown={() => { setMenuOpen(false); onReport(comment.id); }}
-                    className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-stone-50 dark:hover:bg-[#232F3D] flex items-center gap-1.5"
+                    className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-stone-50 dark:hover:bg-[#12151A] flex items-center gap-1.5"
                     data-testid={`button-report-comment-${comment.id}`}
                   >
                     <Flag className="w-3 h-3" /> Segnala
@@ -260,7 +260,7 @@ function CheckinSocialBar({ tastingId }: { tastingId: number }) {
   });
 
   return (
-    <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#2F3D4D]/40">
+    <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40">
       <div className="flex items-center gap-4">
         <button
           onClick={() => isAuthenticated && likeMut.mutate()}
@@ -356,11 +356,11 @@ function MicroblogPostCard({ post }: { post: any }) {
       {(post.beer_name || post.pub_name || post.brewery_name) && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {post.beer_name && <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold">🍺 {post.beer_name}</span>}
-          {post.pub_name && <span className="text-[10px] bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full">📍 {post.pub_name}</span>}
-          {post.brewery_name && <span className="text-[10px] bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full">🏭 {post.brewery_name}</span>}
+          {post.pub_name && <span className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full">📍 {post.pub_name}</span>}
+          {post.brewery_name && <span className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full">🏭 {post.brewery_name}</span>}
         </div>
       )}
-      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#2F3D4D]/40 flex items-center gap-4">
+      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40 flex items-center gap-4">
         <button onClick={() => likeMut.mutate()}
           className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${post.liked ? "text-red-500" : "text-stone-500 hover:text-red-500"}`}>
           <Heart className="w-4 h-4" fill={post.liked ? "currentColor" : "none"} />
@@ -446,7 +446,7 @@ export default function SocialFeed() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] flex items-center justify-center p-6">
         <div className="text-center space-y-3">
           <Users className="w-12 h-12 mx-auto text-stone-300" />
           <p className="text-stone-500">Accedi per vedere il feed degli amici</p>
@@ -460,13 +460,13 @@ export default function SocialFeed() {
   const totalFormat = (stats?.formatBreakdown ?? []).reduce((s: number, f: any) => s + parseInt(f.cnt), 0);
 
   return (
-    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] pb-24">
+    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] pb-24">
       <Helmet><title>Sociale | Fermenta.to</title></Helmet>
 
       <Tabs defaultValue="feed" className="w-full">
-      <div className="bg-white dark:bg-[#1B2735] border-b border-stone-100 dark:border-[hsl(220,5%,27%)] px-4 pt-5 pb-0 sticky top-0 z-10">
+      <div className="bg-white dark:bg-[#1A1D24] border-b border-stone-100 dark:border-[hsl(220,5%,27%)] px-4 pt-5 pb-0 sticky top-0 z-10">
         <h1 className="text-xl font-bold text-stone-900 dark:text-stone-50 font-poppins mb-3">Sociale</h1>
-          <TabsList className="w-full bg-transparent p-0 h-auto border-b border-stone-100 dark:border-[#2F3D4D]/50 rounded-none justify-start gap-0">
+          <TabsList className="w-full bg-transparent p-0 h-auto border-b border-stone-100 dark:border-[#23262E]/50 rounded-none justify-start gap-0">
             {[
               { value: "feed", label: "Feed" },
               { value: "amici", label: `Amici${following.length > 0 ? ` (${following.length})` : ""}` },
@@ -491,7 +491,7 @@ export default function SocialFeed() {
               </div>
             ) : timeline.length === 0 ? (
               <div className="flex flex-col items-center justify-center pt-16 px-6 text-center gap-4">
-                <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[#1B2735] flex items-center justify-center shadow-sm">
+                <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[#1A1D24] flex items-center justify-center shadow-sm">
                   <Users className="w-9 h-9 text-stone-300" />
                 </div>
                 <p className="font-semibold text-stone-700 dark:text-stone-300 font-poppins">
@@ -512,7 +512,7 @@ export default function SocialFeed() {
                 <div className="flex items-center gap-2 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-3">
                   <UserAvatar user={user as any} size={9} />
                   <Link href="/microblog/nuovo" className="flex-1">
-                    <button className="w-full text-left text-sm text-stone-400 bg-stone-50 dark:bg-[#1B2735] rounded-full px-4 py-2.5 hover:bg-stone-100 dark:hover:bg-[#232F3D] transition">
+                    <button className="w-full text-left text-sm text-stone-400 bg-stone-50 dark:bg-[#1A1D24] rounded-full px-4 py-2.5 hover:bg-stone-100 dark:hover:bg-[#12151A] transition">
                       Cosa stai bevendo, {(user as any)?.firstName ?? "appassionato"}?
                     </button>
                   </Link>
@@ -532,7 +532,7 @@ export default function SocialFeed() {
                     <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1 scrollbar-hide">
                       {news.slice(0, 5).map((n: any) => (
                         <a key={n.id} href={n.link} target="_blank" rel="noopener noreferrer"
-                          className="flex-shrink-0 w-44 bg-stone-50 dark:bg-[#1B2735] rounded-xl overflow-hidden hover:shadow-md transition">
+                          className="flex-shrink-0 w-44 bg-stone-50 dark:bg-[#1A1D24] rounded-xl overflow-hidden hover:shadow-md transition">
                           {n.image_url && <img src={n.image_url} alt="" loading="lazy" className="w-full h-20 object-cover" />}
                           <div className="p-2">
                             <p className="text-[9px] font-bold uppercase text-primary truncate">{n.source_name}</p>
@@ -561,9 +561,9 @@ export default function SocialFeed() {
                     </div>
                     <div className="flex items-start gap-3">
                       {entry.data.beer_image ? (
-                        <img src={entry.data.beer_image} alt={entry.data.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[#232F3D] flex-shrink-0" />
+                        <img src={entry.data.beer_image} alt={entry.data.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[#12151A] flex-shrink-0" />
                       ) : (
-                        <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#232F3D] flex items-center justify-center flex-shrink-0">
+                        <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#12151A] flex items-center justify-center flex-shrink-0">
                           <Package className="w-5 h-5 text-stone-300" />
                         </div>
                       )}
@@ -697,7 +697,7 @@ export default function SocialFeed() {
                               <span className="text-stone-700 dark:text-stone-200 font-medium truncate">{s.style}</span>
                               <span className="text-stone-400 ml-2 flex-shrink-0">{s.cnt}</span>
                             </div>
-                            <div className="h-1.5 bg-stone-100 dark:bg-[#232F3D] rounded-full overflow-hidden">
+                            <div className="h-1.5 bg-stone-100 dark:bg-[#12151A] rounded-full overflow-hidden">
                               <div className="h-full bg-primary rounded-full" style={{ width: `${(s.cnt / max) * 100}%` }} />
                             </div>
                           </div>
@@ -713,7 +713,7 @@ export default function SocialFeed() {
                     <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Come bevi</p>
                     <div className="flex flex-wrap gap-2">
                       {stats.formatBreakdown.map((f: any) => (
-                        <div key={f.format} className="bg-stone-50 dark:bg-[#1B2735] rounded-xl px-3 py-2 text-center">
+                        <div key={f.format} className="bg-stone-50 dark:bg-[#1A1D24] rounded-xl px-3 py-2 text-center">
                           <p className="text-sm font-bold text-stone-800 dark:text-stone-100">{f.cnt}</p>
                           <p className="text-[10px] text-stone-400">{FORMAT_LABELS[f.format] ?? f.format}</p>
                         </div>
@@ -731,7 +731,7 @@ export default function SocialFeed() {
                     <div className="space-y-2">
                       {stats.topBreweries.slice(0, 5).map((b: any, i: number) => (
                         <div key={i} className="flex items-center gap-2">
-                          {b.logo_url && <img src={b.logo_url} alt={b.name} className="w-7 h-7 rounded-lg object-contain bg-stone-50 dark:bg-[#1B2735] flex-shrink-0" />}
+                          {b.logo_url && <img src={b.logo_url} alt={b.name} className="w-7 h-7 rounded-lg object-contain bg-stone-50 dark:bg-[#1A1D24] flex-shrink-0" />}
                           <span className="text-sm text-stone-700 dark:text-stone-200 truncate flex-1">{b.name}</span>
                           <span className="text-xs text-stone-400 flex-shrink-0">{b.cnt} 🍺</span>
                         </div>
@@ -750,7 +750,7 @@ export default function SocialFeed() {
                       {BADGE_DEFS.map(def => {
                         const earned = badges.find((b: any) => b.key === def.key)?.earned;
                         return (
-                          <div key={def.key} className={`flex flex-col items-center gap-1 p-2 rounded-xl text-center ${earned ? "bg-primary/10" : "bg-stone-50 dark:bg-[#1B2735] opacity-40"}`}>
+                          <div key={def.key} className={`flex flex-col items-center gap-1 p-2 rounded-xl text-center ${earned ? "bg-primary/10" : "bg-stone-50 dark:bg-[#1A1D24] opacity-40"}`}>
                             <span className="text-2xl">{def.icon}</span>
                             <p className="text-[9px] font-bold text-stone-600 dark:text-stone-300 leading-tight">{def.name}</p>
                           </div>

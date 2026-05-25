@@ -66,10 +66,10 @@ export default function NewsStrip({ variant = "home", limit = 6, className = "" 
                   target="_blank"
                   rel="noopener noreferrer"
                   data-testid={`news-item-${n.id}`}
-                  className="snap-start flex-shrink-0 w-64 sm:w-72 bg-white dark:bg-[#1B2735] rounded-2xl shadow-card-sm hover:shadow-card transition-shadow overflow-hidden border border-stone-100 dark:border-[#2F3D4D]"
+                  className="snap-start flex-shrink-0 w-64 sm:w-72 bg-white dark:bg-[#1A1D24] rounded-2xl shadow-card-sm hover:shadow-card transition-shadow overflow-hidden border border-stone-100 dark:border-[#23262E]"
                 >
                   {n.image_url ? (
-                    <div className="w-full h-28 bg-stone-100 dark:bg-[#1B2735] overflow-hidden">
+                    <div className="w-full h-28 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden">
                       <img src={n.image_url} alt="" loading="lazy" className="w-full h-full object-cover" />
                     </div>
                   ) : (

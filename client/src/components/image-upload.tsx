@@ -171,7 +171,7 @@ export function ImageUpload({
         onDragLeave={handleDragLeave}
         className={`
           flex items-center gap-4 p-3 rounded-xl border-2 transition-all duration-200
-          ${isDragging ? 'border-orange-400 bg-stone-50 dark:bg-[#15202B]/30' : 'border-dashed border-gray-200 dark:border-[#2F3D4D] hover:border-gray-300 dark:hover:border-gray-600 bg-stone-50/50 dark:bg-[#1B2735]/30'}
+          ${isDragging ? 'border-orange-400 bg-stone-50 dark:bg-[#0B0D10]/30' : 'border-dashed border-gray-200 dark:border-[#23262E] hover:border-gray-300 dark:hover:border-gray-600 bg-stone-50/50 dark:bg-[#1A1D24]/30'}
           ${uploadState === 'error' ? 'border-red-400 bg-red-50 dark:bg-red-950/20' : ''}
           ${uploadState === 'uploading' ? 'border-blue-400 bg-blue-50 dark:bg-blue-950/20' : ''}
           ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
@@ -179,7 +179,7 @@ export function ImageUpload({
       >
         {/* Thumbnail / Placeholder */}
         <div
-          className={`${thumbnailClasses} rounded-lg overflow-hidden bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center flex-shrink-0 relative border border-gray-200 dark:border-[#2F3D4D]`}
+          className={`${thumbnailClasses} rounded-lg overflow-hidden bg-stone-100 dark:bg-[#1A1D24] flex items-center justify-center flex-shrink-0 relative border border-gray-200 dark:border-[#23262E]`}
           onClick={!preview ? handleClickUpload : undefined}
           style={{ cursor: !preview ? 'pointer' : 'default' }}
         >

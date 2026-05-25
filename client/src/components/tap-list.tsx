@@ -103,7 +103,7 @@ export default function TapList({ tapList, pub }: TapListProps) {
   if (!sorted || sorted.length === 0) {
     return (
       <div className="text-center py-16">
-        <div className="w-20 h-20 rounded-2xl bg-stone-100 dark:bg-[#1B2735] mx-auto mb-4 flex items-center justify-center">
+        <div className="w-20 h-20 rounded-2xl bg-stone-100 dark:bg-[#1A1D24] mx-auto mb-4 flex items-center justify-center">
           <Wine className="h-10 w-10 text-stone-400" />
         </div>
         <h4 className="text-base font-semibold text-stone-700 dark:text-stone-300 mb-1">
@@ -191,7 +191,7 @@ export default function TapList({ tapList, pub }: TapListProps) {
             {isAuthenticated && (
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCheckinTap(tap); }}
-                className="w-8 h-8 rounded-full flex items-center justify-center bg-stone-100 dark:bg-[#1B2735] text-stone-500 dark:text-stone-400 hover:text-primary hover:bg-stone-200 dark:hover:bg-[#232F3D] active:scale-95 transition-all flex-shrink-0"
+                className="w-8 h-8 rounded-full flex items-center justify-center bg-stone-100 dark:bg-[#1A1D24] text-stone-500 dark:text-stone-400 hover:text-primary hover:bg-stone-200 dark:hover:bg-[#12151A] active:scale-95 transition-all flex-shrink-0"
                 aria-label="Check-in"
                 title="Sto bevendo questa"
               >
@@ -201,7 +201,7 @@ export default function TapList({ tapList, pub }: TapListProps) {
           </div>
         </div>
         {!isLast && (
-          <div className="h-px bg-stone-100 dark:bg-[#1B2735]/60 ml-[3.75rem] mr-4" />
+          <div className="h-px bg-stone-100 dark:bg-[#1A1D24]/60 ml-[3.75rem] mr-4" />
         )}
       </div>
     );
@@ -216,7 +216,7 @@ export default function TapList({ tapList, pub }: TapListProps) {
           </span>
         </div>
       )}
-      <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-[#2F3D4D]/20 shadow-sm">
+      <div className="bg-white dark:bg-card rounded-2xl overflow-hidden border border-stone-100/70 dark:border-[#23262E]/20 shadow-sm">
         {items.map((tap, i) => renderRow(tap, i, items))}
       </div>
     </div>

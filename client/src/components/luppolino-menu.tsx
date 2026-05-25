@@ -113,8 +113,8 @@ export default function LuppolinoMenu({ menu, menuInfoBox }: LuppolinoMenuProps)
 
   if (!menu || menu.length === 0) {
     return (
-      <div className="text-center py-12 rounded-2xl border-2 border-dashed border-stone-200 dark:border-[#2F3D4D]/30">
-        <div className="w-14 h-14 bg-stone-50 dark:bg-[#15202B]/20 rounded-full flex items-center justify-center mx-auto mb-3">
+      <div className="text-center py-12 rounded-2xl border-2 border-dashed border-stone-200 dark:border-[#23262E]/30">
+        <div className="w-14 h-14 bg-stone-50 dark:bg-[#0B0D10]/20 rounded-full flex items-center justify-center mx-auto mb-3">
           <ChefHat className="w-7 h-7 text-primary/40" />
         </div>
         <p className="text-sm font-medium text-muted-foreground">Menu in preparazione</p>

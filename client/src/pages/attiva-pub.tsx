@@ -173,7 +173,7 @@ export default function AttivaPub() {
 
   if (step === "activating") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-[#15202B] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-[#0B0D10] flex items-center justify-center px-4">
         <div className="text-center space-y-4 max-w-sm">
           {!activationTimedOut ? (
             <>
@@ -212,7 +212,7 @@ export default function AttivaPub() {
 
   if (step === "trial-success") {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-950 dark:to-[#15202B] pt-20 flex flex-col">
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-950 dark:to-[#0B0D10] pt-20 flex flex-col">
         <SEO title="Periodo di prova attivato — Fermenta.to" url="https://fermenta.to/attiva-pub" />
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-md text-center space-y-6">
@@ -251,7 +251,7 @@ export default function AttivaPub() {
   if (step === "checkout-success") {
     const isBrewpub = registrationType === "brewpub";
     return (
-      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-950 dark:to-[#15202B] pt-20 flex flex-col">
+      <div className="min-h-screen bg-gradient-to-b from-green-50 to-white dark:from-gray-950 dark:to-[#0B0D10] pt-20 flex flex-col">
         <SEO title={isBrewpub ? "Brewpub attivato — Fermenta.to" : "Pub attivato — Fermenta.to"} url="https://fermenta.to/attiva-pub" />
         <div className="flex-1 flex items-center justify-center px-4 py-16">
           <div className="max-w-md text-center space-y-6">
@@ -309,7 +309,7 @@ export default function AttivaPub() {
       : ["15 giorni di prova gratuita", "Badge pub verificato", "Taplist digitale illimitata", "Analytics e notifiche push", "Disdici quando vuoi nei 15 giorni — nessun addebito"];
 
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-[#15202B] pt-20 flex flex-col">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-[#0B0D10] pt-20 flex flex-col">
         <SEO title={isReactivation ? "Riattiva Piano Pub — Fermenta.to" : "Attiva Piano Pub — Fermenta.to"} url="https://fermenta.to/attiva-pub" />
         <div className="max-w-lg mx-auto px-4 py-12 flex-1 w-full">
           <button onClick={() => setStep("choose")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground dark:hover:text-white text-sm mb-8 transition-colors">
@@ -399,7 +399,7 @@ export default function AttivaPub() {
   if (step === "trial-confirm") {
     const eligiblePubs = Array.isArray(userPubs) ? userPubs.filter((p: any) => p.subscriptionStatus === 'none') : [];
     return (
-      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-[#15202B] pt-20 flex flex-col">
+      <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-[#0B0D10] pt-20 flex flex-col">
         <SEO title="Prova gratuita — Fermenta.to" url="https://fermenta.to/attiva-pub" />
         <div className="max-w-md mx-auto px-4 py-16 flex-1">
           <button onClick={() => setStep("choose")} className="flex items-center gap-2 text-muted-foreground hover:text-foreground dark:hover:text-white text-sm mb-8 transition-colors">
@@ -436,7 +436,7 @@ export default function AttivaPub() {
               {eligiblePubs.map((pub: any) => (
                 <Card
                   key={pub.id}
-                  className={`cursor-pointer transition-all border-2 ${selectedPub?.id === pub.id ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20" : "border-gray-200 dark:border-[#2F3D4D] hover:border-amber-300"}`}
+                  className={`cursor-pointer transition-all border-2 ${selectedPub?.id === pub.id ? "border-amber-400 bg-amber-50 dark:bg-amber-900/20" : "border-gray-200 dark:border-[#23262E] hover:border-amber-300"}`}
                   onClick={() => setSelectedPub(pub)}
                 >
                   <CardContent className="p-4 flex items-center gap-3">
@@ -471,7 +471,7 @@ export default function AttivaPub() {
   // ── Step: choose (default landing) ────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-[#15202B] pt-20 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-gray-950 dark:to-[#0B0D10] pt-20 flex flex-col">
       <SEO
         title="Attiva il Piano Pub — Fermenta.to"
         description="Porta il tuo pub su Fermenta.to. Piano Pub Pro a 65€/anno con taplist digitale, analytics, notifiche push e molto altro."

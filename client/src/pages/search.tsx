@@ -163,7 +163,7 @@ export default function SearchPage() {
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
                 placeholder="Cerca birre, stili, birrifici, pub..."
-                className="pl-12 pr-10 h-11 rounded-2xl border-stone-200 dark:border-border bg-white dark:bg-[#1B2735] focus-visible:ring-primary/20 text-base"
+                className="pl-12 pr-10 h-11 rounded-2xl border-stone-200 dark:border-border bg-white dark:bg-[#1A1D24] focus-visible:ring-primary/20 text-base"
               />
               {inputValue && (
                 <button
@@ -256,7 +256,7 @@ export default function SearchPage() {
                 {popularStyles.slice(0, 12).filter(({ style }) => style !== filterStyle).map(({ style }) => (
                   <button key={style}
                     onClick={() => setFilterStyle(style)}
-                    className="px-2.5 py-1 rounded-full text-xs font-medium border border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-all bg-white dark:bg-[#1B2735]">
+                    className="px-2.5 py-1 rounded-full text-xs font-medium border border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-all bg-white dark:bg-[#1A1D24]">
                     {style}
                   </button>
                 ))}
@@ -314,7 +314,7 @@ export default function SearchPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="w-20 h-20 rounded-full bg-stone-50 dark:bg-[#15202B]/20 flex items-center justify-center mb-5">
+                <div className="w-20 h-20 rounded-full bg-stone-50 dark:bg-[#0B0D10]/20 flex items-center justify-center mb-5">
                   <Search className="h-10 w-10 text-primary/30" />
                 </div>
                 <p className="text-lg font-semibold text-foreground mb-1">Cosa stai cercando?</p>
@@ -363,7 +363,7 @@ export default function SearchPage() {
                     <span>{tab.label}</span>
                     {count > 0 && (
                       <span className={`text-[10px] rounded-full px-1.5 py-0.5 min-w-5 text-center font-bold ${
-                        isActive ? "bg-white/20 text-white" : "bg-stone-50 dark:bg-[#15202B]/20 text-primary dark:text-orange-400"
+                        isActive ? "bg-white/20 text-white" : "bg-stone-50 dark:bg-[#0B0D10]/20 text-primary dark:text-orange-400"
                       }`}>
                         {count > 99 ? "99+" : count}
                       </span>
@@ -442,7 +442,7 @@ export default function SearchPage() {
                             {beer.isAlcoholFree && <AlcoholFreeBadge size={10} />}
                           </div>
                         </div>
-                        <Badge className="flex-shrink-0 text-[10px] bg-stone-50 dark:bg-[#15202B]/20 text-primary dark:text-orange-400 border-0 font-bold uppercase tracking-wider">Birra</Badge>
+                        <Badge className="flex-shrink-0 text-[10px] bg-stone-50 dark:bg-[#0B0D10]/20 text-primary dark:text-orange-400 border-0 font-bold uppercase tracking-wider">Birra</Badge>
                       </div>
                     </Link>
                   ))}
@@ -478,7 +478,7 @@ export default function SearchPage() {
                             {brewery.location}{brewery.country ? `, ${brewery.country}` : ""}
                           </div>
                         </div>
-                        <Badge className="flex-shrink-0 text-[10px] bg-stone-50 dark:bg-[#15202B]/20 text-primary dark:text-orange-400 border-0 font-bold uppercase tracking-wider">Birrificio</Badge>
+                        <Badge className="flex-shrink-0 text-[10px] bg-stone-50 dark:bg-[#0B0D10]/20 text-primary dark:text-orange-400 border-0 font-bold uppercase tracking-wider">Birrificio</Badge>
                       </div>
                     </Link>
                   ))}
@@ -525,7 +525,7 @@ export default function SearchPage() {
             {/* No results */}
             {tabCounts.all === 0 && (
               <div className="text-center py-14">
-                <div className="w-16 h-16 rounded-full bg-stone-50 dark:bg-[#15202B]/20 flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 rounded-full bg-stone-50 dark:bg-[#0B0D10]/20 flex items-center justify-center mx-auto mb-4">
                   <Search className="h-8 w-8 text-primary/30" />
                 </div>
                 <p className="font-bold text-foreground">Nessun risultato per "{query}"</p>
@@ -539,7 +539,7 @@ export default function SearchPage() {
                   )}
                   <button
                     onClick={() => setAdditionModalOpen(true)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1B2735] border border-stone-200 text-primary rounded-xl text-sm font-bold hover:bg-stone-50 transition-colors"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1A1D24] border border-stone-200 text-primary rounded-xl text-sm font-bold hover:bg-stone-50 transition-colors"
                   >
                     <PlusCircle className="h-4 w-4" />
                     Non la trovi? Suggeriscila

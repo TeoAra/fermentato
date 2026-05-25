@@ -55,7 +55,7 @@ function CommunityPostCard({ post }: { post: any }) {
     },
   });
   return (
-    <div className="bg-white dark:bg-[#1B2735] rounded-2xl border border-stone-100 dark:border-[#2F3D4D] shadow-sm p-4" data-testid={`community-post-${post.id}`}>
+    <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-stone-100 dark:border-[#23262E] shadow-sm p-4" data-testid={`community-post-${post.id}`}>
       <div className="flex items-center gap-2 mb-2">
         <Link href={`/user/${post.username}`}><PostAvatar post={post} size={9} /></Link>
         <div className="flex-1 min-w-0">
@@ -80,17 +80,17 @@ function CommunityPostCard({ post }: { post: any }) {
           )}
           {post.pub_name && (
             <Link href={`/pub/${post.pub_id}`}>
-              <span className="text-[10px] bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#232F3D]">📍 {post.pub_name}</span>
+              <span className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A]">📍 {post.pub_name}</span>
             </Link>
           )}
           {post.brewery_name && (
             <Link href={`/brewery/${post.brewery_id}`}>
-              <span className="text-[10px] bg-stone-100 dark:bg-[#1B2735] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#232F3D]">🏭 {post.brewery_name}</span>
+              <span className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A]">🏭 {post.brewery_name}</span>
             </Link>
           )}
         </div>
       )}
-      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#2F3D4D]/40 flex items-center gap-4">
+      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40 flex items-center gap-4">
         <button
           onClick={() => isAuthenticated && likeMut.mutate()}
           disabled={!isAuthenticated || likeMut.isPending}
@@ -165,7 +165,7 @@ export function CommunityPostsSection({ entity, title = "Post della community", 
           {[0, 1].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}
         </div>
       ) : posts.length === 0 ? (
-        <div className="bg-white dark:bg-[#1B2735] rounded-2xl border border-dashed border-stone-200 dark:border-[#2F3D4D] p-6 text-center">
+        <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-dashed border-stone-200 dark:border-[#23262E] p-6 text-center">
           <Users className="w-8 h-8 mx-auto text-stone-300 mb-2" />
           <p className="text-sm text-stone-500 dark:text-stone-400">
             Nessun post ancora. {isAuthenticated && "Sii il primo a parlarne!"}

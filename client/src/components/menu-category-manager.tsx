@@ -542,7 +542,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
           />
         </div>
         
-        <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-[#15202B]/20 rounded-xl border border-stone-200 dark:border-[#2F3D4D]/30">
+        <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-[#0B0D10]/20 rounded-xl border border-stone-200 dark:border-[#23262E]/30">
           <div className="text-left">
             <Label htmlFor="category-visible" className="text-sm font-bold text-foreground">
               Visibile nel menu pubblico
@@ -660,11 +660,11 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 py-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="p-4 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card space-y-3">
-                <div className="h-5 w-28 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
-                <div className="h-3 w-20 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                <div className="h-5 w-28 bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
+                <div className="h-3 w-20 bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
                 <div className="space-y-2 pt-2">
-                  <div className="h-3 w-full bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
-                  <div className="h-3 w-2/3 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                  <div className="h-3 w-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
+                  <div className="h-3 w-2/3 bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
                 </div>
               </div>
             ))}
@@ -676,7 +676,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="w-20 h-20 bg-stone-50 dark:bg-[#15202B]/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-stone-50 dark:bg-[#0B0D10]/30 rounded-full flex items-center justify-center mx-auto mb-6">
               <Utensils className="h-10 w-10 text-primary opacity-20" />
             </div>
             <h3 className="text-xl font-semibold text-foreground mb-2">
@@ -884,7 +884,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                     ) : (
                                     <div
                                       key={product.id}
-                                      className="flex items-center justify-between p-3 bg-stone-50/50 dark:bg-[#15202B]/20 rounded-xl hover:bg-stone-100/60 dark:hover:bg-stone-900/40 transition-colors"
+                                      className="flex items-center justify-between p-3 bg-stone-50/50 dark:bg-[#0B0D10]/20 rounded-xl hover:bg-stone-100/60 dark:hover:bg-stone-900/40 transition-colors"
                                     >
                                       <div className="flex-1">
                                         <div className="flex items-center gap-2 flex-wrap">

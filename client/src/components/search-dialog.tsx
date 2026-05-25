@@ -129,13 +129,13 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
 
       {/* Panel — floating card with lateral margins, rounded on all sides */}
       <div
-        className="relative z-10 w-full max-w-lg mx-3 mt-2 rounded-2xl shadow-2xl flex flex-col bg-white dark:bg-[#15202B] overflow-hidden"
+        className="relative z-10 w-full max-w-lg mx-3 mt-2 rounded-2xl shadow-2xl flex flex-col bg-white dark:bg-[#0B0D10] overflow-hidden"
         style={{ maxHeight: 'calc(min(88dvh, 680px) - env(safe-area-inset-top))' }}
       >
         {/* ── Search bar ── */}
         <div className="flex items-center gap-2.5 px-4 pt-4 pb-3 border-b border-stone-100 dark:border-white/[0.06]">
           {/* Pill input */}
-          <div className="flex-1 flex items-center gap-2 bg-stone-100 dark:bg-[#1B2735] rounded-full px-4 py-2.5">
+          <div className="flex-1 flex items-center gap-2 bg-stone-100 dark:bg-[#1A1D24] rounded-full px-4 py-2.5">
             <Search className="h-4 w-4 text-stone-400 flex-shrink-0" />
             <input
               ref={inputRef}
@@ -160,7 +160,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
           {/* Circular close button */}
           <button
             onClick={handleClose}
-            className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-full bg-stone-100 dark:bg-[#1B2735] text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-[#232F3D] active:scale-95 transition-all"
+            className="h-9 w-9 flex-shrink-0 flex items-center justify-center rounded-full bg-stone-100 dark:bg-[#1A1D24] text-stone-500 dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-[#12151A] active:scale-95 transition-all"
             aria-label="Chiudi ricerca"
           >
             <X className="h-4 w-4" />
@@ -174,7 +174,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             className={`text-xs font-medium px-3 py-1 rounded-full border transition-all ${
               filterGlutenFree
                 ? "bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 border-green-400 dark:border-green-600"
-                : "border-stone-200 dark:border-[#2F3D4D] text-stone-500 dark:text-stone-400 hover:border-green-300"
+                : "border-stone-200 dark:border-[#23262E] text-stone-500 dark:text-stone-400 hover:border-green-300"
             }`}
           >
             Gluten Free
@@ -184,7 +184,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             className={`text-xs font-medium px-3 py-1 rounded-full border transition-all ${
               filterAlcoholFree
                 ? "bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 border-blue-400 dark:border-blue-600"
-                : "border-stone-200 dark:border-[#2F3D4D] text-stone-500 dark:text-stone-400 hover:border-blue-300"
+                : "border-stone-200 dark:border-[#23262E] text-stone-500 dark:text-stone-400 hover:border-blue-300"
             }`}
           >
             Analcolica
@@ -229,10 +229,10 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
             <div className="px-4 py-4 space-y-3">
               {[...Array(5)].map((_, i) => (
                 <div key={i} className="flex items-center gap-3 animate-pulse">
-                  <div className="h-9 w-9 bg-stone-200 dark:bg-[#232F3D] rounded-lg flex-shrink-0" />
+                  <div className="h-9 w-9 bg-stone-200 dark:bg-[#12151A] rounded-lg flex-shrink-0" />
                   <div className="flex-1 space-y-1.5">
-                    <div className="h-3.5 bg-stone-200 dark:bg-[#232F3D] rounded w-3/4" />
-                    <div className="h-3 bg-stone-100 dark:bg-[#1B2735] rounded w-1/2" />
+                    <div className="h-3.5 bg-stone-200 dark:bg-[#12151A] rounded w-3/4" />
+                    <div className="h-3 bg-stone-100 dark:bg-[#1A1D24] rounded w-1/2" />
                   </div>
                 </div>
               ))}
@@ -405,7 +405,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                           selectedIndex === base + i ? "bg-stone-50 dark:bg-white/5" : "hover:bg-stone-50 dark:hover:bg-white/5"
                         }`}
                       >
-                        <div className="h-9 w-9 rounded-full bg-stone-200 dark:bg-[#232F3D] flex-shrink-0 overflow-hidden">
+                        <div className="h-9 w-9 rounded-full bg-stone-200 dark:bg-[#12151A] flex-shrink-0 overflow-hidden">
                           {u.profileImageUrl
                             ? <img src={u.profileImageUrl} alt={u.nickname} className="h-9 w-9 object-cover" />
                             : <div className="h-full w-full flex items-center justify-center text-xs font-bold text-stone-500">

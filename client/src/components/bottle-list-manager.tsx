@@ -373,11 +373,11 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                           />
                         </div>
                         {searchResults?.beers && searchResults.beers.length > 0 && !formData.beerId && (
-                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-[#15202B]">
+                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-[#0B0D10]">
                             {searchResults.beers.map((beer: any, idx: number) => (
                               <div
                                 key={beer?.id ?? `result-${idx}`}
-                                className="p-3 hover:bg-gray-50 dark:hover:bg-[#1B2735] cursor-pointer border-b last:border-b-0 transition-colors"
+                                className="p-3 hover:bg-gray-50 dark:hover:bg-[#1A1D24] cursor-pointer border-b last:border-b-0 transition-colors"
                                 onClick={() => {
                                   setFormData({ ...formData, beerId: beer?.id?.toString() || "" });
                                 }}
@@ -413,7 +413,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
 
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && (
-                  <div className="p-4 bg-gray-50 dark:bg-[#1B2735] rounded-lg border">
+                  <div className="p-4 bg-gray-50 dark:bg-[#1A1D24] rounded-lg border">
                     <div className="font-semibold text-gray-900 dark:text-white">{editingItem.beer?.name || "Birra sconosciuta"}</div>
                     <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                       {editingItem.beer?.brewery?.name || "Birrificio sconosciuto"} • {editingItem.beer?.style || "Stile sconosciuto"} • {editingItem.beer?.abv || "0"}% ABV
@@ -534,12 +534,12 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
           <div className="space-y-3 py-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3 p-4 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card">
-                <div className="w-12 h-12 rounded-lg bg-stone-100 dark:bg-[#1B2735] animate-pulse" />
+                <div className="w-12 h-12 rounded-lg bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 w-32 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
-                  <div className="h-3 w-20 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                  <div className="h-4 w-32 bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
+                  <div className="h-3 w-20 bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
                 </div>
-                <div className="h-8 w-16 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                <div className="h-8 w-16 bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
               </div>
             ))}
           </div>
@@ -575,7 +575,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
               return (
                 <div
                   key={item.id}
-                  className={`border rounded-lg p-4 transition-colors ${!safeItem.isVisible ? 'opacity-60 bg-gray-50 dark:bg-[#1B2735]/50' : 'bg-white dark:bg-[#15202B]'}`}
+                  className={`border rounded-lg p-4 transition-colors ${!safeItem.isVisible ? 'opacity-60 bg-gray-50 dark:bg-[#1A1D24]/50' : 'bg-white dark:bg-[#0B0D10]'}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -658,7 +658,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                       €{safeItem.price} • {safeItem.size || "33cl"}
                     </Badge>
                     {safeItem.quantity > 0 && (
-                      <Badge variant="outline" className="text-xs font-medium bg-gray-50 dark:bg-[#1B2735] border-gray-200 dark:border-[#2F3D4D] text-gray-600 dark:text-gray-400">
+                      <Badge variant="outline" className="text-xs font-medium bg-gray-50 dark:bg-[#1A1D24] border-gray-200 dark:border-[#23262E] text-gray-600 dark:text-gray-400">
                         {safeItem.quantity} disponibili
                       </Badge>
                     )}

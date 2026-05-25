@@ -28,7 +28,7 @@ const STYLE_GROUPS: { title: string; icon: React.ReactNode; items: StyleMeta[] }
     items: [
       { label: "IPA",       api: "IPA",                       emoji: "🌿", bg: "bg-emerald-50 dark:bg-emerald-950/30", ring: "ring-emerald-100 dark:ring-emerald-900/40" },
       { label: "Hazy IPA",  api: "IPA - Hazy (NEIPA)",        emoji: "☁️", bg: "bg-amber-50 dark:bg-amber-950/30",     ring: "ring-amber-100 dark:ring-amber-900/40" },
-      { label: "Stout",     api: "Stout - Imperial",          emoji: "🖤", bg: "bg-stone-100 dark:bg-[#1B2735]/60",    ring: "ring-stone-200 dark:ring-stone-700/40" },
+      { label: "Stout",     api: "Stout - Imperial",          emoji: "🖤", bg: "bg-stone-100 dark:bg-[#1A1D24]/60",    ring: "ring-stone-200 dark:ring-stone-700/40" },
       { label: "Sour",      api: "Sour / Wild Beer",          emoji: "🍒", bg: "bg-rose-50 dark:bg-rose-950/30",       ring: "ring-rose-100 dark:ring-rose-900/40" },
       { label: "DIPA",      api: "IIPA DIPA - Imperial / Double IPA", emoji: "💪", bg: "bg-lime-50 dark:bg-lime-950/30", ring: "ring-lime-100 dark:ring-lime-900/40" },
     ],
@@ -38,7 +38,7 @@ const STYLE_GROUPS: { title: string; icon: React.ReactNode; items: StyleMeta[] }
     icon: <Sparkles className="w-4 h-4 text-amber-500" />,
     items: [
       { label: "Saison",       api: "Saison / Farmhouse / Grisette", emoji: "🌾", bg: "bg-yellow-50 dark:bg-yellow-950/30", ring: "ring-yellow-100 dark:ring-yellow-900/40" },
-      { label: "Porter",       api: "Porter",                        emoji: "☕", bg: "bg-stone-100 dark:bg-[#1B2735]/60", ring: "ring-stone-200 dark:ring-stone-700/40" },
+      { label: "Porter",       api: "Porter",                        emoji: "☕", bg: "bg-stone-100 dark:bg-[#1A1D24]/60", ring: "ring-stone-200 dark:ring-stone-700/40" },
       { label: "Fruit Ale",    api: "Flavored - Fruit",              emoji: "🍑", bg: "bg-orange-50 dark:bg-orange-950/30", ring: "ring-orange-100 dark:ring-orange-900/40" },
       { label: "Apple Cider",  api: "Apple Cider",                   emoji: "🍎", bg: "bg-red-50 dark:bg-red-950/30",      ring: "ring-red-100 dark:ring-red-900/40" },
       { label: "Witbier",      api: "Witbier / Belgian White Ale",   emoji: "🌼", bg: "bg-amber-50 dark:bg-amber-950/30",  ring: "ring-amber-100 dark:ring-amber-900/40" },
@@ -62,7 +62,7 @@ const ALL_STYLE_METAS: StyleMeta[] = STYLE_GROUPS.flatMap(g => g.items);
 function getStyleMeta(api: string): StyleMeta {
   const found = ALL_STYLE_METAS.find(s => s.api.toLowerCase() === api.toLowerCase());
   if (found) return found;
-  return { label: api, api, emoji: "🍺", bg: "bg-stone-100 dark:bg-[#1B2735]/60", ring: "ring-stone-200 dark:ring-stone-700/40" };
+  return { label: api, api, emoji: "🍺", bg: "bg-stone-100 dark:bg-[#1A1D24]/60", ring: "ring-stone-200 dark:ring-stone-700/40" };
 }
 
 function isOpenNow(openingHours: any): boolean {
@@ -260,7 +260,7 @@ export default function ExploreBeers() {
             <span className="text-sm font-bold text-foreground truncate">{filteredPubs.length} pub · {styleMeta?.label}</span>
           </div>
         </div>
-        <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}><PubMap pins={mapPins} height="100%" /></Suspense>
+        <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}><PubMap pins={mapPins} height="100%" /></Suspense>
       </div>
     );
   }
@@ -282,7 +282,7 @@ export default function ExploreBeers() {
         <>
         {/* Search bar + filtri stile — sticky sotto header */}
         <div
-          className="sticky lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-[#2F3D4D]/60"
+          className="sticky lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-[#23262E]/60"
           style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
         >
           <PageContainer variant="wide" className="py-2.5 space-y-2.5">
@@ -318,7 +318,7 @@ export default function ExploreBeers() {
                 <button
                   key={s.label}
                   onClick={() => selectStyle(s.api)}
-                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-white dark:bg-card border border-stone-200 dark:border-[#2F3D4D] text-stone-700 dark:text-stone-200 tap-scale hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-colors shadow-sm"
+                  className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-white dark:bg-card border border-stone-200 dark:border-[#23262E] text-stone-700 dark:text-stone-200 tap-scale hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-colors shadow-sm"
                 >
                   <span className="text-sm leading-none">{s.emoji}</span>
                   {s.label}
@@ -408,7 +408,7 @@ export default function ExploreBeers() {
               {/* "Non sai cosa scegliere?" surprise card */}
               <section className="mt-7">
                 <div className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-950/20 dark:via-amber-950/20 dark:to-yellow-950/20 rounded-3xl p-5 border border-orange-100 dark:border-orange-900/30 flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl bg-white dark:bg-[#15202B]/40 flex items-center justify-center flex-shrink-0 shadow-sm">
+                  <div className="w-14 h-14 rounded-2xl bg-white dark:bg-[#0B0D10]/40 flex items-center justify-center flex-shrink-0 shadow-sm">
                     <Dices className="w-7 h-7 text-orange-500" />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -458,7 +458,7 @@ export default function ExploreBeers() {
           </div>
 
           {/* Toggle Birre / Dove berle */}
-          <div className="flex items-center gap-2 mb-4 p-1 bg-stone-100 dark:bg-[#1B2735]/60 rounded-2xl w-fit">
+          <div className="flex items-center gap-2 mb-4 p-1 bg-stone-100 dark:bg-[#1A1D24]/60 rounded-2xl w-fit">
             {(["birre", "dove"] as StyleTab[]).map(t => (
               <button
                 key={t}
@@ -531,7 +531,7 @@ function StyleCard({ meta, count, onClick }: { meta: StyleMeta; count: number; o
 
 function CosaSiBeveCard({ onClick }: { onClick: () => void }) {
   return (
-    <div className="relative bg-white dark:bg-card rounded-3xl overflow-hidden border border-stone-100 dark:border-[#2F3D4D]/60 shadow-sm">
+    <div className="relative bg-white dark:bg-card rounded-3xl overflow-hidden border border-stone-100 dark:border-[#23262E]/60 shadow-sm">
       <div className="flex items-stretch">
         <div className="flex-1 min-w-0 p-5">
           <h2 className="text-lg font-extrabold text-foreground leading-tight">Cosa si beve<br />vicino a te?</h2>
@@ -625,9 +625,9 @@ function BirreTab({ beers, loading, pubs, pubsLoading, userLocation, onSeeAllPub
             <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-4 px-4 lg:-mx-6 lg:px-6 pb-1">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="flex-shrink-0 w-36">
-                  <div className="w-36 h-24 rounded-2xl bg-stone-100 dark:bg-[#1B2735] animate-pulse mb-2" />
-                  <div className="w-24 h-3 rounded bg-stone-100 dark:bg-[#1B2735] animate-pulse mb-1" />
-                  <div className="w-16 h-2.5 rounded bg-stone-100 dark:bg-[#1B2735] animate-pulse" />
+                  <div className="w-36 h-24 rounded-2xl bg-stone-100 dark:bg-[#1A1D24] animate-pulse mb-2" />
+                  <div className="w-24 h-3 rounded bg-stone-100 dark:bg-[#1A1D24] animate-pulse mb-1" />
+                  <div className="w-16 h-2.5 rounded bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />
                 </div>
               ))}
             </div>
@@ -748,7 +748,7 @@ function BeerListRow({ beer }: { beer: any }) {
   return (
     <Link href={`/beer/${beer.id}`}>
       <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl p-2.5 border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99] transition-all duration-200 cursor-pointer">
-        <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1B2735] flex-shrink-0 overflow-hidden flex items-center justify-center">
+        <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1A1D24] flex-shrink-0 overflow-hidden flex items-center justify-center">
           {!imgErr && (beer.imageUrl || beer.breweryLogoUrl) ? (
             <img
               src={beer.imageUrl || beer.breweryLogoUrl}
@@ -787,7 +787,7 @@ function PubMiniCard({ pub }: { pub: any }) {
   return (
     <Link href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}>
       <div className="flex-shrink-0 w-36 cursor-pointer">
-        <div className="relative w-36 h-24 rounded-2xl overflow-hidden bg-stone-200 dark:bg-[#1B2735] mb-1.5">
+        <div className="relative w-36 h-24 rounded-2xl overflow-hidden bg-stone-200 dark:bg-[#1A1D24] mb-1.5">
           {!imgErr && (pub.coverImageUrl || pub.logoUrl) ? (
             <img src={pub.coverImageUrl || pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={() => setImgErr(true)} />
           ) : (
@@ -819,7 +819,7 @@ function PubListRow({ pub }: { pub: any }) {
   return (
     <Link href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}>
       <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl p-3 border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99] transition-all duration-200 cursor-pointer">
-        <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1B2735] flex-shrink-0 overflow-hidden flex items-center justify-center">
+        <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1A1D24] flex-shrink-0 overflow-hidden flex items-center justify-center">
           {!imgErr && (pub.coverImageUrl || pub.logoUrl) ? (
             <img src={pub.coverImageUrl || pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={() => setImgErr(true)} />
           ) : (

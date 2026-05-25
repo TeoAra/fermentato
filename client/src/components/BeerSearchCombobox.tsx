@@ -39,11 +39,11 @@ export default function BeerSearchCombobox({ value, onChange, placeholder = "Cer
 
   if (value) {
     return (
-      <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-[#232F3D] rounded-xl">
+      <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-[#12151A] rounded-xl">
         {value.imageUrl ? (
           <img src={value.imageUrl} alt={value.name} className="w-10 h-10 object-contain rounded-lg" />
         ) : (
-          <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-[#2F3D4D] flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-[#23262E] flex items-center justify-center">
             <Package className="w-5 h-5 text-stone-300" />
           </div>
         )}
@@ -74,20 +74,20 @@ export default function BeerSearchCombobox({ value, onChange, placeholder = "Cer
         )}
       </div>
       {open && debouncedQuery.length >= 2 && (
-        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white dark:bg-[#1B2735] rounded-xl shadow-xl border border-stone-100 dark:border-[hsl(220,5%,27%)] max-h-60 overflow-y-auto">
+        <div className="absolute z-50 top-full mt-1 left-0 right-0 bg-white dark:bg-[#1A1D24] rounded-xl shadow-xl border border-stone-100 dark:border-[hsl(220,5%,27%)] max-h-60 overflow-y-auto">
           {results.length === 0 && !isFetching ? (
             <p className="px-4 py-3 text-sm text-stone-400">Nessuna birra trovata</p>
           ) : (
             results.map((beer: any) => (
               <button
                 key={beer.id}
-                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 dark:hover:bg-[#232F3D] text-left first:rounded-t-xl last:rounded-b-xl"
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-stone-50 dark:hover:bg-[#12151A] text-left first:rounded-t-xl last:rounded-b-xl"
                 onMouseDown={(e) => { e.preventDefault(); onChange(beer); setOpen(false); setQuery(""); }}
               >
                 {beer.imageUrl ? (
                   <img src={beer.imageUrl} alt={beer.name} className="w-9 h-9 object-contain rounded-lg flex-shrink-0" />
                 ) : (
-                  <div className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-[#2F3D4D] flex items-center justify-center flex-shrink-0">
+                  <div className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-[#23262E] flex items-center justify-center flex-shrink-0">
                     <Package className="w-4 h-4 text-stone-300" />
                   </div>
                 )}

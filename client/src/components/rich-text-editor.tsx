@@ -50,7 +50,7 @@ const ToolbarButton = ({
     className={`h-7 w-7 flex items-center justify-center rounded transition-colors text-sm
       ${active
         ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400"
-        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#232F3D] hover:text-gray-900 dark:hover:text-gray-100"
+        : "text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#12151A] hover:text-gray-900 dark:hover:text-gray-100"
       }
       ${disabled ? "opacity-30 cursor-not-allowed" : "cursor-pointer"}`}
   >
@@ -59,7 +59,7 @@ const ToolbarButton = ({
 );
 
 const Divider = () => (
-  <div className="w-px h-5 bg-gray-200 dark:bg-[#232F3D] mx-0.5 flex-shrink-0" />
+  <div className="w-px h-5 bg-gray-200 dark:bg-[#12151A] mx-0.5 flex-shrink-0" />
 );
 
 export default function RichTextEditor({
@@ -125,9 +125,9 @@ export default function RichTextEditor({
   const chars = editor.storage.characterCount.characters();
 
   return (
-    <div className={`border border-gray-200 dark:border-[#2F3D4D] rounded-xl overflow-hidden bg-white dark:bg-[#15202B] ${className}`}>
+    <div className={`border border-gray-200 dark:border-[#23262E] rounded-xl overflow-hidden bg-white dark:bg-[#0B0D10] ${className}`}>
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-0.5 p-2 border-b border-gray-200 dark:border-[#2F3D4D] bg-gray-50 dark:bg-[#1B2735]/50">
+      <div className="flex flex-wrap items-center gap-0.5 p-2 border-b border-gray-200 dark:border-[#23262E] bg-gray-50 dark:bg-[#1A1D24]/50">
 
         {/* Undo / Redo */}
         <ToolbarButton onClick={() => editor.chain().focus().undo().run()} disabled={!editor.can().undo()} title="Annulla">
@@ -248,7 +248,7 @@ export default function RichTextEditor({
       <EditorContent editor={editor} />
 
       {/* Footer: char count */}
-      <div className="flex items-center justify-end px-4 py-2 border-t border-gray-100 dark:border-[#2F3D4D] bg-gray-50/50 dark:bg-[#1B2735]/30">
+      <div className="flex items-center justify-end px-4 py-2 border-t border-gray-100 dark:border-[#23262E] bg-gray-50/50 dark:bg-[#1A1D24]/30">
         <span className={`text-[10px] font-medium tabular-nums ${chars > maxChars * 0.9 ? "text-amber-500" : "text-gray-400 dark:text-gray-600"}`}>
           {chars} / {maxChars.toLocaleString()} caratteri
         </span>

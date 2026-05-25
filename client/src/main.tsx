@@ -19,7 +19,7 @@ if (Capacitor.isNativePlatform()) {
   // mantenuti in sync col tema dark/light dentro ThemeProvider.
   import("@capacitor/status-bar").then(({ StatusBar, Style }) => {
     const isDark = document.documentElement.classList.contains("dark");
-    const bg = isDark ? "#15202B" : "#FFFFFF";
+    const bg = isDark ? "#0B0D10" : "#FFFFFF";
     StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
     // ⚠️ Capacitor 8: la mappatura nomi è INVERTITA rispetto alla semantica:
     //   Style.Dark  ("DARK")  → UIStatusBarStyle.lightContent → icone BIANCHE

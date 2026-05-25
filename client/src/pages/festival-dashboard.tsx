@@ -195,7 +195,7 @@ function TVModeButton({ slug, festivalName }: { slug: string; festivalName?: str
           )}
 
           {/* URL TV */}
-          <div className="flex items-center gap-2 bg-stone-50 dark:bg-[#15202B]/50 border rounded-xl p-3">
+          <div className="flex items-center gap-2 bg-stone-50 dark:bg-[#0B0D10]/50 border rounded-xl p-3">
             <span className="text-xs text-muted-foreground break-all flex-1 font-mono">{tvUrl}</span>
             <Button
               size="sm"
@@ -319,7 +319,7 @@ function TapRow({ tap, festivalId, onToggle, onDelete, onEdit }: {
 
   return (
     <div className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
-      tap.isAvailable ? "bg-white dark:bg-[#1B2735] border-gray-200 dark:border-[#2F3D4D]" : "bg-stone-50 dark:bg-[#15202B] border-gray-100 dark:border-[#2F3D4D] opacity-70"
+      tap.isAvailable ? "bg-white dark:bg-[#1A1D24] border-gray-200 dark:border-[#23262E]" : "bg-stone-50 dark:bg-[#0B0D10] border-gray-100 dark:border-[#23262E] opacity-70"
     }`}>
       <div className={`w-9 h-9 flex-shrink-0 rounded-xl flex items-center justify-center text-xs font-bold ${
         tap.isAvailable ? "bg-amber-100 text-amber-700" : "bg-stone-200 text-stone-400"
@@ -329,7 +329,7 @@ function TapRow({ tap, festivalId, onToggle, onDelete, onEdit }: {
 
       {/* Beer image or brewery logo */}
       {(tap.beerImageUrl || tap.breweryLogoUrl) && (
-        <img src={tap.beerImageUrl || tap.breweryLogoUrl!} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-gray-100 dark:border-[#2F3D4D]" />
+        <img src={tap.beerImageUrl || tap.breweryLogoUrl!} alt="" className="w-8 h-8 rounded-lg object-cover flex-shrink-0 border border-gray-100 dark:border-[#23262E]" />
       )}
 
       <div className="flex-1 min-w-0">
@@ -552,7 +552,7 @@ function TapEditDialog({ festivalId, tapNumber, existing, onClose }: {
               {debouncedSearch.length >= 2 && !isSearching && (
                 <>
                   {searchResults?.beers && searchResults.beers.length > 0 && (
-                    <div className="max-h-52 overflow-y-auto border rounded-xl bg-white dark:bg-[#15202B]">
+                    <div className="max-h-52 overflow-y-auto border rounded-xl bg-white dark:bg-[#0B0D10]">
                       {searchResults.beers.map((beer: any) => (
                         <div
                           key={beer.id}
@@ -815,7 +815,7 @@ function FestivalForm({
           {schedule.map((slot, i) => {
             const isAuto = !!slot.date;
             return (
-              <div key={i} className="flex items-center gap-2 bg-stone-50 dark:bg-[#1B2735] rounded-xl p-2">
+              <div key={i} className="flex items-center gap-2 bg-stone-50 dark:bg-[#1A1D24] rounded-xl p-2">
                 <div className="flex-1 min-w-0">
                   {isAuto ? (
                     <p className="text-sm font-medium text-muted-foreground dark:text-stone-300 truncate px-1">{slot.label}</p>
@@ -1193,7 +1193,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
             className={`text-xs px-2 py-1 rounded-full border transition-colors ${
               itemForm.allergens.includes(a)
                 ? "bg-orange-500 text-white border-orange-500"
-                : "bg-white dark:bg-[#1B2735] text-muted-foreground dark:text-stone-400 border-gray-200 dark:border-gray-600 hover:border-orange-300"
+                : "bg-white dark:bg-[#1A1D24] text-muted-foreground dark:text-stone-400 border-gray-200 dark:border-gray-600 hover:border-orange-300"
             }`}
           >
             {ALLERGEN_LABELS[a]}
@@ -1272,7 +1272,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
           <Card key={cat} className="overflow-hidden">
             <CardHeader className="p-0">
               <button
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50 dark:hover:bg-[#1B2735] transition-colors text-left"
+                className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50 dark:hover:bg-[#1A1D24] transition-colors text-left"
                 onClick={() => toggleCategory(cat)}
               >
                 <div className="flex items-center gap-3">
@@ -1294,7 +1294,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
             </CardHeader>
 
             {isExpanded && (
-              <CardContent className="p-0 border-t dark:border-[#2F3D4D]">
+              <CardContent className="p-0 border-t dark:border-[#23262E]">
                 {items.length === 0 ? (
                   <div className="px-4 py-5 text-center text-sm text-stone-400">
                     Nessuna voce in questa categoria.{" "}
@@ -1616,7 +1616,7 @@ export default function FestivalDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-stone-50 dark:bg-[#15202B]">
+    <div className="min-h-screen bg-stone-50 dark:bg-[#0B0D10]">
       {/* Header */}
       <div className={`bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
         <PageContainer variant="standard" className="flex items-center justify-between gap-4 flex-wrap">
@@ -1690,7 +1690,7 @@ export default function FestivalDashboard() {
                       className={`px-4 py-2 rounded-xl text-sm font-medium transition-all flex items-center gap-1.5 ${
                         (selectedFest?.id === f.id)
                           ? "bg-amber-500 text-white shadow"
-                          : "bg-white dark:bg-[#1B2735] text-muted-foreground dark:text-stone-300 hover:bg-amber-50"
+                          : "bg-white dark:bg-[#1A1D24] text-muted-foreground dark:text-stone-300 hover:bg-amber-50"
                       }`}
                     >
                       {f.name}

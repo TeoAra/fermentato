@@ -96,7 +96,7 @@ function ImageUploadField({
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={uploading}
-            className={`flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 dark:border-[#2F3D4D] rounded-lg text-gray-400 dark:text-gray-500 hover:border-amber-400 hover:text-amber-500 transition-colors ${aspect === "wide" ? "w-full h-20" : "w-20 h-20"}`}
+            className={`flex items-center justify-center gap-2 border-2 border-dashed border-gray-200 dark:border-[#23262E] rounded-lg text-gray-400 dark:text-gray-500 hover:border-amber-400 hover:text-amber-500 transition-colors ${aspect === "wide" ? "w-full h-20" : "w-20 h-20"}`}
           >
             {uploading
               ? <Loader2 className="h-5 w-5 animate-spin" />
@@ -360,13 +360,13 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                       )}
                     </div>
                     {showBreweryResults && !selectedBrewery && beerBreweryQuery.trim().length >= 2 && (
-                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1B2735] rounded-lg border border-gray-200 dark:border-[#2F3D4D] shadow-lg max-h-48 overflow-y-auto">
+                      <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1A1D24] rounded-lg border border-gray-200 dark:border-[#23262E] shadow-lg max-h-48 overflow-y-auto">
                         {breweryResults.map(br => (
                           <button
                             key={br.id}
                             type="button"
                             onClick={() => { setSelectedBrewery(br); setBeerBreweryQuery(br.name); setShowBreweryResults(false); }}
-                            className="w-full text-left px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#232F3D] text-sm border-b border-gray-100 dark:border-[#2F3D4D] last:border-0"
+                            className="w-full text-left px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-[#12151A] text-sm border-b border-gray-100 dark:border-[#23262E] last:border-0"
                           >
                             <span className="font-medium text-gray-900 dark:text-white">{br.name}</span>
                             <span className="text-gray-400 ml-2 text-xs">{br.location}</span>
@@ -379,7 +379,7 @@ export default function AdditionRequestModal({ open, onClose, initialBeerName = 
                             setShowBreweryResults(false);
                             setTab("brewery");
                           }}
-                          className="w-full text-left px-3 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-sm flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium border-t border-gray-100 dark:border-[#2F3D4D]"
+                          className="w-full text-left px-3 py-2.5 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-sm flex items-center gap-2 text-amber-600 dark:text-amber-400 font-medium border-t border-gray-100 dark:border-[#23262E]"
                         >
                           <Building2 className="h-4 w-4 flex-shrink-0" />
                           Birrificio non trovato? Suggeriscilo

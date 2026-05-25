@@ -40,7 +40,7 @@ export const EVENT_CATEGORIES: Record<string, { label: string; color: string; bg
   live_music: { label: "Live Music", color: "#EC4899", bg: "bg-pink-100 text-pink-800", darkBg: "dark:bg-pink-900 dark:text-pink-200", icon: Music },
   sport: { label: "Sport", color: "#10B981", bg: "bg-emerald-100 text-emerald-800", darkBg: "dark:bg-emerald-900 dark:text-emerald-200", icon: Trophy },
   festa: { label: "Festa", color: "#F59E0B", bg: "bg-amber-100 text-amber-800", darkBg: "dark:bg-amber-900 dark:text-amber-200", icon: PartyPopper },
-  altro: { label: "Altro", color: "#6B7280", bg: "bg-stone-100 text-foreground", darkBg: "dark:bg-[#15202B] dark:text-gray-200", icon: Sparkles },
+  altro: { label: "Altro", color: "#6B7280", bg: "bg-stone-100 text-foreground", darkBg: "dark:bg-[#0B0D10] dark:text-gray-200", icon: Sparkles },
 };
 
 interface EventsManagerProps {
@@ -117,7 +117,7 @@ export function EventShareButtons({ event, pubId, size = "sm" }: { event: any; p
   };
 
   return (
-    <Button variant="ghost" size="icon" className={`${btnSize} text-muted-foreground dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-[#1B2735]`} onClick={handleShare} title="Condividi">
+    <Button variant="ghost" size="icon" className={`${btnSize} text-muted-foreground dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-[#1A1D24]`} onClick={handleShare} title="Condividi">
       <Share2 className={iconSize} />
     </Button>
   );
@@ -175,7 +175,7 @@ export function EventInterestButton({
       className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all select-none
         ${interested
           ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 hover:bg-amber-200"
-          : "bg-stone-100 dark:bg-[#1B2735] text-muted-foreground dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-[#232F3D]"
+          : "bg-stone-100 dark:bg-[#1A1D24] text-muted-foreground dark:text-stone-400 hover:bg-stone-200 dark:hover:bg-[#12151A]"
         }
         ${!isAuthenticated ? "opacity-60 cursor-default" : "cursor-pointer"}
       `}
@@ -381,7 +381,7 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-3 bg-stone-50 dark:bg-[#1B2735] rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-stone-50 dark:bg-[#1A1D24] rounded-lg">
                 <div>
                   <p className="font-medium text-sm">Pubblicato</p>
                   <p className="text-xs text-muted-foreground">Visibile ai clienti</p>
@@ -741,7 +741,7 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
                   <Input id="be-end" type="datetime-local" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
                 </div>
               </div>
-              <div className="flex items-center justify-between p-3 bg-stone-50 dark:bg-[#1B2735] rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-stone-50 dark:bg-[#1A1D24] rounded-lg">
                 <div>
                   <p className="font-medium text-sm">Pubblicato</p>
                   <p className="text-xs text-muted-foreground">Visibile al pubblico</p>

@@ -256,7 +256,7 @@ function TapComments({ tapId, slug, isManager }: { tapId: number; slug: string; 
         const initials = (c.userNickname || c.userFirstName || "?")[0]?.toUpperCase();
         const dateStr = c.createdAt ? format(new Date(c.createdAt), "d MMM yyyy", { locale: it }) : "";
         return (
-          <div key={c.id} className="rounded-xl bg-stone-50 dark:bg-[#15202B]/30 border border-stone-100 dark:border-[#2F3D4D] p-3">
+          <div key={c.id} className="rounded-xl bg-stone-50 dark:bg-[#0B0D10]/30 border border-stone-100 dark:border-[#23262E] p-3">
             <div className="flex items-start gap-2">
               {c.userImage ? (
                 <img src={c.userImage} alt={c.userNickname || ""} className="h-6 w-6 rounded-full object-cover" />
@@ -377,7 +377,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
     <div className={`bg-white dark:bg-card rounded-2xl border transition-all ${
       tap.isAvailable
         ? "border-stone-100 dark:border-border shadow-sm"
-        : "border-gray-100 dark:border-[#2F3D4D] opacity-60"
+        : "border-gray-100 dark:border-[#23262E] opacity-60"
     }`}>
       {/* Collapsed row */}
       <button
@@ -398,7 +398,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
           {imageUrl ? (
             <img src={imageUrl} alt={beerName} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0" />
           ) : (
-            <div className="w-12 h-12 rounded-2xl bg-stone-50 dark:bg-[#15202B]/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-12 h-12 rounded-2xl bg-stone-50 dark:bg-[#0B0D10]/20 flex items-center justify-center flex-shrink-0">
               <Beer className="h-6 w-6 text-primary" />
             </div>
           )}
@@ -453,7 +453,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
                 </span>
               )}
               {hasPrices && (
-                <span className="text-xs bg-stone-50 dark:bg-[#15202B]/20 text-primary font-bold rounded-full px-2 py-0.5">
+                <span className="text-xs bg-stone-50 dark:bg-[#0B0D10]/20 text-primary font-bold rounded-full px-2 py-0.5">
                   {Object.entries(tap.prices!).map(([size, price]) => `${size} ${formatPrice(price, useTokens, tokenName)}`).join(" · ")}
                 </span>
               )}
@@ -483,7 +483,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
 
           {/* Beer description */}
           {hasDescription && (
-            <div className="mb-3 bg-stone-50 dark:bg-[#15202B]/20 rounded-xl p-3 border border-primary/10">
+            <div className="mb-3 bg-stone-50 dark:bg-[#0B0D10]/20 rounded-xl p-3 border border-primary/10">
               <p className="text-xs font-bold text-primary dark:text-orange-400 mb-1 flex items-center gap-1">
                 <Info className="h-3.5 w-3.5" />Descrizione
               </p>
@@ -508,7 +508,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
           {isAuth ? (
             <SliderRating tapId={tap.id} slug={slug} current={tap.userRating} avg={tap.avgRating} count={tap.ratingCount} />
           ) : (
-            <div className="flex items-center gap-2 p-3 bg-stone-50 dark:bg-[#15202B]/20 rounded-xl">
+            <div className="flex items-center gap-2 p-3 bg-stone-50 dark:bg-[#0B0D10]/20 rounded-xl">
               {tap.avgRating !== null && tap.ratingCount > 0 && (
                 <div className="flex items-center gap-1 text-xs text-primary dark:text-orange-400">
                   <Star className="h-3.5 w-3.5 fill-current" />
@@ -543,7 +543,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
       >
         <div className="flex items-center gap-2">
           <span className="font-bold text-sm text-foreground">{category}</span>
-          <span className="text-xs text-primary bg-stone-50 dark:bg-[#15202B]/20 px-1.5 py-0.5 rounded-full font-semibold">
+          <span className="text-xs text-primary bg-stone-50 dark:bg-[#0B0D10]/20 px-1.5 py-0.5 rounded-full font-semibold">
             {available}/{items.length}
           </span>
         </div>
@@ -570,7 +570,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
                   {item.allergens && item.allergens.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1.5">
                       {item.allergens.map(a => (
-                        <span key={a} className="text-xs bg-stone-50 dark:bg-[#15202B]/20 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full font-medium">
+                        <span key={a} className="text-xs bg-stone-50 dark:bg-[#0B0D10]/20 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full font-medium">
                           {ALLERGEN_LABELS[a.toLowerCase()] ?? a}
                         </span>
                       ))}
@@ -578,7 +578,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
                   )}
                 </div>
                 {item.price && (
-                  <span className="font-bold text-primary text-sm whitespace-nowrap bg-stone-50 dark:bg-[#15202B]/20 px-2 py-0.5 rounded-full">€{parseFloat(item.price).toFixed(2)}</span>
+                  <span className="font-bold text-primary text-sm whitespace-nowrap bg-stone-50 dark:bg-[#0B0D10]/20 px-2 py-0.5 rounded-full">€{parseFloat(item.price).toFixed(2)}</span>
                 )}
               </div>
             </div>
@@ -607,14 +607,14 @@ function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
             i === 0 ? "bg-primary text-white" :
             i === 1 ? "bg-stone-200 text-muted-foreground" :
             i === 2 ? "bg-stone-100 text-orange-600" :
-            "bg-stone-50 dark:bg-[#15202B]/20 text-primary"
+            "bg-stone-50 dark:bg-[#0B0D10]/20 text-primary"
           }`}>
             {i + 1}
           </div>
           {t.beerImageUrl ? (
             <img src={t.beerImageUrl} alt={t.beerName} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
           ) : (
-            <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-[#15202B]/20 flex items-center justify-center flex-shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-[#0B0D10]/20 flex items-center justify-center flex-shrink-0">
               <Beer className="h-5 w-5 text-primary" />
             </div>
           )}
@@ -887,7 +887,7 @@ export default function FestivalPublic() {
         <div className={`space-y-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
           {/* Schedule */}
           {festival.schedule && festival.schedule.length > 0 && (
-            <div className="bg-stone-50 dark:bg-[#15202B]/20 rounded-2xl border border-primary/10 px-4 py-4 shadow-sm">
+            <div className="bg-stone-50 dark:bg-[#0B0D10]/20 rounded-2xl border border-primary/10 px-4 py-4 shadow-sm">
               <div className="flex items-center gap-2 text-primary dark:text-orange-400 text-sm font-bold uppercase tracking-wider mb-3">
                 <Clock className="h-4 w-4" />Orari del festival
               </div>
@@ -959,7 +959,7 @@ export default function FestivalPublic() {
         {/* Content tabs */}
         <div className={activeTab !== 'overview' ? 'mt-0 lg:mt-8' : 'mt-8'}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="hidden lg:flex w-full mb-6 bg-stone-50/50 dark:bg-[#15202B]/10 p-1 rounded-xl h-12">
+            <TabsList className="hidden lg:flex w-full mb-6 bg-stone-50/50 dark:bg-[#0B0D10]/10 p-1 rounded-xl h-12">
               <TabsTrigger value="taps" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-bold h-10">
                 <Beer className="h-4 w-4" />
                 Birre ({availableCount}/{taps.length})
@@ -1145,7 +1145,7 @@ export default function FestivalPublic() {
                     ))}
                   </div>
                 )}
-                <div className="bg-stone-50/50 dark:bg-[#15202B]/10 p-4 rounded-2xl text-center">
+                <div className="bg-stone-50/50 dark:bg-[#0B0D10]/10 p-4 rounded-2xl text-center">
                   <p className="text-xs text-muted-foreground">
                     I prezzi includono IVA · Informare il personale di eventuali allergie
                   </p>

@@ -66,7 +66,7 @@ export function WishlistButton({ beerId, size = "md", variant = "icon", classNam
           "inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border tap-scale transition-all whitespace-nowrap",
           inWishlist
             ? "bg-amber-50 dark:bg-amber-500/10 border-amber-200 dark:border-amber-500/30 text-amber-600 dark:text-amber-400"
-            : "bg-card border-stone-200 dark:border-[#2F3D4D] text-stone-600 dark:text-stone-300 hover:border-amber-300 dark:hover:border-amber-500/40",
+            : "bg-card border-stone-200 dark:border-[#23262E] text-stone-600 dark:text-stone-300 hover:border-amber-300 dark:hover:border-amber-500/40",
           isPending && "opacity-50",
           className
         )}
@@ -87,7 +87,7 @@ export function WishlistButton({ beerId, size = "md", variant = "icon", classNam
         "flex items-center justify-center rounded-full transition-all active:scale-90",
         inWishlist
           ? "bg-amber-50 dark:bg-amber-500/10 text-amber-500"
-          : "bg-stone-100 dark:bg-[#232F3D] text-stone-400",
+          : "bg-stone-100 dark:bg-[#12151A] text-stone-400",
         isPending && "opacity-50",
         className
       )}

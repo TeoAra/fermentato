@@ -108,8 +108,8 @@ const ACTIVITY_TYPES = [
 
 const TYPE_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   user:     { bg: 'bg-blue-50 dark:bg-blue-900/20',    text: 'text-blue-600 dark:text-blue-400',    border: 'border-blue-200 dark:border-blue-800' },
-  pub:      { bg: 'bg-stone-50 dark:bg-[#15202B]/20', text: 'text-primary dark:text-orange-400', border: 'border-stone-200 dark:border-[#2F3D4D]' },
-  brewery:  { bg: 'bg-stone-50 dark:bg-[#15202B]/20',  text: 'text-primary dark:text-orange-400',  border: 'border-stone-200 dark:border-[#2F3D4D]' },
+  pub:      { bg: 'bg-stone-50 dark:bg-[#0B0D10]/20', text: 'text-primary dark:text-orange-400', border: 'border-stone-200 dark:border-[#23262E]' },
+  brewery:  { bg: 'bg-stone-50 dark:bg-[#0B0D10]/20',  text: 'text-primary dark:text-orange-400',  border: 'border-stone-200 dark:border-[#23262E]' },
   review:   { bg: 'bg-yellow-50 dark:bg-yellow-900/20', text: 'text-yellow-600 dark:text-yellow-400', border: 'border-yellow-200 dark:border-yellow-800' },
   event:    { bg: 'bg-emerald-50 dark:bg-emerald-900/20',  text: 'text-emerald-600 dark:text-emerald-400',  border: 'border-emerald-200 dark:border-emerald-800' },
 };
@@ -302,7 +302,7 @@ export default function AdminAnalytics() {
                 <Activity className="w-5 h-5 text-primary" />
                 Attività Recenti
                 {activityLoading && <Loader2 className="w-4 h-4 animate-spin text-muted-foreground ml-1" />}
-                <Badge variant="secondary" className="ml-1 bg-stone-50 text-primary dark:bg-[#15202B]/20">{recentActivity.length}</Badge>
+                <Badge variant="secondary" className="ml-1 bg-stone-50 text-primary dark:bg-[#0B0D10]/20">{recentActivity.length}</Badge>
               </CardTitle>
               {/* Type filters */}
               <div className="flex flex-wrap gap-1.5">
@@ -313,7 +313,7 @@ export default function AdminAnalytics() {
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${
                       activityType === key
                         ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-white dark:bg-[#1B2735] text-muted-foreground border-stone-200 dark:border-border hover:border-primary/50 hover:text-primary'
+                        : 'bg-white dark:bg-[#1A1D24] text-muted-foreground border-stone-200 dark:border-border hover:border-primary/50 hover:text-primary'
                     }`}
                   >
                     <Icon className="w-3 h-3" />
@@ -415,7 +415,7 @@ export default function AdminAnalytics() {
             <CardContent className="pt-4">
               <div className="space-y-4">
                 {globalStats?.topStyles?.slice(0, 6).map((style, index) => (
-                  <div key={style.style} className="flex items-center justify-between p-3 rounded-xl bg-stone-50/30 dark:bg-[#15202B]/10">
+                  <div key={style.style} className="flex items-center justify-between p-3 rounded-xl bg-stone-50/30 dark:bg-[#0B0D10]/10">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-orange-400 flex items-center justify-center text-white font-bold text-sm">
                         #{index + 1}
@@ -425,7 +425,7 @@ export default function AdminAnalytics() {
                         <p className="text-sm text-muted-foreground">{parseInt(style.count).toLocaleString()} birre</p>
                       </div>
                     </div>
-                    <Badge variant="secondary" className="bg-white dark:bg-[#232F3D] text-primary font-semibold">{((parseInt(style.count) / (globalStats?.totalBeers || 1)) * 100).toFixed(1)}%</Badge>
+                    <Badge variant="secondary" className="bg-white dark:bg-[#12151A] text-primary font-semibold">{((parseInt(style.count) / (globalStats?.totalBeers || 1)) * 100).toFixed(1)}%</Badge>
                   </div>
                 ))}
               </div>
@@ -443,7 +443,7 @@ export default function AdminAnalytics() {
             <CardContent className="pt-4">
               <div className="space-y-4">
                 {globalStats?.topBreweries?.slice(0, 6).map((brewery, index) => (
-                  <div key={brewery.breweryName} className="flex items-center justify-between p-3 rounded-xl bg-stone-50/30 dark:bg-[#15202B]/10">
+                  <div key={brewery.breweryName} className="flex items-center justify-between p-3 rounded-xl bg-stone-50/30 dark:bg-[#0B0D10]/10">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-400 to-purple-500 flex items-center justify-center text-white font-bold text-sm">
                         #{index + 1}
@@ -472,7 +472,7 @@ export default function AdminAnalytics() {
                 <TrendingUp className="w-5 h-5 text-primary" />
                 Crescita ultimi 6 mesi
               </CardTitle>
-              <Badge variant="secondary" className="bg-stone-50 dark:bg-[#15202B]/20 text-primary font-medium">Cumulato</Badge>
+              <Badge variant="secondary" className="bg-stone-50 dark:bg-[#0B0D10]/20 text-primary font-medium">Cumulato</Badge>
             </div>
           </CardHeader>
           <CardContent className="pt-6">
@@ -513,7 +513,7 @@ export default function AdminAnalytics() {
             <CardTitle className="flex items-center gap-2 font-bold text-foreground">
               <Beer className="w-5 h-5 text-primary" />
               Birre più Recensite
-              <Badge variant="secondary" className="ml-1 bg-stone-50 text-primary dark:bg-[#15202B]/20">{popularBeers.length}</Badge>
+              <Badge variant="secondary" className="ml-1 bg-stone-50 text-primary dark:bg-[#0B0D10]/20">{popularBeers.length}</Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
@@ -576,7 +576,7 @@ export default function AdminAnalytics() {
                 <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wider">Birrifici</p>
                 <p className="text-xs text-emerald-600/70 dark:text-emerald-400/70 mt-1 font-medium">Produttori censiti</p>
               </div>
-              <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-stone-200 dark:border-[#2F3D4D]/50">
+              <div className="text-center p-6 rounded-2xl bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-stone-200 dark:border-[#23262E]/50">
                 <div className="text-4xl font-black text-primary dark:text-orange-400 mb-2">
                   {globalStats?.uniqueStyles || '—'}
                 </div>

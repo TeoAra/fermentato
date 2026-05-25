@@ -109,61 +109,66 @@ html.dark {
    LIGHT MODE — COLOUR PALETTE
    ============================ */
 :root {
-  /* Base surfaces — clean neutral, 8pt grid system */
-  --background: hsl(0, 0%, 97%);
-  --foreground: hsl(0, 0%, 7%);
-  --muted: hsl(0, 0%, 94%);
-  --muted-foreground: hsl(0, 0%, 40%);
+  /* ── Fermenta LIGHT palette — crema + amber craft ─────────────
+     Background crema #FAF7F1, card bianche, bordi #E8DED1.
+     Accent amber #F59E0B, secondario amber-light #FFF7EA.
+     Testi #151515 / #6B6357 / #9C9489. */
 
-  /* Card / Popover */
+  /* Base surfaces — crema 8pt grid */
+  --background: hsl(40, 33%, 96%);            /* #FAF7F1 crema */
+  --foreground: hsl(0, 0%, 8%);               /* #151515 */
+  --muted: hsl(36, 25%, 91%);                 /* #F0EAE0 sand */
+  --muted-foreground: hsl(28, 11%, 38%);      /* #6B6357 */
+
+  /* Card / Popover — bianco puro per gerarchia su crema */
   --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(0, 0%, 7%);
+  --popover-foreground: hsl(0, 0%, 8%);
   --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(0, 0%, 7%);
+  --card-foreground: hsl(0, 0%, 8%);
 
-  /* Borders / Inputs */
-  --border: hsl(0, 0%, 88%);
-  --input: hsl(0, 0%, 88%);
+  /* Borders / Inputs — sand neutro #E8DED1 */
+  --border: hsl(35, 28%, 86%);                /* #E8DED1 */
+  --input: hsl(35, 28%, 86%);
 
-  /* Primary — #FF7A00 Fermenta orange */
-  --primary: hsl(29, 100%, 50%);
+  /* Primary — amber craft #F59E0B */
+  --primary: hsl(36, 92%, 50%);               /* #F59E0B */
   --primary-foreground: hsl(0, 0%, 100%);
 
-  /* Shadow tokens — 8pt elevation system */
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.12);
-  --shadow-card-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  /* Shadow tokens — soft warm */
+  --shadow-card: 0 8px 24px rgba(45, 30, 10, 0.06);
+  --shadow-card-hover: 0 12px 32px rgba(45, 30, 10, 0.10);
+  --shadow-card-sm: 0 2px 8px rgba(45, 30, 10, 0.05);
 
-  /* Secondary — warm dark slate */
-  --secondary: hsl(25, 20%, 22%);
+  /* Secondary — warm dark slate per CTA secondari */
+  --secondary: hsl(28, 12%, 22%);             /* #3D362F */
   --secondary-foreground: hsl(0, 0%, 100%);
 
-  /* Accent — violet (replaces orange tint everywhere bg-accent is used) */
-  --accent: hsl(258, 55%, 93%);
-  --accent-foreground: hsl(258, 60%, 36%);
+  /* Accent — amber-light tint #FFF7EA per pill/chip "active" */
+  --accent: hsl(38, 100%, 96%);               /* #FFF7EA */
+  --accent-foreground: hsl(33, 100%, 39%);    /* #C77800 */
 
-  /* Extra palette tokens */
+  /* Extra palette tokens (hop green per success) */
   --violet: hsl(258, 60%, 55%);
   --teal: hsl(174, 58%, 38%);
-  --slate: hsl(215, 20%, 45%);
+  --slate: hsl(28, 9%, 56%);                  /* #9C9489 */
 
   /* Destructive */
   --destructive: hsl(0, 78%, 55%);
   --destructive-foreground: hsl(0, 0%, 100%);
 
-  /* Ring */
-  --ring: hsl(24, 93%, 49%);
+  /* Ring — amber */
+  --ring: hsl(36, 92%, 50%);
   --radius: 1rem;
 
   /* Glassmorphism */
   --glass-bg: hsla(0, 0%, 100%, 0.78);
-  --glass-border: hsla(0, 0%, 100%, 0.32);
+  --glass-border: hsla(35, 28%, 86%, 0.5);
   --glass-shadow: hsla(28, 20%, 0%, 0.06);
 
-  /* Surfaces */
-  --surface-primary: hsl(0, 0%, 100%);
-  --surface-secondary: hsl(40, 14%, 96%);
-  --surface-tertiary: hsl(38, 14%, 92%);
+  /* Surfaces — gerarchia crema */
+  --surface-primary: hsl(0, 0%, 100%);        /* white */
+  --surface-secondary: hsl(40, 33%, 96%);     /* #FAF7F1 */
+  --surface-tertiary: hsl(36, 25%, 91%);      /* #F0EAE0 */
 
   /* Elevations — warm-tinted shadows */
   --elevation-1: 0 1px 3px hsla(28, 30%, 8%, 0.06), 0 1px 2px hsla(28, 30%, 8%, 0.10);
@@ -210,62 +215,63 @@ html.dark {
   --shadow-amber: 0 0 30px rgba(245, 158, 11, 0.15);
   --app-chrome-dark: #0B0D10;
 
-  /* Base surfaces — slate navy moderno (Twitter/Tweetbot dark), tono blu-grigio
-     opaco che fa risaltare l'arancione craft. Più caldo dei classic dark grigi. */
-  --background: hsl(213, 35%, 12%);          /* #15202B */
-  --foreground: hsl(210, 18%, 96%);
-  --muted: hsl(213, 28%, 18%);               /* #232F3D */
-  --muted-foreground: hsl(213, 12%, 68%);
+  /* Base surfaces — true-black craft (#0B0D10 → #12151A → #1A1D24 → #23262E → #2C3038).
+     Niente più slate-navy: tono più caldo per esaltare l'amber craft. */
+  --background: hsl(214, 14%, 5%);            /* #0B0D10 */
+  --foreground: hsl(0, 0%, 96%);              /* #F5F5F5 */
+  --muted: hsl(214, 16%, 9%);                 /* #12151A */
+  --muted-foreground: hsl(213, 11%, 75%);     /* #B7BDC7 */
 
-  /* Card / Popover — leggermente più chiari del background per gerarchia */
-  --popover: hsl(213, 32%, 16%);             /* #1B2735 */
-  --popover-foreground: hsl(210, 18%, 96%);
-  --card: hsl(213, 32%, 16%);                /* #1B2735 */
-  --card-foreground: hsl(210, 18%, 96%);
+  /* Card / Popover — un gradino sopra il background per gerarchia */
+  --popover: hsl(217, 16%, 12%);              /* #1A1D24 */
+  --popover-foreground: hsl(0, 0%, 96%);
+  --card: hsl(217, 16%, 12%);                 /* #1A1D24 */
+  --card-foreground: hsl(0, 0%, 96%);
 
-  /* Borders / Inputs */
-  --border: hsl(213, 22%, 24%);              /* #2F3D4D */
-  --input: hsl(213, 22%, 24%);
+  /* Borders / Inputs — elevated surface come bordo solido (rgba bianco non
+     funziona bene con HSL tokens, usiamo #23262E che è ~ white/.06 percepito) */
+  --border: hsl(215, 14%, 17%);               /* #23262E */
+  --input: hsl(215, 14%, 17%);
 
-  /* Primary — arancione vibrante, l'unica nota calda sulla palette navy */
-  --primary: hsl(29, 100%, 58%);
+  /* Primary — amber craft #F59E0B, unica nota calda */
+  --primary: hsl(36, 92%, 50%);               /* #F59E0B */
   --primary-foreground: hsl(0, 0%, 100%);
 
-  /* Secondary */
-  --secondary: hsl(213, 25%, 22%);
-  --secondary-foreground: hsl(210, 18%, 96%);
+  /* Secondary — elevated hover #2C3038 */
+  --secondary: hsl(215, 12%, 20%);            /* #2C3038 */
+  --secondary-foreground: hsl(0, 0%, 96%);
 
-  /* Shadow tokens dark — deeper for dark bg */
-  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.40);
-  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.55);
-  --shadow-card-sm: 0 2px 8px rgba(0, 0, 0, 0.30);
+  /* Shadow tokens dark — deeper per fondo nero */
+  --shadow-card: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --shadow-card-hover: 0 12px 32px rgba(0, 0, 0, 0.60);
+  --shadow-card-sm: 0 2px 8px rgba(0, 0, 0, 0.35);
 
-  /* Accent — violet dark mode */
-  --accent: hsl(258, 35%, 28%);
-  --accent-foreground: hsl(258, 70%, 82%);
+  /* Accent — amber tint per chip/pill active */
+  --accent: hsl(36, 50%, 18%);                /* amber-dark sfondato */
+  --accent-foreground: hsl(35, 100%, 65%);    /* #FFB74D */
 
   /* Extra palette tokens dark */
   --violet: hsl(258, 65%, 65%);
   --teal: hsl(174, 52%, 44%);
-  --slate: hsl(215, 18%, 60%);
+  --slate: hsl(213, 8%, 54%);                 /* #7E8795 */
 
   /* Destructive */
   --destructive: hsl(0, 58%, 42%);
-  --destructive-foreground: hsl(220, 8%, 94%);
+  --destructive-foreground: hsl(0, 0%, 96%);
 
-  /* Ring */
-  --ring: hsl(24, 93%, 55%);
+  /* Ring — amber */
+  --ring: hsl(36, 92%, 50%);
   --radius: 1rem;
 
   /* Glassmorphism dark */
-  --glass-bg: hsla(213, 32%, 16%, 0.85);
-  --glass-border: hsla(213, 30%, 100%, 0.08);
-  --glass-shadow: hsla(213, 40%, 0%, 0.40);
+  --glass-bg: hsla(217, 16%, 12%, 0.85);
+  --glass-border: hsla(0, 0%, 100%, 0.06);
+  --glass-shadow: hsla(0, 0%, 0%, 0.50);
 
-  /* Surfaces — slate navy, gerarchia di elevazione coerente con --card */
-  --surface-primary: hsl(213, 32%, 16%);
-  --surface-secondary: hsl(213, 30%, 19%);
-  --surface-tertiary: hsl(213, 28%, 23%);
+  /* Surfaces — gerarchia true-black */
+  --surface-primary: hsl(217, 16%, 12%);      /* #1A1D24 */
+  --surface-secondary: hsl(215, 14%, 16%);    /* #23262E */
+  --surface-tertiary: hsl(215, 12%, 20%);     /* #2C3038 */
 
   /* Elevations */
   --elevation-1: 0 1px 3px hsla(0, 0%, 0%, 0.40), 0 1px 2px hsla(0, 0%, 0%, 0.50);

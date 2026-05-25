@@ -88,7 +88,7 @@ export default function CookieBanner() {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[9999] p-3 md:p-6 pb-[calc(64px+env(safe-area-inset-bottom)+8px)] lg:pb-6 pointer-events-none">
-      <div className="max-w-4xl mx-auto bg-white dark:bg-[#15202B] rounded-2xl shadow-2xl border border-gray-200 dark:border-[#2F3D4D] overflow-hidden pointer-events-auto">
+      <div className="max-w-4xl mx-auto bg-white dark:bg-[#0B0D10] rounded-2xl shadow-2xl border border-gray-200 dark:border-[#23262E] overflow-hidden pointer-events-auto">
         {/* Main banner */}
         {!showSettings ? (
           <div className="p-5 md:p-6">
@@ -146,7 +146,7 @@ export default function CookieBanner() {
               </div>
               <button
                 onClick={() => setShowSettings(false)}
-                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-stone-100 dark:hover:bg-[#1B2735] transition-colors"
+                className="w-7 h-7 rounded-full flex items-center justify-center hover:bg-stone-100 dark:hover:bg-[#1A1D24] transition-colors"
               >
                 <X className="w-4 h-4 text-muted-foreground" />
               </button>
@@ -223,7 +223,7 @@ export default function CookieBanner() {
               />
             </div>
 
-            <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t border-gray-100 dark:border-[#2F3D4D]">
+            <div className="flex flex-wrap gap-2 mt-5 pt-4 border-t border-gray-100 dark:border-[#23262E]">
               <Button onClick={saveCustom} className="bg-amber-500 hover:bg-amber-600 text-white text-sm h-9 px-4">
                 Salva preferenze
               </Button>
@@ -278,7 +278,7 @@ function CookieCategory({
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
                 disabled
                   ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                  : "bg-stone-100 text-muted-foreground dark:bg-[#1B2735] dark:text-stone-400"
+                  : "bg-stone-100 text-muted-foreground dark:bg-[#1A1D24] dark:text-stone-400"
               }`}>
                 {badge}
               </span>

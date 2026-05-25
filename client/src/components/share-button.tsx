@@ -74,7 +74,7 @@ export function ShareButton({
       </PopoverTrigger>
       <PopoverContent className="w-52 p-2 space-y-1" align="center">
         <button
-          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-stone-100 dark:hover:bg-[#232F3D] text-sm transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg hover:bg-stone-100 dark:hover:bg-[#12151A] text-sm transition-colors"
           onClick={copyToClipboard}
         >
           <Copy className="h-4 w-4 text-muted-foreground flex-shrink-0" />

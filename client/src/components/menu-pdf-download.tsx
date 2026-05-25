@@ -127,7 +127,7 @@ export function MenuPdfDownload({ pubName, tapList = [], bottleList = [], menuCa
       disabled={generating}
       className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl p-4 flex items-center gap-3 cursor-pointer hover:border-primary/40 hover:shadow-sm transition-all h-full text-left w-full disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      <div className="p-2.5 bg-stone-100 dark:bg-[#1B2735]/60 rounded-xl shrink-0">
+      <div className="p-2.5 bg-stone-100 dark:bg-[#1A1D24]/60 rounded-xl shrink-0">
         {generating ? <Loader2 className="h-5 w-5 animate-spin text-foreground" /> : <FileDown className="h-5 w-5 text-foreground" />}
       </div>
       <div className="min-w-0">

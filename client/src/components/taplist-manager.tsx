@@ -524,7 +524,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
 
   return (
     <Card className="border-stone-200 shadow-sm rounded-2xl overflow-hidden">
-      <CardHeader className="bg-white dark:bg-[#15202B]/20 border-b border-stone-100">
+      <CardHeader className="bg-white dark:bg-[#0B0D10]/20 border-b border-stone-100">
         <CardTitle className="flex items-center justify-between">
           <span className="text-xl font-bold text-foreground flex items-center gap-2">
             <Beer className="w-5 h-5 text-primary" />
@@ -610,11 +610,11 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                         {debouncedSearchTerm.length >= 2 && !isSearching && !formData.beerId && !creatingBeer && (
                           <>
                             {searchResults?.beers && searchResults.beers.length > 0 && (
-                              <div className="max-h-60 overflow-y-auto border border-stone-200 rounded-2xl bg-white dark:bg-[#15202B]/20 shadow-sm mt-2 divide-y divide-orange-50">
+                              <div className="max-h-60 overflow-y-auto border border-stone-200 rounded-2xl bg-white dark:bg-[#0B0D10]/20 shadow-sm mt-2 divide-y divide-orange-50">
                                 {searchResults.beers.map((beer: any) => (
                                   <div
                                     key={beer.id}
-                                    className="p-4 hover:bg-stone-50/50 dark:hover:bg-[#1B2735]/30 cursor-pointer transition-colors"
+                                    className="p-4 hover:bg-stone-50/50 dark:hover:bg-[#1A1D24]/30 cursor-pointer transition-colors"
                                     onClick={() => {
                                       setFormData({ ...formData, beerId: beer.id.toString() });
                                       setSelectedBeerDetails({
@@ -895,7 +895,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
 
                 {/* Form creazione birrificio - condiviso tra aggiunta e modifica */}
                 {creatingBrewery && (
-                  <div className="border border-stone-200 rounded-2xl p-4 bg-stone-50/50 dark:bg-[#15202B]/10 space-y-3">
+                  <div className="border border-stone-200 rounded-2xl p-4 bg-stone-50/50 dark:bg-[#0B0D10]/10 space-y-3">
                     <div className="flex items-center gap-2 mb-1">
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBrewery(false)}>
                         <ArrowLeft className="h-4 w-4" />
@@ -1220,7 +1220,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                   ) : (
                     <div className="space-y-2">
                       {formData.prices.map((p, idx) => (
-                        <div key={idx} className="flex items-center gap-2 p-2 border border-stone-200 rounded-xl bg-stone-50/50 dark:bg-[#15202B]/20">
+                        <div key={idx} className="flex items-center gap-2 p-2 border border-stone-200 rounded-xl bg-stone-50/50 dark:bg-[#0B0D10]/20">
                           <Input
                             type="text"
                             list="tap-size-options"
@@ -1298,7 +1298,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                       onClick={() => setFormData({ ...formData, tapType: "pompa" })}
                       className={`flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
                         formData.tapType === "pompa"
-                          ? "bg-stone-50 border-primary/60 text-primary dark:bg-[#15202B]/20 dark:border-primary/40"
+                          ? "bg-stone-50 border-primary/60 text-primary dark:bg-[#0B0D10]/20 dark:border-primary/40"
                           : "border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40 dark:hover:border-primary/30"
                       }`}
                     >
@@ -1404,12 +1404,12 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
           <div className="space-y-3 py-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-3 p-4 rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card">
-                <div className="w-12 h-12 rounded-lg bg-stone-100 dark:bg-[#1B2735] animate-pulse" />
+                <div className="w-12 h-12 rounded-lg bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 w-32 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
-                  <div className="h-3 w-20 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                  <div className="h-4 w-32 bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
+                  <div className="h-3 w-20 bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
                 </div>
-                <div className="h-8 w-16 bg-stone-100 dark:bg-[#1B2735] animate-pulse rounded" />
+                <div className="h-8 w-16 bg-stone-100 dark:bg-[#1A1D24] animate-pulse rounded" />
               </div>
             ))}
           </div>
@@ -1424,7 +1424,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
             {tapList.map((item) => (
               <div
                 key={item.id}
-                className={`border border-stone-100 dark:border-border rounded-2xl p-4 transition-colors ${!item.isVisible ? 'opacity-60 bg-stone-50/30 dark:bg-[#15202B]/10' : 'bg-white dark:bg-card'}`}
+                className={`border border-stone-100 dark:border-border rounded-2xl p-4 transition-colors ${!item.isVisible ? 'opacity-60 bg-stone-50/30 dark:bg-[#0B0D10]/10' : 'bg-white dark:bg-card'}`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
@@ -1440,7 +1440,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="font-semibold text-base text-foreground truncate">{item.beer.name}</h3>
                         {item.tapType === "pompa" && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 border-stone-300 text-primary dark:border-[#2F3D4D]">
+                          <Badge variant="outline" className="text-xs flex-shrink-0 border-stone-300 text-primary dark:border-[#23262E]">
                             In Pompa
                           </Badge>
                         )}
@@ -1461,7 +1461,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                           </Badge>
                         )}
                         {findBottleItem(item.beer.id) && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 border-stone-300 text-primary dark:border-[#2F3D4D]">
+                          <Badge variant="outline" className="text-xs flex-shrink-0 border-stone-300 text-primary dark:border-[#23262E]">
                             anche in cantina
                           </Badge>
                         )}

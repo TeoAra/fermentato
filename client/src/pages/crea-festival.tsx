@@ -234,7 +234,7 @@ function FestivalCard({ fest }: { fest: any }) {
           </div>
         )}
         {/* Like + Share buttons — always visible, stop propagation so they don't trigger Link */}
-        <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100 dark:border-[#2F3D4D]" onClick={e => e.stopPropagation()}>
+        <div className="flex gap-2 mt-3 pt-2 border-t border-gray-100 dark:border-[#23262E]" onClick={e => e.stopPropagation()}>
           <FestivalLikeButton festivalId={fest.id} showLabel={false} className="flex-none" />
           <ShareButton
             title={fest.name}
@@ -535,7 +535,7 @@ export default function CreaFestival() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="text-center py-4 border-t border-gray-100 dark:border-[#2F3D4D]">
+        <div className="text-center py-4 border-t border-gray-100 dark:border-[#23262E]">
           <p className="text-muted-foreground dark:text-stone-400">
             Hai già un festival su Fermenta?{" "}
             <Link href="/festival-dashboard" className="text-amber-600 font-semibold hover:underline">

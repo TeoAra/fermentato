@@ -121,7 +121,7 @@ export function BottomNavigation() {
 
       <nav
         className={cn(
-          "lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#15202B] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-transform duration-200",
+          "lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-transform duration-200",
           anyModalOpen && "translate-y-[120%]"
         )}
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
@@ -199,7 +199,7 @@ export function BottomNavigation() {
                     className={`h-[22px] w-[22px] rounded-full object-cover border-2 transition-all ${
                       accountActive
                         ? "border-primary ring-1 ring-primary/30"
-                        : "border-stone-200 dark:border-[#2F3D4D]"
+                        : "border-stone-200 dark:border-[#23262E]"
                     }`}
                   />
                 ) : (
@@ -219,7 +219,7 @@ export function BottomNavigation() {
             type="button"
             onClick={() => setSearchOpen(true)}
             aria-label="Cerca"
-            className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-[0_8px_20px_rgba(232,119,34,0.45)] border-4 border-white dark:border-[#15202B] transition-transform active:scale-95 z-[1]"
+            className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-[0_8px_20px_rgba(232,119,34,0.45)] border-4 border-white dark:border-[#0B0D10] transition-transform active:scale-95 z-[1]"
           >
             <Search
               className="w-6 h-6"

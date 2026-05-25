@@ -130,7 +130,7 @@ export default function AppDownload() {
                   <p className="text-xs text-muted-foreground">App Store — prossimamente</p>
                 </div>
               </div>
-              <div className="bg-stone-50 dark:bg-[#15202B]/50 border border-stone-200 dark:border-[#2F3D4D] rounded-xl p-3">
+              <div className="bg-stone-50 dark:bg-[#0B0D10]/50 border border-stone-200 dark:border-[#23262E] rounded-xl p-3">
                 <p className="text-xs text-muted-foreground text-center leading-relaxed">
                   La versione App Store è in arrivo. Nel frattempo usa la <strong>web app</strong> — la salvi sullo schermo home e funziona come un'app.
                 </p>

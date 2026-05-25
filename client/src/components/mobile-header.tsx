@@ -132,7 +132,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     return (
       <Link href={href} onClick={() => { onMenuToggle(); onClick?.(); }}>
         <div className={`flex items-center gap-3 mx-2 px-3 py-2.5 rounded-xl transition-colors tap-scale ${isActive ? 'bg-primary/8 dark:bg-primary/12' : 'hover:bg-stone-50 dark:hover:bg-white/5'}`}>
-          <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 ${isActive ? 'bg-primary text-white' : 'bg-stone-100 dark:bg-[#1B2735] text-stone-500 dark:text-stone-400'}`}>
+          <div className={`flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 ${isActive ? 'bg-primary text-white' : 'bg-stone-100 dark:bg-[#1A1D24] text-stone-500 dark:text-stone-400'}`}>
             <Icon className="h-[18px] w-[18px]" />
           </div>
           <div className="flex-1 min-w-0">
@@ -166,7 +166,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     <>
       {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
       <header
-        className={`lg:hidden fixed top-0 left-0 right-0 z-50 transition-[box-shadow,border-color] duration-200 bg-white dark:bg-[#15202B] ${
+        className={`lg:hidden fixed top-0 left-0 right-0 z-50 transition-[box-shadow,border-color] duration-200 bg-white dark:bg-[#0B0D10] ${
           scrolled
             ? "border-b border-stone-200/70 dark:border-white/[0.08] shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
             : "border-b border-transparent"
@@ -240,7 +240,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
       <Sheet open={isMenuOpen} onOpenChange={(open) => { if (!open) onMenuToggle(); }}>
         <SheetContent
           side="right"
-          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#15202B] border-l border-stone-100/80 dark:border-white/[0.06] overflow-hidden"
+          className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#0B0D10] border-l border-stone-100/80 dark:border-white/[0.06] overflow-hidden"
           style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
         >
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
@@ -294,7 +294,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
               </>
             ) : (
               <div className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-stone-100 dark:bg-[#1B2735] flex-shrink-0">
+                <div className="flex items-center justify-center w-14 h-14 rounded-full bg-stone-100 dark:bg-[#1A1D24] flex-shrink-0">
                   <User className="h-6 w-6 text-stone-400" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -388,7 +388,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 >
                   <div className="flex items-center justify-center w-9 h-9 rounded-xl flex-shrink-0 bg-gradient-to-br from-amber-500 to-orange-600 text-white relative">
                     <Download className="h-[18px] w-[18px]" />
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-[#15202B]" />
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-[#0B0D10]" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-semibold text-foreground leading-snug">Installa l'app</div>
@@ -402,7 +402,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
           </div>
 
           {/* ── Footer: tutorial + theme + logout (fisso in fondo) ── */}
-          <div className="flex-shrink-0 bg-white dark:bg-[#15202B] px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+4rem)]">
+          <div className="flex-shrink-0 bg-white dark:bg-[#0B0D10] px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+4rem)]">
             <button
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground hover:bg-stone-50 dark:hover:bg-white/5 transition-colors tap-scale"
               onClick={() => {

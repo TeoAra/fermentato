@@ -100,7 +100,7 @@ export default function EventiPage() {
   const hasActiveFilters = q || city || category !== "all" || source !== "all" || range !== "all";
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50/40 to-white dark:from-[#15202B] dark:to-[#0F1820]">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50/40 to-white dark:from-[#0B0D10] dark:to-[#0F1820]">
       <Helmet>
         <title>Eventi birrari in Italia · Fermenta.to</title>
         <meta name="description" content="Scopri tutti gli eventi nei pub e birrifici italiani: degustazioni, live music, feste e molto altro. Trova un evento vicino a te." />
@@ -291,7 +291,7 @@ function EventCard({ ev }: { ev: PublicEvent }) {
       <a className="block group" data-testid={`card-event-${ev.sourceType}-${ev.id}`}>
         <Card className="overflow-hidden bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] h-full">
           {ev.imageUrl ? (
-            <div className="relative h-40 bg-stone-100 dark:bg-[#1B2735]">
+            <div className="relative h-40 bg-stone-100 dark:bg-[#1A1D24]">
               <img src={ev.imageUrl} alt={ev.title} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
               <div className="absolute top-2 left-2 flex gap-1.5">

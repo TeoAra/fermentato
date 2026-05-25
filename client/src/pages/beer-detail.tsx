@@ -733,7 +733,7 @@ export default function BeerDetail() {
       {/* ── Scan redirect banner ── */}
       {scanCtx && !scanBannerDismissed && (
         <div className="fixed bottom-20 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
-          <div className="bg-gray-900 dark:bg-[#1B2735] text-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3 max-w-sm w-full pointer-events-auto border border-white/10">
+          <div className="bg-gray-900 dark:bg-[#1A1D24] text-white rounded-2xl shadow-xl px-4 py-3 flex items-center gap-3 max-w-sm w-full pointer-events-auto border border-white/10">
             <div className="flex-1 min-w-0">
               <p className="text-xs text-gray-300 leading-tight">Trovata via scansione</p>
               <p className="text-sm font-semibold truncate leading-tight mt-0.5">
@@ -1357,7 +1357,7 @@ export default function BeerDetail() {
                 </div>
 
                 {reviewsData.distribution && (
-                  <div className="mb-4 space-y-1.5 bg-stone-50/50 dark:bg-[#15202B]/20 rounded-xl p-3">
+                  <div className="mb-4 space-y-1.5 bg-stone-50/50 dark:bg-[#0B0D10]/20 rounded-xl p-3">
                     {[5, 4, 3, 2, 1].map(star => {
                       const count = reviewsData.distribution?.[star] || 0;
                       const pct = reviewsData.reviewCount > 0 ? (count / reviewsData.reviewCount) * 100 : 0;
@@ -1366,7 +1366,7 @@ export default function BeerDetail() {
                         <button
                           key={star}
                           onClick={() => { setReviewFilterRating(isActive ? null : star); setShowAllReviews(false); }}
-                          className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-stone-100 dark:bg-[#15202B]/30' : 'hover:bg-stone-50 dark:hover:bg-stone-900/20'}`}
+                          className={`flex items-center gap-3 w-full rounded-lg px-1 py-0.5 transition-colors ${isActive ? 'bg-stone-100 dark:bg-[#0B0D10]/30' : 'hover:bg-stone-50 dark:hover:bg-stone-900/20'}`}
                         >
                           <div className="flex items-center gap-1 w-12 flex-shrink-0">
                             <span className="text-xs font-bold text-muted-foreground w-3">{star}</span>
@@ -1393,7 +1393,7 @@ export default function BeerDetail() {
                   {reviewFilterRating !== null && (
                     <button
                       onClick={() => setReviewFilterRating(null)}
-                      className="flex items-center gap-1 text-xs bg-stone-50 dark:bg-[#15202B]/20 text-primary px-2.5 py-1 rounded-full font-medium border border-[#E8DED1] dark:border-white/[0.06]/30 hover:bg-stone-100 transition-colors"
+                      className="flex items-center gap-1 text-xs bg-stone-50 dark:bg-[#0B0D10]/20 text-primary px-2.5 py-1 rounded-full font-medium border border-[#E8DED1] dark:border-white/[0.06]/30 hover:bg-stone-100 transition-colors"
                     >
                       {reviewFilterRating}★ <X className="h-3 w-3" />
                     </button>
@@ -1420,7 +1420,7 @@ export default function BeerDetail() {
                     const userBadge = getBadgeForCount(Number(review.userReviewCount || 0));
                     const isPublicReviewer = review.isPublic !== false;
                     return (
-                      <div key={review.id} className="flex gap-3 p-3 bg-stone-50/30 dark:bg-[#15202B]/10 rounded-xl group">
+                      <div key={review.id} className="flex gap-3 p-3 bg-stone-50/30 dark:bg-[#0B0D10]/10 rounded-xl group">
                         <Avatar className="h-9 w-9 flex-shrink-0">
                           {review.profileImageUrl && <AvatarImage src={review.profileImageUrl} />}
                           <AvatarFallback className="bg-gradient-to-br from-[hsl(24,93%,49%)] to-[hsl(20,95%,42%)] text-white font-bold text-sm">
@@ -1818,7 +1818,7 @@ export default function BeerDetail() {
 
       {/* Potrebbero piacerti — same style, other breweries */}
       {similarBeers.length > 0 && (
-        <div className="bg-background dark:bg-[#15202B] border-t  py-8">
+        <div className="bg-background dark:bg-[#0B0D10] border-t  py-8">
           <PageContainer variant="wide">
             <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />

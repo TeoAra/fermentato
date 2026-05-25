@@ -170,9 +170,9 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
       >
       <div
         ref={sheetRef}
-        className="relative z-[61] bg-background dark:bg-[#15202B] shadow-2xl flex flex-col
+        className="relative z-[61] bg-background dark:bg-[#0B0D10] shadow-2xl flex flex-col
                    w-full max-w-md max-h-[88dvh]
-                   rounded-3xl border border-stone-200 dark:border-[#2F3D4D]
+                   rounded-3xl border border-stone-200 dark:border-[#23262E]
                    md:max-w-2xl md:max-h-[86vh]"
         style={{ animation: "findBeerCardIn 260ms cubic-bezier(0.16,1,0.3,1)" }}
         onClick={(e) => e.stopPropagation()}
@@ -192,7 +192,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                 value={query}
                 onChange={e => { setQuery(e.target.value); setActiveStyle(""); }}
                 placeholder="Cerca birra, stile o birrificio…"
-                className="w-full pl-10 pr-9 py-3 rounded-2xl bg-stone-100 dark:bg-[#1B2735] text-[15px] text-foreground placeholder-stone-400 dark:placeholder-stone-500 border-0 outline-none font-medium"
+                className="w-full pl-10 pr-9 py-3 rounded-2xl bg-stone-100 dark:bg-[#1A1D24] text-[15px] text-foreground placeholder-stone-400 dark:placeholder-stone-500 border-0 outline-none font-medium"
               />
               {(query || activeStyle) && (
                 <button
@@ -215,7 +215,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
             </button>
             <button
               onClick={onClose}
-              className="flex-shrink-0 w-10 h-10 rounded-full bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center"
+              className="flex-shrink-0 w-10 h-10 rounded-full bg-stone-100 dark:bg-[#1A1D24] flex items-center justify-center"
             >
               <X className="w-4 h-4 text-stone-500" />
             </button>
@@ -235,7 +235,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                 <button
                   key={r.q + r.ts}
                   onClick={() => { setQuery(r.q); setActiveStyle(""); setActiveTab("birre"); }}
-                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-50 dark:bg-[#1B2735]/40 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-[#2F3D4D] tap-scale"
+                  className="flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold bg-stone-50 dark:bg-[#1A1D24]/40 text-stone-600 dark:text-stone-300 border border-stone-200 dark:border-[#23262E] tap-scale"
                 >
                   {r.q}
                 </button>
@@ -263,7 +263,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-full text-sm font-semibold border transition-all tap-scale ${
                   (s.style && activeStyle === s.style) || (!s.style && activeTab === "locali" && !hasFilter)
                     ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-stone-50 dark:bg-[#1B2735]/60 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#2F3D4D]"
+                    : "bg-stone-50 dark:bg-[#1A1D24]/60 text-stone-600 dark:text-stone-300 border-stone-200 dark:border-[#23262E]"
                 }`}
               >
                 <span className="text-base leading-none">{s.icon}</span>
@@ -287,7 +287,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                     className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-bold border transition-all tap-scale ${
                       activeStyle === s.style
                         ? "bg-primary text-white border-primary"
-                        : "bg-white dark:bg-[#1B2735]/40 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-[#2F3D4D]"
+                        : "bg-white dark:bg-[#1A1D24]/40 text-stone-500 dark:text-stone-400 border-stone-200 dark:border-[#23262E]"
                     }`}
                   >
                     {s.style.split(" - ")[0].split("/")[0].trim()}
@@ -299,14 +299,14 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
         })()}
 
         <div className="px-4 pb-3 flex-shrink-0">
-          <div className="flex bg-stone-100 dark:bg-[#1B2735]/60 rounded-2xl p-1 gap-1">
+          <div className="flex bg-stone-100 dark:bg-[#1A1D24]/60 rounded-2xl p-1 gap-1">
             {(["birre", "birrifici", "locali"] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
                   activeTab === tab
-                    ? "bg-white dark:bg-[#232F3D] text-foreground shadow-sm"
+                    ? "bg-white dark:bg-[#12151A] text-foreground shadow-sm"
                     : "text-stone-400 dark:text-stone-500"
                 }`}
               >
@@ -322,7 +322,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
               isLoading ? (
                 <div className="space-y-2.5">
                   {[...Array(4)].map((_, i) => (
-                    <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1B2735]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+                    <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1A1D24]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
                   ))}
                 </div>
               ) : breweries.length > 0 ? (
@@ -333,8 +333,8 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                   </p>
                   {breweries.slice(0, 15).map((brewery: any) => (
                     <Link key={brewery.id} href={`/brewery/${brewery.id}`} onClick={onClose}>
-                      <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
-                        <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1B2735] overflow-hidden flex items-center justify-center">
+                      <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
+                        <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
                           {brewery.logoUrl ? (
                             <img src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover" />
                           ) : (
@@ -384,7 +384,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
             isLoading ? (
               <div className="space-y-2.5">
                 {[...Array(5)].map((_, i) => (
-                  <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1B2735]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+                  <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1A1D24]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
                 ))}
               </div>
             ) : (beers.length > 0 || breweries.length > 0) ? (
@@ -410,8 +410,8 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                       </p>
                       {breweries.slice(0, 5).map((brewery: any) => (
                         <Link key={brewery.id} href={`/brewery/${brewery.id}`} onClick={onClose}>
-                          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
-                            <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1B2735] overflow-hidden flex items-center justify-center">
+                          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
+                            <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
                               {brewery.logoUrl ? (
                                 <img src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover" />
                               ) : (
@@ -443,8 +443,8 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                   )}
                   {beers.slice(0, 40).map((beer: any) => (
                     <Link key={beer.id} href={`/beer/${beer.id}`} onClick={onClose}>
-                      <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
-                        <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1B2735] overflow-hidden flex items-center justify-center">
+                      <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
+                        <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
                           {beer.imageUrl || beer.breweryLogoUrl ? (
                             <img
                               src={beer.imageUrl || beer.breweryLogoUrl}
@@ -484,7 +484,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                 <div className="flex gap-2 justify-center mt-5">
                   <button
                     onClick={clearFilters}
-                    className="px-4 py-2 rounded-xl border border-stone-200 dark:border-[#2F3D4D] text-sm font-semibold text-stone-500"
+                    className="px-4 py-2 rounded-xl border border-stone-200 dark:border-[#23262E] text-sm font-semibold text-stone-500"
                   >
                     Cambia stile
                   </button>
@@ -510,7 +510,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
               return (
                 <div className="space-y-2.5">
                   {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1B2735]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+                    <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1A1D24]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
                   ))}
                 </div>
               );
@@ -527,8 +527,8 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                   </p>
                   {pubsToShow.map((pub: any) => (
                     <Link key={pub.id} href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`} onClick={onClose}>
-                      <div data-testid={`pub-result-${pub.id}`} className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#2F3D4D] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
-                        <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1B2735] overflow-hidden flex items-center justify-center">
+                      <div data-testid={`pub-result-${pub.id}`} className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
+                        <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
                           {pub.logoUrl ? (
                             <img src={pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" />
                           ) : (

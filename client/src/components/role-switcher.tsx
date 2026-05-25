@@ -60,7 +60,7 @@ export function RoleSwitcher({ compact = false }: RoleSwitcherProps) {
         disabled={switchRoleMutation.isPending}
       >
         <SelectTrigger 
-          className="w-full bg-stone-100/50 dark:bg-[#1B2735]/50 border-white/20 dark:border-[#2F3D4D]/50"
+          className="w-full bg-stone-100/50 dark:bg-[#1A1D24]/50 border-white/20 dark:border-[#23262E]/50"
           data-testid="role-switcher-trigger"
         >
           <div className="flex items-center gap-2">

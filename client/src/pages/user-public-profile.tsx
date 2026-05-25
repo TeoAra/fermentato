@@ -59,8 +59,8 @@ function BadgeCard({ badge, reviewCount, isCurrentLevel }: { badge: any; reviewC
       isCurrentLevel
         ? `border-current bg-gradient-to-br ${badge.bgFrom} ${badge.bgTo} text-white shadow-lg scale-105`
         : unlocked
-        ? `${badge.borderColor} bg-white dark:bg-[#1B2735]`
-        : "border-gray-200 dark:border-[#2F3D4D] bg-stone-50 dark:bg-[#15202B] opacity-40"
+        ? `${badge.borderColor} bg-white dark:bg-[#1A1D24]`
+        : "border-gray-200 dark:border-[#23262E] bg-stone-50 dark:bg-[#0B0D10] opacity-40"
     }`}>
       {isCurrentLevel && (
         <div className="absolute -top-2 -right-2 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full shadow">
@@ -259,7 +259,7 @@ export default function UserPublicProfile() {
 
       {/* Progress to next level */}
       {nextBadge && (
-        <div className="px-6 py-4 bg-white dark:bg-[#15202B] border-t border-gray-100 dark:border-[#2F3D4D]">
+        <div className="px-6 py-4 bg-white dark:bg-[#0B0D10] border-t border-gray-100 dark:border-[#23262E]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-medium text-muted-foreground dark:text-stone-300">
               Progresso verso <strong>{nextBadge.name}</strong> {nextBadge.emoji}
@@ -268,7 +268,7 @@ export default function UserPublicProfile() {
               {profile.reviewCount} / {nextBadge.minReviews}
             </span>
           </div>
-          <div className="h-2.5 bg-stone-200 dark:bg-[#232F3D] rounded-full overflow-hidden">
+          <div className="h-2.5 bg-stone-200 dark:bg-[#12151A] rounded-full overflow-hidden">
             <div
               className={`h-full bg-gradient-to-r ${badge.bgFrom} ${badge.bgTo} rounded-full transition-all duration-500`}
               style={{ width: `${progress}%` }}
@@ -382,7 +382,7 @@ export default function UserPublicProfile() {
         <div className="space-y-3">
           {recentReviews.map((review: any) => (
             <Link key={review.id} href={`/beer/${review.beerId}`}>
-              <div className="flex items-start gap-3 p-3 rounded-xl hover:bg-stone-50 dark:hover:bg-[#1B2735] transition-colors cursor-pointer">
+              <div className="flex items-start gap-3 p-3 rounded-xl hover:bg-stone-50 dark:hover:bg-[#1A1D24] transition-colors cursor-pointer">
                 <ImageWithFallback
                   src={review.beerImageUrl}
                   alt={review.beerName}

@@ -45,7 +45,7 @@ export function PubOwnerTopBar({
       style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
     >
       <motion.div 
-        className="glass-card border-b border-white/20 dark:border-[#2F3D4D]/50 backdrop-blur-xl bg-white/80 dark:bg-[#15202B]/80"
+        className="glass-card border-b border-white/20 dark:border-[#23262E]/50 backdrop-blur-xl bg-white/80 dark:bg-[#0B0D10]/80"
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: "easeOut" }}
@@ -104,7 +104,7 @@ export function PubOwnerTopBar({
 
             {/* Center - Section icons (icon-only on mobile, icon+label on desktop) */}
             <div className="flex-1 flex items-center justify-center">
-              <nav className="flex items-center gap-0.5 lg:gap-1 bg-stone-100/50 dark:bg-[#1B2735]/50 rounded-xl lg:rounded-2xl p-0.5 lg:p-1">
+              <nav className="flex items-center gap-0.5 lg:gap-1 bg-stone-100/50 dark:bg-[#1A1D24]/50 rounded-xl lg:rounded-2xl p-0.5 lg:p-1">
                 {sections.map((section, index) => {
                   const Icon = section.icon;
                   const isActive = currentSection === section.id;
@@ -116,7 +116,7 @@ export function PubOwnerTopBar({
                       className={`relative flex items-center justify-center p-2 lg:px-3 lg:py-2 rounded-lg lg:rounded-xl text-sm font-medium transition-all duration-300 ${
                         isActive
                           ? 'text-white shadow-lg'
-                          : 'text-muted-foreground dark:text-stone-400 hover:text-foreground dark:hover:text-white hover:bg-white/50 dark:hover:bg-[#232F3D]/50'
+                          : 'text-muted-foreground dark:text-stone-400 hover:text-foreground dark:hover:text-white hover:bg-white/50 dark:hover:bg-[#12151A]/50'
                       }`}
                       data-testid={`nav-${section.id}`}
                       whileTap={{ scale: 0.9 }}

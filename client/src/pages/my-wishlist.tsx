@@ -28,7 +28,7 @@ export default function MyWishlist() {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] flex items-center justify-center p-6">
         <div className="text-center space-y-3">
           <Heart className="w-12 h-12 mx-auto text-stone-300" />
           <p className="text-stone-500">Accedi per vedere la tua wishlist</p>
@@ -39,10 +39,10 @@ export default function MyWishlist() {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] pb-24">
+    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] pb-24">
       <Helmet><title>Wishlist | Fermenta.to</title></Helmet>
 
-      <div className="bg-white dark:bg-[#1B2735] border-b border-stone-100 dark:border-[hsl(220,5%,27%)] px-4 py-5">
+      <div className="bg-white dark:bg-[#1A1D24] border-b border-stone-100 dark:border-[hsl(220,5%,27%)] px-4 py-5">
         <h1 className="text-xl font-bold text-stone-900 dark:text-stone-50 font-poppins">Wishlist</h1>
         <p className="text-sm text-stone-500 mt-0.5">{wishlist.length} {wishlist.length === 1 ? "birra" : "birre"} da provare</p>
       </div>
@@ -70,9 +70,9 @@ export default function MyWishlist() {
               className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 flex items-center gap-3 p-3"
             >
               {item.beer_image ? (
-                <img src={item.beer_image} alt={item.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[#232F3D]" />
+                <img src={item.beer_image} alt={item.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[#12151A]" />
               ) : (
-                <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#232F3D] flex items-center justify-center flex-shrink-0">
+                <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#12151A] flex items-center justify-center flex-shrink-0">
                   <Package className="w-6 h-6 text-stone-300" />
                 </div>
               )}
@@ -80,7 +80,7 @@ export default function MyWishlist() {
                 <p className="font-semibold text-stone-900 dark:text-stone-50 truncate text-sm font-poppins">{item.beer_name}</p>
                 <p className="text-xs text-stone-400 mt-0.5">{item.brewery_name}</p>
                 {item.beer_style && (
-                  <span className="inline-block text-xs bg-stone-100 dark:bg-[#232F3D] text-stone-500 rounded-full px-2 py-0.5 mt-1">{item.beer_style}</span>
+                  <span className="inline-block text-xs bg-stone-100 dark:bg-[#12151A] text-stone-500 rounded-full px-2 py-0.5 mt-1">{item.beer_style}</span>
                 )}
               </Link>
               {item.beer_abv && (

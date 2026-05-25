@@ -161,7 +161,7 @@ export default function BecomePublican() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-[#15202B] dark:to-gray-800 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white dark:from-[#0B0D10] dark:to-gray-800 py-8 px-4">
       <div className="max-w-2xl mx-auto">
         <Button 
           variant="ghost" 

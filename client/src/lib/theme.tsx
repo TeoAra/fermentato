@@ -33,12 +33,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
     // Sync browser/PWA chrome (status bar color in Chrome Android, iOS Safari
     // address bar tint, Android task switcher header).
-    const headerBg = theme === "dark" ? "#15202B" : "#FFFFFF";
+    const headerBg = theme === "dark" ? "#0B0D10" : "#FFFFFF";
     const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement | null;
     if (meta) meta.setAttribute("content", headerBg);
 
     // iOS PWA: in dark mode usiamo 'black-translucent' (icone bianche su
-    // header scuro #15202B esteso via env(safe-area-inset-top) → no stacco).
+    // header scuro #0B0D10 esteso via env(safe-area-inset-top) → no stacco).
     // In light mode usiamo 'default' (barra opaca bianca con icone scure):
     // iOS la disegna del proprio bianco di sistema che combacia col bianco
     // dell'header, quindi visivamente non c'è gap. 'black-translucent' in

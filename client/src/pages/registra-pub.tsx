@@ -557,7 +557,7 @@ export default function RegistraPub() {
                               form.setValue("breweryRegion", b.region || "");
                               form.setValue("breweryCountry", (b as any).country || "");
                               setBrewerySearch("");
-                            }} className="w-full text-left p-2 rounded hover:bg-stone-50 dark:hover:bg-[#1B2735]/35 transition-colors">
+                            }} className="w-full text-left p-2 rounded hover:bg-stone-50 dark:hover:bg-[#1A1D24]/35 transition-colors">
                               <p className="font-medium text-sm">{b.name}</p>
                               <p className="text-xs text-muted-foreground">{b.location}</p>
                             </button>
@@ -651,7 +651,7 @@ export default function RegistraPub() {
                         )} />
                       )}
                       {sameSiteAsPub && (
-                        <div className="text-sm text-muted-foreground dark:text-stone-400 bg-stone-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 border border-stone-200 dark:border-[#2F3D4D]">
+                        <div className="text-sm text-muted-foreground dark:text-stone-400 bg-stone-50 dark:bg-orange-900/20 rounded-lg px-3 py-2 border border-stone-200 dark:border-[#23262E]">
                           Sede: <span className="font-medium text-muted-foreground dark:text-stone-300">{form.watch("pubAddress") || form.watch("pubCity")}</span>
                         </div>
                       )}

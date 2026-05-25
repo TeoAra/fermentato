@@ -29,7 +29,7 @@ function engineLabel(engine: string | null): { label: string; color: string } {
   switch (engine) {
     case "gemini": return { label: "Gemini AI", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" };
     case "paddleocr": return { label: "PaddleOCR", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" };
-    case "tesseract": return { label: "Tesseract", color: "bg-stone-100 text-muted-foreground dark:bg-[#1B2735] dark:text-stone-300" };
+    case "tesseract": return { label: "Tesseract", color: "bg-stone-100 text-muted-foreground dark:bg-[#1A1D24] dark:text-stone-300" };
     case "ocrspace": return { label: "OCR.space", color: "bg-stone-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" };
     case "barcode": return { label: "Barcode", color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" };
     default: return { label: engine || "OCR", color: "bg-stone-100 text-muted-foreground" };
@@ -63,10 +63,10 @@ export default function ScanHistoryPage() {
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
       {/* Header */}
-      <div className="bg-white dark:bg-[#15202B] border-b border-gray-200 dark:border-[#2F3D4D] sticky top-0 z-10">
+      <div className="bg-white dark:bg-[#0B0D10] border-b border-gray-200 dark:border-[#23262E] sticky top-0 z-10">
         <div className="max-w-xl mx-auto px-4 py-4 flex items-center gap-3">
           <Link href="/scan">
-            <button className="w-9 h-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-[#1B2735] hover:bg-stone-200 dark:hover:bg-[#232F3D] transition-colors">
+            <button className="w-9 h-9 flex items-center justify-center rounded-full bg-stone-100 dark:bg-[#1A1D24] hover:bg-stone-200 dark:hover:bg-[#12151A] transition-colors">
               <ArrowLeft className="h-4 w-4 text-muted-foreground dark:text-stone-300" />
             </button>
           </Link>
@@ -82,7 +82,7 @@ export default function ScanHistoryPage() {
         {logsLoading ? (
           <div className="flex flex-col gap-3">
             {[1,2,3].map(i => (
-              <div key={i} className="bg-white dark:bg-[#15202B] rounded-2xl h-24 animate-pulse" />
+              <div key={i} className="bg-white dark:bg-[#0B0D10] rounded-2xl h-24 animate-pulse" />
             ))}
           </div>
         ) : logs.length === 0 ? (
@@ -113,7 +113,7 @@ export default function ScanHistoryPage() {
                 <div key={log.id} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30">
                   <div className="flex gap-3 p-3">
                     {/* Scanned image or placeholder */}
-                    <div className="w-16 h-16 rounded-xl bg-stone-100 dark:bg-[#1B2735] flex items-center justify-center overflow-hidden shrink-0">
+                    <div className="w-16 h-16 rounded-xl bg-stone-100 dark:bg-[#1A1D24] flex items-center justify-center overflow-hidden shrink-0">
                       {log.imageUrl ? (
                         <img src={log.imageUrl} alt="scan" className="w-full h-full object-cover" />
                       ) : (
@@ -160,7 +160,7 @@ export default function ScanHistoryPage() {
                           {eng.label}
                         </span>
                         {log.latencyMs && (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-stone-100 dark:bg-[#1B2735] text-muted-foreground dark:text-stone-400">
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-stone-100 dark:bg-[#1A1D24] text-muted-foreground dark:text-stone-400">
                             <Clock className="h-3 w-3" />
                             {log.latencyMs < 1000 ? `${log.latencyMs}ms` : `${(log.latencyMs/1000).toFixed(1)}s`}
                           </span>
@@ -171,7 +171,7 @@ export default function ScanHistoryPage() {
                             {log.chosenBeerId ? "Birra" : "Birrificio"}
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-stone-100 dark:bg-[#1B2735] text-muted-foreground">
+                          <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-stone-100 dark:bg-[#1A1D24] text-muted-foreground">
                             <Search className="h-3 w-3" />
                             Nessuna scelta
                           </span>

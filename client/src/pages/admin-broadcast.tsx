@@ -109,7 +109,7 @@ export default function AdminBroadcast() {
 
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] flex items-center justify-center p-6">
         <div className="text-center max-w-sm space-y-3">
           <Lock className="w-10 h-10 text-stone-400 mx-auto" />
           <h1 className="text-xl font-bold">Accesso riservato</h1>
@@ -123,7 +123,7 @@ export default function AdminBroadcast() {
   }
 
   return (
-    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] pb-24">
+    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] pb-24">
       <Helmet><title>Broadcast | Admin</title></Helmet>
 
       <header className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-b border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 py-5">
@@ -147,7 +147,7 @@ export default function AdminBroadcast() {
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                     audience === a.value
                       ? "bg-primary text-white border-primary"
-                      : "bg-stone-50 dark:bg-[#1B2735] text-stone-500 border-stone-200 dark:border-[#2F3D4D]"
+                      : "bg-stone-50 dark:bg-[#1A1D24] text-stone-500 border-stone-200 dark:border-[#23262E]"
                   }`}>
                   <a.icon className="w-3.5 h-3.5" /> {a.label}
                 </button>
@@ -200,7 +200,7 @@ export default function AdminBroadcast() {
               </AlertDialogDescription>
             </AlertDialogHeader>
 
-            <div className="rounded-xl border border-stone-200 dark:border-[#2F3D4D] bg-stone-50 dark:bg-[#15202B]/50 p-3 my-2">
+            <div className="rounded-xl border border-stone-200 dark:border-[#23262E] bg-stone-50 dark:bg-[#0B0D10]/50 p-3 my-2">
               <div className="flex items-start gap-3">
                 <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
                   <Megaphone className="w-4 h-4 text-primary" />
@@ -242,7 +242,7 @@ export default function AdminBroadcast() {
           ) : (
             <div className="space-y-2 max-h-[600px] overflow-y-auto pr-1">
               {history.slice(0, 50).map(b => (
-                <div key={b.id} className="border border-stone-100 dark:border-[#2F3D4D]/50 rounded-xl p-3" data-testid={`broadcast-history-${b.id}`}>
+                <div key={b.id} className="border border-stone-100 dark:border-[#23262E]/50 rounded-xl p-3" data-testid={`broadcast-history-${b.id}`}>
                   <div className="flex items-start justify-between gap-2">
                     <p className="text-sm font-bold text-stone-900 dark:text-stone-50 flex-1 break-words">{b.title}</p>
                     <span className="text-[10px] font-bold bg-primary/10 text-primary px-2 py-0.5 rounded-full uppercase shrink-0">
@@ -282,7 +282,7 @@ export default function AdminBroadcast() {
             {sources.length === 0 ? (
               <p className="text-xs text-stone-400 text-center py-3">Nessuna fonte</p>
             ) : sources.map(s => (
-              <div key={s.id} className="flex items-center gap-2 border border-stone-100 dark:border-[#2F3D4D]/50 rounded-xl p-3">
+              <div key={s.id} className="flex items-center gap-2 border border-stone-100 dark:border-[#23262E]/50 rounded-xl p-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-stone-800 dark:text-stone-100">{s.name}</p>
                   <p className="text-[11px] text-stone-400 truncate">{s.url}</p>
@@ -295,7 +295,7 @@ export default function AdminBroadcast() {
             ))}
           </div>
 
-          <div className="space-y-2 border-t border-stone-100 dark:border-[#2F3D4D]/50 pt-4">
+          <div className="space-y-2 border-t border-stone-100 dark:border-[#23262E]/50 pt-4">
             <Input value={newSourceName} onChange={e => setNewSourceName(e.target.value)}
               placeholder="Nome (es. Cronache di Birra)" className="rounded-xl" />
             <Input value={newSourceUrl} onChange={e => setNewSourceUrl(e.target.value)}

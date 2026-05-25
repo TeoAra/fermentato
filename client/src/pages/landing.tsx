@@ -284,7 +284,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 variant="ghost"
-                className="h-14 px-8 text-base font-semibold rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-white dark:hover:bg-white/10 border border-stone-200 dark:border-[#2F3D4D] bg-white/60 dark:bg-white/5 backdrop-blur-sm active:scale-[0.97] transition-transform"
+                className="h-14 px-8 text-base font-semibold rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-white dark:hover:bg-white/10 border border-stone-200 dark:border-[#23262E] bg-white/60 dark:bg-white/5 backdrop-blur-sm active:scale-[0.97] transition-transform"
               >
                 <Search className="mr-2 w-5 h-5" />
                 Esplora senza account
@@ -323,7 +323,7 @@ export default function Landing() {
       </section>
 
       {/* ─── SOCIAL PROOF BAR ────────────────────────────────────────────── */}
-      <section className="border-y border-stone-100 dark:border-[#2F3D4D] bg-white/50 dark:bg-white/3 py-5">
+      <section className="border-y border-stone-100 dark:border-[#23262E] bg-white/50 dark:bg-white/3 py-5">
         <PageContainer variant="hero" className="flex flex-wrap items-center justify-center gap-8 text-sm text-stone-500 dark:text-stone-400">
           <span className="flex items-center gap-2 font-medium">
             <CheckCircle2 className="w-4 h-4 text-green-500" /> 100% gratuito per gli utenti
@@ -429,7 +429,7 @@ export default function Landing() {
 
           {locationStatus === 'granted' ? (
             <div className="relative w-full h-[420px] rounded-3xl overflow-hidden bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200" style={{ maxHeight: 420 }}>
-              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1B2735] animate-pulse" />}>
+              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
                 <HomepageMap
                   pubs={Array.isArray(pubs) ? pubs : []}
                   breweries={Array.isArray(breweriesForMap) && breweriesForMap.length > 0 ? breweriesForMap : (Array.isArray(breweriesFallback) ? breweriesFallback : [])}
@@ -481,7 +481,7 @@ export default function Landing() {
           </div>
           {pubsLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-[#1B2735] rounded-3xl h-80 animate-pulse" />)}
+              {[...Array(3)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-[#1A1D24] rounded-3xl h-80 animate-pulse" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -511,7 +511,7 @@ export default function Landing() {
           </div>
           {Array.isArray(breweriesFallback) && breweriesFallback.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-[#1B2735] rounded-3xl h-72 animate-pulse" />)}
+              {[...Array(4)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-[#1A1D24] rounded-3xl h-72 animate-pulse" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -650,7 +650,7 @@ export default function Landing() {
                   </Button>
                 </Link>
               </div>
-              <div className="hidden md:flex flex-col items-center justify-center px-10 py-8 bg-stone-50 dark:bg-[#1B2735]/60 border-l border-stone-100 dark:border-[#2F3D4D] h-full gap-2 min-w-[200px]">
+              <div className="hidden md:flex flex-col items-center justify-center px-10 py-8 bg-stone-50 dark:bg-[#1A1D24]/60 border-l border-stone-100 dark:border-[#23262E] h-full gap-2 min-w-[200px]">
                 <div className="text-5xl mb-1">🎪</div>
                 <span className="text-3xl font-black text-stone-900 dark:text-white">€50</span>
                 <span className="text-xs text-stone-400 dark:text-stone-500 text-center">una tantum<br />per evento</span>

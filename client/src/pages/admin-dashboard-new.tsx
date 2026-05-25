@@ -257,8 +257,8 @@ export default function AdminDashboardNew() {
             <CardContent className="space-y-2.5">
               {[
                 { icon: Beer, label: 'Birre', value: adminStats?.totalBeers || globalStats?.totalBeers || 0, color: 'text-emerald-600', bgColor: 'bg-emerald-50 dark:bg-emerald-950/10' },
-                { icon: Building2, label: 'Birrifici', value: adminStats?.totalBreweries || globalStats?.totalBreweries || 0, color: 'text-primary', bgColor: 'bg-stone-50 dark:bg-[#15202B]/10' },
-                { icon: Store, label: 'Pub', value: adminStats?.totalPubs || 0, color: 'text-primary', bgColor: 'bg-stone-50 dark:bg-[#15202B]/10' },
+                { icon: Building2, label: 'Birrifici', value: adminStats?.totalBreweries || globalStats?.totalBreweries || 0, color: 'text-primary', bgColor: 'bg-stone-50 dark:bg-[#0B0D10]/10' },
+                { icon: Store, label: 'Pub', value: adminStats?.totalPubs || 0, color: 'text-primary', bgColor: 'bg-stone-50 dark:bg-[#0B0D10]/10' },
                 { icon: Users, label: 'Utenti', value: adminStats?.totalUsers || 0, color: 'text-blue-600', bgColor: 'bg-blue-50 dark:bg-blue-950/10' },
                 { icon: Star, label: 'Recensioni', value: adminStats?.totalReviews || 0, color: 'text-amber-500', bgColor: 'bg-amber-50 dark:bg-amber-950/10' },
                 { icon: CalendarDays, label: 'Eventi', value: adminStats?.totalEvents || 0, color: 'text-purple-500', bgColor: 'bg-purple-50 dark:bg-purple-950/10' },

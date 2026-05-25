@@ -91,13 +91,13 @@ function BrewerySearchField({ onSelect }: { onSelect: (id: number, name: string)
         className="mt-1"
       />
       {showResults && results.length > 0 && (
-        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1B2735] border rounded-md shadow-xl max-h-60 overflow-y-auto">
+        <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1A1D24] border rounded-md shadow-xl max-h-60 overflow-y-auto">
           {results.map((brewery) => (
             <button
               key={brewery.id}
               type="button"
               onClick={() => { onSelect(brewery.id, brewery.name); setSelectedName(brewery.name); setQuery(""); setShowResults(false); setResults([]); }}
-              className="w-full px-3 py-2.5 text-left hover:bg-amber-50 dark:hover:bg-[#232F3D] border-b last:border-b-0 flex items-center gap-3 transition-colors"
+              className="w-full px-3 py-2.5 text-left hover:bg-amber-50 dark:hover:bg-[#12151A] border-b last:border-b-0 flex items-center gap-3 transition-colors"
             >
               {brewery.logoUrl ? (
                 <img src={brewery.logoUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
@@ -171,7 +171,7 @@ function CollabBrewerySelector({ selected, onChange, excludeBreweryId }: { selec
           autoComplete="off"
         />
         {showResults && results.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1B2735] border rounded-md shadow-xl max-h-48 overflow-y-auto">
+          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1A1D24] border rounded-md shadow-xl max-h-48 overflow-y-auto">
             {results.map((b) => (
               <button key={b.id} type="button" onMouseDown={e => { e.preventDefault(); add(b); }}
                 className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
@@ -248,7 +248,7 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
           <Label>Stile *</Label>
           <Input value={styleDropdownOpen ? styleSearch : style} onChange={e => { setStyleSearch(e.target.value); setStyle(e.target.value); setStyleDropdownOpen(true); }} onFocus={() => { setStyleSearch(style); setStyleDropdownOpen(true); }} onBlur={() => setTimeout(() => setStyleDropdownOpen(false), 200)} required className="mt-1" placeholder="Cerca o digita stile..." autoComplete="off" />
           {styleDropdownOpen && filteredStyles.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-md bg-white dark:bg-[#1B2735] shadow-lg">
+            <div className="absolute z-50 w-full mt-1 max-h-40 overflow-y-auto border rounded-md bg-white dark:bg-[#1A1D24] shadow-lg">
               {filteredStyles.slice(0, 12).map(s => (
                 <div key={s} onMouseDown={e => { e.preventDefault(); setStyle(s); setStyleSearch(""); setStyleDropdownOpen(false); }} className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer">{s}</div>
               ))}
@@ -280,7 +280,7 @@ function BeerForm({ onSubmit, isPending }: { onSubmit: (data: any) => void; isPe
           <Label>Colore</Label>
           <Input value={color} onChange={e => { setColor(e.target.value); setColorDropdownOpen(true); }} onFocus={() => setColorDropdownOpen(true)} onBlur={() => setTimeout(() => setColorDropdownOpen(false), 200)} className="mt-1" placeholder="Es. dorata, ambrata..." autoComplete="off" />
           {colorDropdownOpen && filteredColors.length > 0 && (
-            <div className="absolute z-50 w-full mt-1 max-h-36 overflow-y-auto border rounded-md bg-white dark:bg-[#1B2735] shadow-lg">
+            <div className="absolute z-50 w-full mt-1 max-h-36 overflow-y-auto border rounded-md bg-white dark:bg-[#1A1D24] shadow-lg">
               {filteredColors.map(c => (
                 <div key={c} onMouseDown={e => { e.preventDefault(); setColor(c); setColorDropdownOpen(false); }} className="px-3 py-1.5 text-sm hover:bg-amber-50 dark:hover:bg-amber-900/20 cursor-pointer capitalize">{c}</div>
               ))}
@@ -602,7 +602,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
             {searchResults.length > 0 && (
               <div className="space-y-1.5 max-h-[600px] overflow-y-auto pr-1">
                 {searchResults.map((item) => (
-                  <div key={item.id} className={`flex items-center gap-3 p-2.5 border rounded-xl hover:bg-gray-50 dark:hover:bg-[#1B2735]/60 transition-colors ${selectedIds.has(item.id) ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
+                  <div key={item.id} className={`flex items-center gap-3 p-2.5 border rounded-xl hover:bg-gray-50 dark:hover:bg-[#1A1D24]/60 transition-colors ${selectedIds.has(item.id) ? 'border-amber-400 bg-amber-50/50 dark:bg-amber-900/10' : ''}`}>
                     <div className="flex-shrink-0 cursor-pointer" onClick={() => toggleSelect(item.id)}>
                       <Checkbox checked={selectedIds.has(item.id)} className="w-4 h-4" />
                     </div>
@@ -694,7 +694,7 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
         <div className="space-y-4">
 
           {/* Selection summary */}
-          <Card className={`${selCount > 0 ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10' : 'border-dashed border-gray-200 dark:border-[#2F3D4D]'} transition-colors`}>
+          <Card className={`${selCount > 0 ? 'border-amber-400 bg-amber-50 dark:bg-amber-900/10' : 'border-dashed border-gray-200 dark:border-[#23262E]'} transition-colors`}>
             <CardContent className="pt-4 pb-4">
               <div className="flex items-center justify-between mb-1">
                 <div className="flex items-center gap-2">

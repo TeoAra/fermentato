@@ -21,13 +21,13 @@ export default function NewsPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#15202B] pb-24">
+    <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] pb-24">
       <Helmet>
         <title>News birra artigianale | Fermenta.to</title>
         <meta name="description" content="Le ultime notizie dal mondo della birra artigianale italiana, aggregate dai migliori blog e magazine di settore." />
       </Helmet>
 
-      <header className="bg-white dark:bg-[#1B2735] border-b border-stone-100 dark:border-[#2F3D4D] px-4 pt-6 pb-4">
+      <header className="bg-white dark:bg-[#1A1D24] border-b border-stone-100 dark:border-[#23262E] px-4 pt-6 pb-4">
         <div className="max-w-3xl mx-auto flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center">
             <Newspaper className="w-5 h-5 text-primary" />

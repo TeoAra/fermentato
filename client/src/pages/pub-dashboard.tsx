@@ -241,7 +241,7 @@ export default function PubDashboard() {
 
   if (!isAuthenticated) {
     return (
-      <div className="max-w-md mx-auto mt-8 p-6 bg-white dark:bg-[#15202B] rounded-lg shadow">
+      <div className="max-w-md mx-auto mt-8 p-6 bg-white dark:bg-[#0B0D10] rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-4">Accesso Richiesto</h2>
         <p className="text-muted-foreground dark:text-stone-300 mb-6">
           Per gestire i tuoi pub devi prima effettuare l'accesso.
@@ -258,7 +258,7 @@ export default function PubDashboard() {
 
   if (!pubs || pubs.length === 0) {
     return (
-      <div className="max-w-2xl mx-auto mt-8 p-6 bg-white dark:bg-[#15202B] rounded-lg shadow">
+      <div className="max-w-2xl mx-auto mt-8 p-6 bg-white dark:bg-[#0B0D10] rounded-lg shadow">
         <div className="text-center">
           <Building2 className="w-16 h-16 text-stone-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-4">Nessun Pub Registrato</h2>
@@ -388,7 +388,7 @@ export default function PubDashboard() {
           }
           const daysLeft = Math.ceil((trialEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
           return (
-            <Card className={`border-stone-200 dark:border-[#2F3D4D] ${daysLeft <= 5 ? 'bg-stone-50 dark:bg-orange-900/20' : 'bg-stone-50 dark:bg-[#15202B]/20'}`}>
+            <Card className={`border-stone-200 dark:border-[#23262E] ${daysLeft <= 5 ? 'bg-stone-50 dark:bg-orange-900/20' : 'bg-stone-50 dark:bg-[#0B0D10]/20'}`}>
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
@@ -420,7 +420,7 @@ export default function PubDashboard() {
         }
         if (status === 'none') {
           return (
-            <Card className="border-stone-200 dark:border-[#2F3D4D] bg-stone-50 dark:bg-[#15202B]/50">
+            <Card className="border-stone-200 dark:border-[#23262E] bg-stone-50 dark:bg-[#0B0D10]/50">
               <CardContent className="p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
@@ -487,7 +487,7 @@ export default function PubDashboard() {
                   </div>
 
                   {selectedPub.description && (
-                    <p className="text-muted-foreground dark:text-stone-300 mt-3 bg-stone-50 dark:bg-[#232F3D] p-3 rounded-lg">
+                    <p className="text-muted-foreground dark:text-stone-300 mt-3 bg-stone-50 dark:bg-[#12151A] p-3 rounded-lg">
                       {selectedPub.description}
                     </p>
                   )}
@@ -783,9 +783,9 @@ function PubAnalyticsTab({ pubId }: { pubId: number }) {
     return (
       <div className="space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="h-24 rounded-xl bg-stone-100 dark:bg-[#15202B] animate-pulse" />)}
+          {[1,2,3,4].map(i => <div key={i} className="h-24 rounded-xl bg-stone-100 dark:bg-[#0B0D10] animate-pulse" />)}
         </div>
-        <div className="h-64 rounded-xl bg-stone-100 dark:bg-[#15202B] animate-pulse" />
+        <div className="h-64 rounded-xl bg-stone-100 dark:bg-[#0B0D10] animate-pulse" />
       </div>
     );
   }

@@ -55,7 +55,7 @@ function RatingSlider({ value, onChange }: { value: number; onChange: (v: number
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
       >
-        <div className="absolute inset-x-0 h-2 bg-stone-100 dark:bg-[#1B2735] rounded-full" />
+        <div className="absolute inset-x-0 h-2 bg-stone-100 dark:bg-[#1A1D24] rounded-full" />
         <div className="absolute left-0 h-2 bg-primary rounded-full transition-all duration-100" style={{ width: `${fillPct}%` }} />
         {RATING_STEPS.map((step, i) => {
           const isActive = i <= activeIdx;
@@ -66,7 +66,7 @@ function RatingSlider({ value, onChange }: { value: number; onChange: (v: number
               <div className={`rounded-full border-2 transition-all duration-100 ${
                 isCurrent ? "w-5 h-5 bg-primary border-primary shadow-lg shadow-primary/40"
                   : isActive ? "w-3 h-3 bg-primary border-primary"
-                  : "w-3 h-3 bg-white dark:bg-[#232F3D] border-stone-200 dark:border-stone-600"
+                  : "w-3 h-3 bg-white dark:bg-[#12151A] border-stone-200 dark:border-stone-600"
               }`} />
             </div>
           );
@@ -240,7 +240,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
           <div className="space-y-5">
 
             {/* Beer info */}
-            <div className="bg-stone-50 dark:bg-[#1B2735]/50 rounded-2xl px-4 py-3">
+            <div className="bg-stone-50 dark:bg-[#1A1D24]/50 rounded-2xl px-4 py-3">
               <p className="font-semibold text-stone-900 dark:text-stone-50 text-base leading-snug">{beer.name}</p>
               <p className="text-xs text-stone-400 mt-0.5">
                 {[beer.breweryName, beer.style].filter(Boolean).join(" · ")}
@@ -268,7 +268,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
                       format === f.label
                         ? "bg-primary text-white border-primary"
-                        : "bg-stone-50 dark:bg-[#1B2735] text-stone-500 dark:text-stone-400 border-stone-200 dark:border-[#2F3D4D] hover:border-stone-300"
+                        : "bg-stone-50 dark:bg-[#1A1D24] text-stone-500 dark:text-stone-400 border-stone-200 dark:border-[#23262E] hover:border-stone-300"
                     }`}
                   >
                     <span>{f.icon}</span>
@@ -292,7 +292,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
                     {selectedPub.city && <p className="text-xs text-stone-400 truncate">{selectedPub.city}</p>}
                   </div>
                   <button onClick={() => setSelectedPub(null)}
-                    className="p-1 rounded-full hover:bg-stone-200/60 dark:hover:bg-[#232F3D]/60 transition-colors">
+                    className="p-1 rounded-full hover:bg-stone-200/60 dark:hover:bg-[#12151A]/60 transition-colors">
                     <X className="w-3.5 h-3.5 text-stone-400" />
                   </button>
                 </div>
@@ -300,7 +300,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
 
               {!selectedPub && !pubSearchOpen && (
                 <button onClick={() => setPubSearchOpen(true)}
-                  className="w-full flex items-center gap-3 rounded-xl border border-stone-200 dark:border-[#2F3D4D] px-3 py-2.5 text-sm text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 transition-colors">
+                  className="w-full flex items-center gap-3 rounded-xl border border-stone-200 dark:border-[#23262E] px-3 py-2.5 text-sm text-stone-400 hover:border-stone-300 dark:hover:border-stone-600 transition-colors">
                   <Search className="w-4 h-4 flex-shrink-0" />
                   <span className="flex-1 text-left">Cerca un locale…</span>
                   <ChevronRight className="w-4 h-4 opacity-40" />
@@ -315,8 +315,8 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
               )}
 
               {pubSearchOpen && (
-                <div className="rounded-2xl border border-stone-200 dark:border-[#2F3D4D] overflow-hidden">
-                  <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100 dark:border-[#2F3D4D]">
+                <div className="rounded-2xl border border-stone-200 dark:border-[#23262E] overflow-hidden">
+                  <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100 dark:border-[#23262E]">
                     <Search className="w-4 h-4 text-stone-400 flex-shrink-0" />
                     <Input ref={searchInputRef} value={pubQuery} onChange={(e) => setPubQuery(e.target.value)}
                       placeholder="Nome del locale, città…"
@@ -332,7 +332,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
                     )}
                     {pubResults.map((p) => (
                       <button key={p.id} onClick={() => selectPub(p)}
-                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-[#1B2735] transition-colors text-left">
+                        className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-stone-50 dark:hover:bg-[#1A1D24] transition-colors text-left">
                         <MapPin className="w-3.5 h-3.5 text-stone-400 flex-shrink-0 mt-0.5" />
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-stone-800 dark:text-stone-100 truncate">{p.name}</p>

@@ -280,7 +280,7 @@ export default function AdminPublicanRequests() {
               <h3 className="font-bold text-lg text-foreground">{request.pubName}</h3>
               <Badge 
                 className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  request.status === 'pending' ? 'bg-stone-50 text-primary dark:bg-[#15202B]/20 dark:text-orange-400' : 
+                  request.status === 'pending' ? 'bg-stone-50 text-primary dark:bg-[#0B0D10]/20 dark:text-orange-400' : 
                   request.status === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400' : 
                   'bg-destructive/10 text-destructive dark:bg-destructive/20'
                 }`}
@@ -341,7 +341,7 @@ export default function AdminPublicanRequests() {
             </div>
 
             {request.adminNotes && (
-              <div className="bg-stone-50/50 dark:bg-[#15202B]/10 p-3 rounded-xl mt-2 border border-stone-100 dark:border-border">
+              <div className="bg-stone-50/50 dark:bg-[#0B0D10]/10 p-3 rounded-xl mt-2 border border-stone-100 dark:border-border">
                 <p className="text-sm text-foreground">
                   <strong className="text-primary">Note admin:</strong> {request.adminNotes}
                 </p>
@@ -389,7 +389,7 @@ export default function AdminPublicanRequests() {
         <CardContent className="pt-5 pb-4">
           {/* Header row: icon + name + badges */}
           <div className="flex items-start gap-3 mb-4">
-            <div className="w-9 h-9 rounded-xl bg-stone-50 dark:bg-[#15202B]/20 flex items-center justify-center shrink-0 mt-0.5 border border-stone-200 dark:border-[#2F3D4D]/50">
+            <div className="w-9 h-9 rounded-xl bg-stone-50 dark:bg-[#0B0D10]/20 flex items-center justify-center shrink-0 mt-0.5 border border-stone-200 dark:border-[#23262E]/50">
               <Factory className="h-4.5 w-4.5 text-primary" />
             </div>
             <div className="flex-1 min-w-0">
@@ -397,7 +397,7 @@ export default function AdminPublicanRequests() {
                 <h3 className="font-bold text-base text-foreground">{request.breweryName}</h3>
                 <Badge
                   className={`text-xs px-2.5 py-0.5 rounded-full font-medium ${
-                    request.status === 'pending' ? 'bg-stone-50 text-primary dark:bg-[#15202B]/20 dark:text-orange-400' :
+                    request.status === 'pending' ? 'bg-stone-50 text-primary dark:bg-[#0B0D10]/20 dark:text-orange-400' :
                     request.status === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/20 dark:text-emerald-400' :
                     'bg-destructive/10 text-destructive dark:bg-destructive/20'
                   }`}
@@ -450,11 +450,11 @@ export default function AdminPublicanRequests() {
             </div>
 
             {request.description && (
-              <p className="text-sm text-muted-foreground italic bg-stone-50/30 dark:bg-[#15202B]/10 p-2 rounded-lg border border-transparent hover:border-stone-100 transition-colors">{request.description}</p>
+              <p className="text-sm text-muted-foreground italic bg-stone-50/30 dark:bg-[#0B0D10]/10 p-2 rounded-lg border border-transparent hover:border-stone-100 transition-colors">{request.description}</p>
             )}
 
             {request.adminNotes && (
-              <div className="bg-stone-50/50 dark:bg-[#15202B]/10 p-2.5 rounded-xl border border-stone-100 dark:border-border">
+              <div className="bg-stone-50/50 dark:bg-[#0B0D10]/10 p-2.5 rounded-xl border border-stone-100 dark:border-border">
                 <p className="text-xs font-medium text-foreground"><strong className="text-primary">Note admin:</strong> {request.adminNotes}</p>
                 {request.reviewedAt && (
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -581,7 +581,7 @@ export default function AdminPublicanRequests() {
                 <strong>Attivazione automatica via Stripe.</strong> I nuovi pub si attivano autonomamente dopo il checkout (prova gratuita 15 giorni → €65/anno). Non è necessaria approvazione manuale. Questa sezione mostra solo lo storico e permette di rifiutare richieste anomale.
               </span>
             </div>
-            <TabsList className="mb-6 bg-stone-50 dark:bg-[#15202B]/20 p-1 rounded-xl border border-stone-200 dark:border-[#2F3D4D]/50">
+            <TabsList className="mb-6 bg-stone-50 dark:bg-[#0B0D10]/20 p-1 rounded-xl border border-stone-200 dark:border-[#23262E]/50">
               <TabsTrigger value="pending" className="gap-2 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-primary dark:data-[state=active]:text-white font-semibold">
                 <Clock className="h-4 w-4" />
                 In attesa ({pendingRequests.length})
@@ -621,7 +621,7 @@ export default function AdminPublicanRequests() {
 
         {section === "brewery" && (
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="mb-6 bg-stone-50 dark:bg-[#15202B]/20 p-1 rounded-xl border border-stone-200 dark:border-[#2F3D4D]/50">
+            <TabsList className="mb-6 bg-stone-50 dark:bg-[#0B0D10]/20 p-1 rounded-xl border border-stone-200 dark:border-[#23262E]/50">
               <TabsTrigger value="pending" className="gap-2 rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-primary dark:data-[state=active]:text-white font-semibold">
                 <Clock className="h-4 w-4" />
                 In attesa ({pendingBreweryRequests.length})
