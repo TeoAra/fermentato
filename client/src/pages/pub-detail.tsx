@@ -9,7 +9,6 @@ import {
   Beer as BeerIcon,
   Wine,
   Utensils,
-  Info,
   XCircle,
   Calendar,
   Clock,
@@ -33,7 +32,6 @@ import {
   TaplistSection,
   BottlesSection,
   FoodMenuSection,
-  InfoCards,
   type StickyTabDef,
   type OpenStatusInfo,
   type PubLike,
@@ -102,7 +100,6 @@ const TABS: StickyTabDef[] = [
   { value: "taplist", label: "Spine", icon: <BeerIcon className="w-4 h-4" /> },
   { value: "bottles", label: "Cantina", icon: <Wine className="w-4 h-4" /> },
   { value: "menu", label: "Menù", icon: <Utensils className="w-4 h-4" /> },
-  { value: "info", label: "Info", icon: <Info className="w-4 h-4" /> },
 ];
 
 // ── Page ───────────────────────────────────────────────────────────────────
@@ -552,7 +549,6 @@ export default function PubDetail() {
           />
         )}
 
-        {activeTab === "info" && <InfoCards pub={pubData} onTabChange={setActiveTab} />}
       </main>
 
       {/* Check-in modal */}

@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import {
   ArrowLeft,
   Share2,
-  MoreHorizontal,
   MapPin,
   Phone,
   Navigation,
@@ -107,14 +106,6 @@ export default function PubHero({
                 <Share2 className="w-4.5 h-4.5 text-[#151515]" />
               </button>
             )}
-            <button
-              type="button"
-              aria-label="Altre opzioni"
-              className="w-10 h-10 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-[0_4px_20px_rgba(0,0,0,0.08)] active:scale-95 transition-transform"
-              data-testid="pub-hero-more"
-            >
-              <MoreHorizontal className="w-5 h-5 text-[#151515]" />
-            </button>
           </div>
         </div>
 

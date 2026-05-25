@@ -13,7 +13,6 @@ import { SiFacebook, SiInstagram } from "react-icons/si";
 import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
 import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
 import type { PubLike } from "./types";
-import { MOCK_AMENITIES } from "./mock-data";
 
 interface OverviewSectionProps {
   pub: PubLike;
@@ -53,7 +52,7 @@ export default function OverviewSection({
   onCall,
   onDirections,
 }: OverviewSectionProps) {
-  const amenities = pub?.amenities && pub.amenities.length > 0 ? pub.amenities : MOCK_AMENITIES;
+  const amenities = Array.isArray(pub?.amenities) ? pub!.amenities! : [];
   const lat = pub?.latitude ? Number(pub.latitude) : null;
   const lng = pub?.longitude ? Number(pub.longitude) : null;
   const hasMap = lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng);
@@ -88,19 +87,21 @@ export default function OverviewSection({
         </motion.div>
       )}
 
-      {/* Amenities chips */}
-      <motion.div variants={item}>
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          {amenities.map((a) => (
-            <span
-              key={a}
-              className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-[#E8DED1] text-xs font-semibold text-[#151515] shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
-            >
-              {a}
-            </span>
-          ))}
-        </div>
-      </motion.div>
+      {/* Amenities chips — solo se il pub ha caratteristiche reali */}
+      {amenities.length > 0 && (
+        <motion.div variants={item}>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            {amenities.map((a) => (
+              <span
+                key={a}
+                className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-white border border-[#E8DED1] text-xs font-semibold text-[#151515] shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
+              >
+                {a}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+      )}
 
       {/* Mappa */}
       {hasMap && (
