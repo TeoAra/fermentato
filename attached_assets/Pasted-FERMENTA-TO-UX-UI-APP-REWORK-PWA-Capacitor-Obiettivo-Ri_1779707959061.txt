@@ -1,0 +1,543 @@
+FERMENTA.TO — UX/UI APP REWORK (PWA + Capacitor)
+
+Obiettivo
+
+Ridisegnare completamente l’esperienza UX/UI di Fermenta.to trasformandola da “sito directory pub” a:
+
+una mobile app craft beer premium, immersiva, fluida e cinematica.
+
+L’app sarà:
+
+* PWA installabile
+* compatibile Capacitor
+* esportabile APK Android e IPA iOS
+* mobile-first
+* ultra fluida
+* con transizioni native-like
+* senza reload percettivi
+* ottimizzata per gesture e overlay
+
+⸻
+
+FILOSOFIA UX
+
+L’utente NON deve percepire:
+
+* pagine separate
+* reload
+* cambio ambiente
+
+Ma:
+
+un’unica superficie interattiva continua.
+
+Ispirazioni:
+
+* Apple Music
+* Airbnb
+* Revolut
+* Arc Browser
+* Untappd premium
+* VisionOS UI
+
+⸻
+
+ARCHITETTURA UX
+
+STRUTTURA A CONTESTI
+
+NON usare:
+
+* pagine classiche
+* menu multipli
+* doppie navigazioni
+
+MA:
+
+* navigazione contestuale
+* overlay layer
+* stack coerente
+* bottom nav dinamica
+
+⸻
+
+ROOT APP NAVIGATION
+
+Bottom navigation globale:
+
+* Home
+* Explore
+* Favorites
+* Events
+* Profile
+
+Questa navigation esiste solo nella root app.
+
+⸻
+
+PUB EXPERIENCE
+
+Quando entro in un pub:
+la bottom navigation cambia contesto.
+
+Diventa:
+
+* Overview
+* Spine
+* Cantina
+* Menu
+* Info
+
+IMPORTANTE:
+
+* NON sono pagine
+* NON fanno reload
+* cambiano sezione tramite:
+    * smooth scroll
+    * content morph
+    * transition fluide
+
+⸻
+
+TOP BAR UX
+
+Design:
+
+minimal, floating, glassmorphism.
+
+Componenti:
+
+Sinistra:
+
+* back gesture/button
+
+Centro:
+
+* logo piccolo o titolo dinamico
+
+Destra:
+
+* search
+* favorite
+* more/options
+
+⸻
+
+COMPORTAMENTO TOP BAR
+
+Stato espanso:
+
+overlay trasparente sopra hero image.
+
+Scroll:
+
+* hero collapse
+* blur progressivo
+* title morph
+* top bar compatta
+
+Animazione:
+120–180ms max.
+
+⸻
+
+SEARCH UX
+
+La search NON deve stare nella bottom bar.
+
+La search è:
+
+globale persistente.
+
+Apertura:
+
+overlay fullscreen con blur.
+
+Tipo:
+
+* Spotlight Apple
+* Raycast
+* Airbnb search overlay
+
+Deve cercare:
+
+* pub
+* birre
+* brewery
+* eventi
+* utenti
+* menu
+* taplist
+
+UX:
+
+* realtime
+* senza pagina nuova
+* chiusura torna esattamente nello stesso punto
+
+⸻
+
+BACK SYSTEM
+
+CRITICO.
+
+Il back deve essere:
+
+gerarchico e coerente.
+
+Esempi:
+
+Pub → dettaglio birra overlay
+back:
+→ chiude overlay
+
+Pub → menu → piatto
+back:
+→ torna menu
+
+Pub → search overlay
+back:
+→ chiude overlay
+
+Pub → back root
+→ torna esattamente alla schermata origine
+
+⸻
+
+DESIGN SYSTEM
+
+STILE PRINCIPALE
+
+Mix tra:
+
+* glassmorphism
+* neumorfismo soft
+* cinematic UI
+* floating layers
+* blur dinamici
+
+⸻
+
+COLORI
+
+Dark mode (principale)
+
+Palette:
+
+* #0B0B0C
+* #121315
+* #18191B
+* #202225
+
+Accent:
+
+* amber
+* orange craft
+* gold
+* copper
+* green hop
+
+⸻
+
+Light mode
+
+NON bianco puro.
+
+Usare:
+
+* warm white
+* soft gray
+* translucent cards
+* soft shadow
+* blur layer
+
+Mood:
+premium iOS-like.
+
+⸻
+
+HEAD DEL PUB
+
+La head del pub è fondamentale.
+
+Struttura:
+
+* hero image/video immersiva
+* blur overlay
+* card floating glassmorphism
+* logo pub in layer separato
+* badge:
+    * aperto/chiuso
+    * spine disponibili
+    * verified
+
+Componenti:
+
+* titolo pub
+* location
+* CTA rapide:
+    * indicazioni
+    * chiama
+    * sito
+    * instagram
+
+⸻
+
+BOTTOM BAR DESIGN
+
+NON usare:
+
+* bottom piena bianca
+* tab classiche Android
+
+MA:
+
+floating translucent dock
+
+Con:
+
+* blur
+* floating effect
+* neumorphic shadow
+* safe area support
+* morph animations
+
+⸻
+
+TAPLIST UX
+
+La taplist è il cuore dell’app.
+
+Ogni birra:
+
+* logo brewery
+* nome birra
+* stile
+* ABV
+* IBU
+* nazione
+* prezzo dinamico:
+    * 20cl
+    * 30cl
+    * 40cl
+* badge:
+    * new
+    * sour
+    * hazy
+    * gluten free
+
+⸻
+
+TAPLIST UX RULES
+
+* virtualized list
+* sticky filters
+* realtime search
+* zero reload
+* overlay dettaglio birra
+
+⸻
+
+DETTAGLIO BIRRA
+
+NON pagina nuova.
+
+Aprire:
+
+overlay layer fullscreen.
+
+Con:
+
+* morph animation
+* swipe down close
+* blur background
+
+Contenuti:
+
+* immagine birra
+* brewery
+* aromi
+* ingredienti
+* food pairing
+* prezzi
+* caratteristiche
+
+⸻
+
+CANTINA
+
+Sezione separata dalla taplist.
+
+Layout:
+
+* bottiglie
+* lattine
+* cards compatte
+* scroll virtualizzato
+
+Categorie:
+
+* IPA
+* Sour
+* Belgian
+* Barrel Aged
+* Italian Craft
+
+⸻
+
+MENU FOOD
+
+Separato dalla birra.
+
+Struttura:
+
+Categorie:
+
+* Panini
+* Piatti
+* Taglieri
+* Snack
+* Dolci
+
+Ogni prodotto:
+
+* foto
+* titolo
+* descrizione
+* ingredienti
+* allergeni
+* prezzo
+* pairing birra consigliato
+
+⸻
+
+ALLERGENI UX
+
+Usare:
+
+* icone tonde
+* tooltip
+* legenda sempre accessibile
+* overlay informativo
+
+⸻
+
+INFO SECTION
+
+Contiene:
+
+* orari
+* wifi
+* pet friendly
+* parcheggio
+* dehors
+* accessibilità
+* social
+* contatti
+* mappe
+
+⸻
+
+OVERLAY SYSTEM
+
+Usare overlay per:
+
+* ricerca
+* dettaglio birra
+* dettaglio piatto
+* filtri
+* azioni rapide
+* suggerisci modifica
+
+NO modali classiche.
+
+⸻
+
+MICROINTERAZIONI
+
+Fondamentali.
+
+Usare:
+
+* morphing
+* soft scale
+* opacity transition
+* translateY micro
+* haptic feeling visuals
+* shimmer loading
+* skeleton
+
+⸻
+
+PERFORMANCE (IMPORTANTISSIMO)
+
+Essendo:
+
+* PWA
+* Capacitor
+* Android/iOS
+
+serve UX ultra fluida.
+
+EVITARE:
+
+* rerender completi
+* shadow pesanti
+* blur eccessivi
+* scroll annidati
+* transition >300ms
+* immagini enormi
+
+⸻
+
+STACK CONSIGLIATO
+
+Frontend:
+
+* Next.js App Router
+* TailwindCSS
+* Framer Motion
+* Zustand
+* React Query
+
+Mobile:
+
+* Capacitor
+
+Backend:
+
+* Supabase
+
+Ottimizzazioni:
+
+* virtualization
+* lazy loading intelligente
+* image CDN
+* realtime updates
+
+⸻
+
+REGOLE UX FONDAMENTALI
+
+UNA funzione = UN solo modo per raggiungerla.
+
+Mai:
+
+* doppie navigazioni
+* CTA duplicate
+* search duplicate
+* menu multipli
+
+⸻
+
+OBIETTIVO FINALE
+
+Fermenta deve sembrare:
+
+NON:
+
+un sito adattato mobile
+
+MA:
+
+un sistema operativo craft beer premium.
