@@ -37,6 +37,13 @@ export function BottomNavigation() {
   const [searchOpen, setSearchOpen] = useState(false);
   const anyModalOpen = useAnyModalOpen();
 
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/notifications/unread-count"],
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  });
+  const unreadCount = unreadData?.count ?? 0;
+
   if (location.startsWith("/tv/") || location.startsWith("/festival-tv/")) return null;
   // Pagine di dettaglio: la bottom bar globale viene sostituita dal dock
   // contestuale specifico della pagina (pub, birrificio, birra, festival, evento, utente).
@@ -54,13 +61,6 @@ export function BottomNavigation() {
     location.startsWith("/pub-dashboard") ||
     location.startsWith("/brewery-dashboard")
   ) return null;
-
-  const { data: unreadData } = useQuery<{ count: number }>({
-    queryKey: ["/api/notifications/unread-count"],
-    enabled: isAuthenticated,
-    refetchInterval: 30000,
-  });
-  const unreadCount = unreadData?.count ?? 0;
 
   const typedUser = user as any;
   const avatarUrl = typedUser?.profileImageUrl;
