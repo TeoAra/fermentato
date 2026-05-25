@@ -1667,7 +1667,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const pubId = await resolvePubId(req.params.id);
       if (!pubId) return res.status(404).json({ message: "Pub not found" });
-      const menu = await storage.getMenuByPub(pubId, true);
+      // Public endpoint: include hidden ONLY if requester owns the pub or is admin
+      let includeHidden = false;
+      try {
+        const userId = (req.user as any)?.id;
+        if (userId) {
+          const user = await storage.getUser(userId);
+          const effectiveRole = user?.activeRole || user?.userType;
+          if (effectiveRole === 'admin') includeHidden = true;
+          else {
+            const userPubs = await storage.getPubsByOwner(userId);
+            if (userPubs.some((p: any) => p.id === pubId)) includeHidden = true;
+          }
+        }
+      } catch {}
+      const menu = await storage.getMenuByPub(pubId, includeHidden);
       res.json(menu);
     } catch (error) {
       console.error("Error fetching menu:", error);
@@ -1680,7 +1694,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const pubId = await resolvePubId(req.params.id);
       if (!pubId) return res.status(404).json({ message: "Pub not found" });
-      const menu = await storage.getMenuByPub(pubId);
+      // Owner / admin sees hidden items in the dashboard preview;
+      // public visitors get only visible categories/items.
+      let includeHidden = false;
+      try {
+        const userId = (req.user as any)?.id;
+        if (userId) {
+          const user = await storage.getUser(userId);
+          const effectiveRole = user?.activeRole || user?.userType;
+          if (effectiveRole === 'admin') includeHidden = true;
+          else {
+            const userPubs = await storage.getPubsByOwner(userId);
+            if (userPubs.some((p: any) => p.id === pubId)) includeHidden = true;
+          }
+        }
+      } catch {}
+      const menu = await storage.getMenuByPub(pubId, includeHidden);
       res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
       res.json(menu);
     } catch (error) {

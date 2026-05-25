@@ -19,7 +19,10 @@ export default function BottlesSection({
   onToggleFavorite,
   favoriteBeerIds,
 }: BottlesSectionProps) {
-  if (!bottles || bottles.length === 0) return null;
+  const visibleBottles = Array.isArray(bottles)
+    ? bottles.filter((b) => b.isVisible !== false && b.isActive !== false)
+    : [];
+  if (visibleBottles.length === 0) return null;
 
   return (
     <motion.section
@@ -32,12 +35,12 @@ export default function BottlesSection({
       <div>
         <h2 className="text-xl font-black text-[#151515] dark:text-[#F5F5F5]">Bottiglie & Lattine</h2>
         <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5">
-          {bottles.length} {bottles.length === 1 ? "referenza" : "referenze"} in cantina
+          {visibleBottles.length} {visibleBottles.length === 1 ? "referenza" : "referenze"} in cantina
         </p>
       </div>
 
       <div className="space-y-2.5">
-        {bottles.map((b) => {
+        {visibleBottles.map((b) => {
           const isFav = favoriteBeerIds?.has(b.beer.id) ?? false;
           const formatLabel = b.size || b.format || (b.beer as any)?.format;
           return (

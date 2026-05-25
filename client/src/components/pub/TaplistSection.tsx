@@ -39,7 +39,9 @@ export default function TaplistSection({
 }: TaplistSectionProps) {
   const sorted = useMemo(() => {
     if (!Array.isArray(taps)) return [];
-    return [...taps].sort((a, b) => (a.tapNumber ?? 999) - (b.tapNumber ?? 999));
+    return [...taps]
+      .filter((t) => t.isVisible !== false && t.isActive !== false)
+      .sort((a, b) => (a.tapNumber ?? 999) - (b.tapNumber ?? 999));
   }, [taps]);
 
   return (

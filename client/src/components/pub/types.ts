@@ -37,6 +37,11 @@ export interface TapItem {
   tapType?: string | null;
   description?: string | null;
   isVisible?: boolean | null;
+  isActive?: boolean | null;
+}
+
+export interface MenuItemBase {
+  isVisible?: boolean | null;
 }
 
 export interface BottleItem {
@@ -46,6 +51,8 @@ export interface BottleItem {
   size?: string | null;
   price?: string | null;
   imageUrl?: string | null;
+  isVisible?: boolean | null;
+  isActive?: boolean | null;
 }
 
 export interface MenuItemAllergen {

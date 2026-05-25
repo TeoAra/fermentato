@@ -199,12 +199,14 @@ export default function PubDetail() {
   const foodMenu: FoodMenu | null = useMemo(() => {
     if (!Array.isArray(menuFull) || menuFull.length === 0) return null;
     return {
-      categories: menuFull.map((c: any) => ({
+      categories: menuFull
+        .filter((c: any) => c.isVisible !== false)
+        .map((c: any) => ({
         id: c.id,
         name: c.name,
         description: c.description,
         items: (c.items || [])
-          .filter((i: any) => !i.isInfoBox)
+          .filter((i: any) => !i.isInfoBox && i.isVisible !== false)
           .map((i: any) => ({
             id: i.id,
             name: i.name,
