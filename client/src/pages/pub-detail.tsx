@@ -28,8 +28,12 @@ import {
   MoreHorizontal,
   Plus,
   Beer as BeerIcon,
+  Home as HomeIcon,
+  Utensils,
+  Search as SearchIcon,
 } from "lucide-react";
 import Footer from "@/components/footer";
+import { useAnyModalOpen } from "@/components/bottom-navigation";
 import TapList from "@/components/tap-list";
 const LuppolinoMenu = lazy(() => import("@/components/luppolino-menu"));
 import { Tabs, TabsContent } from "@/components/ui/tabs";
@@ -248,7 +252,25 @@ export default function PubDetail() {
   const { user, isAuthenticated } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  // Per evitare hydration mismatch SSR, partiamo SEMPRE da "taplist"
+  // (vista valida sia su mobile che desktop). In un effetto client-only
+  // passiamo a "overview" se siamo su mobile, e gestiamo i resize.
   const [activeTab, setActiveTab] = useState("taplist");
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(min-width: 1024px)");
+    // Mount: se mobile, mostriamo la nuova home contestuale "overview".
+    setActiveTab((prev) => (!mq.matches && prev === "taplist" ? "overview" : prev));
+    const handler = (e: MediaQueryListEvent) => {
+      setActiveTab((prev) => {
+        if (e.matches && prev === "overview") return "taplist";
+        return prev;
+      });
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
+  const isPubModalOpen = useAnyModalOpen();
   const [showOpeningHours, setShowOpeningHours] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [checkinBottle, setCheckinBottle] = useState<any>(null);
@@ -675,8 +697,10 @@ export default function PubDetail() {
         ])}</script>
       </Helmet>
       
-      {/* ── HERO — full-bleed cover with rounded-card transition (mobile) ── */}
-      <div className="relative lg:hidden">
+      {/* ── HERO — full-bleed cover with rounded-card transition (mobile) ──
+           Visibile solo nella vista Overview; nelle altre sezioni il dock
+           contestuale in basso prende il posto della top nav. */}
+      <div className={`relative lg:hidden ${activeTab !== 'overview' ? 'hidden' : ''}`}>
         {/* Cover image container — overflow-hidden so blur doesn't bleed */}
         <div className="relative h-72 overflow-hidden">
           {(pub as any)?.coverImageUrl ? (
@@ -938,21 +962,31 @@ export default function PubDetail() {
         </div>
       </div>
 
-      <PageContainer as="main" variant="wide" className="pb-24">
+      <PageContainer
+        as="main"
+        variant="wide"
+        className={`pb-24 lg:pb-24 ${activeTab !== 'overview' ? 'lg:!pt-0' : ''}`}
+        style={{
+          paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+          // Su mobile, quando la hero è nascosta (tab ≠ overview), riserviamo
+          // lo spazio per la sticky mini top bar così il contenuto non finisce sotto.
+          paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
+        }}
+      >
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] lg:items-start lg:min-h-0">
           {/* Main Content */}
           <div className="min-h-0">
             {/* ── TABS — underline style (mockup) ── */}
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <div className="bg-white dark:bg-card border-b border-stone-200 dark:border-[#2F3D4D] px-4">
+                {/* Top tabs underline: solo desktop. Su mobile usiamo il dock floating in basso. */}
+                <div className="hidden lg:block bg-white dark:bg-card border-b border-stone-200 dark:border-[#2F3D4D] px-4">
                   <div className="flex items-center justify-around gap-1 overflow-x-auto scrollbar-hide">
                     {[
                       { id: 'taplist', label: 'Spine' },
                       { id: 'bottles', label: 'Cantina' },
                       { id: 'menu', label: 'Menu' },
                       ...(Array.isArray(pubEvents) && pubEvents.length > 0 ? [{ id: 'events', label: 'Eventi' }] : []),
-                      { id: 'info', label: 'Info', mobileOnly: true },
                     ].map((tab: any) => {
                       const isTab = activeTab === tab.id;
                       return (
@@ -960,7 +994,7 @@ export default function PubDetail() {
                           key={tab.id}
                           data-testid={`tab-${tab.id}`}
                           onClick={() => setActiveTab(tab.id)}
-                          className={`${tab.mobileOnly ? 'lg:hidden' : ''} relative flex-1 lg:flex-none lg:px-4 py-3.5 text-sm font-bold whitespace-nowrap transition-colors ${
+                          className={`relative flex-1 lg:flex-none lg:px-4 py-3.5 text-sm font-bold whitespace-nowrap transition-colors ${
                             isTab
                               ? 'text-primary'
                               : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
@@ -973,6 +1007,107 @@ export default function PubDetail() {
                     })}
                   </div>
                 </div>
+
+                {/* Overview Tab (solo mobile) — preview di spine + eventi visibile dentro la home del pub */}
+                <TabsContent value="overview" className="lg:hidden px-4 pt-2 pb-4 space-y-6">
+                  {/* Preview "In spina" — prime 3 birre con CTA "Vedi tutte" */}
+                  {Array.isArray(tapList) && tapList.length > 0 && (
+                    <section>
+                      <div className="flex items-end justify-between mb-3">
+                        <h2 className="text-lg font-extrabold text-foreground tracking-tight">In spina</h2>
+                        <button
+                          onClick={() => setActiveTab('taplist')}
+                          className="text-xs font-bold text-primary tap-scale"
+                        >
+                          {tapList.length} disponibili →
+                        </button>
+                      </div>
+                      <div className="space-y-2">
+                        {(tapList as any[]).slice(0, 3).map((tap: any, idx: number) => (
+                          <Link
+                            key={tap.id ?? idx}
+                            href={`/beer/${tap.beer?.id}`}
+                            className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.99] transition-all"
+                          >
+                            <div className="w-12 h-12 rounded-xl overflow-hidden bg-stone-50 dark:bg-[#15202B] border border-stone-100 dark:border-[#2F3D4D] flex-shrink-0">
+                              <ImageWithFallback
+                                src={tap.beer?.imageUrl || tap.beer?.logoUrl || tap.beer?.brewery?.logoUrl}
+                                alt={tap.beer?.name || 'Beer'}
+                                imageType="beer"
+                                containerClassName="w-full h-full"
+                                className="w-full h-full object-cover"
+                                iconSize="sm"
+                              />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 rounded-full bg-primary/10 dark:bg-primary/20 text-primary text-[10px] font-black flex items-center justify-center flex-shrink-0">{idx + 1}</div>
+                                <span className="font-bold text-sm text-foreground truncate">{tap.beer?.name || 'Birra'}</span>
+                              </div>
+                              <div className="text-[11px] text-muted-foreground truncate mt-0.5">
+                                {tap.beer?.brewery?.name || tap.beer?.breweryName}{tap.beer?.style ? ` · ${tap.beer.style}` : ''}{tap.beer?.abv ? ` · ${tap.beer.abv}%` : ''}
+                              </div>
+                            </div>
+                            {Array.isArray(tap.prices) && tap.prices.length > 0 && (
+                              <div className="text-right flex-shrink-0">
+                                <div className="text-[10px] text-muted-foreground">{(tap.prices[0] as any).size}</div>
+                                <div className="text-sm font-black text-foreground">€{parseFloat((tap.prices[0] as any).price).toFixed(2)}</div>
+                              </div>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Preview eventi prossimi (solo se presenti) */}
+                  {Array.isArray(pubEvents) && pubEvents.filter((e: any) => {
+                    const end = e.endDate ? new Date(e.endDate) : new Date(new Date(e.eventDate).getTime() + 12 * 60 * 60 * 1000);
+                    return end.getTime() >= Date.now();
+                  }).length > 0 && (
+                    <section>
+                      <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-3">Prossimi eventi</h2>
+                      <div className="space-y-3">
+                        {(pubEvents as any[])
+                          .filter((e: any) => {
+                            const end = e.endDate ? new Date(e.endDate) : new Date(new Date(e.eventDate).getTime() + 12 * 60 * 60 * 1000);
+                            return end.getTime() >= Date.now();
+                          })
+                          .slice(0, 2)
+                          .map((event: any) => (
+                            <button
+                              key={event.id}
+                              onClick={() => setSelectedEvent(event)}
+                              className="w-full text-left overflow-hidden rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale"
+                            >
+                              {event.imageUrl && (
+                                <div className="h-32 bg-cover bg-center" style={{ backgroundImage: `url(${event.imageUrl})` }} />
+                              )}
+                              <div className="p-3">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <EventCategoryBadge category={event.category} />
+                                </div>
+                                <h3 className="font-bold text-base text-foreground leading-snug">{event.title}</h3>
+                                <div className="flex items-center gap-1.5 text-xs text-primary mt-1.5">
+                                  <Calendar className="h-3.5 w-3.5" />
+                                  <span className="capitalize">{format(new Date(event.eventDate), "EEE d MMM 'alle' HH:mm", { locale: itLocale })}</span>
+                                </div>
+                              </div>
+                            </button>
+                          ))}
+                      </div>
+                    </section>
+                  )}
+
+                  {/* Community posts compatti */}
+                  {pub && (pub as any).id && (
+                    <section>
+                      <CommunityPostsSection
+                        entity={{ kind: "pub", id: (pub as any).id, name: (pub as any).name }}
+                      />
+                    </section>
+                  )}
+                </TabsContent>
 
                 {/* Taplist Tab */}
                 <TabsContent value="taplist" className="px-4 lg:px-0 pt-4 space-y-4">
@@ -1507,6 +1642,114 @@ export default function PubDetail() {
         pubName={(pub as any)?.name || ''}
         openingHours={(pub as any)?.openingHours}
       />
+
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ──
+           Quando l'utente naviga in una sezione (Spine/Cantina/Menu/Info),
+           la hero scompare ma resta una top bar floating glass con back +
+           titolo dinamico + azioni rapide. */}
+      {activeTab !== 'overview' && !isPubModalOpen && (
+        <div
+          className="lg:hidden fixed top-0 inset-x-0 z-30"
+          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+        >
+          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+            <div className="flex items-center gap-3 px-3 h-14">
+              <button
+                onClick={() => setActiveTab('overview')}
+                aria-label="Torna alla home del pub"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <ArrowLeft className="h-5 w-5 text-foreground" />
+              </button>
+              <div className="flex-1 min-w-0 flex items-center gap-2">
+                {(pub as any)?.logoUrl && (
+                  <img
+                    src={(pub as any).logoUrl}
+                    alt=""
+                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
+                  />
+                )}
+                <div className="min-w-0">
+                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">{(pub as any)?.name}</div>
+                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
+                    {activeTab === 'taplist' && 'Spine'}
+                    {activeTab === 'bottles' && 'Cantina'}
+                    {activeTab === 'menu' && 'Menu'}
+                    {activeTab === 'info' && 'Info'}
+                    {activeTab === 'events' && 'Eventi'}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={handleShare}
+                aria-label="Condividi"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+              >
+                <Share2 className="h-[18px] w-[18px] text-foreground" />
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={toggleFavoriteMutation.isPending}
+                aria-label={isFavorite ? 'Rimuovi dai preferiti' : 'Salva'}
+                className={`w-10 h-10 rounded-full flex items-center justify-center tap-scale active:scale-95 ${
+                  isFavorite
+                    ? 'bg-primary/15 text-primary'
+                    : 'bg-stone-100 dark:bg-white/[0.06] text-foreground'
+                }`}
+              >
+                <Heart className={`h-[18px] w-[18px] ${isFavorite ? 'fill-primary' : ''}`} />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── FLOATING BOTTOM DOCK (mobile only) — navigation contestuale del pub.
+           Nascosto quando c'è un dialog/sheet aperto per evitare conflitti di stacking. ── */}
+      <nav
+        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          isPubModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        }`}
+        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        aria-label="Navigazione del pub"
+      >
+        <div className="mx-auto max-w-md px-4">
+          <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
+            <div className="flex items-stretch justify-between p-1.5 gap-1">
+              {[
+                { id: 'overview', label: 'Overview', Icon: HomeIcon },
+                { id: 'taplist',  label: 'Spine',    Icon: BeerIcon },
+                { id: 'bottles',  label: 'Cantina',  Icon: Wine },
+                { id: 'menu',     label: 'Menu',     Icon: Utensils },
+                { id: 'info',     label: 'Info',     Icon: Info },
+              ].map(({ id, label, Icon }) => {
+                const active = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => setActiveTab(id)}
+                    data-testid={`pub-dock-${id}`}
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                      active
+                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                    }`}
+                  >
+                    <Icon
+                      className="h-[20px] w-[20px]"
+                      strokeWidth={active ? 2.6 : 1.8}
+                      fill={active ? 'currentColor' : 'none'}
+                      style={active ? { fillOpacity: 0.18 } : {}}
+                    />
+                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </nav>
     </div>
   );
 }

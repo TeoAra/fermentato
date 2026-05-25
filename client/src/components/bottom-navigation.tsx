@@ -9,7 +9,7 @@ const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
 // Rileva se c'è un Dialog/Sheet/AlertDialog aperto controllando la presenza
 // di un overlay scuro fixed (backdrop Radix). Quando è aperto, nascondiamo
 // la bottom nav così il modale ha più spazio e non ci sono sovrapposizioni.
-function useAnyModalOpen(): boolean {
+export function useAnyModalOpen(): boolean {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const check = () => {
@@ -38,6 +38,8 @@ export function BottomNavigation() {
   const anyModalOpen = useAnyModalOpen();
 
   if (location.startsWith("/tv/") || location.startsWith("/festival-tv/")) return null;
+  // Dentro un pub la bottom bar globale viene sostituita dal dock contestuale del pub
+  if (location.startsWith("/pub/") || location.startsWith("/pubs/")) return null;
 
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
