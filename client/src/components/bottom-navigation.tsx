@@ -41,13 +41,18 @@ export function BottomNavigation() {
   // Pagine di dettaglio: la bottom bar globale viene sostituita dal dock
   // contestuale specifico della pagina (pub, birrificio, birra, festival, evento, utente).
   if (
+    location.startsWith("/pub/") ||
     location.startsWith("/pubs/") ||
     location.startsWith("/brewery/") ||
     location.startsWith("/breweries/") ||
     location.startsWith("/beer/") ||
     location.startsWith("/festival/") ||
     location.startsWith("/event/") ||
-    location.startsWith("/user/")
+    location.startsWith("/user/") ||
+    location === "/dashboard" ||
+    location.startsWith("/dashboard/") ||
+    location.startsWith("/pub-dashboard") ||
+    location.startsWith("/brewery-dashboard")
   ) return null;
 
   const { data: unreadData } = useQuery<{ count: number }>({
