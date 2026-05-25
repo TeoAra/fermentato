@@ -10,61 +10,16 @@ interface BeerInfoSectionProps {
 }
 
 /**
- * Sezione "Info" per /beer/:id — descrizione (con traduzione + originale)
- * + lista premi/riconoscimenti.
+ * Sezione "Info" per /beer/:id — lista premi/riconoscimenti.
+ * La descrizione è ora renderizzata in overview da <BeerDescriptionBlock />.
  */
 export default function BeerInfoSection({
   beer,
-  translatedDesc,
-  translating,
-  descExpanded,
-  onToggleExpand,
 }: BeerInfoSectionProps) {
-  const desc = String(translatedDesc || beer?.description || "");
   const awards = (beer as any)?.awards || [];
 
   return (
     <>
-      {beer?.description && (
-        <div className="mt-6">
-          <div className="flex items-center gap-2 mb-2">
-            <p className="text-sm font-bold text-foreground">Descrizione</p>
-            {translating && (
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Traduzione…
-              </span>
-            )}
-            {translatedDesc && !translating && (
-              <span className="text-[10px] font-semibold bg-stone-50 text-primary px-2 py-0.5 rounded-full">
-                Tradotto
-              </span>
-            )}
-          </div>
-          <div className={`text-sm ${descExpanded ? "" : "line-clamp-3"}`}>
-            <RichTextDisplay html={desc} />
-          </div>
-          {desc.length > 160 && (
-            <button
-              onClick={onToggleExpand}
-              className="text-sm font-bold text-primary mt-1 tap-scale"
-            >
-              {descExpanded ? "Mostra meno" : "Leggi di più"}
-            </button>
-          )}
-          {translatedDesc && beer.description && (
-            <details className="mt-3">
-              <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none transition-colors">
-                Testo originale
-              </summary>
-              <div className="mt-2 border-t border-stone-100 pt-2">
-                <RichTextDisplay html={String(beer.description)} className="text-sm" />
-              </div>
-            </details>
-          )}
-        </div>
-      )}
-
       {awards.length > 0 && (
         <div className="mt-6">
           <div className="flex items-center gap-2 mb-3">

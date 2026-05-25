@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import {
@@ -13,10 +12,8 @@ import {
   Heart,
   Navigation,
   Globe,
-  ChevronRight,
 } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
-import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
 
 interface BreweryHeroProps {
   brewery: any;
@@ -53,7 +50,6 @@ export default function BreweryHero({
   onOpenSuggest,
 }: BreweryHeroProps) {
   const [, setLocation] = useLocation();
-  const [descExpanded, setDescExpanded] = useState(false);
   const cover = brewery?.coverImageUrl || brewery?.logoUrl || "";
   const hasRating = !!(breweryRating?.avgRating && breweryRating?.reviewCount);
   const hasWebsite = !!brewery?.websiteUrl;
@@ -229,25 +225,6 @@ export default function BreweryHero({
               </div>
             )}
 
-            {!isRichContentEmpty(brewery?.description) && (
-              <div className="pt-2">
-                <div className={`text-sm text-[#6B6357] dark:text-[#B7BDC7] ${descExpanded ? "" : "line-clamp-3"}`}>
-                  <RichTextDisplay html={brewery.description} />
-                </div>
-                {(brewery.description as string)?.length > 140 && (
-                  <button
-                    type="button"
-                    onClick={() => setDescExpanded((v) => !v)}
-                    className="mt-1 text-sm font-bold text-[#F59E0B] inline-flex items-center gap-0.5 tap-scale"
-                  >
-                    {descExpanded ? "Mostra meno" : "Leggi di più"}
-                    <ChevronRight
-                      className={`h-4 w-4 transition-transform ${descExpanded ? "-rotate-90" : "rotate-90"}`}
-                    />
-                  </button>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Action pills — IDENTICO a PubHero */}

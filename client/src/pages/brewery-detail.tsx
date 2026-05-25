@@ -701,6 +701,20 @@ export default function BreweryDetail() {
               <div className="px-4 md:px-8 pt-4 pb-8">
                 {/* ── TAB: OVERVIEW (solo mobile) — preview di birre + eventi ── */}
                 <TabsContent value="overview" className="lg:hidden m-0 focus-visible:outline-none space-y-6">
+                  {/* Descrizione birrificio */}
+                  {((brewery as any)?.descriptionHtml || brewery?.description) && (
+                    <section>
+                      <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-2">Il Birrificio</h2>
+                      <div className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed">
+                        {(brewery as any)?.descriptionHtml ? (
+                          <RichTextDisplay html={(brewery as any).descriptionHtml} />
+                        ) : (
+                          <RichTextDisplay html={brewery.description || ""} />
+                        )}
+                      </div>
+                    </section>
+                  )}
+
                   {/* Preview "Birre top" */}
                   {beers.length > 0 && (
                     <section>

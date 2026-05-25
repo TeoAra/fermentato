@@ -807,6 +807,47 @@ export default function BeerDetail() {
             <BeerStatsStrip beer={beer} />
           </div>
 
+          {/* Descrizione birra */}
+          {beer?.description && (
+            <section className="mt-5">
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-sm font-bold text-foreground">Descrizione</h2>
+                {translating && (
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    Traduzione…
+                  </span>
+                )}
+                {translatedDesc && !translating && (
+                  <span className="text-[10px] font-semibold bg-stone-50 dark:bg-[#23262E] text-primary px-2 py-0.5 rounded-full">
+                    Tradotto
+                  </span>
+                )}
+              </div>
+              <div className={`text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed ${descExpanded ? "" : "line-clamp-4"}`}>
+                <RichTextDisplay html={String(translatedDesc || beer.description || "")} />
+              </div>
+              {String(translatedDesc || beer.description || "").length > 200 && (
+                <button
+                  onClick={() => setDescExpanded(!descExpanded)}
+                  className="text-sm font-bold text-primary mt-1 tap-scale"
+                >
+                  {descExpanded ? "Mostra meno" : "Leggi di più"}
+                </button>
+              )}
+              {translatedDesc && beer.description && (
+                <details className="mt-3">
+                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none transition-colors">
+                    Testo originale
+                  </summary>
+                  <div className="mt-2 border-t border-stone-100 dark:border-white/[0.06] pt-2">
+                    <RichTextDisplay html={String(beer.description)} className="text-sm" />
+                  </div>
+                </details>
+              )}
+            </section>
+          )}
+
           {/* Flags row */}
           {(beer?.isGlutenFree || beer?.isAlcoholFree) && (
             <div className="flex items-center gap-1.5 mt-3 flex-wrap">
