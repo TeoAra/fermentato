@@ -1,4 +1,3 @@
-import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ShieldCheck, Plus, Utensils } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
@@ -44,15 +43,8 @@ export default function FoodMenuSection({
 }: FoodMenuSectionProps) {
   const useMock = !menu || !menu.categories || menu.categories.length === 0;
   const data = useMock ? MOCK_FOOD_MENU : (menu as FoodMenu);
-  const categories: MenuCategory[] = data.categories || [];
-
-  const [activeCat, setActiveCat] = useState<string>("all");
-
-  const items = useMemo(() => {
-    if (activeCat === "all") return categories.flatMap((c) => c.items.map((i) => ({ ...i, _cat: c.name })));
-    const c = categories.find((x) => String(x.id) === activeCat);
-    return c ? c.items.map((i) => ({ ...i, _cat: c.name })) : [];
-  }, [categories, activeCat]);
+  const categories: MenuCategory[] = (data.categories || []).filter((c) => c.items && c.items.length > 0);
+  const totalItems = categories.reduce((acc, c) => acc + c.items.length, 0);
 
   return (
     <motion.section
@@ -66,7 +58,7 @@ export default function FoodMenuSection({
         <div>
           <h2 className="text-xl font-black text-[#151515]">Menù</h2>
           <p className="text-xs text-[#6B6357] mt-0.5">
-            {useMock ? "Menù di esempio" : `${items.length} piatti disponibili`}
+            {useMock ? "Menù di esempio" : `${totalItems} piatti disponibili`}
           </p>
         </div>
         {useMock && isOwner && onAddMenu && (
@@ -88,116 +80,94 @@ export default function FoodMenuSection({
         </div>
       )}
 
-      {/* Category pills */}
-      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-        <button
-          type="button"
-          onClick={() => setActiveCat("all")}
-          className={`flex-shrink-0 px-3.5 h-9 rounded-full text-xs font-bold border transition-all ${
-            activeCat === "all"
-              ? "bg-[#F59E0B] border-[#F59E0B] text-white"
-              : "bg-white border-[#E8DED1] text-[#6B6357]"
-          }`}
-        >
-          Tutti
-        </button>
-        {categories.map((c) => {
-          const active = String(c.id) === activeCat;
-          return (
-            <button
-              key={c.id}
-              type="button"
-              onClick={() => setActiveCat(String(c.id))}
-              className={`flex-shrink-0 px-3.5 h-9 rounded-full text-xs font-bold border transition-all ${
-                active
-                  ? "bg-[#F59E0B] border-[#F59E0B] text-white"
-                  : "bg-white border-[#E8DED1] text-[#6B6357]"
-              }`}
-              data-testid={`menu-cat-${c.id}`}
-            >
-              {c.name}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Items */}
-      {items.length === 0 ? (
+      {/* Categorie verticali (scroll naturale verso il basso) */}
+      {categories.length === 0 ? (
         <div className="bg-white rounded-[20px] border border-[#E8DED1] py-12 text-center">
           <Utensils className="w-10 h-10 text-[#F59E0B] mx-auto mb-3" />
           <p className="text-sm font-semibold text-[#151515]">Nessun piatto disponibile</p>
         </div>
       ) : (
-        <div className="space-y-2.5">
-          {items.map((item) => {
-            const allergens = resolveAllergens(item.allergens, allergensIndex);
-            return (
-              <div
-                key={`${item._cat}-${item.id}`}
-                className="bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex gap-3"
-                data-testid={`menu-item-${item.id}`}
-              >
-                {item.imageUrl && (
-                  <div className="w-24 h-24 rounded-2xl overflow-hidden bg-[#FAF7F1] flex-shrink-0">
-                    <ImageWithFallback
-                      src={item.imageUrl}
-                      alt={item.name}
-                      imageType="food"
-                      containerClassName="w-full h-full"
-                      className="w-full h-full object-cover"
-                      iconSize="md"
-                    />
-                  </div>
-                )}
-
-                <div className="flex-1 min-w-0 flex flex-col">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="font-bold text-sm text-[#151515] leading-tight">{item.name}</p>
-                    <span className="text-base font-black text-[#F59E0B] tabular-nums whitespace-nowrap">
-                      {formatPrice(item.price)}
-                    </span>
-                  </div>
-                  {item.description && (
-                    <p className="text-xs text-[#6B6357] leading-snug mt-1 line-clamp-2">
-                      {item.description}
-                    </p>
-                  )}
-                  <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
-                    {item.isVegetarian && <span className="text-sm" title="Vegetariano">🌿</span>}
-                    {item.isSpicy && <span className="text-sm" title="Piccante">🌶️</span>}
-                    {allergens.slice(0, 4).map((a, i) => (
-                      <span
-                        key={i}
-                        title={a.label}
-                        className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#FFF7EA] text-[11px]"
-                      >
-                        {a.emoji}
-                      </span>
-                    ))}
-                  </div>
-                  {item.pairingBeer && (
-                    <div className="mt-2 inline-flex items-center gap-1.5 self-start px-2 py-1 rounded-full bg-[#FFF7EA] border border-[#F59E0B]/20 max-w-full">
-                      {item.pairingBeer.logoUrl && (
-                        <div className="w-4 h-4 rounded-full overflow-hidden bg-white flex-shrink-0">
+        <div className="space-y-6">
+          {categories.map((cat) => (
+            <section key={cat.id} data-testid={`menu-cat-${cat.id}`} className="space-y-2.5">
+              <h3 className="text-base font-black text-[#151515] sticky top-0 bg-[#FAF7F1]/95 backdrop-blur-sm py-1.5 -mx-1 px-1 z-10">
+                {cat.name}
+                <span className="ml-2 text-[10px] font-bold text-[#F59E0B] align-middle">
+                  {cat.items.length}
+                </span>
+              </h3>
+              <div className="space-y-2.5">
+                {cat.items.map((item) => {
+                  const allergens = resolveAllergens(item.allergens, allergensIndex);
+                  return (
+                    <div
+                      key={item.id}
+                      className="bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex gap-3"
+                      data-testid={`menu-item-${item.id}`}
+                    >
+                      {item.imageUrl && (
+                        <div className="w-20 h-20 rounded-2xl overflow-hidden bg-[#FAF7F1] flex-shrink-0">
                           <ImageWithFallback
-                            src={item.pairingBeer.logoUrl}
-                            alt={item.pairingBeer.name}
-                            imageType="beer"
+                            src={item.imageUrl}
+                            alt={item.name}
+                            imageType="food"
                             containerClassName="w-full h-full"
                             className="w-full h-full object-cover"
-                            iconSize="sm"
+                            iconSize="md"
                           />
                         </div>
                       )}
-                      <span className="text-[10px] font-semibold text-[#C77800] truncate">
-                        In abbinamento {item.pairingBeer.name}
-                      </span>
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="font-bold text-sm text-[#151515] leading-tight">{item.name}</p>
+                          <span className="text-base font-black text-[#F59E0B] tabular-nums whitespace-nowrap">
+                            {formatPrice(item.price)}
+                          </span>
+                        </div>
+                        {item.description && (
+                          <p className="text-xs text-[#6B6357] leading-snug mt-1 line-clamp-3">
+                            {item.description}
+                          </p>
+                        )}
+                        <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                          {item.isVegetarian && <span className="text-sm" title="Vegetariano">🌿</span>}
+                          {item.isSpicy && <span className="text-sm" title="Piccante">🌶️</span>}
+                          {allergens.slice(0, 4).map((a, i) => (
+                            <span
+                              key={i}
+                              title={a.label}
+                              className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#FFF7EA] text-[11px]"
+                            >
+                              {a.emoji}
+                            </span>
+                          ))}
+                        </div>
+                        {item.pairingBeer && (
+                          <div className="mt-2 inline-flex items-center gap-1.5 self-start px-2 py-1 rounded-full bg-[#FFF7EA] border border-[#F59E0B]/20 max-w-full">
+                            {item.pairingBeer.logoUrl && (
+                              <div className="w-4 h-4 rounded-full overflow-hidden bg-white flex-shrink-0">
+                                <ImageWithFallback
+                                  src={item.pairingBeer.logoUrl}
+                                  alt={item.pairingBeer.name}
+                                  imageType="beer"
+                                  containerClassName="w-full h-full"
+                                  className="w-full h-full object-cover"
+                                  iconSize="sm"
+                                />
+                              </div>
+                            )}
+                            <span className="text-[10px] font-semibold text-[#C77800] truncate">
+                              In abbinamento {item.pairingBeer.name}
+                            </span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                  )}
-                </div>
+                  );
+                })}
               </div>
-            );
-          })}
+            </section>
+          ))}
         </div>
       )}
 

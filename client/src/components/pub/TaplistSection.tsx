@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Link } from "wouter";
 import { Beer as BeerIcon, Heart } from "lucide-react";
@@ -12,23 +12,6 @@ interface TaplistSectionProps {
   currentUserCanCheckin?: boolean;
   onToggleFavorite?: (beerId: number) => void;
   favoriteBeerIds?: Set<number>;
-}
-
-const FILTERS = ["Tutte", "Pils", "IPA", "Stout", "Sour", "Altro"] as const;
-type Filter = (typeof FILTERS)[number];
-
-function matchesFilter(style: string | null | undefined, f: Filter): boolean {
-  if (f === "Tutte") return true;
-  const s = (style || "").toLowerCase();
-  if (f === "Pils") return s.includes("pils") || s.includes("lager") || s.includes("pilsner");
-  if (f === "IPA") return s.includes("ipa") || s.includes("india pale");
-  if (f === "Stout") return s.includes("stout") || s.includes("porter");
-  if (f === "Sour") return s.includes("sour") || s.includes("gose") || s.includes("lambic") || s.includes("berliner");
-  if (f === "Altro") {
-    const main = ["pils", "lager", "pilsner", "ipa", "india pale", "stout", "porter", "sour", "gose", "lambic", "berliner"];
-    return !main.some((k) => s.includes(k));
-  }
-  return true;
 }
 
 function getAllPrices(tap: TapItem): { size: string; price: string }[] {
@@ -54,17 +37,10 @@ export default function TaplistSection({
   onToggleFavorite,
   favoriteBeerIds,
 }: TaplistSectionProps) {
-  const [filter, setFilter] = useState<Filter>("Tutte");
-
   const sorted = useMemo(() => {
     if (!Array.isArray(taps)) return [];
     return [...taps].sort((a, b) => (a.tapNumber ?? 999) - (b.tapNumber ?? 999));
   }, [taps]);
-
-  const filtered = useMemo(
-    () => sorted.filter((t) => matchesFilter(t.beer?.style, filter)),
-    [sorted, filter]
-  );
 
   return (
     <motion.section
@@ -81,29 +57,6 @@ export default function TaplistSection({
         </p>
       </div>
 
-      {sorted.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-          {FILTERS.map((f) => {
-            const active = filter === f;
-            return (
-              <button
-                key={f}
-                type="button"
-                onClick={() => setFilter(f)}
-                className={`flex-shrink-0 px-3.5 h-9 rounded-full text-xs font-bold border transition-all ${
-                  active
-                    ? "bg-[#F59E0B] border-[#F59E0B] text-white"
-                    : "bg-white border-[#E8DED1] text-[#6B6357] hover:text-[#151515]"
-                }`}
-                data-testid={`taplist-filter-${f}`}
-              >
-                {f}
-              </button>
-            );
-          })}
-        </div>
-      )}
-
       {sorted.length === 0 ? (
         <div className="bg-white rounded-[20px] border border-[#E8DED1] py-16 text-center">
           <div className="w-16 h-16 rounded-2xl bg-[#FAF7F1] mx-auto mb-4 flex items-center justify-center">
@@ -116,7 +69,7 @@ export default function TaplistSection({
         </div>
       ) : (
         <div className="space-y-2.5">
-          {filtered.map((tap) => {
+          {sorted.map((tap) => {
             const prices = getAllPrices(tap);
             const isFav = favoriteBeerIds?.has(tap.beer.id) ?? false;
             return (
@@ -125,16 +78,9 @@ export default function TaplistSection({
                 className="relative bg-white rounded-[20px] border border-[#E8DED1] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex items-center gap-3"
                 data-testid={`taplist-tap-${tap.id}`}
               >
-                {/* Tap number */}
-                <div className="w-8 h-8 rounded-full bg-[#FFF7EA] border border-[#F59E0B]/30 flex items-center justify-center flex-shrink-0">
-                  <span className="text-xs font-black text-[#F59E0B] tabular-nums">
-                    {tap.tapNumber ?? "—"}
-                  </span>
-                </div>
-
                 {/* Logo */}
                 <Link href={`/beer/${tap.beer.id}`} className="flex-shrink-0">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-[#FAF7F1] border border-[#E8DED1]">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-[#FAF7F1] border border-[#E8DED1]">
                     <ImageWithFallback
                       src={tap.beer.imageUrl || tap.beer.logoUrl || tap.beer.brewery?.logoUrl}
                       alt={tap.beer.name}

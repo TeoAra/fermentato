@@ -164,19 +164,19 @@ export default function PubHero({
               </div>
             )}
 
-            <div className="flex items-center gap-1.5 text-sm pt-0.5">
-              {hasRating ? (
-                <>
+            <div className="flex items-center gap-3 text-sm pt-0.5 flex-wrap">
+              {hasRating && (
+                <span className="inline-flex items-center gap-1">
                   <Star className="w-4 h-4 text-[#F59E0B]" fill="#F59E0B" />
                   <span className="font-bold text-[#151515]">{beerRatingAvg!.toFixed(1)}</span>
-                  <span className="text-[#6B6357] text-xs">· birre valutate ({beerRatingCount})</span>
-                </>
-              ) : (
-                <span className="text-[#6B6357] text-xs">Nessuna valutazione</span>
+                  <span className="text-[#6B6357] text-xs">({beerRatingCount})</span>
+                </span>
               )}
-              {typeof favoritesCount === "number" && favoritesCount > 0 && (
-                <span className="text-[#6B6357] text-xs ml-auto">♥ {favoritesCount}</span>
-              )}
+              <span className="inline-flex items-center gap-1 text-xs text-[#6B6357]">
+                <Heart className="w-3.5 h-3.5 text-[#F59E0B]" fill="#F59E0B" />
+                <span className="font-bold text-[#151515]">{favoritesCount ?? 0}</span>
+                <span>{(favoritesCount ?? 0) === 1 ? "persona l'ha salvato" : "persone l'hanno salvato"}</span>
+              </span>
             </div>
           </div>
 
