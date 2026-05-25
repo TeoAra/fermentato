@@ -772,7 +772,7 @@ export default function BeerDetail() {
       {/* ═══════════════════════════════════════════════════════════
            HERO — full-bleed artwork + curved white edge (mockup spec)
          ═══════════════════════════════════════════════════════════ */}
-      <div className={`relative ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
+      <div className="relative">
         {/* Cover image container — overflow-hidden so blur doesn't bleed outside */}
         {/* Priority: logoUrl (etichetta) → imageUrl — stessa gerarchia del
             cerchio avatar, così cover e logo mostrano sempre la stessa immagine
@@ -827,7 +827,7 @@ export default function BeerDetail() {
       </div>
 
       {/* White card with rounded top — hero transitions cleanly into content */}
-      <div className={`bg-background rounded-t-[32px] -mt-8 relative z-10 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
+      <div className="bg-background rounded-t-[32px] -mt-8 relative z-10">
         {/* Logo overlap + floating bookmark */}
         <PageContainer variant="wide">
           <div className="flex items-end justify-between -mt-4 relative z-10">
@@ -857,10 +857,9 @@ export default function BeerDetail() {
       <PageContainer
         as="main"
         variant="wide"
-        className={`pb-24 ${activeTab !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : ''}`}
+        className="pb-24"
         style={{
           paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
-          paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
         }}
       >
         <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
@@ -1872,62 +1871,6 @@ export default function BeerDetail() {
             pub={null}
           />
         </Suspense>
-      )}
-
-      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
-      {activeTab !== 'overview' && !isBeerModalOpen && (
-        <div
-          className="lg:hidden fixed top-0 inset-x-0 z-30"
-          style={{ paddingTop: 'env(safe-area-inset-top)' }}
-        >
-          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-[#E8DED1] dark:border-white/[0.06]">
-            <div className="flex items-center gap-3 px-3 h-14">
-              <button
-                onClick={() => setActiveTab('overview')}
-                aria-label="Torna alla panoramica"
-                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
-              >
-                <ArrowLeft className="h-5 w-5 text-foreground" />
-              </button>
-              <div className="flex-1 min-w-0 flex items-center gap-2">
-                {(beer?.logoUrl || beer?.imageUrl) && (
-                  <img
-                    src={beer?.logoUrl || beer?.imageUrl}
-                    alt=""
-                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
-                  />
-                )}
-                <div className="min-w-0">
-                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">{beer?.name}</div>
-                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
-                    {activeTab === 'recensioni' && 'Recensioni'}
-                    {activeTab === 'disponibilita' && 'Disponibilità'}
-                    {activeTab === 'info' && 'Info'}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={handleShare}
-                aria-label="Condividi"
-                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
-              >
-                <Share2 className="h-[18px] w-[18px] text-foreground" />
-              </button>
-              <button
-                onClick={handleFavoriteToggle}
-                disabled={favoriteMutation.isPending}
-                aria-label={isBeerFavorited ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}
-                className={`w-10 h-10 rounded-full flex items-center justify-center tap-scale active:scale-95 ${
-                  isBeerFavorited
-                    ? 'bg-primary/15 text-primary'
-                    : 'bg-stone-100 dark:bg-white/[0.06] text-foreground'
-                }`}
-              >
-                <Heart className={`h-[18px] w-[18px] ${isBeerFavorited ? 'fill-primary' : ''}`} />
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* ── STICKY BOTTOM TAB BAR — portal-based, escapes will-change trap ── */}

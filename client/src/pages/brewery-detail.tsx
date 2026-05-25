@@ -635,7 +635,7 @@ export default function BreweryDetail() {
       </Helmet>
       
       {/* ── HERO — full-bleed cover with rounded-card transition ── */}
-      <div className={`relative lg:hidden ${activeTab !== 'overview' ? 'hidden' : ''}`}>
+      <div className="relative lg:hidden">
         {/* Cover image container — overflow-hidden so blur doesn't bleed */}
         <div className="relative h-72 overflow-hidden">
           {brewery?.coverImageUrl ? (
@@ -848,10 +848,9 @@ export default function BreweryDetail() {
         <PageContainer
           as="main"
           variant="wide"
-          className={`lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:pt-8 lg:pb-8 lg:items-start lg:min-h-0 ${activeTab !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : ''}`}
+          className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:pt-8 lg:pb-8 lg:items-start lg:min-h-0"
           style={{
             paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
-            paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
           }}
         >
           <div className="bg-white dark:bg-card min-h-0 lg:rounded-2xl lg:shadow-sm lg:border lg:border-stone-100 dark:lg:border-stone-800 lg:overflow-hidden">
@@ -1902,63 +1901,6 @@ export default function BreweryDetail() {
       )}
 
       <Footer />
-
-      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
-      {activeTab !== 'overview' && !isBreweryModalOpen && (
-        <div
-          className="lg:hidden fixed top-0 inset-x-0 z-30"
-          style={{ paddingTop: 'env(safe-area-inset-top)' }}
-        >
-          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-[#E8DED1] dark:border-white/[0.06]">
-            <div className="flex items-center gap-3 px-3 h-14">
-              <button
-                onClick={() => setActiveTab('overview')}
-                aria-label="Torna alla home del birrificio"
-                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
-              >
-                <ArrowLeft className="h-5 w-5 text-foreground" />
-              </button>
-              <div className="flex-1 min-w-0 flex items-center gap-2">
-                {brewery?.logoUrl && (
-                  <img
-                    src={brewery.logoUrl}
-                    alt=""
-                    className="w-7 h-7 rounded-full object-cover border border-stone-200 dark:border-white/10 flex-shrink-0"
-                  />
-                )}
-                <div className="min-w-0">
-                  <div className="text-sm font-extrabold text-foreground truncate leading-tight">{brewery?.name}</div>
-                  <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
-                    {activeTab === 'birre' && 'Birre'}
-                    {activeTab === 'serate' && 'Eventi'}
-                    {activeTab === 'distribuzione' && 'Dove trovarci'}
-                    {activeTab === 'info' && 'Info'}
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={handleShare}
-                aria-label="Condividi"
-                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
-              >
-                <Share2 className="h-[18px] w-[18px] text-foreground" />
-              </button>
-              <button
-                onClick={handleFavoriteToggle}
-                disabled={favoriteMutation.isPending}
-                aria-label={isBreweryFavorited ? 'Smetti di seguire' : 'Segui'}
-                className={`w-10 h-10 rounded-full flex items-center justify-center tap-scale active:scale-95 ${
-                  isBreweryFavorited
-                    ? 'bg-primary/15 text-primary'
-                    : 'bg-stone-100 dark:bg-white/[0.06] text-foreground'
-                }`}
-              >
-                <Heart className={`h-[18px] w-[18px] ${isBreweryFavorited ? 'fill-primary' : ''}`} />
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── STICKY BOTTOM TAB BAR — portal-based, escapes will-change trap ── */}
       <div className="lg:hidden">
