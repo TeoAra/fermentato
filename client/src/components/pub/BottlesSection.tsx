@@ -61,18 +61,18 @@ export default function BottlesSection({
 
               <div className="flex-1 min-w-0">
                 <Link href={`/beer/${b.beer.id}`}>
-                  <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] truncate hover:text-[#F59E0B] transition-colors">
+                  <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] leading-tight break-words hover:text-[#F59E0B] transition-colors">
                     {b.beer.name}
                   </p>
                 </Link>
                 {b.beer.brewery?.name && (
-                  <p className="text-[11px] font-semibold text-[#F59E0B] truncate">
+                  <p className="text-[11px] font-semibold text-[#F59E0B] leading-tight break-words mt-0.5">
                     {b.beer.brewery.name}
                   </p>
                 )}
-                <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                   {b.beer.style && (
-                    <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF7EA] dark:bg-[#F59E0B]/15 text-[#C77800] dark:text-[#FFB74D]">
+                    <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF7EA] dark:bg-[#F59E0B]/15 text-[#C77800] dark:text-[#FFB74D] whitespace-nowrap">
                       {b.beer.style}
                     </span>
                   )}
