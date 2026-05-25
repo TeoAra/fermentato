@@ -87,22 +87,33 @@ export default function FoodMenuSection({
           <p className="text-sm font-semibold text-[#151515] dark:text-[#F5F5F5]">Nessun piatto disponibile</p>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
           {categories.map((cat) => (
-            <section key={cat.id} data-testid={`menu-cat-${cat.id}`} className="space-y-2.5">
-              <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5] sticky top-0 bg-[#FAF7F1] dark:bg-[#12151A]/95 backdrop-blur-sm py-1.5 -mx-1 px-1 z-10">
-                {cat.name}
-                <span className="ml-2 text-[10px] font-bold text-[#F59E0B] align-middle">
-                  {cat.items.length}
+            <section
+              key={cat.id}
+              data-testid={`menu-cat-${cat.id}`}
+              className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden"
+            >
+              <header className="flex items-baseline gap-2 px-4 pt-4 pb-2 border-b border-[#E8DED1] dark:border-white/[0.06]">
+                <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5]">
+                  {cat.name}
+                </h3>
+                <span className="text-[10px] font-bold text-[#F59E0B] tabular-nums">
+                  {cat.items.length} {cat.items.length === 1 ? "piatto" : "piatti"}
                 </span>
-              </h3>
-              <div className="space-y-2.5">
+              </header>
+              {cat.description && (
+                <p className="px-4 pt-2 text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed">
+                  {cat.description}
+                </p>
+              )}
+              <div className="divide-y divide-[#E8DED1] dark:divide-white/[0.06]">
                 {cat.items.map((item) => {
                   const allergens = resolveAllergens(item.allergens, allergensIndex);
                   return (
                     <div
                       key={item.id}
-                      className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex gap-3"
+                      className="px-4 py-3 flex gap-3"
                       data-testid={`menu-item-${item.id}`}
                     >
                       {item.imageUrl && (

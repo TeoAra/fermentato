@@ -43,7 +43,7 @@ export default function BottlesSection({
           return (
             <div
               key={b.id}
-              className="relative bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex items-center gap-3"
+              className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex items-center gap-3"
               data-testid={`bottle-${b.id}`}
             >
               <Link href={`/beer/${b.beer.id}`} className="flex-shrink-0">
@@ -88,38 +88,41 @@ export default function BottlesSection({
                 </span>
               </div>
 
-              {onToggleFavorite && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onToggleFavorite(b.beer.id);
-                  }}
-                  className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/80 dark:bg-[#1A1D24]/80 backdrop-blur-sm flex items-center justify-center hover:bg-[#FFF7EA] dark:bg-[#F59E0B]/15 active:scale-95 transition-all"
-                  aria-label={isFav ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
-                >
-                  <Heart
-                    className={`w-3.5 h-3.5 ${isFav ? "text-[#F59E0B]" : "text-[#6B6357] dark:text-[#B7BDC7]"}`}
-                    fill={isFav ? "currentColor" : "none"}
-                  />
-                </button>
-              )}
-
-              {currentUserCanCheckin && onCheckin && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onCheckin(b);
-                  }}
-                  className="absolute bottom-2 right-2 w-7 h-7 rounded-full bg-[#F59E0B] text-white flex items-center justify-center shadow-sm active:scale-95 transition-all"
-                  aria-label="Check-in"
-                  title="Sto bevendo questa"
-                >
-                  <BeerIcon className="w-3.5 h-3.5" />
-                </button>
+              {(onToggleFavorite || (currentUserCanCheckin && onCheckin)) && (
+                <div className="flex flex-col items-center justify-center gap-1.5 flex-shrink-0 pl-1">
+                  {onToggleFavorite && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onToggleFavorite(b.beer.id);
+                      }}
+                      className="w-8 h-8 rounded-full bg-[#FAF7F1] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center hover:bg-[#FFF7EA] dark:hover:bg-[#F59E0B]/15 active:scale-95 transition-all"
+                      aria-label={isFav ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
+                    >
+                      <Heart
+                        className={`w-3.5 h-3.5 ${isFav ? "text-[#F59E0B]" : "text-[#6B6357] dark:text-[#B7BDC7]"}`}
+                        fill={isFav ? "currentColor" : "none"}
+                      />
+                    </button>
+                  )}
+                  {currentUserCanCheckin && onCheckin && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onCheckin(b);
+                      }}
+                      className="w-8 h-8 rounded-full bg-[#F59E0B] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(245,158,11,0.35)] active:scale-95 transition-all"
+                      aria-label="Check-in"
+                      title="Sto bevendo questa"
+                    >
+                      <BeerIcon className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           );
