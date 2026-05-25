@@ -512,7 +512,7 @@ export default function PubDetail() {
           </div>
         )}
 
-        {activeTab === "overview" && (
+        <div className={`${activeTab === "overview" ? "" : "hidden"} lg:!block`}>
           <OverviewSection
             pub={pubData}
             events={Array.isArray(pubEvents) ? pubEvents : []}
@@ -520,25 +520,25 @@ export default function PubDetail() {
             onCall={handleCall}
             onDirections={handleDirections}
           />
-        )}
+        </div>
 
-        {activeTab === "taplist" && (
+        <div className={`${activeTab === "taplist" ? "" : "hidden"} lg:!block`}>
           <TaplistSection
             taps={Array.isArray(tapList) ? tapList : []}
             currentUserCanCheckin={isAuthenticated}
             onCheckin={openTapCheckin}
           />
-        )}
+        </div>
 
-        {activeTab === "bottles" && (
+        <div className={`${activeTab === "bottles" ? "" : "hidden"} lg:!block`}>
           <BottlesSection
             bottles={Array.isArray(bottles) ? bottles : []}
             currentUserCanCheckin={isAuthenticated}
             onCheckin={openBottleCheckin}
           />
-        )}
+        </div>
 
-        {activeTab === "menu" && (
+        <div className={`${activeTab === "menu" ? "" : "hidden"} lg:!block`}>
           <FoodMenuSection
             menu={foodMenu}
             isOwner={!!canManage}
@@ -547,7 +547,7 @@ export default function PubDetail() {
             }}
             allergensIndex={allergensIndex}
           />
-        )}
+        </div>
 
       </main>
 
