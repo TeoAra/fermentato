@@ -658,7 +658,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 {daysLeft > 0 ? `Prova gratuita · ${daysLeft} giorn${daysLeft === 1 ? 'o' : 'i'} rimanent${daysLeft === 1 ? 'e' : 'i'}` : 'Prova scaduta'}
               </p>
               <p className={`text-xs ${isTrialExpiringSoon ? 'text-orange-700 dark:text-orange-300' : 'text-emerald-700 dark:text-emerald-400'}`}>
-                {daysLeft > 0 ? `Poi €65/anno IVA inclusa · ${trialEndsAt.toLocaleDateString('it-IT')}` : 'Il tuo abbonamento si rinnoverà automaticamente'}
+                {daysLeft > 0
+                  ? (isIosNative
+                      ? `Scade il ${trialEndsAt.toLocaleDateString('it-IT')}`
+                      : `Poi €65/anno IVA inclusa · ${trialEndsAt.toLocaleDateString('it-IT')}`)
+                  : (isIosNative
+                      ? 'Il tuo abbonamento è gestito dall\'account business'
+                      : 'Il tuo abbonamento si rinnoverà automaticamente')}
               </p>
             </div>
           </div>
@@ -678,7 +684,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             <CheckCircle className="w-5 h-5 flex-shrink-0 text-emerald-600" />
             <div className="min-w-0">
               <p className="font-semibold text-sm text-emerald-900 dark:text-emerald-100">Piano Pub Pro — Attivo</p>
-              <p className="text-xs text-emerald-700 dark:text-emerald-400">€65/anno IVA inclusa · rinnovo automatico</p>
+              <p className="text-xs text-emerald-700 dark:text-emerald-400">
+                {isIosNative ? 'Account business attivo' : '€65/anno IVA inclusa · rinnovo automatico'}
+              </p>
             </div>
           </div>
           <Button size="sm" variant="outline" className="flex-shrink-0 text-red-700 border-red-100 hover:bg-red-50 dark:hover:bg-red-900/20 text-xs rounded-xl" onClick={() => setShowCancelDialog(true)}>

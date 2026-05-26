@@ -632,6 +632,9 @@ export default function Landing() {
           </div>
 
           {/* ── Festival Mode — full-width banner below both cards ── */}
+          {/* Nascosto su iOS nativo: contiene prezzo e CTA verso checkout
+              esterno (App Store Review Guideline 3.1.1 / 3.1.3(e) B2B). */}
+          {!isIosNative && (
           <div className="mt-6 rounded-3xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-200">
             <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-0">
               <div className="p-8">
@@ -657,6 +660,7 @@ export default function Landing() {
               </div>
             </div>
           </div>
+          )}
         </PageContainer>
       </section>
 
