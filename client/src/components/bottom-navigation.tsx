@@ -59,7 +59,10 @@ export function BottomNavigation() {
     location === "/dashboard" ||
     location.startsWith("/dashboard/") ||
     location.startsWith("/pub-dashboard") ||
-    location.startsWith("/brewery-dashboard")
+    location.startsWith("/brewery-dashboard") ||
+    location === "/profile" ||
+    location.startsWith("/profile/") ||
+    location.startsWith("/user-dashboard")
   ) return null;
 
   const typedUser = user as any;
