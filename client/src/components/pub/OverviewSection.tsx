@@ -259,7 +259,7 @@ export default function OverviewSection({
             {upcomingEvents.map((e: any) => (
               <Link
                 key={e.id}
-                href={`/event/${e.id}`}
+                href={`/eventi/pub/${e.id}`}
                 className="flex items-center gap-3 py-2 rounded-xl hover:bg-[#FAF7F1] dark:bg-[#12151A] transition-colors px-2 -mx-2"
               >
                 <div className="w-12 h-12 rounded-xl bg-[#FFF7EA] dark:bg-[#F59E0B]/15 border border-[#F59E0B]/30 flex flex-col items-center justify-center flex-shrink-0">

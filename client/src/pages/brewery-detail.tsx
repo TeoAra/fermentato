@@ -717,9 +717,10 @@ export default function BreweryDetail() {
                       <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-3">Prossimi eventi</h2>
                       <div className="space-y-3">
                         {breweryEvents.filter((e: any) => isFuture(new Date(e.eventDate))).slice(0, 2).map((event: any) => (
-                          <div
+                          <Link
                             key={event.id}
-                            className="overflow-hidden rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]"
+                            href={`/eventi/brewery/${event.id}`}
+                            className="block overflow-hidden rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_8px_28px_rgba(0,0,0,0.4)] transition-shadow"
                           >
                             {event.imageUrl && (
                               <div className="h-32 bg-cover bg-center" style={{ backgroundImage: `url(${event.imageUrl})` }} />
@@ -734,7 +735,7 @@ export default function BreweryDetail() {
                                 <span className="capitalize">{format(new Date(event.eventDate), "EEE d MMM 'alle' HH:mm", { locale: itLocale })}</span>
                               </div>
                             </div>
-                          </div>
+                          </Link>
                         ))}
                       </div>
                     </section>
