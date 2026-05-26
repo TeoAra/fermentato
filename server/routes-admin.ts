@@ -64,9 +64,18 @@ export function registerAdminRoutes(app: Express) {
       const roles = userType === 'customer' ? ['customer'] : ['customer', userType];
       const activeRole = userType;
 
-      const hashedPwd = password && typeof password === 'string' && password.length >= 6
-        ? await hashPassword(password)
-        : null;
+      // Se l'admin passa una password, deve essere valida — non la ignoriamo
+      // silenziosamente, altrimenti l'utente non può loggare e si vede
+      // "Account creato con social login" al primo tentativo.
+      let hashedPwd: string | null = null;
+      if (password !== undefined && password !== null && password !== '') {
+        if (typeof password !== 'string' || password.length < 6) {
+          return res.status(400).json({
+            message: "La password deve essere di almeno 6 caratteri (oppure lasciala vuota).",
+          });
+        }
+        hashedPwd = await hashPassword(password);
+      }
 
       const [newUser] = await db
         .insert(users)
@@ -80,7 +89,9 @@ export function registerAdminRoutes(app: Express) {
           roles,
           activeRole,
           hashedPassword: hashedPwd,
-          isEmailVerified: !!email, // creato da admin = considerato verificato
+          // Account creato dall'admin = sempre considerato verificato, anche
+          // se nickname-only (senza email non potrebbe mai verificare).
+          isEmailVerified: true,
           needsOnboarding: false,
         })
         .returning();
