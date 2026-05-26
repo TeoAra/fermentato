@@ -68,7 +68,6 @@ import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import AddressAutocomplete from "@/components/address-autocomplete";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 import { Textarea } from "@/components/ui/textarea";
 import RouteCard from "@/components/route-card";
@@ -532,7 +531,7 @@ export default function BreweryDetail() {
 
   if (breweryLoading) {
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#0B0D10]">
         <PageContainer variant="wide" className="py-8">
           <div className="space-y-8">
             <div className="skeleton rounded-2xl h-80 md:h-96"></div>
@@ -550,7 +549,7 @@ export default function BreweryDetail() {
 
   if (!brewery) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#0B0D10] flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-400 to-orange-600 mx-auto flex items-center justify-center">
             <Building className="w-8 h-8 text-white" />
@@ -580,7 +579,7 @@ export default function BreweryDetail() {
   const seoUrl = `https://fermenta.to/brewery/${id}`;
 
   return (
-      <div className="min-h-screen bg-background dark:bg-background slide-up">
+      <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#0B0D10]">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -652,55 +651,13 @@ export default function BreweryDetail() {
       />
 
         {/* ── MAIN CONTENT ── */}
-        <PageContainer
-          as="main"
-          variant="wide"
-          className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-8 lg:pt-8 lg:pb-8 lg:items-start lg:min-h-0"
-          style={{
-            paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
-          }}
+        <main
+          className="max-w-[720px] mx-auto px-4"
+          style={{ paddingBottom: 'calc(80px + env(safe-area-inset-bottom))' }}
         >
-          <div className="bg-white dark:bg-card min-h-0 lg:rounded-2xl lg:shadow-sm lg:border lg:border-stone-100 dark:lg:border-stone-800 lg:overflow-hidden">
-
-
-            {/* Tabs Section — underline style per mockup (desktop only; mobile usa il dock contestuale) */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-              <div className="hidden lg:block border-b border-[#E8DED1] dark:border-white/[0.06] px-4 md:px-8">
-                <TabsList className="bg-transparent dark:bg-transparent rounded-none p-0 h-auto gap-6 w-full justify-start">
-                  <TabsTrigger
-                    value="birre"
-                    className="bg-transparent rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent text-[#6B6357] dark:text-[#B7BDC7] font-bold px-0 py-3 text-sm transition-colors hover:text-foreground"
-                  >
-                    Birre
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="info"
-                    className="bg-transparent rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent text-[#6B6357] dark:text-[#B7BDC7] font-bold px-0 py-3 text-sm transition-colors hover:text-foreground"
-                  >
-                    Info
-                  </TabsTrigger>
-                  {(breweryEvents.length > 0 || announcements.length > 0) && (
-                    <TabsTrigger
-                      value="serate"
-                      className="bg-transparent rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent text-[#6B6357] dark:text-[#B7BDC7] font-bold px-0 py-3 text-sm transition-colors hover:text-foreground"
-                    >
-                      Eventi
-                    </TabsTrigger>
-                  )}
-                  {distribution.length > 0 && (
-                    <TabsTrigger
-                      value="distribuzione"
-                      className="bg-transparent rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent text-[#6B6357] dark:text-[#B7BDC7] font-bold px-0 py-3 text-sm transition-colors hover:text-foreground whitespace-nowrap"
-                    >
-                      Dove trovarci
-                    </TabsTrigger>
-                  )}
-                </TabsList>
-              </div>
-
-              <div className="px-4 md:px-8 pt-4 pb-8">
+          <div className="pt-4 space-y-6">
                 {/* ── TAB: OVERVIEW (solo mobile) — preview di birre + eventi ── */}
-                <TabsContent value="overview" className="lg:hidden m-0 focus-visible:outline-none space-y-6">
+                <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block m-0 space-y-6`}>
                   {/* Descrizione birrificio */}
                   {((brewery as any)?.descriptionHtml || brewery?.description) && (
                     <section>
@@ -800,10 +757,10 @@ export default function BreweryDetail() {
                       </div>
                     </section>
                   )}
-                </TabsContent>
+                </div>
 
                 {/* ── TAB: BIRRE ── */}
-                <TabsContent value="birre" className="m-0 focus-visible:outline-none">
+                <div className={`${activeTab === 'birre' ? '' : 'hidden'} lg:!block m-0`}>
                   <div className="space-y-4">
                     {beerStyles.length > 1 && (
                       <div className="flex items-center gap-2 overflow-x-auto -mx-4 px-4 pb-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
@@ -978,10 +935,10 @@ export default function BreweryDetail() {
                       </>
                     )}
                   </div>
-                </TabsContent>
+                </div>
 
                 {/* ── TAB: INFO ── */}
-                <TabsContent value="info" className="m-0 focus-visible:outline-none space-y-6 pt-4">
+                <div className={`${activeTab === 'overview' || activeTab === 'info' ? '' : 'hidden'} lg:!block m-0 space-y-6 pt-4`}>
                   {((brewery as any)?.descriptionHtml || brewery?.description) && (
                     <div className="space-y-4">
                       <h2 className="text-xl font-bold text-foreground">Il Birrificio</h2>
@@ -1071,26 +1028,24 @@ export default function BreweryDetail() {
                       )}
                     </div>
                   </div>
-                </TabsContent>
+                </div>
 
                 {/* ── TAB: SERATE ── */}
-                <TabsContent value="serate" className="m-0 focus-visible:outline-none space-y-8 pt-4">
+                <div className={`${activeTab === 'serate' ? '' : 'hidden'} lg:!block m-0 space-y-8 pt-4`}>
                   <BreweryEventsSection
                     announcements={announcements}
                     breweryEvents={breweryEvents}
                   />
-                </TabsContent>
+                </div>
 
                 {/* ── TAB: DISTRIBUZIONE ── */}
-                <TabsContent value="distribuzione" className="m-0 focus-visible:outline-none space-y-6 pt-4">
+                <div className={`${activeTab === 'distribuzione' ? '' : 'hidden'} lg:!block m-0 space-y-6 pt-4`}>
                   <BreweryDistributionSection distribution={distribution} />
-                </TabsContent>
-              </div>
-            </Tabs>
+                </div>
 
             {/* ── Community posts ── */}
             {brewery?.id && brewery?.name && (
-              <div className="px-4 md:px-8 pb-6">
+              <div className="pb-6">
                 <CommunityPostsSection
                   entity={{ kind: "brewery", id: brewery.id, name: brewery.name }}
                   title="Post della community su questo birrificio"
@@ -1099,8 +1054,8 @@ export default function BreweryDetail() {
             )}
           </div>
 
-          {/* ── DESKTOP SIDEBAR ── */}
-          <aside className="hidden lg:flex lg:flex-col gap-4 sticky top-20 self-start">
+          {/* ── DESKTOP SIDEBAR (rimosso — layout stacked stile pub-detail) ── */}
+          <aside className="hidden">
             {/* Brewery identity card */}
             <div className="bg-white dark:bg-card rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-sm overflow-hidden">
               <div className="p-5 space-y-4">
@@ -1233,7 +1188,7 @@ export default function BreweryDetail() {
             )}
           </aside>
 
-        </PageContainer>
+        </main>
 
       {/* Admin Edit Dialog - modal={false} allows Google Maps dropdown to receive clicks */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} modal={false}>
@@ -1643,11 +1598,10 @@ export default function BreweryDetail() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           tabs={[
-            { value: 'overview',     label: 'Overview', icon: <HomeIcon /> },
-            { value: 'birre',        label: 'Birre',    icon: <Beer /> },
-            { value: 'serate',       label: 'Eventi',   icon: <Calendar /> },
-            { value: 'distribuzione',label: 'Dove',     icon: <Store /> },
-            { value: 'info',         label: 'Info',     icon: <InfoIcon /> },
+            { value: 'overview',     label: 'Panoramica',    icon: <HomeIcon /> },
+            { value: 'birre',        label: 'Birre',         icon: <Beer /> },
+            { value: 'serate',       label: 'Eventi',        icon: <Calendar /> },
+            { value: 'distribuzione',label: 'Distribuzione', icon: <Store /> },
           ]}
         />
       </div>

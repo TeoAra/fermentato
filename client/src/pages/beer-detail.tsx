@@ -632,7 +632,7 @@ export default function BeerDetail() {
 
   if (beerLoading) {
     return (
-      <div className="min-h-screen bg-background dark:bg-background ">
+      <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#0B0D10]">
         <PageContainer variant="wide" className="py-8">
           <div className="space-y-8">
             <div className="skeleton rounded-2xl h-80 md:h-96"></div>
@@ -650,7 +650,7 @@ export default function BeerDetail() {
 
   if (!beer) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#0B0D10] flex items-center justify-center">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-red-500 to-pink-600 mx-auto flex items-center justify-center">
             <BeerIcon className="w-8 h-8 text-white" />
@@ -681,7 +681,7 @@ export default function BeerDetail() {
   const seoUrl = `https://fermenta.to/beer/${id}`;
 
   return (
-    <div className="min-h-screen bg-background dark:bg-background ">
+    <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#0B0D10]">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -794,12 +794,10 @@ export default function BeerDetail() {
         }}
       />
 
-      <PageContainer
-        as="main"
-        variant="wide"
-        className="pb-24"
+      <main
+        className="max-w-[720px] mx-auto px-4"
         style={{
-          paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+          paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
         }}
       >
         <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
@@ -1259,7 +1257,7 @@ export default function BeerDetail() {
             )}
           </div>
         </div>
-        </PageContainer>
+        </main>
 
       {/* Admin Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
@@ -1619,10 +1617,10 @@ export default function BeerDetail() {
           activeTab={activeTab}
           onTabChange={setActiveTab}
           tabs={[
-            { value: 'overview',      label: 'Overview',   icon: <HomeIcon /> },
-            { value: 'recensioni',    label: 'Recensioni', icon: <Star /> },
-            { value: 'disponibilita', label: 'Dove',       icon: <MapPin /> },
-            { value: 'info',          label: 'Info',       icon: <InfoIcon /> },
+            { value: 'overview',      label: 'Panoramica',   icon: <HomeIcon /> },
+            { value: 'disponibilita', label: 'Disponibilità', icon: <MapPin /> },
+            { value: 'recensioni',    label: 'Recensioni',   icon: <Star /> },
+            { value: 'info',          label: 'Info',         icon: <InfoIcon /> },
           ]}
         />
       </div>
