@@ -150,7 +150,17 @@ async function findOrCreateUser(p: NormalizedUser): Promise<User> {
 
 function loginUser(req: any, user: User): Promise<void> {
   return new Promise((resolve, reject) => {
-    req.login(user, (err: any) => (err ? reject(err) : resolve()));
+    req.login(user, (err: any) => {
+      if (err) return reject(err);
+      // CRITICO per il login nativo iOS/Android (Apple/Google):
+      // req.login() aggiorna solo la sessione in memoria. Lo store Postgres
+      // scrive in modo asincrono, quindi se rispondiamo subito al POST
+      // /api/auth/apple-native il client può chiamare /api/auth/user PRIMA
+      // che la riga di sessione sia persistita → 401 → l'utente sembra
+      // "non riuscire ad accedere" (Apple App Review rejection 2.1).
+      // Forzando session.save() aspettiamo la scrittura prima di rispondere.
+      req.session.save((saveErr: any) => (saveErr ? reject(saveErr) : resolve()));
+    });
   });
 }
 
