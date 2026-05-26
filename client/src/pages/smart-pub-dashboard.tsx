@@ -72,7 +72,6 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useChromecast } from "@/hooks/useChromecast";
-import { CastDiagnosticPanel } from "@/components/cast-diagnostic-panel";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { useMemo } from "react";
@@ -823,9 +822,6 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   return (
                     <div className="space-y-3">
 
-                      {/* ── Pannello diagnostico (iOS + Android native) ── */}
-                      {(isNativeIos || isNativeAndroid) && <CastDiagnosticPanel />}
-
                       {/* ── Cast SDK caricato: pulsante Chromecast diretto ── */}
                       {castSdkLoaded && (
                         <div className="space-y-2">
@@ -858,57 +854,28 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                               if (ok) {
                                 toast({ title: `Taplist LIVE su ${deviceName || "TV"}!`, description: "Si aggiorna in tempo reale" });
                               } else if (isNativeAndroid) {
-                                // Su APK Android mostriamo la diagnostica live nel toast
-                                // (mirror della logica iOS) — utile per capire se il
-                                // problema è discovery (deviceCount=0 → permessi/rete)
-                                // o app ID (deviceCount>0 ma picker vuoto).
+                                // Su Android: controlliamo silenziosamente il codice errore per
+                                // distinguere user-cancel da problemi reali, ma NON mostriamo
+                                // più dump di diagnostica nel toast.
                                 const diag = await getDiagnostics();
                                 const errCode = (diag as any)?.lastErrorCode ?? 0;
-                                const errLabel = errCode === 2005 ? "AUTH_FAILED — sender package non autorizzato in Cast Console"
-                                  : errCode === 2002 ? "APP_NOT_FOUND — app ID non registrato o non pubblicato"
-                                  : errCode === 2003 ? "APP_NOT_RUNNING"
-                                  : errCode === 15   ? "TIMEOUT"
-                                  : errCode === 7    ? "NETWORK_ERROR"
-                                  : errCode !== 0    ? `code ${errCode}`
-                                  : "";
-                                const diagText = diag
-                                  ? diag.deviceCount === 0
-                                    ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device · App ID ${(diag as any).appId ?? ""}${errLabel ? ` · ❌ ${errLabel}` : ""}`
-                                    : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}${errLabel ? `\n❌ ${errLabel}` : ""}`
-                                  : "📊 Diagnostica non disponibile";
-                                // ⚙️  errCode -1 = USER_CANCELLED (picker chiuso senza scegliere).
-                                // Con il fix delay 6s lato Kotlin, questo NON dovrebbe più
-                                // apparire quando il cast sta per partire. Ma se il picker
-                                // è stato davvero chiuso senza selezione, l'utente sa già
-                                // cosa ha fatto — non serve toast rosso aggressivo.
                                 if (errCode === -1) {
-                                  // Silenzioso: l'utente ha chiuduto il picker, nessun toast.
+                                  // Utente ha chiuso il picker senza scegliere: silenzioso.
                                   return;
                                 }
                                 const title = errCode === 2005 ? "Sessione Cast rifiutata" : "Nessun Chromecast trovato";
                                 toast({
                                   title,
-                                  description: `Assicurati che il Chromecast sia acceso e sulla stessa rete WiFi e che Fermenta abbia il permesso 'Dispositivi nelle vicinanze'.\n\n${diagText}`,
+                                  description: "Assicurati che il Chromecast sia acceso e sulla stessa rete WiFi e che Fermenta abbia il permesso 'Dispositivi nelle vicinanze'.",
                                   variant: "destructive",
-                                  duration: 15000,
+                                  duration: 8000,
                                 });
                               } else if (isNativeIos) {
-                                // Cast SDK attivo ma nessun Chromecast trovato o utente ha annullato il picker.
-                                // NON forzare AirPlay: AirPlay è un pulsante separato qui sotto.
-                                // Includiamo la diagnostica live nel toast: utile per capire se la discovery
-                                // sta funzionando (deviceCount>0 = device vede la TV ma sessione fallita;
-                                // deviceCount=0 = TV non scoperta → problema permessi/rete/bundleID).
-                                const diag = await getDiagnostics();
-                                const diagText = diag
-                                  ? diag.deviceCount === 0
-                                    ? `📊 Discovery ${diag.discoveryActive ? "attiva" : "INATTIVA"} · 0 device trovati`
-                                    : `📊 ${diag.deviceCount} device: ${diag.devices.map(d => `${d.name} (${d.modelName})`).join(", ")}`
-                                  : "";
                                 toast({
                                   title: "Nessun Chromecast trovato",
-                                  description: `Assicurati che il Chromecast/Android TV sia sulla stessa rete WiFi e che Fermenta abbia il permesso 'Rete locale'.${diagText ? "\n\n" + diagText : ""}`,
+                                  description: "Assicurati che il Chromecast/Android TV sia sulla stessa rete WiFi e che Fermenta abbia il permesso 'Rete locale'.",
                                   variant: "destructive",
-                                  duration: 10000,
+                                  duration: 8000,
                                 });
                               } else {
                                 window.open(tvUrl, "_blank");
