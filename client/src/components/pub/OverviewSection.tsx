@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { SiFacebook, SiInstagram } from "react-icons/si";
 import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
+import { cartoPositronProvider } from "@/lib/map-tiles";
 import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
 import type { PubLike } from "./types";
 
@@ -113,6 +114,7 @@ export default function OverviewSection({
             <PigeonMap
               defaultCenter={[lat as number, lng as number]}
               defaultZoom={15}
+              provider={cartoPositronProvider}
               attribution={false}
               mouseEvents={false}
               touchEvents={false}

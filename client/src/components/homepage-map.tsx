@@ -3,6 +3,7 @@ import { Map, Overlay } from "pigeon-maps";
 import { Capacitor } from "@capacitor/core";
 import { X, Plus, Minus } from "lucide-react";
 import Supercluster from "supercluster";
+import { cartoPositronProvider } from "@/lib/map-tiles";
 
 const PUB_COLOR = "#F77104";
 const BREWERY_COLOR = "#9B4E10";
@@ -26,14 +27,9 @@ function radiusToZoom(km: number): number {
   return 8;
 }
 
-// CARTO Positron – pulito e minimalista come Google Maps
-const cartoVoyager = (x: number, y: number, z: number, dpr?: number) => {
-  const s = "abcd"[Math.abs(x + y) % 4];
-  const retina = dpr && dpr >= 2 ? "@2x" : "";
-  const dark = typeof document !== "undefined" && document.documentElement.classList.contains("dark");
-  const style = dark ? "dark_all" : "light_all";
-  return `https://${s}.basemaps.cartocdn.com/${style}/${z}/${x}/${y}${retina}.png`;
-};
+// CARTO Positron / Dark Matter – pulito, minimalista, coerente in tutta l'app
+// (vedi `@/lib/map-tiles`).
+const cartoVoyager = cartoPositronProvider;
 
 interface MapPub {
   id: number;

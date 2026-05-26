@@ -11,9 +11,12 @@ export function isIOS(): boolean {
 }
 
 export function getMapNavigationUrl(name: string, address: string): string {
+  // Usiamo sempre l'URL universale https://www.google.com/maps/dir/?...
+  // Funziona ovunque: su iOS apre Apple Maps via universal link (o il
+  // browser se Apple Maps è stato rimosso), su Android apre Google Maps
+  // o il browser, sul web apre direttamente Google Maps. Evita la
+  // dialog "Nessuna app di navigazione installata" causata dallo
+  // schema custom `maps://` non gestito.
   const query = encodeURIComponent(`${name}, ${address}`);
-  if (isIOS()) {
-    return `maps://maps.apple.com/?q=${query}`;
-  }
   return `https://www.google.com/maps/dir/?api=1&destination=${query}`;
 }
