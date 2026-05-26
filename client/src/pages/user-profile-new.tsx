@@ -52,7 +52,7 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAnyModalOpen, useHideGlobalBottomNav } from "@/components/bottom-navigation";
+import { useAnyModalOpen, useHideGlobalBottomNav, DockPortal } from "@/components/bottom-navigation";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import { FestivalLikeButton } from "@/components/festival-like-button";
@@ -1120,6 +1120,7 @@ export default function UserProfile() {
         )}
 
         {/* ── BOTTOM DOCK PROFILO (mobile only) — stesso pattern di BottomNavigation ── */}
+        <DockPortal>
         <nav
           className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
             isProfileModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
@@ -1170,6 +1171,7 @@ export default function UserProfile() {
             </div>
           </div>
         </nav>
+        </DockPortal>
       </div>
     </div>
     </div>

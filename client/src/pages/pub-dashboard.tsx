@@ -29,7 +29,7 @@ import {
   Home as HomeIcon, Info as InfoIcon, ArrowLeft, Share2, ChevronRight
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
-import { useAnyModalOpen, useHideGlobalBottomNav } from "@/components/bottom-navigation";
+import { useAnyModalOpen, useHideGlobalBottomNav, DockPortal } from "@/components/bottom-navigation";
 
 interface Pub {
   id: number;
@@ -703,6 +703,7 @@ export default function PubDashboard() {
       )}
 
       {/* ── BOTTOM DOCK DASHBOARD PUB — stesso pattern di BottomNavigation ── */}
+      <DockPortal>
       <nav
         className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
           isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
@@ -753,6 +754,7 @@ export default function PubDashboard() {
           </div>
         </div>
       </nav>
+      </DockPortal>
     </div>
   );
 }

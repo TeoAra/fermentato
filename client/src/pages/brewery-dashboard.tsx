@@ -11,7 +11,7 @@ import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useAnyModalOpen, useHideGlobalBottomNav } from "@/components/bottom-navigation";
+import { useAnyModalOpen, useHideGlobalBottomNav, DockPortal } from "@/components/bottom-navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -1428,17 +1428,18 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </div>
       )}
 
-      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      {/* ── BOTTOM DOCK DASHBOARD BIRRIFICIO (mobile only) ── */}
+      <DockPortal>
       <nav
-        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
           isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        style={{ paddingBottom: 'max(env(safe-area-inset-bottom) - 16px, 0px)' }}
         aria-label="Navigazione dashboard birrificio"
         role="tablist"
       >
-        <div className="mx-auto max-w-md px-4">
-          <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
+        <div className="px-2">
+          <div>
             <div className="flex items-stretch justify-between p-1.5 gap-1">
               {[
                 { id: 'overview',      label: 'Home',    Icon: HomeIcon },
@@ -1479,6 +1480,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           </div>
         </div>
       </nav>
+      </DockPortal>
 
       {/* Profile Edit Dialog */}
       <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile} modal={false}>

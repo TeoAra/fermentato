@@ -2,9 +2,20 @@ import { Search, User, Home, Bell, Activity as ActivityIcon } from "lucide-react
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
+
+/**
+ * Renderizza i dock interni dei dashboard tramite portal direttamente in
+ * document.body, bypassando il main-content-wrapper che ha will-change:transform
+ * e intrappola position:fixed impedendo l'ancoraggio al viewport.
+ */
+export function DockPortal({ children }: { children: ReactNode }) {
+  if (typeof document === "undefined") return null;
+  return createPortal(children, document.body);
+}
 
 // ── Context: consente ai dashboard con dock proprio di sopprimere la global nav ──
 interface BottomNavHideCtxType {
