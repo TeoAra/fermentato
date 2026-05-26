@@ -374,7 +374,7 @@ export default function PubDashboard() {
                     </div>
                     {isIosNative ? (
                       <p className="text-xs text-red-700 dark:text-red-300 shrink-0 max-w-[200px] text-right">
-                        Per abbonarti, vai su <strong>fermenta.to</strong> dal browser.
+                        Abbonamento non attivo. Riattiva l'accesso per gestire il pub.
                       </p>
                     ) : (
                       <Button className="bg-primary hover:bg-primary/90 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>
@@ -429,7 +429,7 @@ export default function PubDashboard() {
                   </div>
                   {isIosNative ? (
                     <p className="text-xs text-muted-foreground shrink-0 max-w-[200px] text-right">
-                      Per abbonarti, vai su <strong>fermenta.to</strong> dal browser.
+                      Abbonamento non attivo. Riattiva l'accesso per rendere visibile il pub.
                     </p>
                   ) : (
                     <Button className="bg-primary hover:bg-primary/90 text-white shrink-0" onClick={() => setLocation('/attiva-pub')}>

@@ -702,7 +702,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           </div>
           {isIosNative ? (
             <span className="text-xs text-muted-foreground flex-shrink-0 max-w-[160px] text-right">
-              Riattiva da <strong>fermenta.to</strong>
+              Accesso sospeso
             </span>
           ) : (
             <Link href="/attiva-pub">
@@ -2176,7 +2176,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 </p>
                 {isIosNative ? (
                   <p className="text-sm text-muted-foreground max-w-sm">
-                    Per riattivare l'abbonamento, accedi a <strong>fermenta.to</strong> dal browser del computer o telefono.
+                    Questa sezione tornerà disponibile non appena l'accesso sarà riattivato.
                   </p>
                 ) : (
                   <Link href="/attiva-pub">

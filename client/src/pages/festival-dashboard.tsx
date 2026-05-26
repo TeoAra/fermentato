@@ -1749,7 +1749,7 @@ export default function FestivalDashboard() {
                         </h3>
                         <p className="text-sm text-muted-foreground dark:text-stone-400 mt-1">
                           {isIosNative
-                            ? "Per attivare il taplist pubblico e raccogliere valutazioni, accedi a fermenta.to dal browser e completa l'attivazione."
+                            ? "Il taplist pubblico e la raccolta valutazioni non sono ancora attivi per questo festival."
                             : "Per rendere il taplist pubblico e raccogliere valutazioni è necessario il pagamento una tantum."}
                         </p>
                       </div>
@@ -1800,7 +1800,7 @@ export default function FestivalDashboard() {
                       </div>
                       {isIosNative ? (
                         <p className="text-xs text-muted-foreground flex-shrink-0 max-w-[220px] text-right">
-                          Per rinnovare il festival, accedi a <strong>fermenta.to</strong> dal browser.
+                          Festival concluso. Riattivalo per pubblicare un nuovo taplist.
                         </p>
                       ) : (
                         <Button
