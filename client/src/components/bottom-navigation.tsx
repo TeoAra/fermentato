@@ -1,10 +1,46 @@
 import { Search, User, Home, Bell, Activity as ActivityIcon } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect, lazy, Suspense, type ReactNode } from "react";
+import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
+
+// ── Context: consente ai dashboard con dock proprio di sopprimere la global nav ──
+interface BottomNavHideCtxType {
+  hide: () => void;
+  show: () => void;
+  isHidden: boolean;
+}
+const BottomNavHideCtx = createContext<BottomNavHideCtxType>({
+  hide: () => {},
+  show: () => {},
+  isHidden: false,
+});
+
+export function BottomNavProvider({ children }: { children: ReactNode }) {
+  const [hideCount, setHideCount] = useState(0);
+  const hide = useCallback(() => setHideCount(n => n + 1), []);
+  const show = useCallback(() => setHideCount(n => Math.max(0, n - 1)), []);
+  return (
+    <BottomNavHideCtx.Provider value={{ hide, show, isHidden: hideCount > 0 }}>
+      {children}
+    </BottomNavHideCtx.Provider>
+  );
+}
+
+/**
+ * Chiama questo hook all'interno di qualsiasi pagina che ha un proprio dock
+ * bottom. Nasconde la BottomNavigation globale finché la pagina è montata.
+ */
+export function useHideGlobalBottomNav() {
+  const { hide, show } = useContext(BottomNavHideCtx);
+  useEffect(() => {
+    hide();
+    return () => { show(); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+}
 
 // Rileva se c'è un Dialog/Sheet/AlertDialog aperto controllando la presenza
 // di un overlay scuro fixed (backdrop Radix). Quando è aperto, nascondiamo
@@ -36,6 +72,7 @@ export function BottomNavigation() {
   const { isAuthenticated, user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
   const anyModalOpen = useAnyModalOpen();
+  const { isHidden } = useContext(BottomNavHideCtx);
 
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
@@ -43,6 +80,9 @@ export function BottomNavigation() {
     refetchInterval: 30000,
   });
   const unreadCount = unreadData?.count ?? 0;
+
+  // Nascosta esplicitamente da un dock interno (context — blindato, indipendente dalla route)
+  if (isHidden) return null;
 
   if (location.startsWith("/tv/") || location.startsWith("/festival-tv/")) return null;
   // Pagine di dettaglio: la bottom bar globale viene sostituita dal dock

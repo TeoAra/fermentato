@@ -11,7 +11,7 @@ import { Link, useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
+import { useAnyModalOpen, useHideGlobalBottomNav } from "@/components/bottom-navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -479,6 +479,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
     return () => mq.removeEventListener?.("change", handler);
   }, []);
   const isAnyModalOpen = useAnyModalOpen();
+  useHideGlobalBottomNav();
 
   useEffect(() => {
     if (isAdminMode) return;

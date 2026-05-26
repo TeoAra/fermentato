@@ -80,7 +80,7 @@ import MenuCategoryManager from "@/components/menu-category-manager";
 import { TapListManager } from "@/components/taplist-manager";
 import { BottleListManager } from "@/components/bottle-list-manager";
 import { PubOwnerTopBar } from "@/components/pub-owner-top-bar";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
+import { useAnyModalOpen, useHideGlobalBottomNav } from "@/components/bottom-navigation";
 import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
@@ -362,6 +362,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   const [currentSection, setCurrentSection] = useState<DashboardSection>('taplist');
   const isAnyModalOpen = useAnyModalOpen();
+  useHideGlobalBottomNav();
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;

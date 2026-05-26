@@ -19,7 +19,7 @@ const CapacitorPushPrompt     = lazy(() => import("@/components/pwa-prompt").the
 const CapacitorLocationPrompt = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.CapacitorLocationPrompt })));
 import { MobileHeader } from "@/components/mobile-header";
 const OnboardingTutorial = lazy(() => import("@/components/OnboardingTutorial").then(m => ({ default: m.OnboardingTutorial })));
-import { BottomNavigation } from "@/components/bottom-navigation";
+import { BottomNavigation, BottomNavProvider } from "@/components/bottom-navigation";
 import { DesktopSidebar } from "@/components/desktop-sidebar";
 const CookieBanner = lazy(() => import("@/components/CookieBanner"));
 import { AppUpdateCheck } from "@/components/app-update-check";
@@ -488,7 +488,9 @@ function App() {
             <Toaster />
             <Lightbox />
             <AppUpdateCheck />
+            <BottomNavProvider>
             <Router />
+            </BottomNavProvider>
             <Suspense fallback={null}>
               <AutoPushSubscriber />
               <PwaInstallPrompt />

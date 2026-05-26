@@ -29,7 +29,7 @@ import {
   Home as HomeIcon, Info as InfoIcon, ArrowLeft, Share2, ChevronRight
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
+import { useAnyModalOpen, useHideGlobalBottomNav } from "@/components/bottom-navigation";
 
 interface Pub {
   id: number;
@@ -143,6 +143,7 @@ export default function PubDashboard() {
     return () => mq.removeEventListener?.("change", handler);
   }, []);
   const isAnyModalOpen = useAnyModalOpen();
+  useHideGlobalBottomNav();
 
   // Show welcome message if redirected from email verification
   useEffect(() => {

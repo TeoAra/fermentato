@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
+import { useAnyModalOpen, useHideGlobalBottomNav } from "@/components/bottom-navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,7 @@ export default function UserDashboard() {
     return () => mq.removeEventListener?.('change', handler);
   }, []);
   const isUserModalOpen = useAnyModalOpen();
+  useHideGlobalBottomNav();
 
   // Fetch user data
   const { data: favorites = [] } = useQuery<any[]>({

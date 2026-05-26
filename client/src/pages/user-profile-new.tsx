@@ -52,7 +52,7 @@ import {
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
+import { useAnyModalOpen, useHideGlobalBottomNav } from "@/components/bottom-navigation";
 import type { User as UserType } from "@shared/schema";
 import UserFavoritesSection from "@/components/UserFavoritesSection";
 import { FestivalLikeButton } from "@/components/festival-like-button";
@@ -222,6 +222,7 @@ export default function UserProfile() {
     return () => mq.removeEventListener?.('change', handler);
   }, []);
   const isProfileModalOpen = useAnyModalOpen();
+  useHideGlobalBottomNav();
   
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
