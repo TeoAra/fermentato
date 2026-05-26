@@ -542,6 +542,19 @@ export default function Onboarding() {
                         <FormMessage />
                       </FormItem>
                     )} />
+                    <FormItem>
+                      <FormLabel>Indirizzo</FormLabel>
+                      <FormControl>
+                        <AddressAutocomplete
+                          onAddressSelect={(details: AddressDetails) => {
+                            if (details.city) breweryForm.setValue("breweryLocation", details.city, { shouldValidate: false });
+                            if (details.region) breweryForm.setValue("breweryRegion", details.region, { shouldValidate: false });
+                            if (details.country) breweryForm.setValue("breweryCountry", details.country, { shouldValidate: false });
+                          }}
+                          placeholder="Cerca indirizzo del birrificio..."
+                        />
+                      </FormControl>
+                    </FormItem>
                     <div className="grid grid-cols-2 gap-3">
                       <FormField control={breweryForm.control} name="breweryLocation" render={({ field }) => (
                         <FormItem>
