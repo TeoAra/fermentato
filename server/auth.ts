@@ -1004,7 +1004,16 @@ export async function setupAuth(app: Express) {
       }).where(eq(users.id, user.id));
 
       const [updatedUser] = await db.select().from(users).where(eq(users.id, user.id));
-      req.login(updatedUser, () => {});
+      // CRITICO: aspetta sia req.login() che session.save() prima di rispondere.
+      // Senza questo, il client viene rimbalzato a /login dopo l'onboarding
+      // perché legge /api/auth/user prima che la sessione aggiornata sia
+      // persistita su Postgres (stesso pattern del fix in native-auth.ts).
+      await new Promise<void>((resolve, reject) => {
+        req.login(updatedUser, (err: any) => {
+          if (err) return reject(err);
+          req.session.save((saveErr: any) => (saveErr ? reject(saveErr) : resolve()));
+        });
+      });
 
       const { hashedPassword: _, ...userOut } = updatedUser;
 
@@ -1066,12 +1075,13 @@ export async function setupAuth(app: Express) {
         isActive: false, // Pending verification
       });
 
-      // Update session with new roles
+      // Update session with new roles — aspetta save() prima di rispondere
       const [updatedUser] = await db.select().from(users).where(eq(users.id, user.id));
-      req.login(updatedUser, (err) => {
-        if (err) {
-          console.error('Session update error:', err);
-        }
+      await new Promise<void>((resolve, reject) => {
+        req.login(updatedUser, (err: any) => {
+          if (err) return reject(err);
+          req.session.save((saveErr: any) => (saveErr ? reject(saveErr) : resolve()));
+        });
       });
 
       res.json({ 
