@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,125 @@ const getCategoryIcon = (categoryName: string) => {
   if (name.includes('panini') || name.includes('sandwich')) return Sandwich;
   return Utensils; // Default icon
 };
+
+// ── Beer Pairing Autocomplete ────────────────────────────────────────────────
+function BeerPairingInput({ pubId, value, onChange }: {
+  pubId: number;
+  value: string;
+  onChange: (name: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState(value);
+  const [dbResults, setDbResults] = useState<any[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Taplist + bottles del pub (caricati una volta)
+  const { data: tapItems = [] } = useQuery<any[]>({ queryKey: ['/api/pubs', String(pubId), 'taplist'] });
+  const { data: bottleItems = [] } = useQuery<any[]>({ queryKey: ['/api/pubs', String(pubId), 'bottles'] });
+
+  // Merge locale: taplist + cantina, deduplicati per nome
+  const localBeers: string[] = Array.from(new Set([
+    ...tapItems.map((t: any) => t.beerName || t.name).filter(Boolean),
+    ...bottleItems.map((b: any) => b.beerName || b.name).filter(Boolean),
+  ]));
+
+  const filteredLocal = query.length === 0
+    ? localBeers
+    : localBeers.filter(n => n.toLowerCase().includes(query.toLowerCase()));
+
+  // Ricerca DB con debounce (solo se query >= 2 char)
+  const searchDb = useCallback((q: string) => {
+    if (q.length < 2) { setDbResults([]); return; }
+    fetch(`/api/beers/search?q=${encodeURIComponent(q)}&limit=8`)
+      .then(r => r.ok ? r.json() : [])
+      .then((results: any[]) => {
+        // Escludi quelli già presenti nel locale
+        const localSet = new Set(localBeers.map(n => n.toLowerCase()));
+        setDbResults(results.filter((b: any) => !localSet.has((b.name || '').toLowerCase())));
+      })
+      .catch(() => setDbResults([]));
+  }, [localBeers.join(',')]);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchDb(query), 350);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [query, searchDb]);
+
+  // Chiudi dropdown cliccando fuori
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const select = (name: string) => {
+    setQuery(name);
+    onChange(name);
+    setOpen(false);
+  };
+
+  const allSuggestions = [
+    ...filteredLocal.slice(0, 6).map(name => ({ name, source: 'locale' as const })),
+    ...dbResults.slice(0, 4).map((b: any) => ({ name: b.name, style: b.style, source: 'db' as const })),
+  ];
+
+  return (
+    <div ref={containerRef} className="space-y-1.5 relative">
+      <Label className="text-sm font-bold text-foreground">🍺 Abbinamento birra</Label>
+      <Input
+        placeholder="Cerca tra taplist, cantina o DB birre..."
+        value={query}
+        onChange={(e) => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); }}
+        onFocus={() => setOpen(true)}
+        className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
+      />
+      {open && allSuggestions.length > 0 && (
+        <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] rounded-xl shadow-lg overflow-hidden max-h-56 overflow-y-auto">
+          {filteredLocal.length > 0 && (
+            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B] bg-[#FFF7EA] dark:bg-[#F59E0B]/10">
+              Taplist & Cantina
+            </div>
+          )}
+          {filteredLocal.slice(0, 6).map(name => (
+            <button
+              key={name}
+              type="button"
+              onMouseDown={() => select(name)}
+              className="w-full text-left px-3 py-2 text-sm font-medium text-[#151515] dark:text-[#F5F5F5] hover:bg-[#FAF7F1] dark:hover:bg-white/[0.04] flex items-center gap-2 transition-colors"
+            >
+              <span className="text-base">🍺</span>
+              {name}
+            </button>
+          ))}
+          {dbResults.length > 0 && (
+            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#6B6357] dark:text-[#B7BDC7] bg-[#FAF7F1] dark:bg-white/[0.02] border-t border-[#E8DED1] dark:border-white/[0.06]">
+              Database birre
+            </div>
+          )}
+          {dbResults.slice(0, 4).map((b: any) => (
+            <button
+              key={b.id}
+              type="button"
+              onMouseDown={() => select(b.name)}
+              className="w-full text-left px-3 py-2 hover:bg-[#FAF7F1] dark:hover:bg-white/[0.04] flex items-center gap-2 transition-colors"
+            >
+              <span className="text-base">🔍</span>
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-[#151515] dark:text-[#F5F5F5] truncate">{b.name}</p>
+                {b.style && <p className="text-[11px] text-[#6B6357] dark:text-[#B7BDC7] truncate">{b.style}</p>}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+      <p className="text-[11px] text-muted-foreground">Opzionale — birra consigliata in abbinamento</p>
+    </div>
+  );
+}
 
 export default function MenuCategoryManager({ pubId, categories, isLoading }: MenuCategoryManagerProps) {
   const { toast } = useToast();
@@ -1314,16 +1433,11 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
               aspectRatio="square"
               recommendedDimensions="400×400px"
             />
-            <div className="space-y-1.5">
-              <Label className="text-sm font-bold text-foreground">🍺 Abbinamento birra</Label>
-              <Input
-                placeholder="Es. Krush Belgian Strong Ale..."
-                value={itemForm.pairingBeerName}
-                onChange={(e) => setItemForm({ ...itemForm, pairingBeerName: e.target.value })}
-                className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
-              />
-              <p className="text-[11px] text-muted-foreground">Opzionale — nome della birra consigliata in abbinamento</p>
-            </div>
+            <BeerPairingInput
+              pubId={pubId}
+              value={itemForm.pairingBeerName}
+              onChange={(name) => setItemForm({ ...itemForm, pairingBeerName: name })}
+            />
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsAddItemOpen(false)}>Annulla</Button>
               <Button
