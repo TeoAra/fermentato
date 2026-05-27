@@ -619,7 +619,7 @@ export default function PubDetail() {
                     </div>
                   );
                 })()}
-                {!isRichContentEmpty(selectedEvent.description) && (
+                {selectedEvent.description?.trim() && (
                   <RichTextDisplay html={selectedEvent.description} />
                 )}
                 <div className="pt-3 border-t">

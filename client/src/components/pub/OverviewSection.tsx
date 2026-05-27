@@ -12,7 +12,7 @@ import {
 import { SiFacebook, SiInstagram } from "react-icons/si";
 import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
 import { cartoPositronProvider } from "@/lib/map-tiles";
-import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
+import { RichTextDisplay, isRichContentEmpty, richTextToPlain } from "@/components/rich-text-editor";
 import type { PubLike } from "./types";
 
 interface OverviewSectionProps {
@@ -273,7 +273,7 @@ export default function OverviewSection({
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] truncate">{e.title || e.name}</p>
                   {e.description && (
-                    <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] truncate">{e.description}</p>
+                    <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] truncate">{richTextToPlain(e.description)}</p>
                   )}
                 </div>
               </Link>

@@ -51,16 +51,14 @@ export default function BreweryOverviewSection({
           <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5] mb-2">
             Chi siamo
           </h3>
-          {!isRichContentEmpty(brewery?.richContent) ? (
-            <RichTextDisplay
-              html={typeof brewery?.richContent === "string" ? brewery.richContent : ""}
-              className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed"
-            />
-          ) : (
-            <p className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed whitespace-pre-line">
-              {brewery?.description}
-            </p>
-          )}
+          <RichTextDisplay
+            html={
+              (!isRichContentEmpty(brewery?.richContent) && typeof brewery?.richContent === "string")
+                ? brewery.richContent
+                : (brewery?.description ?? "")
+            }
+            className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed"
+          />
         </motion.div>
       )}
 
