@@ -53,6 +53,33 @@ const getCategoryIcon = (categoryName: string) => {
 };
 
 // ── Beer Pairing Autocomplete ────────────────────────────────────────────────
+interface LocalBeer {
+  name: string;
+  breweryName?: string;
+  abv?: number | null;
+  imageUrl?: string | null;
+  style?: string | null;
+  source: 'taplist' | 'cantina';
+}
+
+function BeerAvatar({ imageUrl, name }: { imageUrl?: string | null; name: string }) {
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name}
+        className="w-9 h-9 rounded-lg object-cover flex-shrink-0 border border-stone-100 dark:border-white/10"
+        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+      />
+    );
+  }
+  return (
+    <div className="w-9 h-9 rounded-lg bg-[#FFF7EA] dark:bg-[#F59E0B]/15 flex items-center justify-center flex-shrink-0 border border-[#F59E0B]/20">
+      <span className="text-base leading-none">🍺</span>
+    </div>
+  );
+}
+
 function BeerPairingInput({ pubId, value, onChange }: {
   pubId: number;
   value: string;
@@ -68,15 +95,46 @@ function BeerPairingInput({ pubId, value, onChange }: {
   const { data: tapItems = [] } = useQuery<any[]>({ queryKey: ['/api/pubs', String(pubId), 'taplist'] });
   const { data: bottleItems = [] } = useQuery<any[]>({ queryKey: ['/api/pubs', String(pubId), 'bottles'] });
 
-  // Merge locale: taplist + cantina, deduplicati per nome
-  const localBeers: string[] = Array.from(new Set([
-    ...tapItems.map((t: any) => t.beerName || t.name).filter(Boolean),
-    ...bottleItems.map((b: any) => b.beerName || b.name).filter(Boolean),
-  ]));
+  // Merge locale: taplist + cantina, deduplicati per nome — mantieni tutti i metadati
+  const localBeers: LocalBeer[] = (() => {
+    const seen = new Set<string>();
+    const result: LocalBeer[] = [];
+    for (const t of tapItems as any[]) {
+      const n = t.beerName || t.name;
+      if (n && !seen.has(n.toLowerCase())) {
+        seen.add(n.toLowerCase());
+        result.push({
+          name: n,
+          breweryName: t.breweryName || t.brewery_name || t.brewery?.name,
+          abv: t.abv ?? t.beer_abv,
+          imageUrl: t.imageUrl || t.image_url || t.beer?.imageUrl,
+          style: t.style || t.beerStyle,
+          source: 'taplist',
+        });
+      }
+    }
+    for (const b of bottleItems as any[]) {
+      const n = b.beerName || b.name;
+      if (n && !seen.has(n.toLowerCase())) {
+        seen.add(n.toLowerCase());
+        result.push({
+          name: n,
+          breweryName: b.breweryName || b.brewery_name || b.brewery?.name,
+          abv: b.abv ?? b.beer_abv,
+          imageUrl: b.imageUrl || b.image_url || b.beer?.imageUrl,
+          style: b.style || b.beerStyle,
+          source: 'cantina',
+        });
+      }
+    }
+    return result;
+  })();
 
   const filteredLocal = query.length === 0
     ? localBeers
-    : localBeers.filter(n => n.toLowerCase().includes(query.toLowerCase()));
+    : localBeers.filter(b => b.name.toLowerCase().includes(query.toLowerCase()) || (b.breweryName || '').toLowerCase().includes(query.toLowerCase()));
+
+  const localNameSet = new Set(localBeers.map(b => b.name.toLowerCase()));
 
   // Ricerca DB con debounce (solo se query >= 2 char)
   const searchDb = useCallback((q: string) => {
@@ -84,12 +142,11 @@ function BeerPairingInput({ pubId, value, onChange }: {
     fetch(`/api/beers/search?q=${encodeURIComponent(q)}&limit=8`)
       .then(r => r.ok ? r.json() : [])
       .then((results: any[]) => {
-        // Escludi quelli già presenti nel locale
-        const localSet = new Set(localBeers.map(n => n.toLowerCase()));
-        setDbResults(results.filter((b: any) => !localSet.has((b.name || '').toLowerCase())));
+        setDbResults(results.filter((b: any) => !localNameSet.has((b.name || '').toLowerCase())));
       })
       .catch(() => setDbResults([]));
-  }, [localBeers.join(',')]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localBeers.map(b => b.name).join(',')]);
 
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -112,10 +169,9 @@ function BeerPairingInput({ pubId, value, onChange }: {
     setOpen(false);
   };
 
-  const allSuggestions = [
-    ...filteredLocal.slice(0, 6).map(name => ({ name, source: 'locale' as const })),
-    ...dbResults.slice(0, 4).map((b: any) => ({ name: b.name, style: b.style, source: 'db' as const })),
-  ];
+  const hasLocal = filteredLocal.length > 0;
+  const hasDb = dbResults.length > 0;
+  const showDropdown = open && (hasLocal || hasDb);
 
   return (
     <div ref={containerRef} className="space-y-1.5 relative">
@@ -127,43 +183,63 @@ function BeerPairingInput({ pubId, value, onChange }: {
         onFocus={() => setOpen(true)}
         className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
       />
-      {open && allSuggestions.length > 0 && (
-        <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] rounded-xl shadow-lg overflow-hidden max-h-56 overflow-y-auto">
-          {filteredLocal.length > 0 && (
-            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B] bg-[#FFF7EA] dark:bg-[#F59E0B]/10">
-              Taplist & Cantina
-            </div>
-          )}
-          {filteredLocal.slice(0, 6).map(name => (
-            <button
-              key={name}
-              type="button"
-              onMouseDown={() => select(name)}
-              className="w-full text-left px-3 py-2 text-sm font-medium text-[#151515] dark:text-[#F5F5F5] hover:bg-[#FAF7F1] dark:hover:bg-white/[0.04] flex items-center gap-2 transition-colors"
-            >
-              <span className="text-base">🍺</span>
-              {name}
-            </button>
-          ))}
-          {dbResults.length > 0 && (
-            <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#6B6357] dark:text-[#B7BDC7] bg-[#FAF7F1] dark:bg-white/[0.02] border-t border-[#E8DED1] dark:border-white/[0.06]">
-              Database birre
-            </div>
-          )}
-          {dbResults.slice(0, 4).map((b: any) => (
-            <button
-              key={b.id}
-              type="button"
-              onMouseDown={() => select(b.name)}
-              className="w-full text-left px-3 py-2 hover:bg-[#FAF7F1] dark:hover:bg-white/[0.04] flex items-center gap-2 transition-colors"
-            >
-              <span className="text-base">🔍</span>
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-[#151515] dark:text-[#F5F5F5] truncate">{b.name}</p>
-                {b.style && <p className="text-[11px] text-[#6B6357] dark:text-[#B7BDC7] truncate">{b.style}</p>}
+      {showDropdown && (
+        <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] rounded-xl shadow-lg overflow-hidden max-h-72 overflow-y-auto">
+          {hasLocal && (
+            <>
+              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#F59E0B] bg-[#FFF7EA] dark:bg-[#F59E0B]/10 sticky top-0">
+                Taplist & Cantina
               </div>
-            </button>
-          ))}
+              {filteredLocal.slice(0, 6).map(beer => (
+                <button
+                  key={beer.name}
+                  type="button"
+                  onMouseDown={() => select(beer.name)}
+                  className="w-full text-left px-3 py-2 hover:bg-[#FAF7F1] dark:hover:bg-white/[0.04] flex items-center gap-2.5 transition-colors"
+                >
+                  <BeerAvatar imageUrl={beer.imageUrl} name={beer.name} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-[#151515] dark:text-[#F5F5F5] truncate">{beer.name}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {beer.style && <span className="text-[11px] text-[#6B6357] dark:text-[#B7BDC7] truncate">{beer.style}</span>}
+                      {beer.abv != null && <span className="text-[11px] font-medium text-[#F59E0B]">{Number(beer.abv).toFixed(1)}%</span>}
+                    </div>
+                    {beer.breweryName && <p className="text-[11px] text-[#6B6357] dark:text-[#B7BDC7] truncate">{beer.breweryName}</p>}
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-wide text-[#F59E0B] bg-[#FFF7EA] dark:bg-[#F59E0B]/15 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                    {beer.source === 'taplist' ? 'Tap' : 'Cantina'}
+                  </span>
+                </button>
+              ))}
+            </>
+          )}
+          {hasDb && (
+            <>
+              <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-[#6B6357] dark:text-[#B7BDC7] bg-[#FAF7F1] dark:bg-white/[0.02] border-t border-[#E8DED1] dark:border-white/[0.06] sticky top-0">
+                Database birre
+              </div>
+              {dbResults.slice(0, 5).map((b: any) => (
+                <button
+                  key={b.id}
+                  type="button"
+                  onMouseDown={() => select(b.name)}
+                  className="w-full text-left px-3 py-2 hover:bg-[#FAF7F1] dark:hover:bg-white/[0.04] flex items-center gap-2.5 transition-colors"
+                >
+                  <BeerAvatar imageUrl={b.imageUrl} name={b.name} />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-[#151515] dark:text-[#F5F5F5] truncate">{b.name}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      {b.style && <span className="text-[11px] text-[#6B6357] dark:text-[#B7BDC7] truncate">{b.style}</span>}
+                      {b.abv != null && <span className="text-[11px] font-medium text-[#F59E0B]">{Number(b.abv).toFixed(1)}%</span>}
+                    </div>
+                    {(b.breweryName || b.brewery?.name) && (
+                      <p className="text-[11px] text-[#6B6357] dark:text-[#B7BDC7] truncate">{b.breweryName || b.brewery?.name}</p>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
       <p className="text-[11px] text-muted-foreground">Opzionale — birra consigliata in abbinamento</p>
@@ -1262,6 +1338,20 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                 selectedAllergens={editingProduct.allergens || []}
                 onAllergensChange={(allergens) => setEditingProduct({ ...editingProduct, allergens })}
               />
+              <ImageUpload
+                label="Foto del prodotto"
+                description="Opzionale — JPG, PNG o WebP"
+                currentImageUrl={editingProduct.imageUrl || undefined}
+                onImageChange={(url) => setEditingProduct((prev: any) => ({ ...prev, imageUrl: url ?? '' }))}
+                folder="menu-items"
+                aspectRatio="square"
+                recommendedDimensions="400×400px"
+              />
+              <BeerPairingInput
+                pubId={pubId}
+                value={editingProduct.pairingBeerName || ''}
+                onChange={(name) => setEditingProduct((prev: any) => ({ ...prev, pairingBeerName: name }))}
+              />
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsEditProductOpen(false)}>Annulla</Button>
                 <Button
@@ -1279,6 +1369,8 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                       allergens: editingProduct.allergens,
                       isVegetarian: editingProduct.isVegetarian ?? false,
                       isSpicy: editingProduct.isSpicy ?? false,
+                      imageUrl: editingProduct.imageUrl || null,
+                      pairingBeerName: editingProduct.pairingBeerName || null,
                     };
                     try {
                       const allItems = [editingProduct, ...editSiblingItems];
