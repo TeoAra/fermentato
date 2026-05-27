@@ -25,6 +25,7 @@ export const APPLE_REDIRECT_URI = "https://fermenta.to/api/auth/apple/callback";
 
 export const isNative = Capacitor.isNativePlatform();
 export const isNativeIos = isNative && Capacitor.getPlatform() === "ios";
+export const isAndroidNative = isNative && Capacitor.getPlatform() === "android";
 
 let initialized = false;
 let initPromise: Promise<void> | null = null;
@@ -156,6 +157,118 @@ export async function loginGoogleNative(): Promise<NativeAuthResult> {
     }
 
     return r1;
+  } catch (e: any) {
+    return { ok: false, error: e?.message || String(e) };
+  }
+}
+
+/**
+ * Fallback Android-only: apre Chrome Custom Tabs per il flusso OAuth web.
+ * Si usa quando il plugin nativo fallisce con "cancelled" perché la firma
+ * SHA-1 dell'APK non è registrata in Google Cloud Console.
+ *
+ * Chrome Custom Tabs è consentito da Google (il WebView è bloccato con
+ * disallowed_useragent). Chrome Custom Tabs e WebView hanno jar di cookie
+ * separati, quindi non possiamo leggere la sessione direttamente dopo l'auth.
+ *
+ * Soluzione: token exchange monouso (60s TTL).
+ *  1. Genera un reqId univoco lato client.
+ *  2. Apre /api/auth/google?req_id=REQ_ID in Chrome Custom Tabs.
+ *  3. Il server, dopo l'OAuth, salva un exchange token associato al reqId
+ *     e redireziona a /auth-app-callback?req_id=REQ_ID.
+ *  4. Nel frattempo il WebView esegue polling su /api/auth/app-token-status/REQ_ID
+ *     ogni 2 secondi (fino a 60s).
+ *  5. Quando il token è pronto, chiama /api/auth/exchange-app-token dal
+ *     WebView → il server crea una sessione nel contesto del WebView (cookie
+ *     nel jar del WebView) → login completato.
+ *  6. Chiude il browser e risolve ok: true.
+ */
+export async function loginGoogleBrowserFallback(): Promise<NativeAuthResult> {
+  try {
+    const { Browser } = await import("@capacitor/browser");
+
+    // reqId univoco: 32 caratteri hex
+    const reqId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    return new Promise<NativeAuthResult>((resolve) => {
+      let settled = false;
+      let pollInterval: ReturnType<typeof setInterval> | null = null;
+
+      const cleanup = async (result: NativeAuthResult) => {
+        if (settled) return;
+        settled = true;
+        if (pollInterval) clearInterval(pollInterval);
+        await Browser.removeAllListeners().catch(() => {});
+        resolve(result);
+      };
+
+      // Polling ogni 2 secondi per max 60 secondi
+      const startPolling = () => {
+        let attempts = 0;
+        pollInterval = setInterval(async () => {
+          attempts++;
+          if (attempts > 30) {
+            // Timeout 60s
+            clearInterval(pollInterval!);
+            await Browser.close().catch(() => {});
+            await cleanup({ ok: false, error: "browser_login_timeout" });
+            return;
+          }
+          try {
+            const r = await fetch(`/api/auth/app-token-status/${reqId}`, {
+              credentials: "include",
+            });
+            if (!r.ok) return;
+            const data = await r.json();
+            if (!data.ready) return;
+
+            // Token pronto: scambialo per una vera sessione nel WebView
+            clearInterval(pollInterval!);
+            const r2 = await fetch("/api/auth/exchange-app-token", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ reqId }),
+            });
+            if (r2.ok) {
+              await Browser.close().catch(() => {});
+              await cleanup({ ok: true });
+            } else {
+              await Browser.close().catch(() => {});
+              await cleanup({ ok: false, error: "exchange_failed" });
+            }
+          } catch {
+            // Ignora errori di rete transitori — riprova al prossimo intervallo
+          }
+        }, 2000);
+      };
+
+      // Se l'utente chiude il browser manualmente prima del completamento
+      Browser.addListener("browserFinished", () => {
+        if (pollInterval) {
+          // Aspetta un ultimo controllo prima di arrendersi
+          setTimeout(async () => {
+            if (!settled) {
+              if (pollInterval) clearInterval(pollInterval);
+              await cleanup({ ok: false, error: "browser_login_cancelled" });
+            }
+          }, 2500);
+        } else {
+          cleanup({ ok: false, error: "browser_login_cancelled" });
+        }
+      });
+
+      Browser.open({
+        url: `https://fermenta.to/api/auth/google?req_id=${reqId}`,
+        presentationStyle: "fullscreen",
+      })
+        .then(() => startPolling())
+        .catch((e: any) => {
+          cleanup({ ok: false, error: e?.message || "browser_open_failed" });
+        });
+    });
   } catch (e: any) {
     return { ok: false, error: e?.message || String(e) };
   }

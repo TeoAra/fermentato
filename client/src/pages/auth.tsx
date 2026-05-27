@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { Beer, Eye, EyeOff, Mail, Lock, User, Store, Phone, Factory, Plus, Search, MailCheck, RefreshCw, CheckCircle2, CheckCircle, XCircle, AlertTriangle, Check, X, QrCode, Loader2 } from "lucide-react";
 import { SiGoogle, SiApple } from "react-icons/si";
-import { isNative, isNativeIos, loginGoogleNative, loginAppleNative } from "@/lib/nativeSocialLogin";
+import { isNative, isNativeIos, isAndroidNative, loginGoogleNative, loginAppleNative, loginGoogleBrowserFallback } from "@/lib/nativeSocialLogin";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ReCAPTCHA from "react-google-recaptcha";
 import type { Brewery } from "@shared/schema";
@@ -242,13 +242,40 @@ export default function AuthPage() {
       const r = await loginGoogleNative();
       if (r.ok) {
         await handleSocialLoginSuccess();
-      } else {
-        toast({
-          title: "Login Google fallito",
-          description: r.error ?? "Riprova",
-          variant: "destructive",
-        });
+        return;
       }
+
+      // Fallback Android: se il plugin nativo fallisce (tipicamente perché
+      // la firma SHA-1 dell'APK non è registrata in Google Cloud Console),
+      // usiamo Chrome Custom Tabs che è consentito da Google e non richiede
+      // la registrazione SHA-1.
+      if (isAndroidNative) {
+        toast({
+          title: "Apertura browser Google...",
+          description: "Completa il login nel browser, poi torna all'app.",
+        });
+        const rb = await loginGoogleBrowserFallback();
+        if (rb.ok) {
+          await handleSocialLoginSuccess();
+          return;
+        }
+        // Se l'utente ha semplicemente chiuso il browser senza fare login
+        // non mostriamo errore — ha annullato lui stesso.
+        if (rb.error !== "browser_login_cancelled") {
+          toast({
+            title: "Login Google fallito",
+            description: rb.error ?? "Riprova",
+            variant: "destructive",
+          });
+        }
+        return;
+      }
+
+      toast({
+        title: "Login Google fallito",
+        description: r.error ?? "Riprova",
+        variant: "destructive",
+      });
       return;
     }
     // Web: redirect classico Passport.js

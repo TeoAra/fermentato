@@ -810,26 +810,85 @@ export async function setupAuth(app: Express) {
     }
   });
 
+  // ── In-memory store for mobile app OAuth exchange tokens (60s TTL) ────────
+  // Chrome Custom Tabs e WebView Capacitor hanno jar di cookie separati, quindi
+  // dopo l'OAuth nel browser il WebView non vede la sessione. Usiamo un token
+  // monouso che il WebView scambia direttamente con /api/auth/exchange-app-token.
+  const appAuthTokens = new Map<string, { userId: number; expires: number }>();
+  setInterval(() => {
+    const now = Date.now();
+    for (const [key, val] of appAuthTokens) {
+      if (val.expires < now) appAuthTokens.delete(key);
+    }
+  }, 30_000);
+
   // Google OAuth routes
   if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-    app.get('/api/auth/google', passport.authenticate('google', { 
-      scope: ['profile', 'email'] 
-    }));
+    app.get('/api/auth/google', (req: any, res, next) => {
+      const reqId = req.query.req_id as string | undefined;
+      // Se c'è un reqId (flusso mobile Chrome Custom Tabs), lo passiamo come
+      // stato OAuth. Il callback lo leggerà per associare il token.
+      if (reqId && /^[\w-]{8,64}$/.test(reqId)) {
+        passport.authenticate('google', { scope: ['profile', 'email'], state: reqId })(req, res, next);
+      } else {
+        passport.authenticate('google', { scope: ['profile', 'email'] })(req, res, next);
+      }
+    });
 
     app.get('/api/auth/google/callback',
       passport.authenticate('google', { failureRedirect: '/login?error=google_auth_failed' }),
       (req: any, res) => {
         const user = req.user as User;
+        // Il state è il reqId se il flusso proviene da Chrome Custom Tabs (app mobile)
+        const reqId = req.query.state as string | undefined;
+        const isMobileAppFlow = reqId && /^[\w-]{8,64}$/.test(reqId) && user;
+
+        if (isMobileAppFlow) {
+          // Salva un token di scambio monouso (60s) che il WebView userà per creare la sessione
+          appAuthTokens.set(reqId, { userId: (user as any).id, expires: Date.now() + 60_000 });
+          req.session.save((saveErr: any) => {
+            if (saveErr) console.error('Session save error after Google OAuth (app):', saveErr);
+            // Redirect a una pagina che l'app può rilevare tramite polling
+            res.redirect('/auth-app-callback?req_id=' + encodeURIComponent(reqId));
+          });
+          return;
+        }
+
+        // Flusso web standard
         const role = user?.activeRole || user?.userType;
         const target = role === 'admin' ? '/admin' : '/dashboard';
-        // Force session save before redirect to prevent race condition where
-        // the browser follows the redirect before the session is persisted in DB
         req.session.save((saveErr: any) => {
           if (saveErr) console.error('Session save error after Google OAuth:', saveErr);
           res.redirect(target);
         });
       }
     );
+
+    // Polling: l'app mobile controlla se il token di scambio è pronto
+    app.get('/api/auth/app-token-status/:reqId', (req, res) => {
+      const token = appAuthTokens.get(req.params.reqId);
+      res.json({ ready: !!(token && token.expires > Date.now()) });
+    });
+
+    // Exchange: il WebView Capacitor scambia il reqId per una vera sessione cookie
+    app.post('/api/auth/exchange-app-token', async (req: any, res) => {
+      const { reqId } = req.body;
+      if (!reqId) return res.status(400).json({ error: 'missing_req_id' });
+      const token = appAuthTokens.get(reqId);
+      if (!token || token.expires < Date.now()) {
+        return res.status(401).json({ error: 'invalid_or_expired_token' });
+      }
+      appAuthTokens.delete(reqId); // monouso
+      const [user] = await db.select().from(users).where(eq(users.id, token.userId as any));
+      if (!user) return res.status(401).json({ error: 'user_not_found' });
+      req.login(user, (err: any) => {
+        if (err) return res.status(500).json({ error: 'login_failed' });
+        req.session.save((saveErr: any) => {
+          if (saveErr) console.error('Session save error in exchange-app-token:', saveErr);
+          res.json({ ok: true });
+        });
+      });
+    });
   }
 
   // Logout
