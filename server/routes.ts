@@ -4168,7 +4168,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/breweries/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const breweryId = parseInt(req.params.id);
-      const updates = req.body;
+      const updates = { ...req.body };
+      if (updates.latitude === '' || updates.latitude === undefined) updates.latitude = null;
+      if (updates.longitude === '' || updates.longitude === undefined) updates.longitude = null;
       const brewery = await storage.updateBrewery(breweryId, updates);
       res.json(brewery);
     } catch (error) {
@@ -5768,7 +5770,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user?.breweryId) {
         return res.status(403).json({ message: "Non sei associato a nessun birrificio" });
       }
-      const updated = await storage.updateBrewery(user.breweryId, req.body);
+      const body = { ...req.body };
+      // Converti stringa vuota → null per campi decimal (latitude/longitude)
+      if (body.latitude === '' || body.latitude === undefined) body.latitude = null;
+      if (body.longitude === '' || body.longitude === undefined) body.longitude = null;
+      const updated = await storage.updateBrewery(user.breweryId, body);
       res.json(updated);
     } catch (error) {
       console.error("Error updating brewery:", error);

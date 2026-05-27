@@ -41,7 +41,6 @@ import {
   Info as InfoIcon,
 } from "lucide-react";
 import Footer from "@/components/footer";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,12 +58,19 @@ import { ImageUpload } from "@/components/image-upload";
 import { WebImageSearchButton } from "@/components/web-image-search-button";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import { PageContainer } from "@/components/layout/page-container";
-import StickyPubTabs from "@/components/pub/StickyPubTabs";
+import StickyPubTabs, { type StickyTabDef } from "@/components/pub/StickyPubTabs";
 import BeerHero from "@/components/beer/BeerHero";
 import BeerStatsStrip from "@/components/beer/BeerStatsStrip";
 import BeerAvailabilitySection from "@/components/beer/BeerAvailabilitySection";
 import BeerInfoSection from "@/components/beer/BeerInfoSection";
 import BeerReviewsSection from "@/components/beer/BeerReviewsSection";
+
+const BEER_TABS: StickyTabDef[] = [
+  { value: "overview", label: "Panoramica", icon: <HomeIcon className="w-4 h-4" /> },
+  { value: "disponibilita", label: "Disponibilità", icon: <MapPin className="w-4 h-4" /> },
+  { value: "recensioni", label: "Recensioni", icon: <Star className="w-4 h-4" /> },
+  { value: "info", label: "Info", icon: <InfoIcon className="w-4 h-4" /> },
+];
 
 function getBeerStyleColor(style: string): { bg: string; text: string } {
   const s = style?.toLowerCase() || '';
@@ -164,23 +170,7 @@ export default function BeerDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // SSR-safe: start with a non-overview tab (valid on desktop where Tabs
-  // are not used). On mobile we switch to "overview" in a client effect.
-  const [activeTab, setActiveTab] = useState<string>("info");
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 1024px)");
-    setActiveTab((prev) => (!mq.matches && prev === "info" ? "overview" : prev));
-    const handler = (e: MediaQueryListEvent) => {
-      setActiveTab((prev) => {
-        if (e.matches && prev === "overview") return "info";
-        return prev;
-      });
-    };
-    mq.addEventListener?.("change", handler);
-    return () => mq.removeEventListener?.("change", handler);
-  }, []);
-  const isBeerModalOpen = useAnyModalOpen();
+  const [activeTab, setActiveTab] = useState<string>("overview");
 
   // ── Scan redirect banner ─────────────────────────────────────────────────
   const [scanCtx, setScanCtx] = useState<ScanRedirectContext | null>(null);
@@ -785,6 +775,12 @@ export default function BeerDetail() {
           setShowTastingForm(true);
           setTimeout(() => document.getElementById('beer-reviews')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
         }}
+      />
+
+      <StickyPubTabs
+        tabs={BEER_TABS}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
       />
 
       <main

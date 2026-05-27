@@ -53,76 +53,77 @@ export default function BeerAvailabilitySection({
   const visible = showAllPubs ? allLocs : allLocs.slice(0, 3);
 
   return (
-    <div className="mt-5 rounded-2xl border border-stone-100 dark:border-border bg-card overflow-hidden">
-      <div className="flex items-center justify-between px-4 pt-3 pb-2">
-        <p className="text-sm font-bold text-foreground flex items-center gap-2">
-          <MapPin className="h-4 w-4 text-primary" />
+    <div className="mt-5 space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-black text-[#151515] dark:text-[#F5F5F5] flex items-center gap-2">
+          <MapPin className="h-5 w-5 text-[#F59E0B]" />
           Dove puoi berla
-        </p>
+        </h2>
         {allLocs.length > 3 && (
           <button
             onClick={onToggleShowAll}
-            className="text-xs font-bold text-primary inline-flex items-center gap-0.5 tap-scale"
+            className="text-xs font-bold text-[#F59E0B] inline-flex items-center gap-0.5 tap-scale"
           >
-            {showAllPubs ? "Mostra meno" : `Vedi tutti i ${allLocs.length} locali`}
+            {showAllPubs ? "Mostra meno" : `Vedi tutti (${allLocs.length})`}
             <ChevronDown
               className={`h-3.5 w-3.5 transition-transform ${showAllPubs ? "rotate-180" : ""}`}
             />
           </button>
         )}
       </div>
-      <ul className="divide-y divide-stone-100 dark:divide-stone-800">
-        {visible.map((loc: any, i: number) => (
-          <li key={`${loc.type}-${loc.pub.id}-${i}`}>
-            <Link href={`/pub/${loc.pub.id}`}>
-              <div className="flex items-center gap-3 px-4 py-3 active:bg-muted/40 transition-colors">
-                <Avatar className="h-10 w-10 flex-shrink-0">
-                  <AvatarFallback className="bg-[#FAF7F1] dark:bg-[#23262E] text-[#6B6357] dark:text-[#B7BDC7] text-xs font-bold">
-                    {loc.pub.name?.charAt(0)?.toUpperCase() || "P"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-foreground line-clamp-1">
-                    {loc.pub.name}
-                  </p>
-                  <p className="text-xs text-muted-foreground line-clamp-1 flex items-center gap-1.5">
-                    <span className="truncate">
-                      {loc.pub.city || loc.pub.address || ""}
+      <div className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden">
+        <ul className="divide-y divide-[#E8DED1] dark:divide-white/[0.06]">
+          {visible.map((loc: any, i: number) => (
+            <li key={`${loc.type}-${loc.pub.id}-${i}`}>
+              <Link href={`/pub/${loc.pub.id}`}>
+                <div className="flex items-center gap-3 px-4 py-3 active:bg-[#FAF7F1] dark:active:bg-[#12151A] transition-colors">
+                  <Avatar className="h-10 w-10 flex-shrink-0">
+                    <AvatarFallback className="bg-[#FAF7F1] dark:bg-[#12151A] text-[#6B6357] dark:text-[#B7BDC7] text-xs font-bold">
+                      {loc.pub.name?.charAt(0)?.toUpperCase() || "P"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-[#151515] dark:text-[#F5F5F5] line-clamp-1">
+                      {loc.pub.name}
+                    </p>
+                    <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] line-clamp-1 flex items-center gap-1.5">
+                      <span className="truncate">
+                        {loc.pub.city || loc.pub.address || ""}
+                      </span>
+                      {loc.type === "tap" ? (
+                        <span className="inline-flex items-center gap-1 text-[#F59E0B] font-semibold flex-shrink-0">
+                          · <Wine className="h-3 w-3" /> Spina
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-[#6B6357] dark:text-[#B7BDC7] font-semibold flex-shrink-0">
+                          · <BeerIcon className="h-3 w-3" /> Bottiglia
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                  {loc.price && (
+                    <span className="text-sm font-extrabold text-[#151515] dark:text-[#F5F5F5] flex-shrink-0">
+                      €{Number(loc.price).toFixed(2).replace(".", ",")}
                     </span>
-                    {loc.type === "tap" ? (
-                      <span className="inline-flex items-center gap-1 text-primary font-semibold flex-shrink-0">
-                        · <Wine className="h-3 w-3" /> Spina
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1 text-stone-500 font-semibold flex-shrink-0">
-                        · <BeerIcon className="h-3 w-3" /> Bottiglia
-                      </span>
-                    )}
-                  </p>
+                  )}
+                  <ChevronRight className="h-4 w-4 text-[#6B6357] dark:text-[#B7BDC7] flex-shrink-0" />
                 </div>
-                {loc.price && (
-                  <span className="text-sm font-extrabold text-foreground flex-shrink-0">
-                    €{Number(loc.price).toFixed(2).replace(".", ",")}
-                  </span>
-                )}
-                <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              </div>
-            </Link>
-          </li>
-        ))}
-      </ul>
-      {allLocs.length > 3 && !showAllPubs && (
-        <button
-          onClick={onToggleShowAll}
-          className="w-full px-4 py-3 bg-orange-50/50 dark:bg-orange-950/10 border-t border-stone-100 dark:border-border flex items-center justify-between text-sm font-bold text-foreground tap-scale"
-        >
-          <span className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
-            Vedi tutti i {allLocs.length} locali
-          </span>
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
-        </button>
-      )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        {allLocs.length > 3 && !showAllPubs && (
+          <button
+            onClick={onToggleShowAll}
+            className="w-full px-4 py-3 bg-[#FFF7EA] dark:bg-[#F59E0B]/10 border-t border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-between text-sm font-bold text-[#151515] dark:text-[#F5F5F5] tap-scale"
+          >
+            <span className="flex items-center gap-2 text-[#F59E0B]">
+              Vedi tutti i {allLocs.length} locali
+            </span>
+            <ChevronRight className="h-4 w-4 text-[#F59E0B]" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
