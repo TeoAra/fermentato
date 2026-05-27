@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ImageUpload } from "@/components/image-upload";
 
 interface MenuCategoryManagerProps {
   pubId: number;
@@ -114,6 +115,8 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
     allergens: [],
     isVegetarian: false,
     isSpicy: false,
+    imageUrl: '',
+    pairingBeerName: '',
   });
 
   // Reset form
@@ -1208,7 +1211,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
         setIsAddItemOpen(open);
         if (!open) {
           setSelectedCategoryIds([]);
-          setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false });
+          setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false, imageUrl: '', pairingBeerName: '' });
         }
       }}>
         <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
@@ -1302,6 +1305,25 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
               selectedAllergens={itemForm.allergens}
               onAllergensChange={(allergens) => setItemForm({ ...itemForm, allergens })}
             />
+            <ImageUpload
+              label="Foto del prodotto"
+              description="Opzionale — JPG, PNG o WebP"
+              currentImageUrl={itemForm.imageUrl || undefined}
+              onImageChange={(url) => setItemForm({ ...itemForm, imageUrl: url ?? '' })}
+              folder="menu-items"
+              aspectRatio="square"
+              recommendedDimensions="400×400px"
+            />
+            <div className="space-y-1.5">
+              <Label className="text-sm font-bold text-foreground">🍺 Abbinamento birra</Label>
+              <Input
+                placeholder="Es. Krush Belgian Strong Ale..."
+                value={itemForm.pairingBeerName}
+                onChange={(e) => setItemForm({ ...itemForm, pairingBeerName: e.target.value })}
+                className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
+              />
+              <p className="text-[11px] text-muted-foreground">Opzionale — nome della birra consigliata in abbinamento</p>
+            </div>
             <div className="flex justify-end space-x-2">
               <Button variant="outline" onClick={() => setIsAddItemOpen(false)}>Annulla</Button>
               <Button
@@ -1330,7 +1352,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                     queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
                     setIsAddItemOpen(false);
                     setSelectedCategoryIds([]);
-                    setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false });
+                    setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false, imageUrl: '', pairingBeerName: '' });
                     toast({ title: catIds.length > 1 ? `✅ Prodotto aggiunto in ${catIds.length} categorie!` : "✅ Prodotto aggiunto!" });
                   } catch (err: any) {
                     // Mostra il messaggio reale del server invece di un errore generico.
