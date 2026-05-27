@@ -67,7 +67,7 @@ export interface MenuItem {
   price: string | number;
   imageUrl?: string | null;
   allergens?: (string | number | MenuItemAllergen)[] | null;
-  pairingBeer?: { id?: number; name: string; logoUrl?: string | null } | null;
+  pairingBeer?: { id?: number; name: string; breweryName?: string | null; logoUrl?: string | null } | null;
   isVegetarian?: boolean;
   isSpicy?: boolean;
   isAvailable?: boolean;

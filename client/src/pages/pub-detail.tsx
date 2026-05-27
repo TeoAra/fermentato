@@ -218,7 +218,10 @@ export default function PubDetail() {
             isVegetarian: i.isVegetarian,
             isSpicy: i.isSpicy,
             isAvailable: i.isAvailable !== false,
-            pairingBeer: i.pairingBeerName ? { name: i.pairingBeerName } : null,
+            pairingBeer: i.pairingBeerName ? (() => {
+              const parts = String(i.pairingBeerName).split('||');
+              return { name: parts[0].trim(), breweryName: parts[1]?.trim() || null };
+            })() : null,
           })),
       })),
     };

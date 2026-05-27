@@ -234,7 +234,8 @@ export default function FoodMenuSection({
                               </div>
                             )}
                             <span className="text-[10px] font-semibold text-[#C77800] dark:text-[#FFB74D] truncate">
-                              In abbinamento {item.pairingBeer.name}
+                              In abbinamento <strong>{item.pairingBeer.name}</strong>
+                              {item.pairingBeer.breweryName && <> di <strong>{item.pairingBeer.breweryName}</strong></>}
                             </span>
                           </div>
                         )}

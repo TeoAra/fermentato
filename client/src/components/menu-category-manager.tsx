@@ -85,8 +85,11 @@ function BeerPairingInput({ pubId, value, onChange }: {
   value: string;
   onChange: (name: string) => void;
 }) {
+  // Parse initial value: "BeerName||BreweryName" → show just beer name in the input
+  const parseBeerName = (raw: string) => raw.includes('||') ? raw.split('||')[0] : raw;
+
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState(value);
+  const [query, setQuery] = useState(parseBeerName(value));
   const [dbResults, setDbResults] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -163,9 +166,9 @@ function BeerPairingInput({ pubId, value, onChange }: {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const select = (name: string) => {
-    setQuery(name);
-    onChange(name);
+  const select = (name: string, brewery?: string) => {
+    setQuery(name); // mostro solo il nome birra nell'input
+    onChange(brewery ? `${name}||${brewery}` : name); // salvo "birra||birrificio" se disponibile
     setOpen(false);
   };
 
@@ -180,7 +183,7 @@ function BeerPairingInput({ pubId, value, onChange }: {
         placeholder="Cerca tra taplist, cantina o DB birre..."
         value={query}
         onChange={(e) => { setQuery(e.target.value); onChange(e.target.value); setOpen(true); }}
-        onFocus={() => setOpen(true)}
+        onFocus={() => { if (query.includes('||')) setQuery(parseBeerName(query)); setOpen(true); }}
         className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
       />
       {showDropdown && (
@@ -194,7 +197,7 @@ function BeerPairingInput({ pubId, value, onChange }: {
                 <button
                   key={beer.name}
                   type="button"
-                  onMouseDown={() => select(beer.name)}
+                  onMouseDown={() => select(beer.name, beer.breweryName || undefined)}
                   className="w-full text-left px-3 py-2 hover:bg-[#FAF7F1] dark:hover:bg-white/[0.04] flex items-center gap-2.5 transition-colors"
                 >
                   <BeerAvatar imageUrl={beer.imageUrl} name={beer.name} />
@@ -222,7 +225,7 @@ function BeerPairingInput({ pubId, value, onChange }: {
                 <button
                   key={b.id}
                   type="button"
-                  onMouseDown={() => select(b.name)}
+                  onMouseDown={() => select(b.name, b.breweryName || b.brewery?.name || undefined)}
                   className="w-full text-left px-3 py-2 hover:bg-[#FAF7F1] dark:hover:bg-white/[0.04] flex items-center gap-2.5 transition-colors"
                 >
                   <BeerAvatar imageUrl={b.imageUrl} name={b.name} />
@@ -1084,7 +1087,15 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                       key={product.id}
                                       className="flex items-center justify-between p-3 bg-stone-50/50 dark:bg-[#0B0D10]/20 rounded-xl hover:bg-stone-100/60 dark:hover:bg-stone-900/40 transition-colors"
                                     >
-                                      <div className="flex-1">
+                                      <div className="flex gap-2.5 flex-1 min-w-0">
+                                        {product.imageUrl && (
+                                          <img
+                                            src={product.imageUrl}
+                                            alt={product.name}
+                                            className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-stone-100 dark:border-white/10"
+                                          />
+                                        )}
+                                      <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
                                           <h4 className="font-medium text-foreground">{product.name}</h4>
                                           {product.isVegetarian && (
@@ -1128,8 +1139,22 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                             </div>
                                           );
                                         })()}
+                                        {product.pairingBeerName && (() => {
+                                          const parts = String(product.pairingBeerName).split('||');
+                                          const beerName = parts[0]?.trim();
+                                          const brewery = parts[1]?.trim();
+                                          return (
+                                            <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#FFF7EA] dark:bg-[#F59E0B]/15 border border-[#F59E0B]/20">
+                                              <span className="text-[10px] text-[#C77800] dark:text-[#FFB74D] font-medium">
+                                                🍺 In abbinamento <strong>{beerName}</strong>
+                                                {brewery && <> di <strong>{brewery}</strong></>}
+                                              </span>
+                                            </div>
+                                          );
+                                        })()}
                                       </div>
-                                      <div className="flex items-center space-x-1 ml-4">
+                                      </div>
+                                      <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
                                         <Button
                                           size="sm"
                                           variant="ghost"
