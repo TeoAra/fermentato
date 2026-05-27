@@ -77,6 +77,7 @@ export interface MenuCategory {
   id: number | string;
   name: string;
   description?: string | null;
+  infoBox?: string | null;
   items: MenuItem[];
 }
 

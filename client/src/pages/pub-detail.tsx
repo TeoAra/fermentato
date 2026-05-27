@@ -205,6 +205,7 @@ export default function PubDetail() {
         id: c.id,
         name: c.name,
         description: c.description,
+        infoBox: c.infoBox ?? null,
         items: (c.items || [])
           .filter((i: any) => !i.isInfoBox && i.isVisible !== false)
           .map((i: any) => ({

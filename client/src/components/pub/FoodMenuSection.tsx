@@ -149,6 +149,12 @@ export default function FoodMenuSection({
                     className="overflow-hidden"
                   >
                     <div className="divide-y divide-[#E8DED1] dark:divide-white/[0.06] border-t border-[#E8DED1] dark:border-white/[0.06]">
+                {cat.infoBox && (
+                  <div className="px-4 py-3 bg-[#FFF7EA] dark:bg-[#F59E0B]/10 flex items-start gap-2">
+                    <span className="text-base flex-shrink-0 mt-0.5">📌</span>
+                    <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed">{cat.infoBox}</p>
+                  </div>
+                )}
                 {cat.items.map((item) => {
                   const allergens = resolveAllergens(item.allergens, allergensIndex);
                   return (
