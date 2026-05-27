@@ -98,84 +98,99 @@ const MenuPdfDownload = lazy(() =>
   import("@/components/menu-pdf-download").then(m => ({ default: m.MenuPdfDownload }))
 );
 
+function parseInfoBoxes(raw: string): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+  } catch {}
+  return [raw];
+}
+
 function PubMenuInfoBox({ pubId, currentValue }: { pubId: number; currentValue: string }) {
-  const [text, setText] = useState(currentValue);
-  const [isEditing, setIsEditing] = useState(false);
+  const [boxes, setBoxes] = useState<string[]>(() => parseInfoBoxes(currentValue));
+  const [editingIdx, setEditingIdx] = useState<number | null>(null);
+  const [editText, setEditText] = useState('');
+  const [addingNew, setAddingNew] = useState(false);
+  const [newText, setNewText] = useState('');
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
-  useEffect(() => { setText(currentValue); }, [currentValue]);
 
-  const saveMutation = useMutation({
-    mutationFn: async (value: string) => {
-      return apiRequest(`/api/pubs/${pubId}`, { method: 'PATCH' }, { menuInfoBox: value || null });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId)] });
-      setIsEditing(false);
-      toast({ title: "Info box salvata" });
-    },
-    onError: () => {
-      toast({ title: "Errore", description: "Impossibile salvare", variant: "destructive" });
-    }
-  });
+  useEffect(() => { setBoxes(parseInfoBoxes(currentValue)); }, [currentValue]);
 
-  if (!isEditing && !currentValue) {
-    return (
-      <Button
-        variant="outline"
-        onClick={() => setIsEditing(true)}
-        className="w-full border-dashed border-stone-200 dark:border-border text-primary hover:bg-stone-50 dark:text-orange-400 dark:hover:bg-stone-900/30 rounded-xl"
-      >
-        <Info className="h-4 w-4 mr-2" />
-        Aggiungi Info Box generale (prima di tutto il menu)
-      </Button>
-    );
-  }
+  const save = async (newBoxes: string[]) => {
+    const filtered = newBoxes.filter(Boolean);
+    const value = filtered.length === 0 ? null : JSON.stringify(filtered);
+    await apiRequest(`/api/pubs/${pubId}`, { method: 'PATCH' }, { menuInfoBox: value });
+    queryClient.invalidateQueries({ queryKey: ["/api/my-pubs"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId)] });
+    setBoxes(filtered);
+  };
+
+  const handleSaveEdit = async (idx: number) => {
+    if (!editText.trim()) return;
+    const updated = boxes.map((b, i) => i === idx ? editText.trim() : b);
+    try { await save(updated); toast({ title: "Info box aggiornata" }); setEditingIdx(null); }
+    catch { toast({ title: "Errore", variant: "destructive" }); }
+  };
+
+  const handleDelete = async (idx: number) => {
+    if (!confirm('Rimuovere questa info box?')) return;
+    try { await save(boxes.filter((_, i) => i !== idx)); toast({ title: "Info box rimossa" }); }
+    catch { toast({ title: "Errore", variant: "destructive" }); }
+  };
+
+  const handleAdd = async () => {
+    if (!newText.trim()) return;
+    try { await save([...boxes, newText.trim()]); toast({ title: "Info box aggiunta" }); setAddingNew(false); setNewText(''); }
+    catch { toast({ title: "Errore", variant: "destructive" }); }
+  };
 
   return (
-    <div className="bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-200 dark:border-[#23262E]/50 rounded-2xl p-4">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Info className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-orange-800 dark:text-orange-200">Info Box Generale Menu</span>
-        </div>
-        <div className="flex gap-1">
-          {isEditing ? (
-            <>
-              <Button size="sm" variant="ghost" className="hover:text-primary rounded-xl" onClick={() => { setText(currentValue); setIsEditing(false); }}>
-                <X className="h-3.5 w-3.5" />
-              </Button>
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white" disabled={saveMutation.isPending}
-                onClick={() => saveMutation.mutate(text)}>
-                <Save className="h-3.5 w-3.5 mr-1" />{saveMutation.isPending ? '...' : 'Salva'}
-              </Button>
-            </>
+    <div className="space-y-2">
+      {boxes.map((box, idx) => (
+        <div key={idx} className="bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-200 dark:border-[#23262E]/50 rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2">
+              <Info className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-orange-800 dark:text-orange-200">Info Box {boxes.length > 1 ? `#${idx + 1}` : 'Generale'}</span>
+            </div>
+            <div className="flex gap-1">
+              {editingIdx === idx ? (
+                <>
+                  <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => setEditingIdx(null)}><X className="h-3.5 w-3.5" /></Button>
+                  <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-xl" onClick={() => handleSaveEdit(idx)}><Save className="h-3.5 w-3.5 mr-1" />Salva</Button>
+                </>
+              ) : (
+                <>
+                  <Button size="sm" variant="ghost" className="hover:text-primary rounded-xl" onClick={() => { setEditingIdx(idx); setEditText(box); }}><Edit3 className="h-3.5 w-3.5" /></Button>
+                  <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700 rounded-xl" onClick={() => handleDelete(idx)}><Trash2 className="h-3.5 w-3.5" /></Button>
+                </>
+              )}
+            </div>
+          </div>
+          {editingIdx === idx ? (
+            <Textarea value={editText} onChange={(e) => setEditText(e.target.value)} rows={3} className="rounded-xl text-sm" placeholder="Testo della info box..." />
           ) : (
-            <>
-              <Button size="sm" variant="ghost" className="hover:text-primary rounded-xl" onClick={() => setIsEditing(true)}>
-                <Edit3 className="h-3.5 w-3.5" />
-              </Button>
-              <Button size="sm" variant="ghost" className="text-red-600 hover:text-red-700 rounded-xl"
-                onClick={() => { if (confirm('Rimuovere la info box generale?')) saveMutation.mutate(''); }}>
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </>
+            <p className="text-sm text-orange-900 dark:text-orange-100 whitespace-pre-wrap">{box}</p>
           )}
         </div>
-      </div>
-      {isEditing ? (
-        <RichTextEditor
-          content={text}
-          onChange={setText}
-          placeholder="Nota informativa che apparirà prima di tutto il menu nel PDF..."
-          maxChars={2000}
-        />
-      ) : (
-        <div className="text-sm text-orange-900 dark:text-orange-100 italic">
-          <RichTextDisplay html={currentValue} />
+      ))}
+
+      {addingNew ? (
+        <div className="bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-200 dark:border-[#23262E]/50 rounded-2xl p-4 space-y-3">
+          <Textarea value={newText} onChange={(e) => setNewText(e.target.value)} rows={3} className="rounded-xl text-sm" placeholder="Testo della nuova info box (es. Coperto €1,50 — Cucina aperta dalle 19:30)..." autoFocus />
+          <div className="flex justify-end gap-2">
+            <Button size="sm" variant="ghost" className="rounded-xl" onClick={() => { setAddingNew(false); setNewText(''); }}><X className="h-3.5 w-3.5 mr-1" />Annulla</Button>
+            <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-xl" onClick={handleAdd}><Save className="h-3.5 w-3.5 mr-1" />Aggiungi</Button>
+          </div>
         </div>
+      ) : (
+        <Button variant="outline" onClick={() => setAddingNew(true)}
+          className="w-full border-dashed border-stone-200 dark:border-border text-primary hover:bg-stone-50 dark:text-orange-400 dark:hover:bg-stone-900/30 rounded-xl">
+          <Info className="h-4 w-4 mr-2" />
+          {boxes.length === 0 ? 'Aggiungi Info Box generale (prima di tutto il menu)' : '+ Aggiungi altra info box'}
+        </Button>
       )}
     </div>
   );

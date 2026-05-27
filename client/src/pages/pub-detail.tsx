@@ -550,6 +550,7 @@ export default function PubDetail() {
               if (canManage) window.location.href = isAdmin ? `/admin/edit-pub/${id}` : "/dashboard";
             }}
             allergensIndex={allergensIndex}
+            menuInfoBox={(pub as any)?.menuInfoBox ?? null}
           />
         </div>
 

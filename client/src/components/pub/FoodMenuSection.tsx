@@ -10,6 +10,16 @@ interface FoodMenuSectionProps {
   isOwner?: boolean;
   onAddMenu?: () => void;
   allergensIndex?: Record<string, { emoji?: string; name?: string }>;
+  menuInfoBox?: string | null;
+}
+
+function parseInfoBoxes(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.filter(Boolean);
+  } catch {}
+  return [raw]; // backward compat: testo singolo
 }
 
 function formatPrice(price: string | number): string {
@@ -41,6 +51,7 @@ export default function FoodMenuSection({
   isOwner,
   onAddMenu,
   allergensIndex,
+  menuInfoBox,
 }: FoodMenuSectionProps) {
   const useMock = !menu || !menu.categories || menu.categories.length === 0;
   const data = useMock ? MOCK_FOOD_MENU : (menu as FoodMenu);
@@ -92,6 +103,14 @@ export default function FoodMenuSection({
           Menù di esempio
         </div>
       )}
+
+      {/* Info box globali (esterne alle categorie) */}
+      {parseInfoBoxes(menuInfoBox).map((box, i) => (
+        <div key={i} className="bg-[#FFF7EA] dark:bg-[#F59E0B]/10 rounded-[16px] border border-[#F59E0B]/30 p-3.5 flex items-start gap-2.5">
+          <span className="text-lg flex-shrink-0">📋</span>
+          <p className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed whitespace-pre-wrap">{box}</p>
+        </div>
+      ))}
 
       {/* Categorie verticali (scroll naturale verso il basso) */}
       {categories.length === 0 ? (
