@@ -261,6 +261,7 @@ export const menuItems = pgTable("menu_items", {
   isVegetarian: boolean("is_vegetarian").default(false),
   isSpicy: boolean("is_spicy").default(false),
   imageUrl: varchar("image_url"),
+  pairingBeerName: varchar("pairing_beer_name"),
   orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

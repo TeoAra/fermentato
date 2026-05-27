@@ -2508,6 +2508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isVegetarian: b.isVegetarian !== undefined ? !!b.isVegetarian : false,
         isSpicy: b.isSpicy !== undefined ? !!b.isSpicy : false,
         imageUrl: b.imageUrl ?? null,
+        pairingBeerName: b.pairingBeerName ? String(b.pairingBeerName).trim() : null,
         orderIndex: b.orderIndex !== undefined ? Number(b.orderIndex) : 0,
       };
       // Schema esplicito (no .omit()): in alcune combinazioni Zod 4 + drizzle-zod
@@ -2525,6 +2526,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isVegetarian: z.boolean().default(false),
         isSpicy: z.boolean().default(false),
         imageUrl: z.string().nullable().optional(),
+        pairingBeerName: z.string().nullable().optional(),
         orderIndex: z.number().int().default(0),
       });
       const itemData = menuItemPayloadSchema.parse(normalizedBody);
@@ -2587,7 +2589,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Extract allowed fields directly from req.body to avoid Zod stripping boolean false values
-      const allowedFields = ['name', 'description', 'price', 'allergens', 'isVisible', 'isAvailable', 'isInfoBox', 'isVegetarian', 'isSpicy', 'imageUrl', 'orderIndex', 'categoryId'];
+      const allowedFields = ['name', 'description', 'price', 'allergens', 'isVisible', 'isAvailable', 'isInfoBox', 'isVegetarian', 'isSpicy', 'imageUrl', 'pairingBeerName', 'orderIndex', 'categoryId'];
       const updates: Record<string, any> = {};
       for (const field of allowedFields) {
         if (field in req.body) {

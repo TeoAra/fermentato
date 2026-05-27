@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { ImageUpload } from "@/components/image-upload";
 import { 
   Utensils, 
   Plus, 
@@ -20,7 +21,8 @@ import {
   EyeOff,
   FolderPlus,
   ChevronDown,
-  ChevronRight
+  ChevronRight,
+  Beer
 } from "lucide-react";
 
 const ALLERGENS_LIST = [
@@ -51,6 +53,7 @@ interface MenuItem {
   isVegetarian?: boolean;
   isSpicy?: boolean;
   imageUrl?: string;
+  pairingBeerName?: string;
   orderIndex: number;
 }
 
@@ -92,6 +95,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     isVegetarian: false,
     isSpicy: false,
     imageUrl: "",
+    pairingBeerName: "",
   });
 
   const { toast } = useToast();
@@ -295,6 +299,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       isVegetarian: false,
       isSpicy: false,
       imageUrl: "",
+      pairingBeerName: "",
     });
   };
 
@@ -319,6 +324,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
       isVegetarian: item.isVegetarian ?? false,
       isSpicy: item.isSpicy ?? false,
       imageUrl: item.imageUrl || "",
+      pairingBeerName: item.pairingBeerName || "",
     });
   };
 
@@ -531,13 +537,32 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   </div>
 
                   <div>
-                    <Label className="font-semibold text-foreground">URL Immagine (opzionale)</Label>
-                    <Input
-                      placeholder="https://..."
-                      value={itemForm.imageUrl}
-                      onChange={(e) => setItemForm({ ...itemForm, imageUrl: e.target.value })}
-                      className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
+                    <Label className="font-semibold text-foreground mb-2 block">Foto piatto (opzionale)</Label>
+                    <ImageUpload
+                      label="Foto piatto"
+                      description="Immagine del piatto (JPG, PNG, WebP — max 5 MB)"
+                      currentImageUrl={itemForm.imageUrl || undefined}
+                      onImageChange={(url) => setItemForm({ ...itemForm, imageUrl: url || "" })}
+                      folder="menu-items"
+                      aspectRatio="square"
+                      recommendedDimensions="600×600 px"
                     />
+                  </div>
+
+                  <div>
+                    <Label className="font-semibold text-foreground flex items-center gap-1.5">
+                      <Beer className="w-3.5 h-3.5 text-primary" />
+                      Birra in abbinamento (opzionale)
+                    </Label>
+                    <Input
+                      placeholder="Es. Hop Fiction IPA, Duvel, Brooklyn Lager..."
+                      value={itemForm.pairingBeerName}
+                      onChange={(e) => setItemForm({ ...itemForm, pairingBeerName: e.target.value })}
+                      className="border-stone-200 rounded-xl focus-visible:ring-primary/20 mt-1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Verrà mostrata come "In abbinamento" nella pagina pubblica del pub.
+                    </p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -750,7 +775,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                                 <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{item.description}</p>
                               )}
 
-                              <div className="flex items-center gap-2 mt-2">
+                              <div className="flex items-center gap-2 mt-2 flex-wrap">
                                 {item.isVegetarian && (
                                   <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-none text-[10px]">🌿 Veg</Badge>
                                 )}
@@ -764,6 +789,12 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                                   <Badge variant="destructive" className="bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border-none text-[10px]">Esaurito</Badge>
                                 )}
                               </div>
+                              {item.pairingBeerName && (
+                                <div className="mt-1.5 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-700/30 text-[10px] font-semibold text-amber-700 dark:text-amber-400 max-w-full">
+                                  <Beer className="w-2.5 h-2.5 shrink-0" />
+                                  <span className="truncate">In abbinamento {item.pairingBeerName}</span>
+                                </div>
+                              )}
                             </div>
                           </div>
 
