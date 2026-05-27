@@ -1,0 +1,28 @@
+root@luppolino:/www/nodeapps/fermenta/downloads# keytool -printcert -file apk_extracted/META-INF/*.RSA
+keytool error: java.io.FileNotFoundException: apk_extracted/META-INF/*.RSA (No such file or directory)
+root@luppolino:/www/nodeapps/fermenta/downloads# cd apk_extracted/
+root@luppolino:/www/nodeapps/fermenta/downloads/apk_extracted# keytool -printcert -file apk_extracted/META-INF/*.RSA
+keytool error: java.io.FileNotFoundException: apk_extracted/META-INF/*.RSA (No such file or directory)
+root@luppolino:/www/nodeapps/fermenta/downloads/apk_extracted# ls
+AndroidManifest.xml                        messaging_event_extension.proto
+DebugProbesKt.bin                          okhttp3
+LICENSE-junit.txt                          org
+META-INF                                   play-services-auth-api-phone.properties
+assets                                     play-services-auth-base.properties
+classes.dex                                play-services-auth-blockstore.properties
+classes2.dex                               play-services-auth.properties
+classes3.dex                               play-services-base.properties
+classes4.dex                               play-services-basement.properties
+client_analytics.proto                     play-services-cast-framework.properties
+firebase-encoders-json.properties          play-services-cast.properties
+firebase-encoders-proto.properties         play-services-cloud-messaging.properties
+firebase-encoders.properties               play-services-fido.properties
+firebase-iid-interop.properties            play-services-flags.properties
+firebase-measurement-connector.properties  play-services-identity-credentials.properties
+googleid.properties                        play-services-location.properties
+junit                                      play-services-stats.properties
+kotlin                                     play-services-tasks.properties
+kotlin-tooling-metadata.json               res
+lib                                        resources.arsc
+messaging_event.proto                      stamp-cert-sha256
+root@luppolino:/www/nodeapps/fermenta/downloads/apk_extracted#
