@@ -10,19 +10,11 @@ import {
   Star, 
   MapPin, 
   Beer as BeerIcon, 
-  Thermometer, 
-  Eye, 
-  Droplets, 
-  Wheat, 
-  Building,
   ArrowLeft,
   Heart,
   Share2,
   Wine,
-  Store,
   Sparkles,
-  Target,
-  Factory,
   Pencil,
   Save,
   X,
@@ -35,20 +27,16 @@ import {
   Trophy,
   Trash2,
   AlertTriangle,
-  Bookmark,
   MoreHorizontal,
   Home as HomeIcon,
   Info as InfoIcon,
 } from "lucide-react";
 import Footer from "@/components/footer";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -57,7 +45,6 @@ import ImageWithFallback from "@/components/image-with-fallback";
 import { ImageUpload } from "@/components/image-upload";
 import { WebImageSearchButton } from "@/components/web-image-search-button";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
-import { PageContainer } from "@/components/layout/page-container";
 import StickyPubTabs, { type StickyTabDef } from "@/components/pub/StickyPubTabs";
 import BeerHero from "@/components/beer/BeerHero";
 import BeerStatsStrip from "@/components/beer/BeerStatsStrip";
@@ -138,20 +125,6 @@ interface BeerAvailability {
   }>;
 }
 
-// Stats Card Component
-const BeerStatsCard = ({ icon: Icon, value, label, gradient }: any) => (
-  <div className="glass-card rounded-xl p-3 sm:p-4 group flex-shrink-0">
-    <div className="flex items-center gap-2 sm:gap-3">
-      <div className={`p-2 sm:p-2.5 rounded-lg bg-gradient-to-br ${gradient} flex-shrink-0`}>
-        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-white" />
-      </div>
-      <div className="min-w-0">
-        <p className="text-sm sm:text-base font-bold text-foreground truncate">{value}</p>
-        <p className="text-xs text-muted-foreground">{label}</p>
-      </div>
-    </div>
-  </div>
-);
 
 interface ScanRedirectContext {
   beerId: number;
@@ -616,17 +589,17 @@ export default function BeerDetail() {
   if (beerLoading) {
     return (
       <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#0B0D10]">
-        <PageContainer variant="wide" className="py-8">
-          <div className="space-y-8">
-            <div className="skeleton rounded-2xl h-80 md:h-96"></div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="skeleton rounded-xl h-20"></div>
-              ))}
-            </div>
-            <div className="skeleton rounded-2xl h-96"></div>
+        <div className="max-w-[720px] mx-auto px-4 py-8 space-y-4">
+          <div className="h-[260px] rounded-b-[28px] bg-stone-200 dark:bg-stone-900 animate-pulse" />
+          <div className="h-36 rounded-[24px] bg-stone-200 dark:bg-stone-900 animate-pulse -mt-10 mx-0" />
+          <div className="grid grid-cols-4 gap-2 mt-2">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-16 rounded-2xl bg-stone-200 dark:bg-stone-900 animate-pulse" />
+            ))}
           </div>
-        </PageContainer>
+          <div className="h-32 rounded-[20px] bg-stone-200 dark:bg-stone-900 animate-pulse" />
+          <div className="h-48 rounded-[20px] bg-stone-200 dark:bg-stone-900 animate-pulse" />
+        </div>
       </div>
     );
   }
@@ -796,17 +769,17 @@ export default function BeerDetail() {
 
           {/* Descrizione birra */}
           {beer?.description && (
-            <section className="mt-5">
+            <div className="mt-5 bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5">
               <div className="flex items-center gap-2 mb-2">
-                <h2 className="text-sm font-bold text-foreground">Descrizione</h2>
+                <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5]">Descrizione</h3>
                 {translating && (
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                  <span className="text-xs text-[#6B6357] dark:text-[#B7BDC7] flex items-center gap-1">
                     <Loader2 className="h-3 w-3 animate-spin" />
                     Traduzione…
                   </span>
                 )}
                 {translatedDesc && !translating && (
-                  <span className="text-[10px] font-semibold bg-stone-50 dark:bg-[#23262E] text-primary px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-bold bg-[#FFF7EA] dark:bg-[#F59E0B]/10 text-[#F59E0B] px-2 py-0.5 rounded-full">
                     Tradotto
                   </span>
                 )}
@@ -817,22 +790,22 @@ export default function BeerDetail() {
               {String(translatedDesc || beer.description || "").length > 200 && (
                 <button
                   onClick={() => setDescExpanded(!descExpanded)}
-                  className="text-sm font-bold text-primary mt-1 tap-scale"
+                  className="text-sm font-bold text-[#F59E0B] mt-2 tap-scale"
                 >
                   {descExpanded ? "Mostra meno" : "Leggi di più"}
                 </button>
               )}
               {translatedDesc && beer.description && (
                 <details className="mt-3">
-                  <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground select-none transition-colors">
+                  <summary className="text-xs text-[#6B6357] dark:text-[#B7BDC7] cursor-pointer hover:text-[#151515] dark:hover:text-[#F5F5F5] select-none transition-colors">
                     Testo originale
                   </summary>
-                  <div className="mt-2 border-t border-stone-100 dark:border-white/[0.06] pt-2">
-                    <RichTextDisplay html={String(beer.description)} className="text-sm" />
+                  <div className="mt-2 border-t border-[#E8DED1] dark:border-white/[0.06] pt-2">
+                    <RichTextDisplay html={String(beer.description)} className="text-sm text-[#6B6357] dark:text-[#B7BDC7]" />
                   </div>
                 </details>
               )}
-            </section>
+            </div>
           )}
 
           {/* Flags row */}
@@ -940,26 +913,26 @@ export default function BeerDetail() {
         <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
           {/* ═══════════ Brewery card ═══════════ */}
           {beer?.brewery && (
-            <div className="mt-6">
+            <div className="mt-4">
               <Link href={`/brewery/${beer.brewery.id}`}>
-                <div className="rounded-2xl border border-stone-100 dark:border-border bg-card p-4 flex items-center gap-3 active:scale-[0.99] transition-all hover:border-primary/20">
-                  <div className="w-12 h-12 rounded-2xl bg-[#FAF7F1] dark:bg-[#1A1D24] flex items-center justify-center flex-shrink-0 overflow-hidden">
+                <div className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-4 flex items-center gap-3 active:scale-[0.99] transition-all hover:border-[#F59E0B]/40">
+                  <div className="w-12 h-12 rounded-2xl bg-[#FAF7F1] dark:bg-[#12151A] flex items-center justify-center flex-shrink-0 overflow-hidden">
                     {(beer.brewery as any).logoUrl ? (
                       <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1" />
                     ) : (
-                      <Building2 className="h-6 w-6 text-primary" />
+                      <Building2 className="h-6 w-6 text-[#F59E0B]" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Birrificio</p>
-                    <p className="text-sm font-bold text-foreground line-clamp-1">{beer.brewery.name}</p>
+                    <p className="text-[10px] uppercase font-bold text-[#6B6357] dark:text-[#B7BDC7] tracking-wider">Birrificio</p>
+                    <p className="text-sm font-bold text-[#151515] dark:text-[#F5F5F5] line-clamp-1">{beer.brewery.name}</p>
                     {beer.brewery.location && (
-                      <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-                        <MapPin className="h-3 w-3" />{beer.brewery.location}
+                      <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5 flex items-center gap-1">
+                        <MapPin className="h-3 w-3 text-[#F59E0B]" />{beer.brewery.location}
                       </p>
                     )}
                   </div>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  <ChevronRight className="h-5 w-5 text-[#6B6357] dark:text-[#B7BDC7]" />
                 </div>
               </Link>
             </div>
@@ -1332,40 +1305,40 @@ export default function BeerDetail() {
 
       {/* Potrebbero piacerti — same style, other breweries */}
       {similarBeers.length > 0 && (
-        <div className="bg-background dark:bg-[#0B0D10] border-t  py-8">
-          <PageContainer variant="wide">
-            <h3 className="text-base font-bold text-foreground mb-4 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-primary" />
+        <div className="bg-[#FAF7F1] dark:bg-[#0B0D10] border-t border-[#E8DED1] dark:border-white/[0.06] py-8">
+          <div className="max-w-[720px] mx-auto px-4">
+            <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5] mb-4 flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-[#F59E0B]" />
               Potrebbero piacerti
-              <span className="text-xs font-normal text-muted-foreground ml-1">· stile {beer?.style}</span>
+              <span className="text-xs font-normal text-[#6B6357] dark:text-[#B7BDC7] ml-1">· stile {beer?.style}</span>
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {similarBeers.map((b: any) => (
                 <Link key={b.id} href={`/beer/${b.id}`}>
-                  <div className="group bg-white dark:bg-card border border-stone-100 dark:border-border rounded-xl p-3 hover:shadow-md hover:border-primary/20 hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer h-full flex flex-col">
-                    <div className="w-10 h-10 rounded-lg flex-shrink-0 bg-stone-50 dark:bg-[hsl(24,93%,15%)] flex items-center justify-center overflow-hidden mb-2 mx-auto">
+                  <div className="group bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] rounded-[16px] p-3 hover:shadow-md hover:border-[#F59E0B]/30 hover:-translate-y-0.5 active:scale-[0.98] transition-all cursor-pointer h-full flex flex-col">
+                    <div className="w-10 h-10 rounded-xl flex-shrink-0 bg-[#FAF7F1] dark:bg-[#12151A] flex items-center justify-center overflow-hidden mb-2 mx-auto">
                       {b.imageUrl ? (
-                        <img src={b.imageUrl} alt={b.name} className="w-10 h-10 object-contain p-0.5 lightbox-img" />
+                        <img src={b.imageUrl} alt={b.name} className="w-10 h-10 object-contain p-0.5" />
                       ) : b.breweryLogoUrl ? (
-                        <img src={b.breweryLogoUrl} alt={b.breweryName} className="w-8 h-8 object-contain lightbox-img" />
+                        <img src={b.breweryLogoUrl} alt={b.breweryName} className="w-8 h-8 object-contain" />
                       ) : (
-                        <BeerIcon className="w-5 h-5 text-primary" />
+                        <BeerIcon className="w-5 h-5 text-[#F59E0B]" />
                       )}
                     </div>
-                    <p className="font-bold text-xs text-foreground line-clamp-2 group-hover:text-primary text-center leading-tight">
+                    <p className="font-bold text-xs text-[#151515] dark:text-[#F5F5F5] line-clamp-2 group-hover:text-[#F59E0B] text-center leading-tight transition-colors">
                       {b.name}
                     </p>
-                    <p className="text-[10px] text-muted-foreground line-clamp-1 text-center mt-0.5">
+                    <p className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] line-clamp-1 text-center mt-0.5">
                       {b.breweryName}
                     </p>
                     {b.abv && (
-                      <p className="text-[10px] font-bold text-primary text-center mt-1">{b.abv}% ABV</p>
+                      <p className="text-[10px] font-bold text-[#F59E0B] text-center mt-1">{b.abv}% ABV</p>
                     )}
                   </div>
                 </Link>
               ))}
             </div>
-          </PageContainer>
+          </div>
         </div>
       )}
 
