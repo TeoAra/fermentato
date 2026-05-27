@@ -31,7 +31,8 @@ const config: CapacitorConfig = {
       backgroundColor: '#FFFFFF',
       showSpinner: false,
       splashFullScreen: true,
-      splashImmersive: true,
+      // splashImmersive deprecato in Android 15 (usa SYSTEM_UI_FLAG_IMMERSIVE_STICKY).
+      // L'effetto immersive è gestito direttamente da Capacitor 8 via WindowInsetsController.
     },
     StatusBar: {
       // ⚠️ Capacitor 8: 'LIGHT' → icone NERE (sfondo bianco header light theme).
