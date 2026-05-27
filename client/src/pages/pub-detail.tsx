@@ -32,7 +32,6 @@ import {
   TaplistSection,
   BottlesSection,
   FoodMenuSection,
-  InfoCards,
   type StickyTabDef,
   type OpenStatusInfo,
   type PubLike,
@@ -524,7 +523,6 @@ export default function PubDetail() {
             onCall={handleCall}
             onDirections={handleDirections}
           />
-          <InfoCards pub={pubData} onTabChange={setActiveTab} />
         </div>
 
         <div className={`${activeTab === "taplist" ? "" : "hidden"} lg:!block`}>
