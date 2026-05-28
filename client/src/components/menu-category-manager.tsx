@@ -26,7 +26,8 @@ import {
   ChefHat,
   Salad,
   X,
-  Info
+  Info,
+  GripVertical
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -278,6 +279,62 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set());
   const [pendingToggles, setPendingToggles] = useState<Set<number>>(new Set());
   const [pendingCategoryToggles, setPendingCategoryToggles] = useState<Set<number>>(new Set());
+
+  // ── Drag-and-drop category ordering ─────────────────────────────────────
+  const [localCategories, setLocalCategories] = useState<any[]>([]);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+  const dragIndexRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    setLocalCategories(
+      [...categories].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+    );
+  }, [categories]);
+
+  const reorderMutation = useMutation({
+    mutationFn: (order: { id: number; orderIndex: number }[]) =>
+      apiRequest(`/api/pubs/${pubId}/menu-categories/reorder`, { method: "POST" }, { order }),
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile salvare l'ordine", variant: "destructive" });
+      setLocalCategories(
+        [...categories].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+      );
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
+    },
+  });
+
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    dragIndexRef.current = index;
+    e.dataTransfer.effectAllowed = "move";
+    // needed for Firefox
+    e.dataTransfer.setData("text/plain", String(index));
+  };
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverIndex(index);
+  };
+  const handleDragLeave = () => setDragOverIndex(null);
+  const handleDrop = (e: React.DragEvent, dropIndex: number) => {
+    e.preventDefault();
+    const from = dragIndexRef.current;
+    setDragOverIndex(null);
+    dragIndexRef.current = null;
+    if (from === null || from === dropIndex) return;
+    const newOrder = [...localCategories];
+    const [moved] = newOrder.splice(from, 1);
+    newOrder.splice(dropIndex, 0, moved);
+    setLocalCategories(newOrder);
+    reorderMutation.mutate(newOrder.map((cat, idx) => ({ id: cat.id, orderIndex: idx })));
+  };
+  const handleDragEnd = () => {
+    setDragOverIndex(null);
+    dragIndexRef.current = null;
+  };
+  // ─────────────────────────────────────────────────────────────────────────
 
   const effectiveProductIsVisible = (product: any) =>
     pendingToggles.has(product.id) ? !product.isVisible : product.isVisible;
@@ -911,8 +968,9 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {categories.map((category: any, index: number) => {
+            {localCategories.map((category: any, index: number) => {
               const IconComponent = getCategoryIcon(category.name);
+              const isDragOver = dragOverIndex === index;
               return (
                 <motion.div
                   key={category.id}
@@ -920,12 +978,28 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                   className="group"
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragLeave={handleDragLeave}
+                  onDrop={(e) => handleDrop(e, index)}
+                  onDragEnd={handleDragEnd}
                 >
-                  <Card className="h-full bg-white dark:bg-card border border-stone-100 dark:border-border shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 rounded-2xl">
+                  <Card className={`h-full bg-white dark:bg-card border shadow-sm hover:border-primary/20 hover:shadow-md transition-all duration-300 rounded-2xl ${
+                    isDragOver
+                      ? "border-primary/60 shadow-md ring-2 ring-primary/20 scale-[1.01]"
+                      : "border-stone-100 dark:border-border"
+                  }`}>
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex items-center space-x-4 flex-1">
-                          <div className="p-2.5 bg-primary/10 rounded-xl">
+                          <div
+                            className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded-lg text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 hover:bg-stone-50 dark:hover:bg-white/[0.04] transition-colors flex-shrink-0"
+                            title="Trascina per riordinare"
+                          >
+                            <GripVertical className="h-5 w-5" />
+                          </div>
+                          <div className="p-2.5 bg-primary/10 rounded-xl flex-shrink-0">
                             <IconComponent className="h-5 w-5 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">

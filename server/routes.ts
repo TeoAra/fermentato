@@ -3006,6 +3006,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Bulk reorder menu categories (array of {id, orderIndex})
+  app.post("/api/pubs/:id/menu-categories/reorder", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const pubId = parseInt(req.params.id);
+      const userPubs = await storage.getPubsByOwner(userId);
+      const userRoles = req.user?.roles ?? [];
+      if (!userRoles.includes('admin') && !userPubs.some((p: any) => p.id === pubId)) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      const { order } = req.body as { order: { id: number; orderIndex: number }[] };
+      if (!Array.isArray(order)) return res.status(400).json({ message: "order must be an array" });
+      await Promise.all(order.map(({ id, orderIndex }) =>
+        storage.updateMenuCategory(id, { orderIndex })
+      ));
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error bulk-reordering menu categories:", error);
+      res.status(500).json({ message: "Failed to reorder categories" });
+    }
+  });
+
   // Reorder menu categories 
   app.patch("/api/pubs/:id/menu/categories/:categoryId/reorder", isAuthenticated, async (req, res) => {
     try {
