@@ -1,0 +1,99 @@
+root@luppolino:/www/nodeapps/fermenta# sudo -u postgres psql -d fermenta << 'EOF'
+> -- Estensioni
+> CREATE EXTENSION IF NOT EXISTS pg_trgm;
+> CREATE EXTENSION IF NOT EXISTS unaccent;
+>
+> -- Funzione unaccent immutable (richiesta dagli indici)
+> CREATE OR REPLACE FUNCTION unaccent_immutable(text)
+>   RETURNS text LANGUAGE sql IMMUTABLE PARALLEL SAFE AS
+>   $$ SELECT unaccent($1) $$;
+>
+> -- keg_count nel magazzino fusti
+> ALTER TABLE next_tap_proposals ADD COLUMN IF NOT EXISTS keg_count INTEGER DEFAULT 1;
+>
+> -- Indici GIN birre
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_beers_name_unaccent_trgm
+>   ON beers USING GIN (unaccent_immutable(lower(name)) gin_trgm_ops);
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_beers_name_compact_trgm
+>   ON beers USING GIN (regexp_replace(lower(name), '\s+', '', 'g') gin_trgm_ops);
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_beers_style_trgm
+>   ON beers USING GIN (lower(COALESCE(style,'')) gin_trgm_ops) WHERE style IS NOT NULL;
+>
+> -- Indici GIN birrifici
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_breweries_name_unaccent_trgm
+>   ON breweries USING GIN (unaccent_immutable(lower(name)) gin_trgm_ops);
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_breweries_name_compact_trgm
+>   ON breweries USING GIN (regexp_replace(lower(name), '\s+', '', 'g') gin_trgm_ops);
+>
+> -- Indici GIN pub
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pubs_name_trgm
+>   ON pubs USING GIN (unaccent_immutable(lower(name)) gin_trgm_ops);
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pubs_city_trgm
+>   ON pubs USING GIN (unaccent_immutable(lower(COALESCE(city,''))) gin_trgm_ops)
+>   WHERE city IS NOT NULL;
+>
+> -- Indici GIN utenti
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_nickname_trgm
+>   ON users USING GIN (unaccent_immutable(lower(COALESCE(nickname,''))) gin_trgm_ops);
+>
+> -- Verifica finale
+> SELECT tablename, indexname FROM pg_indexes
+> WHERE indexname LIKE '%trgm%' OR indexname LIKE '%compact%'
+> ORDER BY tablename, indexname;
+> EOF
+NOTICE:  extension "pg_trgm" already exists, skipping
+CREATE EXTENSION
+NOTICE:  extension "unaccent" already exists, skipping
+CREATE EXTENSION
+CREATE FUNCTION
+NOTICE:  column "keg_count" of relation "next_tap_proposals" already exists, skipping
+ALTER TABLE
+ERROR:  function unaccent(text) does not exist
+LINE 1:  SELECT unaccent($1)
+                ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:   SELECT unaccent($1)
+CONTEXT:  SQL function "unaccent_immutable" during inlining
+NOTICE:  relation "idx_beers_name_compact_trgm" already exists, skipping
+CREATE INDEX
+NOTICE:  relation "idx_beers_style_trgm" already exists, skipping
+CREATE INDEX
+ERROR:  function unaccent(text) does not exist
+LINE 1:  SELECT unaccent($1)
+                ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:   SELECT unaccent($1)
+CONTEXT:  SQL function "unaccent_immutable" during inlining
+NOTICE:  relation "idx_breweries_name_compact_trgm" already exists, skipping
+CREATE INDEX
+ERROR:  function unaccent(text) does not exist
+LINE 1:  SELECT unaccent($1)
+                ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:   SELECT unaccent($1)
+CONTEXT:  SQL function "unaccent_immutable" during inlining
+ERROR:  function unaccent(text) does not exist
+LINE 1:  SELECT unaccent($1)
+                ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:   SELECT unaccent($1)
+CONTEXT:  SQL function "unaccent_immutable" during inlining
+ERROR:  function unaccent(text) does not exist
+LINE 1:  SELECT unaccent($1)
+                ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:   SELECT unaccent($1)
+CONTEXT:  SQL function "unaccent_immutable" during inlining
+ tablename |            indexname
+-----------+----------------------------------
+ beers     | idx_beers_name_compact_trgm
+ beers     | idx_beers_name_trgm
+ beers     | idx_beers_name_unaccent_trgm
+ beers     | idx_beers_style_lower_trgm
+ beers     | idx_beers_style_trgm
+ breweries | idx_breweries_name_compact_trgm
+ breweries | idx_breweries_name_unaccent_trgm
+ scan_logs | idx_scan_logs_ocr_text_trgm
+(8 rows)
+
+root@luppolino:/www/nodeapps/fermenta#
