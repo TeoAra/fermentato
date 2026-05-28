@@ -42,6 +42,106 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+interface BeerProfilePanelProps {
+  beer: { id?: number; name: string; style?: string; abv?: string; ibu?: string; breweryName?: string; description?: string; imageUrl?: string };
+  beerFull?: any;
+  descEdit: string;
+  onDescChange: (v: string) => void;
+  onChangeBeer?: () => void;
+  onRipristina?: () => void;
+  isNew?: boolean;
+}
+
+function BeerProfilePanel({ beer, beerFull, descEdit, onDescChange, onChangeBeer, onRipristina, isNew }: BeerProfilePanelProps) {
+  const isVerifiedBrewery = beerFull?.brewery?.isVerified === true;
+  const breweryName = beer.breweryName || beerFull?.brewery?.name || "Birrificio sconosciuto";
+  return (
+    <div className="border border-stone-200 dark:border-white/[0.08] rounded-2xl overflow-hidden bg-white dark:bg-[#0B0D10]/20">
+      <div className="flex items-start gap-4 p-4">
+        {beer.imageUrl
+          ? <img src={beer.imageUrl} alt={beer.name} className="w-20 h-20 rounded-xl object-cover flex-shrink-0 border border-stone-100 dark:border-white/10" />
+          : <div className="w-20 h-20 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <Beer className="w-9 h-9 text-primary/60" />
+            </div>
+        }
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <h3 className="font-bold text-base text-foreground leading-tight truncate">{beer.name}</h3>
+              <p className="text-sm text-muted-foreground mt-0.5 truncate">{breweryName}</p>
+            </div>
+            <div className="flex gap-1.5 flex-shrink-0">
+              {onRipristina && (
+                <Button type="button" variant="ghost" size="sm" className="rounded-xl text-xs text-muted-foreground" onClick={onRipristina}>
+                  Ripristina
+                </Button>
+              )}
+              {onChangeBeer && (
+                <Button type="button" variant="outline" size="sm" className="rounded-xl border-stone-200 text-xs" onClick={onChangeBeer}>
+                  Cambia
+                </Button>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {beer.style && (
+              <span className="text-[11px] px-2 py-0.5 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 rounded-full border border-amber-200 dark:border-amber-800/40 font-medium">
+                {beer.style}
+              </span>
+            )}
+            {beer.abv && (
+              <span className="text-[11px] px-2 py-0.5 bg-stone-100 dark:bg-white/[0.06] text-stone-600 dark:text-stone-400 rounded-full font-medium">
+                {beer.abv}% ABV
+              </span>
+            )}
+            {beer.ibu && (
+              <span className="text-[11px] px-2 py-0.5 bg-stone-100 dark:bg-white/[0.06] text-stone-600 dark:text-stone-400 rounded-full font-medium">
+                {beer.ibu} IBU
+              </span>
+            )}
+            {isNew && (
+              <span className="text-[11px] px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 rounded-full border border-emerald-200 dark:border-emerald-800/40 font-medium">
+                Nuova selezione
+              </span>
+            )}
+            {isVerifiedBrewery && (
+              <span className="text-[11px] px-2 py-0.5 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 rounded-full border border-blue-200 dark:border-blue-800/40 font-medium">
+                ✓ Birrificio verificato
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="border-t border-stone-100 dark:border-white/[0.04] px-4 pb-4 pt-3 space-y-1.5">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Descrizione birra</p>
+          {isVerifiedBrewery && (
+            <span className="text-[11px] text-muted-foreground/60 italic">Gestita dal birrificio</span>
+          )}
+        </div>
+        {isVerifiedBrewery ? (
+          <p className="text-sm text-foreground/75 leading-relaxed min-h-[40px]">
+            {descEdit || <span className="italic text-muted-foreground">Nessuna descrizione disponibile</span>}
+          </p>
+        ) : (
+          <>
+            <Textarea
+              value={descEdit}
+              onChange={(e) => onDescChange(e.target.value)}
+              placeholder="Descrivi questa birra: aromi, carattere, abbinamenti gastronomici..."
+              className="resize-none text-sm min-h-[80px] border-stone-200 rounded-xl"
+              maxLength={2000}
+            />
+            <p className="text-[11px] text-muted-foreground/60">
+              La descrizione viene salvata sulla scheda pubblica della birra.
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 interface PriceItem {
   size: string;
   price: string;
@@ -131,6 +231,9 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   const [breweryCoverFile, setBreweryCoverFile] = useState<File | null>(null);
   const [breweryCoverPreview, setBreweryCoverPreview] = useState("");
   const [uploadingBreweryImages, setUploadingBreweryImages] = useState(false);
+
+  const [beerDescEdit, setBeerDescEdit] = useState<string>("");
+  const [beerDescEdited, setBeerDescEdited] = useState(false);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -225,6 +328,32 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     queryFn: () => apiRequest(`/api/pubs/${pubId}/next-tap`),
     enabled: !!pubId,
     staleTime: 30000,
+  });
+
+  // Full beer details (for brewery verified status and description)
+  const { data: selectedBeerFull } = useQuery<any>({
+    queryKey: ["/api/beers", formData.beerId],
+    queryFn: () => apiRequest(`/api/beers/${formData.beerId}`),
+    enabled: !!formData.beerId,
+    staleTime: 60000,
+  });
+
+  // Sync beerDescEdit when beer changes
+  useEffect(() => {
+    if (!formData.beerId) return;
+    const desc = selectedBeerFull?.description ?? selectedBeerDetails?.description ?? "";
+    setBeerDescEdit(desc);
+    setBeerDescEdited(false);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.beerId, selectedBeerFull?.id]);
+
+  const updateBeerDescMutation = useMutation({
+    mutationFn: ({ beerId, description }: { beerId: number; description: string }) =>
+      apiRequest(`/api/owner/beers/${beerId}/description`, { method: "PATCH" }, { description }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/beers", formData.beerId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/search"] });
+    },
   });
 
   const confirmDeleteTapItem = async (item: TapItem, addNextBeerId?: number) => {
@@ -485,6 +614,8 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     setStyleDropdownOpen(false);
     setBeerImageFile(null);
     setBeerImagePreview("");
+    setBeerDescEdit("");
+    setBeerDescEdited(false);
   };
 
   const startEdit = (item: TapItem) => {
@@ -520,6 +651,11 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
       return;
     }
 
+    // Save beer description if edited (only for non-verified breweries)
+    if (beerDescEdited && formData.beerId && !selectedBeerFull?.brewery?.isVerified) {
+      updateBeerDescMutation.mutate({ beerId: parseInt(formData.beerId), description: beerDescEdit });
+    }
+
     const submitData = {
       beerId: parseInt(formData.beerId),
       tapNumber: formData.tapNumber ? parseInt(formData.tapNumber) : null,
@@ -529,7 +665,6 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     };
 
     if (editingItem) {
-      // For editing, update the main data first, then update prices on success
       updateTapMutation.mutate(submitData, {
         onSuccess: () => {
           if (formData.prices.length > 0) {
@@ -538,7 +673,6 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
         }
       });
     } else {
-      // For new items, we need to add the item first, then update prices
       addTapMutation.mutate(submitData, {
         onSuccess: (newItem: any) => {
           if (formData.prices.length > 0) {
@@ -655,55 +789,19 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     
                     {/* Mostra birra selezionata */}
                     {formData.beerId && (selectedBeerDetails || searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId)) ? (
-                      <div className="p-4 bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-200 dark:border-white/[0.06] rounded-2xl space-y-3">
-                        {(() => {
-                          const beer = selectedBeerDetails || searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId);
-                          return (
-                            <>
-                              <div className="flex items-center justify-between gap-4">
-                                <div className="flex items-center gap-3">
-                                  {beer?.imageUrl ? (
-                                    <img src={beer.imageUrl} alt={beer.name} className="w-12 h-12 rounded-xl object-cover border border-stone-100 dark:border-white/10 flex-shrink-0" />
-                                  ) : (
-                                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                                      <Beer className="w-6 h-6" />
-                                    </div>
-                                  )}
-                                  <div>
-                                    <div className="font-bold text-foreground">{beer?.name}</div>
-                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                      {beer?.breweryName || beer?.brewery?.name || 'Birrificio sconosciuto'} • {beer?.style}{beer?.abv ? ` • ${beer.abv}% ABV` : ''}
-                                    </div>
-                                    {beer?.ibu && (
-                                      <div className="text-xs text-muted-foreground">{beer.ibu} IBU</div>
-                                    )}
-                                  </div>
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  size="sm"
-                                  className="border-stone-200 text-primary hover:bg-stone-50 rounded-xl flex-shrink-0"
-                                  onClick={() => {
-                                    setFormData({ ...formData, beerId: '' });
-                                    setSelectedBeerDetails(null);
-                                    setSearchTerm('');
-                                  }}
-                                >
-                                  Cambia
-                                </Button>
-                              </div>
-                              {/* Beer description */}
-                              {beer?.description && (
-                                <div className="pt-2 border-t border-stone-100 dark:border-white/[0.04]">
-                                  <p className="text-xs font-medium text-muted-foreground mb-1">Descrizione birra</p>
-                                  <p className="text-sm text-foreground/80 leading-relaxed line-clamp-4">{beer.description}</p>
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
+                      <BeerProfilePanel
+                        beer={selectedBeerDetails || searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId) || { name: "" }}
+                        beerFull={selectedBeerFull}
+                        descEdit={beerDescEdit}
+                        onDescChange={(v) => { setBeerDescEdit(v); setBeerDescEdited(true); }}
+                        onChangeBeer={() => {
+                          setFormData({ ...formData, beerId: "" });
+                          setSelectedBeerDetails(null);
+                          setSearchTerm("");
+                          setBeerDescEdit("");
+                          setBeerDescEdited(false);
+                        }}
+                      />
                     ) : (
                       <>
                         <div className="relative">
@@ -720,6 +818,40 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                             data-testid="input-beer-search"
                           />
                         </div>
+                        {/* Magazzino fusti quick-pick */}
+                        {!creatingBeer && (nextTapProposals as any[]).length > 0 && (
+                          <div className="space-y-2 mt-3">
+                            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dal magazzino fusti</p>
+                            <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                              {(nextTapProposals as any[]).map((p: any) => (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  className="flex-shrink-0 flex flex-col items-center gap-1.5 p-2.5 w-[84px] rounded-xl border border-stone-200 dark:border-white/[0.06] hover:border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors"
+                                  onClick={() => {
+                                    setFormData({ ...formData, beerId: String(p.beer_id) });
+                                    setSelectedBeerDetails({
+                                      id: p.beer_id,
+                                      name: p.beer_name || p.name,
+                                      style: p.style || "",
+                                      abv: p.abv || "",
+                                      ibu: "",
+                                      breweryName: p.brewery_name || "",
+                                      description: p.description || "",
+                                      imageUrl: p.beer_image || "",
+                                    });
+                                  }}
+                                >
+                                  {p.beer_image
+                                    ? <img src={p.beer_image} alt={p.beer_name} className="w-12 h-12 rounded-lg object-cover border border-stone-100 dark:border-white/10" />
+                                    : <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center"><Beer className="w-6 h-6 text-amber-600" /></div>
+                                  }
+                                  <span className="text-[11px] font-medium text-foreground text-center line-clamp-2 leading-tight w-full">{p.beer_name || p.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                         {debouncedSearchTerm.length >= 2 && !isSearching && !formData.beerId && !creatingBeer && (
                           <>
                             {searchResults?.beers && searchResults.beers.length > 0 && (
@@ -1147,66 +1279,36 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
 
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && !isChangingBeer && (
-                  <div className="space-y-3">
-                    <Label className="text-sm font-medium">Birra selezionata</Label>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Birra in spina</Label>
                     {selectedNewBeer ? (
-                      <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-semibold text-foreground">{selectedNewBeer.name}</div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {selectedNewBeer.breweryName} • {selectedNewBeer.style} • {selectedNewBeer.abv}% ABV
-                            </div>
-                            <div className="text-xs text-green-600 dark:text-green-400 mt-1">Nuova birra selezionata</div>
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setIsChangingBeer(true);
-                                setSearchTerm('');
-                              }}
-                            >
-                              Cambia
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setSelectedNewBeer(null);
-                                setFormData({ ...formData, beerId: editingItem.beer.id.toString() });
-                              }}
-                            >
-                              Ripristina
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
+                      <BeerProfilePanel
+                        beer={{ ...selectedNewBeer, imageUrl: selectedBeerFull?.imageUrl || "" }}
+                        beerFull={selectedBeerFull}
+                        descEdit={beerDescEdit}
+                        onDescChange={(v) => { setBeerDescEdit(v); setBeerDescEdited(true); }}
+                        onChangeBeer={() => { setIsChangingBeer(true); setSearchTerm(""); }}
+                        onRipristina={() => {
+                          setSelectedNewBeer(null);
+                          setFormData({ ...formData, beerId: editingItem.beer.id.toString() });
+                        }}
+                        isNew
+                      />
                     ) : (
-                      <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="font-semibold text-foreground">{editingItem.beer.name}</div>
-                            <div className="text-sm text-muted-foreground mt-1">
-                              {editingItem.beer.brewery?.name || 'Birrificio sconosciuto'} • {editingItem.beer.style} • {editingItem.beer.abv}% ABV
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              setIsChangingBeer(true);
-                              setSearchTerm('');
-                            }}
-                          >
-                            Cambia
-                          </Button>
-                        </div>
-                      </div>
+                      <BeerProfilePanel
+                        beer={{
+                          id: editingItem.beer.id,
+                          name: editingItem.beer.name,
+                          style: editingItem.beer.style,
+                          abv: editingItem.beer.abv,
+                          breweryName: editingItem.beer.brewery?.name,
+                          imageUrl: selectedBeerFull?.imageUrl || "",
+                        }}
+                        beerFull={selectedBeerFull}
+                        descEdit={beerDescEdit}
+                        onDescChange={(v) => { setBeerDescEdit(v); setBeerDescEdited(true); }}
+                        onChangeBeer={() => { setIsChangingBeer(true); setSearchTerm(""); }}
+                      />
                     )}
                   </div>
                 )}
@@ -1229,6 +1331,41 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                         autoFocus
                       />
                     </div>
+                    {/* Magazzino fusti quick-pick in cambio */}
+                    {(nextTapProposals as any[]).length > 0 && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Dal magazzino fusti</p>
+                        <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+                          {(nextTapProposals as any[]).map((p: any) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              className="flex-shrink-0 flex flex-col items-center gap-1.5 p-2.5 w-[84px] rounded-xl border border-stone-200 dark:border-white/[0.06] hover:border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/20 transition-colors"
+                              onClick={() => {
+                                if (editingItem && p.beer_id !== editingItem.beer.id) {
+                                  setSelectedNewBeer({
+                                    id: p.beer_id,
+                                    name: p.beer_name || p.name,
+                                    style: p.style || "",
+                                    abv: p.abv || "",
+                                    breweryName: p.brewery_name || "",
+                                  });
+                                  setFormData({ ...formData, beerId: String(p.beer_id) });
+                                }
+                                setIsChangingBeer(false);
+                                setSearchTerm("");
+                              }}
+                            >
+                              {p.beer_image
+                                ? <img src={p.beer_image} alt={p.beer_name} className="w-12 h-12 rounded-lg object-cover border border-stone-100 dark:border-white/10" />
+                                : <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center"><Beer className="w-6 h-6 text-amber-600" /></div>
+                              }
+                              <span className="text-[11px] font-medium text-foreground text-center line-clamp-2 leading-tight w-full">{p.beer_name || p.name}</span>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <Button
                       type="button"
                       variant="ghost"

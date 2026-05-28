@@ -5299,6 +5299,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pub owner: update beer description (only for non-verified-brewery beers)
+  app.patch("/api/owner/beers/:id/description", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user || (!user.roles?.includes('pub_owner') && !user.roles?.includes('admin') && user.activeRole !== 'pub_owner')) {
+        return res.status(403).json({ message: "Pub owner access required" });
+      }
+      const beerId = parseInt(req.params.id);
+      const beer = await storage.getBeerWithBrewery(beerId);
+      if (!beer) return res.status(404).json({ message: "Birra non trovata" });
+      if (beer.brewery?.isVerified && user.activeRole !== 'admin') {
+        return res.status(403).json({ message: "Non puoi modificare la descrizione di birre di birrifici verificati" });
+      }
+      const { description } = req.body;
+      const updated = await storage.updateBeer(beerId, { description: description?.trim() ?? null });
+      clearSearchCache();
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating beer description (owner):", error);
+      res.status(500).json({ message: "Failed to update beer description" });
+    }
+  });
+
   // Create new beer (admin)
   app.post("/api/admin/beers", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
