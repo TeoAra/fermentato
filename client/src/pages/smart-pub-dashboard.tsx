@@ -393,6 +393,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   const [showBeerSearch, setShowBeerSearch] = useState(false);
   const [draggedItem, setDraggedItem] = useState<number | null>(null);
   const [priceManagerType, setPriceManagerType] = useState<'taplist' | 'bottles'>('taplist');
+  const [taplistSubTab, setTaplistSubTab] = useState<'gestione' | 'analytics'>('gestione');
   const [showPriceManager, setShowPriceManager] = useState<number | null>(null);
   const [newItemPrices, setNewItemPrices] = useState<Array<{size: string, price: string, format?: string}>>([]);
   const [selectedAllergens, setSelectedAllergens] = useState<string[]>([]);
@@ -655,6 +656,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     { id: 'bottles', name: 'Cantina', icon: Wine, gradient: 'from-purple-500 to-violet-600' },
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-emerald-500 to-teal-600' },
     { id: 'events', name: 'Eventi', icon: Calendar, gradient: 'from-pink-500 to-rose-600' },
+    { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-sky-500 to-blue-600' },
   ];
 
   // ── Subscription banner (shown on every section) ──────────────────────────
