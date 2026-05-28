@@ -516,6 +516,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_beer_tastings_user ON user_beer_tastings(user_id)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_beer_tastings_beer ON user_beer_tastings(beer_id)`);
     } catch (e) {
+      // ignored
+    }
+  })();
+
+  // ── Startup: estensioni + indici GIN trigram per la ricerca full-text ──────
+  // Questi indici rendono LIKE '%termine%' O(log n) invece di O(n seq scan).
+  // CREATE INDEX IF NOT EXISTS è idempotente. La prima esecuzione costruisce
+  // gli indici (qualche secondo su DB piccoli, 1-2 min su 50k+ righe).
+  (async () => {
+    try {
+      // Estensioni (no-op se già presenti)
+      await pool.query(`CREATE EXTENSION IF NOT EXISTS pg_trgm`).catch(() => {});
+      await pool.query(`CREATE EXTENSION IF NOT EXISTS unaccent`).catch(() => {});
+      // Funzione unaccent IMMUTABLE richiesta dagli indici su espressione
+      await pool.query(`
+        CREATE OR REPLACE FUNCTION unaccent_immutable(text)
+          RETURNS text LANGUAGE sql IMMUTABLE PARALLEL SAFE AS
+          $$ SELECT unaccent($1) $$
+      `).catch(() => {});
+
+      // ── BIRRE ──
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_name_unaccent_trgm
+        ON beers USING GIN (unaccent_immutable(lower(name)) gin_trgm_ops)`).catch(() => {});
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_name_compact_trgm
+        ON beers USING GIN (regexp_replace(lower(name), '\\s+', '', 'g') gin_trgm_ops)`).catch(() => {});
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_style_trgm
+        ON beers USING GIN (lower(COALESCE(style,'')) gin_trgm_ops) WHERE style IS NOT NULL`).catch(() => {});
+
+      // ── BIRRIFICI ──
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_breweries_name_unaccent_trgm
+        ON breweries USING GIN (unaccent_immutable(lower(name)) gin_trgm_ops)`).catch(() => {});
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_breweries_name_compact_trgm
+        ON breweries USING GIN (regexp_replace(lower(name), '\\s+', '', 'g') gin_trgm_ops)`).catch(() => {});
+
+      // ── PUB ──
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_pubs_name_trgm
+        ON pubs USING GIN (unaccent_immutable(lower(name)) gin_trgm_ops)`).catch(() => {});
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_pubs_city_trgm
+        ON pubs USING GIN (unaccent_immutable(lower(COALESCE(city,''))) gin_trgm_ops) WHERE city IS NOT NULL`).catch(() => {});
+
+      // ── UTENTI ──
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_users_nickname_trgm
+        ON users USING GIN (unaccent_immutable(lower(COALESCE(nickname,''))) gin_trgm_ops)`).catch(() => {});
+
+      console.log('[indexes] GIN trigram indexes ready');
+    } catch (e) {
       // Su alcune tabelle (es. beer_views) potrebbero non esserci ancora;
       // log soft, non blocca l'avvio.
       const msg = e instanceof Error ? e.message : String(e);
