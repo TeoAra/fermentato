@@ -621,6 +621,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Soft migrations for menu_items new columns
       await pool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS pairing_beer_name VARCHAR(255)`).catch(() => {});
       await pool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_url TEXT`).catch(() => {});
+      await pool.query(`ALTER TABLE next_tap_proposals ADD COLUMN IF NOT EXISTS keg_count INTEGER DEFAULT 1`).catch(() => {});
       await pool.query(`
         CREATE TABLE IF NOT EXISTS tap_change_logs (
           id SERIAL PRIMARY KEY,
@@ -8407,6 +8408,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     const { rows } = await pool.query(`
       SELECT ntp.*, b.name as beer_name, b.style as beer_style, b.abv as beer_abv,
              b.image_url as beer_image, br.name as brewery_name,
+             COALESCE(ntp.keg_count, 1) as keg_count,
              COUNT(ntv.id) as vote_count,
              ${userId ? `MAX(CASE WHEN ntv.user_id = $2 THEN 1 ELSE 0 END) = 1 as user_voted` : `false as user_voted`}
       FROM next_tap_proposals ntp
@@ -8424,18 +8426,42 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     const pubId = await resolvePubId(req.params.pubId);
     if (!pubId) return res.status(404).json({ message: "Pub non trovato" });
     const userId = (req.user as any).id;
-    // Only pub owner or admin can propose
     const pub = await storage.getPub(pubId);
     const user = req.user as any;
     if (!pub) return res.status(404).json({ message: "Pub non trovato" });
     if (pub.ownerId !== userId && !user.isAdmin) return res.status(403).json({ message: "Non autorizzato" });
-    const { beerId, description } = req.body;
+    const { beerId, description, kegCount } = req.body;
     if (!beerId) return res.status(400).json({ message: "beerId richiesto" });
+    const count = Math.max(1, Math.min(20, parseInt(kegCount) || 1));
     const { rows } = await pool.query(`
-      INSERT INTO next_tap_proposals (pub_id, beer_id, description)
-      VALUES ($1, $2, $3)
+      INSERT INTO next_tap_proposals (pub_id, beer_id, description, keg_count)
+      VALUES ($1, $2, $3, $4)
       RETURNING *
-    `, [pubId, beerId, description || null]);
+    `, [pubId, beerId, description || null, count]);
+    res.json(rows[0]);
+  });
+
+  app.patch("/api/next-tap/:proposalId/count", isAuthenticated, async (req, res) => {
+    const userId = (req.user as any).id;
+    const user = req.user as any;
+    const proposalId = parseInt(req.params.proposalId);
+    const { rows: found } = await pool.query(
+      `SELECT ntp.*, p.owner_id FROM next_tap_proposals ntp JOIN pubs p ON p.id = ntp.pub_id WHERE ntp.id = $1`,
+      [proposalId]
+    );
+    if (!found[0]) return res.status(404).json({ message: "Proposta non trovata" });
+    if (found[0].owner_id !== userId && !user.isAdmin) return res.status(403).json({ message: "Non autorizzato" });
+    const delta = parseInt(req.body.delta) || 0;
+    const current = found[0].keg_count ?? 1;
+    const newCount = Math.max(0, Math.min(20, current + delta));
+    if (newCount === 0) {
+      await pool.query(`DELETE FROM next_tap_proposals WHERE id = $1`, [proposalId]);
+      return res.json({ removed: true });
+    }
+    const { rows } = await pool.query(
+      `UPDATE next_tap_proposals SET keg_count = $1 WHERE id = $2 RETURNING *`,
+      [newCount, proposalId]
+    );
     res.json(rows[0]);
   });
 

@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS tap_cleanings (
 ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS pairing_beer_name VARCHAR(255);
 ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_url TEXT;
 
+-- 4. Quantità fusti in magazzino (next_tap_proposals)
+ALTER TABLE next_tap_proposals ADD COLUMN IF NOT EXISTS keg_count INTEGER DEFAULT 1;
+
 -- Indici utili
 CREATE INDEX IF NOT EXISTS idx_tap_change_logs_pub_id ON tap_change_logs(pub_id);
 CREATE INDEX IF NOT EXISTS idx_tap_change_logs_changed_at ON tap_change_logs(changed_at DESC);
