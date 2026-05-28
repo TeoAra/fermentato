@@ -618,6 +618,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
           UNIQUE(follower_id, following_id)
         )
       `);
+      // Soft migrations for menu_items new columns
+      await pool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS pairing_beer_name VARCHAR(255)`).catch(() => {});
+      await pool.query(`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_url TEXT`).catch(() => {});
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS tap_change_logs (
+          id SERIAL PRIMARY KEY,
+          pub_id INTEGER NOT NULL REFERENCES pubs(id) ON DELETE CASCADE,
+          tap_number INTEGER,
+          tap_type VARCHAR(20),
+          old_beer_id INTEGER,
+          old_beer_name VARCHAR(255),
+          new_beer_id INTEGER,
+          new_beer_name VARCHAR(255),
+          changed_at TIMESTAMP DEFAULT NOW(),
+          duration_minutes INTEGER
+        )
+      `);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS tap_cleanings (
+          id SERIAL PRIMARY KEY,
+          pub_id INTEGER NOT NULL REFERENCES pubs(id) ON DELETE CASCADE,
+          tap_number INTEGER,
+          tap_type VARCHAR(20) DEFAULT 'spina',
+          line_name VARCHAR(100),
+          cleaned_at TIMESTAMP DEFAULT NOW(),
+          notes TEXT
+        )
+      `);
     } catch (e) {
       console.error("[migration] new feature tables error:", e);
     }
@@ -2141,6 +2169,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (newBeer) {
           notifyTapListChange(parseInt(pubId), 'tap_change', newBeer.name, newBeer.id);
         }
+        // Auto-log the beer change
+        try {
+          const oldBeer = await storage.getBeer(oldBeerId);
+          const durationMs = existingItem?.addedAt ? Date.now() - new Date(existingItem.addedAt).getTime() : null;
+          const durationMinutes = durationMs ? Math.round(durationMs / 60000) : null;
+          await pool.query(
+            `INSERT INTO tap_change_logs (pub_id, tap_number, tap_type, old_beer_id, old_beer_name, new_beer_id, new_beer_name, duration_minutes) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [parseInt(pubId), existingItem?.tapNumber ?? null, existingItem?.tapType ?? null, oldBeerId, oldBeer?.name ?? null, data.beerId, newBeer?.name ?? null, durationMinutes]
+          );
+        } catch (logErr) {
+          console.warn('[tap-change-log] auto-log failed:', logErr);
+        }
       }
 
       broadcastPubUpdate(parseInt(pubId), "taplist");
@@ -2166,6 +2206,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const tapItems = await storage.getTapListByPubForOwner(parseInt(pubId));
       const removedItem = tapItems.find((t: any) => t.id === parseInt(id));
+
+      // Auto-log the keg removal before deleting
+      if (removedItem) {
+        try {
+          const beerName = (removedItem as any).beer?.name || (removedItem as any).beerName || null;
+          const durationMs = removedItem.addedAt ? Date.now() - new Date(removedItem.addedAt).getTime() : null;
+          const durationMinutes = durationMs ? Math.round(durationMs / 60000) : null;
+          await pool.query(
+            `INSERT INTO tap_change_logs (pub_id, tap_number, tap_type, old_beer_id, old_beer_name, duration_minutes) VALUES ($1, $2, $3, $4, $5, $6)`,
+            [parseInt(pubId), removedItem.tapNumber ?? null, removedItem.tapType ?? null, removedItem.beerId ?? null, beerName, durationMinutes]
+          );
+        } catch (logErr) {
+          console.warn('[tap-change-log] auto-log failed:', logErr);
+        }
+      }
 
       await storage.removeFromTapList(parseInt(id));
 
@@ -8390,6 +8445,67 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     if (rows[0].owner_id !== userId && !user.isAdmin) return res.status(403).json({ message: "Non autorizzato" });
     await pool.query(`DELETE FROM next_tap_proposals WHERE id = $1`, [req.params.proposalId]);
     res.json({ ok: true });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TAP CHANGE LOGS (cambi fusto)
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/pubs/:pubId/tap-change-logs", isAuthenticated, async (req: any, res) => {
+    const pubId = await resolvePubId(req.params.pubId);
+    if (!pubId) return res.status(404).json({ message: "Pub non trovato" });
+    const userId = req.user?.id;
+    const canEdit = await isAdminOrPubOwner(userId, pubId);
+    if (!canEdit) return res.status(403).json({ message: "Non autorizzato" });
+    const limit = Math.min(parseInt(req.query.limit as string) || 100, 500);
+    const { rows } = await pool.query(
+      `SELECT * FROM tap_change_logs WHERE pub_id = $1 ORDER BY changed_at DESC LIMIT $2`,
+      [pubId, limit]
+    );
+    res.json(rows);
+  });
+
+  app.post("/api/pubs/:pubId/tap-change-logs", isAuthenticated, async (req: any, res) => {
+    const pubId = await resolvePubId(req.params.pubId);
+    if (!pubId) return res.status(404).json({ message: "Pub non trovato" });
+    const userId = req.user?.id;
+    const canEdit = await isAdminOrPubOwner(userId, pubId);
+    if (!canEdit) return res.status(403).json({ message: "Non autorizzato" });
+    const { tapNumber, tapType, oldBeerId, oldBeerName, newBeerId, newBeerName, durationMinutes } = req.body;
+    const { rows } = await pool.query(
+      `INSERT INTO tap_change_logs (pub_id, tap_number, tap_type, old_beer_id, old_beer_name, new_beer_id, new_beer_name, duration_minutes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
+      [pubId, tapNumber ?? null, tapType ?? null, oldBeerId ?? null, oldBeerName ?? null, newBeerId ?? null, newBeerName ?? null, durationMinutes ?? null]
+    );
+    res.status(201).json(rows[0]);
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // TAP CLEANINGS (lavaggi linee)
+  // ─────────────────────────────────────────────────────────────────────────────
+  app.get("/api/pubs/:pubId/tap-cleanings", isAuthenticated, async (req: any, res) => {
+    const pubId = await resolvePubId(req.params.pubId);
+    if (!pubId) return res.status(404).json({ message: "Pub non trovato" });
+    const userId = req.user?.id;
+    const canEdit = await isAdminOrPubOwner(userId, pubId);
+    if (!canEdit) return res.status(403).json({ message: "Non autorizzato" });
+    const { rows } = await pool.query(
+      `SELECT * FROM tap_cleanings WHERE pub_id = $1 ORDER BY cleaned_at DESC LIMIT 200`,
+      [pubId]
+    );
+    res.json(rows);
+  });
+
+  app.post("/api/pubs/:pubId/tap-cleanings", isAuthenticated, async (req: any, res) => {
+    const pubId = await resolvePubId(req.params.pubId);
+    if (!pubId) return res.status(404).json({ message: "Pub non trovato" });
+    const userId = req.user?.id;
+    const canEdit = await isAdminOrPubOwner(userId, pubId);
+    if (!canEdit) return res.status(403).json({ message: "Non autorizzato" });
+    const { tapNumber, tapType, lineName, notes, cleanedAt } = req.body;
+    const { rows } = await pool.query(
+      `INSERT INTO tap_cleanings (pub_id, tap_number, tap_type, line_name, notes, cleaned_at) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+      [pubId, tapNumber ?? null, tapType ?? 'spina', lineName ?? null, notes ?? null, cleanedAt ? new Date(cleanedAt) : new Date()]
+    );
+    res.status(201).json(rows[0]);
   });
 
   // ─────────────────────────────────────────────────────────────────────────────

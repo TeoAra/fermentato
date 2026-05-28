@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
+import PubAnalyticsTab from "@/components/pub-analytics-tab";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -1142,147 +1143,28 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   const renderAnalytics = () => (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground dark:text-white">Analytics</h2>
-        <p className="text-muted-foreground dark:text-muted-foreground">Statistiche reali del tuo pub</p>
+      {/* Quick overview cards — kept for general pub stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="p-3 rounded-2xl bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-100 dark:border-white/[0.04]">
+          <p className="text-xs text-muted-foreground font-medium">Menu voci</p>
+          <p className="text-xl font-bold text-foreground">{totalMenuItems}</p>
+        </div>
+        <div className="p-3 rounded-2xl bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-100 dark:border-white/[0.04]">
+          <p className="text-xs text-muted-foreground font-medium">Preferiti</p>
+          <p className="text-xl font-bold text-foreground">{favoritesCount}</p>
+        </div>
+        <div className="p-3 rounded-2xl bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-100 dark:border-white/[0.04]">
+          <p className="text-xs text-muted-foreground font-medium">Spine</p>
+          <p className="text-xl font-bold text-foreground">{typedTapList.length}</p>
+        </div>
+        <div className="p-3 rounded-2xl bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-100 dark:border-white/[0.04]">
+          <p className="text-xs text-muted-foreground font-medium">Cantina</p>
+          <p className="text-xl font-bold text-foreground">{typedBottleList.length}</p>
+        </div>
       </div>
-      
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Birre alla Spina</p>
-              <p className="text-2xl font-bold">{typedTapList.length}</p>
-            </div>
-            <div className="p-2 bg-stone-100 dark:bg-[#0B0D10]/20 rounded-xl">
-              <Beer className="h-6 w-6 text-primary" />
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Bottiglie</p>
-              <p className="text-2xl font-bold">{typedBottleList.length}</p>
-            </div>
-            <div className="p-2 bg-emerald-100 dark:bg-emerald-950/20 rounded-xl">
-              <Package className="h-6 w-6 text-emerald-600" />
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Prodotti Menu</p>
-              <p className="text-2xl font-bold">{totalMenuItems}</p>
-            </div>
-            <div className="p-2 bg-muted rounded-xl">
-              <Utensils className="h-6 w-6 text-blue-700" />
-            </div>
-          </div>
-        </Card>
-        
-        <Card className="p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-muted-foreground dark:text-muted-foreground">Preferiti</p>
-              <p className="text-2xl font-bold">{favoritesCount}</p>
-            </div>
-            <div className="p-2 bg-red-50 dark:bg-red-950/20 rounded-xl">
-              <Star className="h-6 w-6 text-red-700" />
-            </div>
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Beer className="mr-2 h-5 w-5 text-primary" />
-            Birre alla Spina
-          </h3>
-          <div className="space-y-3">
-            {typedTapList.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Nessuna birra alla spina</p>
-            ) : (
-              typedTapList.map((beer: any, index: number) => (
-                <div key={beer.id} className="flex items-center justify-between p-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-orange-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                      {beer.tapNumber || index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{beer.beer?.name || 'N/D'}</p>
-                      <p className="text-xs text-muted-foreground">{beer.beer?.brewery?.name || beer.beer?.breweryName || ''}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
-                      {beer.beer?.abv ? `${beer.beer.abv}%` : ''}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Package className="mr-2 h-5 w-5 text-emerald-600" />
-            Bottiglie in Cantina
-          </h3>
-          <div className="space-y-3">
-            {typedBottleList.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-4">Nessuna bottiglia</p>
-            ) : (
-              typedBottleList.slice(0, 10).map((bottle: any, index: number) => (
-                <div key={bottle.id} className="flex items-center justify-between p-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-6 h-6 bg-emerald-500 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <p className="font-medium text-sm">{bottle.beer?.name || 'N/D'}</p>
-                      <p className="text-xs text-muted-foreground">{bottle.beer?.brewery?.name || bottle.beer?.breweryName || ''}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-xs font-medium text-muted-foreground dark:text-muted-foreground">
-                      {bottle.beer?.abv ? `${bottle.beer.abv}%` : ''}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </Card>
-      </div>
-
-      {typedEvents.length > 0 && (
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4 flex items-center">
-            <Calendar className="mr-2 h-5 w-5 text-purple-600" />
-            Prossimi Eventi ({typedEvents.length})
-          </h3>
-          <div className="space-y-3">
-            {typedEvents.slice(0, 5).map((event: any) => (
-              <div key={event.id} className="flex items-center justify-between p-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
-                <div>
-                  <p className="font-medium text-sm">{event.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {new Date(event.eventDate).toLocaleDateString('it-IT', { weekday: 'short', day: 'numeric', month: 'short' })}
-                  </p>
-                </div>
-                {event.category && (
-                  <Badge variant="secondary" className="text-xs">{event.category}</Badge>
-                )}
-              </div>
-            ))}
-          </div>
-        </Card>
+      {/* Taplist analytics */}
+      {currentPub && (
+        <PubAnalyticsTab pubId={currentPub.id} tapList={typedTapList} />
       )}
     </div>
   );

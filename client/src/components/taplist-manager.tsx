@@ -95,7 +95,8 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     isVisible: true,
   });
 
-  const [selectedBeerDetails, setSelectedBeerDetails] = useState<{ id: number; name: string; style: string; abv: string; breweryName: string } | null>(null);
+  const [selectedBeerDetails, setSelectedBeerDetails] = useState<{ id: number; name: string; style: string; abv: string; breweryName: string; description?: string; imageUrl?: string; ibu?: string } | null>(null);
+  const [removingItem, setRemovingItem] = useState<TapItem | null>(null);
   const [creatingBeer, setCreatingBeer] = useState(false);
   const [creatingBrewery, setCreatingBrewery] = useState(false);
   const [brewerySearchTerm, setBrewerySearchTerm] = useState("");
@@ -218,22 +219,48 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   const findBottleItem = (beerId: number) =>
     bottleList.find((b: any) => b.beer?.id === beerId || b.beerId === beerId);
 
-  const handleDeleteTapItem = async (item: TapItem) => {
-    if (!confirm('Sei sicuro di voler rimuovere questa birra dalla tap list?')) return;
+  // Query prossime birre in coda per questo pub
+  const { data: nextTapProposals = [] } = useQuery<any[]>({
+    queryKey: ["/api/pubs", String(pubId), "next-tap"],
+    queryFn: () => apiRequest(`/api/pubs/${pubId}/next-tap`),
+    enabled: !!pubId,
+    staleTime: 30000,
+  });
+
+  const confirmDeleteTapItem = async (item: TapItem, addNextBeerId?: number) => {
     const bottleItem = findBottleItem(item.beer.id);
     try {
       await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "DELETE" });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
-      if (bottleItem) {
-        await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "DELETE" });
-        queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
-        toast({ title: "Birra rimossa", description: "Rimossa anche dalla cantina" });
+      // If a "next beer" was chosen from proposals, add it to taplist on the same tap position
+      if (addNextBeerId) {
+        const proposal = (nextTapProposals as any[]).find((p: any) => p.beer_id === addNextBeerId || p.id === addNextBeerId);
+        const tapData: any = { beerId: addNextBeerId, tapNumber: item.tapNumber, tapType: item.tapType, isVisible: true };
+        await apiRequest(`/api/pubs/${pubId}/taplist`, { method: "POST" }, tapData);
+        queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
+        // Remove from proposals if it was a proposal
+        if (proposal) {
+          apiRequest(`/api/next-tap/${proposal.id}`, { method: "DELETE" }).catch(() => {});
+          queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "next-tap"] });
+        }
+        toast({ title: "Birra cambiata!", description: "La nuova birra è ora in spina." });
       } else {
-        toast({ title: "Birra rimossa dalla tap list!" });
+        if (bottleItem) {
+          await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "DELETE" });
+          queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
+          toast({ title: "Birra rimossa", description: "Rimossa anche dalla cantina" });
+        } else {
+          toast({ title: "Birra rimossa dalla tap list!" });
+        }
       }
     } catch {
       toast({ title: "Errore", description: "Impossibile rimuovere la birra. Riprova.", variant: "destructive" });
     }
+    setRemovingItem(null);
+  };
+
+  const handleDeleteTapItem = (item: TapItem) => {
+    setRemovingItem(item);
   };
 
   const handleToggleTapVisibility = async (item: TapItem) => {
@@ -523,6 +550,76 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   };
 
   return (
+    <>
+    {/* Dialog: Conferma rimozione birra dalla spina con coda prossime birre */}
+    <Dialog open={!!removingItem} onOpenChange={(o) => { if (!o) setRemovingItem(null); }}>
+      <DialogContent className="max-w-lg rounded-3xl border-stone-200">
+        <DialogHeader>
+          <DialogTitle className="text-lg font-bold">🔄 Cambia fusto</DialogTitle>
+          <DialogDescription className="text-muted-foreground">
+            Stai rimuovendo <strong>{removingItem?.beer?.name}</strong>
+            {removingItem?.tapNumber ? ` dalla Spina ${removingItem.tapNumber}` : " dalla taplist"}.
+            {nextTapProposals.length > 0 && " Vuoi mettere in spina una delle prossime birre?"}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          {/* Prossime birre in coda */}
+          {(nextTapProposals as any[]).length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prossime birre in coda</p>
+              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                {(nextTapProposals as any[]).map((p: any) => (
+                  <button
+                    key={p.id}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl border border-stone-200 dark:border-white/[0.06] hover:bg-amber-50 dark:hover:bg-amber-950/20 hover:border-amber-200 dark:hover:border-amber-800/40 transition-colors text-left group"
+                    onClick={() => removingItem && confirmDeleteTapItem(removingItem, p.beer_id || p.beerId)}
+                  >
+                    {p.beer_image ? (
+                      <img src={p.beer_image} alt={p.beer_name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100" />
+                    ) : (
+                      <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center flex-shrink-0">
+                        <Beer className="w-5 h-5 text-amber-600" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-sm text-foreground truncate">{p.beer_name || p.name}</div>
+                      {p.brewery_name && <div className="text-xs text-muted-foreground">{p.brewery_name}</div>}
+                      {p.vote_count > 0 && <div className="text-xs text-amber-600 dark:text-amber-400">⬆ {p.vote_count} vot{p.vote_count === 1 ? 'o' : 'i'}</div>}
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-amber-600 transition-colors flex-shrink-0" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Azioni */}
+          <div className="flex flex-col gap-2 pt-2 border-t border-stone-100 dark:border-white/[0.04]">
+            <Button
+              variant="outline"
+              className="w-full justify-start border-stone-200 rounded-xl gap-2"
+              onClick={() => {
+                if (removingItem) {
+                  // Close dialog, open add dialog on same tap to add new beer
+                  setRemovingItem(null);
+                  confirmDeleteTapItem(removingItem);
+                }
+              }}
+            >
+              <Trash2 className="w-4 h-4 text-muted-foreground" />
+              Rimuovi senza sostituire
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full rounded-xl text-muted-foreground"
+              onClick={() => setRemovingItem(null)}
+            >
+              Annulla
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
     <Card className="border-stone-200 shadow-sm rounded-2xl overflow-hidden">
       <CardHeader className="bg-white dark:bg-[#0B0D10]/20 border-b border-stone-100">
         <CardTitle className="flex items-center justify-between">
@@ -558,36 +655,52 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     
                     {/* Mostra birra selezionata */}
                     {formData.beerId && (selectedBeerDetails || searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId)) ? (
-                      <div className="p-4 bg-stone-50 border border-stone-200 rounded-2xl">
+                      <div className="p-4 bg-stone-50 dark:bg-[#0B0D10]/20 border border-stone-200 dark:border-white/[0.06] rounded-2xl space-y-3">
                         {(() => {
                           const beer = selectedBeerDetails || searchResults?.beers?.find((b: any) => b.id.toString() === formData.beerId);
                           return (
-                            <div className="flex items-center justify-between gap-4">
-                              <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                  <Beer className="w-6 h-6" />
-                                </div>
-                                <div>
-                                  <div className="font-bold text-foreground">{beer?.name}</div>
-                                  <div className="text-xs text-muted-foreground mt-0.5">
-                                    {beer?.breweryName || beer?.brewery?.name || 'Birrificio sconosciuto'} • {beer?.style} • {beer?.abv ? `${beer.abv}% ABV` : ''}
+                            <>
+                              <div className="flex items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                  {beer?.imageUrl ? (
+                                    <img src={beer.imageUrl} alt={beer.name} className="w-12 h-12 rounded-xl object-cover border border-stone-100 dark:border-white/10 flex-shrink-0" />
+                                  ) : (
+                                    <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
+                                      <Beer className="w-6 h-6" />
+                                    </div>
+                                  )}
+                                  <div>
+                                    <div className="font-bold text-foreground">{beer?.name}</div>
+                                    <div className="text-xs text-muted-foreground mt-0.5">
+                                      {beer?.breweryName || beer?.brewery?.name || 'Birrificio sconosciuto'} • {beer?.style}{beer?.abv ? ` • ${beer.abv}% ABV` : ''}
+                                    </div>
+                                    {beer?.ibu && (
+                                      <div className="text-xs text-muted-foreground">{beer.ibu} IBU</div>
+                                    )}
                                   </div>
                                 </div>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  className="border-stone-200 text-primary hover:bg-stone-50 rounded-xl flex-shrink-0"
+                                  onClick={() => {
+                                    setFormData({ ...formData, beerId: '' });
+                                    setSelectedBeerDetails(null);
+                                    setSearchTerm('');
+                                  }}
+                                >
+                                  Cambia
+                                </Button>
                               </div>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                className="border-stone-200 text-primary hover:bg-stone-50 rounded-xl"
-                                onClick={() => {
-                                  setFormData({ ...formData, beerId: '' });
-                                  setSelectedBeerDetails(null);
-                                  setSearchTerm('');
-                                }}
-                              >
-                                Cambia
-                              </Button>
-                            </div>
+                              {/* Beer description */}
+                              {beer?.description && (
+                                <div className="pt-2 border-t border-stone-100 dark:border-white/[0.04]">
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">Descrizione birra</p>
+                                  <p className="text-sm text-foreground/80 leading-relaxed line-clamp-4">{beer.description}</p>
+                                </div>
+                              )}
+                            </>
                           );
                         })()}
                       </div>
@@ -614,7 +727,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                                 {searchResults.beers.map((beer: any) => (
                                   <div
                                     key={beer.id}
-                                    className="p-4 hover:bg-stone-50/50 dark:hover:bg-[#1A1D24]/30 cursor-pointer transition-colors"
+                                    className="p-4 hover:bg-stone-50/50 dark:hover:bg-[#1A1D24]/30 cursor-pointer transition-colors flex items-start gap-3"
                                     onClick={() => {
                                       setFormData({ ...formData, beerId: beer.id.toString() });
                                       setSelectedBeerDetails({
@@ -622,13 +735,28 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                                         name: beer.name,
                                         style: beer.style || '',
                                         abv: beer.abv || '',
+                                        ibu: beer.ibu || '',
                                         breweryName: beer.brewery?.name || beer.breweryName || 'Birrificio sconosciuto',
+                                        description: beer.description || '',
+                                        imageUrl: beer.imageUrl || '',
                                       });
                                     }}
                                   >
-                                    <div className="font-medium text-foreground">{beer.name}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                      {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
+                                    {beer.imageUrl ? (
+                                      <img src={beer.imageUrl} alt={beer.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100 dark:border-white/10 mt-0.5" />
+                                    ) : (
+                                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                        <Beer className="w-5 h-5 text-primary" />
+                                      </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <div className="font-medium text-foreground truncate">{beer.name}</div>
+                                      <div className="text-sm text-muted-foreground">
+                                        {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style}{beer.abv ? ` • ${beer.abv}% ABV` : ''}
+                                      </div>
+                                      {beer.description && (
+                                        <div className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-2">{beer.description}</div>
+                                      )}
                                     </div>
                                   </div>
                                 ))}
@@ -1344,11 +1472,12 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 </div>
 
                 <div>
-                  <Label className="text-sm font-medium">Note aggiuntive</Label>
+                  <Label className="text-sm font-medium">Note interne</Label>
+                  <p className="text-xs text-muted-foreground mb-2">Visibili solo ai gestori, non ai clienti. Usa per note logistiche, scadenze fusto, temperatura consigliata, ecc.</p>
                   <RichTextEditor
                     content={formData.description}
                     onChange={(html) => setFormData({ ...formData, description: html })}
-                    placeholder="Note speciali, caratteristiche della spillatura..."
+                    placeholder="Es: fusto in scadenza il 15/03, servire a 6°C, guarnizione da sostituire..."
                     maxChars={2000}
                   />
                 </div>
@@ -1551,5 +1680,6 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
         )}
       </CardContent>
     </Card>
+    </>
   );
 }

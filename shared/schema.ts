@@ -1082,6 +1082,33 @@ export const nextTapVotes = pgTable("next_tap_votes", {
 }, (t) => [unique().on(t.proposalId, t.userId)]);
 export type NextTapVote = typeof nextTapVotes.$inferSelect;
 
+// ─── Keg Change Log ───────────────────────────────────────────────────────────
+export const tapChangeLogs = pgTable("tap_change_logs", {
+  id: serial("id").primaryKey(),
+  pubId: integer("pub_id").notNull().references(() => pubs.id, { onDelete: "cascade" }),
+  tapNumber: integer("tap_number"),
+  tapType: varchar("tap_type", { length: 20 }),
+  oldBeerId: integer("old_beer_id"),
+  oldBeerName: varchar("old_beer_name", { length: 255 }),
+  newBeerId: integer("new_beer_id"),
+  newBeerName: varchar("new_beer_name", { length: 255 }),
+  changedAt: timestamp("changed_at").defaultNow(),
+  durationMinutes: integer("duration_minutes"),
+});
+export type TapChangeLog = typeof tapChangeLogs.$inferSelect;
+
+// ─── Tap Line Cleanings ───────────────────────────────────────────────────────
+export const tapCleanings = pgTable("tap_cleanings", {
+  id: serial("id").primaryKey(),
+  pubId: integer("pub_id").notNull().references(() => pubs.id, { onDelete: "cascade" }),
+  tapNumber: integer("tap_number"),
+  tapType: varchar("tap_type", { length: 20 }).default("spina"),
+  lineName: varchar("line_name", { length: 100 }),
+  cleanedAt: timestamp("cleaned_at").defaultNow(),
+  notes: text("notes"),
+});
+export type TapCleaning = typeof tapCleanings.$inferSelect;
+
 // ─── User Follows ─────────────────────────────────────────────────────────────
 export const userFollows = pgTable("user_follows", {
   id: serial("id").primaryKey(),
