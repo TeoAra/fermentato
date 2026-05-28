@@ -1,0 +1,57 @@
+root@luppolino:/www/nodeapps/fermenta# sudo -u postgres psql -d fermenta << 'EOF'
+> -- Trova lo schema dove è installata unaccent
+> DO $$
+> DECLARE
+>   unaccent_schema text;
+> BEGIN
+>   SELECT n.nspname INTO unaccent_schema
+>   FROM pg_proc p JOIN pg_namespace n ON p.pronamespace = n.oid
+>   WHERE p.proname = 'unaccent' LIMIT 1;
+>
+>   EXECUTE format(
+>     'CREATE OR REPLACE FUNCTION unaccent_immutable(text)
+>        RETURNS text LANGUAGE sql IMMUTABLE PARALLEL SAFE AS
+>        $f$ SELECT %I.unaccent($1) $f$',
+>     unaccent_schema
+>   );
+>
+>   RAISE NOTICE 'unaccent_immutable ricreata usando schema: %', unaccent_schema;
+> END $$;
+>
+> -- Indici mancanti su pub e utenti
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pubs_name_trgm
+>   ON pubs USING GIN (unaccent_immutable(lower(name)) gin_trgm_ops);
+>
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_pubs_city_trgm
+>   ON pubs USING GIN (unaccent_immutable(lower(COALESCE(city,''))) gin_trgm_ops)
+>   WHERE city IS NOT NULL;
+>
+> CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_users_nickname_trgm
+>   ON users USING GIN (unaccent_immutable(lower(COALESCE(nickname,''))) gin_trgm_ops);
+>
+> -- Verifica completa
+> SELECT tablename, indexname FROM pg_indexes
+> WHERE indexname LIKE '%trgm%' OR indexname LIKE '%compact%'
+> ORDER BY tablename, indexname;
+> EOF
+NOTICE:  unaccent_immutable ricreata usando schema: public
+DO
+CREATE INDEX
+CREATE INDEX
+CREATE INDEX
+ tablename |            indexname
+-----------+----------------------------------
+ beers     | idx_beers_name_compact_trgm
+ beers     | idx_beers_name_trgm
+ beers     | idx_beers_name_unaccent_trgm
+ beers     | idx_beers_style_lower_trgm
+ beers     | idx_beers_style_trgm
+ breweries | idx_breweries_name_compact_trgm
+ breweries | idx_breweries_name_unaccent_trgm
+ pubs      | idx_pubs_city_trgm
+ pubs      | idx_pubs_name_trgm
+ scan_logs | idx_scan_logs_ocr_text_trgm
+ users     | idx_users_nickname_trgm
+(11 rows)
+
+root@luppolino:/www/nodeapps/fermenta#
