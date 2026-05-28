@@ -1243,11 +1243,11 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     {debouncedSearchTerm.length >= 2 && !isSearching && (
                       <>
                         {searchResults?.beers && searchResults.beers.length > 0 && (
-                          <div className="max-h-48 overflow-y-auto border border-stone-200 rounded-xl bg-white dark:bg-card">
+                          <div className="max-h-56 overflow-y-auto border border-stone-200 rounded-2xl bg-white dark:bg-[#0B0D10]/20 shadow-sm divide-y divide-stone-100 dark:divide-white/[0.04]">
                             {searchResults.beers.map((beer: any) => (
                               <div
                                 key={beer.id}
-                                className={`p-3 hover:bg-stone-50 dark:hover:bg-stone-900/20 cursor-pointer border-b border-stone-100 last:border-b-0 transition-colors ${beer.id === editingItem.beer.id ? 'bg-amber-50 dark:bg-amber-900/20' : ''}`}
+                                className={`flex items-start gap-3 p-3.5 hover:bg-stone-50/80 dark:hover:bg-[#1A1D24]/30 cursor-pointer transition-colors ${beer.id === editingItem.beer.id ? 'bg-amber-50 dark:bg-amber-900/10' : ''}`}
                                 onClick={() => {
                                   if (beer.id === editingItem.beer.id) {
                                     setSelectedNewBeer(null);
@@ -1266,14 +1266,23 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                                   setSearchTerm('');
                                 }}
                               >
-                                <div className="font-medium text-foreground">
-                                  {beer.name}
-                                  {beer.id === editingItem.beer.id && (
-                                    <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(attuale)</span>
+                                {beer.imageUrl
+                                  ? <img src={beer.imageUrl} alt={beer.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100 dark:border-white/10 mt-0.5" />
+                                  : <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Beer className="w-5 h-5 text-primary" /></div>
+                                }
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-medium text-foreground text-sm">
+                                    {beer.name}
+                                    {beer.id === editingItem.beer.id && (
+                                      <span className="text-xs text-amber-600 dark:text-amber-400 ml-2">(attuale)</span>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground mt-0.5">
+                                    {beer.brewery?.name || 'Birrificio sconosciuto'}{beer.style ? ` • ${beer.style}` : ''}{beer.abv ? ` • ${beer.abv}% ABV` : ''}
+                                  </div>
+                                  {beer.description && (
+                                    <div className="text-xs text-muted-foreground/70 mt-0.5 line-clamp-2">{beer.description}</div>
                                   )}
-                                </div>
-                                <div className="text-sm text-muted-foreground">
-                                  {beer.brewery?.name || 'Birrificio sconosciuto'} • {beer.style} • {beer.abv}% ABV
                                 </div>
                               </div>
                             ))}

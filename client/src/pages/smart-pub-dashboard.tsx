@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import PubAnalyticsTab from "@/components/pub-analytics-tab";
+import PubLineCleaning from "@/components/pub-line-cleaning";
+import KegWarehouse from "@/components/keg-warehouse";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -1055,13 +1057,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Taplist Section
   const renderTaplist = () => (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground dark:text-white">Taplist Management</h2>
-          <p className="text-muted-foreground dark:text-muted-foreground">Gestisci le birre alla spina del tuo pub</p>
-        </div>
+      <div>
+        <h2 className="text-2xl font-bold text-foreground dark:text-white">Taplist Management</h2>
+        <p className="text-muted-foreground dark:text-muted-foreground">Gestisci le birre alla spina, il magazzino fusti e i lavaggi linee</p>
       </div>
-      
+
+      {/* Taplist manager */}
       <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] transition-all duration-200">
         <TapListManager
           pubId={currentPub?.id || 0}
@@ -1069,6 +1070,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           bottleList={typedBottleList}
           isLoading={taplistLoading}
         />
+      </div>
+
+      {/* Magazzino fusti */}
+      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] p-5">
+        {currentPub && <KegWarehouse pubId={currentPub.id} />}
+      </div>
+
+      {/* Lavaggi linee */}
+      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] p-5">
+        {currentPub && <PubLineCleaning pubId={currentPub.id} tapList={typedTapList} />}
       </div>
     </div>
   );
