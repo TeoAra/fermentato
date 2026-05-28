@@ -42,7 +42,7 @@ function durationBadge(minutes: number | null) {
 export default function PubAnalyticsTab({ pubId, tapList }: PubAnalyticsTabProps) {
   const [showAllLogs, setShowAllLogs] = useState(false);
 
-  const { data: changeLogs = [] } = useQuery<any[]>({
+  const { data: changeLogs = [], isLoading: logsLoading } = useQuery<any[]>({
     queryKey: ["/api/pubs", pubId, "tap-change-logs"],
     queryFn: () => apiRequest(`/api/pubs/${pubId}/tap-change-logs?limit=200`),
     enabled: !!pubId,
