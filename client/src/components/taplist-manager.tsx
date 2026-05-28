@@ -1,5 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,11 +12,14 @@ import RichTextEditor, { RichTextDisplay } from "@/components/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { PriceFormatManager } from "@/components/price-format-manager";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ImageWithFallback from "@/components/image-with-fallback";
+import { ImageUpload } from "@/components/image-upload";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { WebImageSearchButton } from "@/components/web-image-search-button";
 import { 
@@ -30,6 +36,8 @@ import {
   Factory,
   ChevronRight,
   ImagePlus,
+  Save,
+  Building,
   X
 } from "lucide-react";
 
@@ -42,6 +50,280 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+function CollabBrewerySelector({ selected, onChange }: { selected: { id: number; name: string }[]; onChange: (breweries: { id: number; name: string }[]) => void }) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const search = useCallback((q: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (q.length < 2) { setResults([]); return; }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setResults(Array.isArray(data) ? data.filter((b: any) => !selected.some((s: any) => s.id === b.id)) : []);
+        setShowResults(true);
+      } catch { setResults([]); }
+    }, 250);
+  }, [selected]);
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-bold text-foreground">Birrifici in Collaborazione</Label>
+      {selected.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {selected.map((b: any) => (
+            <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200">
+              <Building className="w-3 h-3" />
+              {b.name}
+              <button type="button" onClick={() => onChange(selected.filter(s => s.id !== b.id))} className="ml-0.5 text-purple-500 hover:text-purple-800">×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div className="relative">
+        <Input
+          value={query}
+          onChange={e => { setQuery(e.target.value); search(e.target.value); }}
+          onBlur={() => setTimeout(() => setShowResults(false), 200)}
+          placeholder="Cerca birrificio partner..."
+          className="border-stone-200 rounded-xl h-11"
+          autoComplete="off"
+        />
+        {showResults && results.length > 0 && (
+          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1A1D24] border border-stone-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
+            {results.map((b: any) => (
+              <button key={b.id} type="button" onMouseDown={e => { e.preventDefault(); onChange([...selected, { id: b.id, name: b.name }]); setQuery(""); setResults([]); setShowResults(false); }}
+                className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
+                {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-6 h-6 rounded-full object-cover" /> : <Building className="w-4 h-4 text-purple-400" />}
+                <span>{b.name}</span>
+                <span className="text-xs text-stone-400 ml-auto">{b.location}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const beerFullEditSchema = z.object({
+  name: z.string().min(1, "Il nome è obbligatorio"),
+  style: z.string().min(1, "Lo stile è obbligatorio"),
+  abv: z.coerce.number().min(0).max(100).optional().nullable(),
+  ibu: z.coerce.number().int().min(0).optional().nullable(),
+  description: z.string().optional().nullable(),
+  color: z.string().optional().nullable(),
+  imageUrl: z.string().optional().nullable(),
+  isGlutenFree: z.boolean().default(false),
+  isAlcoholFree: z.boolean().default(false),
+  isCollaboration: z.boolean().default(false),
+});
+type BeerFullEditValues = z.infer<typeof beerFullEditSchema>;
+
+function BeerFullEditDialog({ beer, open, onOpenChange, onSaved }: {
+  beer: { id: number; name: string; style?: string; abv?: string | number | null; ibu?: string | number | null; description?: string | null; color?: string | null; imageUrl?: string | null; isGlutenFree?: boolean; isAlcoholFree?: boolean; isCollaboration?: boolean; collaborationBreweries?: { id: number; name: string }[] };
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onSaved?: () => void;
+}) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+  const [collabBreweries, setCollabBreweries] = useState<{ id: number; name: string }[]>([]);
+
+  const form = useForm<BeerFullEditValues>({
+    resolver: zodResolver(beerFullEditSchema) as any,
+    defaultValues: {
+      name: "", style: "", abv: null, ibu: null, description: "", color: "", imageUrl: "",
+      isGlutenFree: false, isAlcoholFree: false, isCollaboration: false,
+    },
+  });
+
+  useEffect(() => {
+    if (open && beer) {
+      setCollabBreweries(beer.collaborationBreweries ?? []);
+      form.reset({
+        name: beer.name,
+        style: beer.style ?? "",
+        abv: beer.abv ? parseFloat(String(beer.abv)) : null,
+        ibu: beer.ibu ? parseInt(String(beer.ibu)) : null,
+        description: beer.description ?? "",
+        color: beer.color ?? "",
+        imageUrl: beer.imageUrl ?? "",
+        isGlutenFree: beer.isGlutenFree ?? false,
+        isAlcoholFree: beer.isAlcoholFree ?? false,
+        isCollaboration: beer.isCollaboration ?? false,
+      });
+    }
+  }, [open, beer.id]);
+
+  const updateMutation = useMutation({
+    mutationFn: (values: BeerFullEditValues) =>
+      apiRequest(`/api/owner/beers/${beer.id}`, { method: "PATCH" }, {
+        ...values,
+        collaborationBreweryIds: values.isCollaboration ? collabBreweries.map(b => b.id) : [],
+      }),
+    onSuccess: () => {
+      toast({ title: "Successo", description: "Scheda birra aggiornata" });
+      queryClient.invalidateQueries({ queryKey: ["/api/beers", String(beer.id)] });
+      queryClient.invalidateQueries({ queryKey: ["/api/beers"] });
+      onOpenChange(false);
+      onSaved?.();
+    },
+    onError: (err: any) => {
+      const msg = err?.message || "Impossibile aggiornare la birra";
+      toast({ title: "Errore", description: msg, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg w-full max-h-[90vh] overflow-x-hidden overflow-y-auto rounded-3xl border-stone-200 shadow-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <div className="p-2 bg-primary rounded-xl">
+              <Beer className="h-5 w-5 text-white" />
+            </div>
+            Modifica Scheda Birra
+          </DialogTitle>
+        </DialogHeader>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit((v) => updateMutation.mutate(v))} className="space-y-5 pt-2 text-left">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-bold">Nome Birra *</FormLabel>
+                  <FormControl><Input placeholder="Es. Luppolina" {...field} className="border-stone-200 rounded-xl h-11" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="style" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-bold">Stile *</FormLabel>
+                  <FormControl><Input placeholder="Es. American IPA" {...field} className="border-stone-200 rounded-xl h-11" /></FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField control={form.control} name="abv" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-bold">ABV %</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.1" placeholder="5.2" {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))} className="border-stone-200 rounded-xl h-11" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+              <FormField control={form.control} name="ibu" render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="font-bold">IBU</FormLabel>
+                  <FormControl>
+                    <Input type="number" placeholder="45" {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))} className="border-stone-200 rounded-xl h-11" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )} />
+            </div>
+
+            <FormField control={form.control} name="color" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-bold">Colore</FormLabel>
+                <FormControl><Input placeholder="Es. Giallo Paglierino, Mogano..." {...field} value={field.value ?? ""} className="border-stone-200 rounded-xl h-11" /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
+            <FormField control={form.control} name="description" render={({ field }) => (
+              <FormItem>
+                <FormLabel className="font-bold">Descrizione Organolettica</FormLabel>
+                <FormControl>
+                  <RichTextEditor
+                    content={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Note di degustazione, malti e luppoli utilizzati..."
+                    maxChars={2000}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )} />
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-sm font-bold text-foreground">Immagine Prodotto</label>
+                <WebImageSearchButton
+                  endpoint={`/api/beers/${beer.id}/find-image-preview`}
+                  responseKey="imageUrl"
+                  onFound={(url) => form.setValue("imageUrl", url)}
+                />
+              </div>
+              <ImageUpload
+                label="Immagine Birra"
+                description="Foto della bottiglia o del bicchiere"
+                currentImageUrl={form.watch("imageUrl") || undefined}
+                onImageChange={(url) => form.setValue("imageUrl", url || "")}
+                folder="beer-images"
+                aspectRatio="square"
+                maxSize={5}
+                recommendedDimensions="400x400px"
+              />
+            </div>
+
+            <div className="space-y-3 p-4 bg-stone-50 dark:bg-white/[0.03] rounded-xl border border-stone-100 dark:border-white/[0.06]">
+              <p className="text-xs font-bold text-stone-500 uppercase tracking-wider">Caratteristiche Speciali</p>
+              <FormField control={form.control} name="isGlutenFree" render={({ field }) => (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} className="rounded-md" />
+                  <span className="text-sm font-medium">Senza Glutine</span>
+                </label>
+              )} />
+              <FormField control={form.control} name="isAlcoholFree" render={({ field }) => (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} className="rounded-md" />
+                  <span className="text-sm font-medium">Analcolica (0,0%)</span>
+                </label>
+              )} />
+              <FormField control={form.control} name="isCollaboration" render={({ field }) => (
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <Checkbox checked={field.value} onCheckedChange={field.onChange} className="rounded-md" />
+                  <span className="text-sm font-medium text-purple-700 dark:text-purple-400">Birra in Collaborazione</span>
+                </label>
+              )} />
+              {form.watch("isCollaboration") && (
+                <div className="pt-1">
+                  <CollabBrewerySelector selected={collabBreweries} onChange={setCollabBreweries} />
+                  {collabBreweries.length === 0 && (
+                    <p className="text-xs text-red-500 mt-1">Aggiungi almeno un birrificio partner</p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-2 border-t border-stone-100 dark:border-white/[0.06]">
+              <Button
+                type="submit"
+                className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
+                disabled={updateMutation.isPending || (form.watch("isCollaboration") && collabBreweries.length === 0)}
+              >
+                {updateMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
+                Salva modifiche
+              </Button>
+              <Button variant="outline" type="button" onClick={() => onOpenChange(false)} className="px-6 border-stone-200 rounded-xl h-12">
+                Annulla
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 interface BeerProfilePanelProps {
   beer: { id?: number; name: string; style?: string; abv?: string; ibu?: string; breweryName?: string; description?: string; imageUrl?: string };
   beerFull?: any;
@@ -51,10 +333,11 @@ interface BeerProfilePanelProps {
   isSavingDesc?: boolean;
   onChangeBeer?: () => void;
   onRipristina?: () => void;
+  onEditFull?: () => void;
   isNew?: boolean;
 }
 
-function BeerProfilePanel({ beer, beerFull, descEdit, onDescChange, onSaveDesc, isSavingDesc, onChangeBeer, onRipristina, isNew }: BeerProfilePanelProps) {
+function BeerProfilePanel({ beer, beerFull, descEdit, onDescChange, onSaveDesc, isSavingDesc, onChangeBeer, onRipristina, onEditFull, isNew }: BeerProfilePanelProps) {
   const isVerifiedBrewery = beerFull?.brewery?.isVerified === true;
   const breweryName = beer.breweryName || beerFull?.brewery?.name || "Birrificio sconosciuto";
   const [isDescEditing, setIsDescEditing] = useState(!descEdit);
@@ -83,6 +366,12 @@ function BeerProfilePanel({ beer, beerFull, descEdit, onDescChange, onSaveDesc, 
               {onRipristina && (
                 <Button type="button" variant="ghost" size="sm" className="rounded-xl text-xs text-muted-foreground h-7 px-2" onClick={onRipristina}>
                   Ripristina
+                </Button>
+              )}
+              {onEditFull && beer.id && (
+                <Button type="button" variant="ghost" size="sm" className="rounded-xl text-xs text-primary h-7 px-2 gap-1" onClick={onEditFull}>
+                  <Edit className="h-3 w-3" />
+                  Scheda
                 </Button>
               )}
               {onChangeBeer && (
@@ -235,6 +524,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   const [editingItem, setEditingItem] = useState<TapItem | null>(null);
   const [isChangingBeer, setIsChangingBeer] = useState(false);
   const [selectedNewBeer, setSelectedNewBeer] = useState<{ id: number; name: string; style: string; abv: string; breweryName: string } | null>(null);
+  const [fullEditOpen, setFullEditOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showPriceManager, setShowPriceManager] = useState(false);
   const [tempPrices, setTempPrices] = useState<PriceItem[]>([]);
@@ -860,6 +1150,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                           }
                         }}
                         isSavingDesc={updateBeerDescMutation.isPending}
+                        onEditFull={selectedBeerFull?.id ? () => setFullEditOpen(true) : undefined}
                         onChangeBeer={() => {
                           setFormData({ ...formData, beerId: "" });
                           setSelectedBeerDetails(null);
@@ -1359,6 +1650,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                           }
                         }}
                         isSavingDesc={updateBeerDescMutation.isPending}
+                        onEditFull={selectedBeerFull?.id ? () => setFullEditOpen(true) : undefined}
                         onChangeBeer={() => { setIsChangingBeer(true); setSearchTerm(""); }}
                         onRipristina={() => {
                           setSelectedNewBeer(null);
@@ -1385,6 +1677,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                           }
                         }}
                         isSavingDesc={updateBeerDescMutation.isPending}
+                        onEditFull={selectedBeerFull?.id ? () => setFullEditOpen(true) : editingItem?.beer?.id ? () => setFullEditOpen(true) : undefined}
                         onChangeBeer={() => { setIsChangingBeer(true); setSearchTerm(""); }}
                       />
                     )}
@@ -1730,6 +2023,26 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
             </DialogContent>
           </Dialog>
           
+          {/* Full Beer Edit Dialog */}
+          {fullEditOpen && (selectedBeerFull?.id || editingItem?.beer?.id) && (
+            <BeerFullEditDialog
+              beer={selectedBeerFull ?? {
+                id: editingItem!.beer.id,
+                name: editingItem!.beer.name,
+                style: editingItem!.beer.style,
+                abv: editingItem!.beer.abv,
+                imageUrl: "",
+              }}
+              open={fullEditOpen}
+              onOpenChange={setFullEditOpen}
+              onSaved={() => {
+                if (formData.beerId) {
+                  queryClient.invalidateQueries({ queryKey: ["/api/beers", formData.beerId] });
+                }
+              }}
+            />
+          )}
+
           {/* Price Manager Dialog */}
           {showPriceManager && (
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">

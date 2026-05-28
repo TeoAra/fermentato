@@ -5370,6 +5370,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Pub owner: full beer update (name, style, abv, ibu, color, description, imageUrl, isGlutenFree, isAlcoholFree, isCollaboration)
+  app.patch("/api/owner/beers/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const user = await storage.getUser(userId);
+      if (!user || (!user.roles?.includes('pub_owner') && !user.roles?.includes('admin') && user.activeRole !== 'pub_owner')) {
+        return res.status(403).json({ message: "Pub owner access required" });
+      }
+      const beerId = parseInt(req.params.id);
+      const beer = await storage.getBeerWithBrewery(beerId);
+      if (!beer) return res.status(404).json({ message: "Birra non trovata" });
+      // Only block editing if brewery is verified AND user is not admin
+      if (beer.brewery?.isVerified && !user.roles?.includes('admin') && user.activeRole !== 'admin') {
+        return res.status(403).json({ message: "Non puoi modificare birre di birrifici verificati" });
+      }
+      const { collaborationBreweryIds, isCollaboration, ...updates } = req.body;
+      const allowed = ['name','style','abv','ibu','color','description','imageUrl','isGlutenFree','isAlcoholFree'];
+      const sanitized: Record<string, any> = {};
+      for (const k of allowed) { if (k in updates) sanitized[k] = updates[k]; }
+      const updated = await storage.updateBeer(beerId, sanitized);
+      if (sanitized.imageUrl) {
+        try { clipIndexBeer(beerId, sanitized.imageUrl); } catch { /* non-blocking */ }
+      }
+      if (collaborationBreweryIds !== undefined) {
+        await db.delete(beerCollaborations).where(eq(beerCollaborations.beerId, beerId));
+        const ids = Array.isArray(collaborationBreweryIds) ? collaborationBreweryIds : [];
+        for (const brewId of ids) {
+          await db.insert(beerCollaborations).values({ beerId, breweryId: Number(brewId) }).onConflictDoNothing();
+        }
+        try { await db.execute(sql`UPDATE beers SET is_collaboration = ${ids.length > 0} WHERE id = ${beerId}`); } catch { /* non-blocking */ }
+      }
+      clearSearchCache();
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating beer (owner):", error);
+      res.status(500).json({ message: "Failed to update beer" });
+    }
+  });
+
   // Create new beer (admin)
   app.post("/api/admin/beers", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
