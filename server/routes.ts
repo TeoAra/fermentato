@@ -2469,7 +2469,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const items = await storage.getDrinkItems(parseInt(req.params.id), false);
       res.json(items);
-    } catch { res.status(500).json({ message: "Failed to fetch drink items" }); }
+    } catch (error) {
+      console.error("Error fetching public drink items:", error);
+      res.status(500).json({ message: "Failed to fetch drink items" });
+    }
   });
 
   app.get("/api/pubs/:id/drinks/all", isAuthenticated, async (req: any, res) => {
