@@ -394,13 +394,16 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                 {item.vintage && <span className="text-xs text-muted-foreground">{item.vintage}</span>}
                                 {item.distillery && <span className="text-xs text-muted-foreground">{item.distillery}</span>}
-                                {item.priceByGlass && <span className="text-xs font-medium text-primary">🥂 €{parseFloat(item.priceByGlass).toFixed(2)}</span>}
-                                {item.priceByBottle && <span className="text-xs font-medium">🍾 €{parseFloat(item.priceByBottle).toFixed(2)}</span>}
+                                {item.priceByGlass && <span className="text-xs font-medium text-primary">Calice €{parseFloat(item.priceByGlass).toFixed(2)}</span>}
+                                {item.priceByBottle && <span className="text-xs font-medium">Bottiglia €{parseFloat(item.priceByBottle).toFixed(2)}</span>}
                                 {item.price && !item.priceByGlass && !item.priceByBottle && (
                                   <span className="text-xs font-medium text-primary">€{parseFloat(item.price).toFixed(2)}</span>
                                 )}
                                 {item.alcoholDegree && <span className="text-xs text-muted-foreground">{item.alcoholDegree}%</span>}
                               </div>
+                              {item.description && (
+                                <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.description}</p>
+                              )}
                             </div>
                             <div className="flex items-center gap-0.5 flex-shrink-0">
                               <button

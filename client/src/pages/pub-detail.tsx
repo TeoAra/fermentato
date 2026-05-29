@@ -66,22 +66,28 @@ function DrinkItemRow({ item, emoji }: { item: any; emoji: string }) {
           <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5 line-clamp-1">{item.description}</p>
         )}
       </div>
-      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+      <div className="flex flex-col items-end gap-1 flex-shrink-0">
         {item.priceByGlass && (
-          <span className="text-xs font-bold text-[#F59E0B]">🥂 €{parseFloat(item.priceByGlass).toFixed(2)}</span>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-medium text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide leading-none">Calice</span>
+            <span className="text-base font-bold text-[#F59E0B] leading-tight">€{parseFloat(item.priceByGlass).toFixed(2)}</span>
+          </div>
         )}
         {item.priceByBottle && (
-          <span className="text-xs font-medium text-[#151515] dark:text-[#F5F5F5]">🍾 €{parseFloat(item.priceByBottle).toFixed(2)}</span>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-medium text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide leading-none">Bottiglia</span>
+            <span className="text-base font-semibold text-[#151515] dark:text-[#F5F5F5] leading-tight">€{parseFloat(item.priceByBottle).toFixed(2)}</span>
+          </div>
         )}
         {item.price && !item.priceByGlass && !item.priceByBottle && (
-          <span className="text-sm font-bold text-[#F59E0B]">€{parseFloat(item.price).toFixed(2)}</span>
+          <span className="text-base font-bold text-[#F59E0B]">€{parseFloat(item.price).toFixed(2)}</span>
         )}
         <div className="flex items-center gap-1.5">
           {item.volumeCl && (
-            <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7]">{item.volumeCl}cl</span>
+            <span className="text-xs text-[#6B6357] dark:text-[#B7BDC7]">{item.volumeCl}cl</span>
           )}
           {item.alcoholDegree && (
-            <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7]">{item.alcoholDegree}%</span>
+            <span className="text-xs text-[#6B6357] dark:text-[#B7BDC7]">{item.alcoholDegree}%</span>
           )}
         </div>
       </div>
