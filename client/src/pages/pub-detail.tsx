@@ -13,7 +13,9 @@ import {
   XCircle,
   Calendar,
   Clock,
+  ChevronDown,
 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
@@ -96,32 +98,92 @@ function DrinkItemRow({ item, emoji }: { item: any; emoji: string }) {
 }
 
 function DrinksPublicSection({ categories, legacyItems }: { categories: any[]; legacyItems: any[] }) {
-  // New system: render categories with nested items (preferred)
+  // New system: collapsible categories with description + info box
   const visibleCats = categories.filter(c => c.isVisible !== false && Array.isArray(c.items) && c.items.length > 0);
+
+  const [expanded, setExpanded] = useState<Set<number>>(
+    () => new Set(visibleCats.length > 0 ? [visibleCats[0].id] : [])
+  );
+  const toggleCat = (id: number) =>
+    setExpanded(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
 
   if (visibleCats.length > 0) {
     return (
-      <section className="pt-6 space-y-6">
-        <h2 className="text-xl font-bold text-[#151515] dark:text-[#F5F5F5]">Bevande</h2>
-        {visibleCats.map((cat: any) => {
-          const emoji = cat.type === "vino" ? "🍷" : "🏷️";
-          const visibleItems = (cat.items as any[]).filter((i: any) => i.isVisible !== false);
-          if (visibleItems.length === 0) return null;
-          return (
-            <div key={cat.id}>
-              <h3 className="text-sm font-semibold text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide mb-3 flex items-center gap-1.5">
-                <span>{emoji}</span>
-                <span>{cat.name}</span>
-              </h3>
-              <div className="space-y-2">
-                {visibleItems.map((item: any) => (
-                  <DrinkItemRow key={item.id} item={item} emoji={emoji} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </section>
+      <motion.section
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        className="space-y-3 pt-4"
+      >
+        <h2 className="text-xl font-black text-[#151515] dark:text-[#F5F5F5]">Bevande</h2>
+        <div className="space-y-3">
+          {visibleCats.map((cat: any) => {
+            const emoji = cat.type === "vino" ? "🍷" : cat.type === "birra" ? "🍺" : "🥤";
+            const visibleItems = (cat.items as any[]).filter((i: any) => i.isVisible !== false);
+            if (visibleItems.length === 0) return null;
+            const isOpen = expanded.has(cat.id);
+            return (
+              <section
+                key={cat.id}
+                className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden"
+              >
+                <button
+                  type="button"
+                  onClick={() => toggleCat(cat.id)}
+                  aria-expanded={isOpen}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#FAF7F1] dark:active:bg-white/[0.03] transition-colors"
+                >
+                  <span className="text-xl flex-shrink-0">{emoji}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline gap-2 flex-wrap">
+                      <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5]">{cat.name}</h3>
+                      <span className="text-[10px] font-bold text-[#F59E0B] tabular-nums">
+                        {visibleItems.length} {visibleItems.length === 1 ? "prodotto" : "prodotti"}
+                      </span>
+                    </div>
+                    {cat.description && (
+                      <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed mt-1">{cat.description}</p>
+                    )}
+                  </div>
+                  <ChevronDown
+                    className={`w-5 h-5 text-[#6B6357] dark:text-[#B7BDC7] flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                  />
+                </button>
+                <AnimatePresence initial={false}>
+                  {isOpen && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.25, ease: "easeOut" }}
+                      className="overflow-hidden"
+                    >
+                      <div className="border-t border-[#E8DED1] dark:border-white/[0.06]">
+                        {cat.infoBox && (
+                          <div className="px-4 py-3 bg-[#FFF7EA] dark:bg-[#F59E0B]/10 flex items-start gap-2">
+                            <span className="text-base flex-shrink-0 mt-0.5">📌</span>
+                            <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed">{cat.infoBox}</p>
+                          </div>
+                        )}
+                        <div className="p-3 space-y-2">
+                          {visibleItems.map((item: any) => (
+                            <DrinkItemRow key={item.id} item={item} emoji={emoji} />
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
+            );
+          })}
+        </div>
+      </motion.section>
     );
   }
 
