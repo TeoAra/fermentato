@@ -11,22 +11,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { AllergenSelector } from "@/components/allergen-selector";
-import { Plus, Edit3, Trash2, Eye, EyeOff, GlassWater, Loader2, Tag } from "lucide-react";
+import {
+  Plus, Edit3, Trash2, Eye, EyeOff, GlassWater, Loader2, Tag,
+  MoreHorizontal, Pencil,
+} from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-// Only "vino" is a preset. Everything else is custom.
 const CUSTOM_VALUE = "__custom__";
 
 function catEmoji(cat: string): string {
   if (cat === "vino") return "🍷";
   return "🏷️";
 }
-
 function catLabel(cat: string): string {
   if (cat === "vino") return "Vini";
   return cat;
 }
-
-// vino → calice + bottiglia; custom → prezzo singolo
 function isWine(cat: string) {
   return cat === "vino";
 }
@@ -44,7 +46,7 @@ const EMPTY_FORM = {
   isAvailable: true,
   allergens: [] as string[],
   vintage: "",
-  produttore: "",  // stored in `distillery` column
+  produttore: "",
   alcoholDegree: "",
   volumeCl: "",
 };
@@ -59,6 +61,10 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Category rename state
+  const [renamingCat, setRenamingCat] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
 
   const { data: items = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/pubs", String(pubId), "drinks"],
@@ -82,7 +88,6 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
       category: cat,
       name: form.name,
       description: form.description || null,
-      // vino: prezzi al calice/bottiglia; custom: prezzo unico
       price: !wine && form.price ? parseFloat(form.price) : null,
       priceByGlass: wine && form.priceByGlass ? parseFloat(form.priceByGlass) : null,
       priceByBottle: wine && form.priceByBottle ? parseFloat(form.priceByBottle) : null,
@@ -93,7 +98,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
       vintage: wine && form.vintage ? parseInt(form.vintage) : null,
       region: null,
       grapeVariety: null,
-      distillery: form.produttore || null,  // produttore → distillery column
+      distillery: form.produttore || null,
       alcoholDegree: form.alcoholDegree ? parseFloat(form.alcoholDegree) : null,
       volumeCl: form.volumeCl ? parseInt(form.volumeCl) : null,
     };
@@ -131,6 +136,44 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
     onError: () => toast({ title: "Errore nell'eliminazione", variant: "destructive" }),
   });
 
+  // Bulk rename all items in a category
+  const handleRenameCategory = async (oldCat: string, newCat: string) => {
+    if (!newCat.trim() || newCat.trim() === oldCat) {
+      setRenamingCat(null);
+      return;
+    }
+    const catItems = items.filter(i => (i.category ?? "vino") === oldCat);
+    try {
+      await Promise.all(
+        catItems.map(item =>
+          apiRequest(`/api/pubs/${pubId}/drinks/${item.id}`, { method: "PATCH" }, { category: newCat.trim() })
+        )
+      );
+      toast({ title: "Sezione rinominata" });
+      invalidate();
+    } catch {
+      toast({ title: "Errore nel rinominare", variant: "destructive" });
+    }
+    setRenamingCat(null);
+  };
+
+  // Delete all items in a category
+  const handleDeleteCategory = async (cat: string) => {
+    const catItems = items.filter(i => (i.category ?? "vino") === cat);
+    if (!confirm(`Eliminare tutta la sezione "${catLabel(cat)}" (${catItems.length} voci)?`)) return;
+    try {
+      await Promise.all(
+        catItems.map(item =>
+          apiRequest(`/api/pubs/${pubId}/drinks/${item.id}`, { method: "DELETE" })
+        )
+      );
+      toast({ title: "Sezione eliminata" });
+      invalidate();
+    } catch {
+      toast({ title: "Errore nell'eliminazione", variant: "destructive" });
+    }
+  };
+
   const openAdd = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
@@ -167,11 +210,6 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
     setForm(EMPTY_FORM);
   };
 
-  const handleDelete = (id: number) => {
-    if (!confirm("Eliminare questa voce?")) return;
-    deleteMutation.mutate(id);
-  };
-
   const handleSubmit = () => {
     if (!form.name.trim()) {
       toast({ title: "Nome obbligatorio", variant: "destructive" }); return;
@@ -185,7 +223,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
   const resolvedCat = effectiveCategory();
   const wine = isWine(resolvedCat);
 
-  // Group: "vino" first, then custom categories alphabetically
+  // Group: "vino" first, then custom alphabetically
   const grouped = (() => {
     const allCats = [...new Set(items.map(i => i.category ?? "vino"))];
     const presetFirst = allCats.filter(c => c === "vino");
@@ -229,11 +267,70 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
         <div className="space-y-6">
           {grouped.map(({ cat, items: groupItems }) => (
             <div key={cat}>
+              {/* Category header */}
               <div className="flex items-center gap-2 mb-3">
                 <span className="text-base">{catEmoji(cat)}</span>
-                <h3 className="font-semibold text-sm text-foreground">{catLabel(cat)}</h3>
+
+                {renamingCat === cat ? (
+                  /* Inline rename input */
+                  <form
+                    className="flex items-center gap-1.5 flex-1"
+                    onSubmit={e => { e.preventDefault(); handleRenameCategory(cat, renameValue); }}
+                  >
+                    <Input
+                      value={renameValue}
+                      onChange={e => setRenameValue(e.target.value)}
+                      className="h-7 text-sm font-semibold py-0 px-2 w-40"
+                      autoFocus
+                      onBlur={() => handleRenameCategory(cat, renameValue)}
+                    />
+                    <Button type="submit" size="sm" className="h-7 px-2 text-xs">OK</Button>
+                    <Button
+                      type="button" size="sm" variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setRenamingCat(null)}
+                    >
+                      ✕
+                    </Button>
+                  </form>
+                ) : (
+                  <h3 className="font-semibold text-sm text-foreground">{catLabel(cat)}</h3>
+                )}
+
                 <Badge variant="secondary" className="text-xs">{groupItems.length}</Badge>
+
+                {/* Category actions menu */}
+                {renamingCat !== cat && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button className="ml-auto p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] text-muted-foreground transition-colors">
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setRenamingCat(cat);
+                          setRenameValue(catLabel(cat));
+                        }}
+                        className="gap-2"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                        Rinomina sezione
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleDeleteCategory(cat)}
+                        className="gap-2 text-red-500 focus:text-red-500"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                        Elimina sezione
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
+
+              {/* Items */}
               <div className="space-y-2">
                 {groupItems.map((item: any) => (
                   <Card
@@ -286,7 +383,10 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => {
+                            if (!confirm("Eliminare questa voce?")) return;
+                            deleteMutation.mutate(item.id);
+                          }}
                           className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-red-400"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -313,7 +413,6 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             <div>
               <Label className="text-sm font-medium mb-1.5 block">Categoria</Label>
               <div className="flex gap-2">
-                {/* Vini */}
                 <button
                   type="button"
                   onClick={() => setForm(f => ({ ...f, category: "vino" }))}
@@ -326,7 +425,6 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                   <span className="text-lg">🍷</span>
                   <span>Vini</span>
                 </button>
-                {/* Sezione personalizzata */}
                 <button
                   type="button"
                   onClick={() => setForm(f => ({ ...f, category: CUSTOM_VALUE }))}
@@ -341,7 +439,6 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                 </button>
               </div>
 
-              {/* Nome categoria custom */}
               {form.category === CUSTOM_VALUE && (
                 <div className="mt-2">
                   <Input
@@ -418,7 +515,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               </div>
             </div>
 
-            {/* Campi specifici vini */}
+            {/* Annata + Produttore (vini) */}
             {wine && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -441,7 +538,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               </div>
             )}
 
-            {/* Produttore per categorie custom */}
+            {/* Produttore per custom */}
             {!wine && (
               <div>
                 <Label className="text-sm font-medium">Produttore / Brand</Label>
@@ -463,7 +560,6 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               />
             </div>
 
-            {/* Immagine */}
             <ImageUpload
               label="Immagine"
               currentImageUrl={form.imageUrl || undefined}
@@ -471,13 +567,11 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               folder="drinks"
             />
 
-            {/* Allergeni */}
             <AllergenSelector
               selectedAllergens={form.allergens}
               onAllergensChange={a => setForm(f => ({ ...f, allergens: a }))}
             />
 
-            {/* Visibilità */}
             <div className="flex items-center gap-3">
               <Switch
                 checked={form.isVisible}
