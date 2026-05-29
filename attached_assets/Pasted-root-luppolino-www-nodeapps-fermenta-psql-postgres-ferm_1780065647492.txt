@@ -1,0 +1,137 @@
+root@luppolino:/www/nodeapps/fermenta# psql "postgres://fermenta:antanicorp94@localhost/fermenta" -f migrations/vps_migration_drink_items.sql
+psql:migrations/vps_migration_drink_items.sql:27: NOTICE:  relation "drink_items" already exists, skipping
+CREATE TABLE
+psql:migrations/vps_migration_drink_items.sql:31: NOTICE:  column "format" of relation "bottle_list" already exists, skipping
+ALTER TABLE
+root@luppolino:/www/nodeapps/fermenta# pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/root/.pm2/pm2.log last 15 lines:
+PM2        | 2026-05-29T14:31:13: PM2 log: Stopping app:fermenta id:0
+PM2        | 2026-05-29T14:31:13: PM2 log: App [fermenta:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-29T14:31:13: PM2 log: pid=4070629 msg=process killed
+PM2        | 2026-05-29T14:31:13: PM2 log: App [fermenta:0] starting in -fork mode-
+PM2        | 2026-05-29T14:31:13: PM2 log: App [fermenta:0] online
+PM2        | 2026-05-29T14:35:37: PM2 log: Stopping app:fermenta id:0
+PM2        | 2026-05-29T14:35:37: PM2 log: App [fermenta:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-29T14:35:37: PM2 log: pid=4071460 msg=process killed
+PM2        | 2026-05-29T14:35:37: PM2 log: App [fermenta:0] starting in -fork mode-
+PM2        | 2026-05-29T14:35:37: PM2 log: App [fermenta:0] online
+PM2        | 2026-05-29T14:38:32: PM2 log: Stopping app:fermenta id:0
+PM2        | 2026-05-29T14:38:32: PM2 log: App [fermenta:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-29T14:38:32: PM2 log: pid=4072392 msg=process killed
+PM2        | 2026-05-29T14:38:32: PM2 log: App [fermenta:0] starting in -fork mode-
+PM2        | 2026-05-29T14:38:32: PM2 log: App [fermenta:0] online
+
+/root/.pm2/logs/clip-service-error.log last 15 lines:
+1|clip-ser |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1|clip-ser |   File "/usr/lib/python3.11/selectors.py", line 415, in select
+1|clip-ser |     fd_event_list = self._selector.poll(timeout)
+1|clip-ser |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1|clip-ser | KeyboardInterrupt
+1|clip-ser | Traceback (most recent call last):
+1|clip-ser |   File "/www/nodeapps/fermenta/server/clip_service_v3.py", line 262, in <module>
+1|clip-ser |     HTTPServer(("127.0.0.1", CLIP_PORT), Handler).serve_forever()
+1|clip-ser |   File "/usr/lib/python3.11/socketserver.py", line 233, in serve_forever
+1|clip-ser |     ready = selector.select(poll_interval)
+1|clip-ser |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1|clip-ser |   File "/usr/lib/python3.11/selectors.py", line 415, in select
+1|clip-ser |     fd_event_list = self._selector.poll(timeout)
+1|clip-ser |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1|clip-ser | KeyboardInterrupt
+
+/root/.pm2/logs/clip-service-out.log last 15 lines:
+1|clip-ser | [clip] Carico CLIP ViT-B/32...
+1|clip-ser | [clip] CLIP pronto!
+1|clip-ser | [clip] Indice caricato: 4224 birre
+1|clip-ser | [clip] Avvio su porta 5002 | batch=16 | dl_workers=8
+1|clip-ser | [clip] Carico CLIP ViT-B/32...
+1|clip-ser | [clip] CLIP pronto!
+1|clip-ser | [clip] Indice caricato: 4224 birre
+1|clip-ser | [clip] Avvio su porta 5002 | batch=16 | dl_workers=8
+1|clip-ser | [clip] Carico CLIP ViT-B/32...
+1|clip-ser | [clip] CLIP pronto!
+1|clip-ser | [clip] Indice caricato: 4224 birre
+1|clip-ser | [clip] Avvio su porta 5002 | batch=16 | dl_workers=8
+1|clip-ser | [clip] Carico CLIP ViT-B/32...
+1|clip-ser | [clip] CLIP pronto!
+1|clip-ser | [clip] Indice caricato: 4224 birre
+
+/root/.pm2/logs/fermenta-out.log last 15 lines:
+0|fermenta | 2026-05-29T14:38:36: 2:38:36 PM [express] Stripe webhook configured
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/my-pubs 200 in 13ms :: [{"id":7,"name":"Luppolino Pub","address":"Via …
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/next-tap 200 in 61ms :: []
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/bottles 200 in 68ms :: [{"id":17,"pubId":7,"beerId":52920,"isAc…
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/menu 200 in 82ms :: [{"id":33,"pubId":7,"name":"Starters","desc…
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/taplist 200 in 47ms :: [{"id":41,"pubId":7,"beerId":46352,"isAc…
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/menu/categories/35/items 200 in 29ms :: [{"id":28,"categoryId":…
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/menu/categories/33/items 200 in 37ms :: [{"id":19,"categoryId":…
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/menu/categories/40/items 200 in 38ms :: [{"id":88,"categoryId":…
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/menu/categories/36/items 200 in 34ms :: [{"id":35,"categoryId":…
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/menu/categories/38/items 200 in 25ms :: [{"id":61,"categoryId":…
+0|fermenta | 2026-05-29T14:39:33: 2:39:33 PM [express] GET /api/pubs/7/menu/categories/37/items 200 in 36ms :: [{"id":41,"categoryId":…
+0|fermenta | 2026-05-29T14:39:47: 2:39:47 PM [express] POST /api/pubs/7/drinks 500 in 64ms :: {"message":"Failed to create drink item"}
+0|fermenta | 2026-05-29T14:39:59: 2:39:59 PM [express] GET /api/pubs/7/drinks 200 in 30ms :: []
+0|fermenta | 2026-05-29T14:40:11: 2:40:11 PM [express] GET /api/pubs/luppolino-pub/drinks 500 in 47ms :: {"message":"Failed to fetch d…
+
+/root/.pm2/logs/fermenta-error.log last 15 lines:
+0|fermenta | 2026-05-29T14:40:11:     hint: undefined,
+0|fermenta | 2026-05-29T14:40:11:     position: undefined,
+0|fermenta | 2026-05-29T14:40:11:     internalPosition: undefined,
+0|fermenta | 2026-05-29T14:40:11:     internalQuery: undefined,
+0|fermenta | 2026-05-29T14:40:11:     where: "unnamed portal parameter $1 = '...'",
+0|fermenta | 2026-05-29T14:40:11:     schema: undefined,
+0|fermenta | 2026-05-29T14:40:11:     table: undefined,
+0|fermenta | 2026-05-29T14:40:11:     column: undefined,
+0|fermenta | 2026-05-29T14:40:11:     dataType: undefined,
+0|fermenta | 2026-05-29T14:40:11:     constraint: undefined,
+0|fermenta | 2026-05-29T14:40:11:     file: 'numutils.c',
+0|fermenta | 2026-05-29T14:40:11:     line: '615',
+0|fermenta | 2026-05-29T14:40:11:     routine: 'pg_strtoint32_safe'
+0|fermenta | 2026-05-29T14:40:11:   }
+0|fermenta | 2026-05-29T14:40:11: }
+
+0|fermenta  | 2026-05-29T14:40:30: Error creating drink item: DrizzleQueryError: Failed query: insert into "drink_items" ("id", "pub_id", "category", "name", "description", "price", "price_by_glass", "price_by_bottle", "image_url", "is_visible", "is_available", "order_index", "allergens", "vintage", "region", "grape_variety", "distillery", "alcohol_degree", "volume_cl", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, default, $11, $12, $13, $14, $15, $16, $17, default, default) returning "id", "pub_id", "category", "name", "description", "price", "price_by_glass", "price_by_bottle", "image_url", "is_visible", "is_available", "order_index", "allergens", "vintage", "region", "grape_variety", "distillery", "alcohol_degree", "volume_cl", "created_at", "updated_at"
+0|fermenta  | 2026-05-29T14:40:30: params: 7,bibita,Acqua,,2.5,,,,true,true,[],,,,,,70
+0|fermenta  | 2026-05-29T14:40:30:     at NodePgPreparedQuery.queryWithCache (file:///www/nodeapps/fermenta/node_modules/drizzle-orm/pg-core/session.js:41:15)
+0|fermenta  | 2026-05-29T14:40:30:     at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|fermenta  | 2026-05-29T14:40:30:     at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:117:22
+0|fermenta  | 2026-05-29T14:40:30:     ... 2 lines matching cause stack trace ...
+0|fermenta  | 2026-05-29T14:40:30:     at async file:///www/nodeapps/fermenta/dist/index.js:13199:20 {
+0|fermenta  | 2026-05-29T14:40:30:   query: 'insert into "drink_items" ("id", "pub_id", "category", "name", "description", "price", "price_by_glass", "price_by_bottle", "image_url", "is_visible", "is_available", "order_index", "allergens", "vintage", "region", "grape_variety", "distillery", "alcohol_degree", "volume_cl", "created_at", "updated_at") values (default, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, default, $11, $12, $13, $14, $15, $16, $17, default, default) returning "id", "pub_id", "category", "name", "description", "price", "price_by_glass", "price_by_bottle", "image_url", "is_visible", "is_available", "order_index", "allergens", "vintage", "region", "grape_variety", "distillery", "alcohol_degree", "volume_cl", "created_at", "updated_at"',
+0|fermenta  | 2026-05-29T14:40:30:   params: [
+0|fermenta  | 2026-05-29T14:40:30:     7,    'bibita', 'Acqua',
+0|fermenta  | 2026-05-29T14:40:30:     null, 2.5,      null,
+0|fermenta  | 2026-05-29T14:40:30:     null, null,     true,
+0|fermenta  | 2026-05-29T14:40:30:     true, '[]',     null,
+0|fermenta  | 2026-05-29T14:40:30:     null, null,     null,
+0|fermenta  | 2026-05-29T14:40:30:     null, 70
+0|fermenta  | 2026-05-29T14:40:30:   ],
+0|fermenta  | 2026-05-29T14:40:30:   cause: error: permission denied for sequence drink_items_id_seq
+0|fermenta  | 2026-05-29T14:40:30:       at /www/nodeapps/fermenta/node_modules/pg-pool/index.js:45:11
+0|fermenta  | 2026-05-29T14:40:30:       at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+0|fermenta  | 2026-05-29T14:40:30:       at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:124:18
+0|fermenta  | 2026-05-29T14:40:30:       at async NodePgPreparedQuery.queryWithCache (file:///www/nodeapps/fermenta/node_modules/drizzle-orm/pg-core/session.js:39:16)
+0|fermenta  | 2026-05-29T14:40:30:       at async file:///www/nodeapps/fermenta/node_modules/drizzle-orm/node-postgres/session.js:117:22
+0|fermenta  | 2026-05-29T14:40:30:       at async DatabaseStorage.createDrinkItem (file:///www/nodeapps/fermenta/dist/index.js:2259:27)
+0|fermenta  | 2026-05-29T14:40:30:       at async StorageWrapper.dbCall (file:///www/nodeapps/fermenta/dist/index.js:3026:18)
+0|fermenta  | 2026-05-29T14:40:30:       at async file:///www/nodeapps/fermenta/dist/index.js:13199:20 {
+0|fermenta  | 2026-05-29T14:40:30:     length: 112,
+0|fermenta  | 2026-05-29T14:40:30:     severity: 'ERROR',
+0|fermenta  | 2026-05-29T14:40:30:     code: '42501',
+0|fermenta  | 2026-05-29T14:40:30:     detail: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     hint: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     position: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     internalPosition: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     internalQuery: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     where: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     schema: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     table: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     column: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     dataType: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     constraint: undefined,
+0|fermenta  | 2026-05-29T14:40:30:     file: 'sequence.c',
+0|fermenta  | 2026-05-29T14:40:30:     line: '652',
+0|fermenta  | 2026-05-29T14:40:30:     routine: 'nextval_internal'
+0|fermenta  | 2026-05-29T14:40:30:   }
+0|fermenta  | 2026-05-29T14:40:30: }
+0|fermenta  | 2026-05-29T14:40:30: 2:40:30 PM [express] POST /api/pubs/7/drinks 500 in 38ms :: {"message":"Failed to create drink item"}
