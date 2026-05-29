@@ -2464,6 +2464,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // ── Drink items routes ─────────────────────────────────────────────────────
+  app.get("/api/pubs/:id/drinks", async (req, res) => {
+    try {
+      const items = await storage.getDrinkItems(parseInt(req.params.id), false);
+      res.json(items);
+    } catch { res.status(500).json({ message: "Failed to fetch drink items" }); }
+  });
+
+  app.get("/api/pubs/:id/drinks/all", isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const userId = req.user?.id;
+      const userPubs = await storage.getPubsByOwner(userId);
+      const userRoles = req.user?.roles ?? [];
+      if (!userRoles.includes('admin') && !userPubs.some((p: any) => p.id === pubId))
+        return res.status(403).json({ message: "Not authorized" });
+      const items = await storage.getDrinkItems(pubId, true);
+      res.json(items);
+    } catch { res.status(500).json({ message: "Failed to fetch drink items" }); }
+  });
+
+  app.post("/api/pubs/:id/drinks", isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const userId = req.user?.id;
+      const userPubs = await storage.getPubsByOwner(userId);
+      const userRoles = req.user?.roles ?? [];
+      if (!userRoles.includes('admin') && !userPubs.some((p: any) => p.id === pubId))
+        return res.status(403).json({ message: "Not authorized" });
+      const item = await storage.createDrinkItem({ ...req.body, pubId });
+      broadcastPubUpdate(pubId, "drinks");
+      res.status(201).json(item);
+    } catch (e) { res.status(500).json({ message: "Failed to create drink item" }); }
+  });
+
+  app.patch("/api/pubs/:pubId/drinks/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.pubId);
+      const userId = req.user?.id;
+      const userPubs = await storage.getPubsByOwner(userId);
+      const userRoles = req.user?.roles ?? [];
+      if (!userRoles.includes('admin') && !userPubs.some((p: any) => p.id === pubId))
+        return res.status(403).json({ message: "Not authorized" });
+      const updated = await storage.updateDrinkItem(parseInt(req.params.id), req.body);
+      broadcastPubUpdate(pubId, "drinks");
+      res.json(updated);
+    } catch { res.status(500).json({ message: "Failed to update drink item" }); }
+  });
+
+  app.delete("/api/pubs/:pubId/drinks/:id", isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.pubId);
+      const userId = req.user?.id;
+      const userPubs = await storage.getPubsByOwner(userId);
+      const userRoles = req.user?.roles ?? [];
+      if (!userRoles.includes('admin') && !userPubs.some((p: any) => p.id === pubId))
+        return res.status(403).json({ message: "Not authorized" });
+      await storage.deleteDrinkItem(parseInt(req.params.id));
+      broadcastPubUpdate(pubId, "drinks");
+      res.json({ ok: true });
+    } catch { res.status(500).json({ message: "Failed to delete drink item" }); }
+  });
+  // ── /Drink items routes ────────────────────────────────────────────────────
+
   // Create menu category (only pub owner)
   app.post("/api/pubs/:id/menu-categories", isAuthenticated, async (req: any, res) => {
     try {

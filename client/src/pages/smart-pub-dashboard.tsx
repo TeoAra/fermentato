@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, lazy, Suspense } from "react";
 import PubAnalyticsTab from "@/components/pub-analytics-tab";
 import PubLineCleaning from "@/components/pub-line-cleaning";
 import KegWarehouse from "@/components/keg-warehouse";
+import { DrinkManager } from "@/components/drink-manager";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -64,6 +65,7 @@ import {
   Target,
   Crown,
   Wine,
+  GlassWater,
   Gift,
   ShieldOff,
   RefreshCw,
@@ -656,9 +658,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     { id: 'overview', name: 'Dashboard', icon: Home, gradient: 'from-primary to-orange-600' },
     { id: 'taplist', name: 'Taplist', icon: Beer, gradient: 'from-primary to-orange-600' },
     { id: 'bottles', name: 'Cantina', icon: Wine, gradient: 'from-purple-500 to-violet-600' },
+    { id: 'drinks', name: 'Bevande', icon: GlassWater, gradient: 'from-violet-500 to-purple-600' },
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-emerald-500 to-teal-600' },
     { id: 'events', name: 'Eventi', icon: Calendar, gradient: 'from-pink-500 to-rose-600' },
-    { id: 'analytics', name: 'Analytics', icon: BarChart3, gradient: 'from-sky-500 to-blue-600' },
   ];
 
   // ── Subscription banner (shown on every section) ──────────────────────────
@@ -1050,6 +1052,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
         </div>
       </div>
+
+      {/* Analytics inline nella Overview */}
+      {currentPub && (
+        <div className="mt-6">
+          <PubAnalyticsTab pubId={currentPub.id} tapList={typedTapList} />
+        </div>
+      )}
 
     </motion.div>
   );
@@ -1801,6 +1810,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     </div>
   );
 
+  // Drinks (Bevande) Section
+  const renderDrinks = () => (
+    <div className="space-y-6">
+      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] p-4 md:p-6">
+        <DrinkManager pubId={currentPub?.id || 0} />
+      </div>
+    </div>
+  );
+
   // Bot Manager Section
   const renderBot = () => (
     <div className="space-y-6">
@@ -2080,15 +2098,15 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 {currentSection === 'overview' && renderOverview()}
                 {currentSection === 'taplist' && renderTaplist()}
                 {currentSection === 'bottles' && renderBottles()}
+                {currentSection === 'drinks' && renderDrinks()}
                 {currentSection === 'menu' && renderMenu()}
                 {currentSection === 'events' && (
                   <EventsManager pubId={currentPub?.id || 0} pubName={currentPub?.name} />
                 )}
-                {currentSection === 'analytics' && renderAnalytics()}
                 {currentSection === 'settings' && renderSettings()}
                 {currentSection === 'profile' && renderProfile()}
                 {currentSection === 'bot' && renderBot()}
-                {!['overview', 'taplist', 'bottles', 'menu', 'events', 'hours', 'analytics', 'settings', 'profile', 'bot'].includes(currentSection) && (
+                {!['overview', 'taplist', 'bottles', 'drinks', 'menu', 'events', 'hours', 'settings', 'profile', 'bot'].includes(currentSection) && (
                   <div className="text-center py-16">
                     <div className="space-y-4">
                       <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${sections.find(s => s.id === currentSection)?.gradient} mx-auto flex items-center justify-center`}>

@@ -60,6 +60,9 @@ import {
   type InsertBreweryEvent,
   pubEventInterests,
   breweryEventInterests,
+  drinkItems,
+  type DrinkItem,
+  type InsertDrinkItem,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike, isNotNull, ne } from "drizzle-orm";
@@ -254,6 +257,12 @@ export interface IStorage {
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItem(id: number, updates: Partial<InsertMenuItem>): Promise<MenuItem>;
   deleteMenuItem(id: number): Promise<void>;
+
+  // Drink items operations
+  getDrinkItems(pubId: number, includeHidden?: boolean): Promise<DrinkItem[]>;
+  createDrinkItem(item: InsertDrinkItem): Promise<DrinkItem>;
+  updateDrinkItem(id: number, updates: Partial<InsertDrinkItem>): Promise<DrinkItem>;
+  deleteDrinkItem(id: number): Promise<void>;
 
   // Allergen operations
   getAllergens(): Promise<Allergen[]>;
@@ -1023,6 +1032,28 @@ export class DatabaseStorage implements IStorage {
 
   async removeBottleItem(id: number): Promise<void> {
     await db.delete(bottleList).where(eq(bottleList.id, id));
+  }
+
+  // Drink items operations
+  async getDrinkItems(pubId: number, includeHidden = false): Promise<DrinkItem[]> {
+    const where = includeHidden
+      ? eq(drinkItems.pubId, pubId)
+      : and(eq(drinkItems.pubId, pubId), eq(drinkItems.isVisible, true));
+    return await db.select().from(drinkItems).where(where).orderBy(asc(drinkItems.category), asc(drinkItems.orderIndex));
+  }
+
+  async createDrinkItem(item: InsertDrinkItem): Promise<DrinkItem> {
+    const [created] = await db.insert(drinkItems).values(item).returning();
+    return created;
+  }
+
+  async updateDrinkItem(id: number, updates: Partial<InsertDrinkItem>): Promise<DrinkItem> {
+    const [updated] = await db.update(drinkItems).set({ ...updates, updatedAt: new Date() }).where(eq(drinkItems.id, id)).returning();
+    return updated;
+  }
+
+  async deleteDrinkItem(id: number): Promise<void> {
+    await db.delete(drinkItems).where(eq(drinkItems.id, id));
   }
 
   // Menu operations
@@ -2468,6 +2499,20 @@ class StorageWrapper implements IStorage {
       () => this.databaseStorage.updateMenuItem(id, updates),
       async () => { throw new Error('Not implemented in memory storage'); }
     );
+  }
+
+  // Drink items operations
+  async getDrinkItems(pubId: number, includeHidden?: boolean): Promise<DrinkItem[]> {
+    return this.dbCall(() => this.databaseStorage.getDrinkItems(pubId, includeHidden), async () => []);
+  }
+  async createDrinkItem(item: InsertDrinkItem): Promise<DrinkItem> {
+    return this.dbCall(() => this.databaseStorage.createDrinkItem(item), async () => { throw new Error('Not implemented'); });
+  }
+  async updateDrinkItem(id: number, updates: Partial<InsertDrinkItem>): Promise<DrinkItem> {
+    return this.dbCall(() => this.databaseStorage.updateDrinkItem(id, updates), async () => { throw new Error('Not implemented'); });
+  }
+  async deleteDrinkItem(id: number): Promise<void> {
+    return this.dbCall(() => this.databaseStorage.deleteDrinkItem(id), async () => {});
   }
 
   async deleteMenuItem(id: number): Promise<void> {

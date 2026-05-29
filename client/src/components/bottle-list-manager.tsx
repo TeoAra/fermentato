@@ -69,6 +69,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
     price: "",
     quantity: "",
     size: "33cl",
+    format: "bottiglia",
     vintage: "",
     description: "",
     isVisible: true,
@@ -172,6 +173,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
       price: "",
       quantity: "",
       size: "33cl",
+      format: "bottiglia",
       vintage: "",
       description: "",
       isVisible: true,
@@ -242,6 +244,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
       price: item.price || "",
       quantity: item.quantity?.toString() || "",
       size: item.size || "33cl",
+      format: (item as any).format || "bottiglia",
       vintage: item.vintage || "",
       description: item.description || "",
       isVisible: item.isVisible ?? true,
@@ -289,6 +292,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
       price: formData.price,
       quantity: quantityNum,
       size: formData.size || null,
+      format: formData.format || "bottiglia",
       vintage: formData.vintage || null,
       description: formData.description || null,
       isVisible: formData.isVisible,
@@ -456,6 +460,28 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                       <option value="1L" />
                       <option value="1.5L" />
                     </datalist>
+                  </div>
+                </div>
+
+                {/* Tipo contenitore: bottiglia / lattina */}
+                <div>
+                  <Label className="text-sm font-medium mb-1 block">Tipo contenitore</Label>
+                  <div className="flex gap-2">
+                    {(["bottiglia", "lattina"] as const).map((f) => (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, format: f })}
+                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-sm font-medium transition-colors ${
+                          formData.format === f
+                            ? "bg-primary text-white border-primary"
+                            : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
+                        }`}
+                      >
+                        <span>{f === "bottiglia" ? "🍺" : "🥫"}</span>
+                        <span className="capitalize">{f}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
 

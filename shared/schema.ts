@@ -215,17 +215,48 @@ export const bottleList = pgTable("bottle_list", {
   pubId: integer("pub_id").references(() => pubs.id).notNull(),
   beerId: integer("beer_id").references(() => beers.id).notNull(),
   isActive: boolean("is_active").default(true),
-  isVisible: boolean("is_visible").default(true), // Può essere nascosta temporaneamente
-  // Prezzi flessibili per bottiglie con misure personalizzate
-  prices: jsonb("prices").$type<Record<string, number>>(), // es. {"33cl": 5.50, "50cl": 7.50, "75cl": 12.00}
-  // Manteniamo compatibilità legacy
-  priceBottle: decimal("price_bottle", { precision: 5, scale: 2 }), // Prezzo bottiglia
-  bottleSize: varchar("bottle_size").default("0.33L"), // Dimensione bottiglia
-  quantity: integer("quantity"), // Quantità disponibile
-  description: text("description"), // Note personalizzate del pub
+  isVisible: boolean("is_visible").default(true),
+  prices: jsonb("prices").$type<Record<string, number>>(),
+  priceBottle: decimal("price_bottle", { precision: 5, scale: 2 }),
+  bottleSize: varchar("bottle_size").default("0.33L"),
+  format: varchar("format", { length: 20 }).default("bottiglia"), // 'bottiglia' | 'lattina'
+  quantity: integer("quantity"),
+  description: text("description"),
   addedAt: timestamp("added_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Drink items (vini, spirits, cocktails, bibite) - gestiti separatamente dal menu food
+export const drinkItems = pgTable("drink_items", {
+  id: serial("id").primaryKey(),
+  pubId: integer("pub_id").references(() => pubs.id, { onDelete: "cascade" }).notNull(),
+  category: varchar("category", { length: 50 }).notNull().default("other"),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  price: decimal("price", { precision: 6, scale: 2 }),
+  priceByGlass: decimal("price_by_glass", { precision: 6, scale: 2 }),
+  priceByBottle: decimal("price_by_bottle", { precision: 6, scale: 2 }),
+  imageUrl: varchar("image_url", { length: 500 }),
+  isVisible: boolean("is_visible").default(true),
+  isAvailable: boolean("is_available").default(true),
+  orderIndex: integer("order_index").default(0),
+  allergens: jsonb("allergens").$type<string[]>().default([]),
+  // Campi specializzati vini
+  vintage: integer("vintage"),
+  region: varchar("region", { length: 255 }),
+  grapeVariety: varchar("grape_variety", { length: 255 }),
+  // Campi specializzati spirits
+  distillery: varchar("distillery", { length: 255 }),
+  // Campi comuni
+  alcoholDegree: decimal("alcohol_degree", { precision: 4, scale: 1 }),
+  volumeCl: integer("volume_cl"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertDrinkItemSchema = createInsertSchema(drinkItems).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertDrinkItem = z.infer<typeof insertDrinkItemSchema>;
+export type DrinkItem = typeof drinkItems.$inferSelect;
 
 // Food menu categories
 export const menuCategories = pgTable("menu_categories", {
