@@ -1,0 +1,52 @@
+sudo -u postgres psql -d fermenta << 'EOF'
+-- 1. Colonna format nella cantina (bottiglia / lattina)
+ALTER TABLE bottle_list
+  ADD COLUMN IF NOT EXISTS format VARCHAR(20) DEFAULT 'bottiglia';
+
+-- 2. Tabella drink_items
+CREATE TABLE IF NOT EXISTS drink_items (
+  id                SERIAL PRIMARY KEY,
+  pub_id            INTEGER NOT NULL REFERENCES pubs(id) ON DELETE CASCADE,
+  category          VARCHAR(50) NOT NULL DEFAULT 'other',
+  name              VARCHAR(255) NOT NULL,
+  description       TEXT,
+  price             DECIMAL(6,2),
+  price_by_glass    DECIMAL(6,2),
+  price_by_bottle   DECIMAL(6,2),
+  image_url         VARCHAR(500),
+  is_visible        BOOLEAN DEFAULT TRUE,
+  is_available      BOOLEAN DEFAULT TRUE,
+EOFdrink_items_id); EXISTS idx_drink_items_pub_id ON d
+NOTICE:  column "format" of relation "bottle_list" already exists, skipping
+ALTER TABLE
+CREATE TABLE
+CREATE INDEX
+                                           Table "public.drink_items"
+     Column      |            Type             | Collation | Nullable |                 Default                 
+-----------------+-----------------------------+-----------+----------+-----------------------------------------
+ id              | integer                     |           | not null | nextval('drink_items_id_seq'::regclass)
+ pub_id          | integer                     |           | not null | 
+ category        | character varying(50)       |           | not null | 'other'::character varying
+ name            | character varying(255)      |           | not null | 
+ description     | text                        |           |          | 
+ price           | numeric(6,2)                |           |          | 
+ price_by_glass  | numeric(6,2)                |           |          | 
+ price_by_bottle | numeric(6,2)                |           |          | 
+ image_url       | character varying(500)      |           |          | 
+ is_visible      | boolean                     |           |          | true
+ is_available    | boolean                     |           |          | true
+ order_index     | integer                     |           |          | 0
+ allergens       | jsonb                       |           |          | '[]'::jsonb
+ vintage         | integer                     |           |          | 
+ region          | character varying(255)      |           |          | 
+ grape_variety   | character varying(255)      |           |          | 
+ distillery      | character varying(255)      |           |          | 
+ alcohol_degree  | numeric(4,1)                |           |          | 
+ volume_cl       | integer                     |           |          | 
+ created_at      | timestamp without time zone |           |          | now()
+ updated_at      | timestamp without time zone |           |          | now()
+Indexes:
+    "drink_items_pkey" PRIMARY KEY, btree (id)
+    "idx_drink_items_pub_id" btree (pub_id)
+Foreign-key constraints:
+    "drink_items_pub_id_fkey" FOREIGN KEY (pub_id) REFERENCES pubs(id) ON DELETE CASCADE
