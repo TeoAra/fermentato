@@ -45,25 +45,37 @@ const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
 // ── Drinks public display ───────────────────────────────────────────────────
 const DRINK_CAT_META: Record<string, { label: string; emoji: string }> = {
-  vino:    { label: "Vini",              emoji: "🍷" },
-  spirits: { label: "Super Alcolici",    emoji: "🥃" },
-  cocktail:{ label: "Cocktails & Drinks",emoji: "🍹" },
-  bibita:  { label: "Bevande & Bibite",  emoji: "🥤" },
-  altro:   { label: "Altro",             emoji: "🍾" },
+  vino:       { label: "Vini",        emoji: "🍷" },
+  distillati: { label: "Distillati",  emoji: "🥃" },
+  spirits:    { label: "Distillati",  emoji: "🥃" },
+  cocktail:   { label: "Distillati",  emoji: "🥃" },
+  bibita:     { label: "Bevande",     emoji: "🥤" },
+  altro:      { label: "Altro",       emoji: "🍾" },
 };
+const DRINK_CAT_ORDER = ["vino", "distillati", "bibita", "altro"];
 
 function DrinksPublicSection({ items }: { items: any[] }) {
   const visible = items.filter(i => i.isVisible !== false);
   if (visible.length === 0) return null;
 
-  const categories = Object.keys(DRINK_CAT_META).filter(c => visible.some(i => i.category === c));
+  // Resolve legacy categories and deduplicate
+  const resolveRaw = (cat: string) => {
+    if (cat === "spirits" || cat === "cocktail") return "distillati";
+    return cat;
+  };
+
+  // Get ordered unique resolved categories
+  const allResolved = [...new Set(visible.map(i => resolveRaw(i.category ?? "altro")))];
+  const presetCats = DRINK_CAT_ORDER.filter(c => allResolved.includes(c));
+  const customCats = allResolved.filter(c => !DRINK_CAT_ORDER.includes(c)).sort();
+  const orderedCats = [...presetCats, ...customCats];
 
   return (
     <section className="pt-6 space-y-6">
       <h2 className="text-xl font-bold text-[#151515] dark:text-[#F5F5F5]">Bevande</h2>
-      {categories.map(cat => {
-        const meta = DRINK_CAT_META[cat];
-        const catItems = visible.filter(i => i.category === cat);
+      {orderedCats.map(cat => {
+        const meta = DRINK_CAT_META[cat] ?? { label: cat, emoji: "🏷️" };
+        const catItems = visible.filter(i => resolveRaw(i.category ?? "altro") === cat);
         return (
           <div key={cat}>
             <h3 className="text-sm font-semibold text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide mb-3 flex items-center gap-1.5">

@@ -12,27 +12,54 @@ import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { AllergenSelector } from "@/components/allergen-selector";
 import {
-  Plus, Edit3, Trash2, Eye, EyeOff, GlassWater, Loader2
+  Plus, Edit3, Trash2, Eye, EyeOff, GlassWater, Loader2, Tag
 } from "lucide-react";
 
-const CATEGORIES = [
-  { value: "vino",     label: "Vini",             emoji: "🍷", hasWineFields: true },
-  { value: "spirits",  label: "Super Alcolici",    emoji: "🥃", hasSpiritFields: true },
-  { value: "cocktail", label: "Cocktails & Drinks",emoji: "🍹" },
-  { value: "bibita",   label: "Bevande & Bibite",  emoji: "🥤" },
-  { value: "altro",    label: "Altro",             emoji: "🍾" },
+// Predefined categories (saved as-is in DB)
+const PRESET_CATEGORIES = [
+  { value: "vino",       label: "Vini",       emoji: "🍷", hasWineFields: true,   hasSpiritFields: false },
+  { value: "distillati", label: "Distillati", emoji: "🥃", hasWineFields: false,  hasSpiritFields: true  },
+  { value: "bibita",     label: "Bevande",    emoji: "🥤", hasWineFields: false,  hasSpiritFields: false },
+  { value: "altro",      label: "Altro",      emoji: "🍾", hasWineFields: false,  hasSpiritFields: false },
 ] as const;
-type Category = typeof CATEGORIES[number]["value"];
 
-const catMeta = (v: string) => CATEGORIES.find(c => c.value === v) ?? CATEGORIES[4];
+// Legacy mapping: old categories already in DB → shown under distillati
+const LEGACY_MAP: Record<string, string> = {
+  spirits:  "distillati",
+  cocktail: "distillati",
+};
 
-function priceLabel(cat: string) {
-  if (cat === "vino" || cat === "spirits") return ["Calice (€)", "Bottiglia (€)"];
+const CUSTOM_VALUE = "__custom__";
+
+// All values that appear in the picker (excluding the custom button)
+type PresetValue = typeof PRESET_CATEGORIES[number]["value"];
+
+function resolveCategory(raw: string): string {
+  return LEGACY_MAP[raw] ?? raw;
+}
+
+function presetMeta(cat: string) {
+  const resolved = resolveCategory(cat);
+  return PRESET_CATEGORIES.find(c => c.value === resolved) ?? null;
+}
+
+function catEmoji(cat: string): string {
+  return presetMeta(cat)?.emoji ?? "🏷️";
+}
+
+function catLabel(cat: string): string {
+  return presetMeta(cat)?.label ?? cat;
+}
+
+function priceLabel(cat: string): [string, string | null] {
+  const resolved = resolveCategory(cat);
+  if (resolved === "vino" || resolved === "distillati") return ["Calice (€)", "Bottiglia (€)"];
   return ["Prezzo (€)", null];
 }
 
 const EMPTY_FORM = {
-  category: "vino" as Category,
+  category: "vino" as PresetValue | typeof CUSTOM_VALUE,
+  customCategory: "",
   name: "",
   description: "",
   price: "",
@@ -69,9 +96,17 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "drinks"] });
 
+  // Effective category string to save in DB
+  const effectiveCategory = (): string => {
+    if (form.category === CUSTOM_VALUE) {
+      return form.customCategory.trim() || "altro";
+    }
+    return form.category;
+  };
+
   const buildPayload = () => ({
     pubId,
-    category: form.category,
+    category: effectiveCategory(),
     name: form.name,
     description: form.description || null,
     price: form.price ? parseFloat(form.price) : null,
@@ -99,7 +134,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
       invalidate();
       closeDialog();
     },
-    onError: () => toast({ title: "Errore", variant: "destructive" }),
+    onError: (err: any) => toast({ title: err?.message || "Errore", variant: "destructive" }),
   });
 
   const toggleMutation = useMutation({
@@ -128,8 +163,12 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
 
   const openEdit = (item: any) => {
     setEditingId(item.id);
+    const rawCat: string = item.category ?? "altro";
+    const resolved = resolveCategory(rawCat);
+    const isPreset = PRESET_CATEGORIES.some(c => c.value === resolved);
     setForm({
-      category: item.category ?? "altro",
+      category: isPreset ? resolved as PresetValue : CUSTOM_VALUE,
+      customCategory: isPreset ? "" : rawCat,
       name: item.name ?? "",
       description: item.description ?? "",
       price: item.price ?? "",
@@ -164,17 +203,29 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
     if (!form.name.trim()) {
       toast({ title: "Nome obbligatorio", variant: "destructive" }); return;
     }
+    if (form.category === CUSTOM_VALUE && !form.customCategory.trim()) {
+      toast({ title: "Inserisci il nome della categoria", variant: "destructive" }); return;
+    }
     saveMutation.mutate(buildPayload());
   };
 
-  const catObj = catMeta(form.category);
-  const [label1, label2] = priceLabel(form.category);
+  const resolvedCat = form.category === CUSTOM_VALUE ? form.customCategory.trim() || "altro" : form.category;
+  const catMeta = presetMeta(resolvedCat);
+  const [label1, label2] = priceLabel(resolvedCat);
 
-  // Group items by category for display
-  const grouped = CATEGORIES.map(cat => ({
-    ...cat,
-    items: items.filter(i => i.category === cat.value),
-  })).filter(g => g.items.length > 0);
+  // Group items: predefined categories first (in order), then custom ones alphabetically
+  const grouped = (() => {
+    const allCats = [...new Set(items.map(i => resolveCategory(i.category ?? "altro")))];
+    const presetOrder = PRESET_CATEGORIES.map(c => c.value);
+    const presetCats = presetOrder.filter(v => allCats.includes(v));
+    const customCats = allCats
+      .filter(v => !presetOrder.includes(v))
+      .sort((a, b) => a.localeCompare(b));
+    return [...presetCats, ...customCats].map(cat => ({
+      cat,
+      items: items.filter(i => resolveCategory(i.category ?? "altro") === cat),
+    }));
+  })();
 
   return (
     <div className="space-y-6">
@@ -182,7 +233,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-foreground">Bevande</h2>
-          <p className="text-sm text-muted-foreground">Vini, spirits, cocktails e bibite</p>
+          <p className="text-sm text-muted-foreground">Vini, distillati, bibite e categorie personalizzate</p>
         </div>
         <Button onClick={openAdd} className="gap-1.5">
           <Plus className="w-4 h-4" /> Aggiungi
@@ -200,29 +251,29 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             <GlassWater className="w-8 h-8 text-white" />
           </div>
           <p className="font-semibold text-foreground">Nessuna bevanda</p>
-          <p className="text-sm text-muted-foreground">Aggiungi vini, spirits, cocktails o bibite</p>
+          <p className="text-sm text-muted-foreground">Aggiungi vini, distillati, bibite o crea una sezione personalizzata</p>
           <Button onClick={openAdd} className="gap-1.5 mt-2">
             <Plus className="w-4 h-4" /> Aggiungi prima voce
           </Button>
         </div>
       ) : (
         <div className="space-y-6">
-          {grouped.map(group => (
-            <div key={group.value}>
+          {grouped.map(({ cat, items: groupItems }) => (
+            <div key={cat}>
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-base">{group.emoji}</span>
-                <h3 className="font-semibold text-sm text-foreground">{group.label}</h3>
-                <Badge variant="secondary" className="text-xs">{group.items.length}</Badge>
+                <span className="text-base">{catEmoji(cat)}</span>
+                <h3 className="font-semibold text-sm text-foreground">{catLabel(cat)}</h3>
+                <Badge variant="secondary" className="text-xs">{groupItems.length}</Badge>
               </div>
               <div className="space-y-2">
-                {group.items.map((item: any) => (
+                {groupItems.map((item: any) => (
                   <Card key={item.id} className={`border transition-all ${item.isVisible ? "border-stone-100 dark:border-border" : "opacity-50 border-dashed border-stone-200 dark:border-border"}`}>
                     <CardContent className="p-3 flex items-center gap-3">
                       {item.imageUrl ? (
                         <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                       ) : (
                         <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-[#1A1D24] flex items-center justify-center flex-shrink-0 text-lg">
-                          {catMeta(item.category).emoji}
+                          {catEmoji(item.category)}
                         </div>
                       )}
                       <div className="flex-1 min-w-0">
@@ -270,7 +321,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
 
       {/* Add/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{editingId ? "Modifica voce" : "Aggiungi bevanda"}</DialogTitle>
           </DialogHeader>
@@ -280,7 +331,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             <div>
               <Label className="text-sm font-medium mb-1.5 block">Categoria</Label>
               <div className="grid grid-cols-5 gap-1.5">
-                {CATEGORIES.map(cat => (
+                {PRESET_CATEGORIES.map(cat => (
                   <button
                     key={cat.value}
                     type="button"
@@ -295,7 +346,32 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                     <span className="leading-tight text-center">{cat.label.split(" ")[0]}</span>
                   </button>
                 ))}
+                {/* Custom category button */}
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, category: CUSTOM_VALUE }))}
+                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border text-xs font-medium transition-colors ${
+                    form.category === CUSTOM_VALUE
+                      ? "bg-primary text-white border-primary"
+                      : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
+                  }`}
+                >
+                  <Tag className="w-5 h-5" />
+                  <span className="leading-tight text-center">Crea</span>
+                </button>
               </div>
+
+              {/* Custom category name input */}
+              {form.category === CUSTOM_VALUE && (
+                <div className="mt-2">
+                  <Input
+                    value={form.customCategory}
+                    onChange={e => setForm(f => ({ ...f, customCategory: e.target.value }))}
+                    placeholder="Nome categoria (es. Gin List, Sakè, Analcolici…)"
+                    autoFocus
+                  />
+                </div>
+              )}
             </div>
 
             {/* Nome */}
@@ -304,7 +380,11 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               <Input
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder={catObj.value === "vino" ? "es. Barolo Riserva" : catObj.value === "cocktail" ? "es. Negroni" : "Nome"}
+                placeholder={
+                  resolvedCat === "vino" ? "es. Barolo Riserva" :
+                  resolvedCat === "distillati" ? "es. Glenfarclas 15y" :
+                  "Nome"
+                }
               />
             </div>
 
@@ -354,7 +434,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             </div>
 
             {/* Campi vino */}
-            {(catObj as any).hasWineFields && (
+            {catMeta?.hasWineFields && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-sm font-medium">Annata</Label>
@@ -384,14 +464,14 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               </div>
             )}
 
-            {/* Campi spirits */}
-            {(catObj as any).hasSpiritFields && (
+            {/* Campi distillati */}
+            {catMeta?.hasSpiritFields && (
               <div>
-                <Label className="text-sm font-medium">Distilleria</Label>
+                <Label className="text-sm font-medium">Distilleria / Produttore</Label>
                 <Input
                   value={form.distillery}
                   onChange={e => setForm(f => ({ ...f, distillery: e.target.value }))}
-                  placeholder="es. Glenfarclas"
+                  placeholder="es. Glenfarclas, Hendrick's"
                 />
               </div>
             )}

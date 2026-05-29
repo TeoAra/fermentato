@@ -1,0 +1,86 @@
+root@luppolino:/www/nodeapps/fermenta# pm2 logs
+[TAILING] Tailing last 15 lines for [all] processes (change the value with --lines option)
+/root/.pm2/pm2.log last 15 lines:
+PM2        | 2026-05-29T14:24:27: PM2 log: pid=3201668 msg=failed to kill - retrying in 100ms
+PM2        | 2026-05-29T14:24:27: PM2 log: App [clip-service:1] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-29T14:24:27: PM2 log: pid=3201668 msg=process killed
+PM2        | 2026-05-29T14:24:27: PM2 log: App [clip-service:1] starting in -fork mode-
+PM2        | 2026-05-29T14:24:27: PM2 log: App [clip-service:1] online
+PM2        | 2026-05-29T14:27:17: PM2 log: Stopping app:fermenta id:0
+PM2        | 2026-05-29T14:27:17: PM2 log: App [fermenta:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-29T14:27:17: PM2 log: pid=4069950 msg=process killed
+PM2        | 2026-05-29T14:27:17: PM2 log: App [fermenta:0] starting in -fork mode-
+PM2        | 2026-05-29T14:27:17: PM2 log: App [fermenta:0] online
+PM2        | 2026-05-29T14:31:13: PM2 log: Stopping app:fermenta id:0
+PM2        | 2026-05-29T14:31:13: PM2 log: App [fermenta:0] exited with code [0] via signal [SIGINT]
+PM2        | 2026-05-29T14:31:13: PM2 log: pid=4070629 msg=process killed
+PM2        | 2026-05-29T14:31:13: PM2 log: App [fermenta:0] starting in -fork mode-
+PM2        | 2026-05-29T14:31:13: PM2 log: App [fermenta:0] online
+
+/root/.pm2/logs/clip-service-error.log last 15 lines:
+1|clip-ser |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1|clip-ser |   File "/usr/lib/python3.11/selectors.py", line 415, in select
+1|clip-ser |     fd_event_list = self._selector.poll(timeout)
+1|clip-ser |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1|clip-ser | KeyboardInterrupt
+1|clip-ser | Traceback (most recent call last):
+1|clip-ser |   File "/www/nodeapps/fermenta/server/clip_service_v3.py", line 262, in <module>
+1|clip-ser |     HTTPServer(("127.0.0.1", CLIP_PORT), Handler).serve_forever()
+1|clip-ser |   File "/usr/lib/python3.11/socketserver.py", line 233, in serve_forever
+1|clip-ser |     ready = selector.select(poll_interval)
+1|clip-ser |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1|clip-ser |   File "/usr/lib/python3.11/selectors.py", line 415, in select
+1|clip-ser |     fd_event_list = self._selector.poll(timeout)
+1|clip-ser |                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+1|clip-ser | KeyboardInterrupt
+
+/root/.pm2/logs/clip-service-out.log last 15 lines:
+1|clip-ser | [clip] Carico CLIP ViT-B/32...
+1|clip-ser | [clip] CLIP pronto!
+1|clip-ser | [clip] Indice caricato: 4224 birre
+1|clip-ser | [clip] Avvio su porta 5002 | batch=16 | dl_workers=8
+1|clip-ser | [clip] Carico CLIP ViT-B/32...
+1|clip-ser | [clip] CLIP pronto!
+1|clip-ser | [clip] Indice caricato: 4224 birre
+1|clip-ser | [clip] Avvio su porta 5002 | batch=16 | dl_workers=8
+1|clip-ser | [clip] Carico CLIP ViT-B/32...
+1|clip-ser | [clip] CLIP pronto!
+1|clip-ser | [clip] Indice caricato: 4224 birre
+1|clip-ser | [clip] Avvio su porta 5002 | batch=16 | dl_workers=8
+1|clip-ser | [clip] Carico CLIP ViT-B/32...
+1|clip-ser | [clip] CLIP pronto!
+1|clip-ser | [clip] Indice caricato: 4224 birre
+
+/root/.pm2/logs/fermenta-out.log last 15 lines:
+0|fermenta | 2026-05-29T14:31:17: [telegram] Webhook registrato: https://fermenta.to/api/bot/telegram/webhook
+0|fermenta | 2026-05-29T14:31:17: 2:31:17 PM [express] Stripe webhook configured
+0|fermenta | 2026-05-29T14:31:19: 2:31:19 PM [express] POST /api/pubs/7/drinks 500 in 67ms :: {"message":"Failed to create drink item"}
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/my-pubs 200 in 15ms :: [{"id":7,"name":"Luppolino Pub","address":"Via …
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/next-tap 200 in 22ms :: []
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/taplist 200 in 70ms :: [{"id":41,"pubId":7,"beerId":46352,"isAc…
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/bottles 200 in 59ms :: [{"id":17,"pubId":7,"beerId":52920,"isAc…
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/menu 200 in 70ms :: [{"id":33,"pubId":7,"name":"Starters","desc…
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/menu/categories/33/items 200 in 27ms :: [{"id":19,"categoryId":…
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/menu/categories/35/items 200 in 28ms :: [{"id":28,"categoryId":…
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/menu/categories/40/items 200 in 36ms :: [{"id":88,"categoryId":…
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/menu/categories/38/items 200 in 35ms :: [{"id":61,"categoryId":…
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/menu/categories/36/items 200 in 27ms :: [{"id":35,"categoryId":…
+0|fermenta | 2026-05-29T14:31:21: 2:31:21 PM [express] GET /api/pubs/7/menu/categories/37/items 200 in 34ms :: [{"id":41,"categoryId":…
+0|fermenta | 2026-05-29T14:31:34: 2:31:34 PM [express] POST /api/pubs/7/drinks 500 in 15ms :: {"message":"Failed to create drink item"}
+
+/root/.pm2/logs/fermenta-error.log last 15 lines:
+0|fermenta | 2026-05-29T14:31:34:     position: undefined,
+0|fermenta | 2026-05-29T14:31:34:     internalPosition: undefined,
+0|fermenta | 2026-05-29T14:31:34:     internalQuery: undefined,
+0|fermenta | 2026-05-29T14:31:34:     where: undefined,
+0|fermenta | 2026-05-29T14:31:34:     schema: undefined,
+0|fermenta | 2026-05-29T14:31:34:     table: undefined,
+0|fermenta | 2026-05-29T14:31:34:     column: undefined,
+0|fermenta | 2026-05-29T14:31:34:     dataType: undefined,
+0|fermenta | 2026-05-29T14:31:34:     constraint: undefined,
+0|fermenta | 2026-05-29T14:31:34:     file: 'sequence.c',
+0|fermenta | 2026-05-29T14:31:34:     line: '652',
+0|fermenta | 2026-05-29T14:31:34:     routine: 'nextval_internal'
+0|fermenta | 2026-05-29T14:31:34:   }
+0|fermenta | 2026-05-29T14:31:34: }
+0|fermenta | 2026-05-29T14:31:47: [rss] feed https://www.reservoirbirra.it/feed/ failed: getaddrinfo ENOTFOUND www.reservoirbirra.it
