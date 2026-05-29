@@ -44,33 +44,100 @@ import {
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
 // ── Drinks public display ───────────────────────────────────────────────────
-const DRINK_CAT_META: Record<string, { label: string; emoji: string }> = {
-  vino:       { label: "Vini",       emoji: "🍷" },
-  // legacy
-  distillati: { label: "Distillati", emoji: "🥃" },
-  spirits:    { label: "Distillati", emoji: "🥃" },
-  cocktail:   { label: "Cocktails",  emoji: "🍹" },
-  bibita:     { label: "Bevande",    emoji: "🥤" },
-  altro:      { label: "Altro",      emoji: "🍾" },
-};
-const DRINK_CAT_PRESET_ORDER = ["vino", "distillati", "bibita", "altro"];
 
-function DrinksPublicSection({ items }: { items: any[] }) {
-  const visible = items.filter(i => i.isVisible !== false);
+function DrinkItemRow({ item, emoji }: { item: any; emoji: string }) {
+  return (
+    <div className="flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06]">
+      {item.imageUrl ? (
+        <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+      ) : (
+        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-[#252830] flex items-center justify-center text-lg flex-shrink-0">
+          {emoji}
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm text-[#151515] dark:text-[#F5F5F5] truncate">{item.name}</p>
+        {(item.vintage || item.distillery || item.producer) && (
+          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] truncate mt-0.5">
+            {[item.producer, item.vintage, item.distillery].filter(Boolean).join(" · ")}
+          </p>
+        )}
+        {item.description && (
+          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5 line-clamp-1">{item.description}</p>
+        )}
+      </div>
+      <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
+        {item.priceByGlass && (
+          <span className="text-xs font-bold text-[#F59E0B]">🥂 €{parseFloat(item.priceByGlass).toFixed(2)}</span>
+        )}
+        {item.priceByBottle && (
+          <span className="text-xs font-medium text-[#151515] dark:text-[#F5F5F5]">🍾 €{parseFloat(item.priceByBottle).toFixed(2)}</span>
+        )}
+        {item.price && !item.priceByGlass && !item.priceByBottle && (
+          <span className="text-sm font-bold text-[#F59E0B]">€{parseFloat(item.price).toFixed(2)}</span>
+        )}
+        {item.alcoholDegree && (
+          <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7]">{item.alcoholDegree}%</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DrinksPublicSection({ categories, legacyItems }: { categories: any[]; legacyItems: any[] }) {
+  // New system: render categories with nested items (preferred)
+  const visibleCats = categories.filter(c => c.isVisible !== false && Array.isArray(c.items) && c.items.length > 0);
+
+  if (visibleCats.length > 0) {
+    return (
+      <section className="pt-6 space-y-6">
+        <h2 className="text-xl font-bold text-[#151515] dark:text-[#F5F5F5]">Bevande</h2>
+        {visibleCats.map((cat: any) => {
+          const emoji = cat.emoji || (cat.type === "vini" ? "🍷" : "🏷️");
+          const visibleItems = (cat.items as any[]).filter((i: any) => i.isVisible !== false);
+          if (visibleItems.length === 0) return null;
+          return (
+            <div key={cat.id}>
+              <h3 className="text-sm font-semibold text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide mb-3 flex items-center gap-1.5">
+                <span>{emoji}</span>
+                <span>{cat.name}</span>
+              </h3>
+              <div className="space-y-2">
+                {visibleItems.map((item: any) => (
+                  <DrinkItemRow key={item.id} item={item} emoji={emoji} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </section>
+    );
+  }
+
+  // Legacy system fallback: flat items with string category field
+  const LEGACY_META: Record<string, { label: string; emoji: string }> = {
+    vino:       { label: "Vini",       emoji: "🍷" },
+    distillati: { label: "Distillati", emoji: "🥃" },
+    spirits:    { label: "Distillati", emoji: "🥃" },
+    cocktail:   { label: "Cocktails",  emoji: "🍹" },
+    bibita:     { label: "Bevande",    emoji: "🥤" },
+    altro:      { label: "Altro",      emoji: "🍾" },
+  };
+  const LEGACY_ORDER = ["vino", "distillati", "bibita", "altro"];
+  const visible = legacyItems.filter(i => i.isVisible !== false);
   if (visible.length === 0) return null;
-
-  // Preserve legacy categories as-is (no merging), just order presets first
-  const allCats = [...new Set(visible.map(i => i.category ?? "vino"))];
-  const presetCats = DRINK_CAT_PRESET_ORDER.filter(c => allCats.includes(c));
-  const customCats = allCats.filter(c => !DRINK_CAT_PRESET_ORDER.includes(c)).sort();
-  const orderedCats = [...presetCats, ...customCats];
+  const allCats = [...new Set(visible.map((i: any) => i.category ?? "vino"))];
+  const ordered = [
+    ...LEGACY_ORDER.filter(c => allCats.includes(c)),
+    ...allCats.filter(c => !LEGACY_ORDER.includes(c)).sort(),
+  ];
 
   return (
     <section className="pt-6 space-y-6">
       <h2 className="text-xl font-bold text-[#151515] dark:text-[#F5F5F5]">Bevande</h2>
-      {orderedCats.map(cat => {
-        const meta = DRINK_CAT_META[cat] ?? { label: cat, emoji: "🏷️" };
-        const catItems = visible.filter(i => (i.category ?? "vino") === cat);
+      {ordered.map(cat => {
+        const meta = LEGACY_META[cat] ?? { label: cat, emoji: "🏷️" };
+        const catItems = visible.filter((i: any) => (i.category ?? "vino") === cat);
         return (
           <div key={cat}>
             <h3 className="text-sm font-semibold text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide mb-3 flex items-center gap-1.5">
@@ -79,49 +146,7 @@ function DrinksPublicSection({ items }: { items: any[] }) {
             </h3>
             <div className="space-y-2">
               {catItems.map((item: any) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06]"
-                >
-                  {item.imageUrl ? (
-                    <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
-                  ) : (
-                    <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-[#252830] flex items-center justify-center text-lg flex-shrink-0">
-                      {meta.emoji}
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm text-[#151515] dark:text-[#F5F5F5] truncate">{item.name}</p>
-                    {(item.vintage || item.distillery) && (
-                      <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] truncate mt-0.5">
-                        {[item.vintage, item.distillery].filter(Boolean).join(" · ")}
-                      </p>
-                    )}
-                    {item.description && (
-                      <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5 line-clamp-1">{item.description}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                    {item.priceByGlass && (
-                      <span className="text-xs font-bold text-[#F59E0B]">
-                        🥂 €{parseFloat(item.priceByGlass).toFixed(2)}
-                      </span>
-                    )}
-                    {item.priceByBottle && (
-                      <span className="text-xs font-medium text-[#151515] dark:text-[#F5F5F5]">
-                        🍾 €{parseFloat(item.priceByBottle).toFixed(2)}
-                      </span>
-                    )}
-                    {item.price && !item.priceByGlass && !item.priceByBottle && (
-                      <span className="text-sm font-bold text-[#F59E0B]">
-                        €{parseFloat(item.price).toFixed(2)}
-                      </span>
-                    )}
-                    {item.alcoholDegree && (
-                      <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7]">{item.alcoholDegree}%</span>
-                    )}
-                  </div>
-                </div>
+                <DrinkItemRow key={item.id} item={item} emoji={meta.emoji} />
               ))}
             </div>
           </div>
@@ -251,6 +276,14 @@ export default function PubDetail() {
   const { data: drinkItems = [] } = useQuery<any[]>({
     queryKey: ["/api/pubs", id, "drinks"],
     queryFn: () => apiRequest(`/api/pubs/${id}/drinks`),
+    enabled: !!id,
+    staleTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: drinkCategories = [] } = useQuery<any[]>({
+    queryKey: ["/api/pubs", id, "drink-categories"],
+    queryFn: () => apiRequest(`/api/pubs/${id}/drink-categories`),
     enabled: !!id,
     staleTime: 0,
     refetchOnWindowFocus: true,
@@ -644,7 +677,10 @@ export default function PubDetail() {
         </div>
 
         <div className={`${activeTab === "drinks" ? "" : "hidden"} lg:!block`}>
-          <DrinksPublicSection items={Array.isArray(drinkItems) ? drinkItems : []} />
+          <DrinksPublicSection
+            categories={Array.isArray(drinkCategories) ? drinkCategories : []}
+            legacyItems={Array.isArray(drinkItems) ? drinkItems : []}
+          />
         </div>
 
         <div className={`${activeTab === "menu" ? "" : "hidden"} lg:!block`}>
