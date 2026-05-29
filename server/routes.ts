@@ -2490,7 +2490,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ── Drink items routes ─────────────────────────────────────────────────────
   app.get("/api/pubs/:id/drinks", async (req, res) => {
     try {
-      const items = await storage.getDrinkItems(parseInt(req.params.id), false);
+      const pubId = await resolvePubId(req.params.id);
+      if (!pubId) return res.status(404).json({ message: "Pub not found" });
+      const items = await storage.getDrinkItems(pubId, false);
       res.json(items);
     } catch (error) {
       console.error("Error fetching public drink items:", error);
@@ -2587,9 +2589,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public: visible categories with visible items
   app.get("/api/pubs/:id/drink-categories", async (req, res) => {
     try {
-      const cats = await storage.getDrinkCategoriesWithItems(parseInt(req.params.id), false);
+      const pubId = await resolvePubId(req.params.id);
+      if (!pubId) return res.status(404).json({ message: "Pub not found" });
+      const cats = await storage.getDrinkCategoriesWithItems(pubId, false);
       res.json(cats);
-    } catch (e) {
+    } catch (e: any) {
+      console.error("Error fetching public drink categories:", e?.message ?? e);
       res.status(500).json({ message: "Failed to fetch drink categories" });
     }
   });

@@ -76,9 +76,14 @@ function DrinkItemRow({ item, emoji }: { item: any; emoji: string }) {
         {item.price && !item.priceByGlass && !item.priceByBottle && (
           <span className="text-sm font-bold text-[#F59E0B]">€{parseFloat(item.price).toFixed(2)}</span>
         )}
-        {item.alcoholDegree && (
-          <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7]">{item.alcoholDegree}%</span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {item.volumeCl && (
+            <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7]">{item.volumeCl}cl</span>
+          )}
+          {item.alcoholDegree && (
+            <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7]">{item.alcoholDegree}%</span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -93,7 +98,7 @@ function DrinksPublicSection({ categories, legacyItems }: { categories: any[]; l
       <section className="pt-6 space-y-6">
         <h2 className="text-xl font-bold text-[#151515] dark:text-[#F5F5F5]">Bevande</h2>
         {visibleCats.map((cat: any) => {
-          const emoji = cat.emoji || (cat.type === "vini" ? "🍷" : "🏷️");
+          const emoji = cat.type === "vino" ? "🍷" : "🏷️";
           const visibleItems = (cat.items as any[]).filter((i: any) => i.isVisible !== false);
           if (visibleItems.length === 0) return null;
           return (
