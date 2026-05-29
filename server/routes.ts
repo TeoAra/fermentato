@@ -2191,6 +2191,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
+  // Reorder tap list (drag-and-drop)
+  app.post('/api/pubs/:id/taplist/reorder', isAuthenticated, async (req: any, res) => {
+    try {
+      const pubId = parseInt(req.params.id);
+      const userId = (req.user as any)?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const canEdit = await isAdminOrPubOwner(userId, pubId);
+      if (!canEdit) return res.status(403).json({ message: "Not authorized" });
+      const { order } = req.body; // [{ id, tapNumber }]
+      if (!Array.isArray(order)) return res.status(400).json({ message: "order must be an array" });
+      await Promise.all(
+        order.map(({ id, tapNumber }: { id: number; tapNumber: number }) =>
+          storage.updateTapListItem(id, { tapNumber })
+        )
+      );
+      broadcastPubUpdate(pubId, "taplist");
+      res.json({ ok: true });
+    } catch (error) {
+      console.error('Error reordering taplist:', error);
+      res.status(500).json({ message: "Failed to reorder tap list" });
+    }
+  });
+
   // Update tap list item (pub owner only)
   app.patch('/api/pubs/:pubId/taplist/:id', isAuthenticated, async (req: any, res) => {
     try {

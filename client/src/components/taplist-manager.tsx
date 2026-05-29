@@ -38,7 +38,8 @@ import {
   ImagePlus,
   Save,
   Building,
-  X
+  X,
+  GripVertical,
 } from "lucide-react";
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -520,6 +521,55 @@ interface TapListManagerProps {
 }
 
 export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: TapListManagerProps) {
+  // ── Drag-and-drop ordering ────────────────────────────────────────────────
+  const [localTapList, setLocalTapList] = useState<TapItem[]>([]);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const dragFromIdx = useRef<number | null>(null);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setLocalTapList([...tapList].sort((a, b) => (a.tapNumber ?? 999) - (b.tapNumber ?? 999)));
+  }, [tapList]);
+
+  const reorderMutation = useMutation({
+    mutationFn: (order: { id: number; tapNumber: number }[]) =>
+      apiRequest(`/api/pubs/${pubId}/taplist/reorder`, { method: "POST" }, { order }),
+    onError: () => {
+      toast({ title: "Errore ordinamento", variant: "destructive" });
+      setLocalTapList([...tapList].sort((a, b) => (a.tapNumber ?? 999) - (b.tapNumber ?? 999)));
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
+    },
+  });
+
+  const handleDragStart = (e: React.DragEvent, idx: number) => {
+    dragFromIdx.current = idx;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(idx));
+  };
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverIdx(idx);
+  };
+  const handleDrop = (e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault();
+    const from = dragFromIdx.current;
+    setDragOverIdx(null);
+    dragFromIdx.current = null;
+    if (from === null || from === dropIdx) return;
+    const next = [...localTapList];
+    const [moved] = next.splice(from, 1);
+    next.splice(dropIdx, 0, moved);
+    setLocalTapList(next);
+    reorderMutation.mutate(next.map((item, i) => ({ id: item.id, tapNumber: i + 1 })));
+  };
+  const handleDragEnd = () => { setDragOverIdx(null); dragFromIdx.current = null; };
+  // ─────────────────────────────────────────────────────────────────────────
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<TapItem | null>(null);
   const [isChangingBeer, setIsChangingBeer] = useState(false);
@@ -577,9 +627,6 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   const [beerDescEdit, setBeerDescEdit] = useState<string>("");
   const [beerDescEdited, setBeerDescEdited] = useState(false);
 
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
   // Debounce search term for better performance
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -2079,7 +2126,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
               </div>
             ))}
           </div>
-        ) : tapList.length === 0 ? (
+        ) : localTapList.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Beer className="w-12 h-12 mx-auto mb-4 text-stone-300" />
             <p>Nessuna birra alla spina.</p>
@@ -2087,13 +2134,28 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
           </div>
         ) : (
           <div className="space-y-3">
-            {tapList.map((item) => (
+            {localTapList.map((item, idx) => (
               <div
                 key={item.id}
-                className={`border border-stone-100 dark:border-border rounded-2xl p-4 transition-colors ${!item.isVisible ? 'opacity-60 bg-stone-50/30 dark:bg-[#0B0D10]/10' : 'bg-white dark:bg-card'}`}
+                draggable
+                onDragStart={e => handleDragStart(e, idx)}
+                onDragOver={e => handleDragOver(e, idx)}
+                onDrop={e => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
+                onDragLeave={() => setDragOverIdx(null)}
+                className={`border rounded-2xl p-4 transition-colors ${
+                  dragOverIdx === idx
+                    ? 'border-primary border-dashed bg-primary/5'
+                    : !item.isVisible
+                    ? 'border-stone-100 dark:border-border opacity-60 bg-stone-50/30 dark:bg-[#0B0D10]/10'
+                    : 'border-stone-100 dark:border-border bg-white dark:bg-card'
+                }`}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 self-center">
+                      <GripVertical className="w-4 h-4" />
+                    </div>
                     <ImageWithFallback
                       src={(item.beer as any).imageUrl || item.beer.logoUrl}
                       alt={item.beer.name}
