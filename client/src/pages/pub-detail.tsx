@@ -45,29 +45,24 @@ const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
 // ── Drinks public display ───────────────────────────────────────────────────
 const DRINK_CAT_META: Record<string, { label: string; emoji: string }> = {
-  vino:       { label: "Vini",        emoji: "🍷" },
-  distillati: { label: "Distillati",  emoji: "🥃" },
-  spirits:    { label: "Distillati",  emoji: "🥃" },
-  cocktail:   { label: "Distillati",  emoji: "🥃" },
-  bibita:     { label: "Bevande",     emoji: "🥤" },
-  altro:      { label: "Altro",       emoji: "🍾" },
+  vino:       { label: "Vini",       emoji: "🍷" },
+  // legacy
+  distillati: { label: "Distillati", emoji: "🥃" },
+  spirits:    { label: "Distillati", emoji: "🥃" },
+  cocktail:   { label: "Cocktails",  emoji: "🍹" },
+  bibita:     { label: "Bevande",    emoji: "🥤" },
+  altro:      { label: "Altro",      emoji: "🍾" },
 };
-const DRINK_CAT_ORDER = ["vino", "distillati", "bibita", "altro"];
+const DRINK_CAT_PRESET_ORDER = ["vino", "distillati", "bibita", "altro"];
 
 function DrinksPublicSection({ items }: { items: any[] }) {
   const visible = items.filter(i => i.isVisible !== false);
   if (visible.length === 0) return null;
 
-  // Resolve legacy categories and deduplicate
-  const resolveRaw = (cat: string) => {
-    if (cat === "spirits" || cat === "cocktail") return "distillati";
-    return cat;
-  };
-
-  // Get ordered unique resolved categories
-  const allResolved = [...new Set(visible.map(i => resolveRaw(i.category ?? "altro")))];
-  const presetCats = DRINK_CAT_ORDER.filter(c => allResolved.includes(c));
-  const customCats = allResolved.filter(c => !DRINK_CAT_ORDER.includes(c)).sort();
+  // Preserve legacy categories as-is (no merging), just order presets first
+  const allCats = [...new Set(visible.map(i => i.category ?? "vino"))];
+  const presetCats = DRINK_CAT_PRESET_ORDER.filter(c => allCats.includes(c));
+  const customCats = allCats.filter(c => !DRINK_CAT_PRESET_ORDER.includes(c)).sort();
   const orderedCats = [...presetCats, ...customCats];
 
   return (
@@ -75,7 +70,7 @@ function DrinksPublicSection({ items }: { items: any[] }) {
       <h2 className="text-xl font-bold text-[#151515] dark:text-[#F5F5F5]">Bevande</h2>
       {orderedCats.map(cat => {
         const meta = DRINK_CAT_META[cat] ?? { label: cat, emoji: "🏷️" };
-        const catItems = visible.filter(i => resolveRaw(i.category ?? "altro") === cat);
+        const catItems = visible.filter(i => (i.category ?? "vino") === cat);
         return (
           <div key={cat}>
             <h3 className="text-sm font-semibold text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide mb-3 flex items-center gap-1.5">
@@ -97,9 +92,9 @@ function DrinksPublicSection({ items }: { items: any[] }) {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-sm text-[#151515] dark:text-[#F5F5F5] truncate">{item.name}</p>
-                    {(item.vintage || item.region || item.grapeVariety || item.distillery) && (
+                    {(item.vintage || item.distillery) && (
                       <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] truncate mt-0.5">
-                        {[item.vintage, item.region, item.grapeVariety, item.distillery].filter(Boolean).join(" · ")}
+                        {[item.vintage, item.distillery].filter(Boolean).join(" · ")}
                       </p>
                     )}
                     {item.description && (

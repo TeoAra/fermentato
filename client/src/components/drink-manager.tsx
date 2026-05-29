@@ -11,54 +11,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { AllergenSelector } from "@/components/allergen-selector";
-import {
-  Plus, Edit3, Trash2, Eye, EyeOff, GlassWater, Loader2, Tag
-} from "lucide-react";
+import { Plus, Edit3, Trash2, Eye, EyeOff, GlassWater, Loader2, Tag } from "lucide-react";
 
-// Predefined categories (saved as-is in DB)
-const PRESET_CATEGORIES = [
-  { value: "vino",       label: "Vini",       emoji: "🍷", hasWineFields: true,   hasSpiritFields: false },
-  { value: "distillati", label: "Distillati", emoji: "🥃", hasWineFields: false,  hasSpiritFields: true  },
-  { value: "bibita",     label: "Bevande",    emoji: "🥤", hasWineFields: false,  hasSpiritFields: false },
-  { value: "altro",      label: "Altro",      emoji: "🍾", hasWineFields: false,  hasSpiritFields: false },
-] as const;
-
-// Legacy mapping: old categories already in DB → shown under distillati
-const LEGACY_MAP: Record<string, string> = {
-  spirits:  "distillati",
-  cocktail: "distillati",
-};
-
+// Only "vino" is a preset. Everything else is custom.
 const CUSTOM_VALUE = "__custom__";
 
-// All values that appear in the picker (excluding the custom button)
-type PresetValue = typeof PRESET_CATEGORIES[number]["value"];
-
-function resolveCategory(raw: string): string {
-  return LEGACY_MAP[raw] ?? raw;
-}
-
-function presetMeta(cat: string) {
-  const resolved = resolveCategory(cat);
-  return PRESET_CATEGORIES.find(c => c.value === resolved) ?? null;
-}
-
 function catEmoji(cat: string): string {
-  return presetMeta(cat)?.emoji ?? "🏷️";
+  if (cat === "vino") return "🍷";
+  return "🏷️";
 }
 
 function catLabel(cat: string): string {
-  return presetMeta(cat)?.label ?? cat;
+  if (cat === "vino") return "Vini";
+  return cat;
 }
 
-function priceLabel(cat: string): [string, string | null] {
-  const resolved = resolveCategory(cat);
-  if (resolved === "vino" || resolved === "distillati") return ["Calice (€)", "Bottiglia (€)"];
-  return ["Prezzo (€)", null];
+// vino → calice + bottiglia; custom → prezzo singolo
+function isWine(cat: string) {
+  return cat === "vino";
 }
 
 const EMPTY_FORM = {
-  category: "vino" as PresetValue | typeof CUSTOM_VALUE,
+  category: "vino" as string,
   customCategory: "",
   name: "",
   description: "",
@@ -70,9 +44,7 @@ const EMPTY_FORM = {
   isAvailable: true,
   allergens: [] as string[],
   vintage: "",
-  region: "",
-  grapeVariety: "",
-  distillery: "",
+  produttore: "",  // stored in `distillery` column
   alcoholDegree: "",
   volumeCl: "",
 };
@@ -94,35 +66,38 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
     staleTime: 0,
   });
 
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "drinks"] });
+  const invalidate = () =>
+    queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "drinks"] });
 
-  // Effective category string to save in DB
-  const effectiveCategory = (): string => {
-    if (form.category === CUSTOM_VALUE) {
-      return form.customCategory.trim() || "altro";
-    }
-    return form.category;
+  const effectiveCategory = (): string =>
+    form.category === CUSTOM_VALUE
+      ? form.customCategory.trim() || "altro"
+      : form.category;
+
+  const buildPayload = () => {
+    const cat = effectiveCategory();
+    const wine = isWine(cat);
+    return {
+      pubId,
+      category: cat,
+      name: form.name,
+      description: form.description || null,
+      // vino: prezzi al calice/bottiglia; custom: prezzo unico
+      price: !wine && form.price ? parseFloat(form.price) : null,
+      priceByGlass: wine && form.priceByGlass ? parseFloat(form.priceByGlass) : null,
+      priceByBottle: wine && form.priceByBottle ? parseFloat(form.priceByBottle) : null,
+      imageUrl: form.imageUrl || null,
+      isVisible: form.isVisible,
+      isAvailable: form.isAvailable,
+      allergens: form.allergens,
+      vintage: wine && form.vintage ? parseInt(form.vintage) : null,
+      region: null,
+      grapeVariety: null,
+      distillery: form.produttore || null,  // produttore → distillery column
+      alcoholDegree: form.alcoholDegree ? parseFloat(form.alcoholDegree) : null,
+      volumeCl: form.volumeCl ? parseInt(form.volumeCl) : null,
+    };
   };
-
-  const buildPayload = () => ({
-    pubId,
-    category: effectiveCategory(),
-    name: form.name,
-    description: form.description || null,
-    price: form.price ? parseFloat(form.price) : null,
-    priceByGlass: form.priceByGlass ? parseFloat(form.priceByGlass) : null,
-    priceByBottle: form.priceByBottle ? parseFloat(form.priceByBottle) : null,
-    imageUrl: form.imageUrl || null,
-    isVisible: form.isVisible,
-    isAvailable: form.isAvailable,
-    allergens: form.allergens,
-    vintage: form.vintage ? parseInt(form.vintage) : null,
-    region: form.region || null,
-    grapeVariety: form.grapeVariety || null,
-    distillery: form.distillery || null,
-    alcoholDegree: form.alcoholDegree ? parseFloat(form.alcoholDegree) : null,
-    volumeCl: form.volumeCl ? parseInt(form.volumeCl) : null,
-  });
 
   const saveMutation = useMutation({
     mutationFn: (payload: any) =>
@@ -150,7 +125,8 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => apiRequest(`/api/pubs/${pubId}/drinks/${id}`, { method: "DELETE" }),
+    mutationFn: (id: number) =>
+      apiRequest(`/api/pubs/${pubId}/drinks/${id}`, { method: "DELETE" }),
     onSuccess: () => { toast({ title: "Eliminato" }); invalidate(); },
     onError: () => toast({ title: "Errore nell'eliminazione", variant: "destructive" }),
   });
@@ -163,11 +139,10 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
 
   const openEdit = (item: any) => {
     setEditingId(item.id);
-    const rawCat: string = item.category ?? "altro";
-    const resolved = resolveCategory(rawCat);
-    const isPreset = PRESET_CATEGORIES.some(c => c.value === resolved);
+    const rawCat: string = item.category ?? "vino";
+    const isPreset = rawCat === "vino";
     setForm({
-      category: isPreset ? resolved as PresetValue : CUSTOM_VALUE,
+      category: isPreset ? rawCat : CUSTOM_VALUE,
       customCategory: isPreset ? "" : rawCat,
       name: item.name ?? "",
       description: item.description ?? "",
@@ -179,9 +154,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
       isAvailable: item.isAvailable ?? true,
       allergens: item.allergens ?? [],
       vintage: item.vintage ? String(item.vintage) : "",
-      region: item.region ?? "",
-      grapeVariety: item.grapeVariety ?? "",
-      distillery: item.distillery ?? "",
+      produttore: item.distillery ?? "",
       alcoholDegree: item.alcoholDegree ?? "",
       volumeCl: item.volumeCl ? String(item.volumeCl) : "",
     });
@@ -209,21 +182,17 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
     saveMutation.mutate(buildPayload());
   };
 
-  const resolvedCat = form.category === CUSTOM_VALUE ? form.customCategory.trim() || "altro" : form.category;
-  const catMeta = presetMeta(resolvedCat);
-  const [label1, label2] = priceLabel(resolvedCat);
+  const resolvedCat = effectiveCategory();
+  const wine = isWine(resolvedCat);
 
-  // Group items: predefined categories first (in order), then custom ones alphabetically
+  // Group: "vino" first, then custom categories alphabetically
   const grouped = (() => {
-    const allCats = [...new Set(items.map(i => resolveCategory(i.category ?? "altro")))];
-    const presetOrder = PRESET_CATEGORIES.map(c => c.value);
-    const presetCats = presetOrder.filter(v => allCats.includes(v));
-    const customCats = allCats
-      .filter(v => !presetOrder.includes(v))
-      .sort((a, b) => a.localeCompare(b));
-    return [...presetCats, ...customCats].map(cat => ({
+    const allCats = [...new Set(items.map(i => i.category ?? "vino"))];
+    const presetFirst = allCats.filter(c => c === "vino");
+    const customs = allCats.filter(c => c !== "vino").sort((a, b) => a.localeCompare(b));
+    return [...presetFirst, ...customs].map(cat => ({
       cat,
-      items: items.filter(i => resolveCategory(i.category ?? "altro") === cat),
+      items: items.filter(i => (i.category ?? "vino") === cat),
     }));
   })();
 
@@ -233,7 +202,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-foreground">Bevande</h2>
-          <p className="text-sm text-muted-foreground">Vini, distillati, bibite e categorie personalizzate</p>
+          <p className="text-sm text-muted-foreground">Vini e sezioni personalizzate</p>
         </div>
         <Button onClick={openAdd} className="gap-1.5">
           <Plus className="w-4 h-4" /> Aggiungi
@@ -251,7 +220,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             <GlassWater className="w-8 h-8 text-white" />
           </div>
           <p className="font-semibold text-foreground">Nessuna bevanda</p>
-          <p className="text-sm text-muted-foreground">Aggiungi vini, distillati, bibite o crea una sezione personalizzata</p>
+          <p className="text-sm text-muted-foreground">Aggiungi vini o crea sezioni personalizzate</p>
           <Button onClick={openAdd} className="gap-1.5 mt-2">
             <Plus className="w-4 h-4" /> Aggiungi prima voce
           </Button>
@@ -267,7 +236,14 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               </div>
               <div className="space-y-2">
                 {groupItems.map((item: any) => (
-                  <Card key={item.id} className={`border transition-all ${item.isVisible ? "border-stone-100 dark:border-border" : "opacity-50 border-dashed border-stone-200 dark:border-border"}`}>
+                  <Card
+                    key={item.id}
+                    className={`border transition-all ${
+                      item.isVisible
+                        ? "border-stone-100 dark:border-border"
+                        : "opacity-50 border-dashed border-stone-200 dark:border-border"
+                    }`}
+                  >
                     <CardContent className="p-3 flex items-center gap-3">
                       {item.imageUrl ? (
                         <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
@@ -280,13 +256,19 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                         <p className="font-semibold text-sm text-foreground truncate">{item.name}</p>
                         <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           {item.vintage && <span className="text-xs text-muted-foreground">{item.vintage}</span>}
-                          {item.region && <span className="text-xs text-muted-foreground">{item.region}</span>}
-                          {item.grapeVariety && <span className="text-xs text-muted-foreground italic">{item.grapeVariety}</span>}
                           {item.distillery && <span className="text-xs text-muted-foreground">{item.distillery}</span>}
-                          {item.priceByGlass && <span className="text-xs font-medium text-primary">🥂 €{parseFloat(item.priceByGlass).toFixed(2)}</span>}
-                          {item.priceByBottle && <span className="text-xs font-medium text-foreground">🍾 €{parseFloat(item.priceByBottle).toFixed(2)}</span>}
-                          {item.price && !item.priceByGlass && !item.priceByBottle && <span className="text-xs font-medium text-primary">€{parseFloat(item.price).toFixed(2)}</span>}
-                          {item.alcoholDegree && <span className="text-xs text-muted-foreground">{item.alcoholDegree}%</span>}
+                          {item.priceByGlass && (
+                            <span className="text-xs font-medium text-primary">🥂 €{parseFloat(item.priceByGlass).toFixed(2)}</span>
+                          )}
+                          {item.priceByBottle && (
+                            <span className="text-xs font-medium text-foreground">🍾 €{parseFloat(item.priceByBottle).toFixed(2)}</span>
+                          )}
+                          {item.price && !item.priceByGlass && !item.priceByBottle && (
+                            <span className="text-xs font-medium text-primary">€{parseFloat(item.price).toFixed(2)}</span>
+                          )}
+                          {item.alcoholDegree && (
+                            <span className="text-xs text-muted-foreground">{item.alcoholDegree}%</span>
+                          )}
                         </div>
                       </div>
                       <div className="flex items-center gap-1 flex-shrink-0">
@@ -330,44 +312,42 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             {/* Categoria */}
             <div>
               <Label className="text-sm font-medium mb-1.5 block">Categoria</Label>
-              <div className="grid grid-cols-5 gap-1.5">
-                {PRESET_CATEGORIES.map(cat => (
-                  <button
-                    key={cat.value}
-                    type="button"
-                    onClick={() => setForm(f => ({ ...f, category: cat.value }))}
-                    className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border text-xs font-medium transition-colors ${
-                      form.category === cat.value
-                        ? "bg-primary text-white border-primary"
-                        : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
-                    }`}
-                  >
-                    <span className="text-lg">{cat.emoji}</span>
-                    <span className="leading-tight text-center">{cat.label.split(" ")[0]}</span>
-                  </button>
-                ))}
-                {/* Custom category button */}
+              <div className="flex gap-2">
+                {/* Vini */}
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, category: "vino" }))}
+                  className={`flex flex-col items-center gap-1 py-2 px-4 rounded-xl border text-xs font-medium transition-colors ${
+                    form.category === "vino"
+                      ? "bg-primary text-white border-primary"
+                      : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
+                  }`}
+                >
+                  <span className="text-lg">🍷</span>
+                  <span>Vini</span>
+                </button>
+                {/* Sezione personalizzata */}
                 <button
                   type="button"
                   onClick={() => setForm(f => ({ ...f, category: CUSTOM_VALUE }))}
-                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border text-xs font-medium transition-colors ${
+                  className={`flex flex-1 items-center gap-2 py-2 px-4 rounded-xl border text-xs font-medium transition-colors ${
                     form.category === CUSTOM_VALUE
                       ? "bg-primary text-white border-primary"
                       : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
                   }`}
                 >
-                  <Tag className="w-5 h-5" />
-                  <span className="leading-tight text-center">Crea</span>
+                  <Tag className="w-4 h-4 flex-shrink-0" />
+                  <span>Sezione personalizzata</span>
                 </button>
               </div>
 
-              {/* Custom category name input */}
+              {/* Nome categoria custom */}
               {form.category === CUSTOM_VALUE && (
                 <div className="mt-2">
                   <Input
                     value={form.customCategory}
                     onChange={e => setForm(f => ({ ...f, customCategory: e.target.value }))}
-                    placeholder="Nome categoria (es. Gin List, Sakè, Analcolici…)"
+                    placeholder="es. Cocktails, Spirits, Analcolici, Sakè…"
                     autoFocus
                   />
                 </div>
@@ -380,35 +360,40 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               <Input
                 value={form.name}
                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder={
-                  resolvedCat === "vino" ? "es. Barolo Riserva" :
-                  resolvedCat === "distillati" ? "es. Glenfarclas 15y" :
-                  "Nome"
-                }
+                placeholder={wine ? "es. Barolo Riserva" : "Nome"}
               />
             </div>
 
             {/* Prezzi */}
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label className="text-sm font-medium">{label1}</Label>
-                <Input
-                  type="number" step="0.10" min="0"
-                  value={form.priceByGlass || form.price}
-                  onChange={e => {
-                    if (label2) setForm(f => ({ ...f, priceByGlass: e.target.value }));
-                    else setForm(f => ({ ...f, price: e.target.value }));
-                  }}
-                  placeholder="0.00"
-                />
-              </div>
-              {label2 && (
-                <div>
-                  <Label className="text-sm font-medium">{label2}</Label>
+              {wine ? (
+                <>
+                  <div>
+                    <Label className="text-sm font-medium">Calice (€)</Label>
+                    <Input
+                      type="number" step="0.10" min="0"
+                      value={form.priceByGlass}
+                      onChange={e => setForm(f => ({ ...f, priceByGlass: e.target.value }))}
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium">Bottiglia (€)</Label>
+                    <Input
+                      type="number" step="0.50" min="0"
+                      value={form.priceByBottle}
+                      onChange={e => setForm(f => ({ ...f, priceByBottle: e.target.value }))}
+                      placeholder="0.00"
+                    />
+                  </div>
+                </>
+              ) : (
+                <div className="col-span-2">
+                  <Label className="text-sm font-medium">Prezzo (€)</Label>
                   <Input
-                    type="number" step="0.50" min="0"
-                    value={form.priceByBottle}
-                    onChange={e => setForm(f => ({ ...f, priceByBottle: e.target.value }))}
+                    type="number" step="0.10" min="0"
+                    value={form.price}
+                    onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
                     placeholder="0.00"
                   />
                 </div>
@@ -433,8 +418,8 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               </div>
             </div>
 
-            {/* Campi vino */}
-            {catMeta?.hasWineFields && (
+            {/* Campi specifici vini */}
+            {wine && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-sm font-medium">Annata</Label>
@@ -442,36 +427,28 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                     type="number" min="1900" max={new Date().getFullYear()}
                     value={form.vintage}
                     onChange={e => setForm(f => ({ ...f, vintage: e.target.value }))}
-                    placeholder="2021"
+                    placeholder="es. 2021"
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Regione</Label>
+                  <Label className="text-sm font-medium">Produttore</Label>
                   <Input
-                    value={form.region}
-                    onChange={e => setForm(f => ({ ...f, region: e.target.value }))}
-                    placeholder="es. Piemonte"
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label className="text-sm font-medium">Vitigno</Label>
-                  <Input
-                    value={form.grapeVariety}
-                    onChange={e => setForm(f => ({ ...f, grapeVariety: e.target.value }))}
-                    placeholder="es. Nebbiolo, Sangiovese"
+                    value={form.produttore}
+                    onChange={e => setForm(f => ({ ...f, produttore: e.target.value }))}
+                    placeholder="es. Gaja, Sassicaia"
                   />
                 </div>
               </div>
             )}
 
-            {/* Campi distillati */}
-            {catMeta?.hasSpiritFields && (
+            {/* Produttore per categorie custom */}
+            {!wine && (
               <div>
-                <Label className="text-sm font-medium">Distilleria / Produttore</Label>
+                <Label className="text-sm font-medium">Produttore / Brand</Label>
                 <Input
-                  value={form.distillery}
-                  onChange={e => setForm(f => ({ ...f, distillery: e.target.value }))}
-                  placeholder="es. Glenfarclas, Hendrick's"
+                  value={form.produttore}
+                  onChange={e => setForm(f => ({ ...f, produttore: e.target.value }))}
+                  placeholder="es. Hendrick's, Campari"
                 />
               </div>
             )}
@@ -512,7 +489,9 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             <div className="flex justify-end gap-2 pt-2 border-t">
               <Button variant="outline" onClick={closeDialog}>Annulla</Button>
               <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : (editingId ? "Salva" : "Aggiungi")}
+                {saveMutation.isPending
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : editingId ? "Salva" : "Aggiungi"}
               </Button>
             </div>
           </div>
