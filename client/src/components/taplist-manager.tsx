@@ -2151,65 +2151,13 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     : 'border-stone-100 dark:border-border bg-white dark:bg-card'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 self-center">
-                      <GripVertical className="w-4 h-4" />
-                    </div>
-                    <ImageWithFallback
-                      src={(item.beer as any).imageUrl || item.beer.logoUrl}
-                      alt={item.beer.name}
-                      imageType="beer"
-                      containerClassName="w-12 h-12 rounded-lg flex-shrink-0"
-                      className="w-12 h-12 rounded-lg object-cover"
-                      iconSize="md"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold text-base text-foreground truncate">{item.beer.name}</h3>
-                        {item.tapType === "pompa" && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 border-stone-300 text-primary dark:border-[#23262E]">
-                            In Pompa
-                          </Badge>
-                        )}
-                        {item.tapType === "botte" && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 border-amber-400 text-amber-700 dark:border-amber-600 dark:text-amber-400">
-                            🛢️ Botte
-                          </Badge>
-                        )}
-                        {item.tapNumber && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 border-amber-300 text-amber-700 dark:text-amber-400">
-                            Spina {item.tapNumber}
-                          </Badge>
-                        )}
-                        {!item.isVisible && (
-                          <Badge variant="secondary" className="text-xs flex-shrink-0">
-                            <EyeOff className="w-3 h-3 mr-1" />
-                            Nascosta
-                          </Badge>
-                        )}
-                        {findBottleItem(item.beer.id) && (
-                          <Badge variant="outline" className="text-xs flex-shrink-0 border-stone-300 text-primary dark:border-[#23262E]">
-                            anche in cantina
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <span className="text-xs text-muted-foreground">
-                          {item.beer.style} • {item.beer.abv}% ABV
-                        </span>
-                        {(item.beer as any).isGlutenFree && (
-                          <GlutenFreeSmallBadge size={11} />
-                        )}
-                        {(item.beer as any).isAlcoholFree && (
-                          <AlcoholFreeBadge size={10} />
-                        )}
-                      </div>
-                    </div>
+                {/* Row 1: drag handle + full name + action buttons */}
+                <div className="flex items-start gap-2">
+                  <div className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 mt-1">
+                    <GripVertical className="w-4 h-4" />
                   </div>
-
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <h3 className="flex-1 font-bold text-base text-foreground leading-snug">{item.beer.name}</h3>
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -2221,10 +2169,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => {
-                        startEdit(item);
-                        setIsAddDialogOpen(true);
-                      }}
+                      onClick={() => { startEdit(item); setIsAddDialogOpen(true); }}
                       className="h-8 w-8 p-0 text-muted-foreground hover:text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 rounded-lg"
                     >
                       <Edit className="w-4 h-4" />
@@ -2240,8 +2185,60 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                   </div>
                 </div>
 
-                {item.prices && item.prices.length > 0 ? (
-                  <div className="flex flex-wrap gap-2 mt-3 ml-[60px]">
+                {/* Row 2: badges (spina, tipo, visibilità, cantina) */}
+                <div className="flex flex-wrap gap-1.5 mt-2 pl-6">
+                  {item.tapNumber && (
+                    <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 dark:text-amber-400">
+                      Spina {item.tapNumber}
+                    </Badge>
+                  )}
+                  {item.tapType === "pompa" && (
+                    <Badge variant="outline" className="text-xs border-stone-300 text-primary dark:border-[#23262E]">
+                      In Pompa
+                    </Badge>
+                  )}
+                  {item.tapType === "botte" && (
+                    <Badge variant="outline" className="text-xs border-amber-400 text-amber-700 dark:border-amber-600 dark:text-amber-400">
+                      🛢️ Botte
+                    </Badge>
+                  )}
+                  {!item.isVisible && (
+                    <Badge variant="secondary" className="text-xs">
+                      <EyeOff className="w-3 h-3 mr-1" />
+                      Nascosta
+                    </Badge>
+                  )}
+                  {findBottleItem(item.beer.id) && (
+                    <Badge variant="outline" className="text-xs border-stone-300 text-primary dark:border-[#23262E]">
+                      anche in cantina
+                    </Badge>
+                  )}
+                </div>
+
+                {/* Row 3: immagine + birrificio/stile/ABV */}
+                <div className="flex items-center gap-3 mt-2.5 pl-6">
+                  <ImageWithFallback
+                    src={(item.beer as any).imageUrl || item.beer.logoUrl}
+                    alt={item.beer.name}
+                    imageType="beer"
+                    containerClassName="w-11 h-11 rounded-lg flex-shrink-0"
+                    className="w-11 h-11 rounded-lg object-cover"
+                    iconSize="sm"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-foreground/80 leading-tight">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
+                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                      {item.beer.style && <span className="text-xs text-muted-foreground">{item.beer.style}</span>}
+                      {item.beer.abv && <span className="text-xs text-muted-foreground">• {item.beer.abv}% ABV</span>}
+                      {(item.beer as any).isGlutenFree && <GlutenFreeSmallBadge size={11} />}
+                      {(item.beer as any).isAlcoholFree && <AlcoholFreeBadge size={10} />}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Row 4: prezzi */}
+                {(item.prices && item.prices.length > 0) ? (
+                  <div className="flex flex-wrap gap-2 mt-2.5 pl-6">
                     {item.prices.map((price, idx) => (
                       <Badge key={idx} variant="outline" className="text-xs font-medium bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
                         {price.size}: €{price.price}
@@ -2249,7 +2246,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     ))}
                   </div>
                 ) : (item.priceSmall || item.priceMedium || item.priceLarge) ? (
-                  <div className="flex flex-wrap gap-2 mt-3 ml-[60px]">
+                  <div className="flex flex-wrap gap-2 mt-2.5 pl-6">
                     {item.priceSmall && (
                       <Badge variant="outline" className="text-xs font-medium bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
                         Piccola: €{item.priceSmall}
@@ -2268,8 +2265,9 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                   </div>
                 ) : null}
 
+                {/* Row 5: descrizione */}
                 {item.description && (
-                  <div className="mt-3 ml-[60px]">
+                  <div className="mt-2 pl-6">
                     <RichTextDisplay html={item.description} className="text-sm italic text-muted-foreground dark:text-stone-400" />
                   </div>
                 )}
