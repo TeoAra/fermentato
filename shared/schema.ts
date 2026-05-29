@@ -258,6 +258,23 @@ export const insertDrinkItemSchema = createInsertSchema(drinkItems).omit({ id: t
 export type InsertDrinkItem = z.infer<typeof insertDrinkItemSchema>;
 export type DrinkItem = typeof drinkItems.$inferSelect;
 
+// Drink categories (separate from menu food categories)
+export const drinkCategories = pgTable("drink_categories", {
+  id: serial("id").primaryKey(),
+  pubId: integer("pub_id").references(() => pubs.id, { onDelete: "cascade" }).notNull(),
+  name: varchar("name", { length: 255 }).notNull(),
+  type: varchar("type", { length: 50 }).default("custom"), // "vino" | "custom"
+  description: text("description"),
+  infoBox: text("info_box"),
+  orderIndex: integer("order_index").default(0),
+  isVisible: boolean("is_visible").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertDrinkCategorySchema = createInsertSchema(drinkCategories).omit({ id: true, createdAt: true });
+export type InsertDrinkCategory = z.infer<typeof insertDrinkCategorySchema>;
+export type DrinkCategory = typeof drinkCategories.$inferSelect;
+
 // Food menu categories
 export const menuCategories = pgTable("menu_categories", {
   id: serial("id").primaryKey(),

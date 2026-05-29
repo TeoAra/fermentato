@@ -2547,6 +2547,124 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   // ── /Drink items routes ────────────────────────────────────────────────────
 
+  // ── Drink categories routes ───────────────────────────────────────────────
+  const drinkAuthMiddleware = async (req: any, res: any): Promise<{ pubId: number } | null> => {
+    const pubId = parseInt(req.params.pubId || req.params.id);
+    const userId = (req.user as any)?.id;
+    if (!userId) { res.status(401).json({ message: "Not authenticated" }); return null; }
+    const user = await storage.getUser(userId);
+    const pub = await storage.getPub(pubId);
+    const role = user?.activeRole || user?.userType;
+    if (!pub || (role !== "admin" && pub.ownerId !== userId)) {
+      res.status(403).json({ message: "Not authorized" }); return null;
+    }
+    return { pubId };
+  };
+
+  // Public: visible categories with visible items
+  app.get("/api/pubs/:id/drink-categories", async (req, res) => {
+    try {
+      const cats = await storage.getDrinkCategoriesWithItems(parseInt(req.params.id), false);
+      res.json(cats);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to fetch drink categories" });
+    }
+  });
+
+  // Owner: all categories including hidden
+  app.get("/api/pubs/:id/drink-categories/all", isAuthenticated, async (req: any, res) => {
+    const ctx = await drinkAuthMiddleware(req, res);
+    if (!ctx) return;
+    try {
+      const cats = await storage.getDrinkCategoriesWithItems(ctx.pubId, true);
+      res.json(cats);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to fetch drink categories" });
+    }
+  });
+
+  app.post("/api/pubs/:id/drink-categories", isAuthenticated, async (req: any, res) => {
+    const ctx = await drinkAuthMiddleware(req, res);
+    if (!ctx) return;
+    try {
+      const cats = await storage.getDrinkCategoriesWithItems(ctx.pubId, true);
+      const cat = await storage.createDrinkCategory({ ...req.body, pubId: ctx.pubId, orderIndex: cats.length });
+      broadcastPubUpdate(ctx.pubId, "drinks");
+      res.status(201).json(cat);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to create drink category" });
+    }
+  });
+
+  app.patch("/api/pubs/:pubId/drink-categories/:catId", isAuthenticated, async (req: any, res) => {
+    const ctx = await drinkAuthMiddleware(req, res);
+    if (!ctx) return;
+    try {
+      const cat = await storage.updateDrinkCategory(parseInt(req.params.catId), req.body);
+      broadcastPubUpdate(ctx.pubId, "drinks");
+      res.json(cat);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to update drink category" });
+    }
+  });
+
+  app.patch("/api/pubs/:pubId/drink-categories/:catId/toggle-visibility", isAuthenticated, async (req: any, res) => {
+    const ctx = await drinkAuthMiddleware(req, res);
+    if (!ctx) return;
+    try {
+      const cats = await storage.getDrinkCategoriesWithItems(ctx.pubId, true);
+      const cat = cats.find((c: any) => c.id === parseInt(req.params.catId));
+      if (!cat) return res.status(404).json({ message: "Not found" });
+      const updated = await storage.updateDrinkCategory(cat.id, { isVisible: !cat.isVisible });
+      broadcastPubUpdate(ctx.pubId, "drinks");
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to toggle visibility" });
+    }
+  });
+
+  app.delete("/api/pubs/:pubId/drink-categories/:catId", isAuthenticated, async (req: any, res) => {
+    const ctx = await drinkAuthMiddleware(req, res);
+    if (!ctx) return;
+    try {
+      await storage.deleteDrinkCategory(parseInt(req.params.catId));
+      broadcastPubUpdate(ctx.pubId, "drinks");
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ message: "Failed to delete drink category" });
+    }
+  });
+
+  app.post("/api/pubs/:id/drink-categories/reorder", isAuthenticated, async (req: any, res) => {
+    const ctx = await drinkAuthMiddleware(req, res);
+    if (!ctx) return;
+    try {
+      await storage.reorderDrinkCategories(req.body.order);
+      broadcastPubUpdate(ctx.pubId, "drinks");
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ message: "Failed to reorder" });
+    }
+  });
+
+  app.patch("/api/pubs/:pubId/drink-items/:id/toggle-visibility", isAuthenticated, async (req: any, res) => {
+    const ctx = await drinkAuthMiddleware(req, res);
+    if (!ctx) return;
+    try {
+      const item = await storage.updateDrinkItem(parseInt(req.params.id), {});
+      // Re-fetch to get current state
+      const allItems = await storage.getDrinkItems(ctx.pubId, true);
+      const current = allItems.find((i: any) => i.id === parseInt(req.params.id));
+      if (!current) return res.status(404).json({ message: "Not found" });
+      const updated = await storage.updateDrinkItem(current.id, { isVisible: !current.isVisible });
+      broadcastPubUpdate(ctx.pubId, "drinks");
+      res.json(updated);
+    } catch (e) {
+      res.status(500).json({ message: "Failed to toggle item visibility" });
+    }
+  });
+  // ── /Drink categories routes ───────────────────────────────────────────────
+
   // Create menu category (only pub owner)
   app.post("/api/pubs/:id/menu-categories", isAuthenticated, async (req: any, res) => {
     try {

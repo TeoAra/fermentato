@@ -1,10 +1,11 @@
-import { useState } from "react";
-import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
+import { useState, useRef, useEffect } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -12,181 +13,173 @@ import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { AllergenSelector } from "@/components/allergen-selector";
 import {
-  Plus, Edit3, Trash2, Eye, EyeOff, GlassWater, Loader2, Tag,
-  MoreHorizontal, Pencil,
+  Plus, Edit3, Trash2, Eye, EyeOff, GlassWater, Loader2,
+  GripVertical, ChevronDown, ChevronRight, Info,
 } from "lucide-react";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
-const CUSTOM_VALUE = "__custom__";
+// ─────────────────────────────────────────────────────────
+// Helpers
+// ─────────────────────────────────────────────────────────
+const catEmoji = (type: string) => (type === "vino" ? "🍷" : "🏷️");
 
-function catEmoji(cat: string): string {
-  if (cat === "vino") return "🍷";
-  return "🏷️";
-}
-function catLabel(cat: string): string {
-  if (cat === "vino") return "Vini";
-  return cat;
-}
-function isWine(cat: string) {
-  return cat === "vino";
-}
+const EMPTY_CAT_FORM = { name: "", type: "custom" as string, description: "", infoBox: "", isVisible: true };
 
-const EMPTY_FORM = {
-  category: "vino" as string,
-  customCategory: "",
-  name: "",
-  description: "",
-  price: "",
-  priceByGlass: "",
-  priceByBottle: "",
-  imageUrl: "",
-  isVisible: true,
-  isAvailable: true,
-  allergens: [] as string[],
-  vintage: "",
-  produttore: "",
-  alcoholDegree: "",
-  volumeCl: "",
+const EMPTY_ITEM_FORM = {
+  name: "", description: "", price: "", priceByGlass: "", priceByBottle: "",
+  imageUrl: "", isVisible: true, allergens: [] as string[],
+  vintage: "", produttore: "", alcoholDegree: "", volumeCl: "",
 };
 
-interface DrinkManagerProps {
-  pubId: number;
-}
+// ─────────────────────────────────────────────────────────
+// Props
+// ─────────────────────────────────────────────────────────
+interface DrinkManagerProps { pubId: number }
 
+// ─────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────
 export function DrinkManager({ pubId }: DrinkManagerProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const QK = ["/api/pubs", String(pubId), "drink-categories"];
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: QK });
 
-  // Category rename state
-  const [renamingCat, setRenamingCat] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState("");
-
-  const { data: items = [], isLoading } = useQuery<any[]>({
-    queryKey: ["/api/pubs", String(pubId), "drinks"],
-    queryFn: () => apiRequest(`/api/pubs/${pubId}/drinks/all`),
+  // ── Data ─────────────────────────────────────────────
+  const { data: categories = [], isLoading } = useQuery<any[]>({
+    queryKey: QK,
+    queryFn: () => apiRequest(`/api/pubs/${pubId}/drink-categories/all`),
     staleTime: 0,
   });
 
-  const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "drinks"] });
+  // ── Local ordered state for drag-and-drop ────────────
+  const [localCats, setLocalCats] = useState<any[]>([]);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const dragFromIdx = useRef<number | null>(null);
+  useEffect(() => {
+    setLocalCats([...categories].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+  }, [categories]);
 
-  const effectiveCategory = (): string =>
-    form.category === CUSTOM_VALUE
-      ? form.customCategory.trim() || "altro"
-      : form.category;
-
-  const buildPayload = () => {
-    const cat = effectiveCategory();
-    const wine = isWine(cat);
-    return {
-      pubId,
-      category: cat,
-      name: form.name,
-      description: form.description || null,
-      price: !wine && form.price ? parseFloat(form.price) : null,
-      priceByGlass: wine && form.priceByGlass ? parseFloat(form.priceByGlass) : null,
-      priceByBottle: wine && form.priceByBottle ? parseFloat(form.priceByBottle) : null,
-      imageUrl: form.imageUrl || null,
-      isVisible: form.isVisible,
-      isAvailable: form.isAvailable,
-      allergens: form.allergens,
-      vintage: wine && form.vintage ? parseInt(form.vintage) : null,
-      region: null,
-      grapeVariety: null,
-      distillery: form.produttore || null,
-      alcoholDegree: form.alcoholDegree ? parseFloat(form.alcoholDegree) : null,
-      volumeCl: form.volumeCl ? parseInt(form.volumeCl) : null,
-    };
-  };
-
-  const saveMutation = useMutation({
-    mutationFn: (payload: any) =>
-      editingId
-        ? apiRequest(`/api/pubs/${pubId}/drinks/${editingId}`, { method: "PATCH" }, payload)
-        : apiRequest(`/api/pubs/${pubId}/drinks`, { method: "POST" }, payload),
-    onSuccess: () => {
-      toast({ title: editingId ? "Aggiornato!" : "Aggiunto!" });
+  const reorderMutation = useMutation({
+    mutationFn: (order: { id: number; orderIndex: number }[]) =>
+      apiRequest(`/api/pubs/${pubId}/drink-categories/reorder`, { method: "POST" }, { order }),
+    onError: () => {
+      toast({ title: "Errore ordinamento", variant: "destructive" });
+      setLocalCats([...categories].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
       invalidate();
-      closeDialog();
     },
-    onError: (err: any) => toast({ title: err?.message || "Errore", variant: "destructive" }),
+    onSuccess: () => invalidate(),
   });
 
-  const toggleMutation = useMutation({
-    mutationFn: ({ id, isVisible }: { id: number; isVisible: boolean }) =>
-      apiRequest(`/api/pubs/${pubId}/drinks/${id}`, { method: "PATCH" }, { isVisible }),
-    onMutate: async ({ id, isVisible }) => {
-      await queryClient.cancelQueries({ queryKey: ["/api/pubs", String(pubId), "drinks"] });
-      queryClient.setQueryData(["/api/pubs", String(pubId), "drinks"], (old: any[]) =>
-        Array.isArray(old) ? old.map(i => i.id === id ? { ...i, isVisible } : i) : old
+  const handleDragStart = (e: React.DragEvent, idx: number) => {
+    dragFromIdx.current = idx;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(idx));
+  };
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverIdx(idx);
+  };
+  const handleDrop = (e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault();
+    const from = dragFromIdx.current;
+    setDragOverIdx(null);
+    dragFromIdx.current = null;
+    if (from === null || from === dropIdx) return;
+    const next = [...localCats];
+    const [moved] = next.splice(from, 1);
+    next.splice(dropIdx, 0, moved);
+    setLocalCats(next);
+    reorderMutation.mutate(next.map((c, i) => ({ id: c.id, orderIndex: i })));
+  };
+  const handleDragEnd = () => { setDragOverIdx(null); dragFromIdx.current = null; };
+
+  // ── Expand / collapse ────────────────────────────────
+  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+  const toggleExpand = (id: number) =>
+    setExpanded(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  // ── Category create dialog ────────────────────────────
+  const [catDialogOpen, setCatDialogOpen] = useState(false);
+  const [editingCat, setEditingCat] = useState<any>(null);
+  const [catForm, setCatForm] = useState(EMPTY_CAT_FORM);
+  const catNameRef = useRef<HTMLInputElement>(null);
+  const catDescRef = useRef<HTMLTextAreaElement>(null);
+  const catInfoRef = useRef<HTMLTextAreaElement>(null);
+  const catVisRef = useRef<boolean>(true);
+
+  const openCreateCat = () => {
+    setEditingCat(null);
+    setCatForm(EMPTY_CAT_FORM);
+    catVisRef.current = true;
+    setCatDialogOpen(true);
+  };
+  const openEditCat = (cat: any) => {
+    setEditingCat(cat);
+    setCatForm({ name: cat.name, type: cat.type ?? "custom", description: cat.description ?? "", infoBox: cat.infoBox ?? "", isVisible: cat.isVisible ?? true });
+    catVisRef.current = cat.isVisible ?? true;
+    setCatDialogOpen(true);
+  };
+
+  const createCatMutation = useMutation({
+    mutationFn: (data: any) => apiRequest(`/api/pubs/${pubId}/drink-categories`, { method: "POST" }, data),
+    onSuccess: () => { toast({ title: "✅ Sezione creata" }); invalidate(); setCatDialogOpen(false); },
+    onError: () => toast({ title: "Errore", variant: "destructive" }),
+  });
+  const updateCatMutation = useMutation({
+    mutationFn: ({ id, data }: any) => apiRequest(`/api/pubs/${pubId}/drink-categories/${id}`, { method: "PATCH" }, data),
+    onSuccess: () => { toast({ title: "✅ Sezione aggiornata" }); invalidate(); setCatDialogOpen(false); },
+    onError: () => toast({ title: "Errore", variant: "destructive" }),
+  });
+  const deleteCatMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/pubs/${pubId}/drink-categories/${id}`, { method: "DELETE" }),
+    onSuccess: () => { toast({ title: "🗑️ Sezione eliminata" }); invalidate(); },
+    onError: () => toast({ title: "Errore eliminazione", variant: "destructive" }),
+  });
+  const toggleCatMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/pubs/${pubId}/drink-categories/${id}/toggle-visibility`, { method: "PATCH" }),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: QK });
+      queryClient.setQueryData(QK, (old: any[]) =>
+        Array.isArray(old) ? old.map(c => c.id === id ? { ...c, isVisible: !c.isVisible } : c) : old
       );
     },
     onSettled: () => invalidate(),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) =>
-      apiRequest(`/api/pubs/${pubId}/drinks/${id}`, { method: "DELETE" }),
-    onSuccess: () => { toast({ title: "Eliminato" }); invalidate(); },
-    onError: () => toast({ title: "Errore nell'eliminazione", variant: "destructive" }),
-  });
-
-  // Bulk rename all items in a category
-  const handleRenameCategory = async (oldCat: string, newCat: string) => {
-    if (!newCat.trim() || newCat.trim() === oldCat) {
-      setRenamingCat(null);
-      return;
-    }
-    const catItems = items.filter(i => (i.category ?? "vino") === oldCat);
-    try {
-      await Promise.all(
-        catItems.map(item =>
-          apiRequest(`/api/pubs/${pubId}/drinks/${item.id}`, { method: "PATCH" }, { category: newCat.trim() })
-        )
-      );
-      toast({ title: "Sezione rinominata" });
-      invalidate();
-    } catch {
-      toast({ title: "Errore nel rinominare", variant: "destructive" });
-    }
-    setRenamingCat(null);
+  const handleCatSubmit = () => {
+    const name = catNameRef.current?.value?.trim() || "";
+    if (!name) { toast({ title: "Nome sezione obbligatorio", variant: "destructive" }); return; }
+    const data = {
+      name,
+      type: catForm.type,
+      description: catDescRef.current?.value?.trim() || null,
+      infoBox: catInfoRef.current?.value?.trim() || null,
+      isVisible: catVisRef.current,
+    };
+    if (editingCat) updateCatMutation.mutate({ id: editingCat.id, data });
+    else createCatMutation.mutate(data);
   };
 
-  // Delete all items in a category
-  const handleDeleteCategory = async (cat: string) => {
-    const catItems = items.filter(i => (i.category ?? "vino") === cat);
-    if (!confirm(`Eliminare tutta la sezione "${catLabel(cat)}" (${catItems.length} voci)?`)) return;
-    try {
-      await Promise.all(
-        catItems.map(item =>
-          apiRequest(`/api/pubs/${pubId}/drinks/${item.id}`, { method: "DELETE" })
-        )
-      );
-      toast({ title: "Sezione eliminata" });
-      invalidate();
-    } catch {
-      toast({ title: "Errore nell'eliminazione", variant: "destructive" });
-    }
-  };
+  // ── Item dialog ──────────────────────────────────────
+  const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  const [itemCatId, setItemCatId] = useState<number | null>(null);
+  const [itemCatType, setItemCatType] = useState<string>("custom");
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [itemForm, setItemForm] = useState(EMPTY_ITEM_FORM);
 
-  const openAdd = () => {
-    setEditingId(null);
-    setForm(EMPTY_FORM);
-    setDialogOpen(true);
+  const openAddItem = (cat: any) => {
+    setEditingItem(null);
+    setItemCatId(cat.id);
+    setItemCatType(cat.type ?? "custom");
+    setItemForm(EMPTY_ITEM_FORM);
+    setItemDialogOpen(true);
   };
-
-  const openEdit = (item: any) => {
-    setEditingId(item.id);
-    const rawCat: string = item.category ?? "vino";
-    const isPreset = rawCat === "vino";
-    setForm({
-      category: isPreset ? rawCat : CUSTOM_VALUE,
-      customCategory: isPreset ? "" : rawCat,
+  const openEditItem = (cat: any, item: any) => {
+    setEditingItem(item);
+    setItemCatId(cat.id);
+    setItemCatType(cat.type ?? "custom");
+    setItemForm({
       name: item.name ?? "",
       description: item.description ?? "",
       price: item.price ?? "",
@@ -194,398 +187,485 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
       priceByBottle: item.priceByBottle ?? "",
       imageUrl: item.imageUrl ?? "",
       isVisible: item.isVisible ?? true,
-      isAvailable: item.isAvailable ?? true,
       allergens: item.allergens ?? [],
       vintage: item.vintage ? String(item.vintage) : "",
       produttore: item.distillery ?? "",
       alcoholDegree: item.alcoholDegree ?? "",
       volumeCl: item.volumeCl ? String(item.volumeCl) : "",
     });
-    setDialogOpen(true);
+    setItemDialogOpen(true);
   };
 
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditingId(null);
-    setForm(EMPTY_FORM);
+  const isWine = itemCatType === "vino";
+
+  const buildItemPayload = () => ({
+    pubId,
+    category: String(itemCatId),
+    name: itemForm.name,
+    description: itemForm.description || null,
+    price: !isWine && itemForm.price ? parseFloat(itemForm.price) : null,
+    priceByGlass: isWine && itemForm.priceByGlass ? parseFloat(itemForm.priceByGlass) : null,
+    priceByBottle: isWine && itemForm.priceByBottle ? parseFloat(itemForm.priceByBottle) : null,
+    imageUrl: itemForm.imageUrl || null,
+    isVisible: itemForm.isVisible,
+    isAvailable: true,
+    allergens: itemForm.allergens,
+    vintage: isWine && itemForm.vintage ? parseInt(itemForm.vintage) : null,
+    region: null,
+    grapeVariety: null,
+    distillery: itemForm.produttore || null,
+    alcoholDegree: itemForm.alcoholDegree ? parseFloat(itemForm.alcoholDegree) : null,
+    volumeCl: itemForm.volumeCl ? parseInt(itemForm.volumeCl) : null,
+  });
+
+  const saveItemMutation = useMutation({
+    mutationFn: (payload: any) =>
+      editingItem
+        ? apiRequest(`/api/pubs/${pubId}/drinks/${editingItem.id}`, { method: "PATCH" }, payload)
+        : apiRequest(`/api/pubs/${pubId}/drinks`, { method: "POST" }, payload),
+    onSuccess: () => {
+      toast({ title: editingItem ? "✅ Prodotto aggiornato" : "✅ Prodotto aggiunto" });
+      invalidate();
+      setItemDialogOpen(false);
+    },
+    onError: () => toast({ title: "Errore", variant: "destructive" }),
+  });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/pubs/${pubId}/drinks/${id}`, { method: "DELETE" }),
+    onSuccess: () => { toast({ title: "🗑️ Eliminato" }); invalidate(); },
+    onError: () => toast({ title: "Errore eliminazione", variant: "destructive" }),
+  });
+
+  const toggleItemMutation = useMutation({
+    mutationFn: (id: number) => apiRequest(`/api/pubs/${pubId}/drink-items/${id}/toggle-visibility`, { method: "PATCH" }),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: QK });
+      queryClient.setQueryData(QK, (old: any[]) =>
+        Array.isArray(old)
+          ? old.map(c => ({ ...c, items: (c.items || []).map((i: any) => i.id === id ? { ...i, isVisible: !i.isVisible } : i) }))
+          : old
+      );
+    },
+    onSettled: () => invalidate(),
+  });
+
+  const handleItemSubmit = () => {
+    if (!itemForm.name.trim()) { toast({ title: "Nome obbligatorio", variant: "destructive" }); return; }
+    saveItemMutation.mutate(buildItemPayload());
   };
 
-  const handleSubmit = () => {
-    if (!form.name.trim()) {
-      toast({ title: "Nome obbligatorio", variant: "destructive" }); return;
-    }
-    if (form.category === CUSTOM_VALUE && !form.customCategory.trim()) {
-      toast({ title: "Inserisci il nome della categoria", variant: "destructive" }); return;
-    }
-    saveMutation.mutate(buildPayload());
-  };
-
-  const resolvedCat = effectiveCategory();
-  const wine = isWine(resolvedCat);
-
-  // Group: "vino" first, then custom alphabetically
-  const grouped = (() => {
-    const allCats = [...new Set(items.map(i => i.category ?? "vino"))];
-    const presetFirst = allCats.filter(c => c === "vino");
-    const customs = allCats.filter(c => c !== "vino").sort((a, b) => a.localeCompare(b));
-    return [...presetFirst, ...customs].map(cat => ({
-      cat,
-      items: items.filter(i => (i.category ?? "vino") === cat),
-    }));
-  })();
-
+  // ─────────────────────────────────────────────────────
+  // Render
+  // ─────────────────────────────────────────────────────
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-bold text-foreground">Bevande</h2>
-          <p className="text-sm text-muted-foreground">Vini e sezioni personalizzate</p>
+          <p className="text-sm text-muted-foreground">Sezioni e prodotti — trascina per riordinare</p>
         </div>
-        <Button onClick={openAdd} className="gap-1.5">
-          <Plus className="w-4 h-4" /> Aggiungi
+        <Button onClick={openCreateCat} className="gap-1.5">
+          <Plus className="w-4 h-4" /> Nuova sezione
         </Button>
       </div>
 
-      {/* List */}
+      {/* Empty state */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : items.length === 0 ? (
+        <div className="flex justify-center py-16"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
+      ) : localCats.length === 0 ? (
         <div className="text-center py-16 space-y-3">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 mx-auto flex items-center justify-center">
             <GlassWater className="w-8 h-8 text-white" />
           </div>
-          <p className="font-semibold text-foreground">Nessuna bevanda</p>
-          <p className="text-sm text-muted-foreground">Aggiungi vini o crea sezioni personalizzate</p>
-          <Button onClick={openAdd} className="gap-1.5 mt-2">
-            <Plus className="w-4 h-4" /> Aggiungi prima voce
+          <p className="font-semibold">Nessuna sezione</p>
+          <p className="text-sm text-muted-foreground">Crea una sezione per iniziare (es. Vini, Cocktails, Spirits)</p>
+          <Button onClick={openCreateCat} className="gap-1.5 mt-2">
+            <Plus className="w-4 h-4" /> Crea prima sezione
           </Button>
         </div>
       ) : (
-        <div className="space-y-6">
-          {grouped.map(({ cat, items: groupItems }) => (
-            <div key={cat}>
-              {/* Category header */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-base">{catEmoji(cat)}</span>
-
-                {renamingCat === cat ? (
-                  /* Inline rename input */
-                  <form
-                    className="flex items-center gap-1.5 flex-1"
-                    onSubmit={e => { e.preventDefault(); handleRenameCategory(cat, renameValue); }}
+        <div className="space-y-3">
+          {localCats.map((cat, idx) => {
+            const isExpanded = expanded.has(cat.id);
+            const isDragOver = dragOverIdx === idx;
+            return (
+              <div
+                key={cat.id}
+                draggable
+                onDragStart={e => handleDragStart(e, idx)}
+                onDragOver={e => handleDragOver(e, idx)}
+                onDrop={e => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
+                onDragLeave={() => setDragOverIdx(null)}
+                className={`rounded-2xl border transition-all ${
+                  isDragOver
+                    ? "border-primary border-dashed bg-primary/5"
+                    : cat.isVisible
+                    ? "border-stone-200 dark:border-border bg-card"
+                    : "border-dashed border-stone-200 dark:border-border bg-card opacity-60"
+                }`}
+              >
+                {/* Category header */}
+                <div className="flex items-center gap-2 p-3">
+                  <div className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                    <GripVertical className="w-4 h-4" />
+                  </div>
+                  <button
+                    onClick={() => toggleExpand(cat.id)}
+                    className="flex items-center gap-2 flex-1 min-w-0 text-left"
                   >
-                    <Input
-                      value={renameValue}
-                      onChange={e => setRenameValue(e.target.value)}
-                      className="h-7 text-sm font-semibold py-0 px-2 w-40"
-                      autoFocus
-                      onBlur={() => handleRenameCategory(cat, renameValue)}
-                    />
-                    <Button type="submit" size="sm" className="h-7 px-2 text-xs">OK</Button>
-                    <Button
-                      type="button" size="sm" variant="ghost"
-                      className="h-7 px-2 text-xs"
-                      onClick={() => setRenamingCat(null)}
+                    <span className="text-base leading-none flex-shrink-0">{catEmoji(cat.type)}</span>
+                    <span className="font-semibold text-sm text-foreground truncate">{cat.name}</span>
+                    {cat.description && (
+                      <span className="text-xs text-muted-foreground truncate hidden sm:inline">{cat.description}</span>
+                    )}
+                    <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
+                      {(cat.items || []).length}
+                    </Badge>
+                    {isExpanded
+                      ? <ChevronDown className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      : <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+                  </button>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    <button
+                      onClick={() => toggleCatMutation.mutate(cat.id)}
+                      className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                      title={cat.isVisible ? "Nascondi sezione" : "Mostra sezione"}
                     >
-                      ✕
+                      {cat.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => openEditCat(cat)}
+                      className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (!confirm(`Eliminare la sezione "${cat.name}" e tutti i suoi prodotti?`)) return;
+                        deleteCatMutation.mutate(cat.id);
+                      }}
+                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-red-400"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* InfoBox */}
+                {isExpanded && cat.infoBox && (
+                  <div className="mx-3 mb-3 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-xl px-3 py-2">
+                    <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
+                    <span>{cat.infoBox}</span>
+                  </div>
+                )}
+
+                {/* Items list */}
+                {isExpanded && (
+                  <div className="px-3 pb-3 space-y-2">
+                    {(cat.items || []).length === 0 ? (
+                      <p className="text-center text-xs text-muted-foreground py-4">
+                        Nessun prodotto — aggiungi il primo
+                      </p>
+                    ) : (
+                      (cat.items || []).map((item: any) => (
+                        <Card
+                          key={item.id}
+                          className={`border transition-all ${
+                            item.isVisible
+                              ? "border-stone-100 dark:border-border"
+                              : "opacity-50 border-dashed border-stone-200 dark:border-border"
+                          }`}
+                        >
+                          <CardContent className="p-3 flex items-center gap-3">
+                            {item.imageUrl ? (
+                              <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-[#1A1D24] flex items-center justify-center flex-shrink-0 text-base">
+                                {catEmoji(cat.type)}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="font-semibold text-sm text-foreground truncate">{item.name}</p>
+                              <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                                {item.vintage && <span className="text-xs text-muted-foreground">{item.vintage}</span>}
+                                {item.distillery && <span className="text-xs text-muted-foreground">{item.distillery}</span>}
+                                {item.priceByGlass && <span className="text-xs font-medium text-primary">🥂 €{parseFloat(item.priceByGlass).toFixed(2)}</span>}
+                                {item.priceByBottle && <span className="text-xs font-medium">🍾 €{parseFloat(item.priceByBottle).toFixed(2)}</span>}
+                                {item.price && !item.priceByGlass && !item.priceByBottle && (
+                                  <span className="text-xs font-medium text-primary">€{parseFloat(item.price).toFixed(2)}</span>
+                                )}
+                                {item.alcoholDegree && <span className="text-xs text-muted-foreground">{item.alcoholDegree}%</span>}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-0.5 flex-shrink-0">
+                              <button
+                                onClick={() => toggleItemMutation.mutate(item.id)}
+                                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                              >
+                                {item.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                              </button>
+                              <button
+                                onClick={() => openEditItem(cat, item)}
+                                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (!confirm(`Eliminare "${item.name}"?`)) return;
+                                  deleteItemMutation.mutate(item.id);
+                                }}
+                                className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-red-400"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                    <Button
+                      size="sm" variant="outline"
+                      className="w-full gap-1.5 border-dashed mt-1"
+                      onClick={() => openAddItem(cat)}
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Aggiungi prodotto
                     </Button>
-                  </form>
-                ) : (
-                  <h3 className="font-semibold text-sm text-foreground">{catLabel(cat)}</h3>
-                )}
-
-                <Badge variant="secondary" className="text-xs">{groupItems.length}</Badge>
-
-                {/* Category actions menu */}
-                {renamingCat !== cat && (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="ml-auto p-1 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] text-muted-foreground transition-colors">
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setRenamingCat(cat);
-                          setRenameValue(catLabel(cat));
-                        }}
-                        className="gap-2"
-                      >
-                        <Pencil className="w-3.5 h-3.5" />
-                        Rinomina sezione
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => handleDeleteCategory(cat)}
-                        className="gap-2 text-red-500 focus:text-red-500"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Elimina sezione
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  </div>
                 )}
               </div>
-
-              {/* Items */}
-              <div className="space-y-2">
-                {groupItems.map((item: any) => (
-                  <Card
-                    key={item.id}
-                    className={`border transition-all ${
-                      item.isVisible
-                        ? "border-stone-100 dark:border-border"
-                        : "opacity-50 border-dashed border-stone-200 dark:border-border"
-                    }`}
-                  >
-                    <CardContent className="p-3 flex items-center gap-3">
-                      {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
-                      ) : (
-                        <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-[#1A1D24] flex items-center justify-center flex-shrink-0 text-lg">
-                          {catEmoji(item.category)}
-                        </div>
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm text-foreground truncate">{item.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                          {item.vintage && <span className="text-xs text-muted-foreground">{item.vintage}</span>}
-                          {item.distillery && <span className="text-xs text-muted-foreground">{item.distillery}</span>}
-                          {item.priceByGlass && (
-                            <span className="text-xs font-medium text-primary">🥂 €{parseFloat(item.priceByGlass).toFixed(2)}</span>
-                          )}
-                          {item.priceByBottle && (
-                            <span className="text-xs font-medium text-foreground">🍾 €{parseFloat(item.priceByBottle).toFixed(2)}</span>
-                          )}
-                          {item.price && !item.priceByGlass && !item.priceByBottle && (
-                            <span className="text-xs font-medium text-primary">€{parseFloat(item.price).toFixed(2)}</span>
-                          )}
-                          {item.alcoholDegree && (
-                            <span className="text-xs text-muted-foreground">{item.alcoholDegree}%</span>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 flex-shrink-0">
-                        <button
-                          onClick={() => toggleMutation.mutate({ id: item.id, isVisible: !item.isVisible })}
-                          className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
-                          title={item.isVisible ? "Nascondi" : "Mostra"}
-                        >
-                          {item.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
-                        </button>
-                        <button
-                          onClick={() => openEdit(item)}
-                          className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
-                        >
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            if (!confirm("Eliminare questa voce?")) return;
-                            deleteMutation.mutate(item.id);
-                          }}
-                          className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Add/Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o) closeDialog(); }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+      {/* ── Category create/edit dialog ── */}
+      <Dialog open={catDialogOpen} onOpenChange={o => { if (!o) setCatDialogOpen(false); }}>
+        <DialogContent className="max-w-md" aria-describedby={undefined}>
           <DialogHeader>
-            <DialogTitle>{editingId ? "Modifica voce" : "Aggiungi bevanda"}</DialogTitle>
+            <DialogTitle>{editingCat ? "Modifica sezione" : "Nuova sezione"}</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
-
-            {/* Categoria */}
+          <div className="space-y-4 pt-1">
+            {/* Tipo */}
             <div>
-              <Label className="text-sm font-medium mb-1.5 block">Categoria</Label>
+              <Label className="text-sm font-bold mb-1.5 block">Tipo</Label>
               <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, category: "vino" }))}
-                  className={`flex flex-col items-center gap-1 py-2 px-4 rounded-xl border text-xs font-medium transition-colors ${
-                    form.category === "vino"
-                      ? "bg-primary text-white border-primary"
-                      : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
-                  }`}
-                >
-                  <span className="text-lg">🍷</span>
-                  <span>Vini</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm(f => ({ ...f, category: CUSTOM_VALUE }))}
-                  className={`flex flex-1 items-center gap-2 py-2 px-4 rounded-xl border text-xs font-medium transition-colors ${
-                    form.category === CUSTOM_VALUE
-                      ? "bg-primary text-white border-primary"
-                      : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
-                  }`}
-                >
-                  <Tag className="w-4 h-4 flex-shrink-0" />
-                  <span>Sezione personalizzata</span>
-                </button>
+                {[
+                  { value: "vino", label: "Vini", emoji: "🍷" },
+                  { value: "custom", label: "Personalizzata", emoji: "🏷️" },
+                ].map(opt => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setCatForm(f => ({ ...f, type: opt.value }))}
+                    className={`flex flex-1 items-center gap-2 px-3 py-2 rounded-xl border text-sm font-medium transition-colors ${
+                      catForm.type === opt.value
+                        ? "bg-primary text-white border-primary"
+                        : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
+                    }`}
+                  >
+                    <span>{opt.emoji}</span><span>{opt.label}</span>
+                  </button>
+                ))}
               </div>
-
-              {form.category === CUSTOM_VALUE && (
-                <div className="mt-2">
-                  <Input
-                    value={form.customCategory}
-                    onChange={e => setForm(f => ({ ...f, customCategory: e.target.value }))}
-                    placeholder="es. Cocktails, Spirits, Analcolici, Sakè…"
-                    autoFocus
-                  />
-                </div>
-              )}
             </div>
 
             {/* Nome */}
             <div>
-              <Label className="text-sm font-medium">Nome *</Label>
+              <Label htmlFor="cat-name" className="text-sm font-bold">Nome sezione *</Label>
               <Input
-                value={form.name}
-                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                placeholder={wine ? "es. Barolo Riserva" : "Nome"}
+                ref={catNameRef}
+                id="cat-name"
+                defaultValue={catForm.name}
+                placeholder="es. Vini, Cocktails, Birre Artigianali…"
+                className="mt-1"
+              />
+            </div>
+
+            {/* Descrizione */}
+            <div>
+              <Label htmlFor="cat-desc" className="text-sm font-bold">Descrizione (opzionale)</Label>
+              <Textarea
+                ref={catDescRef}
+                id="cat-desc"
+                defaultValue={catForm.description}
+                placeholder="Breve descrizione della sezione…"
+                rows={2}
+                className="mt-1"
+              />
+            </div>
+
+            {/* InfoBox */}
+            <div>
+              <Label htmlFor="cat-info" className="text-sm font-bold">Info box (opzionale)</Label>
+              <p className="text-xs text-muted-foreground mb-1">Nota evidenziata nel menu pubblico</p>
+              <Textarea
+                ref={catInfoRef}
+                id="cat-info"
+                defaultValue={catForm.infoBox}
+                placeholder="es. Tutti i vini sono italiani a km 0…"
+                rows={2}
+                className="mt-1"
+              />
+            </div>
+
+            {/* Visibilità */}
+            <div className="flex items-center justify-between p-3 bg-stone-50 dark:bg-[#0B0D10]/20 rounded-xl border border-stone-200 dark:border-border/30">
+              <div>
+                <Label className="text-sm font-bold">Visibile nel menu pubblico</Label>
+                <p className="text-xs text-muted-foreground">I clienti vedono questa sezione</p>
+              </div>
+              <Switch
+                defaultChecked={catForm.isVisible}
+                onCheckedChange={v => { catVisRef.current = v; }}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-1 border-t">
+              <Button variant="outline" onClick={() => setCatDialogOpen(false)}>Annulla</Button>
+              <Button
+                onClick={handleCatSubmit}
+                disabled={createCatMutation.isPending || updateCatMutation.isPending}
+              >
+                {(createCatMutation.isPending || updateCatMutation.isPending)
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : editingCat ? "Salva" : "Crea sezione"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── Item add/edit dialog ── */}
+      <Dialog open={itemDialogOpen} onOpenChange={o => { if (!o) setItemDialogOpen(false); }}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>{editingItem ? "Modifica prodotto" : "Aggiungi prodotto"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            {/* Nome */}
+            <div>
+              <Label className="text-sm font-bold">Nome *</Label>
+              <Input
+                value={itemForm.name}
+                onChange={e => setItemForm(f => ({ ...f, name: e.target.value }))}
+                placeholder={isWine ? "es. Barolo Riserva" : "Nome prodotto"}
+                className="mt-1"
               />
             </div>
 
             {/* Prezzi */}
             <div className="grid grid-cols-2 gap-3">
-              {wine ? (
+              {isWine ? (
                 <>
                   <div>
                     <Label className="text-sm font-medium">Calice (€)</Label>
-                    <Input
-                      type="number" step="0.10" min="0"
-                      value={form.priceByGlass}
-                      onChange={e => setForm(f => ({ ...f, priceByGlass: e.target.value }))}
-                      placeholder="0.00"
-                    />
+                    <Input type="number" step="0.10" min="0"
+                      value={itemForm.priceByGlass}
+                      onChange={e => setItemForm(f => ({ ...f, priceByGlass: e.target.value }))}
+                      placeholder="0.00" className="mt-1" />
                   </div>
                   <div>
                     <Label className="text-sm font-medium">Bottiglia (€)</Label>
-                    <Input
-                      type="number" step="0.50" min="0"
-                      value={form.priceByBottle}
-                      onChange={e => setForm(f => ({ ...f, priceByBottle: e.target.value }))}
-                      placeholder="0.00"
-                    />
+                    <Input type="number" step="0.50" min="0"
+                      value={itemForm.priceByBottle}
+                      onChange={e => setItemForm(f => ({ ...f, priceByBottle: e.target.value }))}
+                      placeholder="0.00" className="mt-1" />
                   </div>
                 </>
               ) : (
                 <div className="col-span-2">
                   <Label className="text-sm font-medium">Prezzo (€)</Label>
-                  <Input
-                    type="number" step="0.10" min="0"
-                    value={form.price}
-                    onChange={e => setForm(f => ({ ...f, price: e.target.value }))}
-                    placeholder="0.00"
-                  />
+                  <Input type="number" step="0.10" min="0"
+                    value={itemForm.price}
+                    onChange={e => setItemForm(f => ({ ...f, price: e.target.value }))}
+                    placeholder="0.00" className="mt-1" />
                 </div>
               )}
               <div>
                 <Label className="text-sm font-medium">Gradazione (%)</Label>
-                <Input
-                  type="number" step="0.1" min="0" max="100"
-                  value={form.alcoholDegree}
-                  onChange={e => setForm(f => ({ ...f, alcoholDegree: e.target.value }))}
-                  placeholder="es. 13.5"
-                />
+                <Input type="number" step="0.1" min="0" max="100"
+                  value={itemForm.alcoholDegree}
+                  onChange={e => setItemForm(f => ({ ...f, alcoholDegree: e.target.value }))}
+                  placeholder="es. 13.5" className="mt-1" />
               </div>
               <div>
                 <Label className="text-sm font-medium">Volume (cl)</Label>
-                <Input
-                  type="number" min="0"
-                  value={form.volumeCl}
-                  onChange={e => setForm(f => ({ ...f, volumeCl: e.target.value }))}
-                  placeholder="es. 75"
-                />
+                <Input type="number" min="0"
+                  value={itemForm.volumeCl}
+                  onChange={e => setItemForm(f => ({ ...f, volumeCl: e.target.value }))}
+                  placeholder="es. 75" className="mt-1" />
               </div>
             </div>
 
             {/* Annata + Produttore (vini) */}
-            {wine && (
+            {isWine && (
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label className="text-sm font-medium">Annata</Label>
-                  <Input
-                    type="number" min="1900" max={new Date().getFullYear()}
-                    value={form.vintage}
-                    onChange={e => setForm(f => ({ ...f, vintage: e.target.value }))}
-                    placeholder="es. 2021"
-                  />
+                  <Input type="number" min="1900" max={new Date().getFullYear()}
+                    value={itemForm.vintage}
+                    onChange={e => setItemForm(f => ({ ...f, vintage: e.target.value }))}
+                    placeholder="es. 2021" className="mt-1" />
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Produttore</Label>
-                  <Input
-                    value={form.produttore}
-                    onChange={e => setForm(f => ({ ...f, produttore: e.target.value }))}
-                    placeholder="es. Gaja, Sassicaia"
-                  />
+                  <Input value={itemForm.produttore}
+                    onChange={e => setItemForm(f => ({ ...f, produttore: e.target.value }))}
+                    placeholder="es. Gaja" className="mt-1" />
                 </div>
               </div>
             )}
 
-            {/* Produttore per custom */}
-            {!wine && (
+            {/* Produttore/Brand per non-vini */}
+            {!isWine && (
               <div>
                 <Label className="text-sm font-medium">Produttore / Brand</Label>
-                <Input
-                  value={form.produttore}
-                  onChange={e => setForm(f => ({ ...f, produttore: e.target.value }))}
-                  placeholder="es. Hendrick's, Campari"
-                />
+                <Input value={itemForm.produttore}
+                  onChange={e => setItemForm(f => ({ ...f, produttore: e.target.value }))}
+                  placeholder="es. Campari, Hendrick's" className="mt-1" />
               </div>
             )}
 
             {/* Descrizione */}
             <div>
               <Label className="text-sm font-medium">Descrizione</Label>
-              <Input
-                value={form.description}
-                onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Note di degustazione, abbinamenti..."
-              />
+              <Input value={itemForm.description}
+                onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))}
+                placeholder="Note di degustazione, abbinamenti…" className="mt-1" />
             </div>
 
             <ImageUpload
               label="Immagine"
-              currentImageUrl={form.imageUrl || undefined}
-              onImageChange={url => setForm(f => ({ ...f, imageUrl: url || "" }))}
+              currentImageUrl={itemForm.imageUrl || undefined}
+              onImageChange={url => setItemForm(f => ({ ...f, imageUrl: url || "" }))}
               folder="drinks"
             />
 
             <AllergenSelector
-              selectedAllergens={form.allergens}
-              onAllergensChange={a => setForm(f => ({ ...f, allergens: a }))}
+              selectedAllergens={itemForm.allergens}
+              onAllergensChange={a => setItemForm(f => ({ ...f, allergens: a }))}
             />
 
             <div className="flex items-center gap-3">
               <Switch
-                checked={form.isVisible}
-                onCheckedChange={v => setForm(f => ({ ...f, isVisible: v }))}
+                checked={itemForm.isVisible}
+                onCheckedChange={v => setItemForm(f => ({ ...f, isVisible: v }))}
               />
               <Label className="text-sm font-medium">Visibile al pubblico</Label>
             </div>
 
             <div className="flex justify-end gap-2 pt-2 border-t">
-              <Button variant="outline" onClick={closeDialog}>Annulla</Button>
-              <Button onClick={handleSubmit} disabled={saveMutation.isPending}>
-                {saveMutation.isPending
+              <Button variant="outline" onClick={() => setItemDialogOpen(false)}>Annulla</Button>
+              <Button onClick={handleItemSubmit} disabled={saveItemMutation.isPending}>
+                {saveItemMutation.isPending
                   ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : editingId ? "Salva" : "Aggiungi"}
+                  : editingItem ? "Salva" : "Aggiungi"}
               </Button>
             </div>
           </div>

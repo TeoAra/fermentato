@@ -63,6 +63,9 @@ import {
   drinkItems,
   type DrinkItem,
   type InsertDrinkItem,
+  drinkCategories,
+  type DrinkCategory,
+  type InsertDrinkCategory,
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike, isNotNull, ne } from "drizzle-orm";
@@ -263,6 +266,13 @@ export interface IStorage {
   createDrinkItem(item: InsertDrinkItem): Promise<DrinkItem>;
   updateDrinkItem(id: number, updates: Partial<InsertDrinkItem>): Promise<DrinkItem>;
   deleteDrinkItem(id: number): Promise<void>;
+
+  // Drink category operations
+  getDrinkCategoriesWithItems(pubId: number, includeHidden?: boolean): Promise<any[]>;
+  createDrinkCategory(data: InsertDrinkCategory): Promise<DrinkCategory>;
+  updateDrinkCategory(id: number, updates: Partial<InsertDrinkCategory>): Promise<DrinkCategory>;
+  deleteDrinkCategory(id: number): Promise<void>;
+  reorderDrinkCategories(order: { id: number; orderIndex: number }[]): Promise<void>;
 
   // Allergen operations
   getAllergens(): Promise<Allergen[]>;
@@ -1054,6 +1064,48 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDrinkItem(id: number): Promise<void> {
     await db.delete(drinkItems).where(eq(drinkItems.id, id));
+  }
+
+  // Drink category operations
+  async getDrinkCategoriesWithItems(pubId: number, includeHidden = false): Promise<any[]> {
+    const catWhere = includeHidden
+      ? eq(drinkCategories.pubId, pubId)
+      : and(eq(drinkCategories.pubId, pubId), eq(drinkCategories.isVisible, true));
+    const cats = await db.select().from(drinkCategories).where(catWhere).orderBy(asc(drinkCategories.orderIndex));
+    const allItems = await db.select().from(drinkItems)
+      .where(
+        includeHidden
+          ? eq(drinkItems.pubId, pubId)
+          : and(eq(drinkItems.pubId, pubId), eq(drinkItems.isVisible, true))
+      )
+      .orderBy(asc(drinkItems.orderIndex));
+    return cats.map(cat => ({
+      ...cat,
+      items: allItems.filter(i => i.category === String(cat.id)),
+    }));
+  }
+
+  async createDrinkCategory(data: InsertDrinkCategory): Promise<DrinkCategory> {
+    const [created] = await db.insert(drinkCategories).values(data).returning();
+    return created;
+  }
+
+  async updateDrinkCategory(id: number, updates: Partial<InsertDrinkCategory>): Promise<DrinkCategory> {
+    const [updated] = await db.update(drinkCategories).set(updates).where(eq(drinkCategories.id, id)).returning();
+    return updated;
+  }
+
+  async deleteDrinkCategory(id: number): Promise<void> {
+    await db.delete(drinkItems).where(eq(drinkItems.category, String(id)));
+    await db.delete(drinkCategories).where(eq(drinkCategories.id, id));
+  }
+
+  async reorderDrinkCategories(order: { id: number; orderIndex: number }[]): Promise<void> {
+    await Promise.all(
+      order.map(({ id, orderIndex }) =>
+        db.update(drinkCategories).set({ orderIndex }).where(eq(drinkCategories.id, id))
+      )
+    );
   }
 
   // Menu operations
@@ -2513,6 +2565,21 @@ class StorageWrapper implements IStorage {
   }
   async deleteDrinkItem(id: number): Promise<void> {
     return this.dbCall(() => this.databaseStorage.deleteDrinkItem(id), async () => {});
+  }
+  async getDrinkCategoriesWithItems(pubId: number, includeHidden?: boolean): Promise<any[]> {
+    return this.dbCall(() => this.databaseStorage.getDrinkCategoriesWithItems(pubId, includeHidden), async () => []);
+  }
+  async createDrinkCategory(data: InsertDrinkCategory): Promise<DrinkCategory> {
+    return this.dbCall(() => this.databaseStorage.createDrinkCategory(data), async () => { throw new Error('Not implemented'); });
+  }
+  async updateDrinkCategory(id: number, updates: Partial<InsertDrinkCategory>): Promise<DrinkCategory> {
+    return this.dbCall(() => this.databaseStorage.updateDrinkCategory(id, updates), async () => { throw new Error('Not implemented'); });
+  }
+  async deleteDrinkCategory(id: number): Promise<void> {
+    return this.dbCall(() => this.databaseStorage.deleteDrinkCategory(id), async () => {});
+  }
+  async reorderDrinkCategories(order: { id: number; orderIndex: number }[]): Promise<void> {
+    return this.dbCall(() => this.databaseStorage.reorderDrinkCategories(order), async () => {});
   }
 
   async deleteMenuItem(id: number): Promise<void> {
