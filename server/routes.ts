@@ -7838,13 +7838,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const info = beerInfo.rows[0];
       if (!info) return res.status(404).json({ error: "beer not found" });
 
-      // Authorise: admin or owner of the beer's brewery — same rule as preview.
+      // Authorise: admin, brewery owner, OR pub owner (any authenticated titolare)
       const userId = (req.user as any).id;
       const user = await storage.getUser(userId);
       const effectiveRole = user?.activeRole || user?.userType;
       const isAdminUser = effectiveRole === "admin";
-      const isOwner = user?.breweryId != null && user.breweryId === info.brewery_id;
-      if (!isAdminUser && !isOwner) {
+      const isBreweryOwner = user?.breweryId != null && user.breweryId === info.brewery_id;
+      const isPubOwner = effectiveRole === "pub_owner";
+      if (!isAdminUser && !isBreweryOwner && !isPubOwner) {
         return res.status(403).json({ error: "Not authorized" });
       }
       if (info.image_url && !isPlaceholderImage(info.image_url) && !force) return res.json({ status: "skipped", reason: "already has image" });

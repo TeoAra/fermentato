@@ -565,14 +565,13 @@ export default function BeerDetail() {
     const currentImage = beer?.logoUrl || beer?.imageUrl || null;
     try {
       await apiRequest("POST", `/api/beers/${id}/find-web-image`, { force: true });
-      // Il finder è fire-and-forget: facciamo polling fino a 60s, fermandoci
-      // appena vediamo cambiare l'URL dell'immagine.
+      // Fire-and-forget: polling fino a 60s usando refetchQueries (aspetta il
+      // dato fresco prima di leggere) invece di invalidateQueries + getQueryData.
       const delays = [4000, 4000, 5000, 7000, 10000, 15000, 15000];
-      let elapsed = 0;
       for (const wait of delays) {
-        elapsed += wait;
         await new Promise(r => setTimeout(r, wait));
-        await queryClient.invalidateQueries({ queryKey: ["/api/beers", id] });
+        // refetchQueries attende il completamento del fetch — getQueryData legge dati aggiornati
+        await queryClient.refetchQueries({ queryKey: ["/api/beers", id] });
         const fresh = queryClient.getQueryData<any>(["/api/beers", id]);
         const next = fresh?.logoUrl || fresh?.imageUrl || null;
         if (next && next !== currentImage) {
@@ -580,9 +579,13 @@ export default function BeerDetail() {
           break;
         }
       }
-    } catch {
-      // ignora — verrà comunque ricaricato dopo
+    } catch (err: any) {
+      if (err?.status === 403) {
+        toast({ title: "Non autorizzato", description: "Solo admin e titolari possono cercare immagini.", variant: "destructive" });
+      }
     } finally {
+      // Refetch finale per aggiornare la UI anche se il polling non ha rilevato la modifica
+      await queryClient.refetchQueries({ queryKey: ["/api/beers", id] });
       setIsSearchingImage(false);
     }
   };
