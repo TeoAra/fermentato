@@ -858,8 +858,8 @@ export default function BeerDetail() {
                       <span>Suggerisci</span>
                     </button>
                   )}
-                  {/* Cerca img per titolari (sempre visibile, non solo se manca img) */}
-                  {(isAdmin || isPubOwner) && (
+                  {/* Cerca img solo per titolari pub (admin ce l'ha già nella riga sotto) */}
+                  {isPubOwner && (
                     <button
                       onClick={handleFindWebImage}
                       disabled={isSearchingImage}
@@ -1169,14 +1169,19 @@ export default function BeerDetail() {
                   <WebImageSearchButton
                     endpoint={`/api/beers/${id}/find-image-preview`}
                     responseKey="imageUrl"
-                    onFound={(url) => setEditForm(prev => ({ ...prev, imageUrl: url }))}
+                    onFound={(url) => setEditForm(prev => ({ ...prev, imageUrl: url, logoUrl: '' }))}
                   />
                 </div>
                 <ImageUpload
                   label="Immagine Birra"
                   description="Immagine principale della birra"
-                  currentImageUrl={editForm.imageUrl || undefined}
-                  onImageChange={(url) => setEditForm(prev => ({ ...prev, imageUrl: url ?? '' }))}
+                  currentImageUrl={editForm.imageUrl || editForm.logoUrl || undefined}
+                  onImageChange={(url) => setEditForm(prev => ({
+                    ...prev,
+                    imageUrl: url ?? '',
+                    // Azzera logoUrl così BeerHero mostra imageUrl (evita che logoUrl vecchio abbia priorità)
+                    logoUrl: url ? '' : prev.logoUrl,
+                  }))}
                   folder="beer-images"
                   aspectRatio="square"
                   maxSize={5}
