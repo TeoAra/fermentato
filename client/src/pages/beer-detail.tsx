@@ -215,6 +215,7 @@ export default function BeerDetail() {
   }, []);
   
   const isAdmin = (user as any)?.activeRole === 'admin' || (!((user as any)?.activeRole) && (user as any)?.userType === 'admin');
+  const isPubOwner = (user as any)?.activeRole === 'pub_owner' || (!((user as any)?.activeRole) && (user as any)?.userType === 'pub_owner');
   
   const { data: beer, isLoading: beerLoading } = useQuery<Beer>({
     queryKey: ["/api/beers", id],
@@ -824,40 +825,52 @@ export default function BeerDetail() {
 
           {/* ═══════════ Secondary actions (Wishlist · Cantina · Suggerisci) ═══════════ */}
           {(isAuthenticated || isAdmin) && (
-            <div className="mt-3 flex items-center gap-1.5 flex-wrap">
-              {isAuthenticated && id && (
-                <WishlistButton beerId={parseInt(id)} variant="pill" />
-              )}
+            <div className="mt-3 space-y-2">
+              {/* Riga 1: Wishlist + Cantina + Suggerisci — sempre sulla stessa riga */}
               {isAuthenticated && (
-                <button
-                  onClick={() => cellarMutation.mutate()}
-                  disabled={cellarMutation.isPending}
-                  data-testid="button-cellar"
-                  className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border tap-scale transition-all whitespace-nowrap ${
-                    inCellar
-                      ? 'bg-primary/10 border-primary/30 text-primary'
-                      : 'bg-card border-[#E8DED1] dark:border-white/[0.06] text-[#6B6357] dark:text-[#B7BDC7] hover:border-primary/30'
-                  }`}
-                  title={inCellar ? 'Rimuovi dalla cantina' : 'Aggiungi alla cantina'}
-                >
-                  <Wine className={`h-4 w-4 ${inCellar ? 'fill-current' : ''}`} />
-                  <span>{inCellar ? 'In cantina' : 'Cantina'}</span>
-                </button>
-              )}
-              {isAuthenticated && !isAdmin && (
-                <button
-                  onClick={() => setIsSuggestDialogOpen(true)}
-                  data-testid="button-suggest-change"
-                  className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border bg-card border-[#E8DED1] dark:border-white/[0.06] text-[#6B6357] dark:text-[#B7BDC7] hover:border-primary/30 tap-scale transition-all whitespace-nowrap"
-                  title="Suggerisci una modifica a questa scheda"
-                >
-                  <Lightbulb className="h-4 w-4" />
-                  <span>Suggerisci modifica</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  {id && <WishlistButton beerId={parseInt(id)} variant="pill" />}
+                  <button
+                    onClick={() => cellarMutation.mutate()}
+                    disabled={cellarMutation.isPending}
+                    data-testid="button-cellar"
+                    className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border tap-scale transition-all whitespace-nowrap ${
+                      inCellar
+                        ? 'bg-primary/10 border-primary/30 text-primary'
+                        : 'bg-card border-[#E8DED1] dark:border-white/[0.06] text-[#6B6357] dark:text-[#B7BDC7] hover:border-primary/30'
+                    }`}
+                    title={inCellar ? 'Rimuovi dalla cantina' : 'Aggiungi alla cantina'}
+                  >
+                    <Wine className={`h-4 w-4 ${inCellar ? 'fill-current' : ''}`} />
+                    <span>{inCellar ? 'In cantina' : 'Cantina'}</span>
+                  </button>
+                  {!isAdmin && (
+                    <button
+                      onClick={() => setIsSuggestDialogOpen(true)}
+                      data-testid="button-suggest-change"
+                      className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full text-xs font-bold border bg-card border-[#E8DED1] dark:border-white/[0.06] text-[#6B6357] dark:text-[#B7BDC7] hover:border-primary/30 tap-scale transition-all whitespace-nowrap"
+                      title="Suggerisci una modifica a questa scheda"
+                    >
+                      <Lightbulb className="h-4 w-4" />
+                      <span>Suggerisci</span>
+                    </button>
+                  )}
+                  {/* Cerca img per titolari (sempre visibile, non solo se manca img) */}
+                  {(isAdmin || isPubOwner) && (
+                    <button
+                      onClick={handleFindWebImage}
+                      disabled={isSearchingImage}
+                      className="ml-auto text-[11px] text-primary font-bold disabled:opacity-50 px-2 h-9 tap-scale whitespace-nowrap"
+                    >
+                      {isSearchingImage ? 'Cerco…' : (beer?.logoUrl || beer?.imageUrl) ? 'Re-cerca img' : 'Cerca img'}
+                    </button>
+                  )}
+                </div>
               )}
 
+              {/* Riga 2: bottoni admin modifica/elimina */}
               {isAdmin && (
-                <div className="ml-auto flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5">
                   <button
                     onClick={openEditDialog}
                     data-testid="button-admin-edit-beer"
@@ -873,17 +886,15 @@ export default function BeerDetail() {
                   >
                     <Trash2 className="h-4 w-4" />
                   </button>
+                  {/* Cerca img anche per admin */}
+                  <button
+                    onClick={handleFindWebImage}
+                    disabled={isSearchingImage}
+                    className="text-[11px] text-primary font-bold disabled:opacity-50 px-2 h-9 tap-scale whitespace-nowrap"
+                  >
+                    {isSearchingImage ? 'Cerco…' : (beer?.logoUrl || beer?.imageUrl) ? 'Re-cerca img' : 'Cerca img'}
+                  </button>
                 </div>
-              )}
-
-              {((!beer?.logoUrl && !beer?.imageUrl) || isAdmin) && (
-                <button
-                  onClick={handleFindWebImage}
-                  disabled={isSearchingImage}
-                  className={`${isAdmin ? '' : 'ml-auto'} text-[11px] text-primary font-bold disabled:opacity-50 px-2 h-9 tap-scale`}
-                >
-                  {isSearchingImage ? 'Cerco…' : (beer?.logoUrl || beer?.imageUrl) ? 'Re-cerca img' : 'Cerca img'}
-                </button>
               )}
             </div>
           )}

@@ -243,8 +243,8 @@ export default function BeerHero({
             </div>
           </div>
 
-          {/* Action pills — IDENTICO a PubHero */}
-          <div className="grid grid-cols-3 gap-2 mt-4">
+          {/* Action pills */}
+          <div className="grid grid-cols-2 gap-2 mt-4">
             <button
               type="button"
               onClick={onCheckin}
@@ -271,17 +271,6 @@ export default function BeerHero({
             >
               <Heart className="w-4 h-4" fill={isBeerFavorited ? "currentColor" : "none"} />
               <span>{isBeerFavorited ? "Salvata" : "Salva"}</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={onReview}
-              className="flex items-center justify-center gap-1.5 px-3 h-11 rounded-full border border-[#F59E0B] bg-white dark:bg-[#1A1D24] text-[#F59E0B] font-semibold text-sm active:scale-95 transition-all"
-              data-testid="button-review"
-              aria-label="Scrivi recensione"
-            >
-              <Star className="w-4 h-4" />
-              <span>Recensisci</span>
             </button>
           </div>
         </motion.div>
