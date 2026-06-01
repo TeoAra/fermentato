@@ -256,7 +256,7 @@ export default function HomepageMap({
               const count = c.properties.point_count as number;
               const size = count < 10 ? 38 : count < 50 ? 46 : count < 200 ? 54 : 62;
               return (
-                <Overlay key={`cluster-${c.id}`} anchor={[lat, lng]} offset={[size / 2, size / 2]}>
+                <Overlay key={`cluster-${c.id}`} anchor={[lat, lng]} offset={[size / 2, size / 2]} style={{ zIndex: 10 }}>
                   <div
                     onClick={(e) => {
                       e.stopPropagation();
@@ -286,7 +286,7 @@ export default function HomepageMap({
               const pub = data;
               const isSelected = selected?.type === "pub" && selected.id === pub.id;
               return (
-                <Overlay key={`pub-${pub.id}`} anchor={[lat, lng]} offset={[18, 18]}>
+                <Overlay key={`pub-${pub.id}`} anchor={[lat, lng]} offset={[18, 18]} style={{ zIndex: isSelected ? 1000 : 5 }}>
                   <div style={{ position: "relative" }}>
                     <MarkerPin
                       type="pub"
@@ -315,7 +315,7 @@ export default function HomepageMap({
             const isSelected = selected?.type === "brewery" && selected.id === brewery.id;
             const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
             return (
-              <Overlay key={`brewery-${brewery.id}`} anchor={[lat, lng]} offset={[18, 18]}>
+              <Overlay key={`brewery-${brewery.id}`} anchor={[lat, lng]} offset={[18, 18]} style={{ zIndex: isSelected ? 1000 : 5 }}>
                 <div style={{ position: "relative" }}>
                   <MarkerPin
                     type="brewery"
