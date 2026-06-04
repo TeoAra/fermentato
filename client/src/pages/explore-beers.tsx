@@ -102,6 +102,7 @@ export default function ExploreBeers() {
   const [styleTab, setStyleTab] = useState<StyleTab>("birre");
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [distanceKm, setDistanceKm] = useState(10);
+  const [distanceFilterActive, setDistanceFilterActive] = useState(false);
   const [pubFilter, setPubFilter] = useState<"all" | "open">("all");
   const [stylesView, setStylesView] = useState<null | "popular" | "discover">(null);
   const [findBeerOpen, setFindBeerOpen] = useState(false);
@@ -186,10 +187,12 @@ export default function ExploreBeers() {
 
   const filteredPubs = useMemo(() => {
     let arr = pubsWithDist;
-    if (userLocation) arr = arr.filter((p: any) => p._dist != null && p._dist <= distanceKm);
+    if (distanceFilterActive && userLocation) {
+      arr = arr.filter((p: any) => p._dist != null && p._dist <= distanceKm);
+    }
     if (pubFilter === "open") arr = arr.filter((p: any) => isOpenNow(p.openingHours));
     return arr;
-  }, [pubsWithDist, userLocation, distanceKm, pubFilter]);
+  }, [pubsWithDist, userLocation, distanceKm, pubFilter, distanceFilterActive]);
 
   const mapPins = useMemo(() => filteredPubs.map((p: any) => ({ ...p, type: "pub" as const })), [filteredPubs]);
 
@@ -260,7 +263,7 @@ export default function ExploreBeers() {
             <span className="text-sm font-bold text-foreground truncate">{filteredPubs.length} pub · {styleMeta?.label}</span>
           </div>
         </div>
-        <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}><PubMap pins={mapPins} height="100%" /></Suspense>
+        <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}><PubMap pins={mapPins} height="100%" userLocation={userLocation} radiusKm={distanceFilterActive ? distanceKm : undefined} /></Suspense>
       </div>
     );
   }
@@ -487,9 +490,12 @@ export default function ExploreBeers() {
             <DoveBerleTab
               styleLabel={styleMeta?.label ?? activeStyle}
               pubs={filteredPubs}
+              allPubs={pubsWithDist}
               userLocation={userLocation}
               distanceKm={distanceKm}
               setDistanceKm={setDistanceKm}
+              distanceFilterActive={distanceFilterActive}
+              setDistanceFilterActive={setDistanceFilterActive}
               pubFilter={pubFilter}
               setPubFilter={setPubFilter}
               onOpenMap={() => setViewMode("map")}
@@ -645,13 +651,16 @@ function BirreTab({ beers, loading, pubs, pubsLoading, userLocation, onSeeAllPub
 }
 
 function DoveBerleTab({
-  styleLabel, pubs, userLocation, distanceKm, setDistanceKm, pubFilter, setPubFilter, onOpenMap, onLocate,
+  styleLabel, pubs, allPubs, userLocation, distanceKm, setDistanceKm, distanceFilterActive, setDistanceFilterActive, pubFilter, setPubFilter, onOpenMap, onLocate,
 }: {
   styleLabel: string;
   pubs: any[];
+  allPubs: any[];
   userLocation: { lat: number; lng: number } | null;
   distanceKm: number;
   setDistanceKm: (n: number) => void;
+  distanceFilterActive: boolean;
+  setDistanceFilterActive: (v: boolean) => void;
   pubFilter: "all" | "open";
   setPubFilter: (f: "all" | "open") => void;
   onOpenMap: () => void;
@@ -666,21 +675,31 @@ function DoveBerleTab({
         <div className="relative flex-shrink-0">
           <button
             onClick={() => setShowDistPicker(v => !v)}
-            className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-700 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale hover:border-primary/30 active:scale-[0.99] transition-all duration-200"
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
+              distanceFilterActive
+                ? "bg-primary text-white border-primary shadow-sm"
+                : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-700 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
+            }`}
           >
-            Entro {distanceKm} km ▾
+            {distanceFilterActive ? `Entro ${distanceKm} km` : "Distanza"} ▾
           </button>
           {showDistPicker && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
-              <div className="absolute top-9 left-0 z-50 bg-white/90 dark:bg-white/[0.06] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden min-w-[110px]">
+              <div className="absolute top-9 left-0 z-50 bg-white/90 dark:bg-white/[0.06] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden min-w-[120px]">
+                <button
+                  onClick={() => { setDistanceFilterActive(false); setShowDistPicker(false); }}
+                  className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${!distanceFilterActive ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-muted'}`}
+                >
+                  Tutti
+                </button>
                 {[1, 5, 10, 15, 20, 30, 50].map(d => (
                   <button
                     key={d}
-                    onClick={() => { setDistanceKm(d); setShowDistPicker(false); if (!userLocation) onLocate(); }}
-                    className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-muted'}`}
+                    onClick={() => { setDistanceKm(d); setDistanceFilterActive(true); setShowDistPicker(false); if (!userLocation) onLocate(); }}
+                    className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceFilterActive && distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-muted'}`}
                   >
-                    {d} km
+                    Entro {d} km
                   </button>
                 ))}
               </div>
@@ -708,28 +727,37 @@ function DoveBerleTab({
       </div>
 
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs text-stone-500 font-bold">{pubs.length} pub trovati</span>
-        {pubs.length > 1 && (
-          <span className="text-xs text-stone-400 font-medium">
-            Ordina: {userLocation ? "Distanza" : "Nome"} ▾
-          </span>
+        <span className="text-xs text-stone-500 font-bold">
+          {pubs.length} pub{distanceFilterActive && userLocation ? ` entro ${distanceKm} km` : userLocation ? " ordinati per distanza" : " trovati"}
+        </span>
+        {pubs.length > 1 && userLocation && (
+          <span className="text-xs text-stone-400 font-medium">Distanza ▾</span>
         )}
       </div>
 
       {!userLocation ? (
         <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-3xl p-6 text-center border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
           <Navigation className="w-10 h-10 text-primary mx-auto mb-3" />
-          <h3 className="text-[15px] font-extrabold text-foreground">Posizione</h3>
-          <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">Per trovare pub che servono {styleLabel} vicino a te</p>
+          <h3 className="text-[15px] font-extrabold text-foreground">Dove sei?</h3>
+          <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">Attiva la posizione per vedere i pub più vicini a te che servono {styleLabel}</p>
           <button
             onClick={onLocate}
             className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-primary text-white text-sm font-bold tap-scale shadow-sm"
           >
             Continua
           </button>
+          {allPubs.length > 0 && (
+            <p className="text-xs text-stone-400 mt-3">{allPubs.length} pub servono questo stile</p>
+          )}
         </div>
       ) : pubs.length === 0 ? (
-        <EmptyState icon={<MapPin className="w-8 h-8 text-stone-400" />} title="Nessun pub vicino" subtitle="Prova ad aumentare la distanza" />
+        <EmptyState
+          icon={<MapPin className="w-8 h-8 text-stone-400" />}
+          title={distanceFilterActive ? `Nessun pub entro ${distanceKm} km` : "Nessun pub trovato"}
+          subtitle={distanceFilterActive ? "Prova ad aumentare la distanza o seleziona Tutti" : "Nessun locale serve questo stile al momento"}
+          ctaLabel={distanceFilterActive ? "Mostra tutti" : undefined}
+          onCta={distanceFilterActive ? () => setDistanceFilterActive(false) : undefined}
+        />
       ) : (
         <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
           {pubs.map((pub: any) => (

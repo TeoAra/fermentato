@@ -248,6 +248,7 @@ export default function ExploreBreweries() {
   if (viewMode === "map") {
     return (
       <div className="fixed inset-x-0 bottom-0 top-14 z-40 bg-background">
+        {/* Row 1: back + count */}
         <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
           <button
             onClick={() => setViewMode("list")}
@@ -260,10 +261,57 @@ export default function ExploreBreweries() {
             <span className="text-sm font-bold text-foreground">{breweryMapPins.length} birrifici</span>
           </div>
         </div>
+        {/* Row 2: filter chips */}
+        <div className="absolute top-[3.5rem] left-3 right-3 z-50 flex items-center gap-2 overflow-x-auto scrollbar-hide pointer-events-none">
+          {quickFilter === "nearby" && (
+            <div className="relative flex-shrink-0 pointer-events-auto">
+              <button
+                onClick={() => setShowDistPicker(v => !v)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border bg-primary text-white border-primary shadow-sm tap-scale"
+              >
+                Entro {distanceKm} km ▾
+              </button>
+              {showDistPicker && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
+                  <div className="absolute top-9 left-0 z-50 bg-white/95 dark:bg-[#1A1D24]/95 backdrop-blur-xl border border-stone-100 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
+                    {[1, 5, 10, 15, 20, 30, 50].map(d => (
+                      <button key={d} onClick={() => { setDistanceKm(d); setShowDistPicker(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-muted'}`}>
+                        {d} km
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          {QUICK_FILTERS.filter(f => f.key !== "all").map(f => (
+            <button
+              key={f.key}
+              onClick={() => handleQuickFilter(f.key)}
+              className={`pointer-events-auto flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
+                quickFilter === f.key
+                  ? "bg-primary text-white border-primary shadow-sm"
+                  : "bg-white/80 dark:bg-white/[0.08] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/50 dark:border-white/[0.1] shadow-sm hover:border-primary/30"
+              }`}
+            >
+              {f.icon && f.icon}{f.label}
+            </button>
+          ))}
+        </div>
         {isLoading ? (
           <div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />
         ) : (
-          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}><PubMap pins={breweryMapPins} height="100%" /></Suspense>
+          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
+            <PubMap
+              pins={breweryMapPins}
+              height="100%"
+              userLocation={userLocation}
+              radiusKm={quickFilter === "nearby" && userLocation ? distanceKm : undefined}
+              label="birrifici"
+            />
+          </Suspense>
         )}
       </div>
     );

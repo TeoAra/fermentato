@@ -18,12 +18,25 @@ interface PubMapProps {
   height?: string;
   onError?: () => void;
   label?: string;
+  userLocation?: { lat: number; lng: number } | null;
+  radiusKm?: number;
 }
 
 const ITALY_CENTER: [number, number] = [12.4964, 41.9028];
 const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
 
-export function PubMap({ pins, height = "100%", onError, label }: PubMapProps) {
+function makeCirclePolygon(lat: number, lng: number, radiusKm: number, steps = 64): GeoJSON.FeatureCollection {
+  const coords: [number, number][] = [];
+  for (let i = 0; i <= steps; i++) {
+    const angle = (i / steps) * 2 * Math.PI;
+    const dLat = (radiusKm / 111.32) * Math.sin(angle);
+    const dLng = (radiusKm / (111.32 * Math.cos((lat * Math.PI) / 180))) * Math.cos(angle);
+    coords.push([lng + dLng, lat + dLat]);
+  }
+  return { type: "FeatureCollection", features: [{ type: "Feature", geometry: { type: "Polygon", coordinates: [coords] }, properties: {} }] };
+}
+
+export function PubMap({ pins, height = "100%", onError, label, userLocation, radiusKm }: PubMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
@@ -196,6 +209,40 @@ export function PubMap({ pins, height = "100%", onError, label }: PubMapProps) {
     mapRef.current = map;
     return () => { map.remove(); mapRef.current = null; };
   }, []);
+
+  // Draw / update user-location dot + radius circle whenever location or radius changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+
+    if (userLocation) {
+      const userPoint: GeoJSON.FeatureCollection = {
+        type: "FeatureCollection",
+        features: [{ type: "Feature", geometry: { type: "Point", coordinates: [userLocation.lng, userLocation.lat] }, properties: {} }],
+      };
+
+      if (map.getSource("user-location")) {
+        (map.getSource("user-location") as maplibregl.GeoJSONSource).setData(userPoint);
+      } else {
+        map.addSource("user-location", { type: "geojson", data: userPoint });
+        map.addLayer({ id: "user-dot-halo", type: "circle", source: "user-location", paint: { "circle-radius": 12, "circle-color": "#3b82f6", "circle-opacity": 0.18 } });
+        map.addLayer({ id: "user-dot", type: "circle", source: "user-location", paint: { "circle-radius": 6, "circle-color": "#3b82f6", "circle-stroke-width": 2.5, "circle-stroke-color": "#fff" } });
+      }
+
+      if (radiusKm && radiusKm > 0) {
+        const circleData = makeCirclePolygon(userLocation.lat, userLocation.lng, radiusKm);
+        if (map.getSource("radius-circle")) {
+          (map.getSource("radius-circle") as maplibregl.GeoJSONSource).setData(circleData as any);
+        } else {
+          map.addSource("radius-circle", { type: "geojson", data: circleData as any });
+          map.addLayer({ id: "radius-fill", type: "fill", source: "radius-circle", paint: { "fill-color": "#3b82f6", "fill-opacity": 0.06 } }, "clusters");
+          map.addLayer({ id: "radius-border", type: "line", source: "radius-circle", paint: { "line-color": "#3b82f6", "line-width": 1.5, "line-dasharray": [4, 3], "line-opacity": 0.45 } }, "clusters");
+        }
+      } else if (map.getSource("radius-circle")) {
+        (map.getSource("radius-circle") as maplibregl.GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
+      }
+    }
+  }, [userLocation, radiusKm, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
