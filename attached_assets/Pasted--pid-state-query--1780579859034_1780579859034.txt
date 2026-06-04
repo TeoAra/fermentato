@@ -1,0 +1,53 @@
+   pid   | state  |                                      query                                       |    duration
+---------+--------+----------------------------------------------------------------------------------+-----------------
+ 1444097 | active |                                                                                 +| 00:11:50.211632
+         |        |           SELECT                                                                +|
+         |        |             b1.id as id1, b1.name as name1, b1.country as coun                   |
+ 1444206 | active |                                                                                 +| 00:11:26.535664
+         |        |           SELECT                                                                +|
+         |        |             b1.id as id1, b1.name as name1, b1.country as coun                   |
+ 1444324 | active |                                                                                 +| 00:10:42.492387
+         |        |           SELECT                                                                +|
+         |        |             b1.id as id1, b1.name as name1, b1.country as coun                   |
+ 1444666 | active | ALTER TABLE beers ADD COLUMN IF NOT EXISTS awards jsonb                          | 00:09:24.701672
+ 1444665 | active |                                                                                 +| 00:09:24.691718
+         |        |         ALTER TABLE breweries ADD COLUMN IF NOT EXISTS email varchar;           +|
+         |        |         A                                                                        |
+ 1444672 | active | CREATE INDEX IF NOT EXISTS idx_beers_name_compact_trgm                          +| 00:09:24.634774
+         |        |         ON beers USING GI                                                        |
+ 1444750 | active |                                                                                 +| 00:08:54.819479
+         |        |         SELECT e.id, e.title, e.event_date, e.image_url, e.brewery_id,          +|
+         |        |                                                                                  |
+ 1444842 | active | select "brewery_events"."id", "brewery_events"."brewery_id", "brewery_events"."t | 00:08:24.807847
+ 1444938 | active |                                                                                 +| 00:07:48.628023
+         |        |   ALTER TABLE breweries                                                         +|
+         |        |     ADD COLUMN IF NOT EXISTS is_closed BOOLEAN DEFAULT                           |
+ 1445010 | active | select "brewery_events"."id", "brewery_events"."brewery_id", "brewery_events"."t | 00:07:24.80594
+ 1445036 | active | select "brewery_announcements"."id", "brewery_announcements"."type", "brewery_an | 00:07:19.434247
+ 1445033 | active |                                                                                 +| 00:07:19.431041
+         |        |           SELECT                                                                +|
+         |        |             tl.id,                                                              +|
+         |        |             p.id  AS pub_id,                                                    +|
+         |        |             p.                                                                   |
+ 1445035 | active | select "breweries"."id", "breweries"."name", "breweries"."location", "breweries" | 00:07:19.421398
+ 1445034 | active | select COUNT(*)::int from "breweries" where COALESCE("breweries"."is_closed", fa | 00:07:19.397948
+ 1446246 | active |                                                                                 +| 00:00:00
+         |        | SELECT pid, state, left(query,80) AS query, now()-query_start AS duration       +|
+         |        | FROM                                                                             |
+(15 rows)
+
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+~
+(END)
