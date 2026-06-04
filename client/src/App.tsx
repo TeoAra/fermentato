@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect, Component, ReactNode, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, Component, ReactNode, lazy, Suspense } from "react";
 import { initGA } from "./lib/analytics";
 import { Capacitor } from "@capacitor/core";
 import { useAnalytics } from "./hooks/use-analytics";
@@ -24,9 +24,50 @@ import { DesktopSidebar } from "@/components/desktop-sidebar";
 const CookieBanner = lazy(() => import("@/components/CookieBanner"));
 import { AppUpdateCheck } from "@/components/app-update-check";
 import { ThemeProvider } from "@/lib/theme";
-import { isIosNative } from "@/lib/platform";
+import { isIosNative, isNativeApp } from "@/lib/platform";
 import { NativeSplashOverlay } from "@/components/native-splash-overlay";
 import type { User } from "@shared/schema";
+
+// ─── iOS App Store install banner (browser only, not native app) ─────────────
+function IosAppBanner() {
+  const isIosBrowser = useMemo(() => {
+    if (isNativeApp) return false;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) && !("MSStream" in window);
+  }, []);
+  const [visible, setVisible] = useState(() => {
+    if (!isIosBrowser) return false;
+    try { return sessionStorage.getItem("ios-app-banner-dismissed") !== "1"; } catch { return true; }
+  });
+  if (!isIosBrowser || !visible) return null;
+  const dismiss = () => {
+    setVisible(false);
+    try { sessionStorage.setItem("ios-app-banner-dismissed", "1"); } catch {}
+  };
+  return (
+    <div className="fixed left-3 right-3 z-[60] flex items-center gap-3 px-4 py-3 bg-white dark:bg-[#1C1F26] border border-stone-200 dark:border-[#2A2D35] rounded-2xl shadow-xl"
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 68px)" }}>
+      <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-stone-100 flex items-center justify-center">
+        <img src="/icons/icon-192.png" alt="Fermenta.to" className="w-full h-full object-cover"
+          onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-extrabold text-foreground leading-tight">Fermenta.to su App Store</p>
+        <p className="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">Gratuita · A breve anche su Android</p>
+      </div>
+      <a
+        href="https://apps.apple.com/it/app/fermenta-to/id6769051632"
+        target="_blank" rel="noopener noreferrer"
+        className="flex-shrink-0 flex items-center gap-1 px-3 py-1.5 rounded-full bg-black text-white text-[12px] font-bold tap-scale"
+      >
+        <svg viewBox="0 0 14 14" className="w-3 h-3 fill-white flex-shrink-0"><path d="M7 0C3.134 0 0 3.134 0 7s3.134 7 7 7 7-3.134 7-7-3.134-7-7-7zm.35 10.5c-.192 0-.35-.158-.35-.35V7.35H4.55a.35.35 0 0 1 0-.7H7V3.85a.35.35 0 0 1 .7 0V6.65h2.45a.35.35 0 0 1 0 .7H7.7v2.8c0 .192-.158.35-.35.35z"/></svg>
+        Scarica
+      </a>
+      <button onClick={dismiss} aria-label="Chiudi" className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-stone-400 tap-scale rounded-full hover:bg-stone-100 dark:hover:bg-[#2A2D35]">
+        <svg viewBox="0 0 12 12" className="w-3 h-3 fill-current"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/></svg>
+      </button>
+    </div>
+  );
+}
 
 // ─── Page lazy imports — loaded only when the route is visited ───────────────
 const NotFound           = lazy(() => import("@/pages/not-found"));
@@ -499,6 +540,7 @@ function App() {
               <CapacitorPushPrompt />
               <CookieBanner />
             </Suspense>
+            <IosAppBanner />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

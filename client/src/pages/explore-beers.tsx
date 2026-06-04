@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Beer, Search, X, Star, Bookmark, Dices, Flame, Sparkles, Trophy, ChevronRight, SlidersHorizontal } from "lucide-react";
 import FindBeerSheet from "@/components/FindBeerSheet";
@@ -264,6 +264,20 @@ export default function ExploreBeers() {
   const isLoading = activeStyle ? styleLoading : (searchQ ? searchLoading : false);
   const isHome = !activeStyle && !searchQ;
 
+  // Style suggestion while typing: if inputValue matches a known style, show it
+  const styleSuggestion = useMemo(() => {
+    const q = inputValue.trim().toLowerCase();
+    if (q.length < 2 || activeStyle || searchQ) return null;
+    const all = popularStyles ?? [];
+    // exact → starts-with → contains (min 3 chars)
+    return (
+      all.find(s => s.style.toLowerCase() === q) ??
+      all.find(s => s.style.toLowerCase().startsWith(q) && q.length >= 3) ??
+      (q.length >= 4 ? all.find(s => s.style.toLowerCase().includes(q)) : null) ??
+      null
+    );
+  }, [inputValue, activeStyle, searchQ, popularStyles]);
+
   // ── Actions ──
   function selectStyle(api: string) {
     setActiveStyle(api);
@@ -277,6 +291,15 @@ export default function ExploreBeers() {
   function runSearch(q: string) {
     const trimmed = q.trim();
     if (!trimmed) return;
+    // Match style name first (exact, starts-with, contains)
+    const lowerQ = trimmed.toLowerCase();
+    const all = popularStyles ?? [];
+    const styleMatch =
+      all.find(s => s.style.toLowerCase() === lowerQ) ??
+      all.find(s => s.style.toLowerCase().startsWith(lowerQ) && lowerQ.length >= 3) ??
+      (lowerQ.length >= 4 ? all.find(s => s.style.toLowerCase().includes(lowerQ)) : null);
+    if (styleMatch) { selectStyle(styleMatch.style); return; }
+    // Fall back to full-text beer/brewery search
     setActiveStyle("");
     setSearchQ(trimmed);
     setInputValue(trimmed);
@@ -383,6 +406,20 @@ export default function ExploreBeers() {
               <SlidersHorizontal className="h-4 w-4 text-stone-400 flex-shrink-0" />
             )}
           </div>
+
+          {/* Style suggestion while typing */}
+          {styleSuggestion && (
+            <div className="flex items-center gap-2 animate-in fade-in slide-in-from-top-1 duration-150">
+              <span className="text-[11px] text-stone-400 font-medium flex-shrink-0">Stile trovato:</span>
+              <button
+                onClick={() => selectStyle(styleSuggestion.style)}
+                className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold border border-primary/20 tap-scale hover:bg-primary/20 transition-all"
+              >
+                🍺 {styleSuggestion.style}
+                {styleSuggestion.count > 0 && <span className="opacity-60">· {styleSuggestion.count.toLocaleString("it-IT")}</span>}
+              </button>
+            </div>
+          )}
 
           {/* Style chips */}
           <div className="flex gap-2 overflow-x-auto scrollbar-hide -mx-0.5 px-0.5 pb-1">
