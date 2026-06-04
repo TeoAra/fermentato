@@ -20,6 +20,7 @@ interface PubMapProps {
   label?: string;
   userLocation?: { lat: number; lng: number } | null;
   radiusKm?: number;
+  fullscreen?: boolean;
 }
 
 const ITALY_CENTER: [number, number] = [12.4964, 41.9028];
@@ -36,7 +37,7 @@ function makeCirclePolygon(lat: number, lng: number, radiusKm: number, steps = 6
   return { type: "FeatureCollection", features: [{ type: "Feature", geometry: { type: "Polygon", coordinates: [coords] }, properties: {} }] };
 }
 
-export function PubMap({ pins, height = "100%", onError, label, userLocation, radiusKm }: PubMapProps) {
+export function PubMap({ pins, height = "100%", onError, label, userLocation, radiusKm, fullscreen }: PubMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
@@ -279,7 +280,7 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
 
   if (mapError) {
     return (
-      <div className="relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border bg-stone-50 dark:bg-[#0B0D10]/30 flex flex-col items-center justify-center gap-3 text-center px-6" style={{ height }}>
+      <div className={fullscreen ? "relative w-full h-full bg-stone-50 dark:bg-[#0B0D10]/30 flex flex-col items-center justify-center gap-3 text-center px-6" : "relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border bg-stone-50 dark:bg-[#0B0D10]/30 flex flex-col items-center justify-center gap-3 text-center px-6"} style={fullscreen ? undefined : { height }}>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-stone-300 dark:text-stone-600">
           <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
@@ -295,7 +296,7 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
   }
 
   return (
-    <div data-no-pull="true" className="relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border" style={{ height }}>
+    <div data-no-pull="true" className={fullscreen ? "relative w-full h-full" : "relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border"} style={fullscreen ? undefined : { height }}>
       <div ref={containerRef} className="w-full h-full" />
 
       {/* Info badge */}

@@ -263,7 +263,11 @@ export default function ExploreBeers() {
             <span className="text-sm font-bold text-foreground truncate">{filteredPubs.length} pub · {styleMeta?.label}</span>
           </div>
         </div>
-        <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}><PubMap pins={mapPins} height="100%" userLocation={userLocation} radiusKm={distanceFilterActive ? distanceKm : undefined} /></Suspense>
+        <div className="absolute inset-0">
+          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
+            <PubMap pins={mapPins} height="100%" fullscreen userLocation={userLocation} radiusKm={distanceFilterActive ? distanceKm : undefined} />
+          </Suspense>
+        </div>
       </div>
     );
   }

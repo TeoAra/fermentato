@@ -300,19 +300,22 @@ export default function ExploreBreweries() {
             </button>
           ))}
         </div>
-        {isLoading ? (
-          <div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />
-        ) : (
-          <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
-            <PubMap
-              pins={breweryMapPins}
-              height="100%"
-              userLocation={userLocation}
-              radiusKm={quickFilter === "nearby" && userLocation ? distanceKm : undefined}
-              label="birrifici"
-            />
-          </Suspense>
-        )}
+        <div className="absolute inset-0">
+          {isLoading ? (
+            <div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />
+          ) : (
+            <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
+              <PubMap
+                pins={breweryMapPins}
+                height="100%"
+                fullscreen
+                userLocation={userLocation}
+                radiusKm={quickFilter === "nearby" && userLocation ? distanceKm : undefined}
+                label="birrifici"
+              />
+            </Suspense>
+          )}
+        </div>
       </div>
     );
   }
