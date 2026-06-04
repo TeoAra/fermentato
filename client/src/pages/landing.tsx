@@ -1,17 +1,17 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Beer, MapPin, Store, Users, Navigation,
   ChevronRight, Building2, Search, CheckCircle2,
-  Crown, Shield, ArrowRight, Zap, Sparkles
+  Crown, Shield, ArrowRight, Zap, Sparkles,
+  TrendingUp, Flame, Star, Bookmark, ChevronDown
 } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
-import { lazy, Suspense } from "react";
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
 import { PageContainer } from "@/components/layout/page-container";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
@@ -54,28 +54,6 @@ function useCountUp(target: number, duration = 1400, startDelay = 300) {
   return value;
 }
 
-function useScrollReveal() {
-  const ref = useRef<HTMLElement>(null);
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') {
-      setVisible(true);
-      return;
-    }
-    const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReduced) { setVisible(true); return; }
-    const obs = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
-      { threshold: 0.1 }
-    );
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, []);
-  return { ref, className: `reveal-section${visible ? ' is-visible' : ''}` };
-}
-
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -85,14 +63,19 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+function formatDist(km: number): string {
+  return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
 export default function Landing() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationStatus, setLocationStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
+  const [showPubs, setShowPubs] = useState(true);
+  const [showBreweries, setShowBreweries] = useState(true);
+  const [distanceKm, setDistanceKm] = useState(10);
+  const [showDistancePicker, setShowDistancePicker] = useState(false);
 
   useEffect(() => {
-    // Sulla landing pubblica non chiediamo automaticamente la posizione su
-    // nativo: l'utente non è ancora loggato e il prompt nativo iOS in apertura
-    // è invadente. Su web manteniamo l'auto-richiesta (silent fail).
     if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) {
       setLocationStatus('idle');
       return;
@@ -108,13 +91,13 @@ export default function Landing() {
 
   const { data: breweriesFallback } = useQuery({
     queryKey: ["/api/breweries", "landing-fallback"],
-    queryFn: () => fetch("/api/breweries?random=true&limit=4").then(r => r.json()),
+    queryFn: () => fetch("/api/breweries?random=true&limit=12").then(r => r.json()),
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: breweriesNearby, isLoading: breweriesNearbyLoading } = useQuery({
+  const { data: breweriesNearby } = useQuery({
     queryKey: ["/api/breweries/nearby", userLocation?.lat, userLocation?.lng],
-    queryFn: () => fetch(`/api/breweries/nearby?lat=${userLocation!.lat}&lng=${userLocation!.lng}&limit=4`).then(r => r.json()),
+    queryFn: () => fetch(`/api/breweries/nearby?lat=${userLocation!.lat}&lng=${userLocation!.lng}&limit=12`).then(r => r.json()),
     enabled: !!userLocation,
     staleTime: 5 * 60 * 1000,
   });
@@ -127,22 +110,30 @@ export default function Landing() {
   });
 
   const { data: globalStats } = useQuery<any>({ queryKey: ["/api/stats"] });
+  const { data: popularStyles } = useQuery<{ style: string; count: number }[]>({ queryKey: ["/api/beers/popular-styles"], staleTime: 10 * 60 * 1000 });
+  const { data: taplistActivity = [] } = useQuery<any[]>({ queryKey: ["/api/home/taplist-activity"], staleTime: 2 * 60 * 1000 });
 
   const nearbyHasResults = Array.isArray(breweriesNearby) && breweriesNearby.length > 0;
 
   const sortedPubs = useMemo(() => {
     if (!Array.isArray(pubs)) return [];
-    if (!userLocation) return (pubs as any[]).slice(0, 3);
+    if (!userLocation) return (pubs as any[]).slice(0, 6);
     return [...(pubs as any[])]
       .map((pub: any) => ({
         ...pub,
         _distance: pub.latitude && pub.longitude && parseFloat(pub.latitude) !== 0
           ? haversineDistance(userLocation.lat, userLocation.lng, parseFloat(pub.latitude), parseFloat(pub.longitude))
-          : Infinity,
+          : null,
       }))
-      .sort((a, b) => a._distance - b._distance)
-      .slice(0, 3);
-  }, [pubs, userLocation]);
+      .filter((pub) => pub._distance === null || pub._distance <= distanceKm)
+      .sort((a, b) => {
+        if (a._distance === null && b._distance === null) return 0;
+        if (a._distance === null) return 1;
+        if (b._distance === null) return -1;
+        return a._distance - b._distance;
+      })
+      .slice(0, 6);
+  }, [pubs, userLocation, distanceKm]);
 
   const sortedBreweries = useMemo(() => {
     if (userLocation && nearbyHasResults) return breweriesNearby as any[];
@@ -160,19 +151,18 @@ export default function Landing() {
   const totalBreweries = globalStats?.totalBreweries ?? 0;
   const totalBeers = globalStats?.totalBeers ?? 0;
   const totalPubs = globalStats?.totalPubs ?? 0;
-
   const animBreweries = useCountUp(totalBreweries, 1400, 450);
   const animPubs = useCountUp(totalPubs, 1400, 550);
   const animBeers = useCountUp(totalBeers, 1400, 650);
 
-  const valuePropsReveal = useScrollReveal();
-  const mapReveal = useScrollReveal();
-  const pubsReveal = useScrollReveal();
-  const breweriesReveal = useScrollReveal();
-  const businessReveal = useScrollReveal();
+  const breweryOfDay = useMemo(() => {
+    const src = Array.isArray(sortedBreweries) ? sortedBreweries : [];
+    const withCover = src.filter((b: any) => b.coverImageUrl || b.logoUrl);
+    return withCover[0] ?? src[0] ?? null;
+  }, [sortedBreweries]);
 
   return (
-    <div className="min-h-screen bg-background slide-up">
+    <div className="min-h-screen bg-background">
       <Helmet>
         <title>Fermenta.to — La community italiana della birra artigianale</title>
         <meta name="description" content="Iscriviti a Fermenta.to, la piattaforma per chi ama la birra artigianale. Trova pub e birrifici, assaggia, recensisci e condividi con la community." />
@@ -184,512 +174,574 @@ export default function Landing() {
         <meta property="og:image" content="https://fermenta.to/logo-full.png" />
         <meta name="twitter:card" content="summary_large_image" />
         <link rel="canonical" href="https://fermenta.to/" />
-        <script type="application/ld+json">{JSON.stringify([
-          {
-            "@context": "https://schema.org",
-            "@type": "FAQPage",
-            "mainEntity": [
-              {
-                "@type": "Question",
-                "name": "Cos'è Fermenta.to?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Fermenta.to è la piattaforma italiana dedicata alla birra artigianale. Permette di scoprire pub, birrifici e birre craft, consultare taplist in tempo reale, assaggiare e recensire birre, partecipare ai festival e connettersi con la community dei beer lovers italiani." }
-              },
-              {
-                "@type": "Question",
-                "name": "Come posso trovare pub con birre artigianali vicino a me?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Su Fermenta.to puoi usare la sezione 'Esplora Pub' per trovare i locali craft beer più vicini. L'app utilizza la geolocalizzazione per mostrare pub ordinati per distanza, con taplist aggiornata in tempo reale e orari di apertura." }
-              },
-              {
-                "@type": "Question",
-                "name": "Come funziona la taplist in tempo reale?",
-                "acceptedAnswer": { "@type": "Answer", "text": "I gestori dei pub aggiornano direttamente la taplist dal loro pannello. Gli utenti vedono subito quali birre sono disponibili alla spina, in bottiglia o in lattina, con informazioni su ABV, stile e birrificio." }
-              },
-              {
-                "@type": "Question",
-                "name": "Posso recensire le birre su Fermenta.to?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Sì. Ogni birra nel catalogo può essere valutata con un voto da 1 a 5 stelle e una recensione testuale. Le recensioni contribuiscono al punteggio medio della birra visibile nella scheda prodotto." }
-              },
-              {
-                "@type": "Question",
-                "name": "Come faccio a registrare il mio pub su Fermenta.to?",
-                "acceptedAnswer": { "@type": "Answer", "text": "I proprietari di pub possono registrarsi gratuitamente come gestore. Dopo la verifica, potranno aggiornare la taplist, inserire orari, eventi e promozioni direttamente dalla dashboard." }
-              },
-              {
-                "@type": "Question",
-                "name": "Come faccio a registrare il mio birrificio su Fermenta.to?",
-                "acceptedAnswer": { "@type": "Answer", "text": "I birrifici artigianali possono richiedere la propria pagina su Fermenta.to. Una volta verificati, potranno gestire il catalogo birre, aggiungere informazioni, aggiornare immagini e comunicare direttamente con la community." }
-              },
-              {
-                "@type": "Question",
-                "name": "Fermenta.to è disponibile come app?",
-                "acceptedAnswer": { "@type": "Answer", "text": "Fermenta.to è una Progressive Web App (PWA): può essere installata su iOS e Android direttamente dal browser, senza passare per l'App Store o Play Store, e funziona come un'app nativa." }
-              },
-            ]
-          }
-        ])}</script>
+        <script type="application/ld+json">{JSON.stringify([{
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            { "@type": "Question", "name": "Cos'è Fermenta.to?", "acceptedAnswer": { "@type": "Answer", "text": "Fermenta.to è la piattaforma italiana dedicata alla birra artigianale." } },
+            { "@type": "Question", "name": "Come posso trovare pub con birre artigianali vicino a me?", "acceptedAnswer": { "@type": "Answer", "text": "Su Fermenta.to puoi usare la sezione 'Esplora Pub' per trovare i locali craft beer più vicini." } },
+          ]
+        }])}</script>
       </Helmet>
 
-      {/* ─── HERO ────────────────────────────────────────────────────────── */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(247,113,4,0.07),transparent)]" />
+      {/* ═══════════════════════════════════════════════════════════════
+          HERO — mappa + chip + heading + CTA (stile homepage loggata)
+      ═══════════════════════════════════════════════════════════════ */}
+      <PageContainer as="main" variant="wide" className="pt-4 pb-8">
+
+        {/* Map card */}
+        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-[#0B0D10] shadow-card h-[300px] lg:h-[260px]" style={{ maxHeight: 300 }}>
+          <div className="absolute inset-0 overflow-hidden" style={{ maxHeight: '100%' }}>
+            <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-[#1A1D24]" />}>
+              <HomepageMap
+                pubs={Array.isArray(pubs) ? pubs as any[] : []}
+                breweries={(() => {
+                  const src = Array.isArray(breweriesForMap) && breweriesForMap.length > 0
+                    ? breweriesForMap
+                    : (Array.isArray(breweriesFallback) ? breweriesFallback : []);
+                  return (src as any[]).filter((b: any) => b.latitude && b.longitude);
+                })()}
+                userLocation={userLocation}
+                isLoading={pubsLoading}
+                showPubs={showPubs}
+                showBreweries={showBreweries}
+                distanceKm={userLocation ? distanceKm : undefined}
+                onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
+                showControls={false}
+                fixedHeight={300}
+              />
+            </Suspense>
+          </div>
+
+          {/* Location chip */}
+          <div className="absolute top-3 left-3 z-10 pointer-events-none">
+            {locationStatus === 'granted' && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-white/95 dark:bg-card/95 backdrop-blur-md text-primary rounded-full px-2.5 py-1.5 shadow-card-sm border border-primary/15">
+                <MapPin className="w-3 h-3" /> Vicino a te
+              </span>
+            )}
+            {locationStatus === 'requesting' && (
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-amber-500 text-white rounded-full px-2.5 py-1.5 animate-pulse shadow-card-sm">
+                <Navigation className="w-3 h-3" /> Ricerca GPS…
+              </span>
+            )}
+          </div>
         </div>
 
-        <PageContainer variant="hero" className="relative pt-20 pb-24 lg:pt-12 lg:pb-32 text-center">
-
-          {/* Eyebrow pill */}
-          <div
-            className="slide-up inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 dark:bg-primary/15 border border-primary/20 text-primary text-sm font-semibold mb-8"
-            style={{ animationDelay: '0ms' }}
-          >
-            <Sparkles className="w-4 h-4" />
-            Il tuo punto di riferimento sulla birra artigianale
+        {/* Filter chips below map */}
+        <div className="flex items-center gap-2 mt-3 pb-0.5">
+          {/* Distance picker */}
+          <div className="relative flex-shrink-0">
+            <button
+              onClick={() => setShowDistancePicker(v => !v)}
+              className="tap-scale flex items-center gap-1.5 bg-card border border-border rounded-full px-3.5 py-2 text-[13px] font-bold text-foreground shadow-card-sm whitespace-nowrap"
+            >
+              {distanceKm} km <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
+            {showDistancePicker && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowDistancePicker(false)} />
+                <div className="absolute top-11 left-0 z-50 bg-card border border-border rounded-2xl shadow-card overflow-hidden min-w-[110px]">
+                  {[1, 5, 10, 15, 20, 30, 50, 100].map(d => (
+                    <button
+                      key={d}
+                      onClick={() => { setDistanceKm(d); setShowDistancePicker(false); }}
+                      className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-muted'}`}
+                    >
+                      {d} km
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Headline — the most important line on the page */}
-          <h1
-            className="slide-up font-display text-5xl sm:text-6xl lg:text-7xl font-black text-stone-900 dark:text-white mb-6 leading-[1.05]"
-            style={{ animationDelay: '80ms' }}
-          >
-            Trova la birra perfetta.<br />
-            <span className="text-primary font-display-italic">Sempre vicina a te.</span>
-          </h1>
+          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
+            <button
+              onClick={() => setShowPubs(v => !v)}
+              className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
+                showPubs ? 'bg-primary border-primary text-white' : 'bg-card border-border text-foreground'
+              }`}
+            >
+              <Store className="w-3.5 h-3.5" /> Pub
+            </button>
+            <button
+              onClick={() => setShowBreweries(v => !v)}
+              className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
+                showBreweries ? 'bg-amber-500 border-amber-500 text-white' : 'bg-card border-border text-foreground'
+              }`}
+            >
+              <Building2 className="w-3.5 h-3.5" /> Birrifici
+            </button>
+            <Link href="/search" className="flex-shrink-0">
+              <button className="tap-scale w-9 h-9 flex items-center justify-center bg-card border border-border rounded-full shadow-card-sm text-foreground" aria-label="Cerca birre">
+                <Search className="w-4 h-4" />
+              </button>
+            </Link>
+          </div>
+        </div>
 
-          {/* Sub-headline */}
-          <p
-            className="slide-up text-xl text-stone-500 dark:text-stone-400 mb-10 max-w-2xl mx-auto leading-relaxed"
-            style={{ animationDelay: '160ms' }}
-          >
-            Fermenta.to ti connette a <strong className="text-stone-700 dark:text-stone-300">pub artigianali</strong>,{" "}
-            <strong className="text-stone-700 dark:text-stone-300">birrifici da tutto il mondo</strong> e{" "}
-            <strong className="text-stone-700 dark:text-stone-300">oltre {totalBeers > 0 ? (totalBeers / 1000).toFixed(0) + "k" : "1M"} birre</strong> — tutto in un'unica app gratuita.
+        {/* Content block — heading + CTAs */}
+        <div className="mt-4">
+          <h1 className="text-[26px] sm:text-[30px] font-extrabold text-foreground leading-[1.15] tracking-tight">
+            Trova la birra perfetta.<br />
+            <span className="text-primary">Sempre vicina a te.</span>
+          </h1>
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            Pub, birrifici e{" "}
+            {totalBeers > 0 ? (
+              <strong className="text-foreground">{(totalBeers / 1000).toFixed(0)}k birre</strong>
+            ) : (
+              <strong className="text-foreground">migliaia di birre</strong>
+            )}{" "}
+            — tutto in un'unica app gratuita.
           </p>
 
-          {/* CTA group — ONE primary, one ghost */}
-          <div
-            className="slide-up flex flex-col sm:flex-row items-center justify-center gap-3 mb-14"
-            style={{ animationDelay: '240ms' }}
-          >
-            <Link href="/login">
-              <Button
-                size="lg"
-                className="h-14 px-8 text-base font-bold rounded-2xl text-white border-0 shadow-xl shadow-orange-200/50 dark:shadow-orange-900/30 active:scale-[0.97] transition-transform"
-                style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }}
-              >
-                <Users className="mr-2 w-5 h-5" />
-                Inizia gratis — è immediato
-              </Button>
+          {/* CTAs */}
+          <div className="flex gap-2.5 mt-4">
+            <Link href="/login" className="flex-1">
+              <button className="tap-scale btn-orange-glow w-full flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card">
+                <Users className="w-4 h-4" />
+                Inizia gratis
+              </button>
             </Link>
-            <Link href="/explore/breweries">
-              <Button
-                size="lg"
-                variant="ghost"
-                className="h-14 px-8 text-base font-semibold rounded-2xl text-stone-600 dark:text-stone-300 hover:bg-white dark:hover:bg-white/10 border border-stone-200 dark:border-[#23262E] bg-white/60 dark:bg-white/5 backdrop-blur-sm active:scale-[0.97] transition-transform"
-              >
-                <Search className="mr-2 w-5 h-5" />
-                Esplora senza account
-              </Button>
+            <Link href="/explore/pubs" className="flex-1">
+              <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-sm font-bold px-4 py-3 rounded-2xl border-2 border-primary/25 shadow-card-sm">
+                <Store className="w-4 h-4 text-primary" />
+                Esplora pub
+              </button>
             </Link>
           </div>
 
-          {/* Live stats pills — animated count-up */}
-          {globalStats && (
-            <div
-              className="slide-up flex flex-wrap items-center justify-center gap-3"
-              style={{ animationDelay: '340ms' }}
+          {/* GPS opt-in */}
+          {locationStatus !== 'granted' && locationStatus !== 'requesting' && (
+            <button
+              onClick={handleRequestLocation}
+              className="tap-scale w-full mt-2.5 flex items-center justify-center gap-1.5 text-primary text-[13px] font-bold px-4 py-2 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-primary/15"
             >
-              {[
-                { icon: Building2, val: animBreweries.toLocaleString("it-IT"), label: "birrifici" },
-                { icon: Store, val: animPubs.toLocaleString("it-IT"), label: "pub" },
-                { icon: Beer, val: (() => { if (!animBeers) return "—"; if (animBeers < 1000) return animBeers.toString(); const k = Math.round(animBeers / 100) / 10; return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + "k"; })(), label: "birre" },
-              ].map(({ icon: Icon, val, label }) => (
-                <div key={label} className="flex items-center gap-2 px-4 py-2.5 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-full border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tabular-nums transition-all duration-200">
-                  <Icon className="w-4 h-4 text-primary flex-shrink-0" />
-                  <span className="font-bold text-stone-900 dark:text-white text-sm min-w-[2.5rem] text-right">{val}</span>
-                  <span className="text-stone-400 dark:text-stone-500 text-sm">{label}</span>
-                </div>
-              ))}
-            </div>
+              <Navigation className="w-3.5 h-3.5" />
+              Usa la mia posizione
+            </button>
           )}
 
-          {/* News strip dentro l'Hero */}
-          <div className="slide-up mt-10 max-w-4xl mx-auto" style={{ animationDelay: '420ms' }}>
+          {/* NewsStrip */}
+          <div className="mt-5">
             <NewsStrip variant="hero" limit={6} />
           </div>
-        </PageContainer>
+        </div>
 
-        {/* Smooth fade into next section */}
-        <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-b from-transparent to-background" />
-      </section>
-
-      {/* ─── SOCIAL PROOF BAR ────────────────────────────────────────────── */}
-      <section className="border-y border-stone-100 dark:border-[#23262E] bg-white/50 dark:bg-white/3 py-5">
-        <PageContainer variant="hero" className="flex flex-wrap items-center justify-center gap-8 text-sm text-stone-500 dark:text-stone-400">
-          <span className="flex items-center gap-2 font-medium">
-            <CheckCircle2 className="w-4 h-4 text-green-500" /> 100% gratuito per gli utenti
-          </span>
-          <span className="hidden sm:block text-stone-200 dark:text-stone-700">|</span>
-          <span className="flex items-center gap-2 font-medium">
-            <Navigation className="w-4 h-4 text-primary" /> Geolocalizzazione in tempo reale
-          </span>
-          <span className="hidden sm:block text-stone-200 dark:text-stone-700">|</span>
-          <span className="flex items-center gap-2 font-medium">
-            <Building2 className="w-4 h-4 text-amber-500" /> Birrifici da tutto il mondo
-          </span>
-          <span className="hidden sm:block text-stone-200 dark:text-stone-700">|</span>
-          <span className="flex items-center gap-2 font-medium">
-            <Shield className="w-4 h-4 text-blue-500" /> Dati verificati dalla community
-          </span>
-        </PageContainer>
-      </section>
-
-      {/* ─── VALUE PROPS ─────────────────────────────────────────────────── */}
-      <section ref={valuePropsReveal.ref} className={`${valuePropsReveal.className} py-20 lg:py-28`}>
-        <PageContainer variant="hero">
-          <div className="text-center mb-14">
-            <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Perché Fermenta.to</p>
-            <h2 className="display-serif text-4xl lg:text-5xl font-black text-stone-900 dark:text-white mb-4 leading-tight">
-              Tutto il craft beer,<br className="hidden sm:block" /> in un'unica app
-            </h2>
-            <p className="text-stone-500 dark:text-stone-400 max-w-xl mx-auto text-lg">
-              Che tu sia un appassionato, un gestore di pub o un birrificio — Fermenta.to ha qualcosa per te.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* ─── STATS ROW ────────────────────────────────────────── */}
+        {globalStats && (
+          <div className="grid grid-cols-3 gap-3 mt-6">
             {[
-              {
-                emoji: "🗺️",
-                title: "Trova il pub giusto in pochi secondi",
-                desc: "Geolocalizzazione in tempo reale con taplist aggiornata e orari. Sai già cosa berrai prima di uscire di casa.",
-                cta: "Cerca pub vicini",
-                href: "/explore/pubs",
-                ctaClass: "text-primary",
-              },
-              {
-                emoji: "🍺",
-                title: "Un catalogo vastissimo di birre",
-                desc: "Stile, ABV, IBU, birrificio di origine e disponibilità locale. Migliaia di etichette da esplorare e scoprire.",
-                cta: "Esplora il catalogo",
-                href: "/search",
-                ctaClass: "text-amber-600 dark:text-amber-400",
-              },
-              {
-                emoji: "🏭",
-                title: "Birrifici da tutto il mondo",
-                desc: "Oltre 50.000 birrifici mappati in tutto il mondo. Visita i più vicini, segui le uscite stagionali e scopri nuovi produttori.",
-                cta: "Esplora birrifici",
-                href: "/explore/breweries",
-                ctaClass: "text-stone-700 dark:text-stone-300",
-              },
-            ].map((card, i) => (
-              <Link key={card.title} href={card.href}>
-                <div
-                  className="interactive-card rounded-3xl p-8 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex flex-col h-full group transition-all duration-200 hover:bg-white/80 dark:hover:bg-white/[0.06]"
-                  style={{ transitionDelay: `${i * 60}ms` }}
-                >
-                  <div className="text-5xl mb-5">{card.emoji}</div>
-                  <h3 className="text-xl font-bold text-stone-900 dark:text-white mb-3 leading-snug">{card.title}</h3>
-                  <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed flex-1 mb-6">{card.desc}</p>
-                  <span className={`flex items-center gap-1.5 text-sm font-bold ${card.ctaClass}`}>
-                    {card.cta}
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              { icon: Building2, val: animBreweries.toLocaleString("it-IT"), label: "Birrifici", color: "bg-amber-100 dark:bg-amber-900/25", iconColor: "text-amber-500" },
+              { icon: Store, val: animPubs.toLocaleString("it-IT"), label: "Pub", color: "bg-orange-100 dark:bg-orange-900/25", iconColor: "text-primary" },
+              { icon: Beer, val: (() => {
+                if (!animBeers) return "—";
+                if (animBeers < 1000) return animBeers.toString();
+                const k = Math.round(animBeers / 100) / 10;
+                return (k % 1 === 0 ? k.toFixed(0) : k.toFixed(1)) + "k";
+              })(), label: "Birre", color: "bg-blue-100 dark:bg-blue-900/25", iconColor: "text-blue-500" },
+            ].map(({ icon: Icon, val, label, color, iconColor }) => (
+              <div key={label} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-center">
+                <div className={`w-9 h-9 rounded-full ${color} flex items-center justify-center mx-auto mb-2`}>
+                  <Icon className={`w-4.5 h-4.5 ${iconColor}`} style={{ width: 18, height: 18 }} />
+                </div>
+                <p className="text-[22px] font-extrabold text-foreground leading-none tabular-nums">{val}</p>
+                <p className="text-[11px] font-semibold text-muted-foreground mt-1">{label}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ─── BIRRIFICIO IN EVIDENZA ────────────────────────────── */}
+        {breweryOfDay && (
+          <section className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="section-title flex items-center gap-2">
+                <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
+                Consigliato per te
+              </h2>
+              <Link href="/explore/breweries">
+                <button className="text-sm font-semibold text-primary">Vedi tutti →</button>
+              </Link>
+            </div>
+            <Link href={`/brewery/${breweryOfDay.id}`}>
+              <div className="tap-scale relative rounded-3xl overflow-hidden cursor-pointer shadow-card" style={{ height: '168px' }}>
+                {(breweryOfDay.coverImageUrl || breweryOfDay.logoUrl) ? (
+                  <img src={breweryOfDay.coverImageUrl || breweryOfDay.logoUrl} alt={breweryOfDay.name} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #1a0800 0%, #3d1200 50%, #7a2800 100%)' }} />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/20" />
+                <div className="absolute inset-0 flex flex-col justify-end p-5">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-300 mb-1.5 uppercase tracking-wide">
+                    <Star className="w-3 h-3" fill="currentColor" /> In evidenza
                   </span>
+                  <p className="text-white/65 text-[11px] font-medium mb-0.5">Birrificio del giorno</p>
+                  <p className="text-white text-[18px] font-extrabold leading-tight">{breweryOfDay.name}</p>
+                  {breweryOfDay.location && (
+                    <p className="text-white/60 text-[11px] mt-0.5 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />{breweryOfDay.location}
+                    </p>
+                  )}
+                  <button className="mt-3 self-start text-[12px] font-bold bg-white text-stone-900 rounded-full px-4 py-1.5 shadow-md">
+                    Scopri il birrificio →
+                  </button>
+                </div>
+              </div>
+            </Link>
+          </section>
+        )}
+
+        {/* ─── ORA IN SPINA ─────────────────────────────────────── */}
+        {(taplistActivity as any[]).length > 0 && (
+          <section className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="section-title flex items-center gap-1.5">
+                <Flame className="w-5 h-5 text-primary" />
+                Ora in spina vicino a te
+              </h2>
+              <Link href="/explore/pubs">
+                <button className="text-sm font-semibold text-primary">Vedi tutto →</button>
+              </Link>
+            </div>
+            <div className="flex gap-3 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
+              {(taplistActivity as any[]).map((item: any) => (
+                <Link key={item.id} href={`/pub/${item.pub_slug || item.pub_id}`}>
+                  <div className="tap-scale flex-shrink-0 w-[148px] cursor-pointer">
+                    <div className="relative h-[112px] rounded-2xl overflow-hidden mb-2 bg-muted shadow-card-sm">
+                      {item.beer_image ? (
+                        <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary to-[#c95000] flex items-center justify-center">
+                          <Beer className="w-8 h-8 text-white/70" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+                      {item.beer_abv && (
+                        <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/45 backdrop-blur-sm rounded-full px-2 py-0.5">
+                          {item.beer_abv}%
+                        </span>
+                      )}
+                      <span className={`absolute top-2 left-2 text-[9px] font-extrabold text-white rounded-full px-1.5 py-0.5 uppercase ${item.tap_type === 'pompa' ? 'bg-violet-600' : 'bg-primary'}`}>
+                        {item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
+                      </span>
+                    </div>
+                    <p className="text-[13px] font-semibold text-foreground line-clamp-1 leading-tight">{item.beer_name}</p>
+                    {item.beer_style && <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{item.beer_style}</p>}
+                    <div className="flex items-center gap-1 mt-1.5">
+                      {item.pub_logo
+                        ? <img src={item.pub_logo} alt={item.pub_name} className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0" />
+                        : <Store className="w-3 h-3 text-muted-foreground flex-shrink-0" />}
+                      <p className="text-[10px] text-muted-foreground truncate">{item.pub_name}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* ─── PUB LIST ─────────────────────────────────────────── */}
+        {sortedPubs.length > 0 && (
+          <section className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="section-title flex items-center gap-2">
+                <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
+                {userLocation ? 'Pub vicini a te' : 'Pub consigliati'}
+              </h2>
+              <Link href="/explore/pubs">
+                <button className="text-sm font-semibold text-primary">Vedi tutti →</button>
+              </Link>
+            </div>
+            {pubsLoading ? (
+              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] overflow-hidden">
+                {[...Array(3)].map((_, i) => <div key={i} className="h-16 bg-muted/50 border-b border-border last:border-0 animate-pulse" />)}
+              </div>
+            ) : (
+              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl overflow-hidden border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                {sortedPubs.slice(0, 5).map((pub: any, idx: number) => {
+                  const tap = (taplistActivity as any[]).find((t: any) => t.pub_id === pub.id);
+                  const isLast = idx === Math.min(4, sortedPubs.length - 1);
+                  return (
+                    <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
+                      <div className={`tap-scale flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/30 ${!isLast ? 'border-b border-border' : ''}`}>
+                        <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+                          {pub.logoUrl
+                            ? <img src={pub.logoUrl} alt={pub.name} className="w-10 h-10 object-cover" />
+                            : <Store className="w-4 h-4 text-muted-foreground" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-semibold text-foreground truncate">{pub.name}</p>
+                          <p className="text-[11px] text-muted-foreground">
+                            {pub.city || pub.address?.split(',')[0]}
+                            {pub._distance != null ? ` · ${formatDist(pub._distance)}` : ''}
+                          </p>
+                        </div>
+                        {tap ? (
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <div className="text-right">
+                              <p className="text-[11px] font-medium text-foreground truncate max-w-[80px]">{tap.beer_name}</p>
+                              <p className="text-[10px] text-muted-foreground">{tap.beer_style}</p>
+                            </div>
+                            {tap.beer_image
+                              ? <img src={tap.beer_image} alt={tap.beer_name} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
+                              : <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0"><Beer className="w-4 h-4 text-primary" /></div>
+                            }
+                          </div>
+                        ) : (
+                          <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                        )}
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* ─── TREND STILI ──────────────────────────────────────── */}
+        {Array.isArray(popularStyles) && popularStyles.length > 0 && (
+          <section className="mt-6">
+            <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-[14px] font-bold text-foreground flex items-center gap-1.5">
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                  Stili di tendenza
+                </h3>
+                <Link href="/explore/beers">
+                  <span className="text-[11px] font-semibold text-primary">Vedi tutto →</span>
+                </Link>
+              </div>
+              <div className="space-y-2.5">
+                {(() => {
+                  const top = popularStyles.slice(0, 5);
+                  const max = top[0]?.count ?? 1;
+                  return top.map((s, i) => (
+                    <Link key={s.style} href={`/explore/beers?style=${encodeURIComponent(s.style)}`}>
+                      <div className="flex items-center gap-2 cursor-pointer">
+                        <span className={`text-[10px] font-bold w-3 text-right flex-shrink-0 ${i < 3 ? 'text-primary' : 'text-muted-foreground'}`}>{i + 1}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <p className="text-[11px] font-medium text-foreground truncate">{s.style}</p>
+                            <p className="text-[10px] text-muted-foreground ml-1 flex-shrink-0">{Math.round((s.count / max) * 100)}%</p>
+                          </div>
+                          <div className="h-1 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full transition-all duration-700" style={{ width: `${Math.round((s.count / max) * 100)}%` }} />
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ));
+                })()}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ─── BIRRIFICI ────────────────────────────────────────── */}
+        {sortedBreweries.length > 0 && (
+          <section className="mt-6">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="section-title flex items-center gap-2">
+                <span className="w-1.5 h-5 rounded-full bg-amber-500 flex-shrink-0" />
+                {nearbyHasResults ? 'Birrifici vicini' : 'Birrifici in evidenza'}
+              </h2>
+              <Link href="/explore/breweries">
+                <button className="text-sm font-semibold text-primary">Vedi tutti →</button>
+              </Link>
+            </div>
+            <div className="flex gap-3 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
+              {sortedBreweries.slice(0, 8).map((brewery: any) => (
+                <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
+                  <div className="tap-scale flex-shrink-0 w-[140px] cursor-pointer">
+                    <div className="relative h-[100px] rounded-2xl overflow-hidden mb-2 bg-muted shadow-card-sm">
+                      {brewery.coverImageUrl || brewery.logoUrl ? (
+                        <img src={brewery.coverImageUrl || brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
+                          <Building2 className="w-8 h-8 text-white/70" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                    </div>
+                    <p className="text-[13px] font-semibold text-foreground line-clamp-1 leading-tight">{brewery.name}</p>
+                    {brewery.location && <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" />{brewery.location}</p>}
+                    {brewery._distance != null && isFinite(brewery._distance) && (
+                      <p className="text-[10px] text-primary font-semibold mt-0.5">{formatDist(brewery._distance)}</p>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </PageContainer>
+
+      {/* ─── PERCHÉ FERMENTA ─────────────────────────────────────────────── */}
+      <div className="border-t border-border mt-4">
+        <PageContainer variant="wide" className="py-8">
+          <div className="mb-5">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Perché Fermenta.to</p>
+            <h2 className="text-[22px] font-extrabold text-foreground leading-tight">
+              Tutto il craft beer, in un'unica app
+            </h2>
+          </div>
+          <div className="space-y-3">
+            {[
+              { icon: MapPin, emoji: "🗺️", title: "Trova il pub giusto", desc: "Taplist live, orari e geolocalizzazione in tempo reale.", cta: "Cerca pub", href: "/explore/pubs", accent: "bg-orange-100 dark:bg-orange-900/25 text-primary" },
+              { icon: Beer, emoji: "🍺", title: "Catalogo vastissimo", desc: "Stile, ABV, IBU e disponibilità locale. Migliaia di etichette.", cta: "Esplora birre", href: "/search", accent: "bg-amber-100 dark:bg-amber-900/25 text-amber-500" },
+              { icon: Building2, emoji: "🏭", title: "Birrifici dal mondo", desc: "Oltre 50.000 birrifici mappati — vicini e lontani.", cta: "Esplora birrifici", href: "/explore/breweries", accent: "bg-stone-100 dark:bg-stone-800 text-stone-500" },
+            ].map((card) => (
+              <Link key={card.title} href={card.href}>
+                <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:bg-white/80 dark:hover:bg-white/[0.06]">
+                  <div className={`w-12 h-12 rounded-2xl ${card.accent} flex items-center justify-center flex-shrink-0 text-2xl`}>
+                    {card.emoji}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[14px] font-bold text-foreground">{card.title}</p>
+                    <p className="text-[12px] text-muted-foreground mt-0.5 leading-relaxed">{card.desc}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-[12px] font-bold text-primary flex-shrink-0">
+                    {card.cta} <ChevronRight className="w-3.5 h-3.5" />
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
-        </PageContainer>
-      </section>
 
-      {/* ─── MAP + GPS ───────────────────────────────────────────────────── */}
-      <section ref={mapReveal.ref} className={`${mapReveal.className} py-6 pb-20`}>
-        <PageContainer variant="hero">
-          <div className="flex items-end justify-between mb-8 flex-wrap gap-4">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">
-                {locationStatus === 'granted' ? '📍 La tua zona' : '🗺️ Esplora la mappa'}
-              </p>
-              <h2 className="display-serif text-3xl lg:text-4xl font-black text-stone-900 dark:text-white">
-                {locationStatus === 'granted' ? 'Vicino a te adesso' : 'Pub e birrifici nel mondo'}
-              </h2>
-            </div>
-            {locationStatus !== 'granted' && (
-              <Button
-                onClick={handleRequestLocation}
-                disabled={locationStatus === 'requesting'}
-                className="rounded-2xl h-11 px-5 font-bold text-white border-0 shadow-md shadow-orange-200/40"
-                style={{ background: "linear-gradient(135deg,#F77104,#f5a623)" }}
-              >
-                <Navigation className="w-4 h-4 mr-2" />
-                {locationStatus === 'requesting' ? 'Ricerca...' : 'Continua'}
-              </Button>
-            )}
+          {/* Social proof mini-row */}
+          <div className="flex flex-wrap gap-3 mt-5">
+            {[
+              { icon: CheckCircle2, label: "100% gratuito per gli utenti", color: "text-green-500" },
+              { icon: Shield, label: "Dati verificati dalla community", color: "text-blue-500" },
+              { icon: Sparkles, label: "Aggiornato in tempo reale", color: "text-amber-500" },
+            ].map(({ icon: Icon, label, color }) => (
+              <span key={label} className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground bg-muted/50 rounded-full px-3 py-1.5 border border-border">
+                <Icon className={`w-3.5 h-3.5 ${color}`} /> {label}
+              </span>
+            ))}
+          </div>
+        </PageContainer>
+      </div>
+
+      {/* ─── PER LE ATTIVITÀ ─────────────────────────────────────────────── */}
+      <div className="border-t border-border">
+        <PageContainer variant="wide" className="py-8">
+          <div className="mb-5">
+            <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">Per le attività</p>
+            <h2 className="text-[22px] font-extrabold text-foreground leading-tight">Sei un pub o un birrificio?</h2>
+            <p className="text-sm text-muted-foreground mt-1">Porta la tua attività online e raggiungi migliaia di appassionati.</p>
           </div>
 
-          {locationStatus === 'granted' ? (
-            <div className="relative w-full h-[420px] rounded-3xl overflow-hidden bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200" style={{ maxHeight: 420 }}>
-              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
-                <HomepageMap
-                  pubs={Array.isArray(pubs) ? pubs : []}
-                  breweries={Array.isArray(breweriesForMap) && breweriesForMap.length > 0 ? breweriesForMap : (Array.isArray(breweriesFallback) ? breweriesFallback : [])}
-                  userLocation={userLocation}
-                  isLoading={pubsLoading || breweriesNearbyLoading}
-                  onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
-                  fixedHeight={420}
-                />
-              </Suspense>
-            </div>
-          ) : (
-            <div className="rounded-3xl overflow-hidden bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] h-80 flex flex-col items-center justify-center text-center gap-4 p-8 transition-all duration-200">
-              <div className="w-16 h-16 rounded-2xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center">
-                <MapPin className="w-7 h-7 text-primary" />
-              </div>
-              <div>
-                <p className="text-stone-700 dark:text-stone-300 font-semibold mb-1">Mappa live nella tua zona</p>
-                <p className="text-stone-400 text-sm">Vedi pub e birrifici in tempo reale attorno a te</p>
-              </div>
-              <Button
-                onClick={handleRequestLocation}
-                size="sm"
-                className="rounded-xl font-bold text-white border-0"
-                style={{ background: "linear-gradient(135deg,#F77104,#f5a623)" }}
-              >
-                <Navigation className="w-4 h-4 mr-2" />
-                Continua
-              </Button>
-            </div>
-          )}
-        </PageContainer>
-      </section>
-
-      {/* ─── PUB VICINI ──────────────────────────────────────────────────── */}
-      <section ref={pubsReveal.ref} className={`${pubsReveal.className} py-6 pb-20 bg-white/40 dark:bg-white/2`}>
-        <PageContainer variant="hero">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">Locali</p>
-              <h2 className="display-serif text-3xl font-black text-stone-900 dark:text-white">
-                {userLocation ? 'Pub vicini a te' : 'Pub consigliati'}
-              </h2>
-            </div>
-            <Link href="/explore/pubs">
-              <Button variant="ghost" className="text-primary hover:text-primary hover:bg-orange-50 dark:hover:bg-orange-900/20 font-bold rounded-xl">
-                Vedi tutti <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-          {pubsLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(3)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-[#1A1D24] rounded-3xl h-80 animate-pulse" />)}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {sortedPubs.map((pub: any) => (
-                <PubCard key={pub.id} pub={pub} distance={userLocation && pub._distance !== Infinity ? pub._distance : undefined} />
-              ))}
-            </div>
-          )}
-        </PageContainer>
-      </section>
-
-      {/* ─── BIRRIFICI ───────────────────────────────────────────────────── */}
-      <section ref={breweriesReveal.ref} className={`${breweriesReveal.className} py-6 pb-20`}>
-        <PageContainer variant="hero">
-          <div className="flex items-center justify-between mb-10">
-            <div>
-              <p className="text-sm font-bold uppercase tracking-widest text-primary mb-2">Produttori</p>
-              <h2 className="display-serif text-3xl font-black text-stone-900 dark:text-white">
-                {nearbyHasResults ? 'Birrifici vicini' : 'Birrifici in evidenza'}
-              </h2>
-            </div>
-            <Link href="/explore/breweries">
-              <Button variant="ghost" className="text-primary hover:text-primary hover:bg-orange-50 dark:hover:bg-orange-900/20 font-bold rounded-xl">
-                Vedi tutti <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </Link>
-          </div>
-          {Array.isArray(breweriesFallback) && breweriesFallback.length === 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[...Array(4)].map((_, i) => <div key={i} className="bg-stone-100 dark:bg-[#1A1D24] rounded-3xl h-72 animate-pulse" />)}
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {sortedBreweries.map((brewery: any) => (
-                <BreweryCard key={brewery.id} brewery={brewery} beerCount={brewery.beerCount ?? 0}
-                  distance={nearbyHasResults && brewery._distance != null && isFinite(brewery._distance) ? brewery._distance : undefined} />
-              ))}
-            </div>
-          )}
-        </PageContainer>
-      </section>
-
-      {/* ─── FOR BUSINESS ────────────────────────────────────────────────── */}
-      <section ref={businessReveal.ref} className={`${businessReveal.className} py-20 lg:py-28`}>
-        <PageContainer variant="hero">
-          <div className="text-center mb-14">
-            <p className="text-sm font-bold uppercase tracking-widest text-primary mb-3">Per le attività</p>
-            <h2 className="display-serif text-4xl font-black text-stone-900 dark:text-white mb-4">
-              Sei un pub o un birrificio?
-            </h2>
-            <p className="text-stone-500 dark:text-stone-400 max-w-xl mx-auto text-lg">
-              Porta la tua attività online e raggiungi migliaia di appassionati ogni giorno.
-            </p>
-          </div>
-
-          <div className={`grid grid-cols-1 ${isIosNative ? '' : 'md:grid-cols-2'} gap-6 max-w-4xl mx-auto`}>
-            {/* Pub plan — hidden on iOS native (App Store guideline 3.1.3(e), B2B) */}
+          <div className="space-y-3">
+            {/* Pub Pro — nascosto su iOS */}
             {!isIosNative && (
-            <div className="rounded-3xl p-8 text-white shadow-xl shadow-orange-200/50 dark:shadow-orange-900/30 flex flex-col"
-              style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 60%, #f5a623 100%)" }}>
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center">
-                  <Crown className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="font-black text-xl">Piano Pub Pro</p>
-                  <p className="text-white/70 text-sm">Per pub e birrerie</p>
-                </div>
-              </div>
-              <div className="flex items-end gap-1 mb-2">
-                <span className="text-5xl font-black">€65</span>
-                <span className="text-white/70 mb-2 text-sm">/anno</span>
-              </div>
-              <p className="text-white/70 text-xs mb-6">Equivale a meno di 18 centesimi al giorno</p>
-              <div className="space-y-2.5 mb-8 flex-1">
-                {[
-                  "Taplist digitale illimitata e in tempo reale",
-                  "Analytics clienti e notifiche push",
-                  "QR Code personalizzato + modalità TV",
-                  "Badge profilo verificato con priorità in mappa",
-                  "15 giorni di prova gratuita — zero rischi",
-                ].map(f => (
-                  <div key={f} className="flex items-start gap-2.5 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-white/80 flex-shrink-0 mt-0.5" />
-                    <span className="text-white/90">{f}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href="/registra-pub">
-                <Button className="w-full min-h-12 h-auto py-3 px-4 rounded-2xl bg-white text-primary hover:bg-orange-50 font-bold text-sm sm:text-base border-0 shadow-none whitespace-normal leading-tight text-center">
-                  <Zap className="w-4 h-4 mr-2 flex-shrink-0" />
-                  <span className="break-words">Registra il tuo pub — 15 giorni gratis</span>
-                </Button>
-              </Link>
-            </div>
-            )}
-
-            {/* Brewery plan — free */}
-            <div className="rounded-3xl p-8 text-white shadow-xl border border-stone-700 flex flex-col"
-              style={{ background: "linear-gradient(135deg, #1c1917 0%, #292524 100%)" }}>
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                    <Building2 className="w-6 h-6 text-primary" />
+              <div className="rounded-2xl p-5 text-white shadow-card overflow-hidden"
+                style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 60%, #f5a623 100%)" }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Crown className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-black text-xl">Birrificio Verificato</p>
-                    <p className="text-white/40 text-sm">Per produttori artigianali</p>
+                    <p className="font-black text-[16px]">Piano Pub Pro</p>
+                    <p className="text-white/70 text-[12px]">Per pub e birrerie · €65/anno</p>
                   </div>
                 </div>
-                <span className="px-3 py-1.5 rounded-full text-xs font-black bg-green-500/20 text-green-400 border border-green-500/30 flex-shrink-0">
-                  GRATUITO
-                </span>
+                <div className="space-y-1.5 mb-4">
+                  {["Taplist digitale illimitata in tempo reale", "Analytics clienti e notifiche push", "QR Code + modalità TV · 15 giorni gratis"].map(f => (
+                    <div key={f} className="flex items-center gap-2 text-[12px]">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-white/80 flex-shrink-0" />
+                      <span className="text-white/90">{f}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link href="/registra-pub">
+                  <button className="tap-scale w-full bg-white text-primary font-bold text-sm py-2.5 rounded-xl shadow-sm">
+                    <Zap className="w-4 h-4 inline mr-1.5" />
+                    Registra il tuo pub — 15 giorni gratis
+                  </button>
+                </Link>
               </div>
-              <div className="mb-2">
-                <span className="text-5xl font-black">€0</span>
+            )}
+
+            {/* Brewery — free */}
+            <div className="rounded-2xl p-5 border border-border bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+              <div className="flex items-center justify-between gap-3 mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-orange-100 dark:bg-orange-900/25 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-black text-[16px] text-foreground">Birrificio Verificato</p>
+                    <p className="text-muted-foreground text-[12px]">Per produttori artigianali</p>
+                  </div>
+                </div>
+                <span className="px-2.5 py-1 rounded-full text-[11px] font-black bg-green-500/15 text-green-600 dark:text-green-400 border border-green-500/25 flex-shrink-0">GRATIS</span>
               </div>
-              <p className="text-white/40 text-xs mb-6">Sempre gratuito per i birrifici</p>
-              <div className="space-y-2.5 mb-5 flex-1">
-                {[
-                  "Profilo birrificio verificato e visibile in mappa",
-                  "Catalogo completo delle tue birre e stili",
-                  "Link diretto al tuo sito o shop online",
-                  "Analytics su visualizzazioni e interesse",
-                ].map(f => (
-                  <div key={f} className="flex items-start gap-2.5 text-sm">
-                    <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                    <span className="text-white/70">{f}</span>
+              <div className="space-y-1.5 mb-4">
+                {["Profilo verificato e visibile in mappa", "Catalogo birre con stile e ABV", "Analytics su visualizzazioni e interesse"].map(f => (
+                  <div key={f} className="flex items-center gap-2 text-[12px]">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                    <span className="text-foreground/80">{f}</span>
                   </div>
                 ))}
-              </div>
-              {/* Brewpub note */}
-              <div className="rounded-2xl bg-white/5 border border-white/10 p-4 mb-6">
-                <p className="text-xs font-black text-amber-400 uppercase tracking-wider mb-1.5">🍻 Sei un brewpub?</p>
-                <p className="text-white/60 text-xs leading-relaxed">
-                  Se produci e somministri, ottieni accesso a <strong className="text-white/80">entrambi i pannelli</strong> — birrificio verificato + gestione pub — al solo costo del Piano Pub Pro. Nessun extra.
-                </p>
               </div>
               {!isIosNative && (
                 <Link href="/prezzi">
-                  <Button className="w-full min-h-12 h-auto py-3 px-4 rounded-2xl font-bold text-sm sm:text-base border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary shadow-none whitespace-normal leading-tight text-center">
-                    <Building2 className="w-4 h-4 mr-2 flex-shrink-0" />
-                    <span className="break-words">Registra il tuo birrificio gratis</span>
-                  </Button>
+                  <button className="tap-scale w-full bg-primary/10 dark:bg-primary/15 text-primary font-bold text-sm py-2.5 rounded-xl border border-primary/20">
+                    <Building2 className="w-4 h-4 inline mr-1.5" />
+                    Registra il tuo birrificio gratis
+                  </button>
                 </Link>
               )}
             </div>
-          </div>
 
-          {/* ── Festival Mode — full-width banner below both cards ── */}
-          {/* Nascosto su iOS nativo: contiene prezzo e CTA verso checkout
-              esterno (App Store Review Guideline 3.1.1 / 3.1.3(e) B2B). */}
-          {!isIosNative && (
-          <div className="mt-6 rounded-3xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] overflow-hidden transition-all duration-200">
-            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] items-center gap-0">
-              <div className="p-8">
-                <p className="text-xs font-black text-primary uppercase tracking-widest mb-3">🎪 Festival Mode</p>
-                <h3 className="text-xl font-black text-stone-900 dark:text-white mb-2">
-                  Porta Fermenta.to alle tue fiere ed eventi
-                </h3>
-                <p className="text-stone-500 dark:text-stone-400 text-sm leading-relaxed max-w-xl mb-4">
-                  Attiva la modalità festival per il tuo evento e trasforma il tuo stand in un punto di controllo live: i visitatori scansionano il QR, tracciano gli assaggi in tempo reale e tu gestisci code e comunicazioni direttamente dall'app.
-                </p>
-                <Link href="/festival">
-                  <Button size="sm" className="rounded-xl font-bold text-white border-0"
-                    style={{ background: "linear-gradient(135deg,#F77104,#f5a623)" }}>
-                    Scopri Festival Mode
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+            {/* Festival Mode — nascosto su iOS */}
+            {!isIosNative && (
+              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center gap-4">
+                <div className="text-3xl flex-shrink-0">🎪</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-bold text-foreground">Festival Mode</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">Taplist live per fiere ed eventi · €50 una tantum</p>
+                </div>
+                <Link href="/festival" className="flex-shrink-0">
+                  <button className="tap-scale flex items-center gap-1 text-[12px] font-bold text-primary">
+                    Scopri <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
                 </Link>
               </div>
-              <div className="hidden md:flex flex-col items-center justify-center px-10 py-8 bg-stone-50 dark:bg-[#1A1D24]/60 border-l border-stone-100 dark:border-[#23262E] h-full gap-2 min-w-[200px]">
-                <div className="text-5xl mb-1">🎪</div>
-                <span className="text-3xl font-black text-stone-900 dark:text-white">€50</span>
-                <span className="text-xs text-stone-400 dark:text-stone-500 text-center">una tantum<br />per evento</span>
-              </div>
-            </div>
+            )}
           </div>
-          )}
         </PageContainer>
-      </section>
+      </div>
 
       {/* ─── FINAL CTA ───────────────────────────────────────────────────── */}
-      <section className="py-20 lg:py-28">
-        <PageContainer variant="narrow" className="text-center">
-          <div className="rounded-3xl p-12 lg:p-16 relative overflow-hidden"
+      <div className="border-t border-border">
+        <PageContainer variant="wide" className="py-8">
+          <div className="rounded-3xl p-8 relative overflow-hidden text-center"
             style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }}>
             <div className="absolute inset-0 opacity-10"
               style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
             <div className="relative">
-              <div className="text-5xl mb-6">🍺</div>
-              <h2 className="display-serif text-4xl lg:text-5xl font-black text-white mb-4 leading-tight">
-                Inizia a esplorare<br />il craft beer italiano
+              <div className="text-4xl mb-4">🍺</div>
+              <h2 className="text-[22px] font-extrabold text-white mb-2 leading-tight">
+                Inizia a esplorare il craft beer
               </h2>
-              <p className="text-white/80 mb-8 text-lg max-w-lg mx-auto">
-                Gratuito per sempre per gli appassionati. Registrati in 30 secondi con Google.
-              </p>
+              <p className="text-white/80 mb-5 text-sm">Gratuito per sempre. Registrati in 30 secondi con Google.</p>
               <Link href="/login">
-                <Button size="lg" className="min-h-14 h-auto max-w-full py-3 px-6 sm:px-10 text-sm sm:text-base font-black rounded-2xl bg-white text-primary hover:bg-orange-50 border-0 shadow-xl shadow-black/20 whitespace-normal leading-tight text-center">
-                  <Users className="mr-2 w-5 h-5 flex-shrink-0" />
-                  <span className="break-words">Registrati — è gratis</span>
-                </Button>
+                <button className="tap-scale inline-flex items-center gap-2 bg-white text-primary font-black text-sm px-8 py-3 rounded-2xl shadow-xl shadow-black/20">
+                  <Users className="w-4 h-4" />
+                  Registrati — è gratis
+                </button>
               </Link>
-              <p className="text-white/60 text-xs mt-4">Nessuna carta di credito · Nessuna email di spam</p>
+              <p className="text-white/60 text-xs mt-3">Nessuna carta di credito · Nessuna email di spam</p>
             </div>
           </div>
         </PageContainer>
-      </section>
+      </div>
 
       <Footer />
     </div>
