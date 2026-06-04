@@ -1979,7 +1979,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Search endpoints
   app.get("/api/search", async (req, res) => {
     try {
-      const query = req.query.q as string;
+      const query = ((req.query.q as string) || "").trim();
       if (!query) {
         return res.status(400).json({ message: "Query parameter 'q' is required" });
       }
