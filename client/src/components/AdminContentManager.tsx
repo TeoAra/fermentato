@@ -12,7 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
-import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, CheckSquare, Square, Edit2, RefreshCw, X, GitMerge, Wand2, Replace, Tag, Palette, Globe, LayoutGrid, AlignLeft, ChevronRight } from "lucide-react";
+import { Search, Plus, Trash2, BeerIcon, Building2, MapPin, ExternalLink, Loader2, CheckSquare, Square, Edit2, RefreshCw, X, GitMerge, Wand2, Replace, Tag, Palette, Globe, LayoutGrid, AlignLeft, ChevronRight, Archive, ArchiveRestore } from "lucide-react";
 import { Link } from "wouter";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { ImageUpload } from "@/components/image-upload";
@@ -462,6 +462,19 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
     onError: (err: any) => { toast({ title: "Errore", description: err?.message || "Impossibile eliminare", variant: "destructive" }); setDeleteTarget(null); },
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id, archived }: { id: number; archived: boolean }) =>
+      apiRequest(`/api/admin/${type}/${id}/archive`, { method: "PATCH" }, { archived }),
+    onSuccess: (_data: any, vars) => {
+      const flag = type === 'breweries' ? 'isClosed' : 'isDiscontinued';
+      setSearchResults(prev => prev.map(item => item.id === vars.id ? { ...item, [flag]: vars.archived } : item));
+      toast({ title: vars.archived ? "Archiviato" : "Ripristinato" });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      if (type === "breweries") queryClient.invalidateQueries({ queryKey: ["/api/breweries"] });
+    },
+    onError: (err: any) => toast({ title: "Errore", description: err?.message || "Operazione non riuscita", variant: "destructive" }),
+  });
+
   const createMutation = useMutation({
     mutationFn: async (data: any) => apiRequest(`/api/admin/${type}`, { method: "POST" }, data),
     onSuccess: () => {
@@ -623,6 +636,9 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                       <div className="font-semibold text-sm truncate text-gray-900 dark:text-white">
                         {item.name}
                         <span className="ml-1.5 text-xs text-gray-400 font-normal">#{item.id}</span>
+                        {((type === 'breweries' && item.isClosed) || (type === 'beers' && item.isDiscontinued)) && (
+                          <Badge variant="secondary" className="ml-1.5 text-xs py-0 h-4 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">Archiviato</Badge>
+                        )}
                       </div>
                       {type === 'beers' && (
                         <div className="flex flex-wrap items-center gap-1 mt-0.5">
@@ -661,6 +677,21 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                           <ExternalLink className="w-3.5 h-3.5" />
                         </Button>
                       </Link>
+                      {(type === 'breweries' || type === 'beers') && (() => {
+                        const isArchived = type === 'breweries' ? !!item.isClosed : !!item.isDiscontinued;
+                        return (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-7 w-7 p-0 ${isArchived ? 'text-green-500 hover:text-green-700 hover:bg-green-50' : 'text-amber-500 hover:text-amber-700 hover:bg-amber-50'}`}
+                            title={isArchived ? 'Ripristina' : 'Archivia (escludi da ricerca e contatori)'}
+                            disabled={archiveMutation.isPending}
+                            onClick={() => archiveMutation.mutate({ id: item.id, archived: !isArchived })}
+                          >
+                            {isArchived ? <ArchiveRestore className="w-3.5 h-3.5" /> : <Archive className="w-3.5 h-3.5" />}
+                          </Button>
+                        );
+                      })()}
                       <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50" title="Elimina" onClick={() => setDeleteTarget(item)}>
                         <Trash2 className="w-3.5 h-3.5" />
                       </Button>

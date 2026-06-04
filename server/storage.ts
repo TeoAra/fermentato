@@ -69,6 +69,7 @@ import {
 } from "@shared/schema";
 import { db, pool } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike, isNotNull, ne } from "drizzle-orm";
+import { breweryActiveSql, beerVisibleSql } from "./visibility";
 import { memoryStorageInstance } from "./memoryStorage";
 
 // Mapping utilities for field conversion
@@ -478,14 +479,14 @@ export class DatabaseStorage implements IStorage {
 
   // Brewery operations
   async getBreweries(): Promise<Brewery[]> {
-    return await db.select().from(breweries).orderBy(asc(breweries.name));
+    return await db.select().from(breweries).where(breweryActiveSql).orderBy(asc(breweries.name));
   }
 
   async getBreweriesForMap(): Promise<{ id: number; name: string; latitude: string; longitude: string; logoUrl: string | null; location: string; country: string | null }[]> {
     return await db
       .select({ id: breweries.id, name: breweries.name, latitude: breweries.latitude, longitude: breweries.longitude, logoUrl: breweries.logoUrl, location: breweries.location, country: breweries.country })
       .from(breweries)
-      .where(sql`${breweries.latitude} IS NOT NULL AND ${breweries.longitude} IS NOT NULL`)
+      .where(and(sql`${breweries.latitude} IS NOT NULL AND ${breweries.longitude} IS NOT NULL`, breweryActiveSql))
       .orderBy(asc(breweries.name)) as any;
   }
 
@@ -507,7 +508,8 @@ export class DatabaseStorage implements IStorage {
         beerCount: sql<number>`count(${beers.id})::int`,
       })
       .from(breweries)
-      .leftJoin(beers, eq(beers.breweryId, breweries.id))
+      .leftJoin(beers, and(eq(beers.breweryId, breweries.id), sql`COALESCE(${beers.isDiscontinued}, false) = false`))
+      .where(breweryActiveSql)
       .groupBy(breweries.id)
       .orderBy(random ? sql`RANDOM()` : asc(breweries.name));
     if (limit) {
@@ -517,7 +519,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRandomBreweries(limit: number = 10): Promise<Brewery[]> {
-    return await db.select().from(breweries).orderBy(sql`RANDOM()`).limit(limit);
+    return await db.select().from(breweries).where(breweryActiveSql).orderBy(sql`RANDOM()`).limit(limit);
   }
 
   async getBeerCountByBrewery(breweryId: number): Promise<number> {
@@ -553,12 +555,12 @@ export class DatabaseStorage implements IStorage {
     const breweriesRanked = await db
       .select({ id: breweries.id, beerCount: sql<number>`COUNT(${beers.id})` })
       .from(breweries)
-      .leftJoin(beers, eq(breweries.id, beers.breweryId))
-      .where(or(
+      .leftJoin(beers, and(eq(breweries.id, beers.breweryId), sql`COALESCE(${beers.isDiscontinued}, false) = false`))
+      .where(and(breweryActiveSql, or(
         sql`unaccent(lower(${breweries.name})) LIKE unaccent(lower(${q}))`,
         ilike(breweries.location, q),
         ilike(breweries.description, q)
-      ))
+      )))
       .groupBy(breweries.id)
       .orderBy(desc(sql`COUNT(${beers.id})`), asc(breweries.name))
       .limit(10);
@@ -572,7 +574,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string): Promise<{ breweries: any[]; total: number }> {
-    const conditions: any[] = [];
+    const conditions: any[] = [breweryActiveSql];
     if (q && q.length >= 2) conditions.push(ilike(breweries.name, `%${q}%`));
     if (country) {
       const cl = country.toLowerCase();
@@ -608,7 +610,7 @@ export class DatabaseStorage implements IStorage {
           beerCount: sql<number>`COUNT(${beers.id})`,
         })
         .from(breweries)
-        .leftJoin(beers, eq(breweries.id, beers.breweryId))
+        .leftJoin(beers, and(eq(breweries.id, beers.breweryId), sql`COALESCE(${beers.isDiscontinued}, false) = false`))
         .where(whereClause)
         .groupBy(breweries.id)
         .orderBy(desc(sql`COUNT(${beers.id})`), asc(breweries.name))
@@ -623,7 +625,7 @@ export class DatabaseStorage implements IStorage {
     const rows = await db
       .select({ country: breweries.country, count: sql<number>`COUNT(*)::int` })
       .from(breweries)
-      .where(and(isNotNull(breweries.country), ne(breweries.country, "")))
+      .where(and(isNotNull(breweries.country), ne(breweries.country, ""), breweryActiveSql))
       .groupBy(breweries.country)
       .orderBy(desc(sql`COUNT(*)`));
     return rows.map(r => ({ country: r.country!, count: Number(r.count) }));
@@ -631,7 +633,7 @@ export class DatabaseStorage implements IStorage {
 
   // Beer operations
   async getBeers(): Promise<Beer[]> {
-    return await db.select().from(beers).orderBy(asc(beers.name));
+    return await db.select().from(beers).where(beerVisibleSql).orderBy(asc(beers.name));
   }
 
   async getBeer(id: number): Promise<Beer | undefined> {
@@ -802,6 +804,8 @@ export class DatabaseStorage implements IStorage {
       JOIN beers b ON b.id = ci.id
       LEFT JOIN breweries br ON b.brewery_id = br.id
       WHERE 1=1
+        AND COALESCE(b.is_discontinued, false) = false
+        AND COALESCE(br.is_closed, false) = false
         ${extraWhere}
       ORDER BY (${scoreExpr}) DESC, length(b.name) ASC, b.name ASC
       LIMIT 50
@@ -2108,6 +2112,8 @@ export class DatabaseStorage implements IStorage {
       WHERE b.style = ${style}
         AND b.id != ${beerId}
         AND b.is_hidden = false
+        AND COALESCE(b.is_discontinued, false) = false
+        AND COALESCE(br.is_closed, false) = false
       ORDER BY RANDOM()
       LIMIT ${limit}
     `);
@@ -2124,6 +2130,8 @@ export class DatabaseStorage implements IStorage {
       JOIN breweries br ON b.brewery_id = br.id
       WHERE bv.viewed_at > NOW() - (${days} || ' days')::interval
         AND b.is_hidden = false
+        AND COALESCE(b.is_discontinued, false) = false
+        AND COALESCE(br.is_closed, false) = false
       GROUP BY b.id, b.name, b.style, b.abv, b.image_url, br.id, br.name, br.logo_url
       ORDER BY "viewCount" DESC
       LIMIT ${limit}

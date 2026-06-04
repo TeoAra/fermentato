@@ -95,6 +95,10 @@ export const breweries = pgTable("breweries", {
   latitude: decimal("latitude", { precision: 10, scale: 8 }),
   longitude: decimal("longitude", { precision: 11, scale: 8 }),
   rating: decimal("rating", { precision: 2, scale: 1 }).default("0"),
+  // Soft-archive: birrificio chiuso/cessato — escluso da ricerca, liste e contatori (reversibile, nessuna eliminazione)
+  isClosed: boolean("is_closed").default(false),
+  closedSource: varchar("closed_source"), // origine della chiusura: 'ratebeer_import' | 'admin' | 'candidate'
+  closedAt: timestamp("closed_at"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -156,6 +160,8 @@ export const beers = pgTable("beers", {
   isAlcoholFree: boolean("is_alcohol_free").default(false),
   isCollaboration: boolean("is_collaboration").default(false), // Birra in collaborazione
   isHidden: boolean("is_hidden").default(false), // Nascosta dalla pagina pubblica
+  isDiscontinued: boolean("is_discontinued").default(false), // Soft-archive: birra fuori produzione — esclusa da ricerca, liste e contatori
+  discontinuedSource: varchar("discontinued_source"), // origine dell'archiviazione: 'cascade' | 'admin' | 'ratebeer_import'
   barcode: varchar("barcode"), // EAN/UPC barcode
   awards: jsonb("awards").$type<Array<{name: string; year: number; competition: string; type?: 'gold'|'silver'|'bronze'|'special'}>>(),
   createdAt: timestamp("created_at").defaultNow(),

@@ -36,6 +36,8 @@ import { registerFestivalRoutes, runFestivalMigrations } from "./routes-festival
 import { sql, eq, and, desc, asc, gte, count } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
+import { breweryActiveSql, beerVisibleSql, rawBreweryActive, rawBeerVisibleJoined, rawBeerVisibleExists } from "./visibility";
+import { registerCatalogCacheBuster } from "./catalog-cache";
 import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations, festivals, beerViews } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
@@ -67,6 +69,80 @@ function setCache(key: string, data: any) {
   searchCache.set(key, { data, ts: Date.now() });
 }
 function clearSearchCache() { searchCache.clear(); }
+
+// Clears every catalog-derived cache (search results + in-memory TTL cache).
+// Call after any mutation that changes brewery/beer visibility, deletion or edits
+// so archived/restored items disappear/reappear immediately.
+function clearCatalogCaches() {
+  searchCache.clear();
+  _memCache.clear();
+}
+// Register with the shared registry so other modules (e.g. routes-admin.ts
+// deletes) can invalidate these caches without an import cycle.
+registerCatalogCacheBuster(clearCatalogCaches);
+
+// ── Popular search-term logging + cache pre-warming ─────────────────────────
+// Track how often each term is searched so we can periodically re-warm the
+// search cache for the most popular terms. This keeps common searches fast even
+// right after a cache flush (e.g. following an archive/edit/delete mutation).
+const searchTermCounts = new Map<string, number>();
+function normalizeSearchTerm(raw: string) {
+  return (raw || "").trim().toLowerCase();
+}
+// Single source of truth for the /api/search cache key so the request path and
+// the warmer always agree on the key (the query is normalized to avoid
+// case/spacing misses, e.g. "IPA" vs "ipa").
+function buildSearchCacheKey(
+  query: string,
+  f: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number },
+) {
+  return `search:${normalizeSearchTerm(query)}:${!!f.glutenFree}:${!!f.alcoholFree}:${f.style}:${f.minAbv}:${f.maxAbv}:${f.minIbu}:${f.maxIbu}`;
+}
+function logSearchTerm(raw: string) {
+  const t = normalizeSearchTerm(raw);
+  if (t.length < 2 || t.length > 80) return;
+  searchTermCounts.set(t, (searchTermCounts.get(t) || 0) + 1);
+  if (searchTermCounts.size > 2000) {
+    const top = [...searchTermCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 1000);
+    searchTermCounts.clear();
+    for (const [k, v] of top) searchTermCounts.set(k, v);
+  }
+}
+
+// Shared global-search logic used by both /api/search and the warmer so the
+// cached payload never drifts from what the endpoint actually returns.
+async function performGlobalSearch(query: string, filters: any) {
+  const [pubs, breweries, beersResult, usersResult] = await Promise.all([
+    storage.searchPubs(query),
+    storage.searchBreweries(query),
+    storage.searchBeers(query, filters),
+    pool.query(
+      `SELECT id, nickname, first_name, last_name, profile_image_url
+       FROM users
+       WHERE unaccent(lower(COALESCE(nickname,''))) LIKE unaccent(lower($1))
+          OR unaccent(lower(COALESCE(first_name,''))) LIKE unaccent(lower($1))
+          OR unaccent(lower(COALESCE(last_name,''))) LIKE unaccent(lower($1))
+       ORDER BY nickname NULLS LAST
+       LIMIT 10`,
+      [`%${query}%`]
+    ),
+  ]);
+  return { pubs, breweries, beers: beersResult, users: usersResult.rows };
+}
+
+async function warmPopularSearches(topN = 20) {
+  const top = [...searchTermCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, topN);
+  for (const [term] of top) {
+    const cacheKey = buildSearchCacheKey(term, {});
+    if (getCached(cacheKey)) continue;
+    try {
+      const result = await performGlobalSearch(term, {});
+      setCache(cacheKey, result);
+    } catch { /* warming is best-effort */ }
+  }
+}
+// Re-warm the most popular searches every 5 minutes (best-effort, non-blocking).
+setInterval(() => { warmPopularSearches().catch(() => {}); }, 5 * 60 * 1000).unref();
 
 // ── Shared helper: base64 dataURL → temp file ───────────────────────────────
 async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: string } | null> {
@@ -833,11 +909,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/beers/popular-styles", async (req, res) => {
     try {
       const limit = Math.min(50, parseInt(req.query.limit as string) || 30);
-      const rows = await memCached(`beers:popular-styles:${limit}`, 10 * 60 * 1000, () =>
+      const rows = await memCached(`beers:popular-styles:v2:${limit}`, 10 * 60 * 1000, () =>
         db
           .select({ style: beers.style, count: sql<number>`COUNT(*)::int` })
           .from(beers)
-          .where(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`)
+          .where(and(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`, beerVisibleSql))
           .groupBy(beers.style)
           .orderBy(sql`COUNT(*) DESC`)
           .limit(limit)
@@ -997,6 +1073,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           LEFT JOIN tasting_counts tc ON tc.beer_id = b.id
           LEFT JOIN favorite_counts fc ON fc.beer_id = b.id
           WHERE COALESCE(b.is_hidden, false) = false
+            AND COALESCE(b.is_discontinued, false) = false
+            AND COALESCE(br.is_closed, false) = false
             AND (COALESCE(tc.tasting_count, 0) > 0 OR COALESCE(fc.favorite_count, 0) > 0)
           ORDER BY popularity_score DESC, np.distance ASC, b.name ASC
           LIMIT ${limit}
@@ -1087,7 +1165,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(beers)
         .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-        .where(sql`lower(${beers.style}) = lower(${style})`)
+        .where(and(sql`lower(${beers.style}) = lower(${style})`, beerVisibleSql))
         .orderBy(beers.name)
         .limit(limit)
         .offset(offset);
@@ -1106,13 +1184,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const [topStyles, topBreweries, topCities] = await Promise.all([
         db.select({ name: beers.style, count: sql<number>`COUNT(*)::int` })
           .from(beers)
-          .where(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`)
+          .where(and(sql`${beers.style} IS NOT NULL AND ${beers.style} != ''`, beerVisibleSql))
           .groupBy(beers.style)
           .orderBy(sql`COUNT(*) DESC`)
           .limit(12),
         db.select({ name: breweries.name })
           .from(breweries)
-          .where(sql`${breweries.name} IS NOT NULL AND ${breweries.name} != ''`)
+          .where(and(sql`${breweries.name} IS NOT NULL AND ${breweries.name} != ''`, breweryActiveSql))
           .orderBy(sql`RANDOM()`)
           .limit(6),
         db.select({ name: pubs.city, count: sql<number>`COUNT(*)::int` })
@@ -1200,6 +1278,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FROM candidate_ids ci
         JOIN beers b ON b.id = ci.id
         LEFT JOIN breweries br ON b.brewery_id = br.id
+        WHERE COALESCE(b.is_discontinued, false) = false
+          AND COALESCE(br.is_closed, false) = false
         ORDER BY (${scoreExpr}) DESC, b.name ASC
         LIMIT ${limitNum}
       `;
@@ -1221,6 +1301,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         FROM beers b
         LEFT JOIN breweries br ON br.id = b.brewery_id
         WHERE b.image_url IS NOT NULL
+          AND COALESCE(b.is_discontinued, false) = false
+          AND COALESCE(br.is_closed, false) = false
         ORDER BY RANDOM()
         LIMIT 1
       `);
@@ -1336,13 +1418,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
             )
           )) AS "_distance"
         FROM breweries b
-        LEFT JOIN beers beer ON beer.brewery_id = b.id
+        LEFT JOIN beers beer ON beer.brewery_id = b.id AND COALESCE(beer.is_discontinued, false) = false
         WHERE b.latitude IS NOT NULL
           AND b.longitude IS NOT NULL
           AND b.latitude::text != '0'
           AND b.longitude::text != '0'
           AND b.latitude::text != ''
           AND b.longitude::text != ''
+          AND COALESCE(b.is_closed, false) = false
         GROUP BY b.id
         ORDER BY "_distance" ASC
         LIMIT ${limit}
@@ -1900,6 +1983,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!query) {
         return res.status(400).json({ message: "Query parameter 'q' is required" });
       }
+      logSearchTerm(query);
 
       const glutenFree = req.query.glutenFree === 'true';
       const alcoholFree = req.query.alcoholFree === 'true';
@@ -1909,7 +1993,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const minIbu = req.query.minIbu ? parseFloat(req.query.minIbu as string) : undefined;
       const maxIbu = req.query.maxIbu ? parseFloat(req.query.maxIbu as string) : undefined;
 
-      const cacheKey = `search:${query}:${glutenFree}:${alcoholFree}:${style}:${minAbv}:${maxAbv}:${minIbu}:${maxIbu}`;
+      const cacheKey = buildSearchCacheKey(query, { glutenFree, alcoholFree, style, minAbv, maxAbv, minIbu, maxIbu });
       const cached = getCached(cacheKey);
       if (cached) {
         res.setHeader('X-Cache', 'HIT');
@@ -1925,23 +2009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (minIbu !== undefined) filters.minIbu = minIbu;
       if (maxIbu !== undefined) filters.maxIbu = maxIbu;
 
-      const [pubs, breweries, beersResult, usersResult] = await Promise.all([
-        storage.searchPubs(query),
-        storage.searchBreweries(query),
-        storage.searchBeers(query, filters),
-        pool.query(
-          `SELECT id, nickname, first_name, last_name, profile_image_url
-           FROM users
-           WHERE unaccent(lower(COALESCE(nickname,''))) LIKE unaccent(lower($1))
-              OR unaccent(lower(COALESCE(first_name,''))) LIKE unaccent(lower($1))
-              OR unaccent(lower(COALESCE(last_name,''))) LIKE unaccent(lower($1))
-           ORDER BY nickname NULLS LAST
-           LIMIT 10`,
-          [`%${query}%`]
-        ),
-      ]);
-
-      const result = { pubs, breweries, beers: beersResult, users: usersResult.rows };
+      const result = await performGlobalSearch(query, filters);
       setCache(cacheKey, result);
       res.setHeader('X-Cache', 'MISS');
       res.json(result);
@@ -1954,15 +2022,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Database statistics endpoint
   app.get("/api/stats", async (req, res) => {
     try {
-      const stats = await memCached("stats:global", 5 * 60 * 1000, async () => {
+      const stats = await memCached("stats:global:v2", 5 * 60 * 1000, async () => {
         const [pubCount, breweryCount, beerCount, reviewCount, eventCount, userCount, styleCount] = await Promise.all([
           db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
-          db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
-          db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
+          db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries).where(breweryActiveSql),
+          db.select({ count: sql<number>`COUNT(*)::int` }).from(beers).where(beerVisibleSql),
           db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
           db.select({ count: sql<number>`(SELECT COUNT(*) FROM pub_events) + (SELECT COUNT(*) FROM brewery_events)` }),
           db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
-          db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers),
+          db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers).where(beerVisibleSql),
         ]);
         return {
           totalPubs: pubCount[0]?.count || 0,
@@ -4535,6 +4603,93 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: soft-archive / restore a brewery (reversible, no deletion).
+  // Archiving a brewery cascades is_discontinued=true onto its beers so the whole
+  // brewery + its beers disappear from search/listings/suggestions/counters.
+  // Restoring sets is_closed=false and reactivates beers archived BY this cascade
+  // (tracked via closed_source='cascade') without touching beers archived manually.
+  app.patch('/api/admin/breweries/:id/archive', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const archived = req.body?.archived !== false; // default: archive
+      const [current] = await db.select({ id: breweries.id }).from(breweries).where(eq(breweries.id, breweryId));
+      if (!current) return res.status(404).json({ message: "Brewery not found" });
+
+      if (archived) {
+        await db.execute(sql`UPDATE breweries SET is_closed = true, closed_source = 'admin', closed_at = NOW() WHERE id = ${breweryId}`);
+        // Cascade only onto beers that are still active; mark them as cascade-archived
+        // so we can selectively restore them later.
+        await db.execute(sql`UPDATE beers SET is_discontinued = true, discontinued_source = 'cascade' WHERE brewery_id = ${breweryId} AND COALESCE(is_discontinued, false) = false`);
+      } else {
+        await db.execute(sql`UPDATE breweries SET is_closed = false, closed_source = NULL, closed_at = NULL WHERE id = ${breweryId}`);
+        await db.execute(sql`UPDATE beers SET is_discontinued = false, discontinued_source = NULL WHERE brewery_id = ${breweryId} AND discontinued_source = 'cascade'`);
+      }
+      clearCatalogCaches();
+      res.json({ id: breweryId, isClosed: archived });
+    } catch (error) {
+      console.error("Error archiving brewery:", error);
+      res.status(500).json({ message: "Failed to archive brewery" });
+    }
+  });
+
+  // Admin: soft-archive / restore a single beer (reversible, no deletion).
+  app.patch('/api/admin/beers/:id/archive', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const archived = req.body?.archived !== false; // default: archive
+      const [current] = await db.select({ id: beers.id }).from(beers).where(eq(beers.id, beerId));
+      if (!current) return res.status(404).json({ message: "Beer not found" });
+      if (archived) {
+        await db.execute(sql`UPDATE beers SET is_discontinued = true, discontinued_source = 'admin' WHERE id = ${beerId}`);
+      } else {
+        await db.execute(sql`UPDATE beers SET is_discontinued = false, discontinued_source = NULL WHERE id = ${beerId}`);
+      }
+      clearCatalogCaches();
+      res.json({ id: beerId, isDiscontinued: archived });
+    } catch (error) {
+      console.error("Error archiving beer:", error);
+      res.status(500).json({ message: "Failed to archive beer" });
+    }
+  });
+
+  // Admin: suspicious-brewery candidates for soft-archive.
+  // Ranks breweries by inactivity signals computed purely from DB data
+  // (no LLM): zero beers, no taplist/bottlelist presence, no recent views,
+  // no events. Higher score = more likely closed/retired. Read-only; the
+  // admin confirms before archiving via the /archive endpoint above.
+  app.get('/api/admin/breweries/suspicious', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const limit = Math.min(500, parseInt(req.query.limit as string) || 100);
+      const result = await db.execute(sql`
+        WITH b AS (
+          SELECT br.id, br.name, br.location, br.country, br.website_url,
+            (SELECT COUNT(*) FROM beers be WHERE be.brewery_id = br.id) AS beer_count,
+            (SELECT COUNT(*) FROM tap_list tl JOIN beers be ON be.id = tl.beer_id WHERE be.brewery_id = br.id AND tl.is_active = true) AS tap_count,
+            (SELECT COUNT(*) FROM bottle_list bl JOIN beers be ON be.id = bl.beer_id WHERE be.brewery_id = br.id AND bl.is_active = true) AS bottle_count,
+            (SELECT COUNT(*) FROM brewery_events ev WHERE ev.brewery_id = br.id) AS event_count,
+            (SELECT COUNT(*) FROM beer_views bv JOIN beers be ON be.id = bv.beer_id WHERE be.brewery_id = br.id AND bv.viewed_at > NOW() - INTERVAL '180 days') AS recent_views
+          FROM breweries br
+          WHERE COALESCE(br.is_closed, false) = false
+        )
+        SELECT *,
+          ( (CASE WHEN beer_count = 0 THEN 3 ELSE 0 END)
+          + (CASE WHEN tap_count = 0 AND bottle_count = 0 THEN 2 ELSE 0 END)
+          + (CASE WHEN recent_views = 0 THEN 2 ELSE 0 END)
+          + (CASE WHEN event_count = 0 THEN 1 ELSE 0 END)
+          + (CASE WHEN website_url IS NULL OR website_url = '' THEN 1 ELSE 0 END)
+          ) AS suspicion_score
+        FROM b
+        WHERE (tap_count = 0 AND bottle_count = 0 AND recent_views = 0)
+        ORDER BY suspicion_score DESC, beer_count ASC, name ASC
+        LIMIT ${limit}
+      `);
+      res.json(result.rows);
+    } catch (error) {
+      console.error("Error fetching suspicious breweries:", error);
+      res.status(500).json({ message: "Failed to fetch suspicious breweries" });
+    }
+  });
+
   // Admin: batch geocode breweries without coordinates
   // Strategia: deduplication per location string → poche API call Nominatim (gratuito, no key)
   app.post('/api/admin/breweries/geocode', isAuthenticated, isAdmin, async (req: any, res) => {
@@ -4742,22 +4897,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/stats/global', async (req, res) => {
     try {
       const [beerCount, breweryCount, pubCount, userCount, styleCount, reviewCount, eventCount, topStyles, topBreweries] = await Promise.all([
-        db.select({ count: sql<number>`COUNT(*)::int` }).from(beers),
-        db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(beers).where(beerVisibleSql),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries).where(breweryActiveSql),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
-        db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers),
+        db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers).where(beerVisibleSql),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
         db.select({ count: sql<number>`(SELECT COUNT(*) FROM pub_events) + (SELECT COUNT(*) FROM brewery_events)` }),
         db.select({ style: beers.style, count: sql<number>`COUNT(*)::int` })
-          .from(beers).groupBy(beers.style).orderBy(sql`COUNT(*) desc`).limit(10),
+          .from(beers).where(beerVisibleSql).groupBy(beers.style).orderBy(sql`COUNT(*) desc`).limit(10),
         db.select({
             breweryName: breweries.name,
             location: breweries.location,
             beerCount: sql<number>`COUNT(${beers.id})::int`
           })
           .from(breweries)
-          .leftJoin(beers, eq(breweries.id, beers.breweryId))
+          .leftJoin(beers, and(eq(breweries.id, beers.breweryId), sql`COALESCE(${beers.isDiscontinued}, false) = false`))
+          .where(breweryActiveSql)
           .groupBy(breweries.id, breweries.name, breweries.location)
           .orderBy(sql`COUNT(${beers.id}) desc`)
           .limit(10),

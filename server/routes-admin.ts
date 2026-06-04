@@ -7,6 +7,7 @@ import { sendPushToUser, sendPushToAdmins } from "./push-utils";
 import { storage } from "./storage";
 import { sendWelcomeEmail } from "./email";
 import { nanoid } from "nanoid";
+import { bustCatalogCaches } from "./catalog-cache";
 
 // In-memory TTL cache for read-heavy admin endpoints
 const _adminMemCache = new Map<string, { data: any; expires: number }>();
@@ -527,6 +528,7 @@ export function registerAdminRoutes(app: Express) {
         return res.status(404).json({ message: "Beer not found" });
       }
 
+      bustCatalogCaches();
       res.json(updatedBeer);
     } catch (error) {
       console.error("Error updating beer:", error);
@@ -554,6 +556,7 @@ export function registerAdminRoutes(app: Express) {
         return res.status(404).json({ message: "Brewery not found" });
       }
 
+      bustCatalogCaches();
       res.json(updatedBrewery);
     } catch (error) {
       console.error("Error updating brewery:", error);
@@ -1342,10 +1345,12 @@ export function registerAdminRoutes(app: Express) {
           imageUrl: beers.imageUrl,
           isGlutenFree: beers.isGlutenFree,
           isAlcoholFree: beers.isAlcoholFree,
+          isDiscontinued: beers.isDiscontinued,
           brewery: {
             id: breweries.id,
             name: breweries.name,
             logoUrl: breweries.logoUrl,
+            isClosed: breweries.isClosed,
           },
         })
         .from(beers)
@@ -1403,6 +1408,7 @@ export function registerAdminRoutes(app: Express) {
       if (isNaN(id)) return res.status(400).json({ message: "ID non valido" });
 
       await db.delete(beers).where(eq(beers.id, id));
+      bustCatalogCaches();
       res.json({ message: "Birra eliminata con successo" });
     } catch (error) {
       console.error("Error deleting beer:", error);
@@ -1417,6 +1423,7 @@ export function registerAdminRoutes(app: Express) {
 
       await db.delete(beers).where(eq(beers.breweryId, id));
       await db.delete(breweries).where(eq(breweries.id, id));
+      bustCatalogCaches();
       res.json({ message: "Birrificio e relative birre eliminate con successo" });
     } catch (error) {
       console.error("Error deleting brewery:", error);
