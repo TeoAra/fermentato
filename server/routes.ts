@@ -95,8 +95,9 @@ function normalizeSearchTerm(raw: string) {
 function buildSearchCacheKey(
   query: string,
   f: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number },
+  type: string = "all",
 ) {
-  return `search:${normalizeSearchTerm(query)}:${!!f.glutenFree}:${!!f.alcoholFree}:${f.style}:${f.minAbv}:${f.maxAbv}:${f.minIbu}:${f.maxIbu}`;
+  return `search:${normalizeSearchTerm(query)}:${type}:${!!f.glutenFree}:${!!f.alcoholFree}:${f.style}:${f.minAbv}:${f.maxAbv}:${f.minIbu}:${f.maxIbu}`;
 }
 function logSearchTerm(raw: string) {
   const t = normalizeSearchTerm(raw);
@@ -111,11 +112,12 @@ function logSearchTerm(raw: string) {
 
 // Shared global-search logic used by both /api/search and the warmer so the
 // cached payload never drifts from what the endpoint actually returns.
-async function performGlobalSearch(query: string, filters: any) {
+async function performGlobalSearch(query: string, filters: any, type: string = "all") {
+  const runAll = type === "all";
   const [pubs, breweries, beersResult, usersResult] = await Promise.all([
-    storage.searchPubs(query),
-    storage.searchBreweries(query),
-    storage.searchBeers(query, filters),
+    (runAll || type === "pubs") ? storage.searchPubs(query) : Promise.resolve([]),
+    (runAll || type === "breweries") ? storage.searchBreweries(query) : Promise.resolve([]),
+    (runAll || type === "beers") ? storage.searchBeers(query, filters) : Promise.resolve([]),
     pool.query(
       `SELECT id, nickname, first_name, last_name, profile_image_url
        FROM users
@@ -1993,7 +1995,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const minIbu = req.query.minIbu ? parseFloat(req.query.minIbu as string) : undefined;
       const maxIbu = req.query.maxIbu ? parseFloat(req.query.maxIbu as string) : undefined;
 
-      const cacheKey = buildSearchCacheKey(query, { glutenFree, alcoholFree, style, minAbv, maxAbv, minIbu, maxIbu });
+      const type = ((req.query.type as string) || "all").trim();
+      const cacheKey = buildSearchCacheKey(query, { glutenFree, alcoholFree, style, minAbv, maxAbv, minIbu, maxIbu }, type);
       const cached = getCached(cacheKey);
       if (cached) {
         res.setHeader('X-Cache', 'HIT');
@@ -2009,7 +2012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (minIbu !== undefined) filters.minIbu = minIbu;
       if (maxIbu !== undefined) filters.maxIbu = maxIbu;
 
-      const result = await performGlobalSearch(query, filters);
+      const result = await performGlobalSearch(query, filters, type);
       setCache(cacheKey, result);
       res.setHeader('X-Cache', 'MISS');
       res.json(result);

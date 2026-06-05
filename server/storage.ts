@@ -607,6 +607,8 @@ export class DatabaseStorage implements IStorage {
           logoUrl: breweries.logoUrl,
           description: breweries.description,
           websiteUrl: breweries.websiteUrl,
+          latitude: breweries.latitude,
+          longitude: breweries.longitude,
           beerCount: sql<number>`COUNT(${beers.id})`,
         })
         .from(breweries)

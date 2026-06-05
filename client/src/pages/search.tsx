@@ -66,6 +66,7 @@ export default function SearchPage() {
 
   const apiUrl = useMemo(() => {
     const p = new URLSearchParams({ q: query });
+    if (activeTab !== "all") p.set("type", activeTab);
     if (filterGlutenFree) p.set("glutenFree", "true");
     if (filterAlcoholFree) p.set("alcoholFree", "true");
     if (filterStyle) p.set("style", filterStyle);
@@ -74,10 +75,10 @@ export default function SearchPage() {
     if (filterMinIbu) p.set("minIbu", filterMinIbu);
     if (filterMaxIbu) p.set("maxIbu", filterMaxIbu);
     return `/api/search?${p}`;
-  }, [query, filterGlutenFree, filterAlcoholFree, filterStyle, filterMinAbv, filterMaxAbv, filterMinIbu, filterMaxIbu]);
+  }, [query, activeTab, filterGlutenFree, filterAlcoholFree, filterStyle, filterMinAbv, filterMaxAbv, filterMinIbu, filterMaxIbu]);
 
   const { data: results, isLoading } = useQuery<SearchResult>({
-    queryKey: ["/api/search", query, filterGlutenFree, filterAlcoholFree, filterStyle, filterMinAbv, filterMaxAbv, filterMinIbu, filterMaxIbu],
+    queryKey: ["/api/search", query, activeTab, filterGlutenFree, filterAlcoholFree, filterStyle, filterMinAbv, filterMaxAbv, filterMinIbu, filterMaxIbu],
     queryFn: () => fetch(apiUrl).then(r => r.json()),
     enabled: query.length > 1,
   });
@@ -142,8 +143,8 @@ export default function SearchPage() {
 
       {/* Header section */}
       <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-border sticky top-0 z-50">
-        <div className="max-w-3xl mx-auto px-4 pt-4 pb-5">
-          <div className="flex items-center gap-3 mb-4">
+        <div className="max-w-3xl mx-auto px-4 pt-4 pb-3">
+          <div className="flex items-center gap-3 mb-3">
             <Link href="/">
               <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-stone-50/60 rounded-full -ml-1">
                 <ArrowLeft className="h-4 w-4 mr-1" />
@@ -151,18 +152,18 @@ export default function SearchPage() {
               </Button>
             </Link>
             <div className="flex-1">
-              <h1 className="text-foreground font-bold text-lg leading-tight">Ricerca Avanzata</h1>
+              <h1 className="text-foreground font-bold text-lg leading-tight">Ricerca</h1>
               <p className="text-muted-foreground text-xs">Birre · Birrifici · Pub</p>
             </div>
           </div>
 
-          <form onSubmit={handleSearch} className="flex gap-2">
+          <form onSubmit={handleSearch} className="flex gap-2 mb-3">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-primary" />
               <Input
                 value={inputValue}
                 onChange={e => setInputValue(e.target.value)}
-                placeholder="Cerca birre, stili, birrifici, pub..."
+                placeholder={activeTab === "beers" ? "Cerca birra, stile, ABV…" : activeTab === "breweries" ? "Cerca birrificio, nazione…" : activeTab === "pubs" ? "Cerca pub, città…" : "Cerca birre, birrifici, pub…"}
                 className="pl-12 pr-10 h-11 rounded-2xl border-stone-200 dark:border-border bg-white dark:bg-[#1A1D24] focus-visible:ring-primary/20 text-base"
               />
               {inputValue && (
@@ -178,22 +179,47 @@ export default function SearchPage() {
             <Button type="submit" className="bg-primary hover:bg-primary/90 text-white h-11 rounded-xl px-4">
               Cerca
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className={`relative h-11 w-11 rounded-xl flex-shrink-0 border-stone-200 dark:border-border text-primary hover:bg-stone-50 ${hasActiveFilters ? "bg-primary/10 border-primary/30" : ""}`}
-              onClick={() => setShowFilters(f => !f)}
-              title="Filtri avanzati"
-            >
-              <SlidersHorizontal className="h-4 w-4" />
-              {activeFilterCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
-              )}
-            </Button>
+            {(activeTab === "beers" || activeTab === "all") && (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className={`relative h-11 w-11 rounded-xl flex-shrink-0 border-stone-200 dark:border-border text-primary hover:bg-stone-50 ${hasActiveFilters ? "bg-primary/10 border-primary/30" : ""}`}
+                onClick={() => setShowFilters(f => !f)}
+                title="Filtri avanzati"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-primary text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    {activeFilterCount}
+                  </span>
+                )}
+              </Button>
+            )}
           </form>
+
+          {/* Category chips — always visible, pre-filter before searching */}
+          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4">
+            {tabs.map(tab => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => { setActiveTab(tab.id); if (query.length > 1) setQuery(q => q); }}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                    isActive
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-stone-50 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-border hover:border-primary/40 hover:text-primary"
+                  }`}
+                >
+                  <Icon className="h-3 w-3" />
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -343,35 +369,6 @@ export default function SearchPage() {
         {/* Results */}
         {!isLoading && results && query.length > 1 && (
           <div className="space-y-4">
-            {/* Tab bar */}
-            <div className="flex gap-1 p-1 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 overflow-x-auto scrollbar-hide">
-              {tabs.map(tab => {
-                const count = tabCounts[tab.id];
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-4 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                      isActive
-                        ? "bg-primary text-white"
-                        : "text-muted-foreground hover:text-primary hover:bg-stone-50/60"
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span>{tab.label}</span>
-                    {count > 0 && (
-                      <span className={`text-[10px] rounded-full px-1.5 py-0.5 min-w-5 text-center font-bold ${
-                        isActive ? "bg-white/20 text-white" : "bg-stone-50 dark:bg-[#0B0D10]/20 text-primary dark:text-orange-400"
-                      }`}>
-                        {count > 99 ? "99+" : count}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
 
             {/* Results summary */}
             <div className="flex items-center justify-between">
