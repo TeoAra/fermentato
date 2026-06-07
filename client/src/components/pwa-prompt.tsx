@@ -302,8 +302,25 @@ export function PwaInstallPrompt() {
   const [dismissed, setDismissed] = useState(false);
   const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
 
+  // Su Android browser il banner Play Store ha priorità: aspettiamo che
+  // venga chiuso (sessionStorage) prima di mostrare il prompt PWA.
+  const isAndroidBrowser = typeof window !== 'undefined' &&
+    !isNative && /Android/i.test(navigator.userAgent);
+  const [androidBannerDone, setAndroidBannerDone] = useState(() => {
+    if (!isAndroidBrowser) return true;
+    try { return sessionStorage.getItem("android-app-banner-dismissed") === "1"; } catch { return false; }
+  });
+
+  useEffect(() => {
+    if (androidBannerDone) return;
+    const handler = () => setAndroidBannerDone(true);
+    window.addEventListener("android-banner-dismissed", handler);
+    return () => window.removeEventListener("android-banner-dismissed", handler);
+  }, [androidBannerDone]);
+
   useEffect(() => {
     if (!isAuthenticated) return;
+    if (!androidBannerDone) return;
     if (isStandalone()) return;
 
     const isDismissed = localStorage.getItem('pwa-install-dismissed');
@@ -326,7 +343,7 @@ export function PwaInstallPrompt() {
       window.removeEventListener('beforeinstallprompt', handler);
       clearTimeout(timer);
     };
-  }, [isAuthenticated]);
+  }, [isAuthenticated, androidBannerDone]);
 
   const handleInstall = async () => {
     if (deferredPrompt) {

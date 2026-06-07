@@ -45,6 +45,7 @@ function AndroidAppBanner() {
   const dismiss = () => {
     setVisible(false);
     try { sessionStorage.setItem("android-app-banner-dismissed", "1"); } catch {}
+    window.dispatchEvent(new CustomEvent("android-banner-dismissed"));
   };
   return (
     <div className="fixed left-3 right-3 z-[60] flex items-center gap-3 px-4 py-3 bg-white dark:bg-[#1C1F26] border border-stone-200 dark:border-[#2A2D35] rounded-2xl shadow-xl"
