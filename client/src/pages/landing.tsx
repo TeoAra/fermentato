@@ -15,7 +15,7 @@ import BreweryCard from "@/components/brewery-card";
 const HomepageMap = lazy(() => import("@/components/homepage-map"));
 import { PageContainer } from "@/components/layout/page-container";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
-import { isIosNative } from "@/lib/platform";
+import { isIosNative, isNativeApp } from "@/lib/platform";
 import NewsStrip from "@/components/news-strip";
 
 function useCountUp(target: number, duration = 1400, startDelay = 300) {
@@ -717,6 +717,49 @@ export default function Landing() {
           </div>
         </PageContainer>
       </div>
+
+      {/* ─── DOWNLOAD APP ────────────────────────────────────────────────── */}
+      {!isNativeApp && (
+        <div className="border-t border-border">
+          <PageContainer variant="wide" className="py-8">
+            <div className="text-center mb-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-primary mb-1">App gratuita</p>
+              <h2 className="text-[22px] font-extrabold text-foreground leading-tight">Scarica Fermenta.to</h2>
+              <p className="text-sm text-muted-foreground mt-1">Disponibile su iOS e Android</p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              {/* App Store */}
+              <a
+                href="https://apps.apple.com/it/app/fermenta-to/id6769051632"
+                target="_blank" rel="noopener noreferrer"
+                className="tap-scale flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-black text-white shadow-lg w-full sm:w-auto justify-center sm:justify-start"
+              >
+                <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white flex-shrink-0">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                </svg>
+                <div className="text-left">
+                  <p className="text-[10px] text-white/70 leading-none mb-0.5">Scarica su</p>
+                  <p className="text-[15px] font-black leading-none">App Store</p>
+                </div>
+              </a>
+              {/* Google Play */}
+              <a
+                href="https://play.google.com/store/apps/details?id=to.fermentato.app"
+                target="_blank" rel="noopener noreferrer"
+                className="tap-scale flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#01875f] text-white shadow-lg w-full sm:w-auto justify-center sm:justify-start"
+              >
+                <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white flex-shrink-0">
+                  <path d="M3.18 23.76c.33.18.7.2 1.05.06L16.42 11.5l-3.28-3.28L3.18 23.76zm15.2-13.3-3.07-1.77-3.42 3.42 3.42 3.42 3.1-1.79c.88-.51.88-1.77-.03-2.28zm-14.7-8.2c-.35-.14-.72-.12-1.05.06L16.42 11.3l-3.28-3.28L3.68 2.26zm0 0"/>
+                </svg>
+                <div className="text-left">
+                  <p className="text-[10px] text-white/70 leading-none mb-0.5">Scarica su</p>
+                  <p className="text-[15px] font-black leading-none">Google Play</p>
+                </div>
+              </a>
+            </div>
+          </PageContainer>
+        </div>
+      )}
 
       {/* ─── FINAL CTA ───────────────────────────────────────────────────── */}
       <div className="border-t border-border">
