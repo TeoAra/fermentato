@@ -731,9 +731,6 @@ workflows:
         - pattern: "v*"
           include: true
 
-    integrations:
-      google_play: Google Play
-
     environment:
       node: "20"
       java: "21"
@@ -940,7 +937,6 @@ workflows:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         # internal → revisione interna; production → live immediato
         track: internal
-        submit_rollout_percentage: "100"
       email:
         recipients:
           - info@fermenta.to
