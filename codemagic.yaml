@@ -74,6 +74,13 @@ workflows:
           grep -q "google-cast-sdk" Podfile.lock || { echo "ERRORE: google-cast-sdk non in Podfile.lock"; exit 1; }
           echo "google-cast-sdk installato correttamente"
 
+      - name: Genera splash screen iOS (resources/splash.png → native Assets)
+        script: |
+          # Sostituisce il default Capacitor (X blu) con il logo Fermenta.to
+          npm install -D @capacitor/assets --no-audit --no-fund 2>/dev/null || true
+          npx @capacitor/assets generate --splashscreen --ios || true
+          echo "Splash screen iOS generato da resources/splash.png"
+
       - name: Copia web assets e plugin Swift nel progetto iOS
         script: |
           npx cap copy ios
@@ -304,6 +311,13 @@ workflows:
           grep -q "google-cast-sdk" Podfile.lock || { echo "ERRORE: google-cast-sdk non in Podfile.lock"; exit 1; }
           echo "google-cast-sdk installato correttamente"
 
+      - name: Genera splash screen iOS (resources/splash.png → native Assets)
+        script: |
+          # Sostituisce il default Capacitor (X blu) con il logo Fermenta.to
+          npm install -D @capacitor/assets --no-audit --no-fund 2>/dev/null || true
+          npx @capacitor/assets generate --splashscreen --ios || true
+          echo "Splash screen iOS generato da resources/splash.png"
+
       - name: Copia web assets e plugin Swift nel progetto iOS
         script: |
           npx cap copy ios
@@ -468,7 +482,8 @@ workflows:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
-        submit_to_app_store: false
+        # true = invia per review App Store appena arriva su TestFlight
+        submit_to_app_store: true
       email:
         recipients:
           - info@fermenta.to
@@ -687,6 +702,245 @@ workflows:
       - android/app/build/outputs/apk/debug/*.apk
 
     publishing:
+      email:
+        recipients:
+          - info@fermenta.to
+        notify:
+          success: true
+          failure: true
+
+  # ─── Build Android AAB firmato → Google Play ─────────────────────────────────
+  # Trigger: tag v* (es. v1.2.3) — stessa logica di ios-appstore.
+  # Variabili d'ambiente da impostare in Codemagic (Environment variables):
+  #   CM_KEYSTORE          → contenuto del file .jks in base64
+  #                           (openssl base64 -in fermenta.jks | tr -d '\n')
+  #   CM_KEYSTORE_PASSWORD → password del keystore
+  #   CM_KEY_ALIAS         → alias della chiave (es. upload)
+  #   CM_KEY_PASSWORD      → password della chiave
+  # Integrazione richiesta (Codemagic → Team settings → Integrations):
+  #   Google Play: "Google Play" (service account con ruolo Release Manager)
+  android-aab:
+    name: Android AAB → Google Play
+    max_build_duration: 90
+    instance_type: linux_x2
+
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: "v*"
+          include: true
+
+    integrations:
+      google_play: Google Play
+
+    environment:
+      node: "20"
+      java: "21"
+      vars:
+        PACKAGE_NAME: to.fermentato.app
+        CAST_APP_ID: 6666EC62
+
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $CM_BUILD_DIR/node_modules
+        - ~/.gradle/caches
+
+    scripts:
+      - name: Install Node dependencies
+        script: npm ci
+
+      - name: Build web assets
+        script: npm run build
+
+      - name: Add Android platform + sync
+        script: |
+          if [ ! -d "android" ]; then
+            npx cap add android || true
+          fi
+          if [ ! -f "android/app/build.gradle" ]; then
+            echo "ERRORE: build.gradle non trovato dopo cap add android"
+            exit 1
+          fi
+          npx cap sync android
+
+      - name: Genera splash screen e icone Android (resources/ → native)
+        script: |
+          # Sostituisce il default Capacitor (X blu) con il logo Fermenta.to
+          npm install -D @capacitor/assets --no-audit --no-fund 2>/dev/null || true
+          npx @capacitor/assets generate --android || true
+          echo "Splash screen + icone Android generati da resources/"
+
+      - name: Inietta plugin NativeCast Android (Chromecast nativo)
+        script: |
+          MAIN_FILE=$(find android/app/src/main/java \( -name 'MainActivity.kt' -o -name 'MainActivity.java' \) 2>/dev/null | head -1)
+          PKG=""
+          if [ -n "$MAIN_FILE" ]; then
+            PKG=$(grep -oP '^package\s+\K[a-zA-Z0-9_.]+' "$MAIN_FILE" | head -1)
+          fi
+          if [ -z "$PKG" ]; then
+            PKG=$(grep -oP "applicationId\s+[\"']\K[^\"']+" android/app/build.gradle 2>/dev/null | head -1)
+          fi
+          if [ -z "$PKG" ]; then PKG="to.fermentato.app"; fi
+          PKG_PATH=${PKG//./\/}
+          PKG_DIR="android/app/src/main/java/$PKG_PATH"
+          mkdir -p "$PKG_DIR"
+          echo "Package Android: $PKG → $PKG_DIR"
+          find android/app/src/main/java \( -name 'NativeCastPlugin.kt' -o -name 'CastOptionsProvider.kt' \) \
+            -not -path "$PKG_DIR/*" -print -delete 2>/dev/null || true
+          cp android-native/NativeCastPlugin.kt    "$PKG_DIR/"
+          cp android-native/CastOptionsProvider.kt "$PKG_DIR/"
+          sed -i "s/^package .*/package $PKG/" "$PKG_DIR/NativeCastPlugin.kt"
+          sed -i "s/^package .*/package $PKG/" "$PKG_DIR/CastOptionsProvider.kt"
+          ROOT_GRADLE="android/build.gradle"
+          APP_GRADLE="android/app/build.gradle"
+          sed -i '/kotlin-gradle-plugin/d' "$ROOT_GRADLE"
+          sed -i '0,/classpath\s*["'"'"']com\.android\.tools\.build:gradle/{s#\(classpath\s*["'"'"']com\.android\.tools\.build:gradle[^"'"'"']*["'"'"']\)#\1\n        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.1.0"#}' "$ROOT_GRADLE"
+          if ! grep -qE "(kotlin-android|org.jetbrains.kotlin.android)" "$APP_GRADLE"; then
+            sed -i '0,/apply plugin: .com.android.application./{s//apply plugin: "com.android.application"\napply plugin: "kotlin-android"/}' "$APP_GRADLE"
+          fi
+          if [ -z "$MAIN_FILE" ]; then
+            cat > "$PKG_DIR/MainActivity.kt" << KTEOF
+          package $PKG
+          import com.getcapacitor.BridgeActivity
+          class MainActivity : BridgeActivity()
+          KTEOF
+            MAIN_FILE="$PKG_DIR/MainActivity.kt"
+          fi
+          sed -i '/^import .*\.NativeCastPlugin;\?$/d' "$MAIN_FILE"
+          sed -i '/registerPlugin(NativeCastPlugin/d' "$MAIN_FILE"
+          case "$MAIN_FILE" in
+            *.java)
+              sed -i "s|import com.getcapacitor.BridgeActivity;|import com.getcapacitor.BridgeActivity;\nimport $PKG.NativeCastPlugin;|" "$MAIN_FILE"
+              sed -i 's/super.onCreate(savedInstanceState);/registerPlugin(NativeCastPlugin.class);\n        super.onCreate(savedInstanceState);/' "$MAIN_FILE"
+              ;;
+            *.kt)
+              sed -i "s|import com.getcapacitor.BridgeActivity|import com.getcapacitor.BridgeActivity\nimport $PKG.NativeCastPlugin|" "$MAIN_FILE"
+              if ! grep -q "registerPlugin(NativeCastPlugin" "$MAIN_FILE"; then
+                if grep -q "override fun onCreate" "$MAIN_FILE"; then
+                  sed -i 's/super.onCreate(savedInstanceState)/registerPlugin(NativeCastPlugin::class.java)\n        super.onCreate(savedInstanceState)/' "$MAIN_FILE"
+                else
+                  python3 - "$MAIN_FILE" << 'PYEOF'
+          import sys
+          p = sys.argv[1]
+          txt = open(p).read()
+          inject = """
+              override fun onCreate(savedInstanceState: android.os.Bundle?) {
+                  registerPlugin(NativeCastPlugin::class.java)
+                  super.onCreate(savedInstanceState)
+              }
+          """
+          idx = txt.rstrip().rfind("}")
+          open(p, "w").write(txt[:idx] + inject + txt[idx:])
+          PYEOF
+                fi
+              fi
+              ;;
+          esac
+          PLUGINS_JSON="android/app/src/main/assets/capacitor.plugins.json"
+          mkdir -p "$(dirname "$PLUGINS_JSON")"
+          [ ! -f "$PLUGINS_JSON" ] && echo "[]" > "$PLUGINS_JSON"
+          PKG_FOR_PY="$PKG" python3 - "$PLUGINS_JSON" << 'PYEOF'
+          import json, os, sys
+          path = sys.argv[1]
+          pkg  = os.environ["PKG_FOR_PY"]
+          classpath = f"{pkg}.NativeCastPlugin"
+          try:
+              data = json.load(open(path))
+              if not isinstance(data, list): data = []
+          except Exception:
+              data = []
+          data = [p for p in data if p.get("classpath") != classpath]
+          data.append({"pkg": pkg, "classpath": classpath})
+          json.dump(data, open(path, "w"), indent=2)
+          print(f"NativeCast registrato in {path}")
+          PYEOF
+          grep -q "play-services-cast-framework" "$APP_GRADLE" || \
+            sed -i '/dependencies {/a\    implementation "com.google.android.gms:play-services-cast-framework:21.5.0"\n    implementation "androidx.mediarouter:mediarouter:1.7.0"' "$APP_GRADLE"
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          python3 android-native/inject_cast_manifest.py "$MANIFEST" "$PKG"
+
+      - name: Aggiungi permessi AndroidManifest
+        script: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          grep -q "CHANGE_NETWORK_STATE" "$MANIFEST" || \
+            sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>\n    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>|' "$MANIFEST"
+          grep -q "CHANGE_WIFI_MULTICAST_STATE" "$MANIFEST" || \
+            sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>|' "$MANIFEST"
+          grep -q "NEARBY_WIFI_DEVICES" "$MANIFEST" || \
+            sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES" android:usesPermissionFlags="neverForLocation" tools:targetApi="33"/>\n    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>|' "$MANIFEST"
+          grep -q 'xmlns:tools=' "$MANIFEST" || \
+            sed -i 's|<manifest |<manifest xmlns:tools="http://schemas.android.com/tools" |' "$MANIFEST"
+          grep -q "ACCESS_FINE_LOCATION" "$MANIFEST" || \
+            sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>|' "$MANIFEST"
+          echo "AndroidManifest permessi OK"
+
+      - name: Imposta versione e build number
+        script: |
+          set -e
+          VERSION=$(node -p "require('./version.json').version")
+          IFS='.' read -r VM_MAJOR VM_MINOR VM_PATCH <<< "$VERSION"
+          BUILD_NUM=$(( VM_MAJOR * 10000 + VM_MINOR * 100 + VM_PATCH ))
+          sed -i "s/versionName \"[^\"]*\"/versionName \"$VERSION\"/" android/app/build.gradle
+          sed -i "s/versionCode [0-9]*/versionCode $BUILD_NUM/" android/app/build.gradle
+          echo "Android $VERSION (versionCode $BUILD_NUM)"
+
+      - name: Configura firma release con keystore
+        script: |
+          set -e
+          if [ -z "$CM_KEYSTORE" ]; then
+            echo "ERRORE: CM_KEYSTORE (base64) non impostato in Codemagic Environment variables"
+            exit 1
+          fi
+          echo "$CM_KEYSTORE" | base64 --decode > /tmp/fermenta_upload.jks
+          chmod 600 /tmp/fermenta_upload.jks
+          echo "Keystore decodificato in /tmp/fermenta_upload.jks"
+          # Inietta signingConfig release in build.gradle (idempotente)
+          APP_GRADLE="android/app/build.gradle"
+          grep -q "fermenta_upload.jks" "$APP_GRADLE" && { echo "signingConfig già presente"; exit 0; }
+          python3 - "$APP_GRADLE" << 'PYEOF'
+          import sys, re
+          path = sys.argv[1]
+          txt = open(path).read()
+          signing_block = """
+          signingConfigs {
+              release {
+                  storeFile file("/tmp/fermenta_upload.jks")
+                  storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+                  keyAlias     System.getenv("CM_KEY_ALIAS")
+                  keyPassword  System.getenv("CM_KEY_PASSWORD")
+              }
+          }
+          """
+          # Aggiungi signingConfigs prima di buildTypes
+          txt = re.sub(r'(\s*buildTypes\s*\{)', signing_block + r'\1', txt, count=1)
+          # Imposta signingConfig nel blocco release
+          txt = re.sub(
+              r'(release\s*\{)',
+              r'\1\n            signingConfig signingConfigs.release',
+              txt, count=1
+          )
+          open(path, "w").write(txt)
+          print("signingConfig release iniettato in build.gradle")
+          PYEOF
+
+      - name: Build AAB release firmato
+        script: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease --no-daemon 2>&1
+          echo "AAB generato in android/app/build/outputs/bundle/release/"
+
+    artifacts:
+      - android/app/build/outputs/bundle/release/*.aab
+
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        # internal → revisione interna; production → live immediato
+        track: internal
+        submit_rollout_percentage: "100"
       email:
         recipients:
           - info@fermenta.to
