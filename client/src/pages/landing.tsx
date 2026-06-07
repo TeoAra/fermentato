@@ -744,7 +744,7 @@ export default function Landing() {
               </a>
               {/* Google Play */}
               <a
-                href="https://play.google.com/store/apps/details?id=to.fermentato.app"
+                href="https://play.google.com/store/apps/details?id=to.fermenta.app"
                 target="_blank" rel="noopener noreferrer"
                 className="tap-scale flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-[#01875f] text-white shadow-lg w-full sm:w-auto justify-center sm:justify-start"
               >

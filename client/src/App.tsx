@@ -28,7 +28,7 @@ import { isIosNative, isNativeApp } from "@/lib/platform";
 import { NativeSplashOverlay } from "@/components/native-splash-overlay";
 import type { User } from "@shared/schema";
 
-const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=to.fermentato.app";
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=to.fermenta.app";
 const APP_STORE_URL  = "https://apps.apple.com/it/app/fermenta-to/id6769051632";
 
 // ─── Android Google Play install banner (browser only, not native app) ───────
