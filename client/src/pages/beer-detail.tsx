@@ -436,7 +436,7 @@ export default function BeerDetail() {
   const filteredReviews = useMemo(() => {
     if (!reviewsData?.reviews) return [];
     let list = [...reviewsData.reviews];
-    if (reviewFilterRating !== null) list = list.filter(r => r.rating === reviewFilterRating);
+    if (reviewFilterRating !== null) list = list.filter(r => Math.round(r.rating || 0) === reviewFilterRating);
     if (reviewSortBy === 'highest') list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
     else if (reviewSortBy === 'lowest') list.sort((a, b) => (a.rating || 0) - (b.rating || 0));
     else list.sort((a, b) => new Date(b.tastedAt).getTime() - new Date(a.tastedAt).getTime());

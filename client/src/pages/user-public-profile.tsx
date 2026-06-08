@@ -42,12 +42,23 @@ import { it } from "date-fns/locale";
 function StarDisplay({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((s) => (
-        <Star
-          key={s}
-          className={`h-3.5 w-3.5 ${s <= rating ? "text-yellow-500 fill-yellow-500" : "text-stone-300 dark:text-stone-400"}`}
-        />
-      ))}
+      {[1, 2, 3, 4, 5].map((s) => {
+        const full = rating >= s;
+        const half = !full && rating >= s - 0.5;
+        return (
+          <span key={s} className="relative inline-block w-3.5 h-3.5">
+            <Star className="h-3.5 w-3.5 text-stone-300 dark:text-stone-400 absolute inset-0" />
+            {(full || half) && (
+              <span
+                className="absolute inset-0 overflow-hidden"
+                style={{ width: full ? "100%" : "50%" }}
+              >
+                <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+              </span>
+            )}
+          </span>
+        );
+      })}
     </div>
   );
 }
@@ -227,7 +238,7 @@ export default function UserPublicProfile() {
           <div className="text-center sm:text-left text-white">
             <div className="flex items-center justify-center sm:justify-start gap-3 mb-1">
               <h1 className="text-3xl font-bold">{displayName}</h1>
-              {profile.id && <FollowButton userId={profile.id} className="border-white/30 text-white hover:bg-white/10" />}
+              {profile.id && <FollowButton userId={profile.id} />}
             </div>
             <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
               <span className="text-white/90 font-semibold text-lg">{badge.name}</span>
@@ -401,6 +412,8 @@ export default function UserPublicProfile() {
                   )}
                   <p className="text-xs text-stone-400 mt-1">
                     {format(new Date(review.tastedAt), "d MMM yyyy", { locale: it })}
+                    {review.format && <span className="ml-1">· {review.format}</span>}
+                    {review.pubName && <span className="ml-1">· {review.pubName}</span>}
                   </p>
                 </div>
               </div>
@@ -547,6 +560,11 @@ export default function UserPublicProfile() {
                               <StarDisplay rating={review.rating} />
                             </div>
                             {review.beerStyle && <span className="text-[10px] text-muted-foreground">{review.beerStyle}</span>}
+                            {(review.format || review.pubName) && (
+                              <span className="text-[10px] text-stone-400">
+                                {review.format}{review.format && review.pubName ? " · " : ""}{review.pubName}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </Link>

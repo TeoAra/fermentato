@@ -7058,9 +7058,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
         : null;
 
-      // Rating distribution
+      // Rating distribution — bucket decimal ratings to nearest integer
       const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      for (const r of reviews) { if (r.rating) distribution[r.rating] = (distribution[r.rating] || 0) + 1; }
+      for (const r of reviews) {
+        if (r.rating) {
+          const bucket = Math.min(5, Math.max(1, Math.round(r.rating)));
+          distribution[bucket] = (distribution[bucket] || 0) + 1;
+        }
+      }
 
       res.json({
         reviews,
@@ -7156,9 +7161,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         beerName: beers.name,
         beerStyle: beers.style,
         beerImageUrl: beers.imageUrl,
+        format: userBeerTastings.format,
+        pubId: userBeerTastings.pubId,
+        pubName: pubs.name,
       })
       .from(userBeerTastings)
       .leftJoin(beers, eq(userBeerTastings.beerId, beers.id))
+      .leftJoin(pubs, eq(userBeerTastings.pubId, pubs.id))
       .where(and(eq(userBeerTastings.userId, profile.id), sql`${userBeerTastings.rating} IS NOT NULL`))
       .orderBy(desc(userBeerTastings.tastedAt))
       .limit(12);

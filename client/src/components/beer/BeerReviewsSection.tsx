@@ -143,16 +143,21 @@ export default function BeerReviewsSection({
             </h2>
             {reviewsData.avgRating && (
               <div className="flex items-center gap-1">
-                {[1, 2, 3, 4, 5].map((s) => (
-                  <Star
-                    key={s}
-                    className={`h-3.5 w-3.5 ${
-                      s <= Math.round(reviewsData.avgRating || 0)
-                        ? "text-[#F59E0B] fill-[#F59E0B]"
-                        : "text-[#E8DED1] dark:text-white/20"
-                    }`}
-                  />
-                ))}
+                {[1, 2, 3, 4, 5].map((s) => {
+                  const avg = reviewsData.avgRating || 0;
+                  const full = avg >= s;
+                  const half = !full && avg >= s - 0.5;
+                  return (
+                    <span key={s} className="relative inline-block w-3.5 h-3.5">
+                      <Star className="h-3.5 w-3.5 text-[#E8DED1] dark:text-white/20 absolute inset-0" />
+                      {(full || half) && (
+                        <span className="absolute inset-0 overflow-hidden" style={{ width: full ? "100%" : "50%" }}>
+                          <Star className="h-3.5 w-3.5 text-[#F59E0B] fill-[#F59E0B]" />
+                        </span>
+                      )}
+                    </span>
+                  );
+                })}
                 <span className="ml-1 text-sm font-bold text-[#151515] dark:text-[#F5F5F5]">
                   {reviewsData.avgRating?.toFixed(1)}
                 </span>
@@ -277,16 +282,21 @@ export default function BeerReviewsSection({
                         </span>
                       </div>
                       <div className="flex items-center gap-0.5 flex-shrink-0">
-                        {[1, 2, 3, 4, 5].map((s) => (
-                          <Star
-                            key={s}
-                            className={`h-3 w-3 ${
-                              s <= (review.rating || 0)
-                                ? "text-[#F59E0B] fill-[#F59E0B]"
-                                : "text-[#E8DED1] dark:text-white/20"
-                            }`}
-                          />
-                        ))}
+                        {[1, 2, 3, 4, 5].map((s) => {
+                          const r = review.rating || 0;
+                          const full = r >= s;
+                          const half = !full && r >= s - 0.5;
+                          return (
+                            <span key={s} className="relative inline-block w-3 h-3">
+                              <Star className="h-3 w-3 text-[#E8DED1] dark:text-white/20 absolute inset-0" />
+                              {(full || half) && (
+                                <span className="absolute inset-0 overflow-hidden" style={{ width: full ? "100%" : "50%" }}>
+                                  <Star className="h-3 w-3 text-[#F59E0B] fill-[#F59E0B]" />
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                     {review.personalNotes && (
