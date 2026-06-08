@@ -526,7 +526,7 @@ export default function UserProfile() {
       className={`container mx-auto px-4 py-8 max-w-4xl ${activeProfileTab !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : ''}`}
       style={{
         paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
-        paddingTop: activeProfileTab !== 'overview' ? '64px' : undefined,
+        paddingTop: activeProfileTab !== 'overview' ? 'calc(var(--mobile-top-offset) + 56px)' : undefined,
       }}
     >
       <div className="space-y-6">
@@ -766,7 +766,6 @@ export default function UserProfile() {
               </CardContent>
             </Card>
 
-            <BeerTastingsEditor beerTastings={beerTastings} />
           </TabsContent>
 
           <TabsContent value="favorites" className="space-y-4">
@@ -1157,11 +1156,12 @@ export default function UserProfile() {
           </TabsContent>
         </Tabs>
 
-        {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
+        {/* ── STICKY MINI TOP BAR via Portal (avoids will-change:transform containing-block trap) ── */}
         {activeProfileTab !== 'overview' && !isProfileModalOpen && (
+          <DockPortal>
           <div
             className="lg:hidden fixed inset-x-0 z-40"
-            style={{ top: 'calc(env(safe-area-inset-top) + 56px)' }}
+            style={{ top: 'var(--mobile-top-offset)' }}
           >
             <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
               <div className="flex items-center gap-3 px-3 h-14">
@@ -1199,6 +1199,7 @@ export default function UserProfile() {
               </div>
             </div>
           </div>
+          </DockPortal>
         )}
 
         {/* ── BOTTOM DOCK PROFILO (mobile only) — stesso pattern di BottomNavigation ── */}

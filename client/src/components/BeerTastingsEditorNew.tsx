@@ -120,7 +120,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
             <Beer className="w-4 h-4 text-amber-600" />
           </div>
           <div>
-            <h3 className="text-sm font-extrabold text-foreground">Bevute ({beerTastings?.length || 0})</h3>
+            <h3 className="text-sm font-extrabold text-foreground">Check-in ({beerTastings?.length || 0})</h3>
             {hasFilters && <p className="text-[10px] text-primary font-semibold">{filtered.length} filtrate</p>}
           </div>
         </div>
