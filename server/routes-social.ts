@@ -313,13 +313,14 @@ export async function registerSocialRoutes(app: Express) {
   app.get("/api/checkin/:id/likes", async (req, res) => {
     const tastingId = parseInt(req.params.id, 10);
     const userId = (req as any).user?.id ?? null;
-    const [count, mine] = await Promise.all([
+    const [count, mine, commentsCount] = await Promise.all([
       pool.query(`SELECT COUNT(*)::int AS c FROM checkin_likes WHERE tasting_id = $1`, [tastingId]),
       userId
         ? pool.query(`SELECT 1 FROM checkin_likes WHERE tasting_id = $1 AND user_id = $2`, [tastingId, userId])
         : Promise.resolve({ rows: [] } as any),
+      pool.query(`SELECT COUNT(*)::int AS c FROM checkin_comments WHERE tasting_id = $1`, [tastingId]),
     ]);
-    res.json({ count: count.rows[0].c, liked: mine.rows.length > 0 });
+    res.json({ count: count.rows[0].c, liked: mine.rows.length > 0, commentsCount: commentsCount.rows[0].c });
   });
 
   app.get("/api/checkin/:id/comments", async (req: any, res) => {

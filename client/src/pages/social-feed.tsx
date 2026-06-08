@@ -256,6 +256,7 @@ function CheckinSocialBar({ tastingId }: { tastingId: number }) {
     onSuccess: () => {
       setNewComment("");
       queryClient.invalidateQueries({ queryKey: ["/api/checkin", tastingId, "comments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/checkin", tastingId, "likes"] });
     },
   });
 
@@ -277,7 +278,7 @@ function CheckinSocialBar({ tastingId }: { tastingId: number }) {
           className="flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-primary transition-colors"
         >
           <MessageCircle className="w-4 h-4" />
-          {comments.length || ""}
+          {showComments ? (comments.length || (likes?.commentsCount || "")) : (likes?.commentsCount || "")}
           <span className="ml-0.5">Commenti</span>
         </button>
       </div>

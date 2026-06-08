@@ -9142,6 +9142,32 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     if (meId === targetId) return res.status(400).json({ message: "Non puoi seguire te stesso" });
     await pool.query(`INSERT INTO user_follows (follower_id, following_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [meId, targetId]);
     res.json({ following: true });
+
+    // Async: push + notifica in-app all'utente seguito
+    (async () => {
+      try {
+        const me = req.user as any;
+        const displayName = me.nickname || [me.firstName, me.lastName].filter(Boolean).join(" ").trim() || "Qualcuno";
+        const profileUrl = me.nickname ? `/user/${me.nickname}` : "/feed";
+        await Promise.allSettled([
+          sendPushToUser(targetId, {
+            title: "👤 Nuovo follower",
+            body: `${displayName} ha iniziato a seguirti`,
+            url: profileUrl,
+            tag: `follow-${meId}`,
+            category: 'newFollowers',
+          }),
+          storage.createNotification({
+            userId: targetId,
+            type: "follow",
+            title: "Nuovo follower",
+            message: `${displayName} ha iniziato a seguirti`,
+          }),
+        ]);
+      } catch (e) {
+        console.error("[follow] notification error:", e);
+      }
+    })();
   });
 
   app.delete("/api/users/:userId/follow", isAuthenticated, async (req, res) => {
