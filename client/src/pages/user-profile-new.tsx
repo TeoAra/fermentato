@@ -46,7 +46,7 @@ import {
   Home as HomeIcon,
   Info as InfoIcon,
   Shield,
-  MoreHorizontal,
+
   ArrowLeft,
   Lock,
 } from "lucide-react";
@@ -204,7 +204,7 @@ export default function UserProfile() {
   const [tempEmail, setTempEmail] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isPublicProfile, setIsPublicProfile] = useState<boolean>(true);
-  type ProfileTab = 'overview' | 'favorites' | 'info' | 'security' | 'more';
+  type ProfileTab = 'overview' | 'favorites' | 'reviews' | 'info' | 'security';
   // SSR-safe: parte da "favorites" (valida desktop e mobile). In effect
   // client switchiamo a "overview" se siamo su mobile e gestiamo i resize.
   const [activeProfileTab, setActiveProfileTab] = useState<ProfileTab>('favorites');
@@ -617,9 +617,9 @@ export default function UserProfile() {
           <div className="hidden lg:flex gap-1 bg-white dark:bg-card rounded-2xl p-1 border border-stone-100 dark:border-border shadow-sm mb-4">
             {[
               { value: 'favorites', label: 'Preferiti' },
+              { value: 'reviews', label: 'Recensioni' },
               { value: 'info', label: 'Info' },
               { value: 'security', label: 'Sicurezza' },
-              { value: 'more', label: 'Altro' },
             ].map(({ value, label }) => (
               <button
                 key={value}
@@ -866,6 +866,10 @@ export default function UserProfile() {
             </Card>
           </TabsContent>
 
+          <TabsContent value="reviews" className="space-y-6">
+            <BeerTastingsEditor beerTastings={beerTastings} />
+          </TabsContent>
+
           <TabsContent value="info" className="space-y-6">
             <Card className="border-0 shadow-lg bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               <CardHeader>
@@ -877,6 +881,51 @@ export default function UserProfile() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-muted-foreground dark:text-stone-300">Foto Profilo</label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      {typedUser?.profileImageUrl ? (
+                        <img
+                          src={typedUser.profileImageUrl}
+                          alt="Foto profilo"
+                          className="w-20 h-20 rounded-full object-cover border-2 border-stone-200 dark:border-white/10"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center border-2 border-stone-200 dark:border-white/10">
+                          <span className="text-white text-2xl font-bold">
+                            {(typedUser?.nickname || typedUser?.username || "U")[0].toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      {avatarUploading && (
+                        <div className="absolute inset-0 rounded-full bg-black/50 flex items-center justify-center">
+                          <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-stone-100 dark:bg-white/[0.06] hover:bg-stone-200 dark:hover:bg-white/10 text-sm font-medium transition-colors">
+                        <Camera className="w-4 h-4" />
+                        Cambia foto
+                        <input
+                          ref={avatarInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={avatarUploading}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleAvatarUpload(file);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                      <p className="text-xs text-muted-foreground">JPG, PNG o WebP. Max 5 MB.</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium mb-2 text-muted-foreground dark:text-stone-300">Nome Utente (Nickname)</label>
                   {isEditingNickname ? (
@@ -1042,21 +1091,19 @@ export default function UserProfile() {
                 <PasswordChangeForm />
               </CardContent>
             </Card>
-          </TabsContent>
 
-          <TabsContent value="more" className="space-y-6">
             <Card className="border-0 shadow-lg bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-foreground dark:text-white">
                   <div className="p-2 bg-stone-100 dark:bg-[#1A1D24]/50 rounded-lg">
-                    <MoreHorizontal className="w-5 h-5 text-red-600" />
+                    <Trash2 className="w-5 h-5 text-red-600" />
                   </div>
-                  Altro
+                  Zona Pericolo
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div>
-                  <h3 className="text-sm font-medium mb-4 text-red-600">Zona Pericolo</h3>
+                  <p className="text-sm text-muted-foreground dark:text-stone-400 mb-4">L'eliminazione è permanente e non può essere annullata.</p>
                   {!showDeleteConfirm ? (
                     <Button
                       variant="destructive"
@@ -1068,7 +1115,7 @@ export default function UserProfile() {
                   ) : (
                     <div className="space-y-3">
                       <p className="text-sm text-muted-foreground dark:text-stone-400">
-                        Sei sicuro? Questa azione non può essere annullata e tutti i tuoi dati verranno eliminati permanentemente.
+                        Sei sicuro? Tutti i tuoi dati verranno eliminati permanentemente.
                       </p>
                       <div className="flex gap-2">
                         <Button
@@ -1142,9 +1189,9 @@ export default function UserProfile() {
                     </div>
                     <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
                       {activeProfileTab === 'favorites' && 'Preferiti'}
+                      {activeProfileTab === 'reviews' && 'Recensioni'}
                       {activeProfileTab === 'info' && 'Info personali'}
                       {activeProfileTab === 'security' && 'Sicurezza'}
-                      {activeProfileTab === 'more' && 'Altro'}
                     </div>
                   </div>
                 </div>
@@ -1167,11 +1214,11 @@ export default function UserProfile() {
             <div>
               <div className="flex items-stretch justify-between p-1.5 gap-1">
                 {([
-                  { id: 'overview',  label: 'Home',      Icon: HomeIcon },
-                  { id: 'favorites', label: 'Preferiti', Icon: Heart },
-                  { id: 'info',      label: 'Info',      Icon: InfoIcon },
-                  { id: 'security',  label: 'Sicurezza', Icon: Lock },
-                  { id: 'more',      label: 'Altro',     Icon: MoreHorizontal },
+                  { id: 'overview',  label: 'Home',       Icon: HomeIcon },
+                  { id: 'favorites', label: 'Preferiti',  Icon: Heart },
+                  { id: 'reviews',   label: 'Recensioni', Icon: StarIcon },
+                  { id: 'info',      label: 'Info',       Icon: InfoIcon },
+                  { id: 'security',  label: 'Sicurezza',  Icon: Lock },
                 ] as { id: ProfileTab; label: string; Icon: any }[]).map(({ id, label, Icon }) => {
                   const active = activeProfileTab === id;
                   return (

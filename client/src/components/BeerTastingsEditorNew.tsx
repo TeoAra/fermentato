@@ -4,12 +4,11 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import RichTextEditor, { richTextToPlain } from "@/components/rich-text-editor";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Star, Edit3, Trash2, Beer, Calendar, ChevronLeft, ChevronRight, Filter, X } from "lucide-react";
+import { Star, Edit3, Trash2, Beer, Calendar, ChevronLeft, ChevronRight, Filter, X, Camera } from "lucide-react";
 import { PubAutocomplete } from "./PubAutocomplete";
 import { Link } from "wouter";
 
@@ -24,8 +23,12 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
   const [editNotes, setEditNotes] = useState("");
   const [editRating, setEditRating] = useState(5);
   const [editFormat, setEditFormat] = useState("");
+  const [editPhotoUrl, setEditPhotoUrl] = useState<string>("");
+  const [editPhotoUploading, setEditPhotoUploading] = useState(false);
   const [selectedPubId, setSelectedPubId] = useState<number | undefined>();
   const [deletingTasting, setDeletingTasting] = useState<any>(null);
+
+  const toPlain = (s: string) => s ? s.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim() : '';
 
   const [currentPage, setCurrentPage] = useState(1);
   const [perPage, setPerPage] = useState(5);
@@ -34,14 +37,15 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
   const [showFilters, setShowFilters] = useState(false);
 
   const updateTastingMutation = useMutation({
-    mutationFn: async ({ tastingId, notes, rating, pubId, format }: { 
+    mutationFn: async ({ tastingId, notes, rating, pubId, format, photoUrl }: { 
       tastingId: number, 
       notes: string, 
       rating: number,
       pubId?: number,
-      format?: string
+      format?: string,
+      photoUrl?: string | null
     }) => {
-      const updateData: any = { personalNotes: notes, rating, format: format || null };
+      const updateData: any = { personalNotes: notes, rating, format: format || null, photoUrl: photoUrl ?? null };
       if (pubId !== undefined) {
         updateData.pubId = pubId;
       }
@@ -75,9 +79,10 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
 
   const openEditDialog = (tasting: any) => {
     setEditingTasting(tasting);
-    setEditNotes(tasting.personalNotes || "");
-    setEditRating(tasting.rating || 5);
+    setEditNotes(toPlain(tasting.personalNotes || ""));
+    setEditRating(parseFloat(tasting.rating) || 5);
     setEditFormat(tasting.format || "");
+    setEditPhotoUrl(tasting.photoUrl || "");
     setSelectedPubId(tasting.pubId);
   };
 
@@ -88,7 +93,8 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
         notes: editNotes,
         rating: editRating,
         pubId: selectedPubId,
-        format: editFormat
+        format: editFormat,
+        photoUrl: editPhotoUrl || null,
       });
     }
   };
@@ -228,7 +234,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                       </Link>
                       {tasting.personalNotes && (
                         <p className="text-xs text-muted-foreground dark:text-stone-300 italic mt-1 bg-stone-50 dark:bg-[#1A1D24] px-2 py-1 rounded line-clamp-2">
-                          "{richTextToPlain(tasting.personalNotes)}"
+                          "{toPlain(tasting.personalNotes)}"
                         </p>
                       )}
                       {(tasting.createdAt || tasting.tastedAt) && (
@@ -401,12 +407,66 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Note personali</label>
-                  <RichTextEditor
-                    content={editNotes}
-                    onChange={setEditNotes}
+                  <textarea
+                    value={editNotes}
+                    onChange={(e) => setEditNotes(e.target.value)}
                     placeholder="Aggiungi le tue note su questa birra..."
-                    maxChars={2000}
+                    maxLength={2000}
+                    rows={4}
+                    className="w-full px-3 py-2 text-sm border border-stone-200 dark:border-[#23262E] rounded-lg bg-background resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                   />
+                  <p className="text-xs text-muted-foreground text-right mt-1">{editNotes.length} / 2000 caratteri</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Foto (opzionale)</label>
+                  {editPhotoUrl ? (
+                    <div className="relative w-full h-40 rounded-lg overflow-hidden border border-stone-200 dark:border-[#23262E]">
+                      <img src={editPhotoUrl} alt="Foto assaggio" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setEditPhotoUrl("")}
+                        className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <label className="flex items-center gap-2 px-3 py-2.5 border border-dashed border-stone-300 dark:border-[#23262E] rounded-lg cursor-pointer hover:border-primary transition-colors">
+                      <Camera className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                      <span className="text-sm text-muted-foreground">
+                        {editPhotoUploading ? "Caricamento..." : "Aggiungi foto"}
+                      </span>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        disabled={editPhotoUploading}
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setEditPhotoUploading(true);
+                          try {
+                            const formData = new FormData();
+                            formData.append("photo", file);
+                            const res = await fetch("/api/user/beer-tastings/upload-photo", {
+                              method: "POST",
+                              body: formData,
+                              credentials: "include",
+                            });
+                            if (!res.ok) throw new Error("Upload fallito");
+                            const { photoUrl: url } = await res.json();
+                            setEditPhotoUrl(url);
+                          } catch {
+                            toast({ title: "Errore", description: "Impossibile caricare la foto", variant: "destructive" });
+                          } finally {
+                            setEditPhotoUploading(false);
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                    </label>
+                  )}
                 </div>
 
                 <div className="flex gap-2 pt-4">
