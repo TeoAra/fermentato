@@ -9241,7 +9241,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
   // ─────────────────────────────────────────────────────────────────────────────
   app.get("/api/user/stats", isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
-    const [totalRes, avgRes, styleRes, breweryRes, formatRes, monthlyRes, topBeersRes, streakRes] = await Promise.all([
+    const [totalRes, avgRes, styleRes, breweryRes, formatRes, monthlyRes, topBeersRes, streakRes, reviewsRes] = await Promise.all([
       pool.query(`SELECT COUNT(*) as total, AVG(rating) as avg_rating, MAX(rating) as max_rating FROM user_beer_tastings WHERE user_id = $1`, [userId]),
       pool.query(`SELECT rating, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 GROUP BY rating ORDER BY cnt DESC LIMIT 1`, [userId]),
       pool.query(`SELECT b.style, COUNT(*) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND b.style IS NOT NULL GROUP BY b.style ORDER BY cnt DESC LIMIT 5`, [userId]),
@@ -9259,9 +9259,14 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
         )
         SELECT COUNT(*) as streak FROM streaks WHERE grp = (SELECT grp FROM streaks LIMIT 1)
       `, [userId]),
+      pool.query(`SELECT COUNT(*) as total FROM beer_reviews WHERE user_id = $1`, [userId]),
     ]);
+    const tastingsTotal = parseInt(totalRes.rows[0].total);
+    const reviewsTotal = parseInt(reviewsRes.rows[0]?.total ?? 0);
     res.json({
-      total: parseInt(totalRes.rows[0].total),
+      total: tastingsTotal,
+      totalCheckins: tastingsTotal,
+      totalReviews: reviewsTotal,
       avgRating: totalRes.rows[0].avg_rating ? parseFloat(parseFloat(totalRes.rows[0].avg_rating).toFixed(1)) : null,
       topStyles: styleRes.rows,
       topBreweries: breweryRes.rows,

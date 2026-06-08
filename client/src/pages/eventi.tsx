@@ -31,7 +31,7 @@ type PublicEvent = {
   venueLogoUrl: string | null;
 };
 
-type Range = "all" | "today" | "tomorrow" | "week" | "month";
+type Range = "all" | "today" | "tomorrow" | "week" | "month" | "past";
 
 function rangeToDates(range: Range): { from?: Date; to?: Date } {
   const now = new Date();
@@ -43,7 +43,8 @@ function rangeToDates(range: Range): { from?: Date; to?: Date } {
     }
     case "week":     return { from: now, to: endOfDay(addDays(now, 7)) };
     case "month":    return { from: now, to: endOfDay(addDays(now, 30)) };
-    default:         return { from: now };
+    case "past":     return { from: new Date(0), to: now };
+    default:         return {};
   }
 }
 
@@ -94,8 +95,9 @@ export default function EventiPage() {
       arr.push(ev);
       map.set(key, arr);
     }
-    return Array.from(map.entries()).map(([date, list]) => ({ date, list }));
-  }, [events]);
+    const result = Array.from(map.entries()).map(([date, list]) => ({ date, list }));
+    return range === "past" ? result.reverse() : result;
+  }, [events, range]);
 
   const hasActiveFilters = q || city || category !== "all" || source !== "all" || range !== "all";
 
@@ -157,6 +159,7 @@ export default function EventiPage() {
               { v: "all",      l: "Tutti" },
               { v: "today",    l: "Oggi" },
               { v: "tomorrow", l: "Domani" },
+              { v: "past",     l: "Passati" },
               { v: "week",     l: "Questa settimana" },
               { v: "month",    l: "Questo mese" },
             ] as { v: Range; l: string }[]).map(opt => (

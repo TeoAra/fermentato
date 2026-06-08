@@ -218,7 +218,7 @@ export default function ExploreBreweries() {
   const handleQuickFilter = (f: QuickFilter) => {
     setQuickFilter(prev => prev === f ? "all" : f);
     setPage(1);
-    if (f === "nearby" && !userLocation) handleLocate();
+    if (f === "nearby") handleLocate();
   };
 
   const clearFilters = () => {
@@ -228,7 +228,6 @@ export default function ExploreBreweries() {
   const QUICK_FILTERS: { key: QuickFilter; label: string; icon: React.ReactNode }[] = [
     { key: "all", label: "Tutti", icon: <Globe className="w-3 h-3" /> },
     { key: "nearby", label: "Vicino a te", icon: <Navigation className="w-3 h-3" /> },
-    { key: "top", label: "Top rated", icon: <Star className="w-3 h-3" /> },
     { key: "italian", label: "🇮🇹 Italiani", icon: null },
     { key: "international", label: "Internazionali", icon: null },
   ];
@@ -294,23 +293,6 @@ export default function ExploreBreweries() {
                   </>
                 )}
               </div>
-            )}
-
-            {/* Toggle linea d'aria / percorso reale */}
-            {quickFilter === "nearby" && userLocation && (
-              <button
-                onClick={() => setUseRealRoute(v => !v)}
-                title={useRealRoute ? "Distanza calcolata sul percorso stradale reale" : "Distanza in linea d'aria"}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
-                  useRealRoute
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
-                }`}
-                data-testid="toggle-real-route-breweries"
-              >
-                <Navigation className="w-3 h-3" />
-                {useRealRoute ? "Percorso reale" : "Linea d'aria"}
-              </button>
             )}
 
             {QUICK_FILTERS.filter(f => f.key !== "all" || quickFilter === "all").map(f => (

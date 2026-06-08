@@ -54,6 +54,7 @@ export default function NewsPage() {
               <div className="flex gap-0">
                 {it.image_url && (
                   <img src={it.image_url} alt="" loading="lazy"
+                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                     className="w-28 sm:w-40 h-28 sm:h-32 object-cover flex-shrink-0" />
                 )}
                 <div className="p-3 sm:p-4 flex-1 min-w-0">

@@ -243,12 +243,11 @@ export default function ExplorePubs() {
           </div>
           {[
             { key: "nearby" as QuickFilter, label: "Vicino a te", icon: <Navigation className="w-3 h-3" /> },
-            { key: "top" as QuickFilter, label: "Top rated", icon: <Star className="w-3 h-3" /> },
             { key: "open" as QuickFilter, label: "Aperti ora", icon: <span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> },
           ].map(f => (
             <button
               key={f.key}
-              onClick={() => { setQuickFilter(prev => prev === f.key ? "all" : f.key); if (f.key === "nearby" && !userLocation) handleLocate(); }}
+              onClick={() => { setQuickFilter(prev => prev === f.key ? "all" : f.key); if (f.key === "nearby") handleLocate(); }}
               className={`pointer-events-auto flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
                 quickFilter === f.key
                   ? "bg-primary text-white border-primary shadow-sm"
@@ -364,31 +363,13 @@ export default function ExplorePubs() {
               )}
             </div>
 
-            {/* Toggle linea d'aria / percorso reale */}
-            {quickFilter === "nearby" && userLocation && (
-              <button
-                onClick={() => setUseRealRoute(v => !v)}
-                title={useRealRoute ? "Distanza calcolata sul percorso stradale reale" : "Distanza in linea d'aria"}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
-                  useRealRoute
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
-                }`}
-                data-testid="toggle-real-route"
-              >
-                <Navigation className="w-3 h-3" />
-                {useRealRoute ? "Percorso reale" : "Linea d'aria"}
-              </button>
-            )}
-
             {[
               { key: "nearby" as QuickFilter, label: "Vicino a te", icon: <Navigation className="w-3 h-3" /> },
-              { key: "top" as QuickFilter, label: "Top rated", icon: <Star className="w-3 h-3" /> },
               { key: "open" as QuickFilter, label: "Aperti ora", icon: <span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> },
             ].map(f => (
               <button
                 key={f.key}
-                onClick={() => { setQuickFilter(prev => prev === f.key ? "all" : f.key); if (f.key === "nearby" && !userLocation) handleLocate(); }}
+                onClick={() => { setQuickFilter(prev => prev === f.key ? "all" : f.key); if (f.key === "nearby") handleLocate(); }}
                 className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
                   quickFilter === f.key
                     ? "bg-primary text-white border-primary shadow-sm"

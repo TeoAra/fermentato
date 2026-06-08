@@ -49,6 +49,7 @@ import {
 
   ArrowLeft,
   Lock,
+  Trash2,
 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
