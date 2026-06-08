@@ -9240,9 +9240,11 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
   // USER STATS (computed from tastings)
   // ─────────────────────────────────────────────────────────────────────────────
   app.get("/api/user/stats", isAuthenticated, async (req, res) => {
-    const userId = (req.user as any).id;
-    const [totalRes, avgRes, styleRes, breweryRes, formatRes, monthlyRes, topBeersRes, streakRes, reviewsRes] = await Promise.all([
-      pool.query(`SELECT COUNT(*) as total, AVG(rating) as avg_rating, MAX(rating) as max_rating FROM user_beer_tastings WHERE user_id = $1`, [userId]),
+    const userId = String((req.user as any).id);
+    // Use Drizzle for the primary count to avoid raw-SQL user_id type mismatch
+    const [tastingsCountRes, totalRes, avgRes, styleRes, breweryRes, formatRes, monthlyRes, topBeersRes, streakRes, reviewsRes] = await Promise.all([
+      db.select({ cnt: count() }).from(userBeerTastings).where(eq(userBeerTastings.userId, userId)),
+      pool.query(`SELECT AVG(rating) as avg_rating, MAX(rating) as max_rating FROM user_beer_tastings WHERE user_id = $1`, [userId]),
       pool.query(`SELECT rating, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 GROUP BY rating ORDER BY cnt DESC LIMIT 1`, [userId]),
       pool.query(`SELECT b.style, COUNT(*) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND b.style IS NOT NULL GROUP BY b.style ORDER BY cnt DESC LIMIT 5`, [userId]),
       pool.query(`SELECT br.name, br.logo_url, COUNT(*) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id LEFT JOIN breweries br ON br.id = b.brewery_id WHERE ubt.user_id = $1 AND br.name IS NOT NULL GROUP BY br.name, br.logo_url ORDER BY cnt DESC LIMIT 5`, [userId]),
@@ -9261,7 +9263,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
       `, [userId]),
       pool.query(`SELECT COUNT(*) as total FROM beer_reviews WHERE user_id = $1`, [userId]),
     ]);
-    const tastingsTotal = parseInt(totalRes.rows[0].total);
+    const tastingsTotal = Number(tastingsCountRes[0]?.cnt ?? 0);
     const reviewsTotal = parseInt(reviewsRes.rows[0]?.total ?? 0);
     res.json({
       total: tastingsTotal,

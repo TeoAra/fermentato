@@ -531,9 +531,9 @@ export default function Home() {
                 <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/25 flex items-center justify-center mx-auto mb-2">
                   <Beer className="w-4.5 h-4.5 text-primary" style={{ width: 18, height: 18 }} />
                 </div>
-                <p className="text-[22px] font-extrabold text-foreground leading-none">{userStats?.totalReviews ?? 0}</p>
+                <p className="text-[22px] font-extrabold text-foreground leading-none">{userStats?.totalCheckins ?? userStats?.total ?? 0}</p>
                 <p className="text-[11px] font-semibold text-foreground mt-1">Check-in</p>
-                {(userStats?.totalReviews ?? 0) > 0 ? (
+                {(userStats?.totalCheckins ?? userStats?.total ?? 0) > 0 ? (
                   <p className="text-[10px] text-muted-foreground mt-0.5">Birre assaggiate</p>
                 ) : null}
               </div>
@@ -557,7 +557,7 @@ export default function Home() {
                 <div className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-900/25 flex items-center justify-center mx-auto mb-2">
                   <Zap className="w-4.5 h-4.5 text-red-500" style={{ width: 18, height: 18 }} />
                 </div>
-                <p className="text-[22px] font-extrabold text-foreground leading-none">{(userStats?.totalReviews ?? 0) * 20}</p>
+                <p className="text-[22px] font-extrabold text-foreground leading-none">{(userStats?.totalCheckins ?? userStats?.total ?? 0) * 20}</p>
                 <p className="text-[11px] font-semibold text-foreground mt-1">XP totali</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Livello Beer</p>
               </div>

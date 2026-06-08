@@ -271,7 +271,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
 
                 {/* Stats row */}
                 {(() => {
-                  const checkins = userStats?.totalReviews ?? 0;
+                  const checkins = userStats?.totalCheckins ?? (userStats as any)?.total ?? 0;
                   const level = checkins >= 500 ? { label: 'Mastro Birraio', emoji: '🏆' }
                     : checkins >= 200 ? { label: 'Esperto', emoji: '🌟' }
                     : checkins >= 100 ? { label: 'Intenditore', emoji: '⭐' }
