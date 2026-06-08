@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import {
-  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Clock, Shuffle, Loader2, Factory
+  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Clock, Shuffle, Loader2, Factory, UserRound
 } from "lucide-react";
 
 const RECENT_KEY = "fermenta:recentSearches";
@@ -47,7 +47,7 @@ const SHORTCUTS = [
 export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBeerSheetProps) {
   const [query, setQuery] = useState("");
   const [activeStyle, setActiveStyle] = useState("");
-  const [activeTab, setActiveTab] = useState<"birre" | "birrifici" | "locali">("birre");
+  const [activeTab, setActiveTab] = useState<"birre" | "birrifici" | "locali" | "utenti">("birre");
   const [recents, setRecents] = useState<Recent[]>([]);
   const [surpriseLoading, setSurpriseLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -299,18 +299,18 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
         })()}
 
         <div className="px-4 pb-3 flex-shrink-0">
-          <div className="flex bg-stone-100 dark:bg-[#1A1D24]/60 rounded-2xl p-1 gap-1">
-            {(["birre", "birrifici", "locali"] as const).map(tab => (
+          <div className="flex bg-stone-100 dark:bg-[#1A1D24]/60 rounded-2xl p-1 gap-0.5">
+            {(["birre", "birrifici", "locali", "utenti"] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all ${
+                className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all ${
                   activeTab === tab
                     ? "bg-white dark:bg-[#12151A] text-foreground shadow-sm"
                     : "text-stone-400 dark:text-stone-500"
                 }`}
               >
-                {tab === "birre" ? "🍺 Birre" : tab === "birrifici" ? "🏭 Birrifici" : "🏠 Locali"}
+                {tab === "birre" ? "🍺 Birre" : tab === "birrifici" ? "🏭 Birrifici" : tab === "locali" ? "🏠 Locali" : "👤 Utenti"}
               </button>
             ))}
           </div>
@@ -387,9 +387,9 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                   <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1A1D24]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
                 ))}
               </div>
-            ) : (beers.length > 0 || breweries.length > 0) ? (
+            ) : beers.length > 0 ? (
               <>
-                {(activeStyle || query.length > 1) && beers.length > 0 && (
+                {(activeStyle || query.length > 1) && (
                   <p className="text-xs font-semibold text-stone-400 mb-2.5">
                     {beers.length} birre {activeStyle ? `· stile ${activeStyle.split(" - ")[0]}` : ""}
                   </p>
@@ -401,46 +401,6 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                   </p>
                 )}
                 <div className="space-y-2">
-                  {/* Sezione birrifici — solo durante ricerca testuale */}
-                  {breweries.length > 0 && (
-                    <>
-                      <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-1.5 flex items-center gap-1.5 pt-1">
-                        <Factory className="w-3.5 h-3.5 text-primary" />
-                        Birrifici
-                      </p>
-                      {breweries.slice(0, 5).map((brewery: any) => (
-                        <Link key={brewery.id} href={`/brewery/${brewery.id}`} onClick={onClose}>
-                          <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
-                            <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
-                              {brewery.logoUrl ? (
-                                <img src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover" />
-                              ) : (
-                                <Factory className="w-5 h-5 text-stone-300" />
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-[14px] text-foreground truncate">{brewery.name}</p>
-                              <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5 truncate">
-                                {[brewery.location || brewery.city, brewery.region].filter(Boolean).join(" · ")}
-                              </p>
-                            </div>
-                            <div className="flex-shrink-0">
-                              <span className="inline-flex items-center gap-1 bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-bold px-2.5 py-1.5 rounded-xl">
-                                <Factory className="w-3 h-3" />
-                                Birrificio
-                              </span>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                      {beers.length > 0 && (
-                        <p className="text-xs font-bold uppercase tracking-wider text-stone-400 mb-1.5 mt-3 flex items-center gap-1.5">
-                          <Beer className="w-3.5 h-3.5 text-primary" />
-                          Birre
-                        </p>
-                      )}
-                    </>
-                  )}
                   {beers.slice(0, 40).map((beer: any) => (
                     <Link key={beer.id} href={`/beer/${beer.id}`} onClick={onClose}>
                       <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
@@ -499,78 +459,97 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                 <p className="text-sm text-stone-400 mt-1">Oppure seleziona uno stile qui sopra</p>
               </div>
             )
-          ) : (() => {
+          ) : activeTab === "locali" ? (() => {
             const isSearching = query.trim().length > 1;
-            const pubsToShow: any[] = isSearching
-              ? (pubSearchResults ?? [])
-              : nearbyPubs;
+            const pubsToShow: any[] = isSearching ? (pubSearchResults ?? []) : nearbyPubs;
             const loading = isSearching && pubSearchLoading;
-
-            if (loading) {
-              return (
-                <div className="space-y-2.5">
-                  {[...Array(5)].map((_, i) => (
-                    <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1A1D24]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
-                  ))}
-                </div>
-              );
-            }
-
-            if (pubsToShow.length > 0) {
-              return (
-                <div className="space-y-2">
-                  <p className="text-xs font-semibold text-stone-400 mb-2.5 flex items-center gap-1.5">
-                    <MapPin className="w-3.5 h-3.5 text-primary" />
-                    {isSearching
-                      ? `${pubsToShow.length} locali per "${query.trim()}"`
-                      : `${pubsToShow.length} locali nel raggio selezionato`}
-                  </p>
-                  {pubsToShow.map((pub: any) => (
-                    <Link key={pub.id} href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`} onClick={onClose}>
-                      <div data-testid={`pub-result-${pub.id}`} className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
-                        <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
-                          {pub.logoUrl ? (
-                            <img src={pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <Store className="w-5 h-5 text-stone-300" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-bold text-[14px] text-foreground truncate">{pub.name}</p>
-                          <p className="text-xs text-stone-400 mt-0.5 truncate">
-                            {[
-                              pub.city,
-                              pub._distance != null
-                                ? pub._distance < 1
-                                  ? `${Math.round(pub._distance * 1000)} m`
-                                  : `${pub._distance.toFixed(1)} km`
-                                : null,
-                            ].filter(Boolean).join(" · ")}
-                          </p>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />
+            if (loading) return (
+              <div className="space-y-2.5">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1A1D24]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+                ))}
+              </div>
+            );
+            if (pubsToShow.length > 0) return (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-stone-400 mb-2.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-primary" />
+                  {isSearching ? `${pubsToShow.length} locali per "${query.trim()}"` : `${pubsToShow.length} locali nel raggio selezionato`}
+                </p>
+                {pubsToShow.map((pub: any) => (
+                  <Link key={pub.id} href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`} onClick={onClose}>
+                    <div data-testid={`pub-result-${pub.id}`} className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
+                      <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
+                        {pub.logoUrl ? <img src={pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" /> : <Store className="w-5 h-5 text-stone-300" />}
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              );
-            }
-
-            // Empty state — distinguishes "nessun risultato per ricerca" vs "no GPS"
-            if (isSearching) {
-              return (
-                <div className="text-center py-14">
-                  <Store className="w-12 h-12 mx-auto mb-3 text-stone-200 dark:text-stone-700" />
-                  <p className="font-bold text-stone-500 dark:text-stone-400 mb-1">Nessun locale per "{query.trim()}"</p>
-                  <p className="text-sm text-stone-400">Prova con un altro nome o città</p>
-                </div>
-              );
-            }
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-[14px] text-foreground truncate">{pub.name}</p>
+                        <p className="text-xs text-stone-400 mt-0.5 truncate">
+                          {[pub.city, pub._distance != null ? (pub._distance < 1 ? `${Math.round(pub._distance * 1000)} m` : `${pub._distance.toFixed(1)} km`) : null].filter(Boolean).join(" · ")}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            );
+            if (isSearching) return (
+              <div className="text-center py-14">
+                <Store className="w-12 h-12 mx-auto mb-3 text-stone-200 dark:text-stone-700" />
+                <p className="font-bold text-stone-500 dark:text-stone-400 mb-1">Nessun locale per "{query.trim()}"</p>
+                <p className="text-sm text-stone-400">Prova con un altro nome o città</p>
+              </div>
+            );
             return (
               <div className="text-center py-14">
                 <MapPin className="w-12 h-12 mx-auto mb-3 text-stone-200 dark:text-stone-700" />
                 <p className="font-bold text-stone-500 dark:text-stone-400 mb-1">Nessun locale vicino</p>
                 <p className="text-sm text-stone-400">Cerca per nome o attiva il GPS per i pub vicino a te</p>
+              </div>
+            );
+          })() : (() => {
+            const users: any[] = query.length > 1 ? ((searchResults as any)?.users ?? []) : [];
+            if (searchLoading && query.length > 1) return (
+              <div className="space-y-2.5">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="h-[72px] rounded-2xl bg-stone-100 dark:bg-[#1A1D24]/50 animate-pulse" style={{ animationDelay: `${i * 60}ms` }} />
+                ))}
+              </div>
+            );
+            if (users.length > 0) return (
+              <div className="space-y-2">
+                <p className="text-xs font-semibold text-stone-400 mb-2.5 flex items-center gap-1.5">
+                  <UserRound className="w-3.5 h-3.5 text-primary" />
+                  {users.length} utent{users.length === 1 ? "e" : "i"} per "{query.trim()}"
+                </p>
+                {users.map((u: any) => (
+                  <Link key={u.id} href={`/user/${u.nickname || u.id}`} onClick={onClose}>
+                    <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
+                      <div className="w-12 h-12 rounded-full flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
+                        {u.profileImageUrl
+                          ? <img src={u.profileImageUrl} alt={u.nickname} className="w-full h-full object-cover" />
+                          : <span className="text-base font-bold text-stone-400">{u.nickname?.[0]?.toUpperCase()}</span>}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-[14px] text-foreground truncate">@{u.nickname}</p>
+                        {u.firstName && <p className="text-xs text-stone-400 mt-0.5 truncate">{u.firstName} {u.lastName}</p>}
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            );
+            return (
+              <div className="text-center py-14">
+                <UserRound className="w-12 h-12 mx-auto mb-3 text-stone-200 dark:text-stone-700" />
+                <p className="font-bold text-stone-500 dark:text-stone-400 mb-1">
+                  {query.length > 1 ? `Nessun utente per "${query.trim()}"` : "Cerca un utente"}
+                </p>
+                <p className="text-sm text-stone-400">
+                  {query.length > 1 ? "Prova con nickname o nome" : "Digita il nickname qui sopra"}
+                </p>
               </div>
             );
           })()}
