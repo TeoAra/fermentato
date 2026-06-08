@@ -3911,6 +3911,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: force-verify a user's email (unblocks ghost accounts that never confirmed)
+  app.patch('/api/admin/users/:id/verify-email', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const targetId = req.params.id;
+      const [existing] = await db.select({ id: users.id }).from(users).where(eq(users.id, targetId));
+      if (!existing) return res.status(404).json({ message: "Utente non trovato" });
+      await db.update(users).set({
+        isEmailVerified: true,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
+        updatedAt: new Date(),
+      }).where(eq(users.id, targetId));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error force-verifying email:", error);
+      res.status(500).json({ message: "Errore nella verifica forzata" });
+    }
+  });
+
   app.delete('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const targetId = req.params.id;

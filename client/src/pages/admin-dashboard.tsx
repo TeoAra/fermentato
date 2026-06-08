@@ -41,7 +41,10 @@ import {
   Server,
   Wifi,
   QrCode,
-  UserPlus
+  UserPlus,
+  MailCheck,
+  MailX,
+  ShieldCheck
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -72,6 +75,7 @@ export default function AdminDashboard() {
   const queryClient = useQueryClient();
 
   const [userSearch, setUserSearch] = useState("");
+  const [showUnverifiedOnly, setShowUnverifiedOnly] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
   const [editRole, setEditRole] = useState("");
   const [banTarget, setBanTarget] = useState<any>(null);
@@ -181,6 +185,20 @@ export default function AdminDashboard() {
     },
   });
 
+  const verifyEmailMutation = useMutation({
+    mutationFn: async (userId: string) =>
+      apiRequest(`/api/admin/users/${userId}/verify-email`, { method: "PATCH" }),
+    onSuccess: (_data, userId) => {
+      queryClient.setQueryData<any[]>(["/api/admin/users"], (old) =>
+        old ? old.map((u) => u.id === userId ? { ...u, isEmailVerified: true } : u) : []
+      );
+      toast({ title: "Email verificata", description: "L'utente è stato sbloccato." });
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err?.message || "Impossibile verificare l'email", variant: "destructive" });
+    },
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -194,7 +212,10 @@ export default function AdminDashboard() {
 
   if (!isAuthenticated || user?.userType !== "admin") return null;
 
+  const unverifiedCount = allUsers.filter((u: any) => u.email && !u.isEmailVerified).length;
+
   const filteredUsers = allUsers.filter((u: any) => {
+    if (showUnverifiedOnly && (u.isEmailVerified || !u.email)) return false;
     if (!userSearch) return true;
     const q = userSearch.toLowerCase();
     return (
@@ -403,8 +424,8 @@ export default function AdminDashboard() {
 
           {/* ===== USERS TAB ===== */}
           <TabsContent value="users" className="space-y-4 mt-4">
-            <div className="flex items-center gap-3">
-              <div className="relative flex-1 max-w-sm">
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px] max-w-sm">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Cerca per email, nickname, nome..."
@@ -413,6 +434,23 @@ export default function AdminDashboard() {
                   className="pl-9 border-stone-200 dark:border-border focus-visible:ring-primary"
                 />
               </div>
+              <button
+                type="button"
+                onClick={() => setShowUnverifiedOnly(v => !v)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                  showUnverifiedOnly
+                    ? "bg-amber-100 dark:bg-amber-900/30 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300"
+                    : "bg-white dark:bg-transparent border-stone-200 dark:border-border text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <MailX className="w-3.5 h-3.5" />
+                Non verificati
+                {unverifiedCount > 0 && (
+                  <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${showUnverifiedOnly ? "bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200" : "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300"}`}>
+                    {unverifiedCount}
+                  </span>
+                )}
+              </button>
               <span className="text-sm text-muted-foreground">{filteredUsers.length} utenti</span>
               <Button
                 size="sm"
@@ -432,6 +470,7 @@ export default function AdminDashboard() {
                     <thead className="bg-stone-50/40 dark:bg-[#0B0D10]/10 border-b border-stone-100 dark:border-border">
                       <tr>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Utente</th>
+                        <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden sm:table-cell">Email</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ruolo</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider hidden md:table-cell">Iscritto</th>
                         <th className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Azioni</th>
@@ -455,6 +494,8 @@ export default function AdminDashboard() {
                         filteredUsers.map((u: any) => {
                           const isBanned = u.userType === "banned";
                           const isSelf = u.id === (user as any)?.id;
+                          const hasEmail = !!u.email;
+                          const isVerified = !!u.isEmailVerified;
                           return (
                             <tr key={u.id} className={`hover:bg-stone-50/30 dark:hover:bg-stone-900/10 ${isBanned ? "opacity-60" : ""}`}>
                               <td className="px-4 py-3">
@@ -472,8 +513,26 @@ export default function AdminDashboard() {
                                       </span>
                                       {isSelf && <Crown className="w-3 h-3 text-primary flex-shrink-0" />}
                                     </div>
-                                    <p className="text-xs text-muted-foreground truncate max-w-[150px]">{u.email}</p>
+                                    <p className="text-xs text-muted-foreground truncate max-w-[150px] sm:hidden">{u.email || "—"}</p>
                                   </div>
+                                </div>
+                              </td>
+                              {/* Email + verification status column */}
+                              <td className="px-4 py-3 hidden sm:table-cell">
+                                <div className="flex flex-col gap-0.5">
+                                  <span className="text-xs text-muted-foreground truncate max-w-[180px]">{u.email || <span className="italic text-stone-400">Nessuna email (Replit)</span>}</span>
+                                  {hasEmail && (
+                                    <span className={`inline-flex items-center gap-1 text-[10px] font-semibold w-fit px-1.5 py-0.5 rounded-full ${
+                                      isVerified
+                                        ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400"
+                                        : "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400"
+                                    }`}>
+                                      {isVerified
+                                        ? <><MailCheck className="w-3 h-3" /> Verificata</>
+                                        : <><MailX className="w-3 h-3" /> Non verificata</>
+                                      }
+                                    </span>
+                                  )}
                                 </div>
                               </td>
                               <td className="px-4 py-3">
@@ -499,6 +558,19 @@ export default function AdminDashboard() {
                                       <ExternalLink className="w-3.5 h-3.5" />
                                     </Button>
                                   </Link>
+                                  {/* Force-verify button: shown only for non-verified email users */}
+                                  {hasEmail && !isVerified && (
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-7 w-7 p-0 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 text-amber-500"
+                                      title="Forza verifica email"
+                                      disabled={verifyEmailMutation.isPending}
+                                      onClick={() => verifyEmailMutation.mutate(u.id)}
+                                    >
+                                      <ShieldCheck className="w-3.5 h-3.5" />
+                                    </Button>
+                                  )}
                                   {!isSelf && (
                                     <>
                                       <Button

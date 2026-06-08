@@ -447,16 +447,46 @@ export default function UserProfile() {
     return Math.max(0, 15 - diffInDays);
   };
 
+  const compressImage = (file: File, maxPx = 1200, quality = 0.82): Promise<Blob> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = (ev) => {
+        const img = new Image();
+        img.onerror = reject;
+        img.onload = () => {
+          let { width, height } = img;
+          if (width > maxPx || height > maxPx) {
+            if (width >= height) { height = Math.round(height * maxPx / width); width = maxPx; }
+            else                 { width = Math.round(width * maxPx / height); height = maxPx; }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = width; canvas.height = height;
+          canvas.getContext('2d')!.drawImage(img, 0, 0, width, height);
+          canvas.toBlob(
+            (blob) => blob ? resolve(blob) : reject(new Error('Compressione fallita')),
+            'image/jpeg', quality
+          );
+        };
+        img.src = ev.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+
   const handleAvatarUpload = async (file: File) => {
     if (!file || !canUpdateProfileImage()) return;
     setAvatarUploading(true);
     try {
+      const compressed = await compressImage(file);
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append('image', compressed, 'profile.jpg');
       formData.append('folder', 'profile-images');
       const response = await fetch('/api/upload/image', { method: 'POST', body: formData, credentials: 'include' });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || `Errore ${response.status}`);
+      }
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || `Errore ${response.status}`);
       if (!data.url) throw new Error("Nessun URL ricevuto dal server");
       await updateProfileMutation.mutateAsync({ profileImageUrl: data.url } as any);
       toast({ title: "Foto aggiornata", description: "La tua immagine del profilo è stata aggiornata" });
