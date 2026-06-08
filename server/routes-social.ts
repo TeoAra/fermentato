@@ -490,6 +490,20 @@ export async function registerSocialRoutes(app: Express) {
     res.json({ deleted: true });
   });
 
+  app.patch("/api/checkin/comments/:commentId", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const commentId = parseInt(req.params.commentId, 10);
+    if (Number.isNaN(commentId)) return res.status(400).json({ message: "ID non valido" });
+    const content = String(req.body?.content ?? "").trim().slice(0, 500);
+    if (!content) return res.status(400).json({ message: "Commento vuoto" });
+    const { rows } = await pool.query(
+      `UPDATE checkin_comments SET content = $1 WHERE id = $2 AND user_id = $3 RETURNING id, content, created_at`,
+      [content, commentId, userId],
+    );
+    if (!rows.length) return res.status(404).json({ message: "Commento non trovato" });
+    res.json(rows[0]);
+  });
+
   // ─── MICROBLOG ────────────────────────────────────────────────────────────
   app.post("/api/microblog/upload-image", isAuthenticated, upload.single("image"), async (req: any, res) => {
     try {

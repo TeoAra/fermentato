@@ -285,11 +285,11 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                         <div className="text-base font-black text-foreground leading-tight tabular-nums">
                           {checkins > 0 ? checkins : '–'}
                         </div>
-                        <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight">Bevute</div>
+                        <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight">Check-in</div>
                       </div>
                       <div className="flex-1 min-w-0 bg-stone-50 dark:bg-white/5 rounded-2xl px-2 py-2.5 text-center">
-                        <div className="text-sm font-black text-foreground leading-tight">{level.emoji}</div>
-                        <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight truncate">{level.label}</div>
+                        <div className="text-base font-black text-foreground leading-tight tabular-nums">{checkins * 20 > 0 ? checkins * 20 : '–'}</div>
+                        <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight">XP totali</div>
                       </div>
                     </div>
                   );

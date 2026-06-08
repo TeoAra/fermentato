@@ -224,7 +224,7 @@ export default function Home() {
   const { data: myPubs } = useQuery({ queryKey: ["/api/my-pubs"], enabled: isAuthenticated && ((user as any)?.userType === 'pub_owner' || (user as any)?.userType === 'admin') });
   const { data: myBreweryData } = useQuery<{ brewery: any; beers: any[] }>({ queryKey: ["/api/brewery/mine"], enabled: isAuthenticated && (user as any)?.userType === 'brewery_owner' });
   const { data: globalStats } = useQuery<{ totalBeers: number; totalBreweries: number; uniqueStyles: number; totalUsers: number; totalPubs: number }>({ queryKey: ["/api/stats"], staleTime: 60 * 1000 });
-  const { data: userStats } = useQuery<{ total: number; avgRating: number; streak: number; topStyles: any[]; topBreweries: any[] }>({
+  const { data: userStats } = useQuery<{ total: number; totalCheckins: number; totalReviews: number; avgRating: number; streak: number; topStyles: any[]; topBreweries: any[] }>({
     queryKey: ["/api/user/stats"], enabled: isAuthenticated, staleTime: 5 * 60 * 1000,
   });
 
@@ -531,10 +531,10 @@ export default function Home() {
                 <div className="w-9 h-9 rounded-full bg-orange-100 dark:bg-orange-900/25 flex items-center justify-center mx-auto mb-2">
                   <Beer className="w-4.5 h-4.5 text-primary" style={{ width: 18, height: 18 }} />
                 </div>
-                <p className="text-[22px] font-extrabold text-foreground leading-none">{userStats?.total ?? 0}</p>
-                <p className="text-[11px] font-semibold text-foreground mt-1">Le mie bevute</p>
-                {userStats?.total ? (
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Totale assaggi</p>
+                <p className="text-[22px] font-extrabold text-foreground leading-none">{userStats?.totalCheckins ?? userStats?.total ?? 0}</p>
+                <p className="text-[11px] font-semibold text-foreground mt-1">Check-in</p>
+                {(userStats?.totalCheckins ?? userStats?.total ?? 0) > 0 ? (
+                  <p className="text-[10px] text-muted-foreground mt-0.5">Birre assaggiate</p>
                 ) : null}
               </div>
             </Link>
@@ -557,7 +557,7 @@ export default function Home() {
                 <div className="w-9 h-9 rounded-full bg-red-100 dark:bg-red-900/25 flex items-center justify-center mx-auto mb-2">
                   <Zap className="w-4.5 h-4.5 text-red-500" style={{ width: 18, height: 18 }} />
                 </div>
-                <p className="text-[22px] font-extrabold text-foreground leading-none">{(userStats?.total ?? 0) * 20}</p>
+                <p className="text-[22px] font-extrabold text-foreground leading-none">{(userStats?.totalCheckins ?? userStats?.total ?? 0) * 20}</p>
                 <p className="text-[11px] font-semibold text-foreground mt-1">XP totali</p>
                 <p className="text-[10px] text-muted-foreground mt-0.5">Livello Beer</p>
               </div>
@@ -787,11 +787,11 @@ export default function Home() {
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-1 text-center mb-3">
                   <div>
-                    <p className="text-[16px] font-extrabold text-foreground leading-none">{userStats?.total ?? 0}</p>
-                    <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Bevute</p>
+                    <p className="text-[16px] font-extrabold text-foreground leading-none">{userStats?.totalCheckins ?? userStats?.total ?? 0}</p>
+                    <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Check-in</p>
                   </div>
                   <div className="border-x border-border">
-                    <p className="text-[16px] font-extrabold text-foreground leading-none">0</p>
+                    <p className="text-[16px] font-extrabold text-foreground leading-none">{userStats?.totalReviews ?? 0}</p>
                     <p className="text-[9px] text-muted-foreground font-medium mt-0.5">Rec.</p>
                   </div>
                   <div>
@@ -803,12 +803,12 @@ export default function Home() {
                 <div className="mt-auto">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-[9px] text-muted-foreground font-medium uppercase tracking-wide">XP</span>
-                    <span className="text-[10px] font-bold text-primary">{(userStats?.total ?? 0) * 20} / 600</span>
+                    <span className="text-[10px] font-bold text-primary">{(userStats?.totalCheckins ?? userStats?.total ?? 0) * 20} / 600</span>
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full bg-gradient-to-r from-primary to-amber-400 transition-all duration-700"
-                      style={{ width: `${Math.min(100, Math.round(((userStats?.total ?? 0) * 20 / 600) * 100))}%` }}
+                      style={{ width: `${Math.min(100, Math.round(((userStats?.totalCheckins ?? userStats?.total ?? 0) * 20 / 600) * 100))}%` }}
                     />
                   </div>
                 </div>
