@@ -3911,6 +3911,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: resend verification email to a specific user by ID
+  app.post('/api/admin/users/:id/resend-verification', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const targetId = req.params.id;
+      const [user] = await db.select({ id: users.id, email: users.email, isEmailVerified: users.isEmailVerified }).from(users).where(eq(users.id, targetId));
+      if (!user) return res.status(404).json({ message: "Utente non trovato" });
+      if (!user.email) return res.status(400).json({ message: "Questo utente non ha un'email registrata" });
+      if (user.isEmailVerified) return res.status(400).json({ message: "L'email è già verificata" });
+      const { nanoid } = await import("nanoid");
+      const verificationToken = nanoid(32);
+      const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await db.update(users).set({ emailVerificationToken: verificationToken, emailVerificationExpires: verificationExpires }).where(eq(users.id, targetId));
+      const { sendVerificationEmail } = await import("./email");
+      await sendVerificationEmail(user.email, verificationToken);
+      res.json({ success: true, message: "Email di verifica inviata" });
+    } catch (error) {
+      console.error("Error resending verification email:", error);
+      res.status(500).json({ message: "Errore nell'invio dell'email" });
+    }
+  });
+
   // Admin: force-verify a user's email (unblocks ghost accounts that never confirmed)
   app.patch('/api/admin/users/:id/verify-email', isAuthenticated, isAdmin, async (req: any, res) => {
     try {

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Beer, MapPin, CheckCircle2, Search, X, ChevronRight, Camera, Loader2 } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 // ─── Rating labels (same scale as BeerTastingForm) ─────────────────────────
 const RATING_LABELS: Record<number, string> = {
@@ -109,6 +110,7 @@ interface CheckinModalProps {
 }
 
 export default function CheckinModal({ open, onClose, beer, pub: initialPub, tapType }: CheckinModalProps) {
+  const { user } = useAuth();
   const [rating, setRating]     = useState<number>(3.0);
   const [note, setNote]         = useState("");
   const [format, setFormat]     = useState(() => tapTypeToFormat(tapType));
@@ -230,7 +232,16 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
           </SheetTitle>
         </SheetHeader>
 
-        {done ? (
+        {user?.email && !user?.isEmailVerified ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-3 text-center px-4">
+            <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center">
+              <Beer className="w-6 h-6 text-amber-500" />
+            </div>
+            <p className="font-semibold text-stone-800 dark:text-stone-100 text-base">Verifica la tua email</p>
+            <p className="text-sm text-stone-500 dark:text-stone-400">I check-in sono disponibili dopo la conferma dell'email</p>
+            <button onClick={onClose} className="mt-2 text-xs text-muted-foreground underline underline-offset-2">Chiudi</button>
+          </div>
+        ) : done ? (
           <div className="flex flex-col items-center justify-center py-8 gap-3">
             <CheckCircle2 className="w-14 h-14 text-primary" />
             <p className="font-semibold text-stone-800 dark:text-stone-100 text-base">Check-in registrato!</p>

@@ -475,6 +475,10 @@ export default function UserProfile() {
 
   const handleAvatarUpload = async (file: File) => {
     if (!file || !canUpdateProfileImage()) return;
+    if ((typedUser as any)?.email && !(typedUser as any)?.isEmailVerified) {
+      toast({ title: "Email non verificata", description: "Verifica la tua email prima di cambiare la foto profilo", variant: "destructive" });
+      return;
+    }
     setAvatarUploading(true);
     try {
       const compressed = await compressImage(file);

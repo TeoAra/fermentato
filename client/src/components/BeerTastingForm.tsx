@@ -120,7 +120,7 @@ interface BeerTastingFormProps {
 export default function BeerTastingForm({
   beerId, beerName, existingTasting, initialRating, autoOpen, onSuccess, onCancel
 }: BeerTastingFormProps) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
@@ -193,6 +193,16 @@ export default function BeerTastingForm({
         </span>
         <ChevronRight className="w-4 h-4 text-muted-foreground" />
       </button>
+    );
+  }
+
+  const needsEmailVerification = !!user?.email && !user?.isEmailVerified;
+  if (needsEmailVerification && !isEditMode) {
+    return (
+      <div className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 text-sm">
+        <Beer className="w-4 h-4 text-amber-500 flex-shrink-0" />
+        <span className="text-amber-700 dark:text-amber-400 text-sm">Verifica la tua email per registrare assaggi</span>
+      </div>
     );
   }
 

@@ -28,6 +28,7 @@ import {
   Building2,
   MessageSquare,
   CalendarDays,
+  SendHorizonal,
   Store,
   Beer,
   Trash2,
@@ -182,6 +183,17 @@ export default function AdminDashboard() {
       }
       toast({ title: "Errore", description: err?.message || "Impossibile eliminare l'utente", variant: "destructive" });
       setDeleteTarget(null);
+    },
+  });
+
+  const resendVerificationMutation = useMutation({
+    mutationFn: async (userId: string) =>
+      apiRequest(`/api/admin/users/${userId}/resend-verification`, { method: "POST" }),
+    onSuccess: (_data, _userId) => {
+      toast({ title: "Email inviata", description: "Email di verifica inviata all'utente." });
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err?.message || "Impossibile inviare l'email", variant: "destructive" });
     },
   });
 
@@ -558,18 +570,30 @@ export default function AdminDashboard() {
                                       <ExternalLink className="w-3.5 h-3.5" />
                                     </Button>
                                   </Link>
-                                  {/* Force-verify button: shown only for non-verified email users */}
+                                  {/* Resend + force-verify buttons: shown only for non-verified email users */}
                                   {hasEmail && !isVerified && (
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-7 w-7 p-0 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 text-amber-500"
-                                      title="Forza verifica email"
-                                      disabled={verifyEmailMutation.isPending}
-                                      onClick={() => verifyEmailMutation.mutate(u.id)}
-                                    >
-                                      <ShieldCheck className="w-3.5 h-3.5" />
-                                    </Button>
+                                    <>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 hover:bg-blue-50 dark:hover:bg-blue-950/20 hover:text-blue-600 text-stone-400"
+                                        title="Rimanda email di verifica"
+                                        disabled={resendVerificationMutation.isPending}
+                                        onClick={() => resendVerificationMutation.mutate(u.id)}
+                                      >
+                                        <SendHorizonal className="w-3.5 h-3.5" />
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        className="h-7 w-7 p-0 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 text-amber-500"
+                                        title="Forza verifica email"
+                                        disabled={verifyEmailMutation.isPending}
+                                        onClick={() => verifyEmailMutation.mutate(u.id)}
+                                      >
+                                        <ShieldCheck className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </>
                                   )}
                                   {!isSelf && (
                                     <>
