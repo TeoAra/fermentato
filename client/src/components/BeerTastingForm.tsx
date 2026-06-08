@@ -196,16 +196,6 @@ export default function BeerTastingForm({
     );
   }
 
-  const needsEmailVerification = !!user?.email && user?.isEmailVerified === false;
-  if (needsEmailVerification && !isEditMode) {
-    return (
-      <div className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-950/20 text-sm">
-        <Beer className="w-4 h-4 text-amber-500 flex-shrink-0" />
-        <span className="text-amber-700 dark:text-amber-400 text-sm">Verifica la tua email per registrare assaggi</span>
-      </div>
-    );
-  }
-
   if (existingTasting && !isEditMode && !showForm) {
     return (
       <button

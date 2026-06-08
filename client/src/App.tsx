@@ -74,57 +74,6 @@ function AndroidAppBanner() {
   );
 }
 
-// ─── Email verification banner (email-registered users who haven't confirmed) ─
-function EmailVerificationBanner() {
-  const { user, isAuthenticated } = useAuth();
-  const { toast } = useToast();
-  const [visible, setVisible] = useState(true);
-  const [sending, setSending] = useState(false);
-
-  const needsVerification = isAuthenticated && !!user?.email && user?.isEmailVerified === false;
-  if (!needsVerification || !visible) return null;
-
-  const handleResend = async () => {
-    setSending(true);
-    try {
-      const res = await fetch("/api/auth/resend-verification", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user!.email }),
-      });
-      const data = await res.json();
-      toast({ title: data.message || "Email inviata!" });
-    } catch {
-      toast({ title: "Errore nell'invio", variant: "destructive" });
-    } finally {
-      setSending(false);
-    }
-  };
-
-  return (
-    <div className="fixed top-0 left-0 right-0 z-[70] bg-amber-500 dark:bg-amber-600 text-white px-4 py-2.5 flex items-center gap-3 shadow-md">
-      <svg viewBox="0 0 20 20" className="w-4 h-4 flex-shrink-0 fill-white opacity-90"><path d="M10 2a8 8 0 100 16A8 8 0 0010 2zm0 14a6 6 0 110-12 6 6 0 010 12zm-.75-4.75a.75.75 0 001.5 0V10a.75.75 0 00-1.5 0v1.25zM10 7a.875.875 0 100-1.75A.875.875 0 0010 7z"/></svg>
-      <p className="flex-1 text-xs font-semibold leading-tight">
-        Conferma la tua email <span className="font-normal opacity-80">— alcune funzioni sono bloccate fino alla verifica</span>
-      </p>
-      <button
-        onClick={handleResend}
-        disabled={sending}
-        className="flex-shrink-0 text-[11px] font-bold px-2.5 py-1 rounded-lg bg-white/20 hover:bg-white/30 transition-colors disabled:opacity-60"
-      >
-        {sending ? "..." : "Rimanda email"}
-      </button>
-      <button
-        onClick={() => setVisible(false)}
-        aria-label="Chiudi"
-        className="flex-shrink-0 w-5 h-5 flex items-center justify-center opacity-70 hover:opacity-100"
-      >
-        <svg viewBox="0 0 12 12" className="w-3 h-3 fill-none stroke-white stroke-[1.8]"><path d="M1 1l10 10M11 1L1 11" strokeLinecap="round"/></svg>
-      </button>
-    </div>
-  );
-}
 
 // ─── iOS App Store install banner (browser only, not native app) ─────────────
 function IosAppBanner() {
@@ -640,7 +589,6 @@ function App() {
             </Suspense>
             <AndroidAppBanner />
             <IosAppBanner />
-            <EmailVerificationBanner />
           </TooltipProvider>
         </QueryClientProvider>
       </ThemeProvider>

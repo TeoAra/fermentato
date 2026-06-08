@@ -1511,18 +1511,36 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addBeerTasting(tastingData: InsertUserBeerTasting): Promise<UserBeerTasting> {
+    const existing = await db.query.userBeerTastings.findFirst({
+      where: and(
+        eq(userBeerTastings.userId, tastingData.userId),
+        eq(userBeerTastings.beerId, tastingData.beerId)
+      ),
+    });
+    if (existing) {
+      const [updated] = await db
+        .update(userBeerTastings)
+        .set({
+          rating: tastingData.rating,
+          personalNotes: tastingData.personalNotes,
+          format: tastingData.format,
+          photoUrl: tastingData.photoUrl,
+          pubId: tastingData.pubId,
+          tastedAt: tastingData.tastedAt || new Date(),
+          updatedAt: new Date(),
+        })
+        .where(
+          and(
+            eq(userBeerTastings.userId, tastingData.userId),
+            eq(userBeerTastings.beerId, tastingData.beerId)
+          )
+        )
+        .returning();
+      return updated;
+    }
     const [tasting] = await db
       .insert(userBeerTastings)
       .values(tastingData)
-      .onConflictDoUpdate({
-        target: [userBeerTastings.userId, userBeerTastings.beerId],
-        set: {
-          rating: tastingData.rating,
-          personalNotes: tastingData.personalNotes,
-          tastedAt: tastingData.tastedAt || new Date(),
-          updatedAt: new Date(),
-        },
-      })
       .returning();
     return tasting;
   }
