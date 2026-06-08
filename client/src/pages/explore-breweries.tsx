@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } fro
 import { Link } from "wouter";
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
-import { Beer, Search, X, Star, ChevronRight, SlidersHorizontal, Globe, Navigation, ChevronLeft, ChevronRight as ChevronRightIcon, Map, Building2 } from "lucide-react";
+import { Beer, Search, X, Star, ChevronRight, SlidersHorizontal, Globe, Navigation, ChevronLeft, ChevronRight as ChevronRightIcon, Building2 } from "lucide-react";
 const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m.PubMap })));
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -101,6 +101,8 @@ export default function ExploreBreweries() {
   });
   const [distanceKm, setDistanceKm] = useState(10);
   const [showDistPicker, setShowDistPicker] = useState(false);
+  const distBtnRef = useRef<HTMLButtonElement>(null);
+  const [distPickerPos, setDistPickerPos] = useState<{ top: number; left: number } | null>(null);
   // Toggle: distanza in linea d'aria (default) vs percorso reale via OSRM.
   const [useRealRoute, setUseRealRoute] = useState(false);
   const [realDistances, setRealDistances] = useState<Record<number, number>>({});
@@ -327,18 +329,9 @@ export default function ExploreBreweries() {
       <div className="bg-white/95 dark:bg-[#0B0D10]/95 backdrop-blur-md border-b border-stone-100 dark:border-[#23262E]">
         <PageContainer variant="wide" className="pt-3 pb-2">
           {/* Title row */}
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-xl lg:text-2xl font-extrabold text-foreground">Esplora Birrifici</h1>
-              <p className="text-xs text-stone-400 dark:text-stone-500">Scopri i migliori birrifici vicino a te</p>
-            </div>
-            <button
-              onClick={() => setViewMode("map")}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold bg-primary/10 dark:bg-primary/15 text-primary tap-scale border border-primary/20 hover:bg-primary/15 dark:hover:bg-primary/20 transition-colors"
-            >
-              <Map className="w-3.5 h-3.5" />
-              Mappa
-            </button>
+          <div className="mb-3">
+            <h1 className="text-xl lg:text-2xl font-extrabold text-foreground">Esplora Birrifici</h1>
+            <p className="text-xs text-stone-400 dark:text-stone-500">Scopri i migliori birrifici vicino a te</p>
           </div>
 
           {/* Search */}
@@ -363,6 +356,8 @@ export default function ExploreBreweries() {
                 <PubMap
                   pins={breweries.map((b: any) => ({ id: b.id, name: b.name, slug: b.slug, latitude: String(b.latitude || ""), longitude: String(b.longitude || ""), logoUrl: b.logoUrl, type: "brewery" as const }))}
                   height="100%"
+                  userLocation={userLocation ?? undefined}
+                  radiusKm={quickFilter === "nearby" && userLocation ? distanceKm : undefined}
                   onError={() => setMapVisible(false)}
                 />
               </Suspense>
@@ -371,19 +366,28 @@ export default function ExploreBreweries() {
 
           {/* Quick filter chips — distance chip outside overflow to avoid dropdown clipping */}
           <div className="flex items-center gap-2 pb-1">
-            {/* Distance chip (only shown when nearby active) — outside scroll container */}
+            {/* Distance chip (only shown when nearby active) */}
             {quickFilter === "nearby" && (
-              <div className="relative flex-shrink-0">
+              <div className="flex-shrink-0">
                 <button
-                  onClick={() => setShowDistPicker(v => !v)}
+                  ref={distBtnRef}
+                  onClick={() => {
+                    if (showDistPicker) { setShowDistPicker(false); return; }
+                    const r = distBtnRef.current?.getBoundingClientRect();
+                    if (r) setDistPickerPos({ top: r.bottom + 6, left: r.left });
+                    setShowDistPicker(true);
+                  }}
                   className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border bg-primary text-white border-primary tap-scale"
                 >
                   Entro {distanceKm} km ▾
                 </button>
-                {showDistPicker && (
+                {showDistPicker && distPickerPos && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
-                    <div className="absolute top-9 left-0 z-50 bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
+                    <div className="fixed inset-0 z-[199]" onClick={() => setShowDistPicker(false)} />
+                    <div
+                      className="fixed z-[200] bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden min-w-[110px]"
+                      style={{ top: distPickerPos.top, left: distPickerPos.left }}
+                    >
                       {[1, 5, 10, 15, 20, 30, 50].map(d => (
                         <button
                           key={d}
