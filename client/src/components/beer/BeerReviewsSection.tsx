@@ -14,6 +14,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { RichTextDisplay } from "@/components/rich-text-editor";
 import { getBadgeForCount } from "@/lib/badges";
 import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
+import CheckinSocialBar from "@/components/social/CheckinSocialBar";
 
 const BeerTastingForm = lazy(() => import("@/components/BeerTastingForm"));
 
@@ -347,6 +348,7 @@ export default function BeerReviewsSection({
                         </button>
                       )}
                     </div>
+                    <CheckinSocialBar tastingId={review.id} compact />
                   </div>
                 </div>
               );

@@ -56,6 +56,10 @@ function getNotificationIcon(type: string) {
       return { icon: <Factory className={`${base} text-amber-600`} />, bg: 'bg-amber-50 dark:bg-amber-950/30' };
     case 'new_pub_request':
       return { icon: <Store className={`${base} text-amber-600`} />, bg: 'bg-amber-50 dark:bg-amber-950/30' };
+    case 'checkin_like':
+      return { icon: <Heart className={`${base} text-rose-500`} />, bg: 'bg-rose-50 dark:bg-rose-950/30' };
+    case 'checkin_comment':
+      return { icon: <MessageCircle className={`${base} text-violet-600`} />, bg: 'bg-violet-50 dark:bg-violet-950/30' };
     case 'moderation':
       return { icon: <Flag className={`${base} text-red-500`} />, bg: 'bg-red-50 dark:bg-red-950/30' };
     case 'festival':

@@ -3,6 +3,7 @@ import { pool } from "./db";
 import { isAuthenticated, isAdmin } from "./auth";
 import { upload, uploadImage } from "./cloudinary";
 import { sendPushToUser, sendPushToAdmins } from "./push-utils";
+import { storage } from "./storage";
 import Parser from "rss-parser";
 
 const rssParser = new Parser({
@@ -287,10 +288,11 @@ export async function registerSocialRoutes(app: Express) {
     // notify owner if different
     const { rows } = await pool.query(`SELECT user_id FROM user_beer_tastings WHERE id = $1`, [tastingId]);
     if (rows[0] && rows[0].user_id !== userId) {
-      sendPushToUser(rows[0].user_id, {
+      const ownerId: string = rows[0].user_id;
+      sendPushToUser(ownerId, {
         title: "💛 Hai un nuovo like",
         body: "A qualcuno è piaciuto il tuo check-in!",
-        url: "/feed",
+        url: "/notifications",
         tag: `checkin-like-${tastingId}`,
         category: 'checkinLikes',
         batchKey: `checkin-like:${tastingId}`,
@@ -299,6 +301,18 @@ export async function registerSocialRoutes(app: Express) {
           body: `${count} persone hanno messo like al tuo check-in`,
         }),
       });
+      try {
+        const prefs = await storage.getNotificationPreferences(ownerId);
+        if (!prefs || prefs.checkinLikes !== false) {
+          await storage.createNotification({
+            userId: ownerId,
+            type: 'checkin_like',
+            title: "💛 Nuovo like",
+            message: "A qualcuno è piaciuto il tuo check-in!",
+            isRead: false,
+          });
+        }
+      } catch {}
     }
     res.json({ liked: true });
   });
@@ -440,10 +454,11 @@ export async function registerSocialRoutes(app: Express) {
     );
     const owner = await pool.query(`SELECT user_id FROM user_beer_tastings WHERE id = $1`, [tastingId]);
     if (owner.rows[0] && owner.rows[0].user_id !== userId) {
-      sendPushToUser(owner.rows[0].user_id, {
+      const ownerId: string = owner.rows[0].user_id;
+      sendPushToUser(ownerId, {
         title: "💬 Nuovo commento",
         body: content.slice(0, 80),
-        url: "/feed",
+        url: "/notifications",
         tag: `checkin-comment-${tastingId}`,
         category: 'checkinComments',
         batchKey: `checkin-comment:${tastingId}`,
@@ -452,6 +467,18 @@ export async function registerSocialRoutes(app: Express) {
           body: `${count} persone hanno commentato il tuo check-in`,
         }),
       });
+      try {
+        const prefs = await storage.getNotificationPreferences(ownerId);
+        if (!prefs || prefs.checkinComments !== false) {
+          await storage.createNotification({
+            userId: ownerId,
+            type: 'checkin_comment',
+            title: "💬 Nuovo commento al tuo check-in",
+            message: content.slice(0, 120),
+            isRead: false,
+          });
+        }
+      } catch {}
     }
     res.json(rows[0]);
   });

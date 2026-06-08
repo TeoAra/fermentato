@@ -451,7 +451,8 @@ function Router() {
             typedUser?.activeRole === 'pub_owner' ? SmartPubDashboard :
             typedUser?.activeRole === 'brewery_owner' ? BreweryDashboard :
             typedUser?.activeRole === 'admin' ? AdminDashboardNew :
-            // activeRole is customer/null — check roles array and userType as fallback
+            typedUser?.activeRole === 'customer' ? UserProfile :
+            // activeRole null/unset — check roles array and userType as fallback
             (typedUser?.roles || []).includes('pub_owner') || typedUser?.userType === 'pub_owner' ? SmartPubDashboard :
             (typedUser?.roles || []).includes('brewery_owner') || typedUser?.userType === 'brewery_owner' ? BreweryDashboard :
             (typedUser?.roles || []).includes('admin') || typedUser?.userType === 'admin' ? AdminDashboardNew :
