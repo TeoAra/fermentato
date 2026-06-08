@@ -8601,7 +8601,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=180');
       res.json(rows);
-    } catch (e: any) { res.status(500).json({ message: e.message }); }
+    } catch (e: any) {
+      // Table may not exist yet in this environment — return empty array gracefully
+      console.warn("[home/announcements]", e.message);
+      res.setHeader('Cache-Control', 'public, max-age=60');
+      res.json([]);
+    }
   });
 
   // ─── Brewery Announcements ───────────────────────────────────────────────────
@@ -9240,43 +9245,49 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
   // USER STATS (computed from tastings)
   // ─────────────────────────────────────────────────────────────────────────────
   app.get("/api/user/stats", isAuthenticated, async (req, res) => {
-    const userId = String((req.user as any).id);
-    // Use Drizzle for the primary count to avoid raw-SQL user_id type mismatch
-    const [tastingsCountRes, totalRes, avgRes, styleRes, breweryRes, formatRes, monthlyRes, topBeersRes, streakRes, reviewsRes] = await Promise.all([
-      db.select({ cnt: count() }).from(userBeerTastings).where(eq(userBeerTastings.userId, userId)),
-      pool.query(`SELECT AVG(rating) as avg_rating, MAX(rating) as max_rating FROM user_beer_tastings WHERE user_id = $1`, [userId]),
-      pool.query(`SELECT rating, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 GROUP BY rating ORDER BY cnt DESC LIMIT 1`, [userId]),
-      pool.query(`SELECT b.style, COUNT(*) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND b.style IS NOT NULL GROUP BY b.style ORDER BY cnt DESC LIMIT 5`, [userId]),
-      pool.query(`SELECT br.name, br.logo_url, COUNT(*) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id LEFT JOIN breweries br ON br.id = b.brewery_id WHERE ubt.user_id = $1 AND br.name IS NOT NULL GROUP BY br.name, br.logo_url ORDER BY cnt DESC LIMIT 5`, [userId]),
-      pool.query(`SELECT format, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND format IS NOT NULL GROUP BY format ORDER BY cnt DESC`, [userId]),
-      pool.query(`SELECT DATE_TRUNC('month', tasted_at) as month, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 GROUP BY month ORDER BY month DESC LIMIT 12`, [userId]),
-      pool.query(`SELECT b.id, b.name, b.image_url, b.style, ubt.rating FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND ubt.rating IS NOT NULL ORDER BY ubt.rating DESC, ubt.tasted_at DESC LIMIT 10`, [userId]),
-      pool.query(`
-        WITH daily AS (
-          SELECT DATE_TRUNC('day', tasted_at)::date AS d FROM user_beer_tastings WHERE user_id = $1
-          GROUP BY d ORDER BY d DESC
-        ),
-        streaks AS (
-          SELECT d, d - ROW_NUMBER() OVER (ORDER BY d DESC)::int * INTERVAL '1 day' as grp FROM daily
-        )
-        SELECT COUNT(*) as streak FROM streaks WHERE grp = (SELECT grp FROM streaks LIMIT 1)
-      `, [userId]),
-      pool.query(`SELECT COUNT(*) as total FROM beer_reviews WHERE user_id = $1`, [userId]),
-    ]);
-    const tastingsTotal = Number(tastingsCountRes[0]?.cnt ?? 0);
-    const reviewsTotal = parseInt(reviewsRes.rows[0]?.total ?? 0);
-    res.json({
-      total: tastingsTotal,
-      totalCheckins: tastingsTotal,
-      totalReviews: reviewsTotal,
-      avgRating: totalRes.rows[0].avg_rating ? parseFloat(parseFloat(totalRes.rows[0].avg_rating).toFixed(1)) : null,
-      topStyles: styleRes.rows,
-      topBreweries: breweryRes.rows,
-      formatBreakdown: formatRes.rows,
-      monthlyActivity: monthlyRes.rows.reverse(),
-      topBeers: topBeersRes.rows,
-      currentStreak: parseInt(streakRes.rows[0]?.streak ?? 0),
-    });
+    try {
+      const userId = String((req.user as any).id);
+      const [tastingsCountRes, totalRes, styleRes, breweryRes, formatRes, monthlyRes, topBeersRes, streakRes] = await Promise.all([
+        db.select({ cnt: count() }).from(userBeerTastings).where(eq(userBeerTastings.userId, userId)),
+        pool.query(`SELECT AVG(rating) as avg_rating, MAX(rating) as max_rating FROM user_beer_tastings WHERE user_id = $1`, [userId]),
+        pool.query(`SELECT b.style, COUNT(*) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND b.style IS NOT NULL GROUP BY b.style ORDER BY cnt DESC LIMIT 5`, [userId]),
+        pool.query(`SELECT br.name, br.logo_url, COUNT(*) as cnt FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id LEFT JOIN breweries br ON br.id = b.brewery_id WHERE ubt.user_id = $1 AND br.name IS NOT NULL GROUP BY br.name, br.logo_url ORDER BY cnt DESC LIMIT 5`, [userId]),
+        pool.query(`SELECT format, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 AND format IS NOT NULL GROUP BY format ORDER BY cnt DESC`, [userId]),
+        pool.query(`SELECT DATE_TRUNC('month', tasted_at) as month, COUNT(*) as cnt FROM user_beer_tastings WHERE user_id = $1 GROUP BY month ORDER BY month DESC LIMIT 12`, [userId]),
+        pool.query(`SELECT b.id, b.name, b.image_url, b.style, ubt.rating FROM user_beer_tastings ubt JOIN beers b ON b.id = ubt.beer_id WHERE ubt.user_id = $1 AND ubt.rating IS NOT NULL ORDER BY ubt.rating DESC, ubt.tasted_at DESC LIMIT 10`, [userId]),
+        pool.query(`
+          WITH daily AS (
+            SELECT DATE_TRUNC('day', tasted_at)::date AS d FROM user_beer_tastings WHERE user_id = $1
+            GROUP BY d ORDER BY d DESC
+          ),
+          streaks AS (
+            SELECT d, d - ROW_NUMBER() OVER (ORDER BY d DESC)::int * INTERVAL '1 day' as grp FROM daily
+          )
+          SELECT COUNT(*) as streak FROM streaks WHERE grp = (SELECT grp FROM streaks LIMIT 1)
+        `, [userId]),
+      ]);
+      const tastingsTotal = Number(tastingsCountRes[0]?.cnt ?? 0);
+      // beer_reviews is an optional table; default to 0 if it doesn't exist
+      const reviewsTotal = await pool.query(`SELECT COUNT(*) as total FROM beer_reviews WHERE user_id = $1`, [userId])
+        .then(r => parseInt(r.rows[0]?.total ?? 0))
+        .catch(() => 0);
+      const avgRow = totalRes.rows[0];
+      res.json({
+        total: tastingsTotal,
+        totalCheckins: tastingsTotal,
+        totalReviews: reviewsTotal,
+        avgRating: avgRow?.avg_rating ? parseFloat(parseFloat(avgRow.avg_rating).toFixed(1)) : null,
+        topStyles: styleRes.rows,
+        topBreweries: breweryRes.rows,
+        formatBreakdown: formatRes.rows,
+        monthlyActivity: monthlyRes.rows.reverse(),
+        topBeers: topBeersRes.rows,
+        currentStreak: parseInt(streakRes.rows[0]?.streak ?? 0),
+      });
+    } catch (e: any) {
+      console.error("[user/stats]", e.message);
+      res.status(500).json({ message: e.message });
+    }
   });
 
   // ─────────────────────────────────────────────────────────────────────────────
