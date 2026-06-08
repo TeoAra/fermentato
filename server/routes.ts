@@ -9113,7 +9113,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     const userId = (req.user as any).id;
     const { rows } = await pool.query(`
       SELECT u.id, u.nickname as username,
-             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) as display_name,
+             COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') as display_name,
              u.profile_image_url,
              uf.created_at as followed_at
       FROM user_follows uf
@@ -9128,7 +9128,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     const userId = (req.user as any).id;
     const { rows } = await pool.query(`
       SELECT u.id, u.nickname as username,
-             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) as display_name,
+             COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') as display_name,
              u.profile_image_url,
              uf.created_at as followed_at
       FROM user_follows uf

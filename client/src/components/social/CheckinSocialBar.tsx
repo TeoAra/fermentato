@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
-import { Heart, MessageCircle, Send, MoreHorizontal, Flag, Pencil, Trash2, Check, X } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreHorizontal, Flag, Pencil, Trash2, Check, X, AtSign } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -215,6 +215,44 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [reportCommentId, setReportCommentId] = useState<number | null>(null);
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const { data: following = [] } = useQuery<any[]>({
+    queryKey: ["/api/user/following"],
+    enabled: isAuthenticated && dialogOpen,
+    staleTime: 5 * 60_000,
+  });
+
+  const mentionSuggestions = mentionQuery !== null
+    ? following.filter((f: any) =>
+        f.username?.toLowerCase().includes(mentionQuery.toLowerCase()) ||
+        f.display_name?.toLowerCase().includes(mentionQuery.toLowerCase())
+      ).slice(0, 6)
+    : [];
+
+  const handleCommentChange = (value: string) => {
+    const chars = Array.from(value);
+    const trimmed = chars.length > 500 ? chars.slice(0, 500).join("") : value;
+    setNewComment(trimmed);
+    const cursor = textareaRef.current?.selectionStart ?? trimmed.length;
+    const textBefore = trimmed.slice(0, cursor);
+    const match = textBefore.match(/@(\w*)$/);
+    setMentionQuery(match ? match[1] : null);
+  };
+
+  const insertMention = (username: string) => {
+    const cursor = textareaRef.current?.selectionStart ?? newComment.length;
+    const before = newComment.slice(0, cursor).replace(/@\w*$/, `@${username} `);
+    const after = newComment.slice(cursor);
+    setNewComment(before + after);
+    setMentionQuery(null);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      const pos = before.length;
+      textareaRef.current?.setSelectionRange(pos, pos);
+    }, 0);
+  };
 
   const { data: likes } = useQuery<{ count: number; liked: boolean; commentsCount: number }>({
     queryKey: ["/api/checkin", tastingId, "likes"],
@@ -331,27 +369,50 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
           {/* New comment input */}
           {isAuthenticated && (
             <div className="px-4 py-3 border-t border-stone-100 dark:border-[#23262E] flex-shrink-0">
+              {/* @mention dropdown */}
+              {mentionQuery !== null && mentionSuggestions.length > 0 && (
+                <div className="mb-2 bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-[#23262E] rounded-2xl shadow-lg overflow-hidden">
+                  {mentionSuggestions.map((f: any) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onMouseDown={e => { e.preventDefault(); insertMention(f.username); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-stone-50 dark:hover:bg-white/5 transition-colors text-left"
+                    >
+                      {f.profile_image_url
+                        ? <img src={f.profile_image_url} className="w-7 h-7 rounded-full object-cover flex-shrink-0" alt="" />
+                        : <div className="w-7 h-7 rounded-full bg-primary/20 text-primary text-xs font-bold flex items-center justify-center flex-shrink-0">{(f.username ?? '?')[0].toUpperCase()}</div>
+                      }
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-foreground leading-tight truncate">@{f.username}</p>
+                        {f.display_name && f.display_name !== f.username && (
+                          <p className="text-[11px] text-stone-400 leading-tight truncate">{f.display_name}</p>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="flex gap-2.5 items-center">
                 <UserAvatar user={user as any} size={7} />
                 <div className="flex-1 relative">
                   <Textarea
+                    ref={textareaRef}
                     value={newComment}
-                    onChange={e => {
-                      const chars = Array.from(e.target.value);
-                      setNewComment(chars.length > 500 ? chars.slice(0, 500).join("") : e.target.value);
-                    }}
-                    placeholder="Scrivi un commento…"
+                    onChange={e => handleCommentChange(e.target.value)}
+                    placeholder="Scrivi un commento… (@ per taggare)"
                     rows={1}
                     className="rounded-2xl text-sm min-h-[2.5rem] py-2.5 pr-10 resize-none whitespace-pre-wrap"
                     onKeyDown={e => {
-                      if (e.key === "Enter" && !e.shiftKey) {
+                      if (e.key === "Escape") { setMentionQuery(null); return; }
+                      if (e.key === "Enter" && !e.shiftKey && mentionQuery === null) {
                         e.preventDefault();
                         if (newComment.trim()) commentMut.mutate();
                       }
                     }}
                   />
                   <button
-                    onClick={() => newComment.trim() && commentMut.mutate()}
+                    onClick={() => newComment.trim() && mentionQuery === null && commentMut.mutate()}
                     disabled={!newComment.trim() || commentMut.isPending}
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-primary disabled:text-stone-300 p-1.5 hover:bg-primary/10 rounded-full transition-colors"
                   >

@@ -343,7 +343,7 @@ export async function registerSocialRoutes(app: Express) {
     const { rows } = await pool.query(`
       SELECT c.id, c.content, c.created_at,
              u.id AS user_id, u.nickname AS username,
-             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,
              (SELECT COUNT(*)::int FROM checkin_comment_likes ccl WHERE ccl.comment_id = c.id) AS likes_count,
              ($2::varchar IS NOT NULL AND EXISTS(
@@ -558,7 +558,7 @@ export async function registerSocialRoutes(app: Express) {
     const { rows } = await pool.query(`
       SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id, p.created_at,
              u.id AS user_id, u.nickname AS username,
-             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,
              b.name AS beer_name, b.image_url AS beer_image,
              pb.name AS pub_name, pb.city AS pub_city,
@@ -637,7 +637,7 @@ export async function registerSocialRoutes(app: Express) {
       SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id,
              p.event_id, p.event_source_type, p.hashtags, p.created_at,
              u.id AS user_id, u.nickname AS username,
-             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,
              b.name AS beer_name, b.image_url AS beer_image,
              pb.name AS pub_name, pb.city AS pub_city,
@@ -662,7 +662,7 @@ export async function registerSocialRoutes(app: Express) {
     const { rows } = await pool.query(`
       SELECT p.id, p.content, p.image_url, p.created_at,
              u.id AS user_id, u.nickname AS username,
-             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,
              (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
              (SELECT COUNT(*)::int FROM microblog_comments mc WHERE mc.post_id = p.id) AS comments_count
@@ -694,7 +694,7 @@ export async function registerSocialRoutes(app: Express) {
     const { rows } = await pool.query(`
       SELECT c.id, c.content, c.created_at,
              u.id AS user_id, u.nickname AS username,
-             COALESCE(NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), u.nickname) AS display_name,
+             COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url
       FROM microblog_comments c
       JOIN users u ON u.id = c.user_id
