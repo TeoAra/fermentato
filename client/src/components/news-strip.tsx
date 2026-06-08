@@ -69,8 +69,17 @@ export default function NewsStrip({ variant = "home", limit = 6, className = "" 
                   className="snap-start flex-shrink-0 w-64 sm:w-72 bg-white dark:bg-[#1A1D24] rounded-2xl shadow-card-sm hover:shadow-card transition-shadow overflow-hidden border border-stone-100 dark:border-[#23262E]"
                 >
                   {n.image_url ? (
-                    <div className="w-full h-28 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden">
-                      <img src={n.image_url} alt="" loading="lazy" className="w-full h-full object-cover" />
+                    <div className="w-full h-28 bg-gradient-to-br from-primary/15 to-amber-200/30 dark:from-primary/25 dark:to-amber-900/20 overflow-hidden relative">
+                      <img
+                        src={n.image_url}
+                        alt=""
+                        loading="lazy"
+                        className="w-full h-full object-cover absolute inset-0"
+                        onError={(e) => {
+                          const img = e.currentTarget;
+                          img.style.display = "none";
+                        }}
+                      />
                     </div>
                   ) : (
                     <div className="w-full h-28 bg-gradient-to-br from-primary/15 to-amber-200/30 dark:from-primary/25 dark:to-amber-900/20 flex items-center justify-center">

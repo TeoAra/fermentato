@@ -3,7 +3,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { UserPlus, UserCheck } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface FollowButtonProps {
   userId: string;
@@ -29,7 +28,6 @@ export function FollowButton({ userId, className }: FollowButtonProps) {
       : apiRequest("POST", `/api/users/${userId}/follow`),
     onSuccess: (data) => {
       queryClient.setQueryData(["/api/users", userId, "follow-status"], data);
-      // Forza refetch immediato ignorando staleTime
       queryClient.refetchQueries({ queryKey: ["/api/user/following"] });
       queryClient.refetchQueries({ queryKey: ["/api/user/feed"] });
       toast({ title: following ? "Non stai più seguendo" : "Ora segui questo utente! 👋" });
@@ -40,22 +38,21 @@ export function FollowButton({ userId, className }: FollowButtonProps) {
   if (!isAuthenticated || currentUser?.id === userId) return null;
 
   return (
-    <Button
-      size="sm"
-      variant="outline"
-      className={`rounded-xl text-xs h-8 font-medium transition-all ${
+    <button
+      type="button"
+      disabled={followMutation.isPending}
+      onClick={() => followMutation.mutate()}
+      className={`inline-flex items-center gap-1 rounded-xl text-xs h-8 px-3 font-medium transition-all disabled:opacity-50 border ${
         following
           ? "border-stone-300 dark:border-stone-600 bg-stone-100 dark:bg-[#12151A] text-stone-700 dark:text-stone-200 hover:bg-red-50 dark:hover:bg-red-900/20 hover:border-red-300 dark:hover:border-red-600 hover:text-red-600 dark:hover:text-red-400"
           : "border-primary bg-primary text-white hover:bg-primary/90 hover:border-primary/90"
-      } ${className}`}
-      onClick={() => followMutation.mutate()}
-      disabled={followMutation.isPending}
+      } ${className ?? ""}`}
     >
       {following ? (
-        <><UserCheck className="w-3.5 h-3.5 mr-1" /> Segui già</>
+        <><UserCheck className="w-3.5 h-3.5" /> Segui già</>
       ) : (
-        <><UserPlus className="w-3.5 h-3.5 mr-1" /> Segui</>
+        <><UserPlus className="w-3.5 h-3.5" /> Segui</>
       )}
-    </Button>
+    </button>
   );
 }

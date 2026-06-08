@@ -200,10 +200,7 @@ export default function AdminDashboard() {
   const verifyEmailMutation = useMutation({
     mutationFn: async (userId: string) =>
       apiRequest(`/api/admin/users/${userId}/verify-email`, { method: "PATCH" }),
-    onSuccess: (_data, userId) => {
-      queryClient.setQueryData<any[]>(["/api/admin/users"], (old) =>
-        old ? old.map((u) => u.id === userId ? { ...u, isEmailVerified: true } : u) : []
-      );
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "Email verificata", description: "L'utente è stato sbloccato." });
     },
