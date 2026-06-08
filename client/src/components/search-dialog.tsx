@@ -400,7 +400,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                     {searchResults.users.map((u: any, i: number) => (
                       <button
                         key={`user-${u.id}`}
-                        onClick={() => { handleClose(); navigate(`/user/${u.nickname}`); }}
+                        onClick={() => { handleClose(); navigate(`/user/${u.nickname || u.id}`); }}
                         className={`flex items-center gap-3 w-full px-4 py-2.5 text-left transition-colors ${
                           selectedIndex === base + i ? "bg-stone-50 dark:bg-white/5" : "hover:bg-stone-50 dark:hover:bg-white/5"
                         }`}

@@ -232,7 +232,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
           </SheetTitle>
         </SheetHeader>
 
-        {user?.email && !user?.isEmailVerified ? (
+        {user?.email && user?.isEmailVerified === false ? (
           <div className="flex flex-col items-center justify-center py-10 gap-3 text-center px-4">
             <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-950/30 flex items-center justify-center">
               <Beer className="w-6 h-6 text-amber-500" />

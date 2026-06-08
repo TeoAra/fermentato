@@ -119,7 +119,9 @@ async function performGlobalSearch(query: string, filters: any, type: string = "
     (runAll || type === "breweries") ? storage.searchBreweries(query) : Promise.resolve([]),
     (runAll || type === "beers") ? storage.searchBeers(query, filters) : Promise.resolve([]),
     pool.query(
-      `SELECT id, nickname, first_name, last_name, profile_image_url
+      `SELECT id, nickname,
+              first_name AS "firstName", last_name AS "lastName",
+              profile_image_url AS "profileImageUrl"
        FROM users
        WHERE unaccent(lower(COALESCE(nickname,''))) LIKE unaccent(lower($1))
           OR unaccent(lower(COALESCE(first_name,''))) LIKE unaccent(lower($1))

@@ -1,2 +1,3 @@
 - [Duplicate admin routes](duplicate-admin-routes.md) — same admin endpoints defined in routes.ts AND routes-admin.ts; registration order decides which wins, easy to edit the wrong copy.
 - [Search cache key consistency](search-cache-key.md) — request path and warmer must build the /api/search cache key identically (normalize query) or warming targets a key never read.
+- [Nullable boolean gate pattern](nullable-boolean-gate.md) — Drizzle nullable booleans return null (not false) for unset rows; always use === false, not !, to avoid false-positives.

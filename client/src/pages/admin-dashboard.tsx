@@ -204,6 +204,7 @@ export default function AdminDashboard() {
       queryClient.setQueryData<any[]>(["/api/admin/users"], (old) =>
         old ? old.map((u) => u.id === userId ? { ...u, isEmailVerified: true } : u) : []
       );
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       toast({ title: "Email verificata", description: "L'utente è stato sbloccato." });
     },
     onError: (err: any) => {

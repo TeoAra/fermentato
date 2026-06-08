@@ -81,7 +81,7 @@ function EmailVerificationBanner() {
   const [visible, setVisible] = useState(true);
   const [sending, setSending] = useState(false);
 
-  const needsVerification = isAuthenticated && !!user?.email && !user?.isEmailVerified;
+  const needsVerification = isAuthenticated && !!user?.email && user?.isEmailVerified === false;
   if (!needsVerification || !visible) return null;
 
   const handleResend = async () => {
