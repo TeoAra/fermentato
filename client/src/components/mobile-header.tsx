@@ -270,20 +270,30 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 </Link>
 
                 {/* Stats row */}
-                <div className="flex gap-2 mt-4">
-                  <div className="flex-1 min-w-0 bg-stone-50 dark:bg-white/5 rounded-2xl px-2 py-2.5 text-center">
-                    <div className="text-base font-black text-foreground leading-tight tabular-nums">
-                      {userStats?.totalCheckins ?? (userStats as any)?.total ?? (typedUser as any)?.checkinsCount ?? '–'}
+                {(() => {
+                  const checkins = userStats?.totalCheckins ?? (userStats as any)?.total ?? 0;
+                  const level = checkins >= 500 ? { label: 'Mastro Birraio', emoji: '🏆' }
+                    : checkins >= 200 ? { label: 'Esperto', emoji: '🌟' }
+                    : checkins >= 100 ? { label: 'Intenditore', emoji: '⭐' }
+                    : checkins >= 50 ? { label: 'Assaggiatore', emoji: '🏅' }
+                    : checkins >= 20 ? { label: 'Esploratore', emoji: '🍺' }
+                    : checkins >= 5 ? { label: 'Novizio', emoji: '🌱' }
+                    : { label: 'Curioso', emoji: '🧐' };
+                  return (
+                    <div className="flex gap-2 mt-4">
+                      <div className="flex-1 min-w-0 bg-stone-50 dark:bg-white/5 rounded-2xl px-2 py-2.5 text-center">
+                        <div className="text-base font-black text-foreground leading-tight tabular-nums">
+                          {checkins > 0 ? checkins : '–'}
+                        </div>
+                        <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight">Bevute</div>
+                      </div>
+                      <div className="flex-1 min-w-0 bg-stone-50 dark:bg-white/5 rounded-2xl px-2 py-2.5 text-center">
+                        <div className="text-sm font-black text-foreground leading-tight">{level.emoji}</div>
+                        <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight truncate">{level.label}</div>
+                      </div>
                     </div>
-                    <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight">Bevute</div>
-                  </div>
-                  <div className="flex-1 min-w-0 bg-stone-50 dark:bg-white/5 rounded-2xl px-2 py-2.5 text-center">
-                    <div className="text-base font-black text-foreground leading-tight tabular-nums">
-                      {userStats?.totalReviews ?? (typedUser as any)?.reviewsCount ?? '–'}
-                    </div>
-                    <div className="text-[10px] font-semibold text-muted-foreground mt-0.5 leading-tight">Recensioni</div>
-                  </div>
-                </div>
+                  );
+                })()}
 
                 {/* Vai al profilo */}
                 <Link href="/dashboard" onClick={onMenuToggle}>

@@ -331,9 +331,8 @@ export default function ExplorePubs() {
             </div>
           )}
 
-          {/* Distance + filter chips */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 lg:-mx-6 lg:px-6">
-            {/* Distance chip */}
+          {/* Distance + filter chips — distance chip is outside the scroll container to avoid clipping its dropdown */}
+          <div className="flex items-center gap-2 pb-1">
             <div className="relative flex-shrink-0">
               <button
                 onClick={() => setShowDistPicker(v => !v)}
@@ -348,12 +347,12 @@ export default function ExplorePubs() {
               {showDistPicker && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
-                  <div className="absolute top-9 left-0 z-50 bg-white/90 dark:bg-white/[0.06] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden min-w-[110px]">
+                  <div className="absolute top-9 left-0 z-50 bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
                     {[1, 5, 10, 15, 20, 30, 50].map(d => (
                       <button
                         key={d}
                         onClick={() => { setDistanceKm(d); setShowDistPicker(false); if (userLocation) setQuickFilter("nearby"); else handleLocate(); }}
-                        className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-muted'}`}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-stone-50 dark:hover:bg-white/5'}`}
                       >
                         {d} km
                       </button>
@@ -363,23 +362,25 @@ export default function ExplorePubs() {
               )}
             </div>
 
-            {[
-              { key: "nearby" as QuickFilter, label: "Vicino a te", icon: <Navigation className="w-3 h-3" /> },
-              { key: "open" as QuickFilter, label: "Aperti ora", icon: <span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> },
-            ].map(f => (
-              <button
-                key={f.key}
-                onClick={() => { setQuickFilter(prev => prev === f.key ? "all" : f.key); if (f.key === "nearby") handleLocate(); }}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
-                  quickFilter === f.key
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
-                }`}
-              >
-                {f.icon}
-                {f.label}
-              </button>
-            ))}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mr-4 pr-4 lg:-mr-6 lg:pr-6">
+              {[
+                { key: "nearby" as QuickFilter, label: "Vicino a te", icon: <Navigation className="w-3 h-3" /> },
+                { key: "open" as QuickFilter, label: "Aperti ora", icon: <span className="w-2 h-2 rounded-full bg-green-400 inline-block" /> },
+              ].map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => { setQuickFilter(prev => prev === f.key ? "all" : f.key); if (f.key === "nearby") handleLocate(); }}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
+                    quickFilter === f.key
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
+                  }`}
+                >
+                  {f.icon}
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
         </PageContainer>
 

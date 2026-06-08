@@ -526,7 +526,7 @@ export default function UserProfile() {
       className={`container mx-auto px-4 py-8 max-w-4xl ${activeProfileTab !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : ''}`}
       style={{
         paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
-        paddingTop: activeProfileTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
+        paddingTop: activeProfileTab !== 'overview' ? '64px' : undefined,
       }}
     >
       <div className="space-y-6">
@@ -1160,8 +1160,8 @@ export default function UserProfile() {
         {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
         {activeProfileTab !== 'overview' && !isProfileModalOpen && (
           <div
-            className="lg:hidden fixed top-0 inset-x-0 z-30"
-            style={{ paddingTop: 'env(safe-area-inset-top)' }}
+            className="lg:hidden fixed inset-x-0 z-40"
+            style={{ top: 'calc(env(safe-area-inset-top) + 56px)' }}
           >
             <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
               <div className="flex items-center gap-3 px-3 h-14">

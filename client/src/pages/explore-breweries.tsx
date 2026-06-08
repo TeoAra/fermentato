@@ -1,10 +1,11 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } from "react";
 import { Link } from "wouter";
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
-import { Beer, Search, X, Star, ChevronRight, SlidersHorizontal, Globe, Navigation, ChevronLeft, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { Beer, Search, X, Star, ChevronRight, SlidersHorizontal, Globe, Navigation, ChevronLeft, ChevronRight as ChevronRightIcon, Map, Building2 } from "lucide-react";
+const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m.PubMap })));
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
@@ -85,6 +86,7 @@ function formatDist(km: number): string {
 }
 
 type QuickFilter = "all" | "nearby" | "top" | "italian" | "international";
+type ViewMode = "list" | "map";
 const PAGE_SIZE = 30;
 
 export default function ExploreBreweries() {
@@ -92,6 +94,8 @@ export default function ExploreBreweries() {
   const [debouncedQ, setDebouncedQ] = useState("");
   const [quickFilter, setQuickFilter] = useState<QuickFilter>("italian");
   const [page, setPage] = useState(1);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [mapVisible, setMapVisible] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
     try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
   });
@@ -232,6 +236,86 @@ export default function ExploreBreweries() {
     { key: "international", label: "Internazionali", icon: null },
   ];
 
+  /* ── FULLSCREEN MAP VIEW ─────────────────────────────────────────── */
+  if (viewMode === "map") {
+    const mapPins = breweries.map((b: any) => ({
+      id: b.id, name: b.name, slug: b.slug,
+      latitude: String(b.latitude || ""), longitude: String(b.longitude || ""),
+      logoUrl: b.logoUrl, type: "brewery" as const,
+    }));
+    return (
+      <div className="fixed inset-x-0 bottom-0 top-14 z-40 bg-background">
+        {/* Row 1: back + count */}
+        <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
+          <button
+            onClick={() => setViewMode("list")}
+            className="pointer-events-auto flex items-center gap-1.5 px-3 py-2 rounded-2xl text-sm font-bold bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-foreground tap-scale hover:border-primary/30 active:scale-[0.99] transition-all duration-200"
+          >
+            ← Lista
+          </button>
+          <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
+            <Building2 className="h-4 w-4 text-primary flex-shrink-0" />
+            <span className="text-sm font-bold text-foreground">
+              {debouncedQ || quickFilter !== "all" ? `${breweries.length} filtrati` : `${total.toLocaleString("it-IT")} birrifici`}
+            </span>
+          </div>
+        </div>
+        {/* Row 2: filter chips */}
+        <div className="absolute top-[3.5rem] left-3 right-3 z-50 flex items-center gap-2 overflow-x-auto scrollbar-hide pointer-events-none">
+          {quickFilter === "nearby" && (
+            <div className="relative flex-shrink-0 pointer-events-auto">
+              <button
+                onClick={() => setShowDistPicker(v => !v)}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border bg-primary text-white border-primary shadow-sm tap-scale"
+              >
+                Entro {distanceKm} km ▾
+              </button>
+              {showDistPicker && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
+                  <div className="absolute top-9 left-0 z-50 bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
+                    {[1, 5, 10, 15, 20, 30, 50].map(d => (
+                      <button key={d} onClick={() => { setDistanceKm(d); setShowDistPicker(false); }}
+                        className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-stone-50 dark:hover:bg-white/5'}`}>
+                        {d} km
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+          {QUICK_FILTERS.filter(f => f.key !== "all" || quickFilter === "all").map(f => (
+            <button key={f.key} onClick={() => handleQuickFilter(f.key)}
+              className={`pointer-events-auto flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
+                quickFilter === f.key
+                  ? "bg-primary text-white border-primary shadow-sm"
+                  : "bg-white/80 dark:bg-white/[0.08] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/50 dark:border-white/[0.1] shadow-sm hover:border-primary/30 active:scale-[0.99]"
+              }`}
+            >
+              {f.icon}{f.label}
+            </button>
+          ))}
+        </div>
+        <div className="absolute inset-0">
+          {isLoading ? (
+            <div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />
+          ) : (
+            <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
+              <PubMap
+                pins={mapPins}
+                height="100%"
+                fullscreen
+                userLocation={userLocation ?? undefined}
+                radiusKm={quickFilter === "nearby" && userLocation ? distanceKm : undefined}
+              />
+            </Suspense>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F7F4F0] dark:bg-background">
       <Helmet>
@@ -248,6 +332,13 @@ export default function ExploreBreweries() {
               <h1 className="text-xl lg:text-2xl font-extrabold text-foreground">Esplora Birrifici</h1>
               <p className="text-xs text-stone-400 dark:text-stone-500">Scopri i migliori birrifici vicino a te</p>
             </div>
+            <button
+              onClick={() => setViewMode("map")}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-2xl text-xs font-bold bg-primary/10 dark:bg-primary/15 text-primary tap-scale border border-primary/20 hover:bg-primary/15 dark:hover:bg-primary/20 transition-colors"
+            >
+              <Map className="w-3.5 h-3.5" />
+              Mappa
+            </button>
           </div>
 
           {/* Search */}
@@ -265,9 +356,22 @@ export default function ExploreBreweries() {
             }
           </div>
 
-          {/* Quick filter chips */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-1 -mx-4 px-4 lg:-mx-6 lg:px-6">
-            {/* Distance chip (only shown when nearby active) */}
+          {/* Mini mappa */}
+          {mapVisible && (
+            <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-[#23262E]/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-[#1A1D24] mb-3">
+              <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
+                <PubMap
+                  pins={breweries.map((b: any) => ({ id: b.id, name: b.name, slug: b.slug, latitude: String(b.latitude || ""), longitude: String(b.longitude || ""), logoUrl: b.logoUrl, type: "brewery" as const }))}
+                  height="100%"
+                  onError={() => setMapVisible(false)}
+                />
+              </Suspense>
+            </div>
+          )}
+
+          {/* Quick filter chips — distance chip outside overflow to avoid dropdown clipping */}
+          <div className="flex items-center gap-2 pb-1">
+            {/* Distance chip (only shown when nearby active) — outside scroll container */}
             {quickFilter === "nearby" && (
               <div className="relative flex-shrink-0">
                 <button
@@ -279,12 +383,12 @@ export default function ExploreBreweries() {
                 {showDistPicker && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
-                    <div className="absolute top-9 left-0 z-50 bg-white/90 dark:bg-white/[0.06] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)] overflow-hidden min-w-[110px]">
+                    <div className="absolute top-9 left-0 z-50 bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
                       {[1, 5, 10, 15, 20, 30, 50].map(d => (
                         <button
                           key={d}
                           onClick={() => { setDistanceKm(d); setShowDistPicker(false); }}
-                          className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-muted'}`}
+                          className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-stone-50 dark:hover:bg-white/5'}`}
                         >
                           {d} km
                         </button>
@@ -295,22 +399,25 @@ export default function ExploreBreweries() {
               </div>
             )}
 
-            {QUICK_FILTERS.filter(f => f.key !== "all" || quickFilter === "all").map(f => (
-              <button
-                key={f.key}
-                onClick={() => handleQuickFilter(f.key)}
-                className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
-                  quickFilter === f.key
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : f.key === "all"
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
-                }`}
-              >
-                {f.icon}
-                {f.label}
-              </button>
-            ))}
+            {/* Scrollable filter chips */}
+            <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide -mr-4 pr-4 lg:-mr-6 lg:pr-6">
+              {QUICK_FILTERS.filter(f => f.key !== "all" || quickFilter === "all").map(f => (
+                <button
+                  key={f.key}
+                  onClick={() => handleQuickFilter(f.key)}
+                  className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all duration-200 tap-scale ${
+                    quickFilter === f.key
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : f.key === "all"
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl text-stone-600 dark:text-stone-300 border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99]"
+                  }`}
+                >
+                  {f.icon}
+                  {f.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Country pills */}
