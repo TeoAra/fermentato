@@ -2,6 +2,7 @@ import webpush from "web-push";
 import { storage } from "./storage";
 import jwt from "jsonwebtoken";
 import http2 from "http2";
+import { GoogleAuth } from "google-auth-library";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY || '';
@@ -18,52 +19,84 @@ const APNS_BUNDLE_ID = process.env.APNS_BUNDLE_ID || 'to.fermentato.app';
 const APNS_P8_KEY = (process.env.APNS_P8_KEY || '').replace(/\\n/g, '\n');
 const apnsConfigured = !!(APNS_KEY_ID && APNS_TEAM_ID && APNS_P8_KEY);
 
-// ── FCM config (Android native push) ───────────────────────────────────────
-// FCM_SERVER_KEY: Firebase Console → Project Settings → Cloud Messaging → Server key
-const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY || '';
-const fcmConfigured = !!FCM_SERVER_KEY;
+// ── FCM config (Android native push) — HTTP v1 API con Service Account ──────
+// FCM_SERVICE_ACCOUNT: JSON del service account scaricato da
+//   Firebase Console → Impostazioni progetto → Account di servizio →
+//   "Genera nuova chiave privata" → copia l'intero contenuto JSON come secret.
+const FCM_SERVICE_ACCOUNT_RAW = process.env.FCM_SERVICE_ACCOUNT || '';
+let fcmCredentials: any = null;
+let fcmProjectId = '';
+try {
+  if (FCM_SERVICE_ACCOUNT_RAW) {
+    fcmCredentials = JSON.parse(FCM_SERVICE_ACCOUNT_RAW);
+    fcmProjectId = fcmCredentials.project_id || '';
+  }
+} catch { /* JSON non valido → fcmCredentials rimane null */ }
+const fcmConfigured = !!(fcmCredentials && fcmProjectId);
 
-// Invia una singola notifica FCM (Android) via Legacy HTTP API
+// Client Google Auth con cache del token (si rinnova automaticamente)
+let _fcmAuthClient: any = null;
+async function getFcmAccessToken(): Promise<string> {
+  if (!fcmConfigured) throw new Error('FCM non configurato');
+  if (!_fcmAuthClient) {
+    const auth = new GoogleAuth({
+      credentials: fcmCredentials,
+      scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+    });
+    _fcmAuthClient = await auth.getClient();
+  }
+  const { token } = await _fcmAuthClient.getAccessToken();
+  if (!token) throw new Error('FCM: impossibile ottenere access token');
+  return token;
+}
+
+// Invia una singola notifica FCM (Android) via HTTP v1 API
 async function sendFcm(deviceToken: string, payload: any): Promise<void> {
   if (!fcmConfigured) return;
+  let accessToken: string;
+  try { accessToken = await getFcmAccessToken(); }
+  catch (err) { console.error('[fcm] auth error:', err); return; }
+
   const body = JSON.stringify({
-    to: deviceToken,
-    notification: {
-      title: payload.title,
-      body: payload.body,
-      sound: 'default',
-      icon: payload.icon || 'ic_notification',
-      tag: payload.tag,
-    },
-    data: {
-      url:  payload.url  || '',
-      type: payload.type || '',
-      tag:  payload.tag  || '',
-      path: payload.url  || '',
-    },
-    priority: 'high',
-    time_to_live: PUSH_TTL,
-  });
-  try {
-    const res = await fetch('https://fcm.googleapis.com/fcm/send', {
-      method: 'POST',
-      headers: {
-        'Authorization': `key=${FCM_SERVER_KEY}`,
-        'Content-Type': 'application/json',
+    message: {
+      token: deviceToken,
+      notification: { title: payload.title, body: payload.body },
+      data: {
+        url:  payload.url  || '',
+        type: payload.type || '',
+        tag:  payload.tag  || '',
       },
-      body,
-    });
+      android: {
+        priority: 'HIGH',
+        ttl: `${PUSH_TTL}s`,
+        notification: {
+          sound: 'default',
+          tag: payload.tag || '',
+          icon: 'ic_notification',
+          click_action: 'FLUTTER_NOTIFICATION_CLICK',
+        },
+      },
+    },
+  });
+
+  try {
+    const res = await fetch(
+      `https://fcm.googleapis.com/v1/projects/${fcmProjectId}/messages:send`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body,
+      }
+    );
     if (!res.ok) {
       const text = await res.text().catch(() => '');
       console.error('[fcm] HTTP error', res.status, text);
-      return;
-    }
-    const json = await res.json() as any;
-    if (json.failure > 0 && json.results) {
-      for (const result of json.results) {
-        if (result.error === 'NotRegistered' || result.error === 'InvalidRegistration') {
-          storage.deleteNativePushToken(deviceToken).catch(() => {});
-        }
+      // Token non più valido → rimuovi dal DB
+      if (res.status === 404 || text.includes('UNREGISTERED') || text.includes('INVALID_ARGUMENT')) {
+        storage.deleteNativePushToken(deviceToken).catch(() => {});
       }
     }
   } catch (err) {
