@@ -305,11 +305,43 @@ if "placeholder" in proj_id.lower() or not api_key.startswith("AIza"):
 
 txt = open(main_path).read()
 
-# ── Idempotente: non iniettare due volte ──────────────────────────────────────
+# ── Rimuovi sempre una eventuale iniezione precedente (self-healing) ──────────
+# Necessario perché android/ non è in git → git reset non la tocca.
+# Un build precedente potrebbe aver iniettato sintassi sbagliata (es. Kotlin in Java).
+def strip_firebase_manual_init(s):
+    """Rimuove il metodo initFirebaseManual e le sue chiamate."""
+    # Rimuovi le chiamate al metodo (Java con ; e Kotlin senza)
+    s = re.sub(r'\n[ \t]*initFirebaseManual\(\);?\n', '\n', s)
+    # Rimuovi il metodo vero e proprio (dalla riga del commento marker alla } finale)
+    marker = "// \u2500\u2500 Firebase manual init"
+    if marker not in s:
+        return s
+    start = s.find(marker)
+    # Includi eventuali spazi/newline prima del commento
+    while start > 0 and s[start - 1] in ' \t':
+        start -= 1
+    if start > 0 and s[start - 1] == '\n':
+        start -= 1
+    # Conta le graffe per trovare la fine del metodo
+    brace_count = 0
+    found_first = False
+    end = start
+    for i in range(start, len(s)):
+        if s[i] == '{':
+            brace_count += 1
+            found_first = True
+        elif s[i] == '}':
+            brace_count -= 1
+            if found_first and brace_count == 0:
+                end = i + 1
+                if end < len(s) and s[end] == '\n':
+                    end += 1
+                break
+    return s[:start] + s[end:]
+
 if "initFirebaseManual" in txt:
-    lang = "Java" if is_java else "Kotlin"
-    print(f"    ✅ Firebase manual init già presente in MainActivity.{('java' if is_java else 'kt')}")
-    sys.exit(0)
+    txt = strip_firebase_manual_init(txt)
+    print(f"    ℹ️  Rimosse iniezioni precedenti di initFirebaseManual (self-healing)")
 
 # ── Genera codice nel linguaggio corretto (Java o Kotlin) ─────────────────────
 if is_java:
@@ -956,6 +988,30 @@ KTEOF
     fi
     rm -rf "$OLD_PKG_DIR"
   fi
+
+  # ── Rigenera MainActivity.java pulita ad ogni build ────────────────────────
+  # android/ NON è in git → git reset --hard non la tocca.
+  # Build precedenti possono aver iniettato codice sbagliato (es. Kotlin in Java).
+  # Partiamo sempre da un file pulito; inject_cast_plugin e inject_firebase_manual_init
+  # aggiungono poi tutto il necessario su una base nota.
+  MAIN_PKG_DIR="android/app/src/main/java/to/fermenta/app"
+  mkdir -p "$MAIN_PKG_DIR"
+  cat > "$MAIN_PKG_DIR/MainActivity.java" << 'JAVAEOF'
+package to.fermenta.app;
+
+import android.content.Intent;
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+    }
+}
+JAVAEOF
+  # Rimuovi eventuale MainActivity.kt dallo stesso package per evitare duplicati
+  rm -f "$MAIN_PKG_DIR/MainActivity.kt"
+  echo "    ✅ MainActivity.java rigenerata (slate pulita per patch)"
 
   echo "    Bump versione app..."
   NEW_VERSION=$(bash "$APP_DIR/scripts/bump-version.sh")
