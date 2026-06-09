@@ -109,9 +109,13 @@ patch_android_manifest() {
   # - inBlock=1 quando stiamo dentro un'apertura <activity che non è ancora chiusa
   # - inMain=1 se quella activity contiene "MainActivity" in qualsiasi forma
   # - quando inMain e troviamo </activity>, inietta i filtri e resetta
+  #
+  # NOTA: Capacitor 8 genera <activity\n (newline dopo il tag, senza spazio/tab)
+  #       quindi il pattern è solo /<activity/ senza vincoli di whitespace.
   awk -v host="$DEEP_LINK_HOST" '
-    # Inizio di un tag <activity (può aprirsi su più righe)
-    /<activity[ \t]/ && !inBlock {
+    # Inizio di un tag <activity (può aprirsi su più righe o tutto su una riga)
+    # Esclude </activity> e <activity-alias>
+    /<activity/ && !/<\/activity/ && !/<activity-alias/ && !inBlock {
       inBlock = 1
       blockHasMain = 0
     }
