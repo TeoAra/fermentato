@@ -1,0 +1,28 @@
+root@luppolino:/www/nodeapps/fermenta# cd /www/nodeapps/fermenta
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# echo "=== 1) Package + prefisso chiave nel google-services.json ==="
+=== 1) Package + prefisso chiave nel google-services.json ===
+root@luppolino:/www/nodeapps/fermenta# node -e "const j=require('./android/app/google-services.json'); j.client.forEach(c=>console.log(' pkg:', c.client_info.android_client_info.package_name, '| key:', (((c.api_key||[])[0]||{}).current_key||'NONE').slice(0,6)+'...')); console.log(' project_id:', j.project_info.project_id);"
+ pkg: to.fermenta.app | key: AIzaSy...
+ project_id: fermentato-98f8c
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# echo "=== 2) applicationId nel build.gradle ==="
+=== 2) applicationId nel build.gradle ===
+root@luppolino:/www/nodeapps/fermenta# grep -n "applicationId" android/app/build.gradle
+8:        applicationId "to.fermenta.app"
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# echo "=== 3) values.xml generato dal plugin (presenza chiave) ==="
+=== 3) values.xml generato dal plugin (presenza chiave) ===
+root@luppolino:/www/nodeapps/fermenta# FOUND=$(find android/app/build -path "*google-services*" -name "values.xml" 2>/dev/null)
+root@luppolino:/www/nodeapps/fermenta# if [ -z "$FOUND" ]; then echo " ✗ NESSUN values.xml generato → il plugin NON ha processato il json"; else
+>   echo "$FOUND" | while read f; do
+>     grep -q 'name="google_api_key">AIza' "$f" && echo " ✓ google_api_key REALE in $f" || echo " ✗ google_api_key ASSENTE in $f";
+>   done
+> fi
+ ✗ NESSUN values.xml generato → il plugin NON ha processato il json
+root@luppolino:/www/nodeapps/fermenta#
+root@luppolino:/www/nodeapps/fermenta# echo "=== 4) override chiave in src/ ? ==="
+=== 4) override chiave in src/ ? ===
+root@luppolino:/www/nodeapps/fermenta# grep -rn "google_api_key" android/app/src/ 2>/dev/null || echo " nessun override (bene)"
+ nessun override (bene)
+root@luppolino:/www/nodeapps/fermenta#

@@ -199,9 +199,15 @@ disable_firebase_autoinit() {
       sed -i '0,/classpath\s*["'"'"']com\.android\.tools\.build:gradle/{s#\(classpath\s*["'"'"']com\.android\.tools\.build:gradle[^"'"'"']*["'"'"']\)#\1\n        classpath "com.google.gms:google-services:4.4.2"#}' "$ROOT_GRADLE"
       echo "    ✅ classpath com.google.gms:google-services:4.4.2 aggiunto a $ROOT_GRADLE"
     fi
-    if ! grep -q "com.google.gms.google-services" "$APP_GRADLE" 2>/dev/null; then
-      printf '\napply plugin: "com.google.gms.google-services"\n' >> "$APP_GRADLE"
-      echo "    ✅ plugin com.google.gms.google-services applicato in $APP_GRADLE"
+    # Capacitor applica il plugin SOLO dentro `if (servicesJSON.text)` a fine
+    # file: questo blocco condizionale a volte NON genera values.xml (chiave
+    # mancante a runtime → "invalid API key"). Forziamo un apply INCONDIZIONATO
+    # a colonna 0 (idempotente: un secondo apply dello stesso plugin è no-op).
+    if ! grep -qE "^apply plugin: ['\"]com\.google\.gms\.google-services" "$APP_GRADLE" 2>/dev/null; then
+      printf "\napply plugin: 'com.google.gms.google-services'\n" >> "$APP_GRADLE"
+      echo "    ✅ plugin com.google.gms.google-services applicato (INCONDIZIONATO) in $APP_GRADLE"
+    else
+      echo "    ✅ plugin com.google.gms.google-services già applicato (incondizionato)"
     fi
 
     # 2) ABILITA auto-init: rimuove i meta-data di disabilitazione iniettati
