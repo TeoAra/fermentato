@@ -235,15 +235,29 @@ disable_firebase_autoinit() {
       echo "    ✅ Firebase auto-init già attivo"
     fi
 
-    # 3) Rimuovi google_api_key da strings.xml se presente.
-    #    In Android le risorse app-level vincono su quelle generate dal plugin
-    #    google-services: un <string name="google_api_key"></string> vuoto in
-    #    strings.xml azzererebbe la chiave a runtime anche se l'AAB contiene la
-    #    stringa AIza nel binario → "Please set a valid API key" da FirebaseInstallations.
+    # 4) Rimuovi google_api_key da strings.xml se presente (override vuoto batte plugin).
     local STRINGS_XML="app/src/main/res/values/strings.xml"
     if [ -f "$STRINGS_XML" ] && grep -q 'name="google_api_key"' "$STRINGS_XML" 2>/dev/null; then
       sed -i '/<string name="google_api_key"/d' "$STRINGS_XML"
-      echo "    ✅ google_api_key rimosso da strings.xml (prevenuto override vuoto della chiave FCM)"
+      echo "    ✅ google_api_key rimosso da strings.xml"
+    fi
+
+    # 5) Disabilita FirebaseInitProvider nel manifest.
+    #    FirebaseInitProvider è un ContentProvider che inizializza Firebase PRIMA di
+    #    MainActivity.onCreate() (i ContentProvider si avviano prima delle Activity).
+    #    Se legge google-services.xml con chiave vuota, FirebaseApp viene creato con
+    #    getApiKey()="" → "Please set a valid API key" — e quando initFirebaseManual()
+    #    gira in MainActivity, getApps().isEmpty() è già false → salta il nostro init.
+    #    Soluzione: rimuoviamo FirebaseInitProvider; initFirebaseManual() fa tutto.
+    if ! grep -q "firebaseinitprovider" "$MANIFEST" 2>/dev/null; then
+      # Aggiungi xmlns:tools al manifest se manca (richiesto da tools:node="remove")
+      if ! grep -q 'xmlns:tools' "$MANIFEST" 2>/dev/null; then
+        sed -i 's|<manifest |<manifest xmlns:tools="http://schemas.android.com/tools" |' "$MANIFEST"
+      fi
+      sed -i 's|</application>|    <provider android:name="com.google.firebase.provider.FirebaseInitProvider" android:authorities="${applicationId}.firebaseinitprovider" android:exported="false" tools:node="remove" />\n    </application>|' "$MANIFEST"
+      echo "    ✅ FirebaseInitProvider rimosso dal manifest (init manuale in MainActivity)"
+    else
+      echo "    ✅ FirebaseInitProvider già rimosso dal manifest"
     fi
     return
   fi
@@ -360,22 +374,35 @@ if is_java:
     # ---- JAVA ----
     init_method = f"""
     // ── Firebase manual init (failsafe per AAB Play Store) ───────────────────
-    // Il plugin google-services Gradle a volte non genera correttamente
-    // google-services.xml nell'AAB → getApiKey()="" a runtime.
+    // FirebaseInitProvider (ContentProvider) si avvia PRIMA di MainActivity e
+    // puo inizializzare Firebase con chiave vuota se google-services.xml e
+    // incompleto. Questo metodo controlla la chiave esistente e, se non valida,
+    // cancella l'istanza e re-inizializza con le credenziali corrette hardcoded.
     private void initFirebaseManual() {{
-        if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {{
-            com.google.firebase.FirebaseOptions opts = new com.google.firebase.FirebaseOptions.Builder()
-                .setApiKey("{api_key}")
-                .setApplicationId("{app_id}")
-                .setProjectId("{proj_id}")
-                .setGcmSenderId("{sender}")
-                .setStorageBucket("{bucket}")
-                .build();
-            com.google.firebase.FirebaseApp.initializeApp(this, opts);
-            android.util.Log.d("FermentaFCM", "Firebase inizializzato manualmente (failsafe)");
-        }} else {{
-            android.util.Log.d("FermentaFCM", "Firebase gia inizializzato dal plugin google-services");
+        String correctApiKey = "{api_key}";
+        try {{
+            com.google.firebase.FirebaseApp existingApp = com.google.firebase.FirebaseApp.getInstance();
+            String existingKey = existingApp.getOptions().getApiKey();
+            if (existingKey != null && existingKey.startsWith("AIza")) {{
+                android.util.Log.d("FermentaFCM", "Firebase OK, chiave valida: " + existingKey.substring(0, 14));
+                return;
+            }}
+            // Chiave vuota/invalida: FirebaseInitProvider ha usato credenziali sbagliate
+            android.util.Log.w("FermentaFCM", "Chiave Firebase non valida ('" + existingKey + "'), re-init con credenziali hardcoded");
+            existingApp.delete();
+        }} catch (IllegalStateException e) {{
+            // FirebaseApp.getInstance() lancia se Firebase non e ancora inizializzato
+            android.util.Log.d("FermentaFCM", "Firebase non ancora inizializzato, init manuale...");
         }}
+        com.google.firebase.FirebaseOptions opts = new com.google.firebase.FirebaseOptions.Builder()
+            .setApiKey(correctApiKey)
+            .setApplicationId("{app_id}")
+            .setProjectId("{proj_id}")
+            .setGcmSenderId("{sender}")
+            .setStorageBucket("{bucket}")
+            .build();
+        com.google.firebase.FirebaseApp.initializeApp(this.getApplicationContext(), opts);
+        android.util.Log.d("FermentaFCM", "Firebase inizializzato manualmente OK");
     }}
 """
     # Inserisce prima dell'ultima graffa della classe
@@ -411,22 +438,32 @@ else:
     # ---- KOTLIN ----
     init_method = f"""
     // ── Firebase manual init (failsafe per AAB Play Store) ───────────────────
-    // Il plugin google-services Gradle a volte non genera correttamente
-    // google-services.xml nell'AAB → getApiKey()="" a runtime.
+    // FirebaseInitProvider (ContentProvider) si avvia PRIMA di MainActivity e
+    // puo inizializzare Firebase con chiave vuota se google-services.xml e
+    // incompleto. Controlla la chiave esistente: se non valida, cancella e re-init.
     private fun initFirebaseManual() {{
-        if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {{
-            val opts = com.google.firebase.FirebaseOptions.Builder()
-                .setApiKey("{api_key}")
-                .setApplicationId("{app_id}")
-                .setProjectId("{proj_id}")
-                .setGcmSenderId("{sender}")
-                .setStorageBucket("{bucket}")
-                .build()
-            com.google.firebase.FirebaseApp.initializeApp(this, opts)
-            android.util.Log.d("FermentaFCM", "Firebase inizializzato manualmente (failsafe)")
-        }} else {{
-            android.util.Log.d("FermentaFCM", "Firebase gia inizializzato dal plugin google-services")
+        val correctApiKey = "{api_key}"
+        try {{
+            val existingApp = com.google.firebase.FirebaseApp.getInstance()
+            val existingKey = existingApp.options.apiKey
+            if (existingKey != null && existingKey.startsWith("AIza")) {{
+                android.util.Log.d("FermentaFCM", "Firebase OK, chiave valida: ${{existingKey.take(14)}}")
+                return
+            }}
+            android.util.Log.w("FermentaFCM", "Chiave Firebase non valida ('$existingKey'), re-init...")
+            existingApp.delete()
+        }} catch (e: IllegalStateException) {{
+            android.util.Log.d("FermentaFCM", "Firebase non ancora inizializzato, init manuale...")
         }}
+        val opts = com.google.firebase.FirebaseOptions.Builder()
+            .setApiKey(correctApiKey)
+            .setApplicationId("{app_id}")
+            .setProjectId("{proj_id}")
+            .setGcmSenderId("{sender}")
+            .setStorageBucket("{bucket}")
+            .build()
+        com.google.firebase.FirebaseApp.initializeApp(this.applicationContext, opts)
+        android.util.Log.d("FermentaFCM", "Firebase inizializzato manualmente OK")
     }}
 """
     last_brace = txt.rstrip().rfind("}")
