@@ -1,0 +1,16 @@
+tree cf9edb9d516e4a2a3b1bc494336bb27dac1bd9fc
+parent 87ef5562558b73e7be9e7228cbb780885cb782f3
+parent 3c63e7c17b352d5bd7c8699a40deaab9d4a45b5d
+author chromiumpd <45321347-chromiumpd@users.noreply.replit.com> 1775834815 +0000
+committer chromiumpd <45321347-chromiumpd@users.noreply.replit.com> 1775834815 +0000
+
+Unify activity feed and social content into a single page
+
+Consolidate social feed and related components into the activity page, removing obsolete references to `/social-feed`.
+
+Replit-Commit-Author: Agent
+Replit-Commit-Session-Id: 82ffa9d9-a3f1-48fa-85ec-0a4c878c364c
+Replit-Commit-Checkpoint-Type: full_checkpoint
+Replit-Commit-Event-Id: 8ab8eccc-51a3-41c3-97f2-f45356f73291
+Replit-Commit-Screenshot-Url: https://storage.googleapis.com/screenshot-production-us-central1/a6edd2f3-686d-4141-9e3a-b24bcd86da12/82ffa9d9-a3f1-48fa-85ec-0a4c878c364c/5bmrHCa
+Replit-Helium-Checkpoint-Created: true
