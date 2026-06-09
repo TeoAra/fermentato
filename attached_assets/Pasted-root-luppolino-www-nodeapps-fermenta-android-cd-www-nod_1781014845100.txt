@@ -1,0 +1,32 @@
+root@luppolino:/www/nodeapps/fermenta/android# cd /www/nodeapps/fermenta/android
+root@luppolino:/www/nodeapps/fermenta/android# source "$HOME/.sdkman/bin/sdkman-init.sh" 2>/dev/null || true
+root@luppolino:/www/nodeapps/fermenta/android# export JAVA_HOME="$HOME/.sdkman/candidates/java/current"
+root@luppolino:/www/nodeapps/fermenta/android# export ANDROID_HOME="$HOME/android-sdk"
+root@luppolino:/www/nodeapps/fermenta/android#
+root@luppolino:/www/nodeapps/fermenta/android# ./gradlew assembleRelease \
+>   -Pandroid.injected.signing.store.file="/www/nodeapps/fermenta/keystore/fermenta-upload.jks" \
+>   -Pandroid.injected.signing.store.password="${FERMENTA_KEY_PASS:-FermentaUpload2024!}" \
+-bash: !}: event not found
+>   -Pandroid.injected.signing.key.alias="${FERMENTA_KEY_ALIAS:-fermenta}" \
+>   -Pandroid.injected.signing.key.password="${FERMENTA_KEY_PASS:-FermentaUpload2024!}"
+-bash: !}: event not found
+>
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+BUILD SUCCESSFUL in 27s
+431 actionable tasks: 85 executed, 346 up-to-date
+root@luppolino:/www/nodeapps/fermenta/android# # verifica che la chiave sia nell'APK release
+root@luppolino:/www/nodeapps/fermenta/android# unzip -p app/build/outputs/apk/release/app-release.apk resources.arsc | grep -ao 'AIza[A-Za-z0-9_-]\{12\}' | head -1 && echo "  ✅ chiave nell'APK release"
+  ✅ chiave nell'APK release
+root@luppolino:/www/nodeapps/fermenta/android#
+root@luppolino:/www/nodeapps/fermenta/android# # pubblica per l'installazione sul telefono
+root@luppolino:/www/nodeapps/fermenta/android# cp app/build/outputs/apk/release/app-release.apk /www/nodeapps/fermenta/downloads/fermenta.apk
+cp: cannot stat 'app/build/outputs/apk/release/app-release.apk': No such file or directory
+root@luppolino:/www/nodeapps/fermenta/android# echo "Installa da: https://fermenta.to/app/download"
+Installa da: https://fermenta.to/app/download
+root@luppolino:/www/nodeapps/fermenta/android#
