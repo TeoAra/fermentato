@@ -1,0 +1,49 @@
+root@luppolino:/www/nodeapps/fermenta# cd android
+root@luppolino:/www/nodeapps/fermenta/android# ./gradlew clean
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+BUILD SUCCESSFUL in 4s
+12 actionable tasks: 12 executed
+root@luppolino:/www/nodeapps/fermenta/android# ./gradlew bundleRelease   # + i tuoi -Pandroid.injected.signing...
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :capgo-capacitor-social-login:processReleaseManifest
+/www/nodeapps/fermenta/node_modules/@capgo/capacitor-social-login/android/src/main/AndroidManifest.xml:7:9-11:35 Warning:
+        provider#com.facebook.internal.FacebookInitProvider was tagged at AndroidManifest.xml:7 to remove other declarations but no other declaration present
+
+> Task :capacitor-android:compileReleaseJavaWithJavac
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :capacitor-push-notifications:compileReleaseJavaWithJavac
+Note: /www/nodeapps/fermenta/node_modules/@capacitor/push-notifications/android/src/main/java/com/capacitorjs/plugins/pushnotifications/PushNotificationsPlugin.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :capgo-capacitor-social-login:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :app:stripReleaseDebugSymbols
+Unable to strip the following libraries, packaging them as they are: libdatastore_shared_counter.so, libimage_processing_util_jni.so, libsurface_util_jni.so.
+
+> Task :capacitor-camera:compileReleaseKotlin
+w: file:///www/nodeapps/fermenta/node_modules/@capacitor/camera/android/src/main/java/com/capacitorjs/plugins/camera/IonCameraFlow.kt:864:13 Condition is always 'false'.
+
+> Task :capacitor-camera:compileReleaseJavaWithJavac
+Note: /www/nodeapps/fermenta/node_modules/@capacitor/camera/android/src/main/java/com/capacitorjs/plugins/camera/CameraBottomSheetDialogFragment.java uses unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+[Incubating] Problems report is available at: file:///www/nodeapps/fermenta/android/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 1m 27s
+394 actionable tasks: 344 executed, 50 up-to-date
+root@luppolino:/www/nodeapps/fermenta/android#

@@ -164,11 +164,52 @@ patch_android_manifest() {
 }
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Disabilita Firebase auto-init per evitare crash all'avvio con google-services
-# placeholder (senza credenziali FCM reali). Aggiunge meta-data in </application>.
+# Configura Firebase in base alla presenza di credenziali FCM REALI.
+#  • Se app/google-services.json contiene una API key valida (AIza…):
+#      → applica il plugin Gradle com.google.gms.google-services
+#      → ABILITA Firebase auto-init (rimuove eventuali meta-data di disabilita)
+#      → le push native FCM funzionano.
+#  • Altrimenti (placeholder o file mancante):
+#      → DISABILITA auto-init per evitare il crash all'avvio.
+# Detection: l'API key Android di Firebase inizia sempre con "AIza".
 # ─────────────────────────────────────────────────────────────────────────────
 disable_firebase_autoinit() {
   local MANIFEST="app/src/main/AndroidManifest.xml"
+  local GS="app/google-services.json"
+  local ROOT_GRADLE="build.gradle"
+  local APP_GRADLE="app/build.gradle"
+
+  local HAS_REAL_FIREBASE=0
+  if [ -f "$GS" ] && grep -qE '"current_key"[[:space:]]*:[[:space:]]*"AIza' "$GS" 2>/dev/null; then
+    HAS_REAL_FIREBASE=1
+  fi
+
+  if [ "$HAS_REAL_FIREBASE" = "1" ]; then
+    echo "    ✅ google-services.json REALE rilevato (API key valida)"
+
+    # 1) Applica il plugin Gradle google-services (classpath root + apply app)
+    if ! grep -q "com.google.gms:google-services" "$ROOT_GRADLE" 2>/dev/null; then
+      sed -i '0,/classpath\s*["'"'"']com\.android\.tools\.build:gradle/{s#\(classpath\s*["'"'"']com\.android\.tools\.build:gradle[^"'"'"']*["'"'"']\)#\1\n        classpath "com.google.gms:google-services:4.4.2"#}' "$ROOT_GRADLE"
+      echo "    ✅ classpath com.google.gms:google-services:4.4.2 aggiunto a $ROOT_GRADLE"
+    fi
+    if ! grep -q "com.google.gms.google-services" "$APP_GRADLE" 2>/dev/null; then
+      printf '\napply plugin: "com.google.gms.google-services"\n' >> "$APP_GRADLE"
+      echo "    ✅ plugin com.google.gms.google-services applicato in $APP_GRADLE"
+    fi
+
+    # 2) ABILITA auto-init: rimuove i meta-data di disabilitazione iniettati
+    #    da build precedenti (quando il file era un placeholder).
+    if grep -q "firebase_messaging_auto_init_enabled" "$MANIFEST" 2>/dev/null; then
+      sed -i '/firebase_messaging_auto_init_enabled/d; /firebase_analytics_collection_deactivated/d' "$MANIFEST"
+      echo "    ✅ Firebase auto-init RI-ABILITATO (push native FCM attive)"
+    else
+      echo "    ✅ Firebase auto-init già attivo"
+    fi
+    return
+  fi
+
+  # Nessuna credenziale reale → disabilita auto-init per evitare crash all'avvio
+  echo "    ⚠️  google-services.json placeholder/mancante → push FCM NON funzioneranno"
   if grep -q "firebase_messaging_auto_init_enabled" "$MANIFEST" 2>/dev/null; then
     echo "    ℹ️  Firebase auto-init già disabilitato"
     return
