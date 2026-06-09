@@ -246,6 +246,130 @@ disable_firebase_autoinit() {
   echo "    ✅ Firebase auto-init disabilitato (placeholder FCM — no crash avvio)"
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Inietta l'inizializzazione Firebase DIRETTAMENTE in MainActivity.kt.
+#
+# PERCHÉ: il plugin Gradle com.google.gms.google-services genera
+# google-services.xml a compile-time. In alcuni AAB Play Store questa
+# generazione fallisce silenziosamente (strings.xml override, condizioni
+# Capacitor, merge di risorse) → getApiKey()="" → "Please set a valid API key".
+#
+# COME: legge i valori da google-services.json con python3, poi inietta un
+# metodo privato initFirebaseManual() in MainActivity.kt che chiama
+# FirebaseApp.initializeApp() con FirebaseOptions.Builder().
+# Il metodo è guardato da FirebaseApp.getApps(this).isEmpty() → no-op se il
+# plugin è già riuscito. Se il plugin fallisce, il codice Kotlin ci pensa lui.
+#
+# PREREQUISITO: com.google.firebase:firebase-messaging è già nella dipendenza
+# del progetto tramite @capacitor/push-notifications → FirebaseApp e
+# FirebaseOptions sono sempre disponibili.
+# ─────────────────────────────────────────────────────────────────────────────
+inject_firebase_manual_init() {
+  local GS="app/google-services.json"
+  local MAIN_FILE
+  MAIN_FILE=$(find app/src/main/java \( -name 'MainActivity.kt' -o -name 'MainActivity.java' \) 2>/dev/null | head -1)
+
+  if [ ! -f "$GS" ]; then
+    echo "    ⚠️  google-services.json non trovato — skip Firebase manual init"
+    return
+  fi
+  if [ ! -f "$MAIN_FILE" ]; then
+    echo "    ⚠️  MainActivity non trovata — skip Firebase manual init"
+    return
+  fi
+
+  echo "    Inietto Firebase manual init in MainActivity.kt (failsafe AAB Play)..."
+
+  python3 - "$GS" "$MAIN_FILE" <<'PYEOF'
+import sys, json, re
+
+gs_path, main_path = sys.argv[1], sys.argv[2]
+
+# ── Leggi google-services.json ────────────────────────────────────────────────
+try:
+    d = json.load(open(gs_path))
+    client   = d["client"][0]
+    api_key  = client["api_key"][0]["current_key"]
+    app_id   = client["client_info"]["mobilesdk_app_id"]
+    proj_id  = d["project_info"]["project_id"]
+    sender   = d["project_info"]["project_number"]
+    bucket   = d["project_info"].get("storage_bucket", f"{proj_id}.appspot.com")
+except Exception as e:
+    print(f"    ⚠️  Errore lettura google-services.json: {e} — skip")
+    sys.exit(0)
+
+if "placeholder" in proj_id.lower() or not api_key.startswith("AIza"):
+    print("    ⚠️  google-services.json è un placeholder — skip Firebase manual init")
+    sys.exit(0)
+
+txt = open(main_path).read()
+
+# ── Idempotente: non iniettare due volte ──────────────────────────────────────
+if "initFirebaseManual" in txt:
+    print("    ✅ Firebase manual init già presente in MainActivity.kt")
+    sys.exit(0)
+
+# ── Metodo privato da iniettare ───────────────────────────────────────────────
+init_method = f"""
+    // ── Firebase manual init (failsafe per AAB Play Store) ───────────────────
+    // Il plugin google-services Gradle a volte non genera correttamente
+    // google-services.xml nell'AAB → getApiKey()="" a runtime.
+    // Questo metodo garantisce l'inizializzazione anche in quel caso.
+    private fun initFirebaseManual() {{
+        if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {{
+            val opts = com.google.firebase.FirebaseOptions.Builder()
+                .setApiKey("{api_key}")
+                .setApplicationId("{app_id}")
+                .setProjectId("{proj_id}")
+                .setGcmSenderId("{sender}")
+                .setStorageBucket("{bucket}")
+                .build()
+            com.google.firebase.FirebaseApp.initializeApp(this, opts)
+            android.util.Log.d("FermentaFCM", "Firebase inizializzato manualmente (failsafe)")
+        }} else {{
+            android.util.Log.d("FermentaFCM", "Firebase già inizializzato dal plugin google-services")
+        }}
+    }}
+"""
+
+# ── Inserisci il metodo prima dell'ultima graffa chiusa della classe ──────────
+last_brace = txt.rstrip().rfind("}")
+new_txt = txt[:last_brace] + init_method + "}\n"
+
+# ── Aggiungi chiamata initFirebaseManual() come prima istruzione di onCreate ──
+# DEVE essere prima di super.onCreate() perché Capacitor inizializza i plugin
+# (incluso push-notifications → FirebaseMessaging) dentro super.onCreate().
+if "override fun onCreate" in new_txt:
+    # Inserisce dopo la prima riga di apertura dell'override
+    new_txt = re.sub(
+        r'(override fun onCreate\s*\([^)]*\)\s*\{)',
+        r'\1\n        initFirebaseManual()',
+        new_txt,
+        count=1
+    )
+elif "super.onCreate(" in new_txt:
+    # Fallback: inserisce prima della prima chiamata super.onCreate
+    new_txt = new_txt.replace(
+        "super.onCreate(",
+        "initFirebaseManual()\n        super.onCreate(",
+        1
+    )
+else:
+    # Nessun onCreate: crea un override completo
+    oncreate_block = """
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+        initFirebaseManual()
+        super.onCreate(savedInstanceState)
+    }
+"""
+    last_brace2 = new_txt.rstrip().rfind("}")
+    new_txt = new_txt[:last_brace2] + oncreate_block + "}\n"
+
+open(main_path, "w").write(new_txt)
+print(f"    ✅ Firebase manual init iniettato in {main_path} (apiKey: {api_key[:14]}...)")
+PYEOF
+}
+
 inject_cast_plugin() {
     if [ ! -d "$APP_DIR/android-native" ]; then
       echo "    ⚠️  android-native/ non trovata — skip Cast plugin"
@@ -832,6 +956,7 @@ KTEOF
   patch_android_manifest
   disable_firebase_autoinit
   inject_cast_plugin
+  inject_firebase_manual_init
 
   echo "── 6/6 Compilo AAB release (firmato) ──"
   chmod +x gradlew

@@ -77,6 +77,17 @@ Android APK = `to.fermenta.app` (matches google-services.json). iOS = `to.fermen
 `capacitor.config.ts` appId says `to.fermentato.app` (cosmetic for Android — the android project is
 already scaffolded with the right applicationId; build-apk.sh force-sets it). Do NOT "fix" it or iOS breaks.
 
+## Firebase manual init in MainActivity.kt (approccio definitivo)
+Tutti i fix al plugin Gradle e a google-services.json non hanno risolto il problema nell'AAB Play.
+**Soluzione definitiva:** `inject_firebase_manual_init()` in build-apk.sh legge i valori da
+`google-services.json` con python3 e inietta `initFirebaseManual()` in MainActivity.kt usando
+`FirebaseOptions.Builder()` con le credenziali hardcoded nel bytecode Kotlin.
+- Chiamato in `aab()` dopo `inject_cast_plugin`, prima del bundleRelease.
+- Guarda con `FirebaseApp.getApps(this).isEmpty()` → no-op se il plugin Gradle funziona.
+- `initFirebaseManual()` è chiamato come prima istruzione in `onCreate()`, prima di `super.onCreate()`.
+- Idempotente: non inietta se "initFirebaseManual" è già nel file.
+- **Immune** a cap sync, strings.xml override, condizioni Capacitor, merge di risorse.
+
 ## versionCode
 Formula: `MAJOR*10000 + MINOR*100 + PATCH`. After a successful Play upload, COMMIT `version.json` +
 `client/src/lib/app-version.ts` or the next `git pull` reverts them → duplicate-versionCode rejection.
