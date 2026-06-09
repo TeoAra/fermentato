@@ -278,12 +278,13 @@ inject_firebase_manual_init() {
     return
   fi
 
-  echo "    Inietto Firebase manual init in MainActivity.kt (failsafe AAB Play)..."
+  echo "    Inietto Firebase manual init in MainActivity (failsafe AAB Play)..."
 
   python3 - "$GS" "$MAIN_FILE" <<'PYEOF'
 import sys, json, re
 
 gs_path, main_path = sys.argv[1], sys.argv[2]
+is_java = main_path.endswith(".java")
 
 # ── Leggi google-services.json ────────────────────────────────────────────────
 try:
@@ -306,15 +307,68 @@ txt = open(main_path).read()
 
 # ── Idempotente: non iniettare due volte ──────────────────────────────────────
 if "initFirebaseManual" in txt:
-    print("    ✅ Firebase manual init già presente in MainActivity.kt")
+    lang = "Java" if is_java else "Kotlin"
+    print(f"    ✅ Firebase manual init già presente in MainActivity.{('java' if is_java else 'kt')}")
     sys.exit(0)
 
-# ── Metodo privato da iniettare ───────────────────────────────────────────────
-init_method = f"""
+# ── Genera codice nel linguaggio corretto (Java o Kotlin) ─────────────────────
+if is_java:
+    # ---- JAVA ----
+    init_method = f"""
     // ── Firebase manual init (failsafe per AAB Play Store) ───────────────────
     // Il plugin google-services Gradle a volte non genera correttamente
     // google-services.xml nell'AAB → getApiKey()="" a runtime.
-    // Questo metodo garantisce l'inizializzazione anche in quel caso.
+    private void initFirebaseManual() {{
+        if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {{
+            com.google.firebase.FirebaseOptions opts = new com.google.firebase.FirebaseOptions.Builder()
+                .setApiKey("{api_key}")
+                .setApplicationId("{app_id}")
+                .setProjectId("{proj_id}")
+                .setGcmSenderId("{sender}")
+                .setStorageBucket("{bucket}")
+                .build();
+            com.google.firebase.FirebaseApp.initializeApp(this, opts);
+            android.util.Log.d("FermentaFCM", "Firebase inizializzato manualmente (failsafe)");
+        }} else {{
+            android.util.Log.d("FermentaFCM", "Firebase gia inizializzato dal plugin google-services");
+        }}
+    }}
+"""
+    # Inserisce prima dell'ultima graffa della classe
+    last_brace = txt.rstrip().rfind("}")
+    new_txt = txt[:last_brace] + init_method + "}\n"
+
+    # Chiama initFirebaseManual() in onCreate — prima di super.onCreate()
+    if re.search(r'void\s+onCreate\s*\(', new_txt):
+        new_txt = re.sub(
+            r'((?:@Override\s*)?(?:public|protected)\s+void\s+onCreate\s*\([^)]*\)\s*\{)',
+            r'\1\n        initFirebaseManual();',
+            new_txt,
+            count=1
+        )
+    elif "super.onCreate(" in new_txt:
+        new_txt = new_txt.replace(
+            "super.onCreate(",
+            "initFirebaseManual();\n        super.onCreate(",
+            1
+        )
+    else:
+        oncreate_block = """
+    @Override
+    protected void onCreate(android.os.Bundle savedInstanceState) {
+        initFirebaseManual();
+        super.onCreate(savedInstanceState);
+    }
+"""
+        last_brace2 = new_txt.rstrip().rfind("}")
+        new_txt = new_txt[:last_brace2] + oncreate_block + "}\n"
+
+else:
+    # ---- KOTLIN ----
+    init_method = f"""
+    // ── Firebase manual init (failsafe per AAB Play Store) ───────────────────
+    // Il plugin google-services Gradle a volte non genera correttamente
+    // google-services.xml nell'AAB → getApiKey()="" a runtime.
     private fun initFirebaseManual() {{
         if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {{
             val opts = com.google.firebase.FirebaseOptions.Builder()
@@ -327,46 +381,39 @@ init_method = f"""
             com.google.firebase.FirebaseApp.initializeApp(this, opts)
             android.util.Log.d("FermentaFCM", "Firebase inizializzato manualmente (failsafe)")
         }} else {{
-            android.util.Log.d("FermentaFCM", "Firebase già inizializzato dal plugin google-services")
+            android.util.Log.d("FermentaFCM", "Firebase gia inizializzato dal plugin google-services")
         }}
     }}
 """
+    last_brace = txt.rstrip().rfind("}")
+    new_txt = txt[:last_brace] + init_method + "}\n"
 
-# ── Inserisci il metodo prima dell'ultima graffa chiusa della classe ──────────
-last_brace = txt.rstrip().rfind("}")
-new_txt = txt[:last_brace] + init_method + "}\n"
-
-# ── Aggiungi chiamata initFirebaseManual() come prima istruzione di onCreate ──
-# DEVE essere prima di super.onCreate() perché Capacitor inizializza i plugin
-# (incluso push-notifications → FirebaseMessaging) dentro super.onCreate().
-if "override fun onCreate" in new_txt:
-    # Inserisce dopo la prima riga di apertura dell'override
-    new_txt = re.sub(
-        r'(override fun onCreate\s*\([^)]*\)\s*\{)',
-        r'\1\n        initFirebaseManual()',
-        new_txt,
-        count=1
-    )
-elif "super.onCreate(" in new_txt:
-    # Fallback: inserisce prima della prima chiamata super.onCreate
-    new_txt = new_txt.replace(
-        "super.onCreate(",
-        "initFirebaseManual()\n        super.onCreate(",
-        1
-    )
-else:
-    # Nessun onCreate: crea un override completo
-    oncreate_block = """
+    if "override fun onCreate" in new_txt:
+        new_txt = re.sub(
+            r'(override fun onCreate\s*\([^)]*\)\s*\{)',
+            r'\1\n        initFirebaseManual()',
+            new_txt,
+            count=1
+        )
+    elif "super.onCreate(" in new_txt:
+        new_txt = new_txt.replace(
+            "super.onCreate(",
+            "initFirebaseManual()\n        super.onCreate(",
+            1
+        )
+    else:
+        oncreate_block = """
     override fun onCreate(savedInstanceState: android.os.Bundle?) {
         initFirebaseManual()
         super.onCreate(savedInstanceState)
     }
 """
-    last_brace2 = new_txt.rstrip().rfind("}")
-    new_txt = new_txt[:last_brace2] + oncreate_block + "}\n"
+        last_brace2 = new_txt.rstrip().rfind("}")
+        new_txt = new_txt[:last_brace2] + oncreate_block + "}\n"
 
 open(main_path, "w").write(new_txt)
-print(f"    ✅ Firebase manual init iniettato in {main_path} (apiKey: {api_key[:14]}...)")
+lang = "Java" if is_java else "Kotlin"
+print(f"    ✅ Firebase manual init iniettato in {main_path} [{lang}] (apiKey: {api_key[:14]}...)")
 PYEOF
 }
 

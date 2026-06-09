@@ -1,0 +1,81 @@
+Firebase manual init iniettato in app/src/main/java/to/fermenta/app/MainActivity.java (apiKey: AIzaSyD928YS8_...)
+── 6/6 Compilo AAB release (firmato) ──
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :app:compileReleaseJavaWithJavac FAILED
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:49: error: ';' expected
+                .build()
+                        ^
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:50: error: ';' expected
+            com.google.firebase.FirebaseApp.initializeApp(this, opts)
+                                                                     ^
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:51: error: ';' expected
+            android.util.Log.d("FermentaFCM", "Firebase inizializzato manualmente (failsafe)")
+                                                                                              ^
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:53: error: ';' expected
+            android.util.Log.d("FermentaFCM", "Firebase già inizializzato dal plugin google-services")
+                                                                                                      ^
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:57: error: ';' expected
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+                ^
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:57: error: invalid method declaration; return type required
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+                 ^
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:57: error: <identifier> expected
+    override fun onCreate(savedInstanceState: android.os.Bundle?) {
+                                            ^
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:58: error: ';' expected
+        initFirebaseManual()
+                            ^
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:59: error: ';' expected
+        super.onCreate(savedInstanceState)
+                                          ^
+9 errors
+[Incubating] Problems report is available at: file:///www/nodeapps/fermenta/android/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileReleaseJavaWithJavac'.
+> Compilation failed; see the compiler output below.
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:49: error: ';' expected
+                  .build()
+                          ^
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:50: error: ';' expected
+              com.google.firebase.FirebaseApp.initializeApp(this, opts)
+                                                                       ^
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:51: error: ';' expected
+              android.util.Log.d("FermentaFCM", "Firebase inizializzato manualmente (failsafe)")
+                                                                                                ^
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:53: error: ';' expected
+              android.util.Log.d("FermentaFCM", "Firebase già inizializzato dal plugin google-services")
+                                                                                                        ^
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:57: error: ';' expected
+      override fun onCreate(savedInstanceState: android.os.Bundle?) {
+                  ^
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:57: error: <identifier> expected
+      override fun onCreate(savedInstanceState: android.os.Bundle?) {
+                                              ^
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:58: error: ';' expected
+          initFirebaseManual()
+                              ^
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:59: error: ';' expected
+          super.onCreate(savedInstanceState)
+                                            ^
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:57: error: invalid method declaration; return type required
+      override fun onCreate(savedInstanceState: android.os.Bundle?) {
+                   ^
+  9 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 7s
+380 actionable tasks: 36 executed, 344 up-to-date
+root@luppolino:/www/nodeapps/fermenta# 
