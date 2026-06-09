@@ -1,0 +1,35 @@
+root@luppolino:/www/nodeapps/fermenta# cd /www/nodeapps/fermenta/android
+root@luppolino:/www/nodeapps/fermenta/android#
+root@luppolino:/www/nodeapps/fermenta/android# echo "=== 1) apply INCONDIZIONATO presente in build.gradle? ==="
+=== 1) apply INCONDIZIONATO presente in build.gradle? ===
+root@luppolino:/www/nodeapps/fermenta/android# grep -nE "^apply plugin: ['\"]com.google.gms.google-services" app/build.gradle || echo "  ✗ MANCA → build-apk.sh non è stato rieseguito dopo il git pull"59:apply plugin: 'com.google.gms.google-services'
+root@luppolino:/www/nodeapps/fermenta/android#
+root@luppolino:/www/nodeapps/fermenta/android# echo "=== 2) classpath plugin presente? ==="
+=== 2) classpath plugin presente? ===
+root@luppolino:/www/nodeapps/fermenta/android# grep -n "com.google.gms:google-services" build.gradle || echo "  ✗ MANCA classpath"
+12:        classpath 'com.google.gms:google-services:4.4.2'
+root@luppolino:/www/nodeapps/fermenta/android#
+root@luppolino:/www/nodeapps/fermenta/android# echo "=== 3) eseguo SOLO il task google-services (output completo) ==="
+=== 3) eseguo SOLO il task google-services (output completo) ===
+root@luppolino:/www/nodeapps/fermenta/android# ./gradlew :app:processReleaseGoogleServices --rerun-tasks 2>&1 | tail -45
+
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :app:processReleaseGoogleServices
+
+BUILD SUCCESSFUL in 3s
+1 actionable task: 1 executed
+root@luppolino:/www/nodeapps/fermenta/android#
+root@luppolino:/www/nodeapps/fermenta/android# echo "=== 4) values.xml generato dal task? ==="
+=== 4) values.xml generato dal task? ===
+root@luppolino:/www/nodeapps/fermenta/android# find app/build -name "values.xml" 2>/dev/null | xargs grep -l "google_api_key" 2>/dev/null || echo "  nessun values.xml con google_api_key"
+app/build/intermediates/incremental/release/packageReleaseResources/merged.dir/values/values.xml
+app/build/intermediates/incremental/release/mergeReleaseResources/merged.dir/values/values.xml
+app/build/intermediates/packaged_res/release/packageReleaseResources/values/values.xml
+app/build/generated/res/processReleaseGoogleServices/values/values.xml
+root@luppolino:/www/nodeapps/fermenta/android#

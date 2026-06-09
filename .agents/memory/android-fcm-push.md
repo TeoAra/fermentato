@@ -30,6 +30,22 @@ auto-init with fake creds, and the original crash recurs.
 `placeholder`/`NotActiveFCM` marker anywhere AND `project_number` not all-zeros. Real file =
 project `fermentato-98f8c`, package `to.fermenta.app`.
 
+## Conditional apply is unreliable → force unconditional apply
+**Why:** Capacitor's app/build.gradle applies the plugin only inside `try { if (servicesJSON.text) {
+apply plugin ... } }` at the bottom. This block did NOT reliably run `processReleaseGoogleServices`,
+so no `values.xml` with `google_api_key` was generated → FirebaseApp inits with empty key → "invalid
+API key" at runtime even though the json, classpath, and applicationId were all correct.
+**How to apply:** `disable_firebase_autoinit()` now appends an UNCONDITIONAL `apply plugin:
+'com.google.gms.google-services'` at column 0 (idempotent; a 2nd apply of the same plugin is a no-op),
+guarded by `grep -qE "^apply plugin: ['\"]com\.google\.gms\.google-services"`.
+
+## Where the generated key actually lands (find false-negative)
+The plugin output is at `app/build/generated/res/processReleaseGoogleServices/values/values.xml`
+(named after the TASK, NOT "google-services"). So `find -path "*google-services*" -name values.xml`
+returns NOTHING even when it works → false "plugin not processing" diagnosis. To verify the key is
+baked in, grep `name="google_api_key">AIza` in the `processReleaseGoogleServices` dir AND confirm it
+propagates into `mergeReleaseResources`/`packageReleaseResources` merged.dir values.xml (= in the APK).
+
 ## Package mapping
 Android APK = `to.fermenta.app` (matches google-services.json). iOS = `to.fermentato.app`.
 `capacitor.config.ts` appId says `to.fermentato.app` (cosmetic for Android — the android project is
