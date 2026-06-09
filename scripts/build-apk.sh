@@ -214,7 +214,19 @@ disable_firebase_autoinit() {
       echo "    ✅ plugin com.google.gms.google-services già applicato (incondizionato)"
     fi
 
-    # 2) ABILITA auto-init: rimuove i meta-data di disabilitazione iniettati
+    # 2) Aggiungi firebase-messaging come dipendenza DIRETTA di :app.
+    #    inject_firebase_manual_init usa FirebaseApp/FirebaseOptions in MainActivity.java.
+    #    Il plugin push-notifications le porta come 'implementation' (non 'api') →
+    #    non sono esposte al modulo :app → "cannot find symbol" a compile-time.
+    #    Versione allineata a quella usata da @capacitor/push-notifications v8.0.4.
+    if ! grep -q "firebase-messaging" "$APP_GRADLE" 2>/dev/null; then
+      sed -i "/^dependencies\s*{/a\\    implementation 'com.google.firebase:firebase-messaging:25.0.1'" "$APP_GRADLE"
+      echo "    ✅ firebase-messaging:25.0.1 aggiunto alle dipendenze di :app"
+    else
+      echo "    ✅ firebase-messaging già nelle dipendenze di :app"
+    fi
+
+    # 3) ABILITA auto-init: rimuove i meta-data di disabilitazione iniettati
     #    da build precedenti (quando il file era un placeholder).
     if grep -q "firebase_messaging_auto_init_enabled" "$MANIFEST" 2>/dev/null; then
       sed -i '/firebase_messaging_auto_init_enabled/d; /firebase_analytics_collection_deactivated/d' "$MANIFEST"

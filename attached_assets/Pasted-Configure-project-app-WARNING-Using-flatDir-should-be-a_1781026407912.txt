@@ -1,0 +1,60 @@
+Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Task :app:compileReleaseJavaWithJavac FAILED
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:18: error: cannot find symbol
+        if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {
+                               ^
+  symbol:   class FirebaseApp
+  location: package com.google.firebase
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:19: error: cannot find symbol
+            com.google.firebase.FirebaseOptions opts = new com.google.firebase.FirebaseOptions.Builder()
+                               ^
+  symbol:   class FirebaseOptions
+  location: package com.google.firebase
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:19: error: package com.google.firebase.FirebaseOptions does not exist
+            com.google.firebase.FirebaseOptions opts = new com.google.firebase.FirebaseOptions.Builder()
+                                                                                              ^
+/www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:26: error: cannot find symbol
+            com.google.firebase.FirebaseApp.initializeApp(this, opts);
+                               ^
+  symbol:   class FirebaseApp
+  location: package com.google.firebase
+4 errors
+[Incubating] Problems report is available at: file:///www/nodeapps/fermenta/android/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileReleaseJavaWithJavac'.
+> Compilation failed; see the compiler output below.
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:19: error: package com.google.firebase.FirebaseOptions does not exist
+              com.google.firebase.FirebaseOptions opts = new com.google.firebase.FirebaseOptions.Builder()
+                                                                                                ^
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:18: error: cannot find symbol
+          if (com.google.firebase.FirebaseApp.getApps(this).isEmpty()) {
+                                 ^
+    symbol:   class FirebaseApp
+    location: package com.google.firebase
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:19: error: cannot find symbol
+              com.google.firebase.FirebaseOptions opts = new com.google.firebase.FirebaseOptions.Builder()
+                                 ^
+    symbol:   class FirebaseOptions
+    location: package com.google.firebase
+  /www/nodeapps/fermenta/android/app/src/main/java/to/fermenta/app/MainActivity.java:26: error: cannot find symbol
+              com.google.firebase.FirebaseApp.initializeApp(this, opts);
+                                 ^
+    symbol:   class FirebaseApp
+    location: package com.google.firebase
+  4 errors
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights.
+
+BUILD FAILED in 4s
+343 actionable tasks: 24 executed, 319 up-to-date
+root@luppolino:/www/nodeapps/fermenta# 
