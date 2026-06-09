@@ -13,11 +13,13 @@ import { useAnalytics } from "./hooks/use-analytics";
 import { usePushBadge } from "@/hooks/use-push-badge";
 import { NavigationProgress } from "@/components/navigation-progress";
 import Lightbox from "@/components/lightbox";
-const PwaInstallPrompt        = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.PwaInstallPrompt })));
-const PushNotificationPrompt  = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.PushNotificationPrompt })));
-const AutoPushSubscriber      = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.AutoPushSubscriber })));
-const CapacitorPushPrompt     = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.CapacitorPushPrompt })));
-const CapacitorLocationPrompt = lazy(() => import("@/components/pwa-prompt").then(m => ({ default: m.CapacitorLocationPrompt })));
+import {
+  PwaInstallPrompt,
+  PushNotificationPrompt,
+  AutoPushSubscriber,
+  CapacitorPushPrompt,
+  CapacitorLocationPrompt,
+} from "@/components/pwa-prompt";
 import { MobileHeader } from "@/components/mobile-header";
 const OnboardingTutorial = lazy(() => import("@/components/OnboardingTutorial").then(m => ({ default: m.OnboardingTutorial })));
 import { BottomNavigation, BottomNavProvider } from "@/components/bottom-navigation";
