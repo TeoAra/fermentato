@@ -1,3 +1,4 @@
 - [Duplicate admin routes](duplicate-admin-routes.md) — same admin endpoints defined in routes.ts AND routes-admin.ts; registration order decides which wins, easy to edit the wrong copy.
 - [Search cache key consistency](search-cache-key.md) — request path and warmer must build the /api/search cache key identically (normalize query) or warming targets a key never read.
-- [Nullable boolean gate pattern](nullable-boolean-gate.md) — Drizzle nullable booleans return null (not false) for unset rows; always use === false, not !, to avoid false-positives.
+- [Android FCM push missing](android-fcm-push.md) — Android native push tokens were saved but never sent; deliverPush only filtered for iOS. FCM v1 API now uses google-auth-library + FCM_SERVICE_ACCOUNT secret.
+- [beer_reviews table missing](beer-reviews-missing.md) — beer_reviews is referenced in raw SQL in routes.ts but doesn't exist in the DB; any query against it must use .catch(() => 0) or similar fallback.
