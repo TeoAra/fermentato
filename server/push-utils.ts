@@ -18,6 +18,59 @@ const APNS_BUNDLE_ID = process.env.APNS_BUNDLE_ID || 'to.fermentato.app';
 const APNS_P8_KEY = (process.env.APNS_P8_KEY || '').replace(/\\n/g, '\n');
 const apnsConfigured = !!(APNS_KEY_ID && APNS_TEAM_ID && APNS_P8_KEY);
 
+// ── FCM config (Android native push) ───────────────────────────────────────
+// FCM_SERVER_KEY: Firebase Console → Project Settings → Cloud Messaging → Server key
+const FCM_SERVER_KEY = process.env.FCM_SERVER_KEY || '';
+const fcmConfigured = !!FCM_SERVER_KEY;
+
+// Invia una singola notifica FCM (Android) via Legacy HTTP API
+async function sendFcm(deviceToken: string, payload: any): Promise<void> {
+  if (!fcmConfigured) return;
+  const body = JSON.stringify({
+    to: deviceToken,
+    notification: {
+      title: payload.title,
+      body: payload.body,
+      sound: 'default',
+      icon: payload.icon || 'ic_notification',
+      tag: payload.tag,
+    },
+    data: {
+      url:  payload.url  || '',
+      type: payload.type || '',
+      tag:  payload.tag  || '',
+      path: payload.url  || '',
+    },
+    priority: 'high',
+    time_to_live: PUSH_TTL,
+  });
+  try {
+    const res = await fetch('https://fcm.googleapis.com/fcm/send', {
+      method: 'POST',
+      headers: {
+        'Authorization': `key=${FCM_SERVER_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body,
+    });
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error('[fcm] HTTP error', res.status, text);
+      return;
+    }
+    const json = await res.json() as any;
+    if (json.failure > 0 && json.results) {
+      for (const result of json.results) {
+        if (result.error === 'NotRegistered' || result.error === 'InvalidRegistration') {
+          storage.deleteNativePushToken(deviceToken).catch(() => {});
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[fcm] send error:', err);
+  }
+}
+
 // Genera un JWT APNs valido per 55 minuti (max 60)
 let apnsJwtCache: { token: string; exp: number } | null = null;
 function getApnsJwt(): string {
@@ -214,8 +267,9 @@ async function deliverPush(userId: string, payload: any) {
     }
   });
 
-  // APNs per iOS native (richiede APNS_KEY_ID, APNS_TEAM_ID, APNS_P8_KEY)
   const nativeTokens = await storage.getNativePushTokensByUser(userId);
+
+  // APNs per iOS native (richiede APNS_KEY_ID, APNS_TEAM_ID, APNS_P8_KEY)
   const apnsPromises = nativeTokens
     .filter(t => t.platform === 'ios')
     .map(async (t) => {
@@ -226,7 +280,18 @@ async function deliverPush(userId: string, payload: any) {
       }
     });
 
-  await Promise.allSettled([...webPromises, ...apnsPromises]);
+  // FCM per Android native (richiede FCM_SERVER_KEY)
+  const fcmPromises = nativeTokens
+    .filter(t => t.platform === 'android')
+    .map(async (t) => {
+      try {
+        await sendFcm(t.token, payload);
+      } catch (err) {
+        console.error('[fcm] errore invio:', err);
+      }
+    });
+
+  await Promise.allSettled([...webPromises, ...apnsPromises, ...fcmPromises]);
 }
 
 type PushPayload = {
@@ -270,9 +335,9 @@ async function scheduleDelivery(userId: string, payload: PushPayload, deferMs: n
 }
 
 export async function sendPushToUser(userId: string, payload: PushPayload) {
-  // NB: non blocchiamo su !vapidConfigured — le push iOS native (APNs) vanno
+  // NB: non blocchiamo su !vapidConfigured — le push iOS/Android native vanno
   // inviate anche senza VAPID. deliverPush salta web push se VAPID assente.
-  if (!vapidConfigured && !apnsConfigured) return;
+  if (!vapidConfigured && !apnsConfigured && !fcmConfigured) return;
   try {
     const { allowed, deferMs } = await shouldSendNotification(userId, payload.category);
     if (!allowed) return;
@@ -345,8 +410,8 @@ async function flushBatch(userId: string, bkey: string) {
 }
 
 export async function sendPushToUserImmediate(userId: string, payload: PushPayload) {
-  // Stesso fix di sendPushToUser: APNs deve funzionare anche senza VAPID.
-  if (!vapidConfigured && !apnsConfigured) return;
+  // Stesso fix di sendPushToUser: APNs/FCM devono funzionare anche senza VAPID.
+  if (!vapidConfigured && !apnsConfigured && !fcmConfigured) return;
   try {
     // Rispetta SEMPRE le quiet hours + categoria + master pushEnabled.
     // Bypassa solo throttle/batching (per push critiche tipo segnalazioni

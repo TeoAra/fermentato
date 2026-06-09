@@ -324,6 +324,11 @@ if (process.env.APNS_KEY_ID && process.env.APNS_TEAM_ID && process.env.APNS_P8_K
 } else {
   console.warn('APNs not fully configured - iOS native push disabled. Set APNS_KEY_ID, APNS_TEAM_ID, APNS_P8_KEY.');
 }
+if (!process.env.FCM_SERVER_KEY) {
+  console.warn('FCM not configured - Android native push disabled. Set FCM_SERVER_KEY (Firebase Console → Project Settings → Cloud Messaging → Server key).');
+} else {
+  console.log('FCM configured - Android native push enabled.');
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Setup authentication (email/password + Google OAuth)
