@@ -46,6 +46,15 @@ returns NOTHING even when it works → false "plugin not processing" diagnosis. 
 baked in, grep `name="google_api_key">AIza` in the `processReleaseGoogleServices` dir AND confirm it
 propagates into `mergeReleaseResources`/`packageReleaseResources` merged.dir values.xml (= in the APK).
 
+## Testing release without waiting for Play (confounder: stale Play version)
+A failing "AAB no, debug APK yes" almost always means the device is running an OLD Play build, NOT a
+release-build defect. To prove the release variant works WITHOUT Play propagation: `./gradlew
+assembleRelease` with the upload keystore via `-Pandroid.injected.signing.*`, then sideload the signed
+`app-release.apk` (uninstall first — debug vs upload signatures differ). Confirmed: release APK push works.
+**Gotcha:** the keystore password contains `!` → run `set +H` first or bash history-expansion eats the
+`-P...password=` args and you get an UNSIGNED `app-release-unsigned.apk`. Also `unzip ... | grep | head -1`
+exit status is always 0 (head), so `&& echo "found"` is a false positive — use `grep -aoq` inside an `if`.
+
 ## Package mapping
 Android APK = `to.fermenta.app` (matches google-services.json). iOS = `to.fermentato.app`.
 `capacitor.config.ts` appId says `to.fermentato.app` (cosmetic for Android — the android project is
