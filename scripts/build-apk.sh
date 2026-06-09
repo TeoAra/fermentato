@@ -730,7 +730,30 @@ aab() {
   if [ ! -d "android" ]; then
     npx cap add android
   fi
+
+  # Backup google-services.json REALE prima di cap sync.
+  # cap sync (e cap add) sovrascrive android/ con template freschi che possono:
+  #   • cancellare/sostituire android/app/google-services.json
+  #   • aggiungere strings.xml con google_api_key="" vuoto
+  # Salviamo il file reale in /tmp e lo ripristiniamo subito dopo.
+  GS_BACKUP="/tmp/google-services-fermenta-backup.json"
+  if [ -f "android/app/google-services.json" ] \
+     && grep -q '"project_id"' "android/app/google-services.json" 2>/dev/null \
+     && ! grep -qiE 'placeholder' "android/app/google-services.json" 2>/dev/null; then
+    cp android/app/google-services.json "$GS_BACKUP"
+    echo "    ✅ Backup google-services.json reale salvato in $GS_BACKUP"
+  fi
+
   npx cap sync android
+
+  # Ripristina google-services.json reale dopo cap sync
+  if [ -f "$GS_BACKUP" ]; then
+    cp "$GS_BACKUP" android/app/google-services.json
+    echo "    ✅ google-services.json reale ripristinato dopo cap sync"
+  else
+    echo "    ⚠️  Nessun backup google-services.json trovato — push FCM potrebbero non funzionare"
+    echo "       Assicurati che android/app/google-services.json sia quello reale prima di lanciare il build"
+  fi
 
   echo "    Forzo applicationId a to.fermenta.app..."
   sed -i 's/applicationId "[^"]*"/applicationId "to.fermenta.app"/' android/app/build.gradle

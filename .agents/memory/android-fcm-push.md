@@ -46,6 +46,12 @@ returns NOTHING even when it works → false "plugin not processing" diagnosis. 
 baked in, grep `name="google_api_key">AIza` in the `processReleaseGoogleServices` dir AND confirm it
 propagates into `mergeReleaseResources`/`packageReleaseResources` merged.dir values.xml (= in the APK).
 
+## cap sync sovrascrive google-services.json (causa root definitiva)
+`npx cap sync android` (e `cap add android`) sovrascrive/ricrea android/ con template freschi che
+cancellano il `google-services.json` reale e/o aggiungono `strings.xml` con `google_api_key=""`.
+**Fix definitivo in aab():** backup di `android/app/google-services.json` in `/tmp/` PRIMA di
+`cap sync`, ripristino DOPO. Senza questo il build aab perde sempre le credenziali Firebase.
+
 ## strings.xml override azzera google_api_key (causa root "Please set a valid API key")
 `cap sync android` (eseguito in aab()) può scrivere/sovrascrivere `app/src/main/res/values/strings.xml`
 con `<string name="google_api_key"></string>` vuoto. In Android resource merging le risorse app-level
