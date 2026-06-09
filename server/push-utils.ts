@@ -72,8 +72,6 @@ async function sendFcm(deviceToken: string, payload: any): Promise<void> {
         notification: {
           sound: 'default',
           tag: payload.tag || '',
-          icon: 'ic_notification',
-          click_action: 'FLUTTER_NOTIFICATION_CLICK',
         },
       },
     },
@@ -91,13 +89,15 @@ async function sendFcm(deviceToken: string, payload: any): Promise<void> {
         body,
       }
     );
+    const text = await res.text().catch(() => '');
     if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      console.error('[fcm] HTTP error', res.status, text);
+      console.error('[fcm] HTTP error', res.status, text.slice(0, 300));
       // Token non più valido → rimuovi dal DB
       if (res.status === 404 || text.includes('UNREGISTERED') || text.includes('INVALID_ARGUMENT')) {
         storage.deleteNativePushToken(deviceToken).catch(() => {});
       }
+    } else {
+      console.log('[fcm] sent ok, token:', deviceToken.slice(0, 20) + '…');
     }
   } catch (err) {
     console.error('[fcm] send error:', err);
