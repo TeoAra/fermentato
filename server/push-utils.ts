@@ -301,10 +301,14 @@ async function deliverPush(userId: string, payload: any) {
   });
 
   const nativeTokens = await storage.getNativePushTokensByUser(userId);
+  const androidTokens = nativeTokens.filter(t => t.platform === 'android');
+  const iosTokens     = nativeTokens.filter(t => t.platform === 'ios');
+  if (nativeTokens.length > 0) {
+    console.log(`[push] user ${userId}: ${androidTokens.length} android, ${iosTokens.length} ios tokens`);
+  }
 
   // APNs per iOS native (richiede APNS_KEY_ID, APNS_TEAM_ID, APNS_P8_KEY)
-  const apnsPromises = nativeTokens
-    .filter(t => t.platform === 'ios')
+  const apnsPromises = iosTokens
     .map(async (t) => {
       try {
         await sendApns(t.token, payload);
@@ -313,9 +317,8 @@ async function deliverPush(userId: string, payload: any) {
       }
     });
 
-  // FCM per Android native (richiede FCM_SERVER_KEY)
-  const fcmPromises = nativeTokens
-    .filter(t => t.platform === 'android')
+  // FCM per Android native
+  const fcmPromises = androidTokens
     .map(async (t) => {
       try {
         await sendFcm(t.token, payload);
