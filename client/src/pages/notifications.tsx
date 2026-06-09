@@ -100,6 +100,14 @@ export default function Notifications() {
   const [accumulated, setAccumulated] = useState<Notification[]>([]);
   const [isSubscribing, setIsSubscribing] = useState(false);
   const [filter, setFilter] = useState<string>('all');
+  const [pushDiag, setPushDiag] = useState<any>(null);
+
+  // Ascolta gli aggiornamenti diagnostici della registrazione push nativa
+  useEffect(() => {
+    const handler = (e: Event) => setPushDiag((e as CustomEvent).detail);
+    window.addEventListener('native-push-diagnostic', handler);
+    return () => window.removeEventListener('native-push-diagnostic', handler);
+  }, []);
 
   // Su app nativa (IPA/APK) non mostriamo mai il banner "installa da Safari":
   // siamo già dentro l'app, il problema non si pone.
@@ -592,6 +600,22 @@ export default function Notifications() {
                     {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />}
                     Riregistra questo dispositivo
                   </button>
+                )}
+                {/* Pannello diagnostico push nativa — visibile per capire dove fallisce */}
+                {isNativeCapacitorApp() && pushDiag && (
+                  <div className="mt-3 rounded-xl bg-muted/50 border border-border p-3 text-[11px] font-mono space-y-1">
+                    <div className="font-bold text-xs font-sans mb-1.5 flex items-center gap-1.5">
+                      <Settings className="h-3.5 w-3.5" /> Diagnostica push
+                    </div>
+                    <div>Piattaforma: <span className="text-primary">{pushDiag.platform}</span></div>
+                    <div>Fase: <span className="text-primary">{pushDiag.step}</span></div>
+                    {pushDiag.permission && <div>Permesso: {pushDiag.permission}</div>}
+                    {typeof pushDiag.tokenReceived === 'boolean' && (
+                      <div>Token FCM: {pushDiag.tokenReceived ? `✓ ${pushDiag.tokenPreview ?? ''}` : '✗ non ricevuto'}</div>
+                    )}
+                    {pushDiag.saveStatus !== undefined && <div>Salvataggio server: {String(pushDiag.saveStatus)}</div>}
+                    {pushDiag.error && <div className="text-red-600 dark:text-red-400 break-all">Errore: {pushDiag.error}</div>}
+                  </div>
                 )}
                 {notifPerm === 'granted' && pushStatus?.subscribed && (
                   <button

@@ -13,6 +13,32 @@ export const nativePlatform = Capacitor.getPlatform(); // 'android' | 'ios' | 'w
 
 // ─── Push Notifications ────────────────────────────────────────────────────
 
+// Diagnostica visibile in-app: traccia ogni fase della registrazione push
+// così l'utente può vedere DOVE fallisce senza accesso a logcat.
+export type PushDiagnostic = {
+  platform: string;
+  step: string;
+  permission?: string;
+  tokenReceived?: boolean;
+  tokenPreview?: string;
+  saveStatus?: number | string;
+  error?: string;
+  updatedAt: number;
+};
+
+export const pushDiagnostic: PushDiagnostic = {
+  platform: nativePlatform,
+  step: "non avviato",
+  updatedAt: Date.now(),
+};
+
+function updateDiag(patch: Partial<PushDiagnostic>) {
+  Object.assign(pushDiagnostic, patch, { updatedAt: Date.now() });
+  try {
+    window.dispatchEvent(new CustomEvent("native-push-diagnostic", { detail: { ...pushDiagnostic } }));
+  } catch {}
+}
+
 async function setupPushNotifications() {
   if (!isNative) return;
   try {
@@ -21,6 +47,12 @@ async function setupPushNotifications() {
     // Listener: token FCM/APNs ricevuto dopo register()
     await PushNotifications.addListener("registration", async (token) => {
       console.log("[native] FCM/APNs token:", token.value);
+      updateDiag({
+        step: "token ricevuto",
+        tokenReceived: true,
+        tokenPreview: token.value ? token.value.slice(0, 12) + "…" : "(vuoto)",
+        error: undefined,
+      });
       // Retry con backoff: il token può arrivare prima che la sessione sia pronta (401).
       const saveToken = async (attempt = 0): Promise<void> => {
         try {
@@ -30,14 +62,17 @@ async function setupPushNotifications() {
             credentials: "include",
             body: JSON.stringify({ token: token.value, platform: nativePlatform }),
           });
+          updateDiag({ step: res.ok ? "token salvato sul server" : `salvataggio HTTP ${res.status}`, saveStatus: res.status });
           if (res.status === 401 && attempt < 4) {
             // Sessione non ancora pronta — riprova con backoff esponenziale
             const delay = 2000 * Math.pow(2, attempt); // 2s, 4s, 8s, 16s
             console.log(`[native] Token save 401, retry in ${delay}ms (attempt ${attempt + 1})`);
+            updateDiag({ step: `401 — riprovo (tentativo ${attempt + 1})`, saveStatus: 401 });
             setTimeout(() => saveToken(attempt + 1), delay);
           }
         } catch (e) {
           console.warn("[native] Failed to save push token", e);
+          updateDiag({ step: "errore salvataggio token", saveStatus: "network", error: String(e) });
         }
       };
       await saveToken();
@@ -46,6 +81,7 @@ async function setupPushNotifications() {
     // Listener: errore di registrazione
     await PushNotifications.addListener("registrationError", (err) => {
       console.warn("[native] Push registration error:", err.error);
+      updateDiag({ step: "errore registrazione FCM/APNs", error: String(err?.error ?? err), tokenReceived: false });
     });
 
     // Listener: notifica ricevuta mentre app è in foreground
@@ -195,17 +231,24 @@ export async function initCapacitorNative() {
 // ─── Push: register manuale (chiamato da CapacitorPushPrompt) ────────────
 
 export async function registerNativePush(): Promise<"granted" | "denied" | "error"> {
-  if (!isNative) return "error";
+  if (!isNative) {
+    updateDiag({ step: "non è un'app nativa", error: "isNativePlatform() = false" });
+    return "error";
+  }
   try {
+    updateDiag({ step: "richiesta permessi…", error: undefined });
     const { PushNotifications } = await import("@capacitor/push-notifications");
     const result = await PushNotifications.requestPermissions();
+    updateDiag({ step: `permesso: ${result.receive}`, permission: result.receive });
     if (result.receive === "granted" || result.receive === "prompt-with-rationale") {
+      updateDiag({ step: "chiamo register() — attendo token FCM…" });
       await PushNotifications.register();
       return "granted";
     }
     return "denied";
   } catch (e) {
     console.warn("[native] registerNativePush error:", e);
+    updateDiag({ step: "eccezione in registerNativePush", error: String(e) });
     return "error";
   }
 }
