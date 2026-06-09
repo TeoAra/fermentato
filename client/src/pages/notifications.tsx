@@ -568,6 +568,31 @@ export default function Notifications() {
                     </button>
                   </div>
                 )}
+                {/* Pulsante ri-registrazione manuale per app nativa Android/iOS */}
+                {isNativeCapacitorApp() && (
+                  <button
+                    onClick={async () => {
+                      setIsSubscribing(true);
+                      try {
+                        localStorage.removeItem('capacitor-push-permission');
+                        const { registerNativePush } = await import('@/services/capacitor-native');
+                        const result = await registerNativePush();
+                        localStorage.setItem('capacitor-push-permission', result);
+                        setTimeout(() => refetchPush(), 3000);
+                        toast({ title: result === 'granted' ? '✓ Token registrato' : 'Permesso non concesso — controlla le impostazioni di sistema', duration: 4000 });
+                      } catch {
+                        toast({ title: 'Errore registrazione push', variant: 'destructive' });
+                      } finally {
+                        setIsSubscribing(false);
+                      }
+                    }}
+                    disabled={isSubscribing}
+                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-50 dark:bg-amber-950/20 text-amber-700 dark:text-amber-400 hover:bg-amber-100 transition-colors"
+                  >
+                    {isSubscribing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Bell className="h-3.5 w-3.5" />}
+                    Riregistra questo dispositivo
+                  </button>
+                )}
                 {notifPerm === 'granted' && pushStatus?.subscribed && (
                   <button
                     onClick={handleUnsubscribe}

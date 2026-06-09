@@ -21,16 +21,26 @@ async function setupPushNotifications() {
     // Listener: token FCM/APNs ricevuto dopo register()
     await PushNotifications.addListener("registration", async (token) => {
       console.log("[native] FCM/APNs token:", token.value);
-      try {
-        await fetch("/api/push/native-token", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ token: token.value, platform: nativePlatform }),
-        });
-      } catch (e) {
-        console.warn("[native] Failed to save push token", e);
-      }
+      // Retry con backoff: il token può arrivare prima che la sessione sia pronta (401).
+      const saveToken = async (attempt = 0): Promise<void> => {
+        try {
+          const res = await fetch("/api/push/native-token", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ token: token.value, platform: nativePlatform }),
+          });
+          if (res.status === 401 && attempt < 4) {
+            // Sessione non ancora pronta — riprova con backoff esponenziale
+            const delay = 2000 * Math.pow(2, attempt); // 2s, 4s, 8s, 16s
+            console.log(`[native] Token save 401, retry in ${delay}ms (attempt ${attempt + 1})`);
+            setTimeout(() => saveToken(attempt + 1), delay);
+          }
+        } catch (e) {
+          console.warn("[native] Failed to save push token", e);
+        }
+      };
+      await saveToken();
     });
 
     // Listener: errore di registrazione
