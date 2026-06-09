@@ -46,6 +46,17 @@ returns NOTHING even when it works → false "plugin not processing" diagnosis. 
 baked in, grep `name="google_api_key">AIza` in the `processReleaseGoogleServices` dir AND confirm it
 propagates into `mergeReleaseResources`/`packageReleaseResources` merged.dir values.xml (= in the APK).
 
+## strings.xml override azzera google_api_key (causa root "Please set a valid API key")
+`cap sync android` (eseguito in aab()) può scrivere/sovrascrivere `app/src/main/res/values/strings.xml`
+con `<string name="google_api_key"></string>` vuoto. In Android resource merging le risorse app-level
+vincono su quelle generate dal plugin google-services → `getApiKey()` ritorna `""` → FirebaseInstallations
+lancia "Please set a valid API key" anche se l'AAB contiene la stringa AIza altrove nel binario (falso
+positivo di `grep -ao 'AIza...'`).
+**Fix:** in `disable_firebase_autoinit` (ramo real) eseguire
+`sed -i '/<string name="google_api_key"/d' app/src/main/res/values/strings.xml` prima del return.
+**Verifica robusta AAB:** usare `unzip -p AAB base/resources.pb | grep -aoq 'fermentato-98f8c'`
+(project_id univoco, non `AIza` che matcha anche il placeholder).
+
 ## Testing release without waiting for Play (confounder: stale Play version)
 A failing "AAB no, debug APK yes" almost always means the device is running an OLD Play build, NOT a
 release-build defect. To prove the release variant works WITHOUT Play propagation: `./gradlew

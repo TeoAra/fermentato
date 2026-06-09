@@ -218,6 +218,17 @@ disable_firebase_autoinit() {
     else
       echo "    ✅ Firebase auto-init già attivo"
     fi
+
+    # 3) Rimuovi google_api_key da strings.xml se presente.
+    #    In Android le risorse app-level vincono su quelle generate dal plugin
+    #    google-services: un <string name="google_api_key"></string> vuoto in
+    #    strings.xml azzererebbe la chiave a runtime anche se l'AAB contiene la
+    #    stringa AIza nel binario → "Please set a valid API key" da FirebaseInstallations.
+    local STRINGS_XML="app/src/main/res/values/strings.xml"
+    if [ -f "$STRINGS_XML" ] && grep -q 'name="google_api_key"' "$STRINGS_XML" 2>/dev/null; then
+      sed -i '/<string name="google_api_key"/d' "$STRINGS_XML"
+      echo "    ✅ google_api_key rimosso da strings.xml (prevenuto override vuoto della chiave FCM)"
+    fi
     return
   fi
 
@@ -812,6 +823,19 @@ KTEOF
     -Pandroid.injected.signing.key.password="$KEY_PASS"
 
   AAB_PATH="app/build/outputs/bundle/release/app-release.aab"
+
+  # Verifica che l'AAB contenga il project-id Firebase REALE.
+  # grep -ao su resources.pb trova stringhe ovunque nel binario, quindi "AIza" è falso-positivo
+  # (il placeholder ha anch'esso una stringa AIza). Usiamo invece il project_id univoco "fermentato-98f8c".
+  echo "    Verifico project_id Firebase nell'AAB..."
+  if ! unzip -p "$AAB_PATH" base/resources.pb 2>/dev/null | grep -aoq 'fermentato-98f8c'; then
+    echo ""
+    echo "❌ ERRORE: project_id Firebase reale NON trovato nell'AAB!"
+    echo "   La build ha usato il placeholder google-services.json."
+    echo "   Verifica android/app/google-services.json e rilancia."
+    exit 1
+  fi
+  echo "    ✅ AAB verificato: project_id Firebase reale presente (push FCM attive)"
 
   cd "$APP_DIR"
   mkdir -p downloads
