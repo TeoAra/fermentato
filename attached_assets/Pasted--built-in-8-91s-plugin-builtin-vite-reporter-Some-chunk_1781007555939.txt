@@ -1,0 +1,100 @@
+
+✓ built in 8.91s
+[plugin builtin:vite-reporter]
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+── 4/6 Sincronizzo piattaforma Android ──
+npm warn config init.module Use `--init-module` instead.
+ℹ Configuring dynamic provider dependencies for SocialLogin
+
+Provider configuration:
+  ✔ Google: enabled
+  ✔ Facebook: enabled
+  ✔ Apple: enabled
+  ✔ Twitter: enabled
+
+ℹ Configuring Android dependencies...
+✔ Updated gradle.properties
+✔ Configuration complete
+
+✔ Copying web assets from public to android/app/src/main/assets/public in 111.54ms
+✔ Creating capacitor.config.json in android/app/src/main/assets in 3.18ms
+✔ copy android in 342.17ms
+✔ Updating Android plugins in 88.22ms
+[info] Found 8 Capacitor plugins for android:
+       @capacitor/app@8.1.0
+       @capacitor/browser@8.0.3
+       @capacitor/camera@8.2.0
+       @capacitor/geolocation@8.2.0
+       @capacitor/push-notifications@8.0.4
+       @capacitor/splash-screen@8.0.1
+       @capacitor/status-bar@8.0.2
+       @capgo/capacitor-social-login@8.3.22
+✔ update android in 463.48ms
+[info] Sync finished in 1.264s
+    Forzo applicationId a to.fermenta.app...
+    Correggo package Kotlin...
+    Bump versione app...
+    ✅ Versione: 1.1.3
+file:///www/nodeapps/fermenta/scripts/generate-native-splash.js:7
+const sharp = require('sharp');
+              ^
+
+ReferenceError: require is not defined in ES module scope, you can use import instead
+This file is being treated as an ES module because it has a '.js' file extension and '/www/nodeapps/fermenta/package.json' contains "type": "module". To treat it as a CommonJS script, rename it to use the '.cjs' file extension.
+    at file:///www/nodeapps/fermenta/scripts/generate-native-splash.js:7:15
+    at ModuleJob.run (node:internal/modules/esm/module_job:325:25)
+    at async ModuleLoader.import (node:internal/modules/esm/loader:606:24)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5)
+
+Node.js v20.19.6
+── 5/6 Applico icone, versione, status bar e manifest patches ──
+    ✅ versionName=1.1.3 versionCode=10103
+    ✅ Icone copiate
+    ✅ Status bar aggiornata
+    Inietto intent-filter deep link per fermenta.to...
+    ⚠️  Patch deep link non applicata (MainActivity non trovata con pattern noto)
+    ℹ️  Deep link non attivi nell'APK, ma la build continua
+    ✅ google-services.json REALE rilevato (API key valida)
+    ✅ Firebase auto-init già attivo
+    ℹ️  Package Android rilevato: to.fermenta.app → app/src/main/java/to/fermenta/app
+    ✅ Sorgenti plugin copiati (package=to.fermenta.app)
+    ✅ kotlin-gradle-plugin:2.1.0 forzato nel classpath di build.gradle
+    ✅ onActivityResult inserito in app/src/main/java/to/fermenta/app/MainActivity.java
+    ✅ NativeCastPlugin registrato in app/src/main/java/to/fermenta/app/MainActivity.java (import → to.fermenta.app, prima di super.onCreate)
+    ✅ NativeCast registrato in app/src/main/assets/capacitor.plugins.json → to.fermenta.app.NativeCastPlugin
+    ✅ Dipendenze Cast aggiunte a build.gradle
+CastOptionsProvider: rimosse 1 occorrenza/e stale, reinserito con FQN=to.fermenta.app.CastOptionsProvider
+    ℹ️  Permessi mDNS/WiFi già presenti
+    ℹ️  NEARBY_WIFI_DEVICES già presente
+    ℹ️  Permessi Geolocalizzazione già presenti
+    ✅ Cast plugin iniettato con successo
+── 6/6 Compilo AAB release (firmato) ──
+
+> Configure project :app
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+> Configure project :capacitor-cordova-android-plugins
+WARNING: Using flatDir should be avoided because it doesn't support any meta-data formats.
+
+BUILD SUCCESSFUL in 21s
+395 actionable tasks: 40 executed, 355 up-to-date
+
+════════════════════════════════════════════
+✅ AAB pronto per Google Play!
+   /www/nodeapps/fermenta/android/app/build/outputs/bundle/release/app-release.aab
+
+Per scaricarlo sul PC:
+   scp root@45.134.39.247:/www/nodeapps/fermenta/android/app/build/outputs/bundle/release/app-release.aab ~/fermenta.aab
+
+Poi caricalo su Google Play Console → Release → Production → Create release
+
+Se è la prima volta che usi Play App Signing, esporta anche il
+certificato upload e caricalo su Play Console:
+   keytool -export -rfc -keystore /www/nodeapps/fermenta/keystore/fermenta-upload.jks -alias fermenta \
+     -storepass Fermenta2026Upload -file upload-cert.pem
+   scp root@45.134.39.247:/www/nodeapps/fermenta/upload-cert.pem ~/upload-cert.pem
+════════════════════════════════════════════
+root@luppolino:/www/nodeapps/fermenta#

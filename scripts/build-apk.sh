@@ -179,8 +179,15 @@ disable_firebase_autoinit() {
   local ROOT_GRADLE="build.gradle"
   local APP_GRADLE="app/build.gradle"
 
+  # Detection robusta: il placeholder (scripts/google-services-placeholder.json)
+  # ha anch'esso current_key che inizia con "AIza" (AIzaSyPlaceholder...),
+  # project_id "fermentato-placeholder" e project_number "000000000000".
+  # Serve quindi: key AIza* + NESSUN marcatore "placeholder" + project_number ≠ tutti zeri.
   local HAS_REAL_FIREBASE=0
-  if [ -f "$GS" ] && grep -qE '"current_key"[[:space:]]*:[[:space:]]*"AIza' "$GS" 2>/dev/null; then
+  if [ -f "$GS" ] \
+     && grep -qE '"current_key"[[:space:]]*:[[:space:]]*"AIza' "$GS" 2>/dev/null \
+     && ! grep -qiE 'placeholder|NotActiveFCM' "$GS" 2>/dev/null \
+     && ! grep -qE '"project_number"[[:space:]]*:[[:space:]]*"0+"' "$GS" 2>/dev/null; then
     HAS_REAL_FIREBASE=1
   fi
 

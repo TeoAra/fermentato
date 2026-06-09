@@ -4,9 +4,9 @@
  * Usato dal build-apk.sh dopo `npx cap sync` per sovrascrivere il logo
  * di default Capacitor (X blu) con il logo proprietario Fermenta.to.
  */
-const sharp = require('sharp');
-const fs = require('fs');
-const path = require('path');
+import sharp from 'sharp';
+import fs from 'fs';
+import path from 'path';
 
 const ICON_PATH = path.resolve('resources/icon.png');
 const ANDROID_RES = path.resolve('android/app/src/main/res');
