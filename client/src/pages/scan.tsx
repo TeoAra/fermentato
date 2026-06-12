@@ -681,7 +681,7 @@ export default function ScanPage() {
                       >
                         <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
                           {beer.imageUrl ? (
-                            <img src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-xl" />
+                            <img loading="lazy" src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-xl" />
                           ) : (
                             <Beer className="h-6 w-6 text-amber-400" />
                           )}
@@ -747,7 +747,7 @@ export default function ScanPage() {
                     >
                       <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center overflow-hidden shrink-0">
                         {brewery.logoUrl ? (
-                          <img src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover rounded-xl" />
+                          <img loading="lazy" src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover rounded-xl" />
                         ) : (
                           <Building2 className="h-6 w-6 text-blue-400" />
                         )}
@@ -777,7 +777,7 @@ export default function ScanPage() {
               <div className="flex items-center gap-3 bg-green-50 dark:bg-green-950/30 border border-green-300 dark:border-green-800 rounded-2xl p-3">
                 <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#0B0D10] flex items-center justify-center overflow-hidden shrink-0 border border-green-200 dark:border-green-800">
                   {manualConfirmedBeer.imageUrl
-                    ? <img src={manualConfirmedBeer.imageUrl} alt={manualConfirmedBeer.name} className="w-full h-full object-cover rounded-xl" />
+                    ? <img loading="lazy" src={manualConfirmedBeer.imageUrl} alt={manualConfirmedBeer.name} className="w-full h-full object-cover rounded-xl" />
                     : <Beer className="h-5 w-5 text-amber-400" />}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -823,7 +823,7 @@ export default function ScanPage() {
                       <div key={beer.id} className="flex items-center gap-2.5 p-2 rounded-xl hover:bg-stone-50 dark:hover:bg-[#1A1D24] cursor-pointer group">
                         <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
                           {beer.imageUrl
-                            ? <img src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-lg" />
+                            ? <img loading="lazy" src={beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-lg" />
                             : <Beer className="h-4 w-4 text-amber-400" />}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -886,7 +886,7 @@ export default function ScanPage() {
                 >
                   <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center overflow-hidden shrink-0">
                     {(beer.logoUrl || beer.imageUrl) ? (
-                      <img src={beer.logoUrl || beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-xl" />
+                      <img loading="lazy" src={beer.logoUrl || beer.imageUrl} alt={beer.name} className="w-full h-full object-cover rounded-xl" />
                     ) : (
                       <Beer className="h-6 w-6 text-amber-400" />
                     )}

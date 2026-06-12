@@ -102,7 +102,7 @@ export default function MyCellar() {
             >
               <div className="flex items-center gap-3 p-3">
                 {item.beer_image ? (
-                  <img src={item.beer_image} alt={item.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[#12151A]" />
+                  <img loading="lazy" src={item.beer_image} alt={item.beer_name} className="w-14 h-14 object-contain rounded-xl bg-stone-50 dark:bg-[#12151A]" />
                 ) : (
                   <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#12151A] flex items-center justify-center">
                     <Package className="w-6 h-6 text-stone-300" />

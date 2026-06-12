@@ -212,7 +212,7 @@ export default function AdminBroadcast() {
                 </div>
               </div>
               {imageUrl && (
-                <img src={imageUrl} alt="" className="mt-3 w-full rounded-lg object-cover max-h-40"
+                <img loading="lazy" src={imageUrl} alt="" className="mt-3 w-full rounded-lg object-cover max-h-40"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               )}
             </div>

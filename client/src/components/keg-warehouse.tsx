@@ -150,7 +150,7 @@ export default function KegWarehouse({ pubId }: KegWarehouseProps) {
                       }}
                     >
                       {beer.imageUrl
-                        ? <img src={beer.imageUrl} alt={beer.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100" />
+                        ? <img loading="lazy" src={beer.imageUrl} alt={beer.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100" />
                         : <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"><Beer className="w-5 h-5 text-primary" /></div>
                       }
                       <div className="min-w-0 flex-1">
@@ -173,7 +173,7 @@ export default function KegWarehouse({ pubId }: KegWarehouseProps) {
             <div className="space-y-4">
               <div className="flex items-start gap-3 p-3 bg-white dark:bg-[#0B0D10]/30 rounded-xl border border-stone-200 dark:border-white/[0.06]">
                 {pendingBeer.imageUrl
-                  ? <img src={pendingBeer.imageUrl} alt={pendingBeer.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-stone-100" />
+                  ? <img loading="lazy" src={pendingBeer.imageUrl} alt={pendingBeer.name} className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border border-stone-100" />
                   : <div className="w-14 h-14 rounded-xl bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center flex-shrink-0">
                       <Beer className="w-7 h-7 text-violet-500" />
                     </div>
@@ -267,7 +267,7 @@ export default function KegWarehouse({ pubId }: KegWarehouseProps) {
               <Card key={keg.id} className="border-stone-200 dark:border-white/[0.06] overflow-hidden">
                 <div className="flex items-start gap-3 p-3">
                   {keg.beer_image
-                    ? <img src={keg.beer_image} alt={keg.beer_name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-stone-100 dark:border-white/10" />
+                    ? <img loading="lazy" src={keg.beer_image} alt={keg.beer_name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-stone-100 dark:border-white/10" />
                     : <div className="w-16 h-16 rounded-xl bg-violet-100 dark:bg-violet-950/40 flex items-center justify-center flex-shrink-0">
                         <Beer className="w-7 h-7 text-violet-500" />
                       </div>

@@ -156,7 +156,7 @@ export default function MyStats() {
                 <div key={br.name} className="px-4 py-3 flex items-center gap-3">
                   <span className="text-xs text-stone-400 w-4 text-right">{i + 1}</span>
                   {br.logo_url ? (
-                    <img src={br.logo_url} alt={br.name} className="w-8 h-8 object-contain rounded-lg bg-stone-50 dark:bg-[#12151A]" />
+                    <img loading="lazy" src={br.logo_url} alt={br.name} className="w-8 h-8 object-contain rounded-lg bg-stone-50 dark:bg-[#12151A]" />
                   ) : (
                     <div className="w-8 h-8 rounded-lg bg-stone-100 dark:bg-[#12151A]" />
                   )}
@@ -210,7 +210,7 @@ export default function MyStats() {
                 <Link key={beer.id} href={`/beer/${beer.id}`} className="flex-shrink-0 w-32">
                   <div className="aspect-square rounded-xl overflow-hidden bg-stone-50 dark:bg-[#12151A] mb-2">
                     {beer.image_url ? (
-                      <img src={beer.image_url} alt={beer.name} className="w-full h-full object-contain" />
+                      <img loading="lazy" src={beer.image_url} alt={beer.name} className="w-full h-full object-contain" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-stone-300 text-3xl">🍺</div>
                     )}
@@ -239,7 +239,7 @@ export default function MyStats() {
                 <Link key={beer.id} href={`/beer/${beer.id}`} className="px-4 py-3 flex items-center gap-3 active:bg-stone-50 dark:active:bg-[#12151A]">
                   <span className="text-xs text-stone-400 w-4 text-right">{i + 1}</span>
                   {beer.image_url ? (
-                    <img src={beer.image_url} alt={beer.name} className="w-10 h-10 object-contain rounded-xl bg-stone-50 dark:bg-[#12151A]" />
+                    <img loading="lazy" src={beer.image_url} alt={beer.name} className="w-10 h-10 object-contain rounded-xl bg-stone-50 dark:bg-[#12151A]" />
                   ) : (
                     <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-[#12151A] flex items-center justify-center text-stone-300 text-lg">🍺</div>
                   )}

@@ -76,7 +76,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
                   <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer group" onClick={onClose}>
                     <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-orange-900/30 flex items-center justify-center flex-shrink-0 overflow-hidden">
                       {(pub.logoUrl || pub.coverImageUrl || pub.imageUrl) ? (
-                        <img src={pub.logoUrl || pub.coverImageUrl || pub.imageUrl} alt="" className="w-10 h-10 rounded-xl object-cover" />
+                        <img loading="lazy" src={pub.logoUrl || pub.coverImageUrl || pub.imageUrl} alt="" className="w-10 h-10 rounded-xl object-cover" />
                       ) : (
                         <MapPin className="w-4 h-4 text-orange-500" />
                       )}
@@ -108,7 +108,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
                   <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer group" onClick={onClose}>
                     <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                       {(brewery.logoUrl || brewery.coverImageUrl) ? (
-                        <img src={brewery.logoUrl || brewery.coverImageUrl} alt="" className="w-10 h-10 object-contain p-0.5" />
+                        <img loading="lazy" src={brewery.logoUrl || brewery.coverImageUrl} alt="" className="w-10 h-10 object-contain p-0.5" />
                       ) : (
                         <Building2 className="w-4 h-4 text-amber-500" />
                       )}
@@ -140,7 +140,7 @@ export default function SearchResults({ query, onClose }: SearchResultsProps) {
                   <div className="flex items-center gap-3 px-4 py-2.5 hover:bg-amber-50 dark:hover:bg-neutral-800 transition-colors cursor-pointer group" onClick={onClose}>
                     <div className="w-10 h-10 rounded-xl flex-shrink-0 overflow-hidden bg-yellow-50 dark:bg-yellow-900/20 flex items-center justify-center">
                       {(beer.imageUrl || beer.logoUrl) ? (
-                        <img src={beer.imageUrl || beer.logoUrl} alt="" className="w-10 h-10 object-contain p-0.5" />
+                        <img loading="lazy" src={beer.imageUrl || beer.logoUrl} alt="" className="w-10 h-10 object-contain p-0.5" />
                       ) : (
                         <Beer className="w-4 h-4 text-yellow-500" />
                       )}

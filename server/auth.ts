@@ -13,6 +13,7 @@ import type { User } from "@shared/schema";
 import { storage } from "./storage";
 import { sendPushToAdmins } from "./push-utils";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./email";
+import { loginRateLimit, registerRateLimit, forgotPasswordRateLimit } from "./middleware/rate-limit";
 
 const SALT_ROUNDS = 12;
 
@@ -240,7 +241,7 @@ export async function setupAuth(app: Express) {
   });
 
   // Register with email/password
-  app.post('/api/auth/register', async (req, res) => {
+  app.post('/api/auth/register', registerRateLimit, async (req, res) => {
     try {
       const { 
         nickname, email, password,
@@ -618,7 +619,7 @@ export async function setupAuth(app: Express) {
   });
 
   // Login with email/password
-  app.post('/api/auth/login', async (req, res, next) => {
+  app.post('/api/auth/login', loginRateLimit, async (req, res, next) => {
     const recaptchaOk = await verifyRecaptcha(req.body.recaptchaToken);
     if (!recaptchaOk) {
       return res.status(400).json({ message: 'Verifica reCAPTCHA fallita. Riprova.' });
@@ -761,7 +762,7 @@ export async function setupAuth(app: Express) {
   });
 
   // Forgot password — send reset email
-  app.post('/api/auth/forgot-password', async (req, res) => {
+  app.post('/api/auth/forgot-password', forgotPasswordRateLimit, async (req, res) => {
     try {
       const { email } = req.body;
       if (!email) return res.status(400).json({ message: 'Email richiesta' });

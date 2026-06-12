@@ -103,7 +103,7 @@ export function NextTapVoting({ pubId, isOwner }: NextTapVotingProps) {
                   {index + 1}
                 </span>
                 {proposal.beer_image ? (
-                  <img src={proposal.beer_image} alt={proposal.beer_name} className="w-12 h-12 object-contain rounded-xl bg-stone-50 dark:bg-[#12151A] flex-shrink-0" />
+                  <img loading="lazy" src={proposal.beer_image} alt={proposal.beer_name} className="w-12 h-12 object-contain rounded-xl bg-stone-50 dark:bg-[#12151A] flex-shrink-0" />
                 ) : (
                   <div className="w-12 h-12 rounded-xl bg-stone-100 dark:bg-[#12151A] flex items-center justify-center flex-shrink-0">
                     <Package className="w-5 h-5 text-stone-300" />

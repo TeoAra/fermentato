@@ -336,7 +336,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                       <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
                         <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
                           {brewery.logoUrl ? (
-                            <img src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover" />
+                            <img loading="lazy" src={brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover" />
                           ) : (
                             <Factory className="w-5 h-5 text-stone-300" />
                           )}
@@ -480,7 +480,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                   <Link key={pub.id} href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`} onClick={onClose}>
                     <div data-testid={`pub-result-${pub.id}`} className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
                       <div className="w-12 h-12 rounded-xl flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
-                        {pub.logoUrl ? <img src={pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" /> : <Store className="w-5 h-5 text-stone-300" />}
+                        {pub.logoUrl ? <img loading="lazy" src={pub.logoUrl} alt={pub.name} className="w-full h-full object-cover" /> : <Store className="w-5 h-5 text-stone-300" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-bold text-[14px] text-foreground truncate">{pub.name}</p>
@@ -528,7 +528,7 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
                     <div className="flex items-center gap-3.5 p-3 rounded-2xl bg-white dark:bg-card border border-stone-100 dark:border-[#23262E] active:scale-[0.97] transition-transform shadow-sm cursor-pointer">
                       <div className="w-12 h-12 rounded-full flex-shrink-0 bg-stone-100 dark:bg-[#1A1D24] overflow-hidden flex items-center justify-center">
                         {u.profileImageUrl
-                          ? <img src={u.profileImageUrl} alt={u.nickname} className="w-full h-full object-cover" />
+                          ? <img loading="lazy" src={u.profileImageUrl} alt={u.nickname} className="w-full h-full object-cover" />
                           : <span className="text-base font-bold text-stone-400">{u.nickname?.[0]?.toUpperCase()}</span>}
                       </div>
                       <div className="flex-1 min-w-0">

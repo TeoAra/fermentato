@@ -117,7 +117,7 @@ export default function UserFavoritesSection({ favorites }: UserFavoritesSection
                     <div className="flex items-start gap-3">
                       <Link href={getRedirectUrl(favorite)} className="flex items-start gap-3 flex-1 min-w-0 cursor-pointer">
                         {favorite.itemImageUrl ? (
-                          <img 
+                          <img loading="lazy" 
                             src={favorite.itemImageUrl} 
                             alt={favorite.itemName || ''} 
                             className="w-12 h-12 rounded-lg object-cover flex-shrink-0"

@@ -290,7 +290,7 @@ export default function AdminModeration() {
 
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           {report.reporterAvatar ? (
-                            <img src={report.reporterAvatar} className="w-4 h-4 rounded-full" alt="" />
+                            <img loading="lazy" src={report.reporterAvatar} className="w-4 h-4 rounded-full" alt="" />
                           ) : (
                             <User className="w-3 h-3" />
                           )}

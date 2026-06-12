@@ -410,7 +410,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
                     >
                       <div className="h-9 w-9 rounded-full bg-stone-200 dark:bg-[#12151A] flex-shrink-0 overflow-hidden">
                         {u.profileImageUrl
-                          ? <img src={u.profileImageUrl} alt={u.nickname} className="h-9 w-9 object-cover" />
+                          ? <img loading="lazy" src={u.profileImageUrl} alt={u.nickname} className="h-9 w-9 object-cover" />
                           : <div className="h-full w-full flex items-center justify-center text-xs font-bold text-stone-500">
                               {u.nickname?.[0]?.toUpperCase()}
                             </div>

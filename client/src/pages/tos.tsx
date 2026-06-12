@@ -2,9 +2,18 @@ import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/footer";
+import { Helmet } from "react-helmet-async";
 
 export default function TermsOfService() {
   return (
+    <>
+    <Helmet>
+      <title>Termini di Servizio | Fermenta.to</title>
+      <meta name="description" content="Termini e condizioni di utilizzo della piattaforma Fermenta.to per la scoperta della birra artigianale italiana." />
+      <meta property="og:title" content="Termini di Servizio | Fermenta.to" />
+      <meta property="og:description" content="Termini e condizioni di utilizzo di Fermenta.to." />
+      <link rel="canonical" href="https://fermenta.to/tos" />
+    </Helmet>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-24 pb-0 px-4">
       <div className="max-w-3xl mx-auto">
         <Link href="/">
@@ -112,5 +121,6 @@ export default function TermsOfService() {
       </div>
       <Footer />
     </div>
+    </>
   );
 }

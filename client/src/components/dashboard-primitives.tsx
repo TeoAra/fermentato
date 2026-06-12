@@ -82,7 +82,7 @@ export function DashboardHero({
               )}
             >
               {avatar.src ? (
-                <img src={avatar.src} alt={title} className="w-full h-full object-cover" />
+                <img loading="lazy" src={avatar.src} alt={title} className="w-full h-full object-cover" />
               ) : (
                 <span className="text-2xl sm:text-3xl font-black text-white select-none">
                   {avatar.fallback.slice(0, 2).toUpperCase()}

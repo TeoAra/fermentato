@@ -165,7 +165,11 @@ export const beers = pgTable("beers", {
   barcode: varchar("barcode"), // EAN/UPC barcode
   awards: jsonb("awards").$type<Array<{name: string; year: number; competition: string; type?: 'gold'|'silver'|'bronze'|'special'}>>(),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_beers_brewery_id").on(table.breweryId),
+  index("idx_beers_style").on(table.style),
+  index("idx_beers_barcode").on(table.barcode),
+]);
 
 // Beer analytics — one row per page view (anonymous or logged-in)
 export const beerViews = pgTable("beer_views", {
@@ -173,7 +177,9 @@ export const beerViews = pgTable("beer_views", {
   beerId: integer("beer_id").references(() => beers.id, { onDelete: "cascade" }).notNull(),
   userId: varchar("user_id"),
   viewedAt: timestamp("viewed_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_beer_views_beer_id").on(table.beerId),
+]);
 
 // Beer collaborations - which extra breweries co-produced a collab beer
 export const beerCollaborations = pgTable("beer_collaborations", {
@@ -213,7 +219,10 @@ export const tapList = pgTable("tap_list", {
   description: text("description"), // Note personalizzate del pub
   addedAt: timestamp("added_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_tap_list_pub_id").on(table.pubId),
+  index("idx_tap_list_beer_id").on(table.beerId),
+]);
 
 // Cantina (Bottle list) - beers available in bottles at pubs
 export const bottleList = pgTable("bottle_list", {
@@ -342,7 +351,10 @@ export const userActivities = pgTable("user_activities", {
   description: text("description"),
   metadata: jsonb("metadata"), // Additional data for activity
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  index("idx_activities_user_id").on(table.userId),
+  index("idx_activities_created_at").on(table.createdAt),
+]);
 
 // User beer tastings - birre assaggiate con note personali
 export const userBeerTastings = pgTable("user_beer_tastings", {
@@ -360,7 +372,9 @@ export const userBeerTastings = pgTable("user_beer_tastings", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
-  unique().on(table.userId, table.beerId) // Un record per utente per birra
+  unique().on(table.userId, table.beerId), // Un record per utente per birra
+  index("idx_tastings_beer_id").on(table.beerId),
+  index("idx_tastings_user_id_created").on(table.userId, table.createdAt),
 ]);
 
 // Ratings table

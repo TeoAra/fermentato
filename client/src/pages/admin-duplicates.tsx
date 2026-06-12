@@ -36,7 +36,7 @@ function BreweryCard({ id, name, country, region, logo, beers, isKept, isDeleted
     >
       <div className="flex items-start gap-3">
         {logo ? (
-          <img src={logo} alt={name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-gray-100" />
+          <img loading="lazy" src={logo} alt={name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-gray-100" />
         ) : (
           <div className="w-12 h-12 rounded-lg bg-gray-100 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0">
             <Beer className="h-6 w-6 text-gray-400" />

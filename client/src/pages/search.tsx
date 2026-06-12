@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
 import { useSearch } from "wouter";
 import { Link } from "wouter";
@@ -139,6 +140,13 @@ export default function SearchPage() {
 
   return (
     <>
+    <Helmet>
+      <title>{query ? `"${query}" — Ricerca | Fermenta.to` : "Ricerca birre e pub | Fermenta.to"}</title>
+      <meta name="description" content={query ? `Risultati per "${query}" su Fermenta.to — birre, pub e birrifici artigianali italiani.` : "Cerca birre artigianali, pub e birrifici in Italia su Fermenta.to."} />
+      <meta property="og:title" content={query ? `"${query}" — Fermenta.to` : "Ricerca | Fermenta.to"} />
+      <meta property="og:description" content="Fermenta.to — La piattaforma per gli amanti della birra artigianale italiana." />
+      <link rel="canonical" href={`https://fermenta.to/search${query ? `?q=${encodeURIComponent(query)}` : ""}`} />
+    </Helmet>
     <div className="min-h-screen bg-background">
 
       {/* Header section */}

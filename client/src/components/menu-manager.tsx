@@ -759,7 +759,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         >
                           <div className="flex gap-4">
                             {item.imageUrl && (
-                              <img 
+                              <img loading="lazy" 
                                 src={item.imageUrl} 
                                 alt={item.name} 
                                 className="w-16 h-16 rounded-xl object-cover shrink-0 border border-stone-100"

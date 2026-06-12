@@ -184,7 +184,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                 <Link href={`/beer/${t.beerId || t.beer?.id}`}>
                   <div className="w-14 h-14 rounded-xl overflow-hidden bg-stone-100 dark:bg-[#1A1D24] flex-shrink-0 cursor-pointer">
                     {t.beer?.imageUrl ? (
-                      <img src={t.beer.imageUrl} alt={name} className="w-full h-full object-cover" onError={e => { (e.target as any).style.display = 'none'; }} />
+                      <img loading="lazy" src={t.beer.imageUrl} alt={name} className="w-full h-full object-cover" onError={e => { (e.target as any).style.display = 'none'; }} />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Beer className="w-6 h-6 text-stone-300 dark:text-stone-600" />
@@ -302,7 +302,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {editingTasting?.beer?.imageUrl && (
-                <img src={editingTasting.beer.imageUrl} alt="" className="w-8 h-8 rounded-lg object-cover" />
+                <img loading="lazy" src={editingTasting.beer.imageUrl} alt="" className="w-8 h-8 rounded-lg object-cover" />
               )}
               {editingTasting?.beer?.name || "Modifica bevuta"}
             </DialogTitle>
@@ -331,7 +331,7 @@ export default function BeerTastingsEditor({ beerTastings }: BeerTastingsEditorP
                 <label className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2 block">Foto</label>
                 {editPhotoUrl ? (
                   <div className="relative w-full h-36 rounded-xl overflow-hidden border border-stone-200 dark:border-[#23262E]">
-                    <img src={editPhotoUrl} alt="Foto" className="w-full h-full object-cover" />
+                    <img loading="lazy" src={editPhotoUrl} alt="Foto" className="w-full h-full object-cover" />
                     <button onClick={() => setEditPhotoUrl("")} className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 text-white flex items-center justify-center">
                       <X className="w-3.5 h-3.5" />
                     </button>

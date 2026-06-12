@@ -115,7 +115,7 @@ export default function ScanHistoryPage() {
                     {/* Scanned image or placeholder */}
                     <div className="w-16 h-16 rounded-xl bg-stone-100 dark:bg-[#1A1D24] flex items-center justify-center overflow-hidden shrink-0">
                       {log.imageUrl ? (
-                        <img src={log.imageUrl} alt="scan" className="w-full h-full object-cover" />
+                        <img loading="lazy" src={log.imageUrl} alt="scan" className="w-full h-full object-cover" />
                       ) : (
                         <Camera className="h-7 w-7 text-stone-400" />
                       )}

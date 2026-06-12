@@ -89,24 +89,6 @@ export const authenticateJWT: RequestHandler = (req: any, res, next) => {
 
 // Setup autenticazione JWT alternativa
 export function setupJWTAuth(app: Express) {
-  // Login temporaneo - crea utente demo e restituisce token
-  app.post("/api/auth/demo-login", (req, res) => {
-    try {
-      const { email } = req.body;
-      const demoUser = createDemoUser(email || 'demo@fermenta.to');
-      const token = generateToken(demoUser);
-      
-      res.json({
-        token,
-        user: demoUser,
-        message: "Login demo eseguito con successo"
-      });
-    } catch (error) {
-      console.error("Errore login demo:", error);
-      res.status(500).json({ message: "Errore durante il login demo" });
-    }
-  });
-  
   // Logout JWT
   app.post("/api/auth/logout", (req, res) => {
     // Con JWT il logout è gestito client-side rimuovendo il token

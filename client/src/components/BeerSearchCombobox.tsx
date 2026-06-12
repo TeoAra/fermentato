@@ -41,7 +41,7 @@ export default function BeerSearchCombobox({ value, onChange, placeholder = "Cer
     return (
       <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-[#12151A] rounded-xl">
         {value.imageUrl ? (
-          <img src={value.imageUrl} alt={value.name} className="w-10 h-10 object-contain rounded-lg" />
+          <img loading="lazy" src={value.imageUrl} alt={value.name} className="w-10 h-10 object-contain rounded-lg" />
         ) : (
           <div className="w-10 h-10 rounded-lg bg-stone-100 dark:bg-[#23262E] flex items-center justify-center">
             <Package className="w-5 h-5 text-stone-300" />
@@ -85,7 +85,7 @@ export default function BeerSearchCombobox({ value, onChange, placeholder = "Cer
                 onMouseDown={(e) => { e.preventDefault(); onChange(beer); setOpen(false); setQuery(""); }}
               >
                 {beer.imageUrl ? (
-                  <img src={beer.imageUrl} alt={beer.name} className="w-9 h-9 object-contain rounded-lg flex-shrink-0" />
+                  <img loading="lazy" src={beer.imageUrl} alt={beer.name} className="w-9 h-9 object-contain rounded-lg flex-shrink-0" />
                 ) : (
                   <div className="w-9 h-9 rounded-lg bg-stone-100 dark:bg-[#23262E] flex items-center justify-center flex-shrink-0">
                     <Package className="w-4 h-4 text-stone-300" />

@@ -359,7 +359,7 @@ export default function CheckinModal({ open, onClose, beer, pub: initialPub, tap
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) handlePhotoSelect(f); e.target.value = ""; }} />
               {photoUrl ? (
                 <div className="relative inline-block">
-                  <img src={photoUrl} alt="anteprima" className="rounded-xl w-28 h-28 object-cover" />
+                  <img loading="lazy" src={photoUrl} alt="anteprima" className="rounded-xl w-28 h-28 object-cover" />
                   <button type="button" onClick={() => setPhotoUrl(null)}
                     className="absolute -top-1.5 -right-1.5 bg-stone-900/80 text-white rounded-full p-1">
                     <X className="w-3 h-3" />

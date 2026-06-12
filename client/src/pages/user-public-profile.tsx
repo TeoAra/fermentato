@@ -1,3 +1,4 @@
+import { Helmet } from "react-helmet-async";
 import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { RichTextDisplay, richTextToPlain } from "@/components/rich-text-editor";
@@ -433,7 +434,22 @@ export default function UserPublicProfile() {
     }
   };
 
+  const seoTitle = `${displayName} — Profilo | Fermenta.to`;
+  const seoDesc = `Scopri il profilo di ${displayName} su Fermenta.to: ${profile.reviewCount || 0} recensioni di birre artigianali italiane.`;
+  const seoUrl = `https://fermenta.to/u/${encodeURIComponent(nickname || "")}`;
+
   return (
+    <>
+    <Helmet>
+      <title>{seoTitle}</title>
+      <meta name="description" content={seoDesc} />
+      <meta property="og:title" content={seoTitle} />
+      <meta property="og:description" content={seoDesc} />
+      <meta property="og:url" content={seoUrl} />
+      {profile.profileImageUrl && <meta property="og:image" content={profile.profileImageUrl} />}
+      <meta name="robots" content="noindex" />
+      <link rel="canonical" href={seoUrl} />
+    </Helmet>
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
       {/* Back button — desktop only (mobile uses sticky topbar) */}
       <div className="hidden lg:block max-w-4xl mx-auto px-4 pt-6">
@@ -738,5 +754,6 @@ export default function UserPublicProfile() {
         </div>
       </nav>
     </div>
+    </>
   );
 }

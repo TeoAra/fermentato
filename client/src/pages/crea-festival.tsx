@@ -186,10 +186,10 @@ function FestivalCard({ fest }: { fest: any }) {
     <Card className={`overflow-hidden transition-all hover:shadow-md ${isPast ? "opacity-70" : ""} ${fest.isActive ? "cursor-pointer" : ""}`}>
       {fest.coverImageUrl && (
         <div className="h-28 relative">
-          <img src={fest.coverImageUrl} alt="" className="w-full h-full object-cover" />
+          <img loading="lazy" src={fest.coverImageUrl} alt="" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
           {fest.logoUrl && (
-            <img src={fest.logoUrl} alt="" className="absolute bottom-2 left-3 w-10 h-10 rounded-xl object-cover shadow-lg border-2 border-white" />
+            <img loading="lazy" src={fest.logoUrl} alt="" className="absolute bottom-2 left-3 w-10 h-10 rounded-xl object-cover shadow-lg border-2 border-white" />
           )}
         </div>
       )}
@@ -197,7 +197,7 @@ function FestivalCard({ fest }: { fest: any }) {
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
             {!fest.coverImageUrl && fest.logoUrl && (
-              <img src={fest.logoUrl} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
+              <img loading="lazy" src={fest.logoUrl} alt="" className="w-9 h-9 rounded-lg object-cover flex-shrink-0" />
             )}
             <h3 className="font-semibold text-foreground dark:text-gray-100 leading-tight">{fest.name}</h3>
           </div>

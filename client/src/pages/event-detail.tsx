@@ -164,7 +164,7 @@ export default function EventDetailPage() {
         <a className="block group" data-testid="link-event-venue">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-stone-50 dark:bg-white/5 hover:bg-stone-100 dark:hover:bg-white/10 transition">
             {ev.venueLogoUrl ? (
-              <img src={ev.venueLogoUrl} alt={ev.venueName} className="h-12 w-12 rounded-lg object-cover" />
+              <img loading="lazy" src={ev.venueLogoUrl} alt={ev.venueName} className="h-12 w-12 rounded-lg object-cover" />
             ) : (
               <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                 <SourceIcon className="h-6 w-6 text-white" />
@@ -233,7 +233,7 @@ export default function EventDetailPage() {
       <div className={`relative ${activeTab !== "overview" ? "hidden lg:block" : ""}`}>
         {ev.imageUrl ? (
           <div className="relative h-64 sm:h-80 lg:h-96 bg-stone-200 dark:bg-[#0B0D10]">
-            <img src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover" />
+            <img loading="lazy" src={ev.imageUrl} alt={ev.title} className="w-full h-full object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
           </div>
         ) : (
@@ -352,7 +352,7 @@ export default function EventDetailPage() {
               <a className="block group" data-testid="link-event-venue-overview">
                 <div className="flex items-center gap-3">
                   {ev.venueLogoUrl ? (
-                    <img src={ev.venueLogoUrl} alt={ev.venueName} className="h-12 w-12 rounded-lg object-cover" />
+                    <img loading="lazy" src={ev.venueLogoUrl} alt={ev.venueName} className="h-12 w-12 rounded-lg object-cover" />
                   ) : (
                     <div className="h-12 w-12 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                       <SourceIcon className="h-6 w-6 text-white" />

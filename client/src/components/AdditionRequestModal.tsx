@@ -82,7 +82,7 @@ function ImageUploadField({
       <div className="mt-1.5 flex items-start gap-3">
         {value ? (
           <div className="relative flex-shrink-0">
-            <img src={value} alt={label} className={previewClass} />
+            <img loading="lazy" src={value} alt={label} className={previewClass} />
             <button
               type="button"
               onClick={() => onChange("")}

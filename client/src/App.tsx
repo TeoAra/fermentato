@@ -148,7 +148,6 @@ const ExploreBreweries   = lazy(() => import("@/pages/explore-breweries"));
 const ExploreBeers       = lazy(() => import("@/pages/explore-beers"));
 const SearchPage         = lazy(() => import("@/pages/search"));
 const AuthPage           = lazy(() => import("@/pages/auth"));
-const DemoLoginPage      = lazy(() => import("@/pages/demo-login-page"));
 const BecomePublican     = lazy(() => import("@/pages/become-publican"));
 const RegistraPub        = lazy(() => import("@/pages/registra-pub"));
 const AttivaPub          = lazy(() => import("@/pages/attiva-pub"));
@@ -439,7 +438,6 @@ function Router() {
           <Route path="/login" component={AuthPage} />
           <Route path="/auth" component={AuthPage} />
           <Route path="/account/delete" component={AccountDelete} />
-          <Route path="/demo-login" component={DemoLoginPage} />
           <Route path="/pub/:id" component={PubDetail} />
           <Route path="/brewery/:id" component={BreweryDetail} />
           <Route path="/beer/:id" component={BeerDetail} />

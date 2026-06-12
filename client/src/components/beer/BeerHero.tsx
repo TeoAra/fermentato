@@ -94,7 +94,7 @@ export default function BeerHero({
               className="absolute inset-0 w-full h-full"
               aria-label="Espandi immagine"
             >
-              <img src={heroImg} alt={beer?.name} className="w-full h-full object-contain" />
+              <img loading="lazy" src={heroImg} alt={beer?.name} className="w-full h-full object-contain" />
             </button>
           </>
         ) : isSearchingImage ? (
@@ -172,7 +172,7 @@ export default function BeerHero({
               aria-label="Logo birra"
             >
               {heroImg ? (
-                <img src={heroImg} alt={beer?.name} className="w-full h-full object-cover" />
+                <img loading="lazy" src={heroImg} alt={beer?.name} className="w-full h-full object-cover" />
               ) : (
                 <BeerIcon className="h-7 w-7 text-[#F59E0B]" />
               )}

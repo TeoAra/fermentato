@@ -185,7 +185,7 @@ export function ImageUpload({
         >
           {preview ? (
             <>
-              <img src={preview} alt="Anteprima" className="w-full h-full object-cover" />
+              <img loading="lazy" src={preview} alt="Anteprima" className="w-full h-full object-cover" />
               {uploadState === 'uploading' && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <RefreshCw className="w-5 h-5 text-white animate-spin" />

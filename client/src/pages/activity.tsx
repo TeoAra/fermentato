@@ -98,7 +98,7 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
   const name = user.display_name ?? user.nickname ?? "?";
   const sizeClass = `w-${size} h-${size}`;
   return user.profile_image_url ? (
-    <img src={user.profile_image_url} alt={name} className={`${sizeClass} rounded-full object-cover flex-shrink-0`} />
+    <img loading="lazy" src={user.profile_image_url} alt={name} className={`${sizeClass} rounded-full object-cover flex-shrink-0`} />
   ) : (
     <div className={`${sizeClass} rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0`}>
       <span className="text-primary text-sm font-bold">{name[0].toUpperCase()}</span>
@@ -479,7 +479,7 @@ export default function Activity() {
                       <Link key={pub.id} href={`/pub/${pub.id}`}>
                         <div className="relative h-36 rounded-2xl overflow-hidden bg-stone-800 cursor-pointer tap-scale group">
                           {cover ? (
-                            <img src={cover} alt={pub.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                            <img loading="lazy" src={cover} alt={pub.name} className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                           ) : (
                             <div className="absolute inset-0 bg-gradient-to-br from-orange-900/60 to-stone-900 flex items-center justify-center">
                               <MapPin className="h-8 w-8 text-orange-400/60" />
@@ -556,7 +556,7 @@ export default function Activity() {
                       <div className="flex-shrink-0 w-[140px] group transition-transform duration-150 ease-out active:scale-[0.97]">
                         <div className="w-full h-[140px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-[#1A1D24] border border-stone-100 dark:border-[#23262E]/30 mb-2 relative">
                           {img ? (
-                            <img src={img} alt={beer?.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                            <img loading="lazy" src={img} alt={beer?.name} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-stone-50 to-stone-100 dark:from-stone-800 dark:to-[#0B0D10]">
                               <Beer className="h-10 w-10 text-orange-400/50" />
@@ -608,7 +608,7 @@ export default function Activity() {
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
                         {ev.imageUrl ? (
-                          <img src={ev.imageUrl} alt={ev.title} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                          <img loading="lazy" src={ev.imageUrl} alt={ev.title} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
                         ) : (
                           <div className="w-12 h-12 bg-pink-100 dark:bg-pink-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
                             <CalendarDays className="h-5 w-5 text-pink-600" />
@@ -739,7 +739,7 @@ export default function Activity() {
                     <Card key={fest.id} className="hover:shadow-lg transition-all duration-200 overflow-hidden">
                       {fest.coverImageUrl && (
                         <div className="relative h-28 overflow-hidden">
-                          <img src={fest.coverImageUrl} alt={fest.name} className="w-full h-full object-cover" />
+                          <img loading="lazy" src={fest.coverImageUrl} alt={fest.name} className="w-full h-full object-cover" />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                         </div>
                       )}
@@ -787,7 +787,7 @@ export default function Activity() {
             <>
               {selectedEvent.imageUrl && (
                 <div className="relative h-48 sm:h-56">
-                  <img src={selectedEvent.imageUrl} alt={selectedEvent.title} className="w-full h-full object-cover" />
+                  <img loading="lazy" src={selectedEvent.imageUrl} alt={selectedEvent.title} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute top-3 left-3">
                     <EventCategoryBadge category={selectedEvent.category} />

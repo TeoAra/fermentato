@@ -305,7 +305,7 @@ export default function AdminFestivals() {
                   <div className="flex items-start gap-4">
                     {/* Logo */}
                     {fest.logoUrl ? (
-                      <img src={fest.logoUrl} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-stone-200" />
+                      <img loading="lazy" src={fest.logoUrl} alt="" className="w-12 h-12 rounded-xl object-cover flex-shrink-0 border border-stone-200" />
                     ) : (
                       <div className="w-12 h-12 rounded-xl bg-stone-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
                         <QrCode className="h-6 w-6 text-primary/40" />

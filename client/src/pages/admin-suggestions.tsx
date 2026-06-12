@@ -79,14 +79,14 @@ function DiffRow({ field, current, proposed }: { field: string; current: any; pr
       <div className="text-xs font-medium text-gray-500 dark:text-gray-400 self-start pt-1">{label}</div>
       <div className="text-xs text-gray-400 dark:text-gray-500 line-through">
         {img && current ? (
-          <img src={current} alt="" className="h-12 w-12 object-cover rounded-md opacity-60" />
+          <img loading="lazy" src={current} alt="" className="h-12 w-12 object-cover rounded-md opacity-60" />
         ) : (
           <span>{String(current ?? "—")}</span>
         )}
       </div>
       <div className="text-xs text-green-700 dark:text-green-400 font-medium">
         {img && proposed ? (
-          <img src={proposed} alt="" className="h-12 w-12 object-cover rounded-md ring-2 ring-green-500/50" />
+          <img loading="lazy" src={proposed} alt="" className="h-12 w-12 object-cover rounded-md ring-2 ring-green-500/50" />
         ) : (
           <span>{String(proposed ?? "—")}</span>
         )}

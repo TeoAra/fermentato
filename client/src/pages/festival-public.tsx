@@ -259,7 +259,7 @@ function TapComments({ tapId, slug, isManager }: { tapId: number; slug: string; 
           <div key={c.id} className="rounded-xl bg-stone-50 dark:bg-[#0B0D10]/30 border border-stone-100 dark:border-[#23262E] p-3">
             <div className="flex items-start gap-2">
               {c.userImage ? (
-                <img src={c.userImage} alt={c.userNickname || ""} className="h-6 w-6 rounded-full object-cover" />
+                <img loading="lazy" src={c.userImage} alt={c.userNickname || ""} className="h-6 w-6 rounded-full object-cover" />
               ) : (
                 <div className="h-6 w-6 rounded-full bg-primary/15 text-primary text-[11px] flex items-center justify-center font-bold">{initials}</div>
               )}
@@ -396,7 +396,7 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
 
           {/* Beer image */}
           {imageUrl ? (
-            <img src={imageUrl} alt={beerName} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0" />
+            <img loading="lazy" src={imageUrl} alt={beerName} className="w-12 h-12 rounded-2xl object-cover flex-shrink-0" />
           ) : (
             <div className="w-12 h-12 rounded-2xl bg-stone-50 dark:bg-[#0B0D10]/20 flex items-center justify-center flex-shrink-0">
               <Beer className="h-6 w-6 text-primary" />
@@ -612,7 +612,7 @@ function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
             {i + 1}
           </div>
           {t.beerImageUrl ? (
-            <img src={t.beerImageUrl} alt={t.beerName} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+            <img loading="lazy" src={t.beerImageUrl} alt={t.beerName} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
           ) : (
             <div className="w-10 h-10 rounded-xl bg-stone-50 dark:bg-[#0B0D10]/20 flex items-center justify-center flex-shrink-0">
               <Beer className="h-5 w-5 text-primary" />
@@ -1006,7 +1006,7 @@ export default function FestivalPublic() {
                             {t.tapNumber}
                           </div>
                           {t.beerImageUrl ? (
-                            <img src={t.beerImageUrl} alt={beerName} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
+                            <img loading="lazy" src={t.beerImageUrl} alt={beerName} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
                           ) : (
                             <div className="w-9 h-9 rounded-xl bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center flex-shrink-0">
                               <Beer className="h-4 w-4 text-primary" />

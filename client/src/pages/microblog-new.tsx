@@ -176,7 +176,7 @@ export default function MicroblogNew() {
 
         {imageUrl ? (
           <div className="relative">
-            <img src={imageUrl} alt="" className="w-full rounded-2xl object-cover max-h-80" />
+            <img loading="lazy" src={imageUrl} alt="" className="w-full rounded-2xl object-cover max-h-80" />
             <button onClick={() => setImageUrl(null)}
               className="absolute top-2 right-2 bg-stone-900/70 text-white rounded-full p-1.5">
               <X className="w-4 h-4" />

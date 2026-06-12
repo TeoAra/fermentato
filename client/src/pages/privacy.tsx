@@ -2,9 +2,18 @@ import { Link } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Footer from "@/components/footer";
+import { Helmet } from "react-helmet-async";
 
 export default function PrivacyPolicy() {
   return (
+    <>
+    <Helmet>
+      <title>Privacy Policy | Fermenta.to</title>
+      <meta name="description" content="Informativa sulla privacy di Fermenta.to — scopri come trattiamo i tuoi dati personali nel rispetto del GDPR." />
+      <meta property="og:title" content="Privacy Policy | Fermenta.to" />
+      <meta property="og:description" content="Informativa sulla privacy di Fermenta.to." />
+      <link rel="canonical" href="https://fermenta.to/privacy" />
+    </Helmet>
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pt-24 pb-0 px-4">
       <div className="max-w-3xl mx-auto">
         <Link href="/">
@@ -120,5 +129,6 @@ export default function PrivacyPolicy() {
       </div>
       <Footer />
     </div>
+    </>
   );
 }

@@ -99,7 +99,7 @@ function CollabBrewerySelector({ selected, onChange }: { selected: { id: number;
             {results.map((b: any) => (
               <button key={b.id} type="button" onMouseDown={e => { e.preventDefault(); onChange([...selected, { id: b.id, name: b.name }]); setQuery(""); setResults([]); setShowResults(false); }}
                 className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
-                {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-6 h-6 rounded-full object-cover" /> : <Building className="w-4 h-4 text-purple-400" />}
+                {b.logoUrl ? <img loading="lazy" src={b.logoUrl} alt="" className="w-6 h-6 rounded-full object-cover" /> : <Building className="w-4 h-4 text-purple-400" />}
                 <span>{b.name}</span>
                 <span className="text-xs text-stone-400 ml-auto">{b.location}</span>
               </button>
@@ -352,7 +352,7 @@ function BeerProfilePanel({ beer, beerFull, descEdit, onDescChange, onSaveDesc, 
     <div className="border border-stone-200 dark:border-white/[0.08] rounded-2xl overflow-hidden bg-white dark:bg-[#0B0D10]/20">
       <div className="flex items-start gap-3 p-3">
         {beer.imageUrl
-          ? <img src={beer.imageUrl} alt={beer.name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-stone-100 dark:border-white/10" />
+          ? <img loading="lazy" src={beer.imageUrl} alt={beer.name} className="w-16 h-16 rounded-xl object-cover flex-shrink-0 border border-stone-100 dark:border-white/10" />
           : <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Beer className="w-7 h-7 text-primary/60" />
             </div>
@@ -1098,7 +1098,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     onClick={() => removingItem && confirmDeleteTapItem(removingItem, p.beer_id || p.beerId)}
                   >
                     {p.beer_image ? (
-                      <img src={p.beer_image} alt={p.beer_name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100" />
+                      <img loading="lazy" src={p.beer_image} alt={p.beer_name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100" />
                     ) : (
                       <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center flex-shrink-0">
                         <Beer className="w-5 h-5 text-amber-600" />
@@ -1247,7 +1247,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                                   }}
                                 >
                                   {p.beer_image
-                                    ? <img src={p.beer_image} alt={p.beer_name} className="w-12 h-12 rounded-lg object-cover border border-stone-100 dark:border-white/10" />
+                                    ? <img loading="lazy" src={p.beer_image} alt={p.beer_name} className="w-12 h-12 rounded-lg object-cover border border-stone-100 dark:border-white/10" />
                                     : <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center"><Beer className="w-6 h-6 text-amber-600" /></div>
                                   }
                                   <span className="text-[11px] font-medium text-foreground text-center line-clamp-2 leading-tight w-full">{p.beer_name || p.name}</span>
@@ -1279,7 +1279,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                                     }}
                                   >
                                     {beer.imageUrl ? (
-                                      <img src={beer.imageUrl} alt={beer.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100 dark:border-white/10 mt-0.5" />
+                                      <img loading="lazy" src={beer.imageUrl} alt={beer.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100 dark:border-white/10 mt-0.5" />
                                     ) : (
                                       <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                                         <Beer className="w-5 h-5 text-primary" />
@@ -1516,7 +1516,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                       </div>
                       {beerImagePreview ? (
                         <div className="relative w-20 h-20 mt-1">
-                          <img src={beerImagePreview} alt="Anteprima" className="w-20 h-20 object-cover rounded-lg border" />
+                          <img loading="lazy" src={beerImagePreview} alt="Anteprima" className="w-20 h-20 object-cover rounded-lg border" />
                           <button
                             type="button"
                             onClick={() => {
@@ -1609,7 +1609,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                         <Label className="text-xs">Logo</Label>
                         {breweryLogoPreview ? (
                           <div className="relative w-16 h-16 mt-1">
-                            <img src={breweryLogoPreview} alt="Logo" className="w-16 h-16 object-cover rounded-lg border" />
+                            <img loading="lazy" src={breweryLogoPreview} alt="Logo" className="w-16 h-16 object-cover rounded-lg border" />
                             <button
                               type="button"
                               onClick={() => { setBreweryLogoFile(null); setBreweryLogoPreview(""); }}
@@ -1638,7 +1638,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                         <Label className="text-xs">Copertina</Label>
                         {breweryCoverPreview ? (
                           <div className="relative w-full h-16 mt-1">
-                            <img src={breweryCoverPreview} alt="Cover" className="w-full h-16 object-cover rounded-lg border" />
+                            <img loading="lazy" src={breweryCoverPreview} alt="Cover" className="w-full h-16 object-cover rounded-lg border" />
                             <button
                               type="button"
                               onClick={() => { setBreweryCoverFile(null); setBreweryCoverPreview(""); }}
@@ -1775,7 +1775,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                               }}
                             >
                               {p.beer_image
-                                ? <img src={p.beer_image} alt={p.beer_name} className="w-12 h-12 rounded-lg object-cover border border-stone-100 dark:border-white/10" />
+                                ? <img loading="lazy" src={p.beer_image} alt={p.beer_name} className="w-12 h-12 rounded-lg object-cover border border-stone-100 dark:border-white/10" />
                                 : <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-950/40 flex items-center justify-center"><Beer className="w-6 h-6 text-amber-600" /></div>
                               }
                               <span className="text-[11px] font-medium text-foreground text-center line-clamp-2 leading-tight w-full">{p.beer_name || p.name}</span>
@@ -1822,7 +1822,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                                 }}
                               >
                                 {beer.imageUrl
-                                  ? <img src={beer.imageUrl} alt={beer.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100 dark:border-white/10 mt-0.5" />
+                                  ? <img loading="lazy" src={beer.imageUrl} alt={beer.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border border-stone-100 dark:border-white/10 mt-0.5" />
                                   : <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5"><Beer className="w-5 h-5 text-primary" /></div>
                                 }
                                 <div className="min-w-0 flex-1">

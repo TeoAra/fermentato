@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import { searchRateLimit } from "./middleware/rate-limit";
 import { createServer, type Server } from "http";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
@@ -1591,7 +1592,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       await db.delete(beerCollaborations).where(eq(beerCollaborations.beerId, beerId));
       const ids = breweryIds.map(Number).filter(n => !isNaN(n));
-      console.log(`[PUT /api/beers/${beerId}/collaborations] saving ids:`, ids);
       for (const brewId of ids) {
         await db.insert(beerCollaborations).values({ beerId, breweryId: brewId }).onConflictDoNothing();
       }
@@ -1991,7 +1991,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Search endpoints
-  app.get("/api/search", async (req, res) => {
+  app.get("/api/search", searchRateLimit, async (req, res) => {
     try {
       const query = ((req.query.q as string) || "").trim();
       if (!query) {
@@ -2308,14 +2308,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const canEdit = await isAdminOrPubOwner(userId, parseInt(pubId));
       if (!canEdit) return res.status(403).json({ message: "Not authorized to modify this pub's tap list" });
       
-      console.log('PATCH taplist item:', { pubId, id, data });
-
       const existingItems = await storage.getTapListByPubForOwner(parseInt(pubId));
       const existingItem = existingItems.find((t: any) => t.id === parseInt(id));
       const oldBeerId = existingItem?.beerId;
       
       const item = await storage.updateTapListItem(parseInt(id), data);
-      console.log('Updated taplist item:', item);
 
       if (data.beerId && oldBeerId && data.beerId !== oldBeerId) {
         const newBeer = await storage.getBeer(data.beerId);
@@ -2355,8 +2352,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const canEdit = await isAdminOrPubOwner(userId, parseInt(pubId));
       if (!canEdit) return res.status(403).json({ message: "Not authorized to modify this pub's tap list" });
       
-      console.log('DELETE taplist item:', { pubId, id });
-
       const tapItems = await storage.getTapListByPubForOwner(parseInt(pubId));
       const removedItem = tapItems.find((t: any) => t.id === parseInt(id));
 
@@ -2377,7 +2372,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await storage.removeFromTapList(parseInt(id));
 
-      console.log('Deleted taplist item:', id);
       broadcastPubUpdate(parseInt(pubId), "taplist");
       _memCache.delete("home:taplist-activity");
       res.status(200).json({ success: true });
@@ -2541,10 +2535,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.description = vintage ? `${currentDescription}\nAnnata: ${vintage}`.trim() : currentDescription;
       }
       
-      console.log('PATCH bottle item:', { pubId, id, originalData: req.body, mappedData: updateData });
-      
       const item = await storage.updateBottleItem(parseInt(id), updateData);
-      console.log('Updated bottle item:', item);
       broadcastPubUpdate(parseInt(pubId), "bottles");
       res.json(item);
     } catch (error) {
@@ -2558,10 +2549,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { pubId, id } = req.params;
       
-      console.log('DELETE bottle item:', { pubId, id });
-      
       await storage.removeBottleItem(parseInt(id));
-      console.log('Deleted bottle item:', id);
       broadcastPubUpdate(parseInt(pubId), "bottles");
       res.status(200).json({ success: true });
     } catch (error) {
@@ -3494,27 +3482,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Upload profile image
   app.post('/api/user/upload-profile-image', isAuthenticated, (req: any, res, next) => {
-    console.log('Request received:', req.method, req.url);
-    console.log('Content-Type:', req.headers['content-type']);
-    console.log('Body type:', typeof req.body);
-    
     upload.single('image')(req, res, (err) => {
       if (err) {
         console.error('Multer error:', err);
         return res.status(400).json({ message: "Errore durante l'upload: " + err.message });
       }
-      
-      console.log('After multer - req.file:', !!req.file);
-      if (req.file) {
-        console.log('File details:', {
-          fieldname: req.file.fieldname,
-          originalname: req.file.originalname,
-          mimetype: req.file.mimetype,
-          size: req.file.size,
-          bufferLength: req.file.buffer?.length
-        });
-      }
-      
       next();
     });
   }, async (req: any, res) => {
@@ -4616,9 +4588,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const beerId = parseInt(req.params.id);
       // Extract collab fields before passing to updateBeer to avoid schema column issues
       const { collaborationBreweryIds, isCollaboration, ...updates } = req.body;
-      console.log(`[admin/beers PATCH] beer=${beerId} imageUrl=${JSON.stringify(updates.imageUrl)}`);
       const beer = await storage.updateBeer(beerId, updates);
-      console.log(`[admin/beers PATCH] after update: imageUrl=${JSON.stringify((beer as any).imageUrl)}`);
       if (updates.logoUrl || updates.imageUrl || updates.logo_url || updates.image_url) {
         clipIndexBeer(beerId, updates.logoUrl || updates.logo_url || updates.imageUrl || updates.image_url);
       }
@@ -4627,7 +4597,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (collaborationBreweryIds !== undefined) {
         await db.delete(beerCollaborations).where(eq(beerCollaborations.beerId, beerId));
         const ids = Array.isArray(collaborationBreweryIds) ? collaborationBreweryIds : [];
-        console.log(`[admin/beers PATCH] beer ${beerId} collab ids:`, ids);
         for (const brewId of ids) {
           await db.insert(beerCollaborations).values({ beerId, breweryId: Number(brewId) }).onConflictDoNothing();
         }
@@ -6358,7 +6327,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (collaborationBreweryIds !== undefined) {
         await db.delete(beerCollaborations).where(eq(beerCollaborations.beerId, beerId));
         const ids = Array.isArray(collaborationBreweryIds) ? collaborationBreweryIds : [];
-        console.log(`[brewery/beers PATCH] beer ${beerId} collab ids:`, ids);
         for (const brewId of ids) {
           await db.insert(beerCollaborations).values({ beerId, breweryId: Number(brewId) }).onConflictDoNothing();
         }

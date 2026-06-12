@@ -33,7 +33,7 @@ export default function AppDownload() {
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="w-20 h-20 rounded-[22px] bg-primary/10 flex items-center justify-center mx-auto mb-4 overflow-hidden border border-primary/20">
-            <img src="/icons/icon-192.png" alt="Fermenta.to" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
+            <img loading="lazy" src="/icons/icon-192.png" alt="Fermenta.to" className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).style.display='none'; }} />
             <span className="text-4xl" style={{display:'none'}}>🍺</span>
           </div>
           <h1 className="text-2xl font-bold text-foreground">Fermenta.to</h1>

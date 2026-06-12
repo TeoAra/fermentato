@@ -11,7 +11,7 @@ import { PostContent } from "@/components/social/PostContent";
 function PostAvatar({ post }: { post: any }) {
   const name = post.display_name ?? post.username ?? "?";
   return post.profile_image_url ? (
-    <img src={post.profile_image_url} alt={name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+    <img loading="lazy" src={post.profile_image_url} alt={name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
   ) : (
     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
       <span className="text-primary text-sm font-bold">{(name[0] ?? "?").toUpperCase()}</span>

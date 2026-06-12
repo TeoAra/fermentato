@@ -328,6 +328,7 @@ export default function AuthPage() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-background dark:bg-background flex items-center justify-center p-4 sm:p-8 overflow-y-auto">
       <div className="w-full max-w-md bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-3xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-6 md:p-8">
           {/* Logo */}
@@ -442,7 +443,7 @@ export default function AuthPage() {
                       <FormControl>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input {...field} placeholder="tu@esempio.it oppure @username" className="pl-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl"
+                          <Input {...field} placeholder="tu@esempio.it oppure @username" maxLength={254} className="pl-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl"
                             data-testid="input-login-email" autoComplete="username" autoFocus={!isNative} />
                         </div>
                       </FormControl>
@@ -456,7 +457,7 @@ export default function AuthPage() {
                       <FormControl>
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input {...field} type={showPassword ? "text" : "password"} placeholder="••••••••"
+                          <Input {...field} type={showPassword ? "text" : "password"} placeholder="••••••••" maxLength={128}
                             className="pl-10 pr-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl"
                             data-testid="input-login-password" autoComplete="current-password" />
                           <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -517,7 +518,7 @@ export default function AuthPage() {
                       <p className="text-sm font-medium text-foreground">Recupero password</p>
                       <div className="space-y-2">
                         <Input placeholder="Inserisci la tua email" value={forgotEmail} onChange={(e) => setForgotEmail(e.target.value)}
-                          className="h-10 bg-white dark:bg-[#1A1D24] border-stone-200 dark:border-border rounded-xl" />
+                          maxLength={254} className="h-10 bg-white dark:bg-[#1A1D24] border-stone-200 dark:border-border rounded-xl" />
                         <div className="flex gap-2">
                           <Button className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl h-10" onClick={() => forgotPasswordMutation.mutate(forgotEmail)}
                             disabled={forgotPasswordMutation.isPending || !forgotEmail.includes("@")}>
@@ -561,7 +562,7 @@ export default function AuthPage() {
                       <FormControl>
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input {...field} placeholder="Il tuo nome" className="pl-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl"
+                          <Input {...field} placeholder="Il tuo nome" maxLength={30} className="pl-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl"
                             onChange={(e) => {
                               const val = e.target.value.toLowerCase().replace(/[^a-z0-9_.]/g, "");
                               field.onChange(val);
@@ -586,7 +587,7 @@ export default function AuthPage() {
                       <FormControl>
                         <div className="relative">
                           <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input {...field} type="email" placeholder="tu@esempio.it" className="pl-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl" />
+                          <Input {...field} type="email" placeholder="tu@esempio.it" maxLength={254} className="pl-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl" />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -601,7 +602,7 @@ export default function AuthPage() {
                       <FormControl>
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input {...field} type={showPassword ? "text" : "password"} placeholder="••••••••"
+                          <Input {...field} type={showPassword ? "text" : "password"} placeholder="••••••••" maxLength={128}
                             className="pl-10 pr-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl"
                             onChange={(e) => { field.onChange(e); setPasswordValue(e.target.value); }} />
                           <button type="button" onClick={() => setShowPassword(!showPassword)}
@@ -641,7 +642,7 @@ export default function AuthPage() {
                       <FormControl>
                         <div className="relative">
                           <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input {...field} type={showConfirmPassword ? "text" : "password"} placeholder="••••••••"
+                          <Input {...field} type={showConfirmPassword ? "text" : "password"} placeholder="••••••••" maxLength={128}
                             className="pl-10 pr-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl" />
                           <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -825,8 +826,8 @@ export default function AuthPage() {
         </div>
       </div>
 
-      {/* ── Overlay: browser fallback Google in corso (Android) ── */}
-      {browserFallbackActive && (
+    {/* ── Overlay: browser fallback Google in corso (Android) ── */}
+    {browserFallbackActive && (
         <div className="fixed inset-0 z-50 flex items-end pointer-events-none">
           <div className="w-full pointer-events-auto">
             <div className="mx-auto max-w-sm mb-6 px-4">
@@ -843,5 +844,6 @@ export default function AuthPage() {
           </div>
         </div>
       )}
+    </>
   );
 }
