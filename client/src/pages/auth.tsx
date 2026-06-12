@@ -97,6 +97,9 @@ export default function AuthPage() {
   const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
   const [emailNotVerified, setEmailNotVerified] = useState<string | null>(null);
   const [passwordValue, setPasswordValue] = useState("");
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isAppleLoading, setIsAppleLoading] = useState(false);
+  const [browserFallbackActive, setBrowserFallbackActive] = useState(false);
 
   const verifiedParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("verified") : null;
   const verifiedEmailParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("email") : null;
@@ -236,70 +239,58 @@ export default function AuthPage() {
   };
 
   const handleGoogleLogin = async () => {
-    // Su native iOS/Android usa il plugin nativo (UI Google nativa, niente
-    // WebView — Google blocca OAuth in WebView con errore disallowed_useragent).
-    if (isNative) {
-      const r = await loginGoogleNative();
-      if (r.ok) {
-        await handleSocialLoginSuccess();
-        return;
-      }
-
-      // Fallback Android: se il plugin nativo fallisce (tipicamente perché
-      // la firma SHA-1 dell'APK non è registrata in Google Cloud Console),
-      // usiamo Chrome Custom Tabs che è consentito da Google e non richiede
-      // la registrazione SHA-1.
-      if (isAndroidNative) {
-        toast({
-          title: "Apertura browser Google...",
-          description: "Completa il login nel browser, poi torna all'app.",
-        });
-        const rb = await loginGoogleBrowserFallback();
-        if (rb.ok) {
+    if (isGoogleLoading) return;
+    setIsGoogleLoading(true);
+    try {
+      if (isNative) {
+        const r = await loginGoogleNative();
+        if (r.ok) {
           await handleSocialLoginSuccess();
           return;
         }
-        // Se l'utente ha semplicemente chiuso il browser senza fare login
-        // non mostriamo errore — ha annullato lui stesso.
-        if (rb.error !== "browser_login_cancelled") {
-          toast({
-            title: "Login Google fallito",
-            description: rb.error ?? "Riprova",
-            variant: "destructive",
-          });
+        // Fallback Android: SHA-1 Play Store non registrata → Chrome Custom Tabs.
+        // (Fix permanente: aggiungere il SHA-1 dell'App Signing Key di Google Play
+        //  in Google Cloud Console → OAuth 2.0 Client ID Android)
+        if (isAndroidNative) {
+          setBrowserFallbackActive(true);
+          const rb = await loginGoogleBrowserFallback();
+          setBrowserFallbackActive(false);
+          if (rb.ok) {
+            await handleSocialLoginSuccess();
+            return;
+          }
+          if (rb.error !== "browser_login_cancelled") {
+            toast({ title: "Login Google fallito", description: rb.error ?? "Riprova", variant: "destructive" });
+          }
+          return;
         }
+        toast({ title: "Login Google fallito", description: r.error ?? "Riprova", variant: "destructive" });
         return;
       }
-
-      toast({
-        title: "Login Google fallito",
-        description: r.error ?? "Riprova",
-        variant: "destructive",
-      });
-      return;
+      // Web: redirect classico Passport.js
+      window.location.href = "/api/auth/google";
+    } finally {
+      setIsGoogleLoading(false);
+      setBrowserFallbackActive(false);
     }
-    // Web: redirect classico Passport.js
-    window.location.href = "/api/auth/google";
   };
 
   const handleAppleLogin = async () => {
     if (!isNativeIos) {
-      toast({
-        title: "Apple Sign-In",
-        description: "Disponibile solo sull'app iOS",
-        variant: "destructive",
-      });
+      toast({ title: "Apple Sign-In", description: "Disponibile solo sull'app iOS", variant: "destructive" });
       return;
     }
-    const r = await loginAppleNative();
-    if (r.ok) {
-      await handleSocialLoginSuccess();
-    } else {
-      toast({
-        title: "Login Apple fallito",
-        description: r.error ?? "Riprova",
-        variant: "destructive",
-      });
+    if (isAppleLoading) return;
+    setIsAppleLoading(true);
+    try {
+      const r = await loginAppleNative();
+      if (r.ok) {
+        await handleSocialLoginSuccess();
+      } else {
+        toast({ title: "Login Apple fallito", description: r.error ?? "Riprova", variant: "destructive" });
+      }
+    } finally {
+      setIsAppleLoading(false);
     }
   };
 
@@ -381,6 +372,7 @@ export default function AuthPage() {
           {/* ── LOGIN FORM ── */}
           {activeTab === "login" && (
             <div className="space-y-5">
+              {/* Status banners */}
               {verifiedParam === "success" && (
                 <div className="flex items-center gap-3 p-3.5 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
                   <CheckCircle2 className="w-4.5 h-4.5 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
@@ -414,6 +406,34 @@ export default function AuthPage() {
                 </div>
               )}
 
+              {/* ── Su app native: social login PRIMA (più veloce e più naturale) ── */}
+              {isNative && (
+                <>
+                  <div className="space-y-3">
+                    <Button type="button" variant="outline" onClick={handleGoogleLogin}
+                      disabled={isGoogleLoading || isAppleLoading}
+                      className="w-full h-12 bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-border text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20 transition-colors">
+                      {isGoogleLoading
+                        ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Accesso in corso...</>
+                        : <><SiGoogle className="w-4 h-4 mr-2" />Continua con Google</>}
+                    </Button>
+                    {isNativeIos && (
+                      <Button type="button" onClick={handleAppleLogin}
+                        disabled={isAppleLoading || isGoogleLoading}
+                        className="w-full h-12 bg-black hover:bg-stone-900 text-white border-black rounded-xl font-medium transition-colors">
+                        {isAppleLoading
+                          ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Accesso in corso...</>
+                          : <><SiApple className="w-4 h-4 mr-2" />Continua con Apple</>}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200 dark:border-border"></div></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-card px-2 text-muted-foreground">oppure con email</span></div>
+                  </div>
+                </>
+              )}
+
               <Form {...loginForm}>
                 <form onSubmit={loginForm.handleSubmit((data) => loginMutation.mutate(data))} className="space-y-4">
                   <FormField control={loginForm.control} name="emailOrUsername" render={({ field }) => (
@@ -423,7 +443,7 @@ export default function AuthPage() {
                         <div className="relative">
                           <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                           <Input {...field} placeholder="tu@esempio.it oppure @username" className="pl-10 h-11 bg-white dark:bg-card border-stone-200 dark:border-border focus-visible:ring-primary/20 rounded-xl"
-                            data-testid="input-login-email" autoComplete="username" />
+                            data-testid="input-login-email" autoComplete="username" autoFocus={!isNative} />
                         </div>
                       </FormControl>
                       <FormMessage />
@@ -449,15 +469,22 @@ export default function AuthPage() {
                     </FormItem>
                   )} />
 
-                  <FormField control={loginForm.control} name="rememberMe" render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-2 space-y-0">
-                      <FormControl>
-                        <input type="checkbox" checked={field.value} onChange={field.onChange}
-                          className="h-4 w-4 rounded border-stone-200 text-primary focus:ring-primary/20 cursor-pointer accent-primary" />
-                      </FormControl>
-                      <FormLabel className="text-sm font-normal text-muted-foreground cursor-pointer">Ricordami</FormLabel>
-                    </FormItem>
-                  )} />
+                  <div className="flex items-center justify-between">
+                    <FormField control={loginForm.control} name="rememberMe" render={({ field }) => (
+                      <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                        <FormControl>
+                          <input type="checkbox" checked={field.value} onChange={field.onChange}
+                            className="h-4 w-4 rounded border-stone-200 text-primary focus:ring-primary/20 cursor-pointer accent-primary" />
+                        </FormControl>
+                        <FormLabel className="text-sm font-normal text-muted-foreground cursor-pointer">Ricordami</FormLabel>
+                      </FormItem>
+                    )} />
+                    <button type="button"
+                      onClick={() => { setShowForgotPassword(true); setForgotSent(false); setForgotEmail(""); }}
+                      className="text-sm text-primary dark:text-orange-400 hover:underline font-medium">
+                      Password dimenticata?
+                    </button>
+                  </div>
 
                   {RECAPTCHA_SITE_KEY && (
                     <div className="flex justify-center">
@@ -470,16 +497,8 @@ export default function AuthPage() {
                     className="w-full h-11 bg-primary hover:bg-primary/90 text-white font-semibold rounded-xl transition-colors"
                     disabled={loginMutation.isPending || (!!RECAPTCHA_SITE_KEY && !loginRecaptchaToken)}
                     data-testid="button-login">
-                    {loginMutation.isPending ? "Accesso in corso..." : "Accedi"}
+                    {loginMutation.isPending ? <><Loader2 className="w-4 h-4 mr-1.5 animate-spin inline" />Accesso in corso...</> : "Accedi"}
                   </Button>
-
-                  <div className="text-center">
-                    <button type="button"
-                      onClick={() => { setShowForgotPassword(true); setForgotSent(false); setForgotEmail(""); }}
-                      className="text-sm text-primary dark:text-orange-400 hover:underline font-medium">
-                      Password dimenticata?
-                    </button>
-                  </div>
                 </form>
               </Form>
 
@@ -512,25 +531,22 @@ export default function AuthPage() {
                 </div>
               )}
 
-              <div className="relative my-8">
-                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200 dark:border-border"></div></div>
-                <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-card px-2 text-muted-foreground">Oppure continua con</span></div>
-              </div>
-
-              <div className="space-y-3">
-                <Button type="button" variant="outline" onClick={handleGoogleLogin}
-                  className="w-full h-11 bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-border text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20">
-                  <SiGoogle className="w-4 h-4 mr-2" />
-                  Google
-                </Button>
-                {isNativeIos && (
-                  <Button type="button" variant="outline" onClick={handleAppleLogin}
-                    className="w-full h-11 bg-black hover:bg-stone-900 text-white border-black rounded-xl font-medium">
-                    <SiApple className="w-4 h-4 mr-2" />
-                    Continua con Apple
+              {/* ── Su web: social login in fondo (dopo il form) ── */}
+              {!isNative && (
+                <>
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-stone-200 dark:border-border"></div></div>
+                    <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-card px-2 text-muted-foreground">Oppure continua con</span></div>
+                  </div>
+                  <Button type="button" variant="outline" onClick={handleGoogleLogin}
+                    disabled={isGoogleLoading}
+                    className="w-full h-11 bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-border text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20">
+                    {isGoogleLoading
+                      ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Reindirizzamento...</>
+                      : <><SiGoogle className="w-4 h-4 mr-2" />Google</>}
                   </Button>
-                )}
-              </div>
+                </>
+              )}
             </div>
           )}
 
@@ -783,15 +799,15 @@ export default function AuthPage() {
 
                 <div className="space-y-3">
                   <Button type="button" variant="outline" onClick={handleGoogleLogin}
+                    disabled={isGoogleLoading || isAppleLoading}
                     className="w-full h-11 bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-border text-foreground rounded-xl font-medium hover:bg-stone-50 dark:hover:bg-stone-900/20">
-                    <SiGoogle className="w-4 h-4 mr-2" />
-                    Google
+                    {isGoogleLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Accesso in corso...</> : <><SiGoogle className="w-4 h-4 mr-2" />Google</>}
                   </Button>
                   {isNativeIos && (
-                    <Button type="button" variant="outline" onClick={handleAppleLogin}
+                    <Button type="button" onClick={handleAppleLogin}
+                      disabled={isAppleLoading || isGoogleLoading}
                       className="w-full h-11 bg-black hover:bg-stone-900 text-white border-black rounded-xl font-medium">
-                      <SiApple className="w-4 h-4 mr-2" />
-                      Registrati con Apple
+                      {isAppleLoading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Accesso in corso...</> : <><SiApple className="w-4 h-4 mr-2" />Registrati con Apple</>}
                     </Button>
                   )}
                 </div>
@@ -808,5 +824,24 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
+
+      {/* ── Overlay: browser fallback Google in corso (Android) ── */}
+      {browserFallbackActive && (
+        <div className="fixed inset-0 z-50 flex items-end pointer-events-none">
+          <div className="w-full pointer-events-auto">
+            <div className="mx-auto max-w-sm mb-6 px-4">
+              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-2xl border border-stone-200 dark:border-border p-4 flex items-center gap-4">
+                <div className="w-10 h-10 bg-blue-50 dark:bg-blue-950/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">Login Google in corso…</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Completa nel browser, poi torna qui</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
   );
 }

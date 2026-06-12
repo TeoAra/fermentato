@@ -413,6 +413,35 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
   const [massDeleteOpen, setMassDeleteOpen] = useState(false);
   const [mergeOpen, setMergeOpen] = useState(false);
   const [keepId, setKeepId] = useState<number | null>(null);
+  const [suspiciousOpen, setSuspiciousOpen] = useState(false);
+  const [suspiciousData, setSuspiciousData] = useState<any[]>([]);
+  const [suspiciousLoading, setSuspiciousLoading] = useState(false);
+
+  const loadSuspicious = async () => {
+    setSuspiciousLoading(true);
+    try {
+      const res = await fetch('/api/admin/breweries/suspicious?limit=100', { credentials: 'include' });
+      const data = await res.json();
+      setSuspiciousData(Array.isArray(data) ? data : []);
+      setSuspiciousOpen(true);
+    } catch {
+      toast({ title: "Errore", description: "Impossibile caricare i birrifici sospetti", variant: "destructive" });
+    } finally {
+      setSuspiciousLoading(false);
+    }
+  };
+
+  const archiveSuspicious = async (id: number) => {
+    try {
+      await apiRequest(`/api/admin/breweries/${id}/archive`, { method: "PATCH" }, { archived: true });
+      setSuspiciousData(prev => prev.filter(b => b.id !== id));
+      toast({ title: "Archiviato", description: "Birrificio archiviato e rimosso dai risultati" });
+      queryClient.invalidateQueries({ queryKey: ["/api/breweries"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+    } catch {
+      toast({ title: "Errore archivio", variant: "destructive" });
+    }
+  };
 
   const toggleSelect = (id: number) => {
     setSelectedIds(prev => {
@@ -902,6 +931,72 @@ export default function AdminContentManager({ type }: AdminContentManagerProps) 
                     <ChevronRight className="w-4 h-4 ml-auto" />
                   </Button>
                 </Link>
+                <Separator className="my-1" />
+                <Button
+                  variant="outline"
+                  className="w-full border-orange-300 text-orange-700 hover:bg-orange-50 dark:border-orange-700 dark:text-orange-400 dark:hover:bg-orange-900/20"
+                  onClick={loadSuspicious}
+                  disabled={suspiciousLoading}
+                >
+                  {suspiciousLoading
+                    ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Carico...</>
+                    : <><Search className="w-4 h-4 mr-2" />Trova birrifici sospetti<ChevronRight className="w-4 h-4 ml-auto" /></>}
+                </Button>
+                <p className="text-xs text-gray-400 px-0.5">Candidati da archiviare: zero birre, nessuna tap/bottlelist, nessuna view recente.</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Suspicious breweries panel */}
+          {type === 'breweries' && suspiciousOpen && (
+            <Card className="border-orange-200 dark:border-orange-900">
+              <CardHeader className="pb-2 pt-4">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm flex items-center gap-2 text-orange-700 dark:text-orange-400">
+                    <Archive className="w-4 h-4" />
+                    Birrifici sospetti ({suspiciousData.length})
+                  </CardTitle>
+                  <button onClick={() => setSuspiciousOpen(false)} className="text-gray-400 hover:text-gray-600">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <p className="text-xs text-gray-400 mt-0.5">Solo proposta — conferma prima di archiviare. Non vengono archiviate automaticamente.</p>
+              </CardHeader>
+              <CardContent className="pb-4">
+                {suspiciousData.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">Nessun candidato trovato.</p>
+                ) : (
+                  <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
+                    {suspiciousData.map(b => (
+                      <div key={b.id} className="flex items-start gap-2 p-2 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/30">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-xs font-semibold text-foreground truncate max-w-[140px]">{b.name}</span>
+                            <Badge className="bg-orange-500 text-white text-[10px] px-1.5 py-0 h-4 shrink-0">
+                              score {b.suspicion_score}
+                            </Badge>
+                          </div>
+                          <p className="text-[10px] text-gray-400 mt-0.5 truncate">{b.location ?? "—"}{b.country ? ` · ${b.country}` : ""}</p>
+                          <div className="flex gap-2 mt-1 flex-wrap">
+                            {Number(b.beer_count) === 0 && <span className="text-[10px] text-red-500">0 birre</span>}
+                            {Number(b.tap_count) === 0 && Number(b.bottle_count) === 0 && <span className="text-[10px] text-orange-500">no tap/bottle</span>}
+                            {Number(b.recent_views) === 0 && <span className="text-[10px] text-gray-400">no views 180gg</span>}
+                            {Number(b.event_count) === 0 && <span className="text-[10px] text-gray-400">no eventi</span>}
+                          </div>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 px-2 text-[11px] border-orange-300 text-orange-700 hover:bg-orange-100 dark:border-orange-700 dark:text-orange-400 shrink-0"
+                          onClick={() => archiveSuspicious(b.id)}
+                        >
+                          <Archive className="w-3 h-3 mr-1" />
+                          Archivia
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
