@@ -159,101 +159,6 @@ async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: str
   return { path, ext };
 }
 
-// ── Gemini Vision OCR (primary engine) ──────────────────────────────────────
-// Uses gemini-2.0-flash (stable, strong vision). Returns structured JSON so
-// we get: beerName, breweryName AND the full raw text — giving fuzzy search
-// more material to work with even when label interpretation is uncertain.
-const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
-
-const GEMINI_PROMPT = `You are analyzing an Italian craft beer label, can or bottle.
-
-Your job:
-1. Read ALL text visible in the image, exactly as written (including any partial words).
-2. Identify the BEER NAME (usually the largest or most prominent text, often a proper name or invented word).
-3. Identify the BREWERY NAME (the producer — look for words like "Birrificio", "Brewery", "Birra", or a brand logo name).
-
-Return ONLY a JSON object with this exact shape — no markdown, no explanation:
-{
-  "beerName": "<beer name or empty string>",
-  "breweryName": "<brewery name or empty string>",
-  "allText": "<all text you can read, space-separated, in order of visual prominence>"
-}
-
-Rules:
-- If you cannot distinguish beer name from brewery name, put your best guess in beerName and leave breweryName empty.
-- The allText field must include EVERYTHING readable: beer name, brewery, style, ABV, taglines, batch numbers.
-- Never invent text that is not visible. If the image is too blurry or dark, return empty strings.
-- ABV percentages (e.g. "6.5%") and style words (IPA, Stout, Lager) often appear but are NOT the beer name.`;
-
-async function runGeminiOCR(dataUrl: string): Promise<{ text: string; available: boolean }> {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return { text: "", available: false };
-
-  const m = dataUrl.match(/^data:(image\/(\w+));base64,(.+)$/);
-  if (!m) return { text: "", available: false };
-
-  try {
-    const body = {
-      contents: [{
-        parts: [
-          { inline_data: { mime_type: m[1], data: m[3] } },
-          { text: GEMINI_PROMPT },
-        ],
-      }],
-      generationConfig: {
-        temperature: 0,
-        maxOutputTokens: 256,
-        responseMimeType: "application/json",
-      },
-    };
-
-    const res = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-      signal: AbortSignal.timeout(18000),
-    });
-
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      console.error(`Gemini OCR HTTP ${res.status}:`, (err as any)?.error?.message?.substring(0, 120));
-      return { text: "", available: res.status !== 401 && res.status !== 403 };
-    }
-
-    const data: any = await res.json();
-    const raw = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
-    if (!raw) return { text: "", available: true };
-
-    // Parse the structured JSON response
-    let parsed: { beerName?: string; breweryName?: string; allText?: string } = {};
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      // Gemini sometimes wraps JSON in markdown — strip ```json ... ```
-      const stripped = raw.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
-      try { parsed = JSON.parse(stripped); } catch { parsed = {}; }
-    }
-
-    const beerName = (parsed.beerName ?? "").trim();
-    const breweryName = (parsed.breweryName ?? "").trim();
-    const allText = (parsed.allText ?? "").trim();
-
-    // Build a search string: put beerName first (highest weight), then brewery, then full text
-    const combined = [beerName, breweryName, allText]
-      .filter(Boolean)
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim();
-
-    console.log(`Gemini OCR → beer="${beerName}" brewery="${breweryName}" allText="${allText.substring(0, 80)}"`);
-    return { text: combined, available: true };
-  } catch (e: any) {
-    console.error("Gemini OCR error:", e?.message?.substring(0, 120));
-    return { text: "", available: true };
-  }
-}
-
 // ── PaddleOCR (best accuracy, Python script) ────────────────────────────────
 // Runs server/paddle_ocr.py — installed once on VPS, cached models ~200MB.
 const PADDLE_SCRIPT = new URL("../server/paddle_ocr.py", import.meta.url).pathname;
@@ -7356,8 +7261,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } catch { /* pg_trgm may not be installed — fall through to regular search */ }
 
       // ── Vector Memory: semantic similarity via pgvector (fallback to pg_trgm) ──
-      // Only runs if pg_trgm didn't find anything above. Generates a Gemini
-      // embedding for the current OCR text and finds the closest confirmed scan.
+      // Only runs if pg_trgm didn't find anything above. Generates an embedding
+      // for the current OCR text and finds the closest confirmed scan (pgvector).
       try {
         const vec = await generateEmbedding(text.trim());
         if (vec) {
@@ -7606,7 +7511,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // OCR endpoint — Gemini Vision as primary, Tesseract + OCR.space as fallback.
+  // OCR endpoint — PaddleOCR primary, Tesseract + OCR.space as fallback.
   app.post("/api/scan/ocr", isAuthenticated, async (req, res) => {
     try {
       const { image } = req.body as { image?: string };
@@ -7614,13 +7519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing image data" });
       }
 
-      // ── 1. Gemini Vision (primary — fast, handles stylised beer label fonts) ─
-      const gemini = await runGeminiOCR(image);
-      if (gemini.available && gemini.text.trim().length >= 3) {
-        return res.json({ text: gemini.text, exitCode: 1, engine: "gemini" });
-      }
-
-      // ── 2. PaddleOCR (fallback — neural net on VPS) ────────────────────────
+      // ── 1. PaddleOCR (primary — neural net on VPS) ───────────────────────
       const paddle = await runPaddleOCR(image);
       if (paddle.available && paddle.text.trim().length >= 3) {
         return res.json({ text: paddle.text, exitCode: 1, engine: "paddleocr" });
@@ -8123,8 +8022,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // ── Find best web image for the confirmed beer (if it has none) ──────────
-      // Searches DuckDuckGo images + brewery website og:image, picks best with
-      // Gemini Vision, uploads to Cloudinary, and updates beers.image_url.
+      // Searches Untappd + brewery website + DuckDuckGo, uploads winner to Cloudinary.
       if (wasCorrect !== false) {
         const targetBeer = chosenBeerId || correctedBeerId;
         if (targetBeer) {

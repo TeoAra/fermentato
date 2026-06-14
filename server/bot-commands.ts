@@ -1,5 +1,5 @@
 /**
- * Bot Commands — parser Gemini + esecutore per Telegram e WhatsApp.
+ * Bot Commands — parser regex + esecutore per Telegram e WhatsApp.
  * Gestisce taplist e menu cibo di un pub via messaggi in italiano naturale.
  * Supporta conferma interattiva quando una ricerca restituisce più candidati.
  */
@@ -10,10 +10,6 @@ import {
 } from "@shared/schema";
 import { eq, and, ilike, asc } from "drizzle-orm";
 import crypto from "crypto";
-
-const GEMINI_API_KEY = () => process.env.GEMINI_API_KEY ?? "";
-const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // ── Tipi ─────────────────────────────────────────────────────────────────────
 
@@ -52,76 +48,89 @@ export type CommandResult =
   | { ok: boolean; message: string }
   | { ok: "choose"; message: string; pending: PendingConfirmation };
 
-// ── Parser Gemini ─────────────────────────────────────────────────────────────
+// ── Parser regex (italiano) ───────────────────────────────────────────────────
 
-export async function parseCommand(message: string, taplistContext: string): Promise<BotAction> {
-  const key = GEMINI_API_KEY();
-  if (!key) return { type: "unknown", reason: "Gemini non configurato" };
+export async function parseCommand(message: string, _taplistContext: string): Promise<BotAction> {
+  const msg = message.trim();
 
-  const prompt = `Sei l'assistente di gestione menu per un pub italiano su Fermenta.to.
-Il titolare ti ha inviato questo messaggio. Analizza e restituisci UN'azione in JSON.
+  // ── Comandi generali ───────────────────────────────────────────────────────
+  if (/\b(aiuto|help|\?)\b/i.test(msg)) return { type: "help" };
 
-Birre attualmente in spillatura:
-${taplistContext || "(nessuna birra in spina)"}
+  if (/\b(lista\s*birre?|birre?\s+(?:in\s+)?spina|cosa\s+(?:c[''è]|abbiamo)\s+(?:in\s+)?spina|taplist|spillatura)\b/i.test(msg))
+    return { type: "taplist" };
 
-Messaggio: "${message}"
+  if (/\b(lista\s*menu|menu\s*cibo|cosa\s+mangiamo)\b/i.test(msg) && !/\bbirr/i.test(msg))
+    return { type: "menu" };
 
-Rispondi SOLO con un JSON valido (nessun testo aggiuntivo):
+  let m: RegExpMatchArray | null;
 
-━━ SPILLATURA (BIRRE) ━━
-Sostituire una birra in spina (prezzi mantenuti):
-{"type":"swap","from":"BIRRA_ATTUALE","to":"NUOVA_BIRRA","brewery":"BIRRIFICIO_OPZIONALE"}
-Nascondere/mostrare dalla spillatura:
-{"type":"hide","beer":"NOME"} oppure {"type":"show","beer":"NOME"}
-Rimuovere/aggiungere dalla spillatura:
-{"type":"remove","beer":"NOME"} oppure {"type":"add","beer":"NOME","brewery":"BIRRIFICIO_OPZIONALE"}
-Aggiornare prezzo birra:
-{"type":"price","beer":"NOME","prices":{"piccola":3.50,"media":5.00}}
-Vedere le birre in spillatura:
-{"type":"taplist"}
+  // ── Categoria menu ────────────────────────────────────────────────────────
+  m = msg.match(/^(?:nascondi|togli)\s+(?:la\s+)?categoria\s+(.+)$/i);
+  if (m) return { type: "category_hide", category: m[1].trim() };
 
-━━ MENU CIBO — PRODOTTI ━━
-Nascondere/mostrare un prodotto:
-{"type":"item_hide","item":"NOME"} oppure {"type":"item_show","item":"NOME"}
-Esaurito / di nuovo disponibile:
-{"type":"item_unavailable","item":"NOME"} oppure {"type":"item_available","item":"NOME"}
-Cambiare prezzo prodotto:
-{"type":"item_price","item":"NOME","price":12.50}
-Rimuovere definitivamente un prodotto:
-{"type":"item_remove","item":"NOME"}
-Rinominare un prodotto:
-{"type":"item_rename","item":"NOME_ATTUALE","newName":"NUOVO_NOME"}
-Aggiungere ingrediente a prodotti specifici:
-{"type":"ingredient_add","ingredient":"INGREDIENTE","items":["PRODOTTO 1","PRODOTTO 2"]}
-Rimuovere ingrediente da tutti i prodotti che lo contengono:
-{"type":"ingredient_remove","ingredient":"INGREDIENTE","items":"all"}
-Rimuovere ingrediente da prodotti specifici:
-{"type":"ingredient_remove","ingredient":"INGREDIENTE","items":["PRODOTTO 1","PRODOTTO 2"]}
+  m = msg.match(/^(?:mostra|rimetti|visualizza)\s+(?:la\s+)?categoria\s+(.+)$/i);
+  if (m) return { type: "category_show", category: m[1].trim() };
 
-━━ MENU CIBO — CATEGORIE ━━
-Nascondere/mostrare un'intera categoria:
-{"type":"category_hide","category":"NOME"} oppure {"type":"category_show","category":"NOME"}
+  // ── Prodotto menu cibo ────────────────────────────────────────────────────
+  m = msg.match(/^rinomina\s+(.+?)\s+in\s+(.+)$/i);
+  if (m) return { type: "item_rename", item: m[1].trim(), newName: m[2].trim() };
 
-━━ GENERALI ━━
-Vedere il menu cibo: {"type":"menu"}
-Aiuto: {"type":"help"}
-Non capisci: {"type":"unknown","reason":"MOTIVO_BREVE"}`;
+  m = msg.match(/^(.+?)\s+esaurit[oa]$/i) ?? msg.match(/^esaurit[oa]\s+(.+)$/i);
+  if (m) return { type: "item_unavailable", item: m[1].trim() };
 
-  try {
-    const resp = await fetch(`${GEMINI_API_URL}?key=${key}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.1, maxOutputTokens: 400 },
-      }),
-    });
-    const json = await resp.json();
-    const raw = json.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? "";
-    return JSON.parse(raw.replace(/```json|```/g, "").trim()) as BotAction;
-  } catch {
-    return { type: "unknown", reason: "Errore nel parsing del comando" };
+  m = msg.match(/^(.+?)\s+(?:di\s+nuovo\s+)?disponibil[ei]$/i);
+  if (m) return { type: "item_available", item: m[1].trim() };
+
+  // ── Ingredienti ───────────────────────────────────────────────────────────
+  m = msg.match(/^(?:rimuovi|togli|elimina)\s+(.+?)\s+da\s+(?:tutti|tutto)\b/i);
+  if (m) return { type: "ingredient_remove", ingredient: m[1].trim(), items: "all" };
+
+  // ── Birre in spillatura ───────────────────────────────────────────────────
+
+  // cambia/sostituisci X con Y
+  m = msg.match(/^(?:cambia|sostituisci|rimpiazza)\s+(.+?)\s+con\s+(.+)$/i);
+  if (m) return { type: "swap", from: m[1].trim(), to: m[2].trim() };
+
+  // metti Y al posto di X
+  m = msg.match(/^metti\s+(.+?)\s+al\s+posto\s+di\s+(.+)$/i);
+  if (m) return { type: "swap", from: m[2].trim(), to: m[1].trim() };
+
+  // nascondi X (birra)
+  m = msg.match(/^(?:nascondi|togli\s+dalla\s+vista)\s+(.+)$/i);
+  if (m) return { type: "hide", beer: m[1].trim() };
+
+  // mostra/rimetti X (birra)
+  m = msg.match(/^(?:mostra|rimetti|riattiva)\s+(.+)$/i);
+  if (m) return { type: "show", beer: m[1].trim() };
+
+  // rimuovi/togli X [dalla spina]
+  m = msg.match(/^(?:rimuovi|togli|elimina)\s+(?:la\s+|il\s+)?(.+?)(?:\s+dalla?\s+spina)?$/i);
+  if (m) return { type: "remove", beer: m[1].trim() };
+
+  // aggiungi/inserisci X [di birrificio]
+  m = msg.match(/^(?:aggiungi|inserisci)\s+(?:la\s+|il\s+)?(.+?)(?:\s+di\s+(.+))?$/i);
+  if (m) return { type: "add", beer: m[1].trim(), brewery: m[2]?.trim() };
+
+  // prezzo X: piccola €N media €N grande €N
+  m = msg.match(/^(?:cambia\s+)?prezz[io]\s+(?:di\s+)?(.+)$/i);
+  if (m) {
+    const beer = m[1].replace(/piccol[ae].*|media.*|grand[ei].*|boccale.*|:\s*.*/i, "").trim();
+    const prices: Record<string, number> = {};
+    const re = /(piccol[ae]|media|grand[ei]|boccale)\s*:?\s*€?\s*([\d.,]+)/gi;
+    let pm;
+    while ((pm = re.exec(msg)) !== null) {
+      const size = pm[1].toLowerCase().replace(/a$/, "");
+      const price = parseFloat(pm[2].replace(",", "."));
+      if (!isNaN(price)) prices[size] = price;
+    }
+    if (Object.keys(prices).length === 0) {
+      const single = msg.match(/€?\s*([\d.,]+)\s*$/);
+      if (single) prices["media"] = parseFloat(single[1].replace(",", "."));
+    }
+    if (beer && Object.keys(prices).length > 0) return { type: "price", beer, prices };
   }
+
+  return { type: "unknown", reason: "Non ho capito. Scrivi 'aiuto' per i comandi disponibili." };
 }
 
 // ── Normalizzazione stringhe (case + spazi extra) ────────────────────────────
