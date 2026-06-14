@@ -691,6 +691,18 @@ html.dark {
     }
   }
 
+  /* ── GPU compositing for fixed nav elements — prevents iOS Safari jumping
+     when browser chrome (address bar / tab bar) shows/hides on scroll.
+     Applied to both the global bottom nav and dashboard docks. ── */
+  @media (max-width: 1023px) {
+    .bottom-nav-fixed {
+      -webkit-transform: translateZ(0);
+      transform: translateZ(0);
+      -webkit-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+  }
+
   /* ── iOS PWA: prevent fixed-element glitch after back navigation ── */
   /*
    * Su Safari iOS in modalità standalone (PWA), dopo una navigazione "indietro"

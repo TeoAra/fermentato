@@ -426,8 +426,8 @@ export default function EventDetailPage() {
       {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
       {activeTab !== "overview" && !isModalOpen && (
         <div
-          className="lg:hidden fixed top-0 inset-x-0 z-30"
-          style={{ paddingTop: "env(safe-area-inset-top)" }}
+          className="lg:hidden fixed inset-x-0 z-[49]"
+          style={{ top: 'var(--mobile-top-offset)' }}
         >
           <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
             <div className="flex items-center gap-3 px-3 h-14">

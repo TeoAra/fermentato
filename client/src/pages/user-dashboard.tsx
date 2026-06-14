@@ -703,7 +703,7 @@ export default function UserDashboard() {
         <div className="flex-1 md:ml-64">
           <div className="py-6 md:py-8 lg:!pt-8 lg:!pb-8" style={{
             paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
-            paddingTop: activeTab !== 'overview' ? 'calc(56px + env(safe-area-inset-top))' : undefined,
+            paddingTop: activeTab !== 'overview' ? '56px' : undefined,
           }}>
             <PageContainer variant="wide">
               {activeTab === 'overview' && renderOverview()}
@@ -735,8 +735,8 @@ export default function UserDashboard() {
       {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
       {activeTab !== 'overview' && !isUserModalOpen && (
         <div
-          className="lg:hidden fixed top-0 inset-x-0 z-30"
-          style={{ paddingTop: 'env(safe-area-inset-top)' }}
+          className="lg:hidden fixed inset-x-0 z-[49]"
+          style={{ top: 'var(--mobile-top-offset)' }}
         >
           <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
             <div className="flex items-center gap-3 px-3 h-14">
@@ -779,7 +779,7 @@ export default function UserDashboard() {
       {/* ── BOTTOM DOCK DASHBOARD UTENTE — stesso pattern di BottomNavigation ── */}
       <DockPortal>
       <nav
-        className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
+        className={`bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
           isUserModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
         style={{ paddingBottom: 'max(env(safe-area-inset-bottom) - 16px, 0px)' }}
