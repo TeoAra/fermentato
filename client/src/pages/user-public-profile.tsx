@@ -21,7 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import Footer from "@/components/footer";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
+import { useAnyModalOpen, DockPortal } from "@/components/bottom-navigation";
 import { PageContainer } from "@/components/layout/page-container";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -663,6 +663,7 @@ export default function UserPublicProfile() {
 
       {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
       {activeTab !== 'overview' && !isModalOpen && (
+        <DockPortal>
         <div
           className="lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
@@ -698,6 +699,7 @@ export default function UserPublicProfile() {
             </div>
           </div>
         </div>
+        </DockPortal>
       )}
 
       {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}

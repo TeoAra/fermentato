@@ -27,7 +27,7 @@ import {
   EventShareButtons,
 } from "@/components/events-manager";
 import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
+import { useAnyModalOpen, DockPortal } from "@/components/bottom-navigation";
 
 type EventDetail = {
   sourceType: "pub" | "brewery";
@@ -425,6 +425,7 @@ export default function EventDetailPage() {
 
       {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
       {activeTab !== "overview" && !isModalOpen && (
+        <DockPortal>
         <div
           className="lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
@@ -469,6 +470,7 @@ export default function EventDetailPage() {
             </div>
           </div>
         </div>
+        </DockPortal>
       )}
 
       {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}

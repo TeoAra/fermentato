@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
+import { useAnyModalOpen, DockPortal } from "@/components/bottom-navigation";
 import {
   Droplets, Search, Star, UtensilsCrossed, Beer, ChevronDown, ChevronUp,
   MapPin, CheckCircle2, XCircle, Loader2, Clock, Calendar, Trophy, Info,
@@ -1168,6 +1168,7 @@ export default function FestivalPublic() {
 
       {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
       {activeTab !== 'overview' && !isFestivalModalOpen && (
+        <DockPortal>
         <div
           className="lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
@@ -1210,6 +1211,7 @@ export default function FestivalPublic() {
             </div>
           </div>
         </div>
+        </DockPortal>
       )}
 
       {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}

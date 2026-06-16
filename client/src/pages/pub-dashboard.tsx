@@ -651,6 +651,7 @@ export default function PubDashboard() {
 
       {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
       {activeTab !== 'overview' && !isAnyModalOpen && (
+        <DockPortal>
         <div
           className="lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
@@ -700,6 +701,7 @@ export default function PubDashboard() {
             </div>
           </div>
         </div>
+        </DockPortal>
       )}
 
       {/* ── BOTTOM DOCK DASHBOARD PUB — stesso pattern di BottomNavigation ── */}

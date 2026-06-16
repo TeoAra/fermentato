@@ -734,6 +734,7 @@ export default function UserDashboard() {
 
       {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
       {activeTab !== 'overview' && !isUserModalOpen && (
+        <DockPortal>
         <div
           className="lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
@@ -774,6 +775,7 @@ export default function UserDashboard() {
             </div>
           </div>
         </div>
+        </DockPortal>
       )}
 
       {/* ── BOTTOM DOCK DASHBOARD UTENTE — stesso pattern di BottomNavigation ── */}

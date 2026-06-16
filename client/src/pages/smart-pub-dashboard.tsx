@@ -2129,6 +2129,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
       {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
       {currentSection !== 'overview' && !isAnyModalOpen && (
+        <DockPortal>
         <div
           className="lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
@@ -2174,6 +2175,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
           </div>
         </div>
+        </DockPortal>
       )}
 
       {/* ── BOTTOM DOCK DASHBOARD PUB — stesso pattern di BottomNavigation ── */}

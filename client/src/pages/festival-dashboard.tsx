@@ -27,7 +27,7 @@ import {
   X, Search, ChevronDown, Clock, Monitor, Copy, Heart, MessageSquare, Reply, Send, Tv,
   Home as HomeIcon, Info as InfoIcon, ArrowLeft, Share2, ChevronRight,
 } from "lucide-react";
-import { useAnyModalOpen } from "@/components/bottom-navigation";
+import { useAnyModalOpen, DockPortal } from "@/components/bottom-navigation";
 import { Capacitor } from "@capacitor/core";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -2089,6 +2089,7 @@ export default function FestivalDashboard() {
 
       {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
       {selectedFest && activeTab !== 'overview' && !isFestModalOpen && (
+        <DockPortal>
         <div
           className="lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
@@ -2131,6 +2132,7 @@ export default function FestivalDashboard() {
             </div>
           </div>
         </div>
+        </DockPortal>
       )}
 
       {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
