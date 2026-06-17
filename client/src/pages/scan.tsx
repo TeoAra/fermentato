@@ -4,6 +4,7 @@ import { Scan, Beer, Building2, ArrowLeft, Search, X, Lock, LogIn, PlusCircle, H
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import LabelScanner from "@/components/LabelScanner";
+import { DockPortal } from "@/components/bottom-navigation";
 import AdditionRequestModal from "@/components/AdditionRequestModal";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
@@ -516,7 +517,11 @@ export default function ScanPage() {
   }
 
   if (scanState === "camera") {
-    return <LabelScanner onResult={handleScanResult} onClose={handleCloseScanner} onBarcodeFound={handleBarcodeFound} />;
+    return (
+      <DockPortal>
+        <LabelScanner onResult={handleScanResult} onClose={handleCloseScanner} onBarcodeFound={handleBarcodeFound} />
+      </DockPortal>
+    );
   }
 
   return (
