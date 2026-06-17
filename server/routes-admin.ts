@@ -1399,6 +1399,109 @@ export function registerAdminRoutes(app: Express) {
   });
 
   // ========================================
+  // Admin ARCHIVE endpoints (soft-archive reversibile)
+  // ========================================
+
+  // GET /api/admin/breweries/suspicious — deve stare PRIMA di /:id
+  app.get("/api/admin/breweries/suspicious", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const rows = await db.execute(sql`
+        SELECT
+          b.id,
+          b.name,
+          b.country,
+          b.city,
+          b.logo_url AS "logoUrl",
+          b.is_closed AS "isClosed",
+          b.closed_source AS "closedSource",
+          COUNT(DISTINCT br.id) FILTER (WHERE br.is_discontinued = false) AS active_beers,
+          COUNT(DISTINCT br.id) AS total_beers,
+          COUNT(DISTINCT be.id) AS events
+        FROM breweries b
+        LEFT JOIN beers br ON br.brewery_id = b.id
+        LEFT JOIN brewery_events be ON be.brewery_id = b.id
+          AND be.start_time > NOW() - INTERVAL '1 year'
+        WHERE b.is_closed = false
+        GROUP BY b.id
+        HAVING
+          COUNT(DISTINCT br.id) FILTER (WHERE br.is_discontinued = false) = 0
+          OR (COUNT(DISTINCT br.id) = 0 AND COUNT(DISTINCT be.id) = 0)
+        ORDER BY b.name
+        LIMIT 200
+      `);
+      res.json(rows.rows ?? rows);
+    } catch (err) {
+      console.error("suspicious breweries error:", err);
+      res.status(500).json({ message: "Errore nel recupero dei candidati sospetti" });
+    }
+  });
+
+  app.patch("/api/admin/breweries/:id/archive", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "ID non valido" });
+      const { archived } = req.body as { archived: boolean };
+
+      if (archived) {
+        // Archivia birrificio
+        await db.update(breweries).set({
+          isClosed: true,
+          closedSource: "admin",
+          closedAt: new Date(),
+        }).where(eq(breweries.id, id));
+
+        // Cascade: archivia birre attive (non quelle già archiviate manualmente)
+        await db.execute(sql`
+          UPDATE beers
+          SET is_discontinued = true, discontinued_source = 'cascade'
+          WHERE brewery_id = ${id}
+            AND is_discontinued = false
+        `);
+      } else {
+        // Ripristina birrificio
+        await db.update(breweries).set({
+          isClosed: false,
+          closedSource: null,
+          closedAt: null,
+        }).where(eq(breweries.id, id));
+
+        // Ripristina solo le birre archiviate dalla cascade (non quelle archiviate manualmente)
+        await db.execute(sql`
+          UPDATE beers
+          SET is_discontinued = false, discontinued_source = null
+          WHERE brewery_id = ${id}
+            AND discontinued_source = 'cascade'
+        `);
+      }
+
+      bustCatalogCaches();
+      res.json({ id, archived });
+    } catch (err) {
+      console.error("archive brewery error:", err);
+      res.status(500).json({ message: "Errore durante l'archiviazione" });
+    }
+  });
+
+  app.patch("/api/admin/beers/:id/archive", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "ID non valido" });
+      const { archived } = req.body as { archived: boolean };
+
+      await db.update(beers).set({
+        isDiscontinued: archived,
+        discontinuedSource: archived ? "admin" : null,
+      }).where(eq(beers.id, id));
+
+      bustCatalogCaches();
+      res.json({ id, archived });
+    } catch (err) {
+      console.error("archive beer error:", err);
+      res.status(500).json({ message: "Errore durante l'archiviazione" });
+    }
+  });
+
+  // ========================================
   // Admin DELETE endpoints
   // ========================================
 

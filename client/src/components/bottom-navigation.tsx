@@ -1,10 +1,11 @@
-import { User, Home, Bell, Activity as ActivityIcon, ScanLine } from "lucide-react";
+import { User, Home, Bell, ScanLine, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
+import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
 
 /**
  * Renderizza i dock interni dei dashboard tramite portal direttamente in
@@ -80,6 +81,7 @@ export function useAnyModalOpen(): boolean {
 export function BottomNavigation() {
   const [location] = useLocation();
   const { isAuthenticated, user } = useAuth();
+  const [searchOpen, setSearchOpen] = useState(false);
   const anyModalOpen = useAnyModalOpen();
   const { isHidden } = useContext(BottomNavHideCtx);
 
@@ -122,11 +124,11 @@ export function BottomNavigation() {
     return location.startsWith(path);
   };
 
-  const homeActive     = isActive("/");
-  const notifActive    = isActive("/notifications");
-  const scanActive     = isActive("/scan");
-  const attivitaActive = isActive("/activity");
-  const accountActive  = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
+  const homeActive    = isActive("/");
+  const notifActive   = isActive("/notifications");
+  const cercaActive   = searchOpen;
+  const scanActive    = isActive("/scan");
+  const accountActive = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
 
   const Tab = ({
     active,
@@ -165,6 +167,11 @@ export function BottomNavigation() {
 
   return (
     <>
+      {searchOpen && (
+        <Suspense fallback={null}>
+          <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
+        </Suspense>
+      )}
       <nav
         className={cn(
           "bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-transform duration-200",
@@ -216,17 +223,15 @@ export function BottomNavigation() {
           {/* Spacer for FAB Cerca */}
           <div className="w-16 flex-shrink-0" aria-hidden="true" />
 
-          {/* Attività */}
-          <Link href="/activity" className="flex-1 flex">
+          {/* Scanner */}
+          <Link href="/scan" className="flex-1 flex">
             <Tab
-              active={attivitaActive}
-              label="Attività"
+              active={scanActive}
+              label="Scanner"
               icon={
-                <ActivityIcon
+                <ScanLine
                   className="h-[22px] w-[22px]"
-                  strokeWidth={attivitaActive ? 2.5 : 1.8}
-                  fill={attivitaActive ? "currentColor" : "none"}
-                  style={attivitaActive ? { fillOpacity: 0.12 } : {}}
+                  strokeWidth={scanActive ? 2.5 : 1.8}
                 />
               }
             />
@@ -260,24 +265,15 @@ export function BottomNavigation() {
             />
           </Link>
 
-          {/* FAB Scanner — centrale, sporge sopra la barra */}
-          <Link href="/scan" className="absolute left-1/2 -translate-x-1/2 -top-7">
-            <button
-              type="button"
-              aria-label="Scanner birra"
-              className={cn(
-                "w-14 h-14 rounded-full text-white flex items-center justify-center border-4 border-white dark:border-[#0B0D10] transition-transform active:scale-95 z-[1]",
-                scanActive
-                  ? "bg-primary shadow-[0_8px_24px_rgba(232,119,34,0.6)]"
-                  : "bg-primary shadow-[0_8px_20px_rgba(232,119,34,0.45)]"
-              )}
-            >
-              <ScanLine
-                className="w-6 h-6"
-                strokeWidth={2.2}
-              />
-            </button>
-          </Link>
+          {/* FAB Cerca — centrale, sporge sopra la barra */}
+          <button
+            type="button"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Cerca"
+            className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-[0_8px_20px_rgba(232,119,34,0.45)] border-4 border-white dark:border-[#0B0D10] transition-transform active:scale-95 z-[1]"
+          >
+            <Search className="w-6 h-6" strokeWidth={2.5} />
+          </button>
 
         </div>
       </nav>
