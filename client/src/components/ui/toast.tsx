@@ -16,7 +16,7 @@ const ToastViewport = React.forwardRef<
     className={cn(
       // Mobile: top-0 + padding-top che rispetta safe-area-inset-top (notch/Dynamic Island)
       // così i toast non finiscono sotto la status bar. Desktop (sm+): in basso a destra.
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col sm:p-4 md:max-w-[420px]",
+      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col sm:p-4 md:max-w-[420px] [will-change:transform] [-webkit-transform:translateZ(0)] [transform:translateZ(0)]",
       className
     )}
     {...props}

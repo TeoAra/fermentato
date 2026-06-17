@@ -63,6 +63,7 @@ export default function FlexiblePriceManager({
       alert('Inserisci almeno una taglia con prezzo');
       return;
     }
+    (document.activeElement as HTMLElement)?.blur();
     onSave(validPrices);
   };
 
