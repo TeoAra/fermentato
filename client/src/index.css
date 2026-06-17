@@ -700,6 +700,9 @@ html.dark {
       transform: translateZ(0);
       -webkit-backface-visibility: hidden;
       backface-visibility: hidden;
+      will-change: transform;
+      /* Prevents iOS address-bar resize from momentarily un-fixing the nav */
+      -webkit-overflow-scrolling: touch;
     }
   }
 

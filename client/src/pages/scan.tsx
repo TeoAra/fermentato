@@ -526,8 +526,8 @@ export default function ScanPage() {
 
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-gray-950">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-b border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
+      {/* Header — sticky sotto il MobileHeader (fixed z-50) */}
+      <div className="sticky z-20 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-b border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200" style={{ top: 'var(--mobile-top-offset)' }}>
         <div className="flex items-center gap-3 px-4 py-3">
           <button
             onClick={handleRescan}
