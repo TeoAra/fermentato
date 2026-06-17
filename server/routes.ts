@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { searchRateLimit } from "./middleware/rate-limit";
 import { createServer, type Server } from "http";
 import { existsSync, readFileSync } from "fs";
@@ -7519,26 +7520,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "Missing image data" });
       }
 
-      // ── 1. PaddleOCR (primary — neural net on VPS) ───────────────────────
+      // ── 1. Gemini 2.0 Flash Vision (primary — context-aware beer label reader) ──
+      const geminiKey = process.env.GEMINI_API_KEY;
+      if (geminiKey) {
+        try {
+          const genAI = new GoogleGenerativeAI(geminiKey);
+          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+          const mimeType = (image.match(/^data:(image\/[^;]+);base64/) ?? [])[1] ?? "image/jpeg";
+          const base64Data = image.replace(/^data:image\/[^;]+;base64,/, "");
+
+          const prompt = `Sei uno scanner specializzato in etichette di birra artigianale (craft beer).
+Analizza questa immagine di un'etichetta, fusto, lattina o bottiglia di birra.
+Estrai SOLO le seguenti informazioni se presenti:
+- Nome della birra
+- Nome del birrificio o produttore
+- Stile birrario (es. IPA, Stout, Pilsner, Weizen, ecc.)
+- Gradazione alcolica (ABV)
+
+Rispondi con UNA SOLA RIGA di testo contenente solo le parole chiave estratte, separate da spazi.
+Non aggiungere spiegazioni, punteggiatura decorativa né formattazione.
+Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispondi con stringa vuota.`;
+
+          const result = await model.generateContent([
+            { inlineData: { data: base64Data, mimeType } },
+            prompt,
+          ]);
+
+          const geminiText = result.response.text().trim();
+          if (geminiText.length >= 3) {
+            return res.json({ text: geminiText, exitCode: 1, engine: "gemini-2.0-flash" });
+          }
+        } catch (geminiErr: any) {
+          // Quota esaurita o errore temporaneo → fallback a PaddleOCR
+          console.warn("[scan/ocr] Gemini error, falling back:", geminiErr?.message ?? geminiErr);
+        }
+      }
+
+      // ── 2. PaddleOCR (fallback — neural OCR locale) ───────────────────────
       const paddle = await runPaddleOCR(image);
       if (paddle.available && paddle.text.trim().length >= 3) {
         return res.json({ text: paddle.text, exitCode: 1, engine: "paddleocr" });
       }
 
-      // ── 3. Tesseract fallback (always available on VPS) ───────────────────
+      // ── 3. Tesseract (sempre disponibile) ────────────────────────────────
       const tesseractText = await runLocalTesseract(image);
       if (tesseractText && tesseractText.trim().length >= 3) {
         return res.json({ text: tesseractText, exitCode: 1, engine: "tesseract" });
       }
 
-      // ── 4. OCR.space cloud (only if personal key set) ─────────────────────
-      const apiKey = process.env.OCR_SPACE_KEY;
-      if (!apiKey) {
+      // ── 4. OCR.space cloud (solo se key configurata) ──────────────────────
+      const ocrSpaceKey = process.env.OCR_SPACE_KEY;
+      if (!ocrSpaceKey) {
         return res.json({ text: tesseractText || "", exitCode: 0, engine: paddle.available ? "paddleocr" : "tesseract" });
       }
 
       const params = new URLSearchParams();
-      params.append("apikey", apiKey);
+      params.append("apikey", ocrSpaceKey);
       params.append("base64Image", image);
       params.append("language", "ita");
       params.append("OCREngine", "2");

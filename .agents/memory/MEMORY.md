@@ -4,4 +4,4 @@
 - [Android FCM native push](android-fcm-push.md) — "invalid API key" = build via build-apk.sh (not gradlew); real-vs-placeholder google-services.json detection needs >1 signal (placeholder key also starts with AIza).
 - [beer_reviews table missing](beer-reviews-missing.md) — beer_reviews is referenced in raw SQL in routes.ts but doesn't exist in the DB; any query against it must use .catch(() => 0) or similar fallback.
 - [Nullable boolean gate](nullable-boolean-gate.md) — gate Drizzle nullable booleans with `=== false`, never `!field` (null/undefined would false-positive).
-- [Gemini fully removed](gemini-removed.md) — all Gemini API calls removed from the codebase; GEMINI_API_KEY no longer needed; bot uses regex parser, OCR uses PaddleOCR/Tesseract, image finders use Untappd+DDG only.
+- [Gemini OCR only](gemini-removed.md) — Gemini 2.0 Flash Vision re-added as primary engine in /api/scan/ocr only (beer label prompt); GEMINI_API_KEY required. Bot still uses regex, image finders still use Untappd+DDG.
