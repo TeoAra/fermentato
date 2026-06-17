@@ -332,7 +332,7 @@ export default function LabelScanner({ onResult, onClose, onBarcodeFound }: Labe
     <div className="fixed inset-0 z-[60] bg-black flex flex-col select-none">
 
       {/* ── Top bar ─────────────────────────────────────────────── */}
-      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-safe-top pt-3 pb-3 bg-gradient-to-b from-black/80 to-transparent">
+      <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pb-3 bg-gradient-to-b from-black/80 to-transparent" style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)" }}>
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center">
             <Scan className="h-4 w-4 text-amber-400" />
