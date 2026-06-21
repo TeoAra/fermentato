@@ -14,9 +14,16 @@ const ToastViewport = React.forwardRef<
   <ToastPrimitives.Viewport
     ref={ref}
     className={cn(
-      // Mobile: top-0 + padding-top che rispetta safe-area-inset-top (notch/Dynamic Island)
-      // così i toast non finiscono sotto la status bar. Desktop (sm+): in basso a destra.
-      "fixed top-0 z-[100] flex max-h-screen w-full flex-col-reverse px-4 pb-4 pt-[calc(env(safe-area-inset-top)+1rem)] sm:bottom-0 sm:right-0 sm:top-auto sm:flex-col sm:p-4 md:max-w-[420px] [will-change:transform] [-webkit-transform:translateZ(0)] [transform:translateZ(0)]",
+      // Mobile: posizionato SOTTO l'header (calc safe-area + 3.5rem altezza header + 0.5rem gap)
+      // NON a top-0 — evita il re-compositing GPU dell'header e della bottom nav su iOS Safari.
+      // contain:layout_style_paint isola completamente questo layer: le animazioni interne
+      // non propagano un reflow agli elementi fixed esterni (header z-50, bottom nav z-55).
+      // max-h rimosso (100vh su iOS può scatenare un resize del visual viewport).
+      // Desktop (sm+): bottom-right classico.
+      "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem+0.5rem)] z-[90] flex flex-col gap-2 px-4 " +
+      "sm:bottom-4 sm:right-4 sm:left-auto sm:top-auto sm:flex-col sm:w-auto sm:max-w-[420px] sm:gap-0 sm:p-0 " +
+      "[-webkit-transform:translateZ(0)] [transform:translateZ(0)] [will-change:transform] " +
+      "[contain:layout_style_paint]",
       className
     )}
     {...props}
@@ -25,7 +32,16 @@ const ToastViewport = React.forwardRef<
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName
 
 const toastVariants = cva(
-  "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+  // p-3 su mobile (meno ingombrante), p-6 su desktop.
+  // Animazione: solo opacity (fade) su mobile — evita che transform:translateY
+  // del slide-in crei un nuovo layer GPU che interferisce con header/bottomnav su iOS.
+  // Su desktop (sm+) si usa anche lo slide standard.
+  "group pointer-events-auto relative flex w-full items-center justify-between space-x-3 overflow-hidden rounded-xl border p-3 pr-7 shadow-lg transition-all " +
+  "sm:space-x-4 sm:rounded-md sm:p-6 sm:pr-8 " +
+  "data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none " +
+  "data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out " +
+  "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 " +
+  "data-[state=open]:duration-200 data-[state=closed]:duration-150",
   {
     variants: {
       variant: {

@@ -703,6 +703,9 @@ html.dark {
       will-change: transform;
       /* Prevents iOS address-bar resize from momentarily un-fixing the nav */
       -webkit-overflow-scrolling: touch;
+      /* Isola il layer dalla GPU: le animazioni di altri fixed (toast, dialog)
+         non forzano il re-compositing di questa barra */
+      contain: layout style;
     }
   }
 
