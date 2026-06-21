@@ -387,8 +387,18 @@ html.dark {
     transition-duration: 0ms !important;
     transition-delay: 0ms !important;
   }
-  /* Elimina anche l'animazione degli overlay bottom (push prompt, ecc.) */
-  [data-capacitor="true"] .animate-in {
+  /* Elimina l'animazione degli overlay bottom (push prompt, ecc.) E di TUTTI gli
+     overlay Radix (dialog / sheet / alert-dialog), che usano le classi variant
+     data-[state=*]:animate-in / animate-out — matchate via [class*="animate-in"]
+     perché il nome di classe NON è il semplice ".animate-in" ma
+     "data-[state=open]:animate-in". Su iOS WKWebView ogni animazione con
+     transform (zoom-in-95 / slide-in-from-bottom) crea un nuovo layer GPU →
+     Safari ri-valuta env(safe-area-*) → header e bottom bar "saltano"
+     all'apertura di un dialog/sheet. Niente animazione su native = nessun nuovo
+     layer = chrome stabile (e nessun touch-freeze su Android WebView). */
+  [data-capacitor="true"] .animate-in,
+  [data-capacitor="true"] [class*="animate-in"],
+  [data-capacitor="true"] [class*="animate-out"] {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

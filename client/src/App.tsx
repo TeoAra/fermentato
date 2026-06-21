@@ -564,16 +564,21 @@ function App() {
   useEffect(() => {
     function readSafeArea(): { sat: number; sab: number } {
       const el = document.createElement('div');
+      // Probe DENTRO al viewport (1px in alto a sinistra, opacity:0), agganciato
+      // a document.body. Alcune build WKWebView NON risolvono env() su elementi
+      // fuori schermo / visibility:hidden, ritornando 0 → la freeze restava a 0,
+      // l'header cadeva sul fallback env() live e SALTAVA agli overlay. Un probe
+      // visibile-ma-trasparente dentro al viewport legge l'inset reale.
       el.style.cssText =
-        'position:fixed;top:-9999px;left:-9999px;' +
-        'pointer-events:none;visibility:hidden;' +
+        'position:fixed;top:0;left:0;width:1px;height:1px;' +
+        'pointer-events:none;opacity:0;z-index:-1;' +
         'padding-top:env(safe-area-inset-top,0px);' +
         'padding-bottom:env(safe-area-inset-bottom,0px);';
-      document.documentElement.appendChild(el);
+      (document.body || document.documentElement).appendChild(el);
       const cs = getComputedStyle(el);
       const sat = parseFloat(cs.paddingTop) || 0;
       const sab = parseFloat(cs.paddingBottom) || 0;
-      document.documentElement.removeChild(el);
+      el.remove();
       return { sat, sab };
     }
 
@@ -617,11 +622,13 @@ function App() {
 
     // Campionamento al boot: immediato + rAF + 80/250/750ms (WKWebView espone
     // gli inset solo dopo il primo layout).
+    // Campionamento al boot + tardivo: WKWebView espone gli inset solo dopo il
+    // primo layout — su alcuni device anche dopo 1–3s, o solo al primo tocco /
+    // resume dell'app. Campioniamo a più riprese (max-non-zero vince) così la
+    // freeze cattura il valore positivo non appena diventa disponibile.
     sample();
     requestAnimationFrame(sample);
-    const t1 = setTimeout(sample, 80);
-    const t2 = setTimeout(sample, 250);
-    const t3 = setTimeout(sample, 750);
+    const timers = [80, 250, 750, 1500, 3000].map((d) => window.setTimeout(sample, d));
 
     const onOrient = () => setTimeout(resampleFromScratch, 200);
     window.addEventListener('orientationchange', onOrient);
@@ -629,13 +636,37 @@ function App() {
     // non declassa mai l'header a 0.
     const onVV = () => sample();
     window.visualViewport?.addEventListener('resize', onVV);
+    const onLoad = () => sample();
+    window.addEventListener('load', onLoad);
+    // Ritorno in foreground / cambio tab: gli inset possono essere esposti ora.
+    const onVis = () => { if (document.visibilityState === 'visible') sample(); };
+    document.addEventListener('visibilitychange', onVis);
+    // Primo tocco: alcune WKWebView espongono gli inset solo dopo interazione.
+    const onFirstTouch = () => sample();
+    window.addEventListener('pointerdown', onFirstTouch, { once: true });
+    window.addEventListener('touchstart', onFirstTouch, { once: true } as any);
+
+    // Capacitor: ri-campiona al resume dell'app (gli inset possono cambiare
+    // quando l'app torna in foreground). Nessun import: plugin globale opzionale.
+    let removeResume: (() => void) | null = null;
+    try {
+      const appPlugin = (window as any).Capacitor?.Plugins?.App;
+      if (appPlugin?.addListener) {
+        Promise.resolve(appPlugin.addListener('resume', sample))
+          .then((h: any) => { removeResume = () => { try { h?.remove?.(); } catch {} }; })
+          .catch(() => {});
+      }
+    } catch {}
 
     return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
+      timers.forEach((t) => clearTimeout(t));
       window.removeEventListener('orientationchange', onOrient);
       window.visualViewport?.removeEventListener('resize', onVV);
+      window.removeEventListener('load', onLoad);
+      document.removeEventListener('visibilitychange', onVis);
+      window.removeEventListener('pointerdown', onFirstTouch);
+      window.removeEventListener('touchstart', onFirstTouch as any);
+      removeResume?.();
     };
   }, []);
 

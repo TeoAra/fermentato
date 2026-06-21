@@ -2127,11 +2127,17 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </div>
       </div>
 
-      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ── */}
-      {currentSection !== 'overview' && !isAnyModalOpen && (
+      {/* ── STICKY MINI TOP BAR (mobile, non-overview) ──
+          Resta SEMPRE montata (niente unmount su modale): l'unmount/remount a
+          metà animazione di un overlay provocava un flash/re-render del chrome
+          ("si muove"). Si nasconde solo via opacity, come il dock; gli overlay
+          z-[60] la coprono comunque. */}
+      {currentSection !== 'overview' && (
         <DockPortal>
         <div
-          className="lg:hidden fixed inset-x-0 z-[49]"
+          className={`lg:hidden fixed inset-x-0 z-[49] transition-opacity duration-200 ${
+            isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
+          }`}
           style={{ top: 'var(--mobile-top-offset)' }}
         >
           <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">

@@ -33,8 +33,13 @@ ensure every live hit is a frozen var (only readers/defaults/comments may keep r
 
 **Gotcha when reading the inset in JS:** `getComputedStyle(root).getPropertyValue('--sat')` returns
 the raw CSS token (e.g. the literal `env(safe-area-inset-top)`), NOT a px value. To get the real
-pixels, create a dummy off-DOM element with `padding-top:env(safe-area-inset-top)` and read its
-computed `paddingTop`.
+pixels, create a dummy element with `padding-top:env(safe-area-inset-top)` and read its computed
+`paddingTop`. The probe element must be **IN the viewport** (`position:fixed;top:0;left:0;width:1px;
+height:1px;opacity:0;pointer-events:none`, appended to `document.body`) — an off-screen
+`visibility:hidden` probe at `top:-9999px` on `<html>` returns `0` on some WKWebView builds, so the
+freeze never gets a positive value. Also sample late and on lifecycle events (rAF + 80/250/750/1500/
+3000ms timers, `load`, `visibilitychange`, first `pointerdown`/`touchstart`, Capacitor App `resume`):
+some builds expose insets only after first layout / first touch / foreground resume.
 
 ## Refinement — NEVER write `0` (it clobbers the env() fallback → permanent overlap)
 
@@ -57,3 +62,26 @@ An overlap on a notched device proves the WebView IS edge-to-edge, so the real `
 only the probe read was wrong. If `env()` is genuinely 0 everywhere, the remaining fix is native
 StatusBar/WebView config (NOT in this repo). All of this is web-layer → reaches the native app only
 after a manual VPS deploy of fermenta.to.
+
+## Refinement #2 — the JUMP comes back if the probe never reads positive (overlap fix's tradeoff)
+
+The "never write 0" overlap fix has a tradeoff: if the probe reads 0 forever, the chrome stays on
+live `env()`, and then the original GPU-layer JUMP returns whenever an overlay opens. A user reported
+exactly this (header + bottom bar "si muove" on editing a menu item → opening a dialog/sheet). So the
+overlap fix alone is not enough on probe-failing devices; ship all three together:
+1. **Harden the probe** (see in-viewport probe + late/lifecycle sampling above) so the freeze actually
+   gets a positive px and the chrome stops reading live `env()`.
+2. **Kill transform animations on native.** Any transform-based enter/exit (Radix `zoom-in-95`,
+   `slide-in-from-bottom`, etc.) creates a new GPU compositing layer → `env()` re-eval → jump. The
+   repo already had `[data-capacitor="true"] .animate-in { animation:none; transform:none }` but it
+   **missed Radix overlays**: their class is the Tailwind *variant* `data-[state=open]:animate-in`,
+   not the plain `.animate-in`. Match the variant with `[class*="animate-in"]`/`[class*="animate-out"]`.
+   (opacity-only fade is fine; only *transform* / new layers trigger the re-eval.)
+3. **Never hard-unmount fixed chrome on modal open.** Even a `position:fixed` bar that occupies no
+   layout flow causes a flash + re-render when unmounted/remounted mid-overlay-animation. Keep it
+   mounted and hide via `opacity`/`pointer-events` (overlays at z-[60] cover chrome below anyway).
+
+**Why:** the env() re-eval needs BOTH a live-`env()` consumer AND a new-GPU-layer trigger; removing
+either stops the jump, so fixing the probe (removes consumer) and killing native transforms (removes
+trigger) is belt-and-suspenders. **Avoid** `max(var(--frozen-sat), env())` as the primary fix — it
+re-introduces a live-`env()` consumer.
