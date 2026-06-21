@@ -664,6 +664,42 @@ function App() {
       if (debug) console.log('[safe-area] sample', { sat, sab, bestSat, bestSab });
     }
 
+    // Stima di SICUREZZA per iOS nativo: alcune build WKWebView (es. primo avvio
+    // su un device nuovo, iPhone 17 / iOS 26) riportano env(safe-area-inset-*) = 0
+    // per TUTTA la sessione. Senza nulla in cache la freeze resterebbe 0 e la
+    // chrome si sovrapporrebbe alla status bar / Dynamic Island. In quel caso
+    // stimiamo l'inset dalla classe del device (solo per non avere MAI overlap).
+    // NB: usata SOLO come ultima spiaggia (probe e cache falliti) e MAI persistita
+    // in cache — qualunque misura reale la sovrascrive subito (vince sempre).
+    function estimateIosInsets(): { sat: number; sab: number } | null {
+      const isIos = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
+      if (!isIos) return null;
+      const w = window.screen?.width ?? 0;
+      const h = window.screen?.height ?? 0;
+      const long = Math.max(w, h), short = Math.min(w, h);
+      if (!long || !short) return null;
+      const ratio = long / short;
+      // Notch / Dynamic Island (aspect ratio ≥ ~1.9): usiamo il valore più alto
+      // (Dynamic Island ≈ 59px) così non si sovrappone mai; qualche px in più su
+      // un device a notch (≈44px) è solo cosmetico e viene corretto da env().
+      if (ratio >= 1.9) return { sat: 59, sab: 34 };
+      // Device con tasto home (SE/8): status bar piccola, niente home indicator.
+      return { sat: 20, sab: 0 };
+    }
+
+    // Applica la stima SOLO in portrait (in landscape gli inset top/bottom sono
+    // ~0) e SOLO se non abbiamo ancora un valore misurato/cache (>0).
+    function applyFallbackIfNeeded() {
+      const portrait = window.matchMedia?.('(orientation: portrait)')?.matches ?? true;
+      if (!portrait) return;
+      if (bestSat > 0 && bestSab > 0) return;
+      const est = estimateIosInsets();
+      if (!est) return;
+      if (bestSat === 0 && est.sat > 0) root.style.setProperty('--frozen-sat', est.sat + 'px');
+      if (bestSab === 0 && est.sab > 0) root.style.setProperty('--frozen-sab', est.sab + 'px');
+      if (debug) console.log('[safe-area] fallback', est, { bestSat, bestSab });
+    }
+
     // La rotazione cambia davvero gli inset (in landscape il notch va sul lato →
     // top/bottom ~0). Rimuoviamo il px congelato (var tornano a env() live),
     // applichiamo la cache del NUOVO orientamento (landscape non ne ha → resta
@@ -678,6 +714,7 @@ function App() {
       requestAnimationFrame(sample);
       setTimeout(sample, 120);
       setTimeout(sample, 350);
+      setTimeout(applyFallbackIfNeeded, 400);
     }
 
     // Boot: applica SUBITO la cache (fix overlap anche se il probe leggerà 0 per
@@ -689,6 +726,8 @@ function App() {
     sample();
     requestAnimationFrame(sample);
     const timers = [80, 250, 750, 1500, 3000].map((d) => window.setTimeout(sample, d));
+    // Stima di sicurezza iOS nativo se probe+cache restano 0 (no overlap mai).
+    const fbTimers = [400, 1200, 3200].map((d) => window.setTimeout(applyFallbackIfNeeded, d));
 
     const onOrient = () => setTimeout(resampleFromScratch, 200);
     window.addEventListener('orientationchange', onOrient);
@@ -720,6 +759,7 @@ function App() {
 
     return () => {
       timers.forEach((t) => clearTimeout(t));
+      fbTimers.forEach((t) => clearTimeout(t));
       window.removeEventListener('orientationchange', onOrient);
       window.visualViewport?.removeEventListener('resize', onVV);
       window.removeEventListener('load', onLoad);

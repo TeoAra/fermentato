@@ -107,3 +107,19 @@ header is correctly offset on every later boot even if the probe fails all sessi
   before reading computed padding.
 - Debug aid: gate `console.log` of measured/cached insets behind a `?sadebug` URL flag for on-device
   diagnosis in production (web-layer change → reaches native app only after a manual VPS deploy).
+
+## Refinement #4 — a web-only fix CANNOT fully cover a fresh device whose env() is 0 all session
+
+The cache (Refinement #3) only helps once the probe has read a positive value at least once. A brand-new
+install (empty localStorage) on a device whose WKWebView reports `env(safe-area-inset-*)=0` for the entire
+first session has nothing to fall back to → overlap. Confirmed reproduced on a fresh iPhone 17.
+**Last-resort safety net (web-only):** when `Capacitor.isNativePlatform() && getPlatform()==='ios'` and the
+probe+cache are still 0, apply a device-class estimate from the orientation-stable `screen` long/short ratio
+(ratio ≥ 1.9 → notch/Dynamic Island → sat 59 / sab 34; else home-button → sat 20 / sab 0). Rules that keep it
+safe: **portrait-only** (landscape insets are ~0), **never written to localStorage** (estimate ≠ measurement),
+and it sets the CSS var WITHOUT mutating bestSat/bestSab so any later real `env()` measurement overwrites it
+(corrects 59→44 down). Use the TALLEST value per class so it never *under*-pads (overlap); a few extra px on a
+notch device is cosmetic and self-corrects.
+**Why:** purely web-layer code can't read the true inset when WKWebView won't expose it; the only fully
+reliable fix is native (a Capacitor StatusBar / safe-area plugin in the iOS project) — but the native project
+is NOT in this repo, so the estimate is the best available web-only mitigation.
