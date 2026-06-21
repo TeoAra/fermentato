@@ -312,11 +312,12 @@ html.dark {
 
   html {
     height: -webkit-fill-available;
-    /* Prevent horizontal rubber-banding and accidental
-       left/right swipe on iOS/Android */
-    overflow-x: hidden;
-    /* Ensure only vertical scroll by default at the root level */
-    touch-action: pan-y;
+    /* NOTE: overflow-x MUST NOT be set on html — on iOS WebKit it would
+       make <html> the scroll container (overflow-x:hidden implies overflow-y:auto),
+       breaking native momentum scroll. overflow-x is set on body instead.
+       Similarly, touch-action on html propagates to ALL descendants (the browser
+       collects touch-action from every ancestor in the event path) and would
+       break horizontal scroll containers (filter pills, carousels, etc.). */
   }
 
   body {
@@ -599,6 +600,13 @@ html.dark {
     transition: background-color 300ms ease, border-color 300ms ease, color 50ms ease;
   }
   .no-transition *, .theme-transitioning .no-transition * { transition: none !important; }
+
+  /* ── FindBeerSheet aperta: copre la bottom nav (che ha will-change:transform
+     creando un nuovo compositing layer che ignora z-index dei fratelli) ── */
+  .find-beer-open .bottom-nav-fixed {
+    visibility: hidden;
+    pointer-events: none;
+  }
 
   /* ── Section header standard ── */
   .section-title {

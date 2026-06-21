@@ -265,15 +265,26 @@ export default function FoodMenuSection({
               Chiedi al nostro staff per informazioni sugli allergeni dei nostri piatti.
             </p>
             <div className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5">
-              {(allergensIndex && Object.keys(allergensIndex).length > 0
-                ? Object.values(allergensIndex).map(a => ({ emoji: a.emoji || '⚠️', label: a.name || '' }))
-                : ALLERGEN_LEGEND
-              ).filter(a => a.label).map((a) => (
-                <div key={a.label} className="flex items-center gap-1.5 text-[11px] text-[#6B6357] dark:text-[#B7BDC7]">
-                  <span className="text-sm">{a.emoji}</span>
-                  <span className="truncate">{a.label}</span>
-                </div>
-              ))}
+              {(() => {
+                const raw = (allergensIndex && Object.keys(allergensIndex).length > 0
+                  ? Object.values(allergensIndex).map(a => ({ emoji: a.emoji || '⚠️', label: a.name || '' }))
+                  : ALLERGEN_LEGEND
+                ).filter(a => a.label);
+                // Dedup per nome normalizzato: il DB può avere 2 row per lo stesso
+                // allergene con capitalizzazione diversa (es. "Frutta a guscio" / "Frutta a Guscio")
+                const seen = new Set<string>();
+                return raw.filter(a => {
+                  const k = a.label.trim().toLowerCase();
+                  if (seen.has(k)) return false;
+                  seen.add(k);
+                  return true;
+                }).map((a) => (
+                  <div key={a.label} className="flex items-center gap-1.5 text-[11px] text-[#6B6357] dark:text-[#B7BDC7]">
+                    <span className="text-sm">{a.emoji}</span>
+                    <span className="truncate">{a.label}</span>
+                  </div>
+                ));
+              })()}
             </div>
           </div>
         </div>

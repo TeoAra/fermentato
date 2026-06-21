@@ -3,6 +3,17 @@ import App from "./App";
 import "./index.css";
 import { Capacitor } from "@capacitor/core";
 
+// ── Migrazione v1: reset tema scuro impostato durante sviluppo/test ──────────
+// Esegue UNA sola volta. Dopo il reset, il toggle utente viene rispettato.
+// Il tema di default è "chiaro" per tutti i nuovi utenti.
+try {
+  const THEME_MIG = 'fermenta-theme-migration-v1';
+  if (!localStorage.getItem(THEME_MIG)) {
+    localStorage.removeItem('fermenta-theme');
+    localStorage.setItem(THEME_MIG, '1');
+  }
+} catch {}
+
 if (Capacitor.isNativePlatform()) {
   // Tag the document so CSS can target Capacitor-specific overrides
   document.documentElement.setAttribute("data-capacitor", "true");

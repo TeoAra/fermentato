@@ -46,6 +46,9 @@ const SHORTCUTS = [
 
 export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBeerSheetProps) {
   const [query, setQuery] = useState("");
+  // debouncedQuery è ciò che viene inviato all'API — si aggiorna 350ms dopo
+  // l'ultima digitazione così evitiamo chiamate su ogni keystroke
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeStyle, setActiveStyle] = useState("");
   const [activeTab, setActiveTab] = useState<"birre" | "birrifici" | "locali" | "utenti">("birre");
   const [recents, setRecents] = useState<Recent[]>([]);
@@ -60,14 +63,27 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
       setRecents(loadRecents());
       setTimeout(() => inputRef.current?.focus(), 320);
       document.body.style.overflow = "hidden";
+      // Nasconde la bottom nav: ha will-change:transform (nuovo compositing layer)
+      // che la fa apparire sopra il backdrop anche se questo è z-[60]
+      document.body.classList.add('find-beer-open');
     } else {
       setQuery("");
       setActiveStyle("");
       setActiveTab("birre");
       document.body.style.overflow = "";
+      document.body.classList.remove('find-beer-open');
     }
-    return () => { document.body.style.overflow = ""; };
+    return () => {
+      document.body.style.overflow = "";
+      document.body.classList.remove('find-beer-open');
+    };
   }, [open]);
+
+  // Debounce query → debouncedQuery (350ms)
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedQuery(query), 350);
+    return () => window.clearTimeout(t);
+  }, [query]);
 
   // Persist recent search after 1.2s of debounce on a meaningful query
   useEffect(() => {
@@ -115,39 +131,39 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
   });
 
   const { data: searchResults, isLoading: searchLoading } = useQuery<{ beers: any[] }>({
-    queryKey: ["/api/search", query],
-    queryFn: () => fetch(`/api/search?q=${encodeURIComponent(query)}`).then(r => r.json()),
-    enabled: !activeStyle && query.length > 1,
+    queryKey: ["/api/search", debouncedQuery],
+    queryFn: () => fetch(`/api/search?q=${encodeURIComponent(debouncedQuery)}`).then(r => r.json()),
+    enabled: !activeStyle && debouncedQuery.length > 1,
     staleTime: 30 * 1000,
   });
 
   const { data: trendingBeers, isLoading: trendingLoading } = useQuery<any[]>({
     queryKey: ["/api/beers/trending"],
     staleTime: 5 * 60 * 1000,
-    enabled: !activeStyle && query.length < 2,
+    enabled: !activeStyle && debouncedQuery.length < 2,
   });
 
   // Ricerca pub per nome (indipendente dal GPS)
   const { data: pubSearchResults, isLoading: pubSearchLoading } = useQuery<any[]>({
-    queryKey: ["/api/pubs/search", query],
-    queryFn: () => fetch(`/api/pubs/search?q=${encodeURIComponent(query)}`).then(r => r.json()),
-    enabled: activeTab === "locali" && query.trim().length > 1,
+    queryKey: ["/api/pubs/search", debouncedQuery],
+    queryFn: () => fetch(`/api/pubs/search?q=${encodeURIComponent(debouncedQuery)}`).then(r => r.json()),
+    enabled: activeTab === "locali" && debouncedQuery.trim().length > 1,
     staleTime: 30 * 1000,
   });
 
   const beers: any[] = activeStyle
     ? (styleBeers ?? [])
-    : query.length > 1
+    : debouncedQuery.length > 1
       ? (searchResults?.beers ?? [])
       : (trendingBeers ?? []);
 
-  const breweries: any[] = (!activeStyle && query.length > 1)
+  const breweries: any[] = (!activeStyle && debouncedQuery.length > 1)
     ? ((searchResults as any)?.breweries ?? [])
     : [];
 
   const isLoading = activeStyle
     ? styleBeerLoading
-    : query.length > 1
+    : debouncedQuery.length > 1
       ? searchLoading
       : trendingLoading;
 
