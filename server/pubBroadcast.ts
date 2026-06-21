@@ -1,6 +1,6 @@
 import { Response } from "express";
 
-type UpdateType = "taplist" | "bottles" | "menu" | "pub";
+type UpdateType = "taplist" | "bottles" | "menu" | "drinks" | "pub";
 
 interface SSEClient {
   res: Response;

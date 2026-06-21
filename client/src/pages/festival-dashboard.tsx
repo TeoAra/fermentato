@@ -793,7 +793,7 @@ function FestivalForm({
       <div>
         <Label className="mb-2 block">Descrizione</Label>
         <RichTextEditor
-          value={form.description}
+          content={form.description}
           onChange={html => setForm(f => ({ ...f, description: html }))}
           placeholder="Descrivi il festival: programma, artisti, info pratiche…"
         />

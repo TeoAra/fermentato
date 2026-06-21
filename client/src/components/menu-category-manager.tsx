@@ -979,7 +979,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                   className="group"
                   draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, index)}
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, index)}

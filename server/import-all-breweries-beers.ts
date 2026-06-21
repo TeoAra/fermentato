@@ -1,7 +1,7 @@
 import { parse } from "csv-parse";
 import { createReadStream } from "fs";
 import { db } from "./db";
-import { beers, breweries } from "@shared/schema";
+import { beers, breweries, type Brewery } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 interface BeerCSVRow {
@@ -106,7 +106,7 @@ async function importAllBreweriesAndBeers() {
           
           // Prima ottieni tutti i birrifici esistenti
           const existingBreweries = await db.select().from(breweries);
-          existingBreweries.forEach(brewery => {
+          existingBreweries.forEach((brewery: Brewery) => {
             breweryIdMap.set(brewery.name, brewery.id);
           });
           

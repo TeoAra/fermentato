@@ -138,10 +138,10 @@ async function fetchFromOpenBreweryDB(): Promise<BreweryData[]> {
   }
 }
 
-async function addWorldBreweries(breweries: BreweryData[]): Promise<number> {
+async function addWorldBreweries(breweryList: BreweryData[]): Promise<number> {
   let addedCount = 0;
   
-  for (const breweryData of breweries) {
+  for (const breweryData of breweryList) {
     try {
       // Verifica se il birrificio esiste già
       const existing = await db
@@ -159,7 +159,7 @@ async function addWorldBreweries(breweries: BreweryData[]): Promise<number> {
             region: breweryData.region,
             country: breweryData.country,
             websiteUrl: breweryData.website_url,
-            phoneNumber: breweryData.phone,
+            phone: breweryData.phone,
             // Aggiungi logo generico basato sul paese
             logoUrl: getCountryBreweryLogo(breweryData.country)
           });
@@ -241,8 +241,8 @@ async function addWorldFamousBeers(): Promise<number> {
 
 function getImageForStyle(style: string): string {
   // Cerca corrispondenza esatta
-  if (BEER_STYLES_IMAGES[style]) {
-    return BEER_STYLES_IMAGES[style];
+  if (BEER_STYLES_IMAGES[style as keyof typeof BEER_STYLES_IMAGES]) {
+    return BEER_STYLES_IMAGES[style as keyof typeof BEER_STYLES_IMAGES];
   }
   
   // Cerca corrispondenza parziale

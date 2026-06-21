@@ -805,7 +805,7 @@ export async function registerSocialRoutes(app: Express) {
   });
 
   app.delete("/api/admin/rss-sources/:id", isAuthenticated, isAdmin, async (req, res) => {
-    await pool.query(`DELETE FROM rss_sources WHERE id = $1`, [parseInt(req.params.id, 10)]);
+    await pool.query(`DELETE FROM rss_sources WHERE id = $1`, [parseInt(String(req.params.id), 10)]);
     res.json({ deleted: true });
   });
 

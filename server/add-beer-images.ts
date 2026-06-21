@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { beers } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 
 // Immagini reali di birre italiane da fonti autentiche
 const REAL_BEER_IMAGES = [
@@ -43,7 +43,7 @@ async function addBeerImages() {
       }
     }
 
-    const beersWithoutImages = await db.select().from(beers).where(eq(beers.imageUrl, null)).limit(100);
+    const beersWithoutImages = await db.select().from(beers).where(isNull(beers.imageUrl)).limit(100);
     for (const beer of beersWithoutImages) {
       const styleKey = Object.keys(STYLE_IMAGES).find(style =>
         beer.style.toLowerCase().includes(style.toLowerCase())

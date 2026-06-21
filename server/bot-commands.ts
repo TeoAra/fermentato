@@ -8,6 +8,7 @@ import {
   tapList, beers, breweries, menuCategories, menuItems,
   botConnections, botLinkTokens, pubs,
 } from "@shared/schema";
+import type { MenuCategory, MenuItem } from "@shared/schema";
 import { eq, and, ilike, asc } from "drizzle-orm";
 import crypto from "crypto";
 
@@ -141,7 +142,21 @@ function norm(s: string | null | undefined): string {
 
 // ── Helpers taplist ───────────────────────────────────────────────────────────
 
-async function getPubTaplist(pubId: number) {
+type TaplistRow = {
+  id: number;
+  beerId: number;
+  beerName: string | null;
+  beerStyle: string | null;
+  breweryName: string | null;
+  isVisible: boolean | null;
+  isActive: boolean | null;
+  priceSmall: string | null;
+  priceMedium: string | null;
+  priceLarge: string | null;
+  prices: Record<string, number> | null;
+};
+
+async function getPubTaplist(pubId: number): Promise<TaplistRow[]> {
   return db
     .select({
       id: tapList.id,
@@ -171,7 +186,7 @@ function buildTaplistContext(items: Awaited<ReturnType<typeof getPubTaplist>>) {
     .join("\n");
 }
 
-function fuzzyFind(name: string, items: { beerName: string | null }[]) {
+function fuzzyFind(name: string, items: TaplistRow[]): TaplistRow | undefined {
   const q = norm(name);
   return items.find(i => norm(i.beerName).includes(q) || q.includes(norm(i.beerName)));
 }
@@ -200,7 +215,7 @@ function scoreBeer(beer: BeerCandidate, beerName: string, brewery?: string): num
 }
 
 async function findBeersInCatalog(beerName: string, brewery?: string): Promise<BeerCandidate[]> {
-  const rows = await db
+  const rows: BeerCandidate[] = await db
     .select({ id: beers.id, name: beers.name, breweryName: breweries.name })
     .from(beers)
     .leftJoin(breweries, eq(beers.breweryId, breweries.id))
@@ -254,7 +269,17 @@ function formatCandidates(candidates: BeerCandidate[]): string {
 
 // ── Helpers menu cibo ─────────────────────────────────────────────────────────
 
-async function getAllFoodItems(pubId: number) {
+type FoodItemRow = {
+  id: number;
+  name: string;
+  description: string | null;
+  price: string;
+  isVisible: boolean | null;
+  isAvailable: boolean | null;
+  categoryId: number;
+};
+
+async function getAllFoodItems(pubId: number): Promise<FoodItemRow[]> {
   return db
     .select({
       id: menuItems.id,
@@ -270,12 +295,12 @@ async function getAllFoodItems(pubId: number) {
     .where(eq(menuCategories.pubId, pubId));
 }
 
-function fuzzyFindItem(name: string, items: { name: string }[]) {
+function fuzzyFindItem(name: string, items: FoodItemRow[]): FoodItemRow | undefined {
   const q = norm(name);
   return items.find(i => norm(i.name).includes(q) || q.includes(norm(i.name)));
 }
 
-async function getPubCategories(pubId: number) {
+async function getPubCategories(pubId: number): Promise<MenuCategory[]> {
   return db
     .select()
     .from(menuCategories)
@@ -283,19 +308,19 @@ async function getPubCategories(pubId: number) {
     .orderBy(asc(menuCategories.orderIndex));
 }
 
-function fuzzyFindCategory(name: string, cats: { name: string }[]) {
+function fuzzyFindCategory(name: string, cats: MenuCategory[]): MenuCategory | undefined {
   const q = norm(name);
   return cats.find(c => norm(c.name).includes(q) || q.includes(norm(c.name)));
 }
 
 async function getFoodMenu(pubId: number) {
-  const cats = await db
+  const cats: MenuCategory[] = await db
     .select()
     .from(menuCategories)
     .where(and(eq(menuCategories.pubId, pubId), eq(menuCategories.isVisible, true)))
     .orderBy(asc(menuCategories.orderIndex));
 
-  const items = await db
+  const items: MenuItem[] = await db
     .select()
     .from(menuItems)
     .where(eq(menuItems.isVisible, true))

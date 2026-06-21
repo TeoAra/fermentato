@@ -23,7 +23,7 @@ interface AllergenSelectorProps {
 export function AllergenSelector({ selectedAllergens, onAllergensChange, className }: AllergenSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
 
-  const { data: allergens = [], isLoading, error } = useQuery({
+  const { data: allergens = [], isLoading, error } = useQuery<Allergen[]>({
     queryKey: ['/api/allergens'],
     queryFn: () => fetch('/api/allergens').then(res => {
       if (!res.ok) throw new Error('Failed to fetch allergens');
@@ -86,7 +86,7 @@ export function AllergenSelector({ selectedAllergens, onAllergensChange, classNa
             <DialogTitle>Seleziona Allergeni</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-2 overflow-y-auto flex-1 min-h-0">
-            {[...new Map(allergens.map((a: Allergen) => [a.id, a])).values()].map((allergen: Allergen) => {
+            {[...new Map(allergens.map((a: Allergen) => [a.id, a] as const)).values()].map((allergen: Allergen) => {
               const isSelected = selectedAllergens.includes(allergen.id.toString());
               return (
                 <Button

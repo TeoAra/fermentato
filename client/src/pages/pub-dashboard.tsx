@@ -832,7 +832,7 @@ function PubAnalyticsTab({ pubId }: { pubId: number }) {
                 <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
                 <Tooltip
                   contentStyle={{ borderRadius: "0.5rem", fontSize: "0.8rem", border: "none", boxShadow: "0 4px 12px rgba(0,0,0,.12)" }}
-                  formatter={(v: number) => [v, "Visite"]}
+                  formatter={(v) => [v, "Visite"]}
                 />
                 <Bar dataKey="Visite" fill="hsl(35,90%,42%)" radius={[4, 4, 0, 0]} maxBarSize={32} />
               </BarChart>

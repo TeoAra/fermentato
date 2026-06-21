@@ -42,7 +42,7 @@ async function resolveGoogleClientId(): Promise<string | null> {
     const r = await fetch("/api/client-config", { credentials: "include" });
     const cfg = await r.json();
     cachedGoogleClientId = cfg.googleClientId || null;
-    return cachedGoogleClientId;
+    return cachedGoogleClientId ?? null;
   } catch {
     cachedGoogleClientId = null;
     return null;
@@ -293,7 +293,7 @@ export async function loginAppleNative(): Promise<NativeAuthResult> {
     // fallback per retro-compatibilità nel caso il plugin venga downgradato.
     // @ts-ignore — il tipo varia
     const identityToken: string | undefined =
-      res?.result?.idToken ?? res?.result?.identityToken;
+      res?.result?.idToken ?? (res?.result as { identityToken?: string } | undefined)?.identityToken;
     // @ts-ignore
     const profile = res?.result?.profile;
     if (!identityToken) {

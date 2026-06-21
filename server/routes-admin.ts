@@ -125,7 +125,7 @@ export function registerAdminRoutes(app: Express) {
   // User management endpoints
   app.patch('/api/admin/users/:id/suspend', isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const userId = req.params.id;
+      const userId = String(req.params.id);
       const currentUserId = (req.user as any)?.claims?.sub;
       
       if (userId === currentUserId) {
@@ -270,7 +270,8 @@ export function registerAdminRoutes(app: Express) {
 
         })
         .from(beers)
-        .leftJoin(breweries, eq(beers.breweryId, breweries.id));
+        .leftJoin(breweries, eq(beers.breweryId, breweries.id))
+        .$dynamic();
 
       if (search) {
         query = query.where(sql`${beers.name} ILIKE ${'%' + search + '%'} OR ${breweries.name} ILIKE ${'%' + search + '%'}`);
@@ -293,7 +294,7 @@ export function registerAdminRoutes(app: Express) {
       const { search, page = 1, limit = 20 } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
 
-      let query = db.select().from(breweries);
+      let query = db.select().from(breweries).$dynamic();
 
       if (search) {
         query = query.where(
@@ -322,7 +323,7 @@ export function registerAdminRoutes(app: Express) {
     try {
       const { q: search, limit = 20 } = req.query;
 
-      let query = db.select().from(breweries);
+      let query = db.select().from(breweries).$dynamic();
 
       if (search) {
         query = query.where(
@@ -331,7 +332,7 @@ export function registerAdminRoutes(app: Express) {
             ilike(breweries.location, `%${search}%`),
             ilike(breweries.country, `%${search}%`)
           )
-        ) as any;
+        );
       }
 
       const results = await query
@@ -351,7 +352,7 @@ export function registerAdminRoutes(app: Express) {
       const { search, page = 1, limit = 20 } = req.query;
       const offset = (parseInt(page) - 1) * parseInt(limit);
 
-      let query = db.select().from(pubs).leftJoin(users, eq(pubs.ownerId, users.id));
+      let query = db.select().from(pubs).leftJoin(users, eq(pubs.ownerId, users.id)).$dynamic();
 
       if (search) {
         query = query.where(
@@ -992,7 +993,7 @@ export function registerAdminRoutes(app: Express) {
   // Approve publican request
   app.post("/api/admin/publican-requests/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const requestId = parseInt(req.params.id);
+      const requestId = parseInt(String(req.params.id));
       const adminId = (req.user as any)?.id;
       const { adminNotes } = req.body;
 
@@ -1062,7 +1063,7 @@ export function registerAdminRoutes(app: Express) {
   // Reject publican request
   app.post("/api/admin/publican-requests/:id/reject", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const requestId = parseInt(req.params.id);
+      const requestId = parseInt(String(req.params.id));
       const adminId = (req.user as any)?.id;
       const { adminNotes } = req.body;
 
@@ -1151,7 +1152,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/brewery-requests/:id/approve", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const requestId = parseInt(req.params.id);
+      const requestId = parseInt(String(req.params.id));
       const adminId = (req.user as any)?.id;
       const { adminNotes } = req.body;
 
@@ -1243,8 +1244,8 @@ export function registerAdminRoutes(app: Express) {
 
         const breweryLabel = request.breweryName;
         const notifyPromises = breweryFollowers
-          .filter(f => f.userId !== request.userId)
-          .map(f =>
+          .filter((f) => f.userId !== request.userId)
+          .map((f) =>
             sendPushToUser(f.userId, {
               title: '🛡️ Birrificio Verificato',
               body: `${breweryLabel} è ora un birrificio verificato su Fermenta.to!`,
@@ -1272,7 +1273,7 @@ export function registerAdminRoutes(app: Express) {
 
   app.post("/api/admin/brewery-requests/:id/reject", isAuthenticated, isAdmin, async (req, res) => {
     try {
-      const requestId = parseInt(req.params.id);
+      const requestId = parseInt(String(req.params.id));
       const adminId = (req.user as any)?.id;
       const { adminNotes } = req.body;
 
@@ -1781,10 +1782,10 @@ export function registerAdminRoutes(app: Express) {
 
       // Brewery owners only see beer requests for their brewery
       if (isBreweryOwner && !isAdminUser && breweryId) {
-        rows = rows.filter(r => r.request.type === 'beer' && r.request.breweryId === breweryId);
+        rows = rows.filter((r) => r.request.type === 'beer' && r.request.breweryId === breweryId);
       }
 
-      const result = rows.map(r => ({ ...r.request, user: r.user }));
+      const result = rows.map((r) => ({ ...r.request, user: r.user }));
       res.json(result);
     } catch (error) {
       console.error("Error listing addition requests:", error);
@@ -1839,19 +1840,19 @@ export function registerAdminRoutes(app: Express) {
           country: request.country || 'Italia',
           description: request.description || null,
           websiteUrl: request.websiteUrl || null,
-          logoUrl: (request as any).logoUrl || null,
-          coverImageUrl: (request as any).coverImageUrl || null,
+          logoUrl: request.logoUrl || null,
+          coverImageUrl: request.coverImageUrl || null,
         }).returning();
         createdId = created.id;
       } else {
         const [created] = await db.insert(beers).values({
           name: request.beerName!,
           style: request.style || 'Non specificato',
-          abv: request.abv ? parseFloat(request.abv) : null,
-          breweryId: request.breweryId || null,
+          abv: request.abv ? String(parseFloat(request.abv)) : null,
+          breweryId: request.breweryId!,
           description: request.description || null,
           imageUrl: request.imageUrl || null,
-          logoUrl: (request as any).logoUrl || null,
+          logoUrl: request.logoUrl || null,
         }).returning();
         createdId = created.id;
       }
@@ -1973,7 +1974,7 @@ export function registerAdminRoutes(app: Express) {
           const [owner] = await db.select({ email: users.email }).from(users).where(eq(users.id, existing.ownerId));
           if (owner?.email) {
             const { getUncachableStripeClient } = await import("./stripeClient");
-            const stripe = getUncachableStripeClient();
+            const stripe = await getUncachableStripeClient();
             const customers = await stripe.customers.list({ email: owner.email, limit: 1 });
             if (customers.data.length > 0) {
               const cid = customers.data[0].id;

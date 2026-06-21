@@ -134,7 +134,7 @@ export function registerFestivalRoutes(app: Express) {
         const ur = await db.select({ tapId: festivalRatings.tapId, rating: festivalRatings.rating })
           .from(festivalRatings)
           .where(and(eq(festivalRatings.festivalId, festival.id), eq(festivalRatings.userId, uid)));
-        ur.forEach(r => { userRatings[r.tapId] = r.rating; });
+        ur.forEach((r) => { userRatings[r.tapId] = r.rating; });
       }
 
       // Rankings (public)
@@ -159,7 +159,7 @@ export function registerFestivalRoutes(app: Express) {
 
       res.json({
         festival: { ...festival, managerId: festival.ownerId },
-        taps: rawTaps.map(t => ({
+        taps: rawTaps.map((t) => ({
           ...t,
           avgRating: t.avgRating ? parseFloat(String(t.avgRating)) : null,
           ratingCount: Number(t.ratingCount || 0),
@@ -167,7 +167,7 @@ export function registerFestivalRoutes(app: Express) {
           prices: pricesMap[t.id] ?? null,
         })),
         food,
-        rankings: topTaps.map(t => ({
+        rankings: topTaps.map((t) => ({
           tapNumber: t.tapNumber,
           beerName: t.beerName || t.customBeerName || `Spina ${t.tapNumber}`,
           beerImageUrl: t.beerImageUrl,
@@ -720,7 +720,7 @@ export function registerFestivalRoutes(app: Express) {
         totalTaps: Number(totals.totalTaps),
         availableTaps: Number(totals.availableTaps),
         totalRatings: Number(totals.totalRatings),
-        topTaps: topTaps.map(t => ({
+        topTaps: topTaps.map((t) => ({
           tapNumber: t.tapNumber,
           beerName: t.beerName || t.customBeerName || `Spina ${t.tapNumber}`,
           avg: parseFloat(String(t.avg)),

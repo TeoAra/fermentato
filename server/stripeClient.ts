@@ -16,7 +16,7 @@ function getDatabaseUrl(): string {
 }
 
 export async function getUncachableStripeClient(): Promise<Stripe> {
-  return new Stripe(getStripeSecretKey(), { apiVersion: "2025-02-24.acacia" });
+  return new Stripe(getStripeSecretKey(), { apiVersion: "2025-02-24.acacia" as unknown as NonNullable<ConstructorParameters<typeof Stripe>[1]>["apiVersion"] });
 }
 
 export async function getStripeSync(): Promise<StripeSync> {

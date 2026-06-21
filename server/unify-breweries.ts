@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { breweries, beers } from "@shared/schema";
-import { eq, ilike, sql } from "drizzle-orm";
+import { and, eq, ilike, sql } from "drizzle-orm";
 
 interface BreweryGroup {
   canonical: any;
@@ -84,8 +84,7 @@ async function unifyBreweries() {
           const existingBeer = await db
             .select()
             .from(beers)
-            .where(eq(beers.name, beer.name))
-            .where(eq(beers.breweryId, group.canonical.id))
+            .where(and(eq(beers.name, beer.name), eq(beers.breweryId, group.canonical.id)))
             .limit(1);
           
           if (existingBeer.length === 0) {

@@ -313,7 +313,7 @@ interface SearchHeaderProps {
   surpriseLoading: boolean;
   onClose: () => void;
   setLocation: (path: string) => void;
-  inputRef: RefObject<HTMLInputElement>;
+  inputRef: RefObject<HTMLInputElement | null>;
 }
 
 function MobileSearchHeader({ query, setQuery, setActiveStyle, clearFilters, surpriseMe, surpriseLoading, onClose, setLocation, inputRef }: SearchHeaderProps) {

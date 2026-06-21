@@ -1122,9 +1122,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .limit(6),
       ]);
       const result = {
-        styles: topStyles.map(r => r.name).filter(Boolean),
-        breweries: topBreweries.map(r => r.name).filter(Boolean),
-        cities: topCities.map(r => r.name).filter(Boolean),
+        styles: topStyles.map((r) => r.name).filter(Boolean),
+        breweries: topBreweries.map((r) => r.name).filter(Boolean),
+        cities: topCities.map((r) => r.name).filter(Boolean),
       };
       setCache('suggestions', result);
       res.json(result);
@@ -1413,7 +1413,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       .orderBy(beers.name);
 
       // Fetch collaboration info for each beer
-      const beerIds = beerRows.map(b => b.id);
+      const beerIds = beerRows.map((b) => b.id);
       let collabMap: Record<number, { id: number; name: string; logoUrl: string | null }[]> = {};
       if (beerIds.length > 0) {
         const collabRows = await db.select({
@@ -1424,7 +1424,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })
         .from(beerCollaborations)
         .innerJoin(breweries, eq(beerCollaborations.breweryId, breweries.id))
-        .where(sql`${beerCollaborations.beerId} = ANY(ARRAY[${sql.join(beerIds.map(id => sql`${id}`), sql`, `)}]::int[])`);
+        .where(sql`${beerCollaborations.beerId} = ANY(ARRAY[${sql.join(beerIds.map((id: number) => sql`${id}`), sql`, `)}]::int[])`);
 
         for (const row of collabRows) {
           if (!collabMap[row.beerId]) collabMap[row.beerId] = [];
@@ -1432,7 +1432,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      const result = beerRows.map(b => {
+      const result = beerRows.map((b) => {
         const isCollabBeer = b.breweryId !== breweryId;
         // For partner-brewery beers (collab beers not owned by this brewery),
         // show the PRIMARY brewery as the "con:" partner.
@@ -1944,12 +1944,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/stats", async (req, res) => {
     try {
       const stats = await memCached("stats:global:v2", 5 * 60 * 1000, async () => {
-        const [pubCount, breweryCount, beerCount, reviewCount, eventCount, userCount, styleCount] = await Promise.all([
+        const [pubCount, breweryCount, beerCount, reviewCount, pubEventCount, breweryEventCount, userCount, styleCount] = await Promise.all([
           db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
           db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries).where(breweryActiveSql),
           db.select({ count: sql<number>`COUNT(*)::int` }).from(beers).where(beerVisibleSql),
           db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
-          db.select({ count: sql<number>`(SELECT COUNT(*) FROM pub_events) + (SELECT COUNT(*) FROM brewery_events)` }),
+          db.select({ count: sql<number>`COUNT(*)::int` }).from(pubEvents),
+          db.select({ count: sql<number>`COUNT(*)::int` }).from(breweryEvents),
           db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
           db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers).where(beerVisibleSql),
         ]);
@@ -1958,7 +1959,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           totalBreweries: breweryCount[0]?.count || 0,
           totalBeers: beerCount[0]?.count || 0,
           totalReviews: reviewCount[0]?.count || 0,
-          totalEvents: eventCount[0]?.count || 0,
+          totalEvents: (pubEventCount[0]?.count || 0) + (breweryEventCount[0]?.count || 0),
           totalUsers: userCount[0]?.count || 0,
           uniqueStyles: styleCount[0]?.count || 0,
           averageBeersPerBrewery: breweryCount[0]?.count > 0 ? Math.round((beerCount[0]?.count || 0) / breweryCount[0].count) : 0,
@@ -2455,8 +2456,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { pubId, id } = req.params;
       
-      await storage.removeBottleItem(parseInt(id));
-      broadcastPubUpdate(parseInt(pubId), "bottles");
+      await storage.removeBottleItem(parseInt(String(id)));
+      broadcastPubUpdate(parseInt(String(pubId)), "bottles");
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error deleting bottle item:', error);
@@ -3241,14 +3242,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const pubs = await storage.getPubsByOwner(userId);
       const pub = pubs.length > 0 ? pubs[0] : null;
       if (!pub || pub.id !== pubId) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const categoryId = parseInt(req.params.categoryId);
+      const categoryId = parseInt(String(req.params.categoryId));
       const { newOrderIndex } = req.body;
       
       const category = await storage.updateMenuCategory(categoryId, { orderIndex: newOrderIndex });
@@ -3661,14 +3662,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const activeUsers = Number(((activeUsersResult as any).rows ?? activeUsersResult)[0]?.count || 0);
       const stats = {
-        totalUsers: Number(userCountResult?.count || 0),
-        totalPubs: Number(pubCountResult?.count || 0),
-        totalBreweries: Number(breweryCountResult?.count || 0),
-        totalBeers: Number(beerCountResult?.count || 0),
-        totalReviews: Number(reviewCountResult?.count || 0),
-        totalTastings: Number(tastingCountResult?.count || 0),
-        totalEvents: Number(pubEventCountResult?.count || 0) + Number(breweryEventCountResult?.count || 0),
-        totalFestivals: Number(festivalCountResult?.count || 0),
+        totalUsers: Number(userCountResult[0]?.count || 0),
+        totalPubs: Number(pubCountResult[0]?.count || 0),
+        totalBreweries: Number(breweryCountResult[0]?.count || 0),
+        totalBeers: Number(beerCountResult[0]?.count || 0),
+        totalReviews: Number(reviewCountResult[0]?.count || 0),
+        totalTastings: Number(tastingCountResult[0]?.count || 0),
+        totalEvents: Number(pubEventCountResult[0]?.count || 0) + Number(breweryEventCountResult[0]?.count || 0),
+        totalFestivals: Number(festivalCountResult[0]?.count || 0),
         averageRating: Number((avgRatingResult[0]?.avg || 0).toFixed(2)),
         activeUsers,
         newUsersThisMonth: Number(newUsersResult[0]?.count || 0),
@@ -4829,14 +4830,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get global beer statistics
   app.get('/api/stats/global', async (req, res) => {
     try {
-      const [beerCount, breweryCount, pubCount, userCount, styleCount, reviewCount, eventCount, topStyles, topBreweries] = await Promise.all([
+      const [beerCount, breweryCount, pubCount, userCount, styleCount, reviewCount, pubEventCount, breweryEventCount, topStyles, topBreweries] = await Promise.all([
         db.select({ count: sql<number>`COUNT(*)::int` }).from(beers).where(beerVisibleSql),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries).where(breweryActiveSql),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(pubs),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(users),
         db.select({ count: sql<number>`COUNT(DISTINCT style)::int` }).from(beers).where(beerVisibleSql),
         db.select({ count: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(sql`rating IS NOT NULL`),
-        db.select({ count: sql<number>`(SELECT COUNT(*) FROM pub_events) + (SELECT COUNT(*) FROM brewery_events)` }),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(pubEvents),
+        db.select({ count: sql<number>`COUNT(*)::int` }).from(breweryEvents),
         db.select({ style: beers.style, count: sql<number>`COUNT(*)::int` })
           .from(beers).where(beerVisibleSql).groupBy(beers.style).orderBy(sql`COUNT(*) desc`).limit(10),
         db.select({
@@ -4859,7 +4861,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         totalPubs: pubCount[0]?.count || 0,
         totalUsers: userCount[0]?.count || 0,
         totalReviews: reviewCount[0]?.count || 0,
-        totalEvents: eventCount[0]?.count || 0,
+        totalEvents: (pubEventCount[0]?.count || 0) + (breweryEventCount[0]?.count || 0),
         uniqueStyles: styleCount[0]?.count || 0,
         topStyles,
         topBreweries,
@@ -4913,13 +4915,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const itemId = parseInt(req.params.itemId);
+      const itemId = parseInt(String(req.params.itemId));
       const { prices } = req.body;
       
       // Convert prices array to object for JSON storage
@@ -4942,13 +4944,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const itemId = parseInt(req.params.itemId);
+      const itemId = parseInt(String(req.params.itemId));
       const { newBeerId } = req.body;
       
       const updatedItem = await storage.updateTapListItem(itemId, { beerId: newBeerId });
@@ -4973,13 +4975,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const itemId = parseInt(req.params.itemId);
+      const itemId = parseInt(String(req.params.itemId));
       const { prices } = req.body;
       
       const priceObject = prices.reduce((acc: any, p: any) => {
@@ -5000,13 +5002,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const itemId = parseInt(req.params.itemId);
+      const itemId = parseInt(String(req.params.itemId));
       const { newBeerId } = req.body;
       
       const updatedItem = await storage.updateBottleItem(itemId, { beerId: newBeerId });
@@ -5023,7 +5025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
@@ -5042,13 +5044,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const categoryId = parseInt(req.params.categoryId);
+      const categoryId = parseInt(String(req.params.categoryId));
       const category = await storage.updateMenuCategory(categoryId, req.body);
       res.json(category);
     } catch (error) {
@@ -5062,13 +5064,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const categoryId = parseInt(req.params.categoryId);
+      const categoryId = parseInt(String(req.params.categoryId));
       await storage.deleteMenuCategory(categoryId);
       res.json({ success: true });
     } catch (error) {
@@ -5083,14 +5085,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const categoryId = parseInt(req.params.categoryId);
-      const item = await storage.createMenuItem(categoryId, req.body);
+      const categoryId = parseInt(String(req.params.categoryId));
+      const item = await storage.createMenuItem({ ...req.body, categoryId });
       res.json(item);
     } catch (error) {
       console.error("Error creating menu item:", error);
@@ -5103,13 +5105,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const itemId = parseInt(req.params.itemId);
+      const itemId = parseInt(String(req.params.itemId));
       const item = await storage.updateMenuItem(itemId, req.body);
       res.json(item);
     } catch (error) {
@@ -5123,13 +5125,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const userId = (req.user as any)?.id;
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
 
-      const pubId = parseInt(req.params.id);
+      const pubId = parseInt(String(req.params.id));
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) {
         return res.status(403).json({ message: "Not authorized to manage this pub" });
       }
 
-      const itemId = parseInt(req.params.itemId);
+      const itemId = parseInt(String(req.params.itemId));
       await storage.deleteMenuItem(itemId);
       res.json({ success: true });
     } catch (error) {
@@ -5442,7 +5444,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const searchTerms = queryStr.toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
       
-      const whereClauses = searchTerms.map(term => {
+      const whereClauses = searchTerms.map((term: string) => {
         const p = `%${term}%`;
         return sql`(LOWER(b.name) LIKE ${p} OR LOWER(b.style) LIKE ${p} OR LOWER(br.name) LIKE ${p} OR LOWER(br.location) LIKE ${p})`;
       });
@@ -6304,10 +6306,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const folder = imageType === 'cover' ? 'brewery-covers' : 'brewery-logos';
       const result = await uploadImage(req.file.buffer, folder);
       const updateData = imageType === 'cover'
-        ? { coverImageUrl: result.secure_url }
-        : { logoUrl: result.secure_url };
+        ? { coverImageUrl: result }
+        : { logoUrl: result };
       const updated = await storage.updateBrewery(user.breweryId, updateData);
-      res.json({ url: result.secure_url, brewery: updated });
+      res.json({ url: result, brewery: updated });
     } catch (error) {
       console.error("Error uploading brewery image:", error);
       res.status(500).json({ message: "Failed to upload image" });
@@ -6942,14 +6944,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .orderBy(desc(userBeerTastings.tastedAt));
 
       const avgRating = reviews.length > 0
-        ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length
+        ? reviews.reduce((sum: number, r) => sum + (Number(r.rating) || 0), 0) / reviews.length
         : null;
 
       // Rating distribution — bucket decimal ratings to nearest integer
       const distribution: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
       for (const r of reviews) {
         if (r.rating) {
-          const bucket = Math.min(5, Math.max(1, Math.round(r.rating)));
+          const bucket = Math.min(5, Math.max(1, Math.round(Number(r.rating))));
           distribution[bucket] = (distribution[bucket] || 0) + 1;
         }
       }
@@ -7632,7 +7634,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
   });
 
   app.put("/api/admin/pages/:slug", isAuthenticated, isAdmin, async (req, res) => {
-    const { slug } = req.params;
+    const slug = String(req.params.slug);
     const { title, content } = req.body;
     if (!title || content === undefined) return res.status(400).json({ error: "title and content required" });
     const safeContent = sanitizePageHtml(String(content));
@@ -8547,7 +8549,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
       const breweryId = parseInt(req.params.id);
       const brewery = await db.select().from(breweries).where(eq(breweries.id, breweryId)).limit(1);
       if (!brewery[0]) { res.status(404).json({ message: "Birrificio non trovato" }); return; }
-      const isOwner = brewery[0].ownerId === req.user?.id;
+      const isOwner = req.user?.breweryId === breweryId;
       const isAdmin = req.user?.activeRole === "admin" || req.user?.userType === "admin";
       if (!isOwner && !isAdmin) { res.status(403).json({ message: "Non autorizzato" }); return; }
       const parsed = insertBreweryAnnouncementSchema.parse({ ...req.body, breweryId });
@@ -8563,7 +8565,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
       const annId = parseInt(req.params.annId);
       const brewery = await db.select().from(breweries).where(eq(breweries.id, breweryId)).limit(1);
       if (!brewery[0]) { res.status(404).json({ message: "Birrificio non trovato" }); return; }
-      const isOwner = brewery[0].ownerId === req.user?.id;
+      const isOwner = req.user?.breweryId === breweryId;
       const isAdmin = req.user?.activeRole === "admin" || req.user?.userType === "admin";
       if (!isOwner && !isAdmin) { res.status(403).json({ message: "Non autorizzato" }); return; }
       await db.delete(breweryAnnouncements).where(and(eq(breweryAnnouncements.id, annId), eq(breweryAnnouncements.breweryId, breweryId)));
@@ -8690,10 +8692,10 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
         url("/explore/breweries", "0.9", "weekly"),
         url("/explore/beers", "0.9", "weekly"),
         url("/search", "0.7", "weekly"),
-        ...allPubs.map(p => url(`/pub/${p.id}`, "0.8", "daily", p.updatedAt ? new Date(p.updatedAt).toISOString().slice(0, 10) : undefined)),
-        ...allBreweries.map(b => url(`/brewery/${b.id}`, "0.7", "weekly")),
-        ...allBeers.map(b => url(`/beer/${b.id}`, "0.6", "monthly")),
-        ...allFestivals.filter(f => f.slug).map(f => url(`/festival/${f.slug}`, "0.8", "weekly")),
+        ...allPubs.map((p) => url(`/pub/${p.id}`, "0.8", "daily", p.updatedAt ? new Date(p.updatedAt).toISOString().slice(0, 10) : undefined)),
+        ...allBreweries.map((b) => url(`/brewery/${b.id}`, "0.7", "weekly")),
+        ...allBeers.map((b) => url(`/beer/${b.id}`, "0.6", "monthly")),
+        ...allFestivals.filter((f) => f.slug).map((f) => url(`/festival/${f.slug}`, "0.8", "weekly")),
         `</urlset>`,
       ];
       res.setHeader("Content-Type", "application/xml; charset=utf-8");
@@ -8734,7 +8736,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     if (!SOCIAL_BOTS.test(ua)) return next();
     try {
       const base = "https://fermenta.to";
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       if (req.path.startsWith("/pub/")) {
         const pub = await storage.getPub(id);
         if (!pub) return next();
@@ -8893,7 +8895,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
   });
 
   app.post("/api/pubs/:pubId/next-tap", isAuthenticated, async (req, res) => {
-    const pubId = await resolvePubId(req.params.pubId);
+    const pubId = await resolvePubId(String(req.params.pubId));
     if (!pubId) return res.status(404).json({ message: "Pub non trovato" });
     const userId = (req.user as any).id;
     const pub = await storage.getPub(pubId);
@@ -8914,7 +8916,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
   app.patch("/api/next-tap/:proposalId/count", isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
     const user = req.user as any;
-    const proposalId = parseInt(req.params.proposalId);
+    const proposalId = parseInt(String(req.params.proposalId));
     const { rows: found } = await pool.query(
       `SELECT ntp.*, p.owner_id FROM next_tap_proposals ntp JOIN pubs p ON p.id = ntp.pub_id WHERE ntp.id = $1`,
       [proposalId]
@@ -8937,7 +8939,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
 
   app.post("/api/next-tap/:proposalId/vote", isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
-    const proposalId = parseInt(req.params.proposalId);
+    const proposalId = parseInt(String(req.params.proposalId));
     try {
       await pool.query(`
         INSERT INTO next_tap_votes (proposal_id, user_id) VALUES ($1, $2)
@@ -9069,7 +9071,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
 
   app.post("/api/users/:userId/follow", isAuthenticated, async (req, res) => {
     const meId = (req.user as any).id;
-    const targetId = req.params.userId;
+    const targetId = String(req.params.userId);
     if (meId === targetId) return res.status(400).json({ message: "Non puoi seguire te stesso" });
     await pool.query(`INSERT INTO user_follows (follower_id, following_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [meId, targetId]);
     res.json({ following: true });
@@ -9186,7 +9188,7 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
       const tastingsTotal = Number(tastingsCountRes[0]?.cnt ?? 0);
       // beer_reviews is an optional table; default to 0 if it doesn't exist
       const reviewsTotal = await pool.query(`SELECT COUNT(*) as total FROM beer_reviews WHERE user_id = $1`, [userId])
-        .then(r => parseInt(r.rows[0]?.total ?? 0))
+        .then((r) => parseInt(r.rows[0]?.total ?? 0))
         .catch(() => 0);
       const avgRow = totalRes.rows[0];
       res.json({

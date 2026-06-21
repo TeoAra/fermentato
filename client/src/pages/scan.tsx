@@ -805,7 +805,7 @@ export default function ScanPage() {
               <div className="rounded-2xl p-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <div className="flex items-center gap-2 mb-3">
                   <p className="text-xs font-semibold text-foreground dark:text-white flex-1">Cerca la birra giusta</p>
-                  <button onClick={() => { setShowManualSearch(false); setManualQuery(""); setManualResults([]); }} className="text-muted-foreground hover:text-foreground">
+                  <button onClick={() => { setShowManualSearch(false); setFallbackQuery(""); setFallbackResults([]); }} className="text-muted-foreground hover:text-foreground">
                     <X className="h-4 w-4" />
                   </button>
                 </div>

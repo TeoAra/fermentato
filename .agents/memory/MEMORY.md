@@ -6,3 +6,4 @@
 - [Nullable boolean gate](nullable-boolean-gate.md) — gate Drizzle nullable booleans with `=== false`, never `!field` (null/undefined would false-positive).
 - [Gemini OCR only](gemini-removed.md) — Gemini 2.0 Flash Vision re-added as primary engine in /api/scan/ocr only (beer label prompt); GEMINI_API_KEY required. Bot still uses regex, image finders still use Untappd+DDG.
 - [iOS safe-area freeze](ios-safe-area-freeze.md) — freeze env(safe-area) into --frozen-sat/sab vars to stop header/nav jump on overlays; only ever write POSITIVE px (writing 0 clobbers the env() fallback → permanent chrome overlap).
+- [Drizzle typing footguns](drizzle-typing-footguns.md) — keep server/db.ts typed (was `any`, masked ~20 bugs); decimal=string (Number/String), reassigned builders need .$dynamic(), select({count}) without .from() reads 0.

@@ -101,7 +101,7 @@ export default function HomepageMap({
   const displayZoom = externalZoom !== undefined ? externalZoom : zoom;
   const [selected, setSelected] = useState<Selected | null>(null);
   const hasFlewRef = useRef(false);
-  const prevDistRef = useRef<number | undefined>();
+  const prevDistRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (fixedHeight) {

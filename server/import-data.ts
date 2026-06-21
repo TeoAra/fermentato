@@ -1,7 +1,7 @@
 import { parse } from "csv-parse";
 import { createReadStream } from "fs";
 import { db } from "./db";
-import { beers, breweries } from "@shared/schema";
+import { beers, breweries, type Brewery } from "@shared/schema";
 import { eq } from "drizzle-orm";
 
 interface BeerCSVRow {
@@ -19,14 +19,14 @@ async function importRemainingBeers() {
   
   // Prima ottieni tutte le birre esistenti per evitare duplicati
   const existingBeers = await db.select({ name: beers.name }).from(beers);
-  const existingBeerNames = new Set(existingBeers.map(b => b.name));
+  const existingBeerNames = new Set(existingBeers.map((b: { name: string }) => b.name));
   console.log(`Found ${existingBeerNames.size} existing beers in database`);
   
   // Ottieni tutti i birrifici e crea un mapping nome -> ID
   const allBreweries = await db.select().from(breweries);
   const breweryMap = new Map<string, number>();
   
-  allBreweries.forEach(brewery => {
+  allBreweries.forEach((brewery: Brewery) => {
     breweryMap.set(brewery.name, brewery.id);
   });
   console.log(`Found ${allBreweries.length} breweries in database`);

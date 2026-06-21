@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { useToast } from "@/hooks/use-toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth, type AuthUser } from "@/hooks/useAuth";
 import { useState, useEffect, useMemo, Component, ReactNode, lazy, Suspense } from "react";
 import { initGA } from "./lib/analytics";
 import { Capacitor } from "@capacitor/core";
@@ -366,7 +366,7 @@ function ScrollToTop() {
 function Router() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, isLoading, user } = useAuth();
-  const typedUser = user as User | null;
+  const typedUser = user as AuthUser | null;
   const [location, navigate] = useLocation();
   
   // Track page views when routes change

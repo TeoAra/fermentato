@@ -156,7 +156,7 @@ app.use((req, res, next) => {
   if (databaseUrl && process.env.STRIPE_SECRET_KEY) {
     import("stripe-replit-sync").then(async ({ runMigrations }) => {
       try {
-        await runMigrations({ databaseUrl, schema: "stripe" });
+        await runMigrations({ databaseUrl });
         log("Stripe schema ready");
         const { getStripeSync } = await import("./stripeClient");
         const stripeSync = await getStripeSync();

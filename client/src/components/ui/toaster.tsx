@@ -95,7 +95,7 @@ export function Toaster() {
           id={id}
           title={title}
           description={description}
-          variant={variant}
+          variant={variant ?? undefined}
           open={open}
           action={action}
           dismiss={dismiss}

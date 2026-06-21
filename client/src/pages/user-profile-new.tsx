@@ -894,7 +894,7 @@ export default function UserProfile() {
                       ) : (
                         <div className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-amber-500 flex items-center justify-center border-2 border-stone-200 dark:border-white/10">
                           <span className="text-white text-2xl font-bold">
-                            {(typedUser?.nickname || typedUser?.username || "U")[0].toUpperCase()}
+                            {(typedUser?.nickname || "U")[0].toUpperCase()}
                           </span>
                         </div>
                       )}

@@ -154,7 +154,7 @@ function CheckinCommentRow({ comment, tastingId, onReport }: { comment: any; tas
                 {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true, locale: it })}
               </span>
               <button
-                onClick={() => isAuthenticated && likeMut.mutate()}
+                onClick={() => isAuthenticated && likeMut.mutate(undefined)}
                 disabled={!isAuthenticated}
                 className={`flex items-center gap-1 text-[10px] font-semibold transition-colors ${
                   comment.liked ? "text-red-500" : "text-stone-400 hover:text-red-500"
@@ -296,7 +296,7 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
     <>
       <div className={`flex items-center gap-4 ${compact ? "" : "mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40"}`}>
         <button
-          onClick={() => isAuthenticated && likeMut.mutate()}
+          onClick={() => isAuthenticated && likeMut.mutate(undefined)}
           disabled={!isAuthenticated}
           className={`flex items-center gap-1.5 text-xs font-semibold transition-all tap-scale ${
             likes?.liked ? "text-red-500" : "text-stone-500 hover:text-red-500"
@@ -335,7 +335,7 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
             {/* Mini like bar */}
             <div className="flex items-center gap-3 mt-2">
               <button
-                onClick={() => isAuthenticated && likeMut.mutate()}
+                onClick={() => isAuthenticated && likeMut.mutate(undefined)}
                 disabled={!isAuthenticated}
                 className={`flex items-center gap-1.5 text-xs font-semibold transition-all tap-scale ${
                   likes?.liked ? "text-red-500" : "text-stone-500 hover:text-red-500"

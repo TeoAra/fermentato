@@ -1,7 +1,7 @@
 import { parse } from "csv-parse";
 import { createReadStream } from "fs";
 import { db } from "./db";
-import { beers, breweries } from "@shared/schema";
+import { beers, breweries, type Brewery } from "@shared/schema";
 import { eq, ilike } from "drizzle-orm";
 
 interface BeerCSVRow {
@@ -21,7 +21,7 @@ async function importItalianBeersFromCSV() {
   const italianBreweries = await db.select().from(breweries);
   const breweryMap = new Map();
   
-  italianBreweries.forEach(brewery => {
+  italianBreweries.forEach((brewery: Brewery) => {
     // Crea diverse variazioni del nome per il matching
     const variants = [
       brewery.name,

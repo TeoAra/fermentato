@@ -178,7 +178,7 @@ export default function AuthPage() {
     },
     onError: (error: any) => {
       if (error.emailNotVerified) {
-        setEmailNotVerified(error.email || loginForm.getValues("email"));
+        setEmailNotVerified(error.email || loginForm.getValues("emailOrUsername"));
         loginRecaptchaRef.current?.reset();
         setLoginRecaptchaToken(null);
         return;
@@ -751,7 +751,7 @@ export default function AuthPage() {
                               <FormItem>
                                 <FormLabel className="text-[10px] font-semibold uppercase text-muted-foreground">Sede Birrificio *</FormLabel>
                                 <FormControl>
-                                  <AddressAutocomplete onAddressSelect={handleBreweryAddressSelect} defaultValue={field.value} placeholder="Indirizzo sede..." className="h-10 bg-white dark:bg-[#1A1D24] border-stone-200 dark:border-border rounded-xl" />
+                                  <AddressAutocomplete onAddressSelect={handleBreweryAddressSelect} value={field.value} placeholder="Indirizzo sede..." className="h-10 bg-white dark:bg-[#1A1D24] border-stone-200 dark:border-border rounded-xl" />
                                 </FormControl>
                                 <FormMessage />
                               </FormItem>

@@ -139,7 +139,7 @@ export default function AttivaPub() {
       sessionStorage.setItem("fermenta_reg_type", type);
       window.history.replaceState({}, "", "/attiva-pub");
       setStep("checkout");
-      setTimeout(() => checkoutMutation.mutate(), 800);
+      setTimeout(() => checkoutMutation.mutate({ reactivate: false }), 800);
       return;
     }
 

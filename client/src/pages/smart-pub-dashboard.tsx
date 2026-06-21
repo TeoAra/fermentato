@@ -299,7 +299,7 @@ function SpecialDaysEditor({ specialDays, onChange }: { specialDays: any[]; onCh
   );
 }
 
-type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'events' | 'analytics' | 'settings' | 'profile' | 'bot';
+type DashboardSection = 'overview' | 'taplist' | 'bottles' | 'menu' | 'drinks' | 'events' | 'analytics' | 'settings' | 'profile' | 'bot';
 
 interface SmartPubDashboardProps {
   adminPubId?: number;

@@ -81,7 +81,7 @@ export default function AdminPages() {
             <div className="space-y-1.5">
               <Label>Contenuto</Label>
               <RichTextEditor
-                value={content}
+                content={content}
                 onChange={setContent}
                 placeholder={`Scrivi il contenuto della pagina ${meta?.label ?? editing.title}...`}
               />

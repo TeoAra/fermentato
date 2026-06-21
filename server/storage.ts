@@ -572,8 +572,8 @@ export class DatabaseStorage implements IStorage {
       .limit(10);
 
     if (breweriesRanked.length === 0) return [];
-    const ids = breweriesRanked.map(r => r.id);
-    const idOrder = breweriesRanked.map(r => r.id);
+    const ids = breweriesRanked.map((r) => r.id);
+    const idOrder = breweriesRanked.map((r) => r.id);
     const result = await db.select().from(breweries).where(inArray(breweries.id, ids));
     result.sort((a, b) => idOrder.indexOf(a.id) - idOrder.indexOf(b.id));
     return result;
@@ -636,7 +636,7 @@ export class DatabaseStorage implements IStorage {
       .where(and(isNotNull(breweries.country), ne(breweries.country, ""), breweryActiveSql))
       .groupBy(breweries.country)
       .orderBy(desc(sql`COUNT(*)`));
-    return rows.map(r => ({ country: r.country!, count: Number(r.count) }));
+    return rows.map((r) => ({ country: r.country!, count: Number(r.count) }));
   }
 
   // Beer operations
@@ -907,7 +907,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(tapList.pubId, pubId))
       .orderBy(asc(tapList.tapNumber));
 
-    return results.map(row => mapTapDbRowToDto({
+    return results.map((row) => mapTapDbRowToDto({
       ...row,
       beer_name: row.beerName,
       beer_style: row.beerStyle,
@@ -1094,9 +1094,9 @@ export class DatabaseStorage implements IStorage {
           : and(eq(drinkItems.pubId, pubId), eq(drinkItems.isVisible, true))
       )
       .orderBy(asc(drinkItems.orderIndex));
-    return cats.map(cat => ({
+    return cats.map((cat) => ({
       ...cat,
-      items: allItems.filter(i => i.category === String(cat.id)),
+      items: allItems.filter((i) => i.category === String(cat.id)),
     }));
   }
 
@@ -1154,11 +1154,11 @@ export class DatabaseStorage implements IStorage {
       .where(itemWhere)
       .orderBy(asc(menuItems.orderIndex), asc(menuItems.id));
 
-    return categories.map(category => ({
+    return categories.map((category) => ({
       ...category,
       items: items
-        .filter(item => item.menu_items?.categoryId === category.id)
-        .map(item => item.menu_items),
+        .filter((item) => item.menu_items?.categoryId === category.id)
+        .map((item) => item.menu_items),
     }));
   }
 
@@ -1493,7 +1493,7 @@ export class DatabaseStorage implements IStorage {
       .where(eq(userBeerTastings.userId, userId))
       .orderBy(desc(userBeerTastings.tastedAt));
 
-    return results.map((row: any) => ({
+    return results.map((row) => ({
       id: row.id,
       userId: row.userId,
       beerId: row.beerId,
@@ -1673,7 +1673,7 @@ export class DatabaseStorage implements IStorage {
 
     // Format response for frontend
     return {
-      tapLocations: tapAvailability.map(tap => ({
+      tapLocations: tapAvailability.map((tap) => ({
         pub: {
           id: tap.pubId,
           name: tap.pubName,
@@ -1687,7 +1687,7 @@ export class DatabaseStorage implements IStorage {
           isActive: tap.isActive,
         }
       })),
-      bottleLocations: bottleAvailability.map(bottle => ({
+      bottleLocations: bottleAvailability.map((bottle) => ({
         pub: {
           id: bottle.pubId,
           name: bottle.pubName,
@@ -1705,7 +1705,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async addRating(rating: any): Promise<any> {
+  async addRating(rating: unknown): Promise<unknown> {
     // Placeholder - implement based on ratings schema
     return rating;
   }
@@ -1873,21 +1873,21 @@ export class DatabaseStorage implements IStorage {
     const rows = await db.select({ userId: favorites.userId })
       .from(favorites)
       .where(and(eq(favorites.itemType, 'pub'), eq(favorites.itemId, pubId)));
-    return rows.map(r => r.userId);
+    return rows.map((r) => r.userId);
   }
 
   async getUsersWhoFavoritedBeer(beerId: number): Promise<string[]> {
     const rows = await db.select({ userId: favorites.userId })
       .from(favorites)
       .where(and(eq(favorites.itemType, 'beer'), eq(favorites.itemId, beerId)));
-    return rows.map(r => r.userId);
+    return rows.map((r) => r.userId);
   }
 
   async getUsersWhoFavoritedBrewery(breweryId: number): Promise<string[]> {
     const rows = await db.select({ userId: favorites.userId })
       .from(favorites)
       .where(and(eq(favorites.itemType, 'brewery'), eq(favorites.itemId, breweryId)));
-    return rows.map(r => r.userId);
+    return rows.map((r) => r.userId);
   }
 
   async getAdminUserIds(): Promise<string[]> {
@@ -1899,7 +1899,7 @@ export class DatabaseStorage implements IStorage {
           eq(users.activeRole, 'admin')
         )
       );
-    return rows.map(r => r.id);
+    return rows.map((r) => r.id);
   }
 
   // Push subscription operations
@@ -2008,7 +2008,7 @@ export class DatabaseStorage implements IStorage {
       .orderBy(asc(pubEvents.eventDate))
       .limit(limit);
 
-    return results.map(row => ({
+    return results.map((row) => ({
       id: row.id,
       pubId: row.pubId,
       title: row.title,
@@ -3035,6 +3035,41 @@ class StorageWrapper implements IStorage {
   }
   async getTrendingBeers(limit?: number, days?: number): Promise<any[]> {
     return this.dbCall(() => this.databaseStorage.getTrendingBeers(limit, days), async () => []);
+  }
+
+  // ── Admin / rating / profile delegations ──────────────────────────────────
+  // These exist on DatabaseStorage but were never exposed on the wrapper, so
+  // `storage.getAllUsers()` & co. resolved to undefined → runtime crash on the
+  // admin/rating/profile routes that call them. Delegate like the methods above.
+  async getAllUsers(): Promise<User[]> {
+    return this.dbCall(() => this.databaseStorage.getAllUsers(), async () => []);
+  }
+  async getAllPubs(): Promise<Pub[]> {
+    return this.dbCall(() => this.databaseStorage.getAllPubs(), async () => []);
+  }
+  async getAllBreweries(): Promise<Brewery[]> {
+    return this.dbCall(() => this.databaseStorage.getAllBreweries(), async () => []);
+  }
+  async getAllBeers(): Promise<Beer[]> {
+    return this.dbCall(() => this.databaseStorage.getAllBeers(), async () => []);
+  }
+  async addRating(rating: unknown): Promise<unknown> {
+    return this.dbCall(
+      () => this.databaseStorage.addRating(rating),
+      async () => { throw new Error('Database unavailable'); },
+    );
+  }
+  async getRatingsByPub(pubId: number): Promise<any[]> {
+    return this.dbCall(() => this.databaseStorage.getRatingsByPub(pubId), async () => []);
+  }
+  async updateUserNickname(userId: string, nickname: string): Promise<User> {
+    return this.dbCall(
+      () => this.databaseStorage.updateUserNickname(userId, nickname),
+      async () => { throw new Error('Database unavailable'); },
+    );
+  }
+  async getUserBeerTasting(userId: string, beerId: number): Promise<UserBeerTasting | undefined> {
+    return this.dbCall(() => this.databaseStorage.getUserBeerTasting(userId, beerId), async () => undefined);
   }
 }
 

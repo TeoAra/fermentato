@@ -114,7 +114,7 @@ async function findOrCreateUser(p: NormalizedUser): Promise<User> {
         isEmailVerified: p.emailVerified,
         // Nuovi utenti via Sign-In with Apple/Google: vanno mandati al form
         // di onboarding per scegliere username, accettare i termini, ecc.
-        // (il middleware in client/src/pages/App.tsx redirige automaticamente
+        // (il middleware in client/src/App.tsx redirige automaticamente
         // a /onboarding finché questo flag resta true).
         needsOnboarding: true,
       })
@@ -134,6 +134,8 @@ async function findOrCreateUser(p: NormalizedUser): Promise<User> {
       });
     }
   }
+
+  if (!user) throw new Error("user_creation_failed");
 
   // 4. Linka OAuth account (se non già linkato)
   await db

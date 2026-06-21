@@ -15,6 +15,12 @@ import { sendPushToAdmins } from "./push-utils";
 import { sendVerificationEmail, sendPasswordResetEmail } from "./email";
 import { loginRateLimit, registerRateLimit, forgotPasswordRateLimit } from "./middleware/rate-limit";
 
+declare module "passport-local" {
+  interface IVerifyOptions {
+    email?: string | null;
+  }
+}
+
 const SALT_ROUNDS = 12;
 
 async function verifyRecaptcha(token: string | undefined): Promise<boolean> {
@@ -187,6 +193,10 @@ export async function setupAuth(app: Express) {
             user = newUser;
           }
           
+          if (!user) {
+            return done(new Error('Errore creazione utente Google'));
+          }
+
           // Link OAuth account
           await db.insert(oauthAccounts).values({
             userId: user.id,
@@ -1000,7 +1010,7 @@ export async function setupAuth(app: Express) {
 
         // Notify admins of new registration
         try {
-          await sendPushToAdmins(`Nuovo pub registrato via Google: ${pubName} (${pubCity})`);
+          await sendPushToAdmins({ title: 'Nuovo pub registrato', body: `Nuovo pub registrato via Google: ${pubName} (${pubCity})` });
         } catch {}
 
       } else if (role === 'brewery_owner') {
@@ -1027,7 +1037,7 @@ export async function setupAuth(app: Express) {
             status: 'pending',
           });
           try {
-            await sendPushToAdmins(`Nuova richiesta birrificio da ${user.firstName || user.email}: ${breweryName}`);
+            await sendPushToAdmins({ title: 'Nuova richiesta birrificio', body: `Nuova richiesta birrificio da ${user.firstName || user.email}: ${breweryName}` });
           } catch {}
         }
       }
