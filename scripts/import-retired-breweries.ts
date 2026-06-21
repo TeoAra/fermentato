@@ -7,9 +7,11 @@
  * Matching (two stages):
  *   1. EXACT — normalized name (lowercase, accents/punctuation stripped,
  *      "Birrificio/Birra/Le/La/Il/The/Brewery/…" prefixes + parenthetical
- *      owner removed). When both sides expose a usable country, it must match
- *      (disambiguates identical names across countries). Exact matches are the
- *      only ones archived on --apply.
+ *      owner removed). Country guard (on by default): when the CSV row has a
+ *      known country, a DB candidate MUST have a matching country; DB rows with a
+ *      missing/different country are sent to review, never auto-archived. Only a
+ *      SINGLE confident exact candidate is archived on --apply — when several
+ *      same-name candidates remain, they are flagged AMBIGUOUS for manual review.
  *   2. FUZZY (trigram) — for retired names with NO exact match, a Dice
  *      coefficient over character trigrams (blocked by name prefix to stay
  *      fast) finds near-matches. These are reported as AMBIGUOUS for manual
@@ -187,27 +189,54 @@ async function main() {
 
   for (const entry of retired.values()) {
     const exact = byNorm.get(entry.norm);
-    let exactHit: DbRow | null = null;
+    let resolved = false;
     if (exact && exact.length) {
-      // Country disambiguation when both sides have a country and CSV isn't "*".
-      const candidates = useCountry
-        ? exact.filter((row) => {
-            const bc = normalizeCountry(row.country);
-            return !bc || entry.countries.has("*") || entry.countries.has(bc);
-          })
-        : exact;
-      if (candidates.length) {
-        for (const row of candidates) {
-          if (matchedIdSet.has(row.id)) continue;
-          matched.push({ id: row.id, name: row.name, csvName: entry.raw, country: row.country });
-          matchedIdSet.add(row.id);
-          exactHit = row;
+      // Known CSV countries for this retired name (drop the "*" unknown marker).
+      const csvCountries = [...entry.countries].filter((c) => c !== "*");
+      const csvHasCountry = csvCountries.length > 0;
+
+      // Confident candidates. With the country guard ON, a KNOWN CSV country REQUIRES a
+      // positive DB country match: DB rows with a missing/different country are NOT
+      // auto-archived (they go to manual review). This stops same-name collisions across
+      // countries (and rows with no country) from cascade-hiding legitimate beers.
+      let confident: DbRow[];
+      if (!useCountry) {
+        confident = exact;
+      } else if (csvHasCountry) {
+        confident = exact.filter((row) => {
+          const bc = normalizeCountry(row.country);
+          return bc != null && csvCountries.includes(bc);
+        });
+      } else {
+        confident = exact; // CSV country unknown → rely on the uniqueness check below
+      }
+
+      const fresh = confident.filter((row) => !matchedIdSet.has(row.id));
+      if (fresh.length === 1) {
+        const row = fresh[0];
+        matched.push({ id: row.id, name: row.name, csvName: entry.raw, country: row.country });
+        matchedIdSet.add(row.id);
+        resolved = true;
+      } else if (fresh.length > 1) {
+        // Multiple exact same-(country) candidates → AMBIGUOUS: never auto-archive,
+        // surface them in the review CSV instead.
+        for (const row of fresh) {
+          ambiguous.push({
+            csvName: entry.raw,
+            csvCountry: [...entry.countries].join("|"),
+            dbId: row.id,
+            dbName: row.name,
+            dbCountry: row.country,
+            score: 1,
+          });
         }
+        resolved = true;
       } else if (exact.length) {
+        // Exact name existed but no confident country match → manual review only.
         skippedCountryMismatch++;
       }
     }
-    if (exactHit) continue;
+    if (resolved) continue;
 
     // Fuzzy fallback (review-only): best trigram match within the same block.
     const candidates = byBlock.get(block(entry.norm)) || [];

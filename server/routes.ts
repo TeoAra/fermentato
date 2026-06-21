@@ -1408,7 +1408,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })
       .from(beers)
       .leftJoin(userBeerTastings, eq(beers.id, userBeerTastings.beerId))
-      .where(sql`(${beers.breweryId} = ${breweryId} OR ${beers.id} IN (SELECT beer_id FROM beer_collaborations WHERE brewery_id = ${breweryId}))${adminView ? sql`` : sql` AND COALESCE(${beers.isHidden}, false) = false`}`)
+      .where(sql`(${beers.breweryId} = ${breweryId} OR ${beers.id} IN (SELECT beer_id FROM beer_collaborations WHERE brewery_id = ${breweryId}))${adminView ? sql`` : sql` AND COALESCE(${beers.isHidden}, false) = false AND COALESCE(${beers.isDiscontinued}, false) = false`}`)
       .groupBy(beers.id)
       .orderBy(beers.name);
 
@@ -4536,8 +4536,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin: soft-archive / restore a brewery (reversible, no deletion).
   // Archiving a brewery cascades is_discontinued=true onto its beers so the whole
   // brewery + its beers disappear from search/listings/suggestions/counters.
-  // Restoring sets is_closed=false and reactivates beers archived BY this cascade
-  // (tracked via closed_source='cascade') without touching beers archived manually.
+  // Restoring sets is_closed=false and reactivates beers auto-archived with the brewery
+  // (discontinued_source 'cascade' or 'ratebeer_import') without touching beers archived
+  // manually by an admin (discontinued_source='admin').
   app.patch('/api/admin/breweries/:id/archive', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const breweryId = parseInt(req.params.id);
@@ -4552,7 +4553,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await db.execute(sql`UPDATE beers SET is_discontinued = true, discontinued_source = 'cascade' WHERE brewery_id = ${breweryId} AND COALESCE(is_discontinued, false) = false`);
       } else {
         await db.execute(sql`UPDATE breweries SET is_closed = false, closed_source = NULL, closed_at = NULL WHERE id = ${breweryId}`);
-        await db.execute(sql`UPDATE beers SET is_discontinued = false, discontinued_source = NULL WHERE brewery_id = ${breweryId} AND discontinued_source = 'cascade'`);
+        // Restore beers auto-archived with the brewery (admin cascade OR RateBeer import),
+        // preserving beers archived individually by an admin (discontinued_source='admin').
+        await db.execute(sql`UPDATE beers SET is_discontinued = false, discontinued_source = NULL WHERE brewery_id = ${breweryId} AND discontinued_source IN ('cascade', 'ratebeer_import')`);
       }
       clearCatalogCaches();
       res.json({ id: breweryId, isClosed: archived });

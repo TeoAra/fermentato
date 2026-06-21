@@ -1465,12 +1465,13 @@ export function registerAdminRoutes(app: Express) {
           closedAt: null,
         }).where(eq(breweries.id, id));
 
-        // Ripristina solo le birre archiviate dalla cascade (non quelle archiviate manualmente)
+        // Ripristina le birre auto-archiviate insieme al birrificio (cascade admin
+        // O import RateBeer), preservando quelle archiviate manualmente (source='admin').
         await db.execute(sql`
           UPDATE beers
           SET is_discontinued = false, discontinued_source = null
           WHERE brewery_id = ${id}
-            AND discontinued_source = 'cascade'
+            AND discontinued_source IN ('cascade', 'ratebeer_import')
         `);
       }
 
