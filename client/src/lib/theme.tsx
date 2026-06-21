@@ -24,6 +24,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const root = document.documentElement;
+    // Aggiungi classe transitioning PRIMA del cambio tema: attiva il CSS
+    // ".theme-transitioning *" che abilita le transizioni background/border/color
+    // solo durante il toggle, non in modo permanente su tutti gli elementi.
+    root.classList.add('theme-transitioning');
+    const cleanupTransition = setTimeout(() => root.classList.remove('theme-transitioning'), 350);
+
     if (theme === "dark") {
       root.classList.add("dark");
     } else {
@@ -64,6 +70,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         }
       }).catch(() => {});
     }
+    return () => clearTimeout(cleanupTransition);
   }, [theme]);
 
   const setTheme = (t: Theme) => setThemeState(t);

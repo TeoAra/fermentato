@@ -542,6 +542,15 @@ function App() {
     initGA();
   }, []);
 
+  // Fix: iOS Safari non attiva :active su elementi senza un listener touchstart
+  // registrato sul documento o su un antenato. Questo empty listener è sufficiente
+  // per sbloccare tap-scale:active, interactive-card:active, ecc. su iPhone/iPad.
+  useEffect(() => {
+    const noop = () => {};
+    document.addEventListener('touchstart', noop, { passive: true });
+    return () => document.removeEventListener('touchstart', noop);
+  }, []);
+
   // Congela env(safe-area-inset-*) come variabili CSS statiche (pixel reali).
   // iOS Safari rivaluta env() ogni volta che crea un nuovo GPU compositing
   // layer (sheet, dialog, overlay). Con valori statici in --frozen-sat/sab

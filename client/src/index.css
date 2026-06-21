@@ -312,6 +312,11 @@ html.dark {
 
   html {
     height: -webkit-fill-available;
+    /* Prevent horizontal rubber-banding and accidental
+       left/right swipe on iOS/Android */
+    overflow-x: hidden;
+    /* Ensure only vertical scroll by default at the root level */
+    touch-action: pan-y;
   }
 
   body {
@@ -324,6 +329,12 @@ html.dark {
     min-height: -webkit-fill-available;
     min-height: 100dvh;
     position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Prevent image dragging — avoids long-press/drag glitches on iOS/Android */
+  img {
+    -webkit-user-drag: none;
   }
 
   /* ── Dynamic viewport units fallback ──────────────────────────────────
@@ -380,6 +391,17 @@ html.dark {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
+  }
+  /* GPU layer per l'header mobile su Capacitor — come per .bottom-nav-fixed.
+     Previene il "jump" dell'header quando iOS ricompila i layer GPU
+     all'apertura di sheet/dialog/overlay. */
+  [data-capacitor="true"] header {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform;
+    contain: layout style;
   }
   /* ──────────────────────────────────────────────────────────────────────── */
 
@@ -567,9 +589,16 @@ html.dark {
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* ── Dark mode theme crossfade ── */
-  * { transition: background-color 300ms ease, border-color 300ms ease, color 50ms ease; }
-  .no-transition * { transition: none !important; }
+  /* ── Dark mode theme crossfade ──────────────────────────────────────────
+     Scoped a .theme-transitioning: la classe viene aggiunta su <html> SOLO
+     durante il toggle tema dal ThemeProvider, e rimossa dopo 350ms.
+     In questo modo la transizione 300ms su background/border/color è attiva
+     SOLO durante il cambio tema — non su ogni hover/tap/interazione mobile.
+     Su dispositivi mobile evita lag percepito (300ms troppo lungo per feedback). */
+  .theme-transitioning * {
+    transition: background-color 300ms ease, border-color 300ms ease, color 50ms ease;
+  }
+  .no-transition *, .theme-transitioning .no-transition * { transition: none !important; }
 
   /* ── Section header standard ── */
   .section-title {
