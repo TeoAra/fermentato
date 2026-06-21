@@ -609,7 +609,9 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     imageUrl: "",
     isGlutenFree: false,
     isAlcoholFree: false,
+    isCollaboration: false,
   });
+  const [newBeerCollabBreweries, setNewBeerCollabBreweries] = useState<{ id: number; name: string }[]>([]);
   const [newBreweryData, setNewBreweryData] = useState({
     name: "",
     location: "",
@@ -873,12 +875,13 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   });
 
   const createBeerMutation = useMutation({
-    mutationFn: async (data: { name: string; breweryId: string; style: string; abv?: string; ibu?: string; description?: string; imageUrl?: string; isGlutenFree?: boolean; isAlcoholFree?: boolean }) => {
+    mutationFn: async (data: { name: string; breweryId: string; style: string; abv?: string; ibu?: string; description?: string; imageUrl?: string; isGlutenFree?: boolean; isAlcoholFree?: boolean; isCollaboration?: boolean }) => {
       let imageUrl = data.imageUrl;
       if (beerImageFile) {
         imageUrl = await uploadBeerImage();
       }
-      return apiRequest("/api/owner/beers", { method: "POST" }, { ...data, imageUrl });
+      const collaborationBreweryIds = data.isCollaboration ? newBeerCollabBreweries.map(b => b.id) : [];
+      return apiRequest("/api/owner/beers", { method: "POST" }, { ...data, imageUrl, collaborationBreweryIds });
     },
     onSuccess: (beer: any) => {
       toast({ title: "Birra creata!" });
@@ -993,7 +996,8 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     setCreatingBeer(false);
     setCreatingBrewery(false);
     setBrewerySearchTerm("");
-    setNewBeerData({ name: "", style: "", abv: "", ibu: "", description: "", breweryId: "", breweryName: "", imageUrl: "", isGlutenFree: false, isAlcoholFree: false });
+    setNewBeerData({ name: "", style: "", abv: "", ibu: "", description: "", breweryId: "", breweryName: "", imageUrl: "", isGlutenFree: false, isAlcoholFree: false, isCollaboration: false });
+    setNewBeerCollabBreweries([]);
     setNewBreweryData({ name: "", location: "", region: "", description: "", logoUrl: "", coverImageUrl: "" });
     setBreweryLogoFile(null);
     setBreweryLogoPreview("");
@@ -1490,7 +1494,29 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                         />
                         <span className="text-xs font-medium text-primary">0.0% Analcolica</span>
                       </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={newBeerData.isCollaboration}
+                          onChange={(e) => {
+                            setNewBeerData({ ...newBeerData, isCollaboration: e.target.checked });
+                            if (!e.target.checked) setNewBeerCollabBreweries([]);
+                          }}
+                          className="w-4 h-4 rounded border-stone-300 text-purple-600 focus:ring-purple-400/30"
+                        />
+                        <span className="text-xs font-medium text-purple-700 dark:text-purple-400">Birra in Collaborazione</span>
+                      </label>
                     </div>
+
+                    {newBeerData.isCollaboration && (
+                      <div className="rounded-xl border border-purple-200 dark:border-purple-900/50 bg-purple-50/50 dark:bg-purple-950/20 p-3">
+                        <Label className="text-xs text-purple-700 dark:text-purple-400 font-medium mb-2 block">Birrifici in Collaborazione</Label>
+                        <CollabBrewerySelector selected={newBeerCollabBreweries} onChange={setNewBeerCollabBreweries} />
+                        {newBeerCollabBreweries.length === 0 && (
+                          <p className="text-xs text-purple-600/70 mt-1.5">Seleziona almeno un birrificio collaboratore</p>
+                        )}
+                      </div>
+                    )}
 
                     <div>
                       <div className="flex items-center justify-between gap-2 mb-1">
@@ -1547,7 +1573,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                       </Button>
                       <Button
                         size="sm"
-                        disabled={!newBeerData.name || !newBeerData.breweryId || !newBeerData.style || createBeerMutation.isPending || uploadingBeerImage}
+                        disabled={!newBeerData.name || !newBeerData.breweryId || !newBeerData.style || createBeerMutation.isPending || uploadingBeerImage || (newBeerData.isCollaboration && newBeerCollabBreweries.length === 0)}
                         onClick={() => createBeerMutation.mutate(newBeerData)}
                       >
                         {(createBeerMutation.isPending || uploadingBeerImage) ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Plus className="h-4 w-4 mr-1" />}
