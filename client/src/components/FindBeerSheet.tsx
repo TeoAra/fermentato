@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import {
-  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Clock, Shuffle, Loader2, Factory, UserRound
+  Search, X, Beer, MapPin, ChevronRight, Store, Sparkles, Clock, Shuffle, Loader2, Factory, UserRound, ScanLine
 } from "lucide-react";
 
 const RECENT_KEY = "fermenta:recentSearches";
@@ -227,6 +227,13 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
               {surpriseLoading
                 ? <Loader2 className="w-4 h-4 animate-spin" />
                 : <Shuffle className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => { onClose(); setLocation('/scan'); }}
+              title="Scansiona etichetta o codice a barre"
+              className="flex-shrink-0 w-10 h-10 rounded-full bg-stone-100 dark:bg-[#1A1D24] flex items-center justify-center tap-scale"
+            >
+              <ScanLine className="w-4 h-4 text-stone-600 dark:text-stone-300" />
             </button>
             <button
               onClick={onClose}

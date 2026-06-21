@@ -1,4 +1,4 @@
-import { User, Home, Bell, ScanLine, Search } from "lucide-react";
+import { User, Home, Bell, Zap, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense, type ReactNode } from "react";
@@ -127,7 +127,7 @@ export function BottomNavigation() {
   const homeActive    = isActive("/");
   const notifActive   = isActive("/notifications");
   const cercaActive   = searchOpen;
-  const scanActive    = isActive("/scan");
+  const activityActive = isActive("/activity");
   const accountActive = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
 
   const Tab = ({
@@ -157,11 +157,6 @@ export function BottomNavigation() {
       >
         {label}
       </span>
-      <span
-        className={`mt-0.5 h-1 w-1 rounded-full transition-all ${
-          active ? "bg-primary opacity-100 scale-100" : "opacity-0 scale-50"
-        }`}
-      />
     </div>
   );
 
@@ -224,15 +219,17 @@ export function BottomNavigation() {
           {/* Spacer for FAB Cerca */}
           <div className="w-16 flex-shrink-0" aria-hidden="true" />
 
-          {/* Scanner */}
-          <Link href="/scan" className="flex-1 flex">
+          {/* Attività */}
+          <Link href="/activity" className="flex-1 flex">
             <Tab
-              active={scanActive}
-              label="Scanner"
+              active={activityActive}
+              label="Attività"
               icon={
-                <ScanLine
+                <Zap
                   className="h-[22px] w-[22px]"
-                  strokeWidth={scanActive ? 2.5 : 1.8}
+                  strokeWidth={activityActive ? 2.5 : 1.8}
+                  fill={activityActive ? "currentColor" : "none"}
+                  style={activityActive ? { fillOpacity: 0.12 } : {}}
                 />
               }
             />

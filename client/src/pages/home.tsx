@@ -105,6 +105,17 @@ export default function Home() {
     return () => window.removeEventListener('capacitor-location-start', handleCapacitorLocationStart);
   }, [applyPosition]);
 
+  // Avvia automaticamente la geolocalizzazione nativa se il permesso è già stato concesso
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    Geolocation.checkPermissions().then(perm => {
+      if (perm.location === 'granted' || (perm.location as string) === 'limited') {
+        window.dispatchEvent(new Event('capacitor-location-start'));
+      }
+    }).catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     if (Capacitor.isNativePlatform()) return;
     if (!navigator.geolocation) return;
@@ -568,7 +579,7 @@ export default function Home() {
         {/* ═══════════════════════════════════════════════════════════════
             ORA VICINO A TE — taplist horizontal scroll
         ═══════════════════════════════════════════════════════════════ */}
-        {(taplistActivity as any[]).length > 0 && typedUser?.userType !== 'pub_owner' && (
+        {(taplistActivity as any[]).length > 0 && (
           <section className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="section-title flex items-center gap-1.5">
@@ -659,7 +670,7 @@ export default function Home() {
         {/* ═══════════════════════════════════════════════════════════════
             IN SPINA VICINO A TE — pub list with taplist
         ═══════════════════════════════════════════════════════════════ */}
-        {sortedPubs.length > 0 && typedUser?.userType !== 'pub_owner' && (
+        {sortedPubs.length > 0 && (
           <section className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="section-title flex items-center gap-1.5">
@@ -820,7 +831,7 @@ export default function Home() {
         {/* ═══════════════════════════════════════════════════════════════
             BIRRIFICI DA SCOPRIRE (only desktop or when no taplist)
         ═══════════════════════════════════════════════════════════════ */}
-        {breweries.length > 0 && typedUser?.userType !== 'pub_owner' && (taplistActivity as any[]).length === 0 && (
+        {breweries.length > 0 && (taplistActivity as any[]).length === 0 && (
           <section className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="section-title flex items-center gap-2">
@@ -842,7 +853,7 @@ export default function Home() {
         {/* ═══════════════════════════════════════════════════════════════
             ATTIVITÀ DALLA COMMUNITY
         ═══════════════════════════════════════════════════════════════ */}
-        {((taplistActivity as any[]).length > 0 || homeAnnouncements.length > 0) && typedUser?.userType !== 'pub_owner' && (
+        {((taplistActivity as any[]).length > 0 || homeAnnouncements.length > 0) && (
           <section className="mb-6">
             <div className="flex items-center justify-between mb-3">
               <h2 className="section-title flex items-center gap-1.5">

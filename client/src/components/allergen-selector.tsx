@@ -81,12 +81,12 @@ export function AllergenSelector({ selectedAllergens, onAllergensChange, classNa
             {selectedAllergens.length > 0 ? selectedAllergenNames : "Seleziona allergeni..."}
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-md max-h-[600px]">
+        <DialogContent className="max-w-md max-h-[80dvh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Seleziona Allergeni</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-2 max-h-96 overflow-y-auto">
-            {allergens.map((allergen: Allergen) => {
+          <div className="grid grid-cols-2 gap-2 overflow-y-auto flex-1 min-h-0">
+            {[...new Map(allergens.map((a: Allergen) => [a.id, a])).values()].map((allergen: Allergen) => {
               const isSelected = selectedAllergens.includes(allergen.id.toString());
               return (
                 <Button
