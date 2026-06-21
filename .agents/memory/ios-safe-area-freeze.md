@@ -85,3 +85,25 @@ overlap fix alone is not enough on probe-failing devices; ship all three togethe
 either stops the jump, so fixing the probe (removes consumer) and killing native transforms (removes
 trigger) is belt-and-suspenders. **Avoid** `max(var(--frozen-sat), env())` as the primary fix — it
 re-introduces a live-`env()` consumer.
+
+## Refinement #3 — persist the inset to localStorage (probe must have worked ONCE, not every session)
+
+The overlap kept recurring "ogni tanto" because the fix still depended on the probe reading a positive
+value *this session*. On some WKWebView sessions the probe (and the `env()` consumer fallback) resolve
+to 0 for the whole lifetime → `--frozen-sat` never gets a positive px → header sits under the status
+bar. The robust web-only fix: **cache the last-known-good positive inset in localStorage and apply it
+at boot, before the first sample.** The notch is constant per device, so once measured even once, the
+header is correctly offset on every later boot even if the probe fails all session.
+- Key by device + orientation: `fermenta.safeArea.v1.${p|l}.${screen.width}x${screen.height}.${dpr}`.
+  `screen.width/height` are orientation-stable on iOS, so the `p`/`l` prefix is what separates
+  portrait/landscape. Landscape has no cache entry → stays on `env()` live (~0, correct).
+- Persist the **raw sane measurement** (not the in-session max) so the cache can self-correct DOWN if
+  iOS ever changes the status-bar height; clamp to sane ranges (sat 1–100, sab 1–80) and never store 0.
+- In-memory still uses "max-non-zero wins" within a session; cache only seeds `bestSat/sab` at boot
+  and on `orientationchange` (removeProperty → applyCache(newKey) → resample).
+- This does NOT re-introduce a live `env()` consumer, so it does not bring back the jump.
+- **Probe hardening that mattered:** `z-index:-1` + `opacity:0` could make WebKit treat the probe as
+  out-of-flow → 0 reads. Use `opacity:0.001; z-index:0` and force a reflow (`void el.offsetHeight`)
+  before reading computed padding.
+- Debug aid: gate `console.log` of measured/cached insets behind a `?sadebug` URL flag for on-device
+  diagnosis in production (web-layer change → reaches native app only after a manual VPS deploy).

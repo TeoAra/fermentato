@@ -571,10 +571,14 @@ function App() {
       // visibile-ma-trasparente dentro al viewport legge l'inset reale.
       el.style.cssText =
         'position:fixed;top:0;left:0;width:1px;height:1px;' +
-        'pointer-events:none;opacity:0;z-index:-1;' +
+        'pointer-events:none;opacity:0.001;z-index:0;' +
         'padding-top:env(safe-area-inset-top,0px);' +
         'padding-bottom:env(safe-area-inset-bottom,0px);';
       (document.body || document.documentElement).appendChild(el);
+      // Forza un reflow prima di leggere: alcune build WKWebView espongono
+      // l'inset solo dopo il primo layout dell'elemento. z-index:-1 e opacity:0
+      // potevano far trattare il probe come fuori-flusso → lettura 0.
+      void el.offsetHeight;
       const cs = getComputedStyle(el);
       const sat = parseFloat(cs.paddingTop) || 0;
       const sab = parseFloat(cs.paddingBottom) || 0;
@@ -583,49 +587,105 @@ function App() {
     }
 
     const root = document.documentElement;
-    // Congela gli inset come px reali, MAI come env() live (che iOS
-    // rivaluterebbe creando nuovi layer GPU su overlay/toast/dialog → salto).
-    // Regola "max-non-zero vince": una lettura 0 precoce/transitoria NON deve
-    // sovrascrivere un notch già rilevato. Al boot scriviamo sempre il miglior
-    // valore visto finora, così le variabili restano px statici e corretti.
+
+    // Clamp di sanità: congeliamo/persistiamo un inset solo se plausibile
+    // (Dynamic Island ~59px, notch ~44–50px; home indicator ~34px). Rifiuta 0 e
+    // valori assurdi (es. un probe che per errore legge l'intera viewport).
+    const SAT_MIN = 1, SAT_MAX = 100;
+    const SAB_MIN = 1, SAB_MAX = 80;
+    const saneSat = (v: number) => v >= SAT_MIN && v <= SAT_MAX;
+    const saneSab = (v: number) => v >= SAB_MIN && v <= SAB_MAX;
+    const debug = (() => { try { return /[?&]sadebug/.test(window.location.search); } catch { return false; } })();
+
+    // Cache localStorage dell'ultimo inset positivo, per device + orientamento.
+    // Il notch è costante sul device: una volta misurato anche UNA sola volta lo
+    // applichiamo SUBITO ai boot successivi — così, anche se in una sessione il
+    // probe legge 0 per tutta la durata (build WKWebView flaky), l'header resta
+    // sotto la status bar invece di sovrapporsi. NON reintroduce env() live →
+    // niente salto agli overlay (al contrario di max(var,env()), da evitare).
+    function cacheKey(): string {
+      const orient = window.matchMedia?.('(orientation: portrait)')?.matches ? 'p' : 'l';
+      const w = window.screen?.width ?? 0;
+      const h = window.screen?.height ?? 0;
+      const dpr = window.devicePixelRatio || 1;
+      return `fermenta.safeArea.v1.${orient}.${w}x${h}.${dpr}`;
+    }
+    function loadCache(key: string): { sat: number; sab: number } | null {
+      try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        const v = JSON.parse(raw);
+        return { sat: Number(v?.sat) || 0, sab: Number(v?.sab) || 0 };
+      } catch { return null; }
+    }
+    function saveCache(key: string, sat: number, sab: number) {
+      try {
+        const prev = loadCache(key);
+        // Persistiamo l'ultima misura SANA (può anche rimpicciolire → self-correcting
+        // se iOS cambia l'altezza della status bar); mai sovrascrivere un valore
+        // sano già salvato con uno 0 transitorio.
+        const next = {
+          sat: saneSat(sat) ? sat : (prev?.sat ?? 0),
+          sab: saneSab(sab) ? sab : (prev?.sab ?? 0),
+        };
+        if (prev && next.sat === prev.sat && next.sab === prev.sab) return;
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {}
+    }
+
+    // Congela gli inset come px reali, MAI come env() live (che iOS rivaluterebbe
+    // creando nuovi layer GPU su overlay/toast/dialog → salto). Regola
+    // "max-non-zero vince" entro la sessione: una lettura 0 precoce/transitoria
+    // NON deve sovrascrivere un notch già rilevato.
     let bestSat = 0;
     let bestSab = 0;
+
+    // Applica subito il valore in cache per l'orientamento corrente (se sano).
+    function applyCache() {
+      const c = loadCache(cacheKey());
+      if (!c) return;
+      if (saneSat(c.sat) && c.sat > bestSat) { bestSat = c.sat; root.style.setProperty('--frozen-sat', bestSat + 'px'); }
+      if (saneSab(c.sab) && c.sab > bestSab) { bestSab = c.sab; root.style.setProperty('--frozen-sab', bestSab + 'px'); }
+      if (debug) console.log('[safe-area] applyCache', cacheKey(), c);
+    }
+
     function sample() {
       const { sat, sab } = readSafeArea();
       if (sat > bestSat) bestSat = sat;
       if (sab > bestSab) bestSab = sab;
-      // MAI scrivere 0: una lettura 0 (al boot, prima che WKWebView esponga gli
-      // inset, oppure un read flaky del probe nascosto su alcune build iOS)
-      // clobbererebbe il fallback CSS `env(safe-area-inset-*)` con uno "0px"
-      // statico, lasciando l'header SOTTO la status bar / Dynamic Island e la
-      // bottom-nav SOTTO l'home indicator (overlap). Congeliamo solo valori
-      // positivi; finché non ne abbiamo uno, le var restano sul fallback env()
-      // live → posizione corretta, al massimo un micro-salto, mai overlap.
+      // MAI scrivere 0: clobbererebbe il fallback env() lasciando header SOTTO la
+      // status bar / Dynamic Island e bottom-nav SOTTO l'home indicator (overlap).
+      // Congeliamo solo valori positivi.
       if (bestSat > 0) root.style.setProperty('--frozen-sat', bestSat + 'px');
       if (bestSab > 0) root.style.setProperty('--frozen-sab', bestSab + 'px');
+      // Persistiamo la misura GREZZA sana (non bestSat) così la cache può anche
+      // correggersi verso il basso ai boot futuri.
+      if (saneSat(sat) || saneSab(sab)) saveCache(cacheKey(), sat, sab);
+      if (debug) console.log('[safe-area] sample', { sat, sab, bestSat, bestSab });
     }
-    // La rotazione cambia davvero gli inset (in landscape il notch va sul lato
-    // → top/bottom possono diventare 0). Rimuoviamo il px congelato (così le var
-    // tornano al fallback env() live, ~0 in landscape) e ricampioniamo da capo:
-    // il portrait ri-blocca il notch al primo valore positivo, il landscape
-    // resta su env() invece di restare incollato al valore portrait.
+
+    // La rotazione cambia davvero gli inset (in landscape il notch va sul lato →
+    // top/bottom ~0). Rimuoviamo il px congelato (var tornano a env() live),
+    // applichiamo la cache del NUOVO orientamento (landscape non ne ha → resta
+    // env() ~0) e ricampioniamo da capo.
     function resampleFromScratch() {
       bestSat = 0;
       bestSab = 0;
       root.style.removeProperty('--frozen-sat');
       root.style.removeProperty('--frozen-sab');
+      applyCache();
       sample();
       requestAnimationFrame(sample);
       setTimeout(sample, 120);
       setTimeout(sample, 350);
     }
 
-    // Campionamento al boot: immediato + rAF + 80/250/750ms (WKWebView espone
-    // gli inset solo dopo il primo layout).
-    // Campionamento al boot + tardivo: WKWebView espone gli inset solo dopo il
-    // primo layout — su alcuni device anche dopo 1–3s, o solo al primo tocco /
-    // resume dell'app. Campioniamo a più riprese (max-non-zero vince) così la
-    // freeze cattura il valore positivo non appena diventa disponibile.
+    // Boot: applica SUBITO la cache (fix overlap anche se il probe leggerà 0 per
+    // tutta la sessione), poi campiona a più riprese (WKWebView espone gli inset
+    // solo dopo il primo layout — su alcuni device dopo 1–3s, o solo al primo
+    // tocco / resume dell'app). max-non-zero vince così la freeze cattura il
+    // valore positivo non appena diventa disponibile.
+    applyCache();
     sample();
     requestAnimationFrame(sample);
     const timers = [80, 250, 750, 1500, 3000].map((d) => window.setTimeout(sample, d));
