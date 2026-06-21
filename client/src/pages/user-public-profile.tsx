@@ -465,7 +465,7 @@ export default function UserPublicProfile() {
         variant="standard"
         className={`pt-4 ${activeTab !== 'overview' ? 'lg:!pt-8 lg:!pb-8' : ''}`}
         style={{
-          paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+          paddingBottom: 'calc(96px + var(--frozen-sab))',
           paddingTop: activeTab !== 'overview' ? '56px' : undefined,
         }}
       >
@@ -707,7 +707,7 @@ export default function UserPublicProfile() {
         className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
           isModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        style={{ bottom: 'calc(var(--frozen-sab) + 12px)' }}
         aria-label="Navigazione del profilo"
       >
         <div className="mx-auto max-w-md px-4">

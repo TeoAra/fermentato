@@ -1,11 +1,10 @@
 import { User, Home, Bell, Zap, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect, useCallback, createContext, useContext, lazy, Suspense, type ReactNode } from "react";
+import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
 
 /**
  * Renderizza i dock interni dei dashboard tramite portal direttamente in
@@ -88,11 +87,8 @@ export function useAnyModalOpen(): boolean {
 }
 
 export function BottomNavigation() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { isAuthenticated, user } = useAuth();
-  const [searchOpen, setSearchOpen] = useState(false);
-  // anyModalOpen rimosso: la nav si nasconde via CSS display:none
-  // (.find-beer-open e :has([data-state="open"])) — istantaneo, zero salto.
   const { isHidden } = useContext(BottomNavHideCtx);
 
   const { data: unreadData } = useQuery<{ count: number }>({
@@ -136,7 +132,6 @@ export function BottomNavigation() {
 
   const homeActive    = isActive("/");
   const notifActive   = isActive("/notifications");
-  const cercaActive   = searchOpen;
   const activityActive = isActive("/activity");
   const accountActive = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
 
@@ -172,12 +167,6 @@ export function BottomNavigation() {
 
   return (
     <>
-      {/* FindBeerSheet sempre nel DOM: il suo layer GPU è pre-allocato al boot,
-          così quando diventa visibile iOS NON crea un nuovo layer → nessun
-          re-composite → header e bottom-nav non saltano mai */}
-      <Suspense fallback={null}>
-        <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
-      </Suspense>
       <nav
         className="bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)]"
         style={{ paddingBottom: "max(calc(var(--frozen-sab) - 16px), 0px)" }}
@@ -273,7 +262,7 @@ export function BottomNavigation() {
           {/* FAB Cerca — centrale, sporge sopra la barra */}
           <button
             type="button"
-            onClick={() => setSearchOpen(true)}
+            onClick={() => setLocation("/search")}
             aria-label="Cerca"
             className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-[0_8px_20px_rgba(232,119,34,0.45)] border-4 border-white dark:border-[#0B0D10] transition-transform active:scale-95 z-[1]"
           >

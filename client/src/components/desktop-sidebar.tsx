@@ -9,8 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { isIosNative } from "@/lib/platform";
-import { useState, lazy, Suspense } from "react";
-const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
+import { useState } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { User as UserType } from "@shared/schema";
 
@@ -31,7 +30,6 @@ export function DesktopSidebar() {
   const [location, setLocation] = useLocation();
   const { user, isAuthenticated } = useAuth();
   const typedUser = user as UserType | undefined;
-  const [searchOpen, setSearchOpen] = useState(false);
 
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
@@ -76,12 +74,6 @@ export function DesktopSidebar() {
 
   return (
     <>
-      {searchOpen && (
-        <Suspense fallback={null}>
-          <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
-        </Suspense>
-      )}
-
       {/* ── Desktop Topbar ── hidden on mobile, shown on lg+ */}
       <header className="hidden lg:flex fixed top-0 left-0 right-0 z-50 h-16 items-center border-b border-stone-200 dark:border-[hsl(25,12%,14%)] bg-white/97 dark:bg-[#0B0D10]/97 backdrop-blur-xl">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center gap-6">
@@ -118,7 +110,7 @@ export function DesktopSidebar() {
           <div className="flex items-center gap-1">
             {/* Search */}
             <button
-              onClick={() => setSearchOpen(true)}
+              onClick={() => setLocation("/search")}
               className="p-2.5 rounded-xl text-stone-500 dark:text-stone-400 hover:bg-stone-100 dark:hover:bg-stone-900/30 hover:text-foreground transition-colors"
               title="Cerca"
             >

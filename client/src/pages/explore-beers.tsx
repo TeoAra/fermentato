@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { Beer, Search, X, Star, Bookmark, Dices, Flame, Sparkles, Trophy, ChevronRight, SlidersHorizontal } from "lucide-react";
-import FindBeerSheet from "@/components/FindBeerSheet";
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
 
@@ -190,7 +189,6 @@ export default function ExploreBeers() {
   const [inputValue, setInputValue] = useState(init.style || init.q);
   const [sortMode, setSortMode] = useState<SortMode>("popular");
   const [showAllStyles, setShowAllStyles] = useState(false);
-  const [findBeerOpen, setFindBeerOpen] = useState(false);
 
   // Sync URL ↔ state on browser back/forward
   useEffect(() => {
@@ -340,7 +338,7 @@ export default function ExploreBeers() {
     return (
       <div className="min-h-screen bg-[#F7F4F0] dark:bg-background">
         <Helmet><title>Tutti gli stili | Fermenta.to</title></Helmet>
-        <div className="sticky z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-[#23262E]/60" style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}>
+        <div className="sticky z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-[#23262E]/60" style={{ top: 'calc(3.5rem + var(--frozen-sat))' }}>
           <PageContainer variant="wide" className="py-3 flex items-center gap-3">
             <button onClick={() => setShowAllStyles(false)} className="flex items-center gap-1.5 text-sm font-bold text-primary tap-scale">
               ← Indietro
@@ -384,7 +382,7 @@ export default function ExploreBeers() {
       {/* ── Sticky search + chips ── */}
       <div
         className="sticky lg:top-16 z-30 bg-[#F7F4F0]/95 dark:bg-background/95 backdrop-blur-md border-b border-stone-100 dark:border-[#23262E]/60"
-        style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
+        style={{ top: 'calc(3.5rem + var(--frozen-sat))' }}
       >
         <PageContainer variant="wide" className="py-2.5 space-y-2.5">
           {/* Search bar */}
@@ -628,7 +626,7 @@ export default function ExploreBeers() {
                     <h2 className="text-lg font-extrabold text-foreground leading-tight">Cosa si beve<br />vicino a te?</h2>
                     <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 leading-relaxed">Scopri le birre più popolari nei pub della tua zona</p>
                     <button
-                      onClick={() => setFindBeerOpen(true)}
+                      onClick={() => setLocation("/search")}
                       className="mt-4 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-primary text-white text-sm font-bold tap-scale shadow-sm hover:bg-primary/90 transition-colors"
                     >
                       Trova una birra
@@ -643,8 +641,6 @@ export default function ExploreBeers() {
           </>
         )}
       </PageContainer>
-
-      <FindBeerSheet open={findBeerOpen} onClose={() => setFindBeerOpen(false)} nearbyPubs={[]} />
     </div>
   );
 }

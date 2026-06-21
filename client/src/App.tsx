@@ -52,7 +52,7 @@ function AndroidAppBanner() {
   };
   return (
     <div className="fixed left-3 right-3 z-[60] flex items-center gap-3 px-4 py-3 bg-white dark:bg-[#1C1F26] border border-stone-200 dark:border-[#2A2D35] rounded-2xl shadow-xl"
-      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 68px)" }}>
+      style={{ bottom: "calc(var(--frozen-sab) + 68px)" }}>
       <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-stone-100 flex items-center justify-center">
         <img src="/icons/icon-192.png" alt="Fermenta.to" className="w-full h-full object-cover"
           onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -94,7 +94,7 @@ function IosAppBanner() {
   };
   return (
     <div className="fixed left-3 right-3 z-[60] flex items-center gap-3 px-4 py-3 bg-white dark:bg-[#1C1F26] border border-stone-200 dark:border-[#2A2D35] rounded-2xl shadow-xl"
-      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 68px)" }}>
+      style={{ bottom: "calc(var(--frozen-sab) + 68px)" }}>
       <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-stone-100 flex items-center justify-center">
         <img src="/icons/icon-192.png" alt="Fermenta.to" className="w-full h-full object-cover"
           onError={e => { (e.target as HTMLImageElement).style.display = "none"; }} />
@@ -577,25 +577,55 @@ function App() {
       return { sat, sab };
     }
 
-    function freezeSafeArea() {
+    const root = document.documentElement;
+    // Congela gli inset come px reali, MAI come env() live (che iOS
+    // rivaluterebbe creando nuovi layer GPU su overlay/toast/dialog → salto).
+    // Regola "max-non-zero vince": una lettura 0 precoce/transitoria NON deve
+    // sovrascrivere un notch già rilevato. Al boot scriviamo sempre il miglior
+    // valore visto finora, così le variabili restano px statici e corretti.
+    let bestSat = 0;
+    let bestSab = 0;
+    function sample() {
       const { sat, sab } = readSafeArea();
-      // Imposta solo se il valore è valido (>0); altrimenti lascia il default CSS.
-      // I default in index.css usano env() direttamente e sono corretti come fallback.
-      if (sat > 0) document.documentElement.style.setProperty('--frozen-sat', sat + 'px');
-      if (sab > 0) document.documentElement.style.setProperty('--frozen-sab', sab + 'px');
+      if (sat > bestSat) bestSat = sat;
+      if (sab > bestSab) bestSab = sab;
+      root.style.setProperty('--frozen-sat', bestSat + 'px');
+      root.style.setProperty('--frozen-sab', bestSab + 'px');
+    }
+    // La rotazione cambia davvero gli inset (in landscape il notch va sul lato
+    // → top/bottom possono diventare 0). Azzeriamo la memoria e ricampioniamo
+    // da capo, così un 0 legittimo viene onorato e il ritorno in portrait
+    // ri-blocca il notch tramite il max.
+    function resampleFromScratch() {
+      bestSat = 0;
+      bestSab = 0;
+      sample();
+      requestAnimationFrame(sample);
+      setTimeout(sample, 120);
+      setTimeout(sample, 350);
     }
 
-    // Prima lettura immediata; retry dopo 80ms per Capacitor/WKWebView
-    // che a volte espone gli inset solo dopo il primo layout.
-    freezeSafeArea();
-    const retryTimer = setTimeout(freezeSafeArea, 80);
+    // Campionamento al boot: immediato + rAF + 80/250/750ms (WKWebView espone
+    // gli inset solo dopo il primo layout).
+    sample();
+    requestAnimationFrame(sample);
+    const t1 = setTimeout(sample, 80);
+    const t2 = setTimeout(sample, 250);
+    const t3 = setTimeout(sample, 750);
 
-    // Aggiorna se l'utente ruota il dispositivo (cambia l'inset)
-    const onOrient = () => setTimeout(freezeSafeArea, 150);
+    const onOrient = () => setTimeout(resampleFromScratch, 200);
     window.addEventListener('orientationchange', onOrient);
+    // visualViewport resize (barra browser / tastiera): ri-campiona col max,
+    // non declassa mai l'header a 0.
+    const onVV = () => sample();
+    window.visualViewport?.addEventListener('resize', onVV);
+
     return () => {
-      clearTimeout(retryTimer);
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
       window.removeEventListener('orientationchange', onOrient);
+      window.visualViewport?.removeEventListener('resize', onVV);
     };
   }, []);
 

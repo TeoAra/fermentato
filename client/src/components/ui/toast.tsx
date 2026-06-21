@@ -20,7 +20,7 @@ const ToastViewport = React.forwardRef<
       // non propagano un reflow agli elementi fixed esterni (header z-50, bottom nav z-55).
       // max-h rimosso (100vh su iOS può scatenare un resize del visual viewport).
       // Desktop (sm+): bottom-right classico.
-      "fixed left-0 right-0 top-[calc(env(safe-area-inset-top)+3.5rem+0.5rem)] z-[90] flex flex-col gap-2 px-4 " +
+      "fixed left-0 right-0 top-[calc(var(--frozen-sat)+3.5rem+0.5rem)] z-[90] flex flex-col gap-2 px-4 " +
       "sm:bottom-4 sm:right-4 sm:left-auto sm:top-auto sm:flex-col sm:w-auto sm:max-w-[420px] sm:gap-0 sm:p-0 " +
       "[-webkit-transform:translateZ(0)] [transform:translateZ(0)] [will-change:transform] " +
       "[contain:layout_style_paint]",

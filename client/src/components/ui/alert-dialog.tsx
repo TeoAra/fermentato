@@ -16,7 +16,7 @@ const AlertDialogOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPrimitive.Overlay
     className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[60] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -31,19 +31,19 @@ const AlertDialogContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AlertDialogPortal>
     {/* Overlay dietro il wrapper flex */}
-    <AlertDialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+    <AlertDialogPrimitive.Overlay className="fixed inset-0 z-[60] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
     {/* Wrapper flex che centra senza transform — funziona su iOS/Android WebView */}
     <div
-      className="fixed left-0 right-0 z-50 flex items-center justify-center px-4 pointer-events-none [&>*]:!max-h-full"
+      className="fixed left-0 right-0 z-[60] flex items-center justify-center px-4 pointer-events-none [&>*]:!max-h-full"
       style={{
-        top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
+        top: 'calc(var(--frozen-sat) + 16px)',
+        bottom: 'calc(var(--frozen-sab) + 80px)',
       }}
     >
       <AlertDialogPrimitive.Content
         ref={ref}
         className={cn(
-          "pointer-events-auto relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-lg duration-200 max-h-full overflow-y-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "pointer-events-auto relative z-[60] grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-lg duration-200 max-h-full overflow-y-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className
         )}
         {...props}

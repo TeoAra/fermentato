@@ -5,4 +5,4 @@
 - [beer_reviews table missing](beer-reviews-missing.md) — beer_reviews is referenced in raw SQL in routes.ts but doesn't exist in the DB; any query against it must use .catch(() => 0) or similar fallback.
 - [Nullable boolean gate](nullable-boolean-gate.md) — gate Drizzle nullable booleans with `=== false`, never `!field` (null/undefined would false-positive).
 - [Gemini OCR only](gemini-removed.md) — Gemini 2.0 Flash Vision re-added as primary engine in /api/scan/ocr only (beer label prompt); GEMINI_API_KEY required. Bot still uses regex, image finders still use Untappd+DDG.
-- [Frozen safe area (iOS)](frozen-safe-area.md) — getPropertyValue('--sat') returns raw CSS token not px; read env() via dummy element paddingTop to freeze the real pixel value.
+- [iOS safe-area freeze](ios-safe-area-freeze.md) — fixed header/nav jump on overlay open: freeze env() into static --frozen-sat/sab vars, use them everywhere for top/bottom chrome (never raw env()), max-non-zero sampling, layer modals over nav (not display:none); read px via dummy el not getPropertyValue.

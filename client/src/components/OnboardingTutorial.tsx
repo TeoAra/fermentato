@@ -156,8 +156,8 @@ export function OnboardingTutorial({ forceOpen, onClose }: OnboardingTutorialPro
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-sm animate-in fade-in duration-200"
       style={{
-        paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)",
-        paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 16px)",
+        paddingTop: "calc(var(--frozen-sat) + 16px)",
+        paddingBottom: "calc(var(--frozen-sab) + 16px)",
         paddingLeft: "16px",
         paddingRight: "16px",
       }}

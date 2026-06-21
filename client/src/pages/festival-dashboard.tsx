@@ -1652,7 +1652,7 @@ export default function FestivalDashboard() {
         variant="standard"
         className="space-y-6 lg:!pt-6 lg:!pb-6"
         style={{
-          paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+          paddingBottom: 'calc(96px + var(--frozen-sab))',
           paddingTop: activeTab !== 'overview' ? '56px' : '24px',
         }}
       >
@@ -2141,7 +2141,7 @@ export default function FestivalDashboard() {
           className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
             isFestModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
-          style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+          style={{ bottom: 'calc(var(--frozen-sab) + 12px)' }}
           aria-label="Navigazione del festival"
         >
           <div className="mx-auto max-w-md px-4">

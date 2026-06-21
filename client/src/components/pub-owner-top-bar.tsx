@@ -42,7 +42,7 @@ export function PubOwnerTopBar({
   return (
     <div
       className="sticky lg:top-0 z-40 w-full"
-      style={{ top: 'calc(3.5rem + env(safe-area-inset-top, 0px))' }}
+      style={{ top: 'calc(3.5rem + var(--frozen-sat))' }}
     >
       <motion.div 
         className="glass-card border-b border-white/20 dark:border-[#23262E]/50 backdrop-blur-xl bg-white/80 dark:bg-[#0B0D10]/80"

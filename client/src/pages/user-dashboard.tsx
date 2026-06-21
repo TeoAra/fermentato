@@ -702,7 +702,7 @@ export default function UserDashboard() {
         {/* Main Content */}
         <div className="flex-1 md:ml-64">
           <div className="py-6 md:py-8 lg:!pt-8 lg:!pb-8" style={{
-            paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+            paddingBottom: 'calc(96px + var(--frozen-sab))',
             paddingTop: activeTab !== 'overview' ? '56px' : undefined,
           }}>
             <PageContainer variant="wide">
@@ -784,7 +784,7 @@ export default function UserDashboard() {
         className={`bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
           isUserModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
-        style={{ paddingBottom: 'max(env(safe-area-inset-bottom) - 16px, 0px)' }}
+        style={{ paddingBottom: 'max(var(--frozen-sab) - 16px, 0px)' }}
         aria-label="Navigazione dashboard utente"
         role="tablist"
       >

@@ -83,10 +83,10 @@ html.dark {
 /* Mobile-first responsive utilities */
 @layer utilities {
   .safe-area-pb {
-    padding-bottom: env(safe-area-inset-bottom);
+    padding-bottom: var(--frozen-sab);
   }
   .safe-area-pt {
-    padding-top: env(safe-area-inset-top);
+    padding-top: var(--frozen-sat);
   }
   .safe-area-pl {
     padding-left: env(safe-area-inset-left);
@@ -601,26 +601,12 @@ html.dark {
   }
   .no-transition *, .theme-transitioning .no-transition * { transition: none !important; }
 
-  /* ── Qualsiasi modal/sheet aperta: nasconde la bottom nav prima del paint.
-     La nav ha will-change:transform (nuovo compositing layer GPU) che può
-     renderla sopra il backdrop nonostante il z-index inferiore su iOS WebKit.
-     Regole coprono TUTTI i casi:
-     1) FindBeerSheet        → body.find-beer-open (useLayoutEffect)
-     2) Radix Dialog/Sheet   → .fixed.inset-0[data-state="open"]
-     3) Custom popup (data)  → .fixed.inset-0[data-modal]
-     4) Custom popup (bg)    → .fixed.inset-0 con classe bg-black/*
-        Tutte regole :has() pure CSS → prima del paint, zero setState.    ── */
-  .find-beer-open .bottom-nav-fixed,
-  body:has(.fixed.inset-0[data-state="open"]) .bottom-nav-fixed,
-  body:has(.fixed.inset-0[data-modal]) .bottom-nav-fixed,
-  body:has(.fixed.inset-0.bg-black) .bottom-nav-fixed,
-  body:has(.fixed.inset-0.bg-black\/50) .bottom-nav-fixed,
-  body:has(.fixed.inset-0.bg-black\/60) .bottom-nav-fixed,
-  body:has(.fixed.inset-0.bg-black\/70) .bottom-nav-fixed,
-  body:has(.fixed.inset-0.bg-black\/80) .bottom-nav-fixed,
-  body:has(.fixed.inset-0.bg-black\/85) .bottom-nav-fixed {
-    display: none;
-  }
+  /* ── La bottom nav resta SEMPRE visibile e statica: NON viene più nascosta
+     all'apertura dei popup. Nasconderla/rimostrarla via display:none causava
+     un flash percepito come "salto". I modali (Radix Dialog/AlertDialog/Sheet,
+     lightbox, scanner, prompt) hanno z-index >= 60 e coprono la nav (z-55).
+     Con --frozen-sat/sab statici (mai env() live), header e nav non saltano
+     mai quando si aprono overlay, toast o dialog.                       ── */
 
   /* ── Section header standard ── */
   .section-title {
@@ -747,7 +733,7 @@ html.dark {
   /* ── Main content bottom padding — clears the 64px nav + safe area (mobile only) ── */
   @media (max-width: 1023px) {
     .main-content-pb {
-      padding-bottom: max(calc(64px + env(safe-area-inset-bottom) + 8px), 80px) !important;
+      padding-bottom: max(calc(64px + var(--frozen-sab) + 8px), 80px) !important;
     }
   }
 
@@ -796,7 +782,7 @@ html.dark {
   /* Mobile: 64px (nav tab) + safe-area-inset-bottom + 8px gap */
   /* Desktop (lg+): 1rem (same as lg:bottom-4) */
   .bottom-nav-above {
-    bottom: calc(4rem + env(safe-area-inset-bottom, 0px) + 0.5rem);
+    bottom: calc(4rem + var(--frozen-sab) + 0.5rem);
   }
   @media (min-width: 1024px) {
     .bottom-nav-above {

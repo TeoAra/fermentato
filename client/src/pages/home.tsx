@@ -11,7 +11,6 @@ import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
-import FindBeerSheet from "@/components/FindBeerSheet";
 import NewsStrip from "@/components/news-strip";
 import { PageContainer } from "@/components/layout/page-container";
 
@@ -47,7 +46,6 @@ export default function Home() {
   const [showDistancePicker, setShowDistancePicker] = useState(false);
   const [showPubs, setShowPubs] = useState(true);
   const [showBreweries, setShowBreweries] = useState(true);
-  const [findBeerOpen, setFindBeerOpen] = useState(false);
 
   const ACCURACY_THRESHOLD = 3000;
   const gotGoodPositionRef = useRef(false);
@@ -410,13 +408,14 @@ export default function Home() {
 
           {/* Two primary CTAs — Trova una birra opens the floating panel */}
           <div className="flex gap-2.5 mt-4">
-            <button
-              onClick={() => setFindBeerOpen(true)}
-              className="tap-scale btn-orange-glow flex-1 flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card"
-            >
-              <Beer className="w-4 h-4" />
-              Trova una birra
-            </button>
+            <Link href="/search" className="flex-1">
+              <button
+                className="tap-scale btn-orange-glow w-full flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card"
+              >
+                <Beer className="w-4 h-4" />
+                Trova una birra
+              </button>
+            </Link>
             <Link href="/explore/pubs" className="flex-1">
               <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-sm font-bold px-4 py-3 rounded-2xl border-2 border-primary/25 shadow-card-sm">
                 <Store className="w-4 h-4 text-primary" />
@@ -1031,12 +1030,6 @@ export default function Home() {
       </PageContainer>
 
       <Footer />
-
-      <FindBeerSheet
-        open={findBeerOpen}
-        onClose={() => setFindBeerOpen(false)}
-        nearbyPubs={sortedPubs}
-      />
     </div>
   );
 }

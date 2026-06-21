@@ -709,7 +709,7 @@ export default function PubDetail() {
 
       <main
         className="max-w-[720px] mx-auto px-4"
-        style={{ paddingBottom: "calc(80px + env(safe-area-inset-bottom))" }}
+        style={{ paddingBottom: "calc(80px + var(--frozen-sab))" }}
       >
         {canManage && (
           <div className="pt-3">

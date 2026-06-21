@@ -76,7 +76,7 @@ export function Toaster() {
         position: "fixed",
         left: 0,
         right: 0,
-        top: "calc(env(safe-area-inset-top) + 3.5rem + 0.5rem)",
+        top: "calc(var(--frozen-sat) + 3.5rem + 0.5rem)",
         zIndex: 90,
         display: "flex",
         flexDirection: "column",

@@ -145,7 +145,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
     <div
       className="fixed inset-0 z-[200] flex flex-col items-center"
       data-modal
-      style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      style={{ paddingTop: 'var(--frozen-sat)' }}
     >
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleClose} />
@@ -153,7 +153,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
       {/* Panel */}
       <div
         className="relative z-10 w-full max-w-lg mx-3 mt-2 rounded-2xl shadow-2xl flex flex-col bg-white dark:bg-[#0B0D10] overflow-hidden"
-        style={{ maxHeight: 'calc(min(88dvh, 680px) - env(safe-area-inset-top))' }}
+        style={{ maxHeight: 'calc(min(88dvh, 680px) - var(--frozen-sat))' }}
       >
         {/* ── Search bar ── */}
         <div className="flex items-center gap-2.5 px-4 pt-4 pb-3 border-b border-stone-100 dark:border-white/[0.06]">

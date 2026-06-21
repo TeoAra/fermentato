@@ -21,7 +21,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+      "fixed inset-0 z-[60] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
       className
     )}
     {...props}
@@ -35,7 +35,7 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
     {/* Overlay separata, dietro il wrapper flex */}
-    <DialogPrimitive.Overlay className="fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+    <DialogPrimitive.Overlay className="fixed inset-0 z-[60] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
     {/* Wrapper flex che centra il dialog ESCLUDENDO la safe-area top e
         l'altezza della bottom nav (~64px + safe-area-bottom). Usiamo
         top/bottom esplicite (non padding) così l'area diventa la viewport
@@ -43,10 +43,10 @@ const DialogContent = React.forwardRef<
         DialogContent (anche se imposta max-h-[85vh] hardcoded) a stare
         dentro questo box, evitando che i CTA finiscano sotto la tab bar. */}
     <div
-      className="fixed left-0 right-0 z-50 flex items-center justify-center px-4 pointer-events-none [&>*]:!max-h-full"
+      className="fixed left-0 right-0 z-[60] flex items-center justify-center px-4 pointer-events-none [&>*]:!max-h-full"
       style={{
-        top: 'calc(env(safe-area-inset-top, 0px) + 16px)',
-        bottom: 'calc(env(safe-area-inset-bottom, 0px) + 80px)',
+        top: 'calc(var(--frozen-sat) + 16px)',
+        bottom: 'calc(var(--frozen-sab) + 80px)',
       }}
     >
       <DialogPrimitive.Content
@@ -64,7 +64,7 @@ const DialogContent = React.forwardRef<
           }
         }}
         className={cn(
-          "pointer-events-auto relative z-50 grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-2xl duration-200 max-h-full overflow-y-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "pointer-events-auto relative z-[60] grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-2xl duration-200 max-h-full overflow-y-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className
         )}
         {...props}

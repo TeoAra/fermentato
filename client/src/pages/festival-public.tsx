@@ -879,7 +879,7 @@ export default function FestivalPublic() {
       <div
         className={`max-w-2xl mx-auto bg-white dark:bg-card rounded-t-3xl relative z-10 px-4 min-h-[calc(100dvh-200px)] ${activeTab !== 'overview' ? 'mt-0 pt-0 lg:-mt-8 lg:pt-6' : '-mt-8 pt-6'}`}
         style={{
-          paddingBottom: 'calc(96px + env(safe-area-inset-bottom))',
+          paddingBottom: 'calc(96px + var(--frozen-sab))',
           paddingTop: activeTab !== 'overview' ? '64px' : undefined,
         }}
       >
@@ -1219,7 +1219,7 @@ export default function FestivalPublic() {
         className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
           isFestivalModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
-        style={{ bottom: 'calc(env(safe-area-inset-bottom) + 12px)' }}
+        style={{ bottom: 'calc(var(--frozen-sab) + 12px)' }}
         aria-label="Navigazione del festival"
         role="tablist"
       >

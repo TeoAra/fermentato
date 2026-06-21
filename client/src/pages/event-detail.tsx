@@ -254,10 +254,10 @@ export default function EventDetailPage() {
           activeTab !== "overview" ? "lg:-mt-16 pt-2" : "-mt-16"
         }`}
         style={{
-          paddingBottom: "calc(96px + env(safe-area-inset-bottom))",
+          paddingBottom: "calc(96px + var(--frozen-sab))",
           paddingTop:
             activeTab !== "overview"
-              ? "calc(56px + env(safe-area-inset-top))"
+              ? "calc(56px + var(--frozen-sat))"
               : undefined,
         }}
       >
@@ -478,7 +478,7 @@ export default function EventDetailPage() {
         className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
           isModalOpen ? "opacity-0 pointer-events-none" : "opacity-100"
         }`}
-        style={{ bottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+        style={{ bottom: "calc(var(--frozen-sab) + 12px)" }}
         aria-label="Navigazione dell'evento"
         role="tablist"
       >

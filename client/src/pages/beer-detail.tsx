@@ -763,7 +763,7 @@ export default function BeerDetail() {
       <main
         className="max-w-[720px] mx-auto px-4"
         style={{
-          paddingBottom: 'calc(80px + env(safe-area-inset-bottom))',
+          paddingBottom: 'calc(80px + var(--frozen-sab))',
         }}
       >
         <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>

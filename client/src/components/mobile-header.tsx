@@ -8,8 +8,7 @@ import { isIosNative } from "@/lib/platform";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import type { User as UserType } from "@shared/schema";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useState, useEffect, lazy, Suspense } from "react";
-const FindBeerSheet = lazy(() => import("@/components/FindBeerSheet"));
+import { useState, useEffect } from "react";
 import { IosInstallGuide } from "@/components/pwa-prompt";
 
 function useScrolled(threshold = 12) {
@@ -71,7 +70,6 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   const [location, setLocation] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const typedUser = user as UserType | undefined;
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [showIosInstallGuide, setShowIosInstallGuide] = useState(false);
   const scrolled = useScrolled(12);
 
@@ -412,7 +410,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
           </div>
 
           {/* ── Footer: tutorial + theme + logout (fisso in fondo) ── */}
-          <div className="flex-shrink-0 bg-white dark:bg-[#0B0D10] px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+env(safe-area-inset-bottom,0px)+4rem)]">
+          <div className="flex-shrink-0 bg-white dark:bg-[#0B0D10] px-2 py-3 border-t border-stone-100 dark:border-white/[0.06] space-y-0.5 pb-[calc(0.75rem+var(--frozen-sab)+4rem)]">
             <button
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-foreground hover:bg-stone-50 dark:hover:bg-white/5 transition-colors tap-scale"
               onClick={() => {
@@ -455,11 +453,6 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         </SheetContent>
       </Sheet>
 
-      {isSearchOpen && (
-        <Suspense fallback={null}>
-          <FindBeerSheet open={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-        </Suspense>
-      )}
       {showIosInstallGuide && (
         <IosInstallGuide onClose={() => setShowIosInstallGuide(false)} />
       )}

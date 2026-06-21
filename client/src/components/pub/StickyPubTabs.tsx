@@ -30,7 +30,7 @@ export default function StickyPubTabs({ tabs, activeTab, onTabChange }: StickyPu
       className={`lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#12151A] rounded-t-[32px] border-t border-x border-[#E8DED1] dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
         isAnyModalOpen ? "opacity-0 pointer-events-none" : "opacity-100"
       }`}
-      style={{ paddingBottom: "max(env(safe-area-inset-bottom) - 16px, 0px)" }}
+      style={{ paddingBottom: "max(var(--frozen-sab) - 16px, 0px)" }}
       role="tablist"
       aria-label="Sezioni del pub"
       data-testid="sticky-pub-tabs"
