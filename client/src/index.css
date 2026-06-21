@@ -604,13 +604,21 @@ html.dark {
   /* ── Qualsiasi modal/sheet aperta: nasconde la bottom nav prima del paint.
      La nav ha will-change:transform (nuovo compositing layer GPU) che può
      renderla sopra il backdrop nonostante il z-index inferiore su iOS WebKit.
-     Doppia regola per coprire tutti i casi:
-     1) FindBeerSheet → body.find-beer-open (classe applicata via useLayoutEffect)
-     2) Radix Dialog/Sheet/AlertDialog → [data-state="open"] sul backdrop
-        La regola :has() è pura CSS → si applica prima del primo paint,
-        senza passare per MutationObserver → setState → re-render.        ── */
+     Regole coprono TUTTI i casi:
+     1) FindBeerSheet        → body.find-beer-open (useLayoutEffect)
+     2) Radix Dialog/Sheet   → .fixed.inset-0[data-state="open"]
+     3) Custom popup (data)  → .fixed.inset-0[data-modal]
+     4) Custom popup (bg)    → .fixed.inset-0 con classe bg-black/*
+        Tutte regole :has() pure CSS → prima del paint, zero setState.    ── */
   .find-beer-open .bottom-nav-fixed,
-  body:has(.fixed.inset-0[data-state="open"]) .bottom-nav-fixed {
+  body:has(.fixed.inset-0[data-state="open"]) .bottom-nav-fixed,
+  body:has(.fixed.inset-0[data-modal]) .bottom-nav-fixed,
+  body:has(.fixed.inset-0.bg-black) .bottom-nav-fixed,
+  body:has(.fixed.inset-0.bg-black\/50) .bottom-nav-fixed,
+  body:has(.fixed.inset-0.bg-black\/60) .bottom-nav-fixed,
+  body:has(.fixed.inset-0.bg-black\/70) .bottom-nav-fixed,
+  body:has(.fixed.inset-0.bg-black\/80) .bottom-nav-fixed,
+  body:has(.fixed.inset-0.bg-black\/85) .bottom-nav-fixed {
     display: none;
   }
 

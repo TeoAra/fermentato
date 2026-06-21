@@ -144,6 +144,7 @@ export default function SearchDialog({ isOpen, onClose }: SearchDialogProps) {
   return (
     <div
       className="fixed inset-0 z-[200] flex flex-col items-center"
+      data-modal
       style={{ paddingTop: 'env(safe-area-inset-top)' }}
     >
       {/* Backdrop */}

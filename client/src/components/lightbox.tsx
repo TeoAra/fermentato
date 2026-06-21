@@ -52,6 +52,7 @@ export default function Lightbox() {
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      data-modal
       style={{ background: "rgba(10,6,2,0.88)", backdropFilter: "blur(10px)" }}
       onClick={close}
     >
