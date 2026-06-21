@@ -5,4 +5,4 @@
 - [beer_reviews table missing](beer-reviews-missing.md) — beer_reviews is referenced in raw SQL in routes.ts but doesn't exist in the DB; any query against it must use .catch(() => 0) or similar fallback.
 - [Nullable boolean gate](nullable-boolean-gate.md) — gate Drizzle nullable booleans with `=== false`, never `!field` (null/undefined would false-positive).
 - [Gemini OCR only](gemini-removed.md) — Gemini 2.0 Flash Vision re-added as primary engine in /api/scan/ocr only (beer label prompt); GEMINI_API_KEY required. Bot still uses regex, image finders still use Untappd+DDG.
-- [iOS safe-area freeze](ios-safe-area-freeze.md) — fixed header/nav jump on overlay open: freeze env() into static --frozen-sat/sab vars, use them everywhere for top/bottom chrome (never raw env()), max-non-zero sampling, layer modals over nav (not display:none); read px via dummy el not getPropertyValue.
+- [iOS safe-area freeze](ios-safe-area-freeze.md) — freeze env(safe-area) into --frozen-sat/sab vars to stop header/nav jump on overlays; only ever write POSITIVE px (writing 0 clobbers the env() fallback → permanent chrome overlap).

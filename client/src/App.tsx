@@ -589,16 +589,26 @@ function App() {
       const { sat, sab } = readSafeArea();
       if (sat > bestSat) bestSat = sat;
       if (sab > bestSab) bestSab = sab;
-      root.style.setProperty('--frozen-sat', bestSat + 'px');
-      root.style.setProperty('--frozen-sab', bestSab + 'px');
+      // MAI scrivere 0: una lettura 0 (al boot, prima che WKWebView esponga gli
+      // inset, oppure un read flaky del probe nascosto su alcune build iOS)
+      // clobbererebbe il fallback CSS `env(safe-area-inset-*)` con uno "0px"
+      // statico, lasciando l'header SOTTO la status bar / Dynamic Island e la
+      // bottom-nav SOTTO l'home indicator (overlap). Congeliamo solo valori
+      // positivi; finché non ne abbiamo uno, le var restano sul fallback env()
+      // live → posizione corretta, al massimo un micro-salto, mai overlap.
+      if (bestSat > 0) root.style.setProperty('--frozen-sat', bestSat + 'px');
+      if (bestSab > 0) root.style.setProperty('--frozen-sab', bestSab + 'px');
     }
     // La rotazione cambia davvero gli inset (in landscape il notch va sul lato
-    // → top/bottom possono diventare 0). Azzeriamo la memoria e ricampioniamo
-    // da capo, così un 0 legittimo viene onorato e il ritorno in portrait
-    // ri-blocca il notch tramite il max.
+    // → top/bottom possono diventare 0). Rimuoviamo il px congelato (così le var
+    // tornano al fallback env() live, ~0 in landscape) e ricampioniamo da capo:
+    // il portrait ri-blocca il notch al primo valore positivo, il landscape
+    // resta su env() invece di restare incollato al valore portrait.
     function resampleFromScratch() {
       bestSat = 0;
       bestSab = 0;
+      root.style.removeProperty('--frozen-sat');
+      root.style.removeProperty('--frozen-sab');
       sample();
       requestAnimationFrame(sample);
       setTimeout(sample, 120);

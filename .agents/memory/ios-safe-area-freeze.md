@@ -35,3 +35,25 @@ ensure every live hit is a frozen var (only readers/defaults/comments may keep r
 the raw CSS token (e.g. the literal `env(safe-area-inset-top)`), NOT a px value. To get the real
 pixels, create a dummy off-DOM element with `padding-top:env(safe-area-inset-top)` and read its
 computed `paddingTop`.
+
+## Refinement — NEVER write `0` (it clobbers the env() fallback → permanent overlap)
+
+A separate user-reported overlap (header under the status bar / Dynamic Island, bottom dock under the
+home indicator) came from `sample()` writing `--frozen-sat/sab` UNCONDITIONALLY, including `"0px"`.
+Rule #3 ("max-non-zero wins") only protected an *already-detected* notch; at boot, before any notch
+is seen, the first sample writes `0px` and that static 0 **clobbers the CSS `env()` default**. If the
+hidden probe then keeps reading 0 (flaky on some WKWebView builds), the var is stuck at 0 forever and
+the chrome overlaps permanently.
+
+**Sharpened rule:** only `setProperty` a **positive** value (`if (val > 0) setProperty(...)`). Until a
+positive reading exists, leave the var on its live `env()` default — correct position, at worst a
+one-time micro-jump, never a permanent overlap. On `orientationchange`, `removeProperty` first (revert
+to live env(), ~0 in landscape) then re-sample so portrait re-freezes the notch.
+
+**Do NOT** "fix" this by switching consumers to `max(var(--frozen-sat), env(...))` — re-introducing
+live `env()` into every chrome calc brings back the GPU-layer jump the freeze exists to prevent.
+
+An overlap on a notched device proves the WebView IS edge-to-edge, so the real `env()` is non-zero —
+only the probe read was wrong. If `env()` is genuinely 0 everywhere, the remaining fix is native
+StatusBar/WebView config (NOT in this repo). All of this is web-layer → reaches the native app only
+after a manual VPS deploy of fermenta.to.
