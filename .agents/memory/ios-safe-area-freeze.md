@@ -123,3 +123,25 @@ notch device is cosmetic and self-corrects.
 **Why:** purely web-layer code can't read the true inset when WKWebView won't expose it; the only fully
 reliable fix is native (a Capacitor StatusBar / safe-area plugin in the iOS project) — but the native project
 is NOT in this repo, so the estimate is the best available web-only mitigation.
+
+## Refinement #5 — the JUMP is a FIRST-PAINT problem; no timed fallback can beat it, only a synchronous pre-paint seed
+
+Refinement #4's estimate ran on a *timer* (~400ms), so on a fresh device it fired AFTER the chrome had
+already painted with inset 0 → the user still saw a visible 0→59 JUMP (re-reported on iPhone 17, both
+native app and standalone PWA). The real mechanism: chrome is GPU-composited (`translateZ(0)` via
+`.pwa-standalone .fixed` / `.bottom-nav-fixed`) and `--frozen-sat/sab` *default to `env()`*; inside a
+composited layer WebKit resolves `env(safe-area-inset-*)` as **0 at first paint**, so frame 1 overlaps,
+then the un-composited probe freezes the var to ~59px → jump. Any JS that runs *after* first paint is too
+late by definition.
+**Decisive cure:** seed `--frozen-sat/sab` to the device-class estimate **synchronously, before the chrome's
+first paint**. Do it at the TOP of `main.tsx` *before* `createRoot().render()` — the chrome is React-rendered
+(never in static HTML), so it always paints after that line, and there `Capacitor.isNativePlatform()` is
+reliable. Do NOT rely on a `<head>` inline script for native detection: `window.Capacitor` /
+`display-mode:standalone` / `navigator.standalone` are NOT reliably true for the Capacitor WKWebView in
+`<head>`, so the native app would miss the seed.
+- Factor the estimate into ONE shared module (`client/src/lib/safe-area-estimate.ts`) used by both the
+  pre-seed and the App.tsx fallback, or the two drift. Gate edge-to-edge = native iOS **OR** (iOS-UA **AND**
+  standalone PWA), portrait-only, never persisted; non-iOS/desktop/Android = no-op.
+- Compatible with the probe: the probe never writes 0 and the fallback only sets when best==0, so neither
+  clobbers the seed; a real positive sample still refines 59→44 on older notch devices (one-time, acceptable).
+- Still web-layer → reaches the native app only after a manual VPS deploy; verify on-device with `?sadebug`.

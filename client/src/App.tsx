@@ -28,6 +28,7 @@ const CookieBanner = lazy(() => import("@/components/CookieBanner"));
 import { AppUpdateCheck } from "@/components/app-update-check";
 import { ThemeProvider } from "@/lib/theme";
 import { isIosNative, isNativeApp } from "@/lib/platform";
+import { estimateIosInsets } from "@/lib/safe-area-estimate";
 import { NativeSplashOverlay } from "@/components/native-splash-overlay";
 import type { User } from "@shared/schema";
 
@@ -664,28 +665,11 @@ function App() {
       if (debug) console.log('[safe-area] sample', { sat, sab, bestSat, bestSab });
     }
 
-    // Stima di SICUREZZA per iOS nativo: alcune build WKWebView (es. primo avvio
-    // su un device nuovo, iPhone 17 / iOS 26) riportano env(safe-area-inset-*) = 0
-    // per TUTTA la sessione. Senza nulla in cache la freeze resterebbe 0 e la
-    // chrome si sovrapporrebbe alla status bar / Dynamic Island. In quel caso
-    // stimiamo l'inset dalla classe del device (solo per non avere MAI overlap).
-    // NB: usata SOLO come ultima spiaggia (probe e cache falliti) e MAI persistita
-    // in cache — qualunque misura reale la sovrascrive subito (vince sempre).
-    function estimateIosInsets(): { sat: number; sab: number } | null {
-      const isIos = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'ios';
-      if (!isIos) return null;
-      const w = window.screen?.width ?? 0;
-      const h = window.screen?.height ?? 0;
-      const long = Math.max(w, h), short = Math.min(w, h);
-      if (!long || !short) return null;
-      const ratio = long / short;
-      // Notch / Dynamic Island (aspect ratio ≥ ~1.9): usiamo il valore più alto
-      // (Dynamic Island ≈ 59px) così non si sovrappone mai; qualche px in più su
-      // un device a notch (≈44px) è solo cosmetico e viene corretto da env().
-      if (ratio >= 1.9) return { sat: 59, sab: 34 };
-      // Device con tasto home (SE/8): status bar piccola, niente home indicator.
-      return { sat: 20, sab: 0 };
-    }
+    // estimateIosInsets è condivisa con il pre-seed pre-paint in main.tsx
+    // (vedi client/src/lib/safe-area-estimate.ts) per evitare drift fra i due
+    // punti: copre iOS nativo Capacitor E PWA standalone. Qui è usata SOLO come
+    // ultima spiaggia (probe e cache falliti) e MAI persistita in cache —
+    // qualunque misura reale la sovrascrive subito (vince sempre).
 
     // Applica la stima SOLO in portrait (in landscape gli inset top/bottom sono
     // ~0) e SOLO se non abbiamo ancora un valore misurato/cache (>0).

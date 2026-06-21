@@ -2,6 +2,12 @@ import { createRoot } from "react-dom/client";
 import App from "./App";
 import "./index.css";
 import { Capacitor } from "@capacitor/core";
+import { preseedSafeAreaInsets } from "./lib/safe-area-estimate";
+
+// Pre-seed gli inset di safe-area PRIMA del primo paint della chrome (header/
+// bottom-nav/dock sono React, quindi vengono disegnati solo dopo questo punto):
+// evita il "salto" 0→inset su iOS edge-to-edge (vedi safe-area-estimate.ts).
+preseedSafeAreaInsets();
 
 // ── Migrazione v1: reset tema scuro impostato durante sviluppo/test ──────────
 // Esegue UNA sola volta. Dopo il reset, il toggle utente viene rispettato.
