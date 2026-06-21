@@ -172,7 +172,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             : "border-b border-transparent"
         }`}
         style={{
-          paddingTop: 'env(safe-area-inset-top)',
+          paddingTop: 'var(--frozen-sat)',
         }}
       >
         <div className="flex items-center justify-between px-4 h-14">
@@ -241,7 +241,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
         <SheetContent
           side="right"
           className="w-[300px] p-0 flex flex-col bg-white dark:bg-[#0B0D10] border-l border-stone-100/80 dark:border-white/[0.06] overflow-hidden"
-          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+          style={{ paddingTop: "var(--frozen-sat)" }}
         >
           <SheetTitle className="sr-only">Menu di navigazione</SheetTitle>
 

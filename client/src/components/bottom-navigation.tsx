@@ -167,17 +167,18 @@ export function BottomNavigation() {
 
   return (
     <>
-      {searchOpen && (
-        <Suspense fallback={null}>
-          <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
-        </Suspense>
-      )}
+      {/* FindBeerSheet sempre nel DOM: il suo layer GPU è pre-allocato al boot,
+          così quando diventa visibile iOS NON crea un nuovo layer → nessun
+          re-composite → header e bottom-nav non saltano mai */}
+      <Suspense fallback={null}>
+        <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
+      </Suspense>
       <nav
         className={cn(
           "bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-transform duration-200",
           anyModalOpen && "translate-y-[120%]"
         )}
-        style={{ paddingBottom: "max(env(safe-area-inset-bottom) - 16px, 0px)" }}
+        style={{ paddingBottom: "max(calc(var(--frozen-sab) - 16px), 0px)" }}
       >
         <div className="relative flex items-stretch h-[64px] px-2">
 

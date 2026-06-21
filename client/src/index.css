@@ -43,7 +43,16 @@
 
 /* Safe area / header offset per Capacitor native */
 :root {
-  --mobile-top-offset: calc(3.5rem + env(safe-area-inset-top, 0px));
+  /* Reader vars — letti una sola volta da JS al boot per congelare il valore */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  /* Frozen vars — sovrascritti da JS con un px statico dopo il boot.
+     Finché JS non è girato funzionano ugualmente perché puntano a env().
+     Dopo che JS li imposta a "44px" (o "0px"), iOS NON li rivaluta mai
+     quando crea nuovi GPU layer per overlay/sheet/dialog. */
+  --frozen-sat: env(safe-area-inset-top, 0px);
+  --frozen-sab: env(safe-area-inset-bottom, 0px);
+  --mobile-top-offset: calc(3.5rem + var(--frozen-sat));
   --app-chrome-light: #FFFFFF;
   --app-chrome-dark: #15202B;
 }
@@ -904,7 +913,9 @@ html.dark {
 @keyframes fadeIn    { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp   { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
 @keyframes scaleIn   { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
-@keyframes routeFade { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+/* Niente transform — il transform crea un nuovo GPU compositing layer che
+   fa ri-valutare env(safe-area-inset-*) a Safari e causa il salto di header/nav */
+@keyframes routeFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes splashLogoIn { from { opacity: 0; transform: scale(0.88); } to { opacity: 1; transform: none; } }
 @keyframes staggerReveal {
   from { opacity: 0; transform: translateY(12px) scale(0.99); }

@@ -158,23 +158,38 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
     setActiveStyle("");
   }
 
-  if (!open) return null;
+  // NON fare return null quando chiuso — il componente resta sempre nel DOM.
+  // Il container fixed è pre-allocato come GPU layer al boot: quando diventa
+  // visibile iOS NON crea un nuovo layer → nessun re-composite dei layer
+  // fratelli (MobileHeader, BottomNav) → safe area non salta mai.
 
   return (
-    <>
-      {/* Backdrop + centering wrapper — usa flex per centrare senza transform */}
-      <div
-        className="fixed inset-0 z-[60] bg-black/70 flex items-center justify-center p-4"
-        onClick={onClose}
-        style={{ animation: "fadeIn 200ms ease" }}
-      >
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      style={{
+        opacity: open ? 1 : 0,
+        pointerEvents: open ? 'auto' : 'none',
+        transition: 'opacity 200ms ease',
+        transform: 'translateZ(0)',   // pre-promuovi il layer al boot
+        willChange: 'opacity',
+      }}
+    >
+      {/* Backdrop scuro */}
+      <div className="absolute inset-0 bg-black/70" onClick={onClose} />
+
+      {/* Card — usa transizione CSS (non @keyframes) per lo stesso motivo */}
       <div
         ref={sheetRef}
-        className="relative z-[61] bg-background dark:bg-[#0B0D10] shadow-2xl flex flex-col
+        className="relative z-[1] bg-background dark:bg-[#0B0D10] shadow-2xl flex flex-col
                    w-full max-w-md max-h-[88dvh]
                    rounded-3xl border border-stone-200 dark:border-[#23262E]
                    md:max-w-2xl md:max-h-[86vh]"
-        style={{ animation: "findBeerCardIn 260ms cubic-bezier(0.16,1,0.3,1)" }}
+        style={{
+          transform: open ? 'translateY(0) scale(1)' : 'translateY(12px) scale(0.97)',
+          transition: open
+            ? 'transform 260ms cubic-bezier(0.16,1,0.3,1), opacity 200ms ease'
+            : 'none',
+        }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top padding (no drag handle since it's a floating card now) */}
@@ -555,7 +570,6 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
           })()}
         </div>
       </div>
-      </div>
-    </>
+    </div>
   );
 }

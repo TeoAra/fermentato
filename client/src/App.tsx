@@ -542,6 +542,25 @@ function App() {
     initGA();
   }, []);
 
+  // Congela env(safe-area-inset-*) come variabili CSS statiche.
+  // iOS Safari rivaluta env() ogni volta che crea un nuovo GPU compositing
+  // layer (sheet, dialog, overlay). Con valori statici in --frozen-sat/sab
+  // l'header e la bottom-nav non saltano mai, indipendentemente dagli overlay.
+  useEffect(() => {
+    function freezeSafeArea() {
+      const style = getComputedStyle(document.documentElement);
+      const sat = style.getPropertyValue('--sat').trim() || '0px';
+      const sab = style.getPropertyValue('--sab').trim() || '0px';
+      document.documentElement.style.setProperty('--frozen-sat', sat);
+      document.documentElement.style.setProperty('--frozen-sab', sab);
+    }
+    freezeSafeArea();
+    // Aggiorna se l'utente ruota il dispositivo (cambia l'inset)
+    const onOrient = () => setTimeout(freezeSafeArea, 150);
+    window.addEventListener('orientationchange', onOrient);
+    return () => window.removeEventListener('orientationchange', onOrient);
+  }, []);
+
   const [location] = useLocation();
 
   if (location.startsWith("/tv/")) {
