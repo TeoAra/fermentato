@@ -185,7 +185,9 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
       style={{
         opacity: open ? 1 : 0,
         pointerEvents: open ? 'auto' : 'none',
-        transition: 'opacity 200ms ease',
+        // Apertura: fade-in 200ms. Chiusura: istantanea — così header e
+        // bottom nav non appaiono mai "attraverso" la sheet in chiusura.
+        transition: open ? 'opacity 200ms ease' : 'none',
         transform: 'translateZ(0)',   // pre-promuovi il layer al boot
         willChange: 'opacity',
       }}

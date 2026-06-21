@@ -60,6 +60,13 @@ export function useAnyModalOpen(): boolean {
   const [open, setOpen] = useState(false);
   useEffect(() => {
     const check = () => {
+      // FindBeerSheet non usa un backdrop .fixed (usa .absolute dentro .fixed)
+      // → rileva il suo stato tramite la classe sul body impostata in FindBeerSheet.tsx
+      if (document.body.classList.contains('find-beer-open')) {
+        setOpen(true);
+        return;
+      }
+      // Overlay Radix (Dialog, Sheet, AlertDialog): cercano sempre .fixed.inset-0.bg-black/
       const overlays = document.querySelectorAll('.fixed.inset-0');
       for (const el of overlays) {
         const cls = (el as HTMLElement).className || '';
@@ -70,8 +77,10 @@ export function useAnyModalOpen(): boolean {
       }
       setOpen(false);
     };
+    // Osserva childList (aggiunta/rimozione elementi) E attributi del body
+    // (classList change per 'find-beer-open')
     const observer = new MutationObserver(check);
-    observer.observe(document.body, { childList: true, subtree: true });
+    observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['class'] });
     check();
     return () => observer.disconnect();
   }, []);
