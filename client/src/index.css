@@ -611,8 +611,7 @@ html.dark {
         senza passare per MutationObserver → setState → re-render.        ── */
   .find-beer-open .bottom-nav-fixed,
   body:has(.fixed.inset-0[data-state="open"]) .bottom-nav-fixed {
-    visibility: hidden;
-    pointer-events: none;
+    display: none;
   }
 
   /* ── Section header standard ── */

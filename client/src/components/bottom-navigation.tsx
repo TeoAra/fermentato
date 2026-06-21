@@ -91,7 +91,8 @@ export function BottomNavigation() {
   const [location] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
-  const anyModalOpen = useAnyModalOpen();
+  // anyModalOpen rimosso: la nav si nasconde via CSS display:none
+  // (.find-beer-open e :has([data-state="open"])) — istantaneo, zero salto.
   const { isHidden } = useContext(BottomNavHideCtx);
 
   const { data: unreadData } = useQuery<{ count: number }>({
@@ -178,10 +179,7 @@ export function BottomNavigation() {
         <FindBeerSheet open={searchOpen} onClose={() => setSearchOpen(false)} />
       </Suspense>
       <nav
-        className={cn(
-          "bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-transform duration-200",
-          anyModalOpen && "translate-y-[120%]"
-        )}
+        className="bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)]"
         style={{ paddingBottom: "max(calc(var(--frozen-sab) - 16px), 0px)" }}
       >
         <div className="relative flex items-stretch h-[64px] px-2">
