@@ -601,9 +601,16 @@ html.dark {
   }
   .no-transition *, .theme-transitioning .no-transition * { transition: none !important; }
 
-  /* ── FindBeerSheet aperta: copre la bottom nav (che ha will-change:transform
-     creando un nuovo compositing layer che ignora z-index dei fratelli) ── */
-  .find-beer-open .bottom-nav-fixed {
+  /* ── Qualsiasi modal/sheet aperta: nasconde la bottom nav prima del paint.
+     La nav ha will-change:transform (nuovo compositing layer GPU) che può
+     renderla sopra il backdrop nonostante il z-index inferiore su iOS WebKit.
+     Doppia regola per coprire tutti i casi:
+     1) FindBeerSheet → body.find-beer-open (classe applicata via useLayoutEffect)
+     2) Radix Dialog/Sheet/AlertDialog → [data-state="open"] sul backdrop
+        La regola :has() è pura CSS → si applica prima del primo paint,
+        senza passare per MutationObserver → setState → re-render.        ── */
+  .find-beer-open .bottom-nav-fixed,
+  body:has(.fixed.inset-0[data-state="open"]) .bottom-nav-fixed {
     visibility: hidden;
     pointer-events: none;
   }

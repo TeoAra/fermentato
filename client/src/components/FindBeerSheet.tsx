@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 import {
@@ -58,18 +58,16 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
   const debounceRef = useRef<number | null>(null);
   const [, setLocation] = useLocation();
 
-  useEffect(() => {
+  // useLayoutEffect (non useEffect) → gira PRIMA del paint del browser.
+  // Con useEffect la body class arrivava un frame in ritardo: il primo paint
+  // mostrava già la sheet in apertura ma nav e header erano ancora visibili.
+  // Con useLayoutEffect la classe è sul body prima di ogni paint, quindi la
+  // CSS rule find-beer-open nasconde la nav dal frame zero → nessun "salto".
+  useLayoutEffect(() => {
     if (open) {
-      setRecents(loadRecents());
-      setTimeout(() => inputRef.current?.focus(), 320);
       document.body.style.overflow = "hidden";
-      // Nasconde la bottom nav: ha will-change:transform (nuovo compositing layer)
-      // che la fa apparire sopra il backdrop anche se questo è z-[60]
       document.body.classList.add('find-beer-open');
     } else {
-      setQuery("");
-      setActiveStyle("");
-      setActiveTab("birre");
       document.body.style.overflow = "";
       document.body.classList.remove('find-beer-open');
     }
@@ -77,6 +75,18 @@ export default function FindBeerSheet({ open, onClose, nearbyPubs = [] }: FindBe
       document.body.style.overflow = "";
       document.body.classList.remove('find-beer-open');
     };
+  }, [open]);
+
+  // Side effects che non devono bloccare il paint (focus, recenti)
+  useEffect(() => {
+    if (open) {
+      setRecents(loadRecents());
+      setTimeout(() => inputRef.current?.focus(), 320);
+    } else {
+      setQuery("");
+      setActiveStyle("");
+      setActiveTab("birre");
+    }
   }, [open]);
 
   // Debounce query → debouncedQuery (350ms)
