@@ -542,23 +542,52 @@ function App() {
     initGA();
   }, []);
 
-  // Congela env(safe-area-inset-*) come variabili CSS statiche.
+  // Congela env(safe-area-inset-*) come variabili CSS statiche (pixel reali).
   // iOS Safari rivaluta env() ogni volta che crea un nuovo GPU compositing
   // layer (sheet, dialog, overlay). Con valori statici in --frozen-sat/sab
   // l'header e la bottom-nav non saltano mai, indipendentemente dagli overlay.
+  //
+  // IMPORTANTE: getPropertyValue('--sat') ritorna la stringa CSS token
+  // "env(safe-area-inset-top, 0px)" — iOS WebKit NON risolve env() quando
+  // la stringa viene riscritta come inline custom property via JS.
+  // La tecnica corretta: leggere paddingTop computato su un elemento dummy,
+  // che ritorna il valore pixel reale (es. "59px"), e salvarlo come numero.
   useEffect(() => {
-    function freezeSafeArea() {
-      const style = getComputedStyle(document.documentElement);
-      const sat = style.getPropertyValue('--sat').trim() || '0px';
-      const sab = style.getPropertyValue('--sab').trim() || '0px';
-      document.documentElement.style.setProperty('--frozen-sat', sat);
-      document.documentElement.style.setProperty('--frozen-sab', sab);
+    function readSafeArea(): { sat: number; sab: number } {
+      const el = document.createElement('div');
+      el.style.cssText =
+        'position:fixed;top:-9999px;left:-9999px;' +
+        'pointer-events:none;visibility:hidden;' +
+        'padding-top:env(safe-area-inset-top,0px);' +
+        'padding-bottom:env(safe-area-inset-bottom,0px);';
+      document.documentElement.appendChild(el);
+      const cs = getComputedStyle(el);
+      const sat = parseFloat(cs.paddingTop) || 0;
+      const sab = parseFloat(cs.paddingBottom) || 0;
+      document.documentElement.removeChild(el);
+      return { sat, sab };
     }
+
+    function freezeSafeArea() {
+      const { sat, sab } = readSafeArea();
+      // Imposta solo se il valore è valido (>0); altrimenti lascia il default CSS.
+      // I default in index.css usano env() direttamente e sono corretti come fallback.
+      if (sat > 0) document.documentElement.style.setProperty('--frozen-sat', sat + 'px');
+      if (sab > 0) document.documentElement.style.setProperty('--frozen-sab', sab + 'px');
+    }
+
+    // Prima lettura immediata; retry dopo 80ms per Capacitor/WKWebView
+    // che a volte espone gli inset solo dopo il primo layout.
     freezeSafeArea();
+    const retryTimer = setTimeout(freezeSafeArea, 80);
+
     // Aggiorna se l'utente ruota il dispositivo (cambia l'inset)
     const onOrient = () => setTimeout(freezeSafeArea, 150);
     window.addEventListener('orientationchange', onOrient);
-    return () => window.removeEventListener('orientationchange', onOrient);
+    return () => {
+      clearTimeout(retryTimer);
+      window.removeEventListener('orientationchange', onOrient);
+    };
   }, []);
 
   const [location] = useLocation();
