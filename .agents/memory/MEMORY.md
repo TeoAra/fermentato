@@ -8,3 +8,4 @@
 - [Gemini OCR only](gemini-removed.md) — Gemini 2.0 Flash Vision re-added as primary engine in /api/scan/ocr only (beer label prompt); GEMINI_API_KEY required. Bot still uses regex, image finders still use Untappd+DDG.
 - [iOS safe-area freeze](ios-safe-area-freeze.md) — freeze env(safe-area) into --frozen-sat/sab vars to stop header/nav jump on overlays; only ever write POSITIVE px (writing 0 clobbers the env() fallback → permanent chrome overlap).
 - [Drizzle typing footguns](drizzle-typing-footguns.md) — keep server/db.ts typed (was `any`, masked ~20 bugs); decimal=string (Number/String), reassigned builders need .$dynamic(), select({count}) without .from() reads 0.
+- [Taplist feed ordering](taplist-feed-ordering.md) — home feed ordered by id DESC buries in-place row updates (bot "cambia birra" keeps the id); order by updated_at, bump it on every mutation path, and bust the home cache (bot uses raw db.update, not storage).

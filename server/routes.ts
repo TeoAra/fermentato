@@ -40,7 +40,7 @@ import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
 import { breweryActiveSql, beerVisibleSql, rawBreweryActive, rawBeerVisibleJoined, rawBeerVisibleExists } from "./visibility";
 import { normalizeBeerSearch, buildBeerSearchFragments } from "./search-normalize";
-import { registerCatalogCacheBuster } from "./catalog-cache";
+import { registerCatalogCacheBuster, registerHomeCacheBuster } from "./catalog-cache";
 import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations, festivals, beerViews } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
@@ -83,6 +83,7 @@ function clearCatalogCaches() {
 // Register with the shared registry so other modules (e.g. routes-admin.ts
 // deletes) can invalidate these caches without an import cycle.
 registerCatalogCacheBuster(clearCatalogCaches);
+registerHomeCacheBuster(() => _memCache.delete("home:taplist-activity"));
 
 // ── Popular search-term logging + cache pre-warming ─────────────────────────
 // Track how often each term is searched so we can periodically re-warm the
@@ -8450,7 +8451,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
           JOIN pubs  p ON p.id = tl.pub_id  AND p.is_active = true
           JOIN beers b ON b.id = tl.beer_id
           WHERE tl.is_active = true
-          ORDER BY tl.id DESC
+          ORDER BY COALESCE(tl.updated_at, tl.added_at) DESC NULLS LAST, tl.id DESC
           LIMIT 20
         `);
         return (rows as any).rows ?? rows;

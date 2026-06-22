@@ -33,8 +33,28 @@ const SEARCH_STOPWORDS = new Set<string>([
   "it", "from", "this", "that", "an",
 ]);
 
+// Non-combining special letters that NFD does NOT decompose, mapped to match
+// PostgreSQL's `unaccent()` output EXACTLY (verified against the DB) so the
+// search term normalizes identically to the indexed `unaccent_immutable(...)`
+// columns. Without this, names with ø/æ/ß/ł… (Nøgne Ø, To Øl, Straße, Łódź)
+// would only match when typed plainly, not the reverse.
+const SPECIAL_LETTERS: Record<string, string> = {
+  "ø": "o", "Ø": "O",
+  "æ": "ae", "Æ": "AE",
+  "œ": "oe", "Œ": "OE",
+  "ł": "l", "Ł": "L",
+  "ß": "ss", "ẞ": "SS",
+  "ð": "d", "Ð": "D",
+  "þ": "th", "Þ": "TH",
+  "đ": "d", "Đ": "D",
+  "ı": "i", "İ": "I",
+};
+
 export function unaccentText(s: string): string {
-  return (s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return (s || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[øØæÆœŒłŁßẞðÐþÞđĐıİ]/g, (c) => SPECIAL_LETTERS[c] ?? c);
 }
 
 export interface NormalizedBeerSearch {
