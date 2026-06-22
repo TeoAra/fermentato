@@ -22,7 +22,7 @@ import {
 } from "@/components/pwa-prompt";
 import { MobileHeader } from "@/components/mobile-header";
 const OnboardingTutorial = lazy(() => import("@/components/OnboardingTutorial").then(m => ({ default: m.OnboardingTutorial })));
-import { BottomNavigation, BottomNavProvider, useRepaintFixedChromeOnModalClose } from "@/components/bottom-navigation";
+import { BottomNavigation, BottomNavProvider, useReanchorIosFixedChrome } from "@/components/bottom-navigation";
 import { DesktopSidebar } from "@/components/desktop-sidebar";
 const CookieBanner = lazy(() => import("@/components/CookieBanner"));
 import { AppUpdateCheck } from "@/components/app-update-check";
@@ -538,7 +538,7 @@ function App() {
   // iOS: ri-ancora header + dock al viewport dopo la chiusura di un overlay
   // (i layer GPU dei fixed chrome restano "incollati" a un offset di scroll
   // stale quando Radix toglie il lock dello scroll del body). No-op altrove.
-  useRepaintFixedChromeOnModalClose();
+  useReanchorIosFixedChrome();
 
   // Initialize Google Analytics when app loads.
   // Apple guideline 5.1.2: niente tracking nelle app native senza ATT.

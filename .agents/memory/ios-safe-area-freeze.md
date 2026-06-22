@@ -187,3 +187,33 @@ NON-composited element (e.g. a semantic `<header>` in PWA) is never needlessly r
 hook ONCE at App level. Do NOT instead drop `translateZ(0)` permanently (re-introduces the env() jump), change
 the Radix scroll-lock strategy, or touch `--frozen-sat/sab`. Web-layer → reaches the native app only after a
 manual VPS deploy.
+
+## Refinement #8 — the detach is GLOBAL: trigger off ANY new composite layer, target an explicit marker, not modal-close
+
+Refinement #7's modal-close-only repaint was too narrow: a user still saw the header AND dock detach after editing a
+FOOD menu item **AND a notification arriving** — i.e. the stranding fires on layers that are NOT a black-backdrop Radix
+overlay (toasts, popovers, selects, tooltips, push/in-app notifications, fade-in dashboard mini-bars). The modal-close
+edge detector (`useAnyModalOpen` open→close) never sees those, so the chrome stayed stranded.
+**Cure (supersedes #7's narrow trigger):** make re-anchoring GLOBAL and continuous, not event-specific.
+1. **Mark, don't selector-match.** Add ONE explicit class `.ios-fixed-chrome` to every PERSISTENT fixed chrome
+   (global `<header>`, all dashboard top mini-bars, docks already have `.bottom-nav-fixed`). Repaint targets ONLY
+   `html.fix-chrome-repaint .ios-fixed-chrome, html.fix-chrome-repaint .bottom-nav-fixed`. **Drop the broad
+   `.pwa-standalone .fixed` / `[style*=position:fixed]` from the repaint selector** — it swept in transient
+   overlays/toasts and risked glitching their OWN enter/exit animations mid-flight. Persistent-chrome-only = safe.
+2. **Give the marker a baseline `transform:translateZ(0)`** in CSS. The frosted mini-bars (`backdrop-blur-xl` on an
+   inner div) had NO transform on the outer fixed wrapper, so `transform:none` would have been a no-op (nothing to
+   toggle → no layer recreate → no re-anchor). Baseline translateZ(0) makes `transform:none` a REAL layer toggle.
+3. **Trigger off everything that can spawn/destroy a composite layer**, funneled through a debounce
+   (~110ms trailing + ~420ms max-wait) so sustained activity re-anchors periodically without a reflow per event:
+   `MutationObserver(document.body, {childList, attributes/class})` (NO `subtree` → avoids #root re-render noise),
+   document **capture** listeners for `animation{start,end,cancel}` + `transition{run,end,cancel}`, `window`
+   resize/orientationchange/pageshow, `document` visibilitychange, and throttled `visualViewport` resize/scroll.
+   `kick()` = add `.fix-chrome-repaint`, `void offsetHeight`, rAF-remove. Full listener/timer/rAF cleanup on unmount.
+**Why marker over selector:** the stuck set is the *persistent* chrome, which is a small, explicitly-known list; a
+broad attribute selector both over-covers (transient overlays) and under-covers (an un-composited wrapper has no
+transform to toggle). An explicit marker + baseline composite is precise on both axes. **Why global trigger:** the
+detach is caused by *any* new GPU layer re-anchoring the viewport-fixed layers to a stale scroll offset, not by modals
+specifically — so the correct dependency is "a layer changed", observed broadly, not "a modal closed". Keep #7's pixel
+invariant (transform:none ≡ translateZ(0) → invisible on correct chrome) and the `isIosEdgeToEdge()` gate. Still
+web-layer → reaches the native app only after a manual VPS deploy; mobile-Safari (non-standalone) dev testing is a
+no-op because `isIosEdgeToEdge()` is false there.

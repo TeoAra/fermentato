@@ -782,23 +782,36 @@ html.dark {
     backface-visibility: hidden;
   }
 
-  /* ── iOS: re-ancora i fixed chrome compositi dopo la chiusura di un overlay ──
-   * Quando un overlay Radix (Dialog/Sheet/AlertDialog via react-remove-scroll)
-   * toglie il lock dello scroll del body, iOS WKWebView lascia i layer GPU dei
-   * fixed chrome (header globale + dock dei dashboard) "incollati" a un offset
-   * di scroll stale: alla chiusura del modale l'header risale sotto la status
-   * bar e il dock si stacca dal bordo inferiore. La classe `.fix-chrome-repaint`
-   * viene aggiunta su <html> per UN frame dal JS (useRepaintFixedChromeOnModalClose):
-   * azzera il transform SOLO sugli stessi elementi che ricevono translateZ(0)
-   * qui sopra, forzando la distruzione e il ri-posizionamento del layer rispetto
-   * al viewport. transform:none e translateZ(0) dipingono alla stessa posizione
-   * → nessun salto; le --frozen-sat/sab non vengono toccate → nessun ritorno del
-   * "jump" di env(). */
-  html.fix-chrome-repaint[data-capacitor="true"] header,
-  html.fix-chrome-repaint .bottom-nav-fixed,
-  html.fix-chrome-repaint.pwa-standalone .fixed,
-  html.fix-chrome-repaint.pwa-standalone [style*="position: fixed"],
-  html.fix-chrome-repaint.pwa-standalone [style*="position:fixed"] {
+  /* ── iOS: marker esplicito del chrome fisso persistente ─────────────────────
+   * Header globale, mini-bar dei dashboard e dock ricevono `.ios-fixed-chrome`.
+   * Il baseline translateZ(0) garantisce che il toggle a transform:none durante
+   * il repaint forzi DAVVERO la ricreazione del layer composito — necessario per
+   * le barre frosted/backdrop-blur che altrimenti non hanno un transform da
+   * azzerare. I dock mantengono anche `.bottom-nav-fixed`. */
+  .ios-fixed-chrome {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform;
+  }
+
+  /* ── iOS: ri-ancora il chrome fisso composito dopo OGNI evento di stranding ──
+   * iOS WKWebView lascia i layer GPU del chrome fisso (header globale, mini-bar,
+   * dock) "incollati" a un offset di scroll stale ogni volta che viene creato o
+   * distrutto un layer composito: apertura/chiusura di overlay Radix (Dialog/
+   * Sheet/AlertDialog/Popover/Select/Tooltip), comparsa di una notifica, fine di
+   * un'animazione/transizione, resize del visual viewport (tastiera/rotazione),
+   * ritorno in foreground. La classe `.fix-chrome-repaint` viene aggiunta su
+   * <html> per UN frame dal JS (useReanchorIosFixedChrome): azzera il transform
+   * SOLO sul chrome marcato (`.ios-fixed-chrome` / `.bottom-nav-fixed`), forzando
+   * la distruzione e il ri-posizionamento del layer rispetto al viewport.
+   * transform:none e translateZ(0) dipingono alla stessa posizione → nessun
+   * salto; le --frozen-sat/sab non vengono toccate → nessun ritorno del "jump" di
+   * env(); gli overlay/toast NON sono nel selettore → nessun glitch sulle loro
+   * animazioni. */
+  html.fix-chrome-repaint .ios-fixed-chrome,
+  html.fix-chrome-repaint .bottom-nav-fixed {
     -webkit-transform: none !important;
     transform: none !important;
     will-change: auto !important;

@@ -164,7 +164,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     <>
       {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
       <header
-        className={`lg:hidden fixed top-0 left-0 right-0 z-50 transition-[box-shadow,border-color] duration-200 bg-white dark:bg-[#0B0D10] ${
+        className={`ios-fixed-chrome lg:hidden fixed top-0 left-0 right-0 z-50 transition-[box-shadow,border-color] duration-200 bg-white dark:bg-[#0B0D10] ${
           scrolled
             ? "border-b border-stone-200/70 dark:border-white/[0.08] shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
             : "border-b border-transparent"

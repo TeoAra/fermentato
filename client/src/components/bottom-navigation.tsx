@@ -1,7 +1,7 @@
 import { User, Home, Bell, Zap, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect, useCallback, useRef, createContext, useContext, type ReactNode } from "react";
+import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -88,38 +88,45 @@ export function useAnyModalOpen(): boolean {
 }
 
 /**
- * iOS WKWebView lascia i layer GPU dei fixed chrome (header globale + dock dei
- * dashboard, compositati con translateZ(0)) "incollati" a un offset di scroll
- * stale quando un overlay Radix (Dialog/Sheet/AlertDialog → react-remove-scroll)
- * toglie il lock dello scroll del body. Effetto visibile alla CHIUSURA del
- * modale: l'header risale sotto la status bar e il dock si stacca dal bordo
- * inferiore, e ci restano finché un reflow successivo non li ri-ancora.
+ * iOS WKWebView lascia i layer GPU del chrome fisso persistente (header globale,
+ * mini-bar dei dashboard, dock — marcati `.ios-fixed-chrome` / `.bottom-nav-fixed`)
+ * "incollati" a un offset di scroll stale ogni volta che viene creato o distrutto
+ * un layer composito: apertura/chiusura di un overlay Radix (Dialog/Sheet/
+ * AlertDialog/Popover/Select/Tooltip), comparsa di una notifica, fine di
+ * un'animazione/transizione, resize del visual viewport (tastiera, rotazione),
+ * ritorno in foreground. Effetto: l'header risale sotto la status bar e il dock si
+ * stacca dal bordo inferiore, e ci restano finché un reflow successivo non li
+ * ri-ancora.
  *
- * Qui forziamo quel reflow: alla transizione modale aperto→chiuso aggiungiamo
- * per un frame la classe `.fix-chrome-repaint` su <html> (vedi index.css), che
- * azzera il transform sui soli fixed chrome → iOS ricrea il layer alla posizione
- * corretta rispetto al viewport. transform:none e translateZ(0) dipingono alla
- * stessa posizione (nessun salto) e le --frozen-sat/sab non vengono toccate
- * (nessun ritorno del jump di env()). No-op fuori da iOS edge-to-edge.
+ * Qui ri-ancoriamo quel chrome in modo GLOBALE: a ogni evento potenzialmente
+ * "stranding" pianifichiamo (debounce di coda + max-wait) un repaint di UN frame
+ * che aggiunge la classe `.fix-chrome-repaint` su <html> (vedi index.css) →
+ * transform:none sul solo chrome marcato → iOS distrugge e ricrea il layer alla
+ * posizione corretta rispetto al viewport. transform:none e translateZ(0)
+ * dipingono alla stessa posizione (nessun salto); le --frozen-sat/sab non vengono
+ * toccate (nessun ritorno del jump di env()); overlay e toast NON sono nel
+ * selettore → nessun glitch sulle loro animazioni. No-op fuori da iOS
+ * edge-to-edge.
  *
  * Va chiamato UNA sola volta a livello di App (non per pagina).
  */
-export function useRepaintFixedChromeOnModalClose(): void {
-  const isAnyModalOpen = useAnyModalOpen();
-  const wasOpenRef = useRef(false);
+export function useReanchorIosFixedChrome(): void {
   useEffect(() => {
-    const wasOpen = wasOpenRef.current;
-    wasOpenRef.current = isAnyModalOpen;
-    // Solo sulla transizione aperto→chiuso, e solo su iOS edge-to-edge.
-    if (!wasOpen || isAnyModalOpen) return;
     if (!isIosEdgeToEdge()) return;
 
     const root = document.documentElement;
+    let debounceTimer = 0;
+    let maxWaitTimer = 0;
     let removeRaf = 0;
+
     const kick = () => {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = 0;
+      window.clearTimeout(maxWaitTimer);
+      maxWaitTimer = 0;
       root.classList.add("fix-chrome-repaint");
-      // Forza un reflow: il layer composito viene distrutto e ri-posizionato
-      // rispetto al viewport corrente.
+      // Forza un reflow: i layer compositi del chrome vengono distrutti e
+      // ri-posizionati rispetto al viewport corrente.
       void root.offsetHeight;
       cancelAnimationFrame(removeRaf);
       removeRaf = requestAnimationFrame(() => {
@@ -127,24 +134,77 @@ export function useRepaintFixedChromeOnModalClose(): void {
       });
     };
 
-    // Aspetta che l'animazione di uscita Radix + il cleanup di react-remove-scroll
-    // siano atterrati prima del repaint (doppio rAF), con un fallback a tempo per
-    // le chiusure più lente in PWA standalone. Eseguire kick più volte è innocuo:
-    // su chrome già corretto transform:none dipinge alla stessa posizione.
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(kick);
+    // Coalescenza: debounce di coda (~110ms) + max-wait (~420ms) così anche
+    // un'attività continua (animazioni a catena) ri-ancora periodicamente senza
+    // forzare un reflow a ogni singolo evento. Su chrome già corretto il repaint
+    // è invisibile (transform:none dipinge alla stessa posizione di translateZ(0)).
+    const schedule = () => {
+      window.clearTimeout(debounceTimer);
+      debounceTimer = window.setTimeout(kick, 110);
+      if (!maxWaitTimer) maxWaitTimer = window.setTimeout(kick, 420);
+    };
+
+    // 1) Mount/unmount dei portal Radix (overlay, popover, dropdown, select,
+    //    tooltip) come figli del body + cambi di classe del body (find-beer-open).
+    //    Niente subtree:true → evita il rumore dei re-render dentro #root.
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.body, {
+      childList: true,
+      attributes: true,
+      attributeFilter: ["class"],
     });
-    const tFallback = window.setTimeout(kick, 180);
+
+    // 2) Inizio/fine di animazioni e transizioni ovunque (toast, fade overlay,
+    //    layer creati al volo) — in cattura per intercettare anche i nodi in #root.
+    const animEvents = [
+      "animationstart",
+      "animationend",
+      "animationcancel",
+      "transitionrun",
+      "transitionend",
+      "transitioncancel",
+    ] as const;
+    for (const ev of animEvents) {
+      document.addEventListener(ev, schedule, true);
+    }
+
+    // 3) Cambi di viewport / lifecycle che ri-compongono i fixed (tastiera,
+    //    rotazione, ritorno in foreground, ripristino bfcache).
+    window.addEventListener("resize", schedule);
+    window.addEventListener("orientationchange", schedule);
+    window.addEventListener("pageshow", schedule);
+    document.addEventListener("visibilitychange", schedule);
+
+    let vvThrottle = 0;
+    const vv = window.visualViewport;
+    const onViewport = () => {
+      if (vvThrottle) return;
+      vvThrottle = window.setTimeout(() => {
+        vvThrottle = 0;
+        schedule();
+      }, 200);
+    };
+    vv?.addEventListener("resize", onViewport);
+    vv?.addEventListener("scroll", onViewport);
 
     return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
+      observer.disconnect();
+      for (const ev of animEvents) {
+        document.removeEventListener(ev, schedule, true);
+      }
+      window.removeEventListener("resize", schedule);
+      window.removeEventListener("orientationchange", schedule);
+      window.removeEventListener("pageshow", schedule);
+      document.removeEventListener("visibilitychange", schedule);
+      vv?.removeEventListener("resize", onViewport);
+      vv?.removeEventListener("scroll", onViewport);
+      window.clearTimeout(debounceTimer);
+      window.clearTimeout(maxWaitTimer);
+      window.clearTimeout(vvThrottle);
       cancelAnimationFrame(removeRaf);
-      clearTimeout(tFallback);
       root.classList.remove("fix-chrome-repaint");
     };
-  }, [isAnyModalOpen]);
+  }, []);
 }
 
 export function BottomNavigation() {

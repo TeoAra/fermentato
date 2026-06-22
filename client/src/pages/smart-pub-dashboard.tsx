@@ -2135,7 +2135,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       {currentSection !== 'overview' && (
         <DockPortal>
         <div
-          className={`lg:hidden fixed inset-x-0 z-[49] transition-opacity duration-200 ${
+          className={`ios-fixed-chrome lg:hidden fixed inset-x-0 z-[49] transition-opacity duration-200 ${
             isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
           style={{ top: 'var(--mobile-top-offset)' }}

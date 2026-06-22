@@ -665,7 +665,7 @@ export default function UserPublicProfile() {
       {activeTab !== 'overview' && !isModalOpen && (
         <DockPortal>
         <div
-          className="lg:hidden fixed inset-x-0 z-[49]"
+          className="ios-fixed-chrome lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
         >
           <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
