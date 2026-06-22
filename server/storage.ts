@@ -70,6 +70,7 @@ import {
 import { db, pool } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike, isNotNull, ne } from "drizzle-orm";
 import { breweryActiveSql, beerVisibleSql } from "./visibility";
+import { normalizeBeerSearch, buildBeerSearchFragments } from "./search-normalize";
 import { memoryStorageInstance } from "./memoryStorage";
 
 // Mapping utilities for field conversion
@@ -695,113 +696,35 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchBeers(query: string, filters?: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number }): Promise<any[]> {
-    const words = query.trim().toLowerCase().split(/\s+/).filter(w => w.length > 0);
+    const n = normalizeBeerSearch(query);
     const hasFilters = filters && Object.values(filters).some(v => v !== undefined && v !== false && v !== "");
-    if (words.length === 0 && !hasFilters) return [];
+    if (n.meaningful.length === 0 && !hasFilters) return [];
 
-    // Strategy: CTE + INTERSECT approach.
-    // For each term, build a UNION of sub-queries each using a single GIN index.
-    // INTERSECT between terms enforces AND (every term must match).
-    // This avoids OR conditions on different columns that force seq scans.
-    //
-    // Params layout:
-    //   For each term i: $[2i+1] = '%term%', $[2i+2] = '%termNospace%'
-    //   $[2N+1] = full phrase pattern
-    //   Extra filter params start at $[2N+2]
+    // Strategy (see server/search-normalize.ts):
+    //   candidate_ids = UNION(exact phrase + most-selective tokens, each capped)
+    //   then a FULL uncapped AND filter ("every meaningful token must match") on
+    //   that small candidate set. This is accent-insensitive (terms are
+    //   unaccented to match the unaccented GIN indexes) and never truncates the
+    //   target away the way the old per-term LIMIT/INTERSECT did.
     const queryParams: any[] = [];
-    words.forEach(w => {
-      queryParams.push(`%${w}%`);
-      queryParams.push(`%${w.replace(/\s+/g, '')}%`);
-    });
-    const fullPhrase = `%${query.trim().toLowerCase()}%`;
-    queryParams.push(fullPhrase); // $[2N+1]
+    const { candidateCTE, matchFilter, scoreExpr } = buildBeerSearchFragments(n, queryParams);
 
-    // Build one CTE per term. Each CTE UNIONs indexed sub-queries so the planner
-    // picks up idx_beers_name_unaccent_trgm, idx_beers_style_lower_trgm,
-    // idx_breweries_name_unaccent_trgm, idx_beers_name_compact_trgm,
-    // idx_breweries_name_compact_trgm for each condition independently.
-    const termCTEs = words.map((_, i) => {
-      const pi = 2 * i + 1; // '%term%'
-      const ci = 2 * i + 2; // '%termNospace%'
-      // LIMIT 300 in ogni sub-query: forza il planner a usare i GIN trigram index
-      // invece di seq scan, riducendo il tempo su query multi-parola da 2-5s a <300ms.
-      // Le parentesi sono obbligatorie in PostgreSQL per LIMIT su UNION members.
-      return `
-        t${i} AS (
-          (SELECT b.id FROM beers b WHERE unaccent_immutable(lower(b.name::text)) LIKE $${pi} LIMIT 300)
-          UNION
-          (SELECT b.id FROM beers b WHERE lower(COALESCE(b.style, '')::text) LIKE $${pi} LIMIT 300)
-          UNION
-          (SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id
-            WHERE unaccent_immutable(lower(br.name::text)) LIKE $${pi} LIMIT 300)
-          UNION
-          (SELECT b.id FROM beers b WHERE regexp_replace(lower(b.name::text), '\\s+', '', 'g') LIKE $${ci} LIMIT 300)
-          UNION
-          (SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id
-            WHERE regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci} LIMIT 300)
-        )`;
-    });
-
-    // INTERSECT enforces AND: candidate must match every term
-    const candidateSQL = words.length > 0
-      ? `candidate_ids AS (${words.map((_, i) => `SELECT id FROM t${i}`).join(' INTERSECT ')})`
-      : `candidate_ids AS (SELECT id FROM beers LIMIT 5000)`;
-
-    // Score: evaluated only on candidate rows (few), so OR/CASE is fine here
-    const termScoreExprs = words.map((_, i) => {
-      const pi = 2 * i + 1;
-      const ci = 2 * i + 2;
-      return `(
-        CASE WHEN unaccent_immutable(lower(b.name::text)) LIKE $${pi} THEN 4 ELSE 0 END
-        + CASE WHEN unaccent_immutable(lower(br.name::text)) LIKE $${pi}
-                  OR regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci} THEN 3 ELSE 0 END
-        + CASE WHEN lower(COALESCE(b.style, '')::text) LIKE $${pi} THEN 1 ELSE 0 END
-      )`;
-    });
-
-    const phraseIdx = 2 * words.length + 1;
-    const scoreExpr = words.length > 0
-      ? `(${termScoreExprs.join(' + ')} + CASE WHEN unaccent_immutable(lower(b.name::text || ' ' || COALESCE(br.name::text, ''))) LIKE $${phraseIdx} THEN 2 ELSE 0 END)`
-      : "1";
-
-    // Extra filter clauses (applied in the final SELECT)
+    // Extra filter clauses (applied in the final SELECT over the candidate set)
     const extraClauses: string[] = [];
-    let paramIdx = 2 * words.length + 2;
+    const pushParam = (v: any) => { queryParams.push(v); return `$${queryParams.length}`; };
 
     if (filters?.glutenFree)  { extraClauses.push(`b.is_gluten_free = true`); }
     if (filters?.alcoholFree) { extraClauses.push(`b.is_alcohol_free = true`); }
-    if (filters?.style) {
-      extraClauses.push(`lower(b.style) LIKE $${paramIdx}`);
-      queryParams.push(`%${filters.style.toLowerCase()}%`);
-      paramIdx++;
-    }
-    if (filters?.minAbv !== undefined) {
-      extraClauses.push(`b.abv::numeric >= $${paramIdx}`);
-      queryParams.push(filters.minAbv);
-      paramIdx++;
-    }
-    if (filters?.maxAbv !== undefined) {
-      extraClauses.push(`b.abv::numeric <= $${paramIdx}`);
-      queryParams.push(filters.maxAbv);
-      paramIdx++;
-    }
-    if (filters?.minIbu !== undefined) {
-      extraClauses.push(`b.ibu::numeric >= $${paramIdx}`);
-      queryParams.push(filters.minIbu);
-      paramIdx++;
-    }
-    if (filters?.maxIbu !== undefined) {
-      extraClauses.push(`b.ibu::numeric <= $${paramIdx}`);
-      queryParams.push(filters.maxIbu);
-      paramIdx++;
-    }
+    if (filters?.style)            { extraClauses.push(`lower(b.style) LIKE ${pushParam(`%${filters.style.toLowerCase()}%`)}`); }
+    if (filters?.minAbv !== undefined) { extraClauses.push(`b.abv::numeric >= ${pushParam(filters.minAbv)}`); }
+    if (filters?.maxAbv !== undefined) { extraClauses.push(`b.abv::numeric <= ${pushParam(filters.maxAbv)}`); }
+    if (filters?.minIbu !== undefined) { extraClauses.push(`b.ibu::numeric >= ${pushParam(filters.minIbu)}`); }
+    if (filters?.maxIbu !== undefined) { extraClauses.push(`b.ibu::numeric <= ${pushParam(filters.maxIbu)}`); }
 
     const extraWhere = extraClauses.length > 0 ? `AND ${extraClauses.join(" AND ")}` : "";
 
-    const cteList = [...termCTEs, candidateSQL].join(',\n');
-
     const sqlText = `
-      WITH ${cteList}
+      WITH ${candidateCTE}
       SELECT
         b.id, b.name, b.style, b.abv, b.ibu, b.description,
         b.image_url       AS "imageUrl",
@@ -817,6 +740,7 @@ export class DatabaseStorage implements IStorage {
       WHERE 1=1
         AND COALESCE(b.is_discontinued, false) = false
         AND COALESCE(br.is_closed, false) = false
+        ${matchFilter}
         ${extraWhere}
       ORDER BY (${scoreExpr}) DESC, length(b.name) ASC, b.name ASC
       LIMIT 50

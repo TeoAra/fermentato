@@ -39,6 +39,7 @@ import { sql, eq, and, desc, asc, gte, count } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
 import { breweryActiveSql, beerVisibleSql, rawBreweryActive, rawBeerVisibleJoined, rawBeerVisibleExists } from "./visibility";
+import { normalizeBeerSearch, buildBeerSearchFragments } from "./search-normalize";
 import { registerCatalogCacheBuster } from "./catalog-cache";
 import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations, festivals, beerViews } from "@shared/schema";
 
@@ -1142,55 +1143,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const limitNum = Math.min(parseInt(limit as string) || 20, 50);
       if (queryStr.length < 2) return res.json([]);
 
-      // Split into terms; also build a compact version (no spaces/apostrophes) for fuzzy brewery/beer matching
-      const searchTerms = queryStr.toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
+      // Shared accent-insensitive search (see server/search-normalize.ts):
+      // UNION(exact phrase + most-selective tokens) then a full uncapped AND
+      // filter on the small candidate set.
+      const n = normalizeBeerSearch(queryStr);
+      if (n.meaningful.length === 0) return res.json([]);
 
-      // CTE + INTERSECT approach: each term gets its own CTE that UNIONs
-      // sub-queries each using a single GIN index. INTERSECT enforces AND.
-      // Params: $[2i+1]='%term%', $[2i+2]='%termNospace%', $[2N+1]=fullPhrase
       const qp: any[] = [];
-      searchTerms.forEach((t: string) => {
-        qp.push(`%${t}%`);
-        qp.push(`%${t.replace(/[\s\-']/g, '')}%`);
-      });
-      const fullPhrase = `%${queryStr.toLowerCase()}%`;
-      qp.push(fullPhrase);
-
-      const termCTEs = searchTerms.map((_, i: number) => {
-        const pi = 2 * i + 1;
-        const ci = 2 * i + 2;
-        return `t${i} AS (
-          SELECT b.id FROM beers b WHERE unaccent_immutable(lower(b.name::text)) LIKE $${pi}
-          UNION
-          SELECT b.id FROM beers b WHERE lower(COALESCE(b.style, '')::text) LIKE $${pi}
-          UNION
-          SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id
-            WHERE unaccent_immutable(lower(br.name::text)) LIKE $${pi}
-          UNION
-          SELECT b.id FROM beers b WHERE regexp_replace(lower(b.name::text), '\\s+', '', 'g') LIKE $${ci}
-          UNION
-          SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id
-            WHERE regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci}
-        )`;
-      });
-
-      const candidateCTE = `candidate_ids AS (${searchTerms.map((_: string, i: number) => `SELECT id FROM t${i}`).join(' INTERSECT ')})`;
-
-      const scoreExprs = searchTerms.map((_: string, i: number) => {
-        const pi = 2 * i + 1;
-        const ci = 2 * i + 2;
-        return `(
-          CASE WHEN unaccent_immutable(lower(b.name::text)) LIKE $${pi} THEN 4 ELSE 0 END
-          + CASE WHEN unaccent_immutable(lower(br.name::text)) LIKE $${pi}
-                    OR regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE $${ci} THEN 3 ELSE 0 END
-          + CASE WHEN lower(COALESCE(b.style, '')::text) LIKE $${pi} THEN 1 ELSE 0 END
-        )`;
-      });
-      const phraseIdx = 2 * searchTerms.length + 1;
-      const scoreExpr = `(${scoreExprs.join(' + ')} + CASE WHEN unaccent_immutable(lower(b.name::text || ' ' || COALESCE(br.name::text, ''))) LIKE $${phraseIdx} THEN 2 ELSE 0 END)`;
+      const { candidateCTE, matchFilter, scoreExpr } = buildBeerSearchFragments(n, qp);
 
       const sqlText = `
-        WITH ${[...termCTEs, candidateCTE].join(',\n')}
+        WITH ${candidateCTE}
         SELECT
           b.id, b.name, b.style, b.abv, b.image_url AS "imageUrl",
           b.is_gluten_free AS "isGlutenFree", b.is_alcohol_free AS "isAlcoholFree",
@@ -1201,7 +1164,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         LEFT JOIN breweries br ON b.brewery_id = br.id
         WHERE COALESCE(b.is_discontinued, false) = false
           AND COALESCE(br.is_closed, false) = false
-        ORDER BY (${scoreExpr}) DESC, b.name ASC
+          ${matchFilter}
+        ORDER BY (${scoreExpr}) DESC, length(b.name) ASC, b.name ASC
         LIMIT ${limitNum}
       `;
 
