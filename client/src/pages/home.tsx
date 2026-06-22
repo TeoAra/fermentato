@@ -280,7 +280,7 @@ export default function Home() {
 
       {/* Pull-to-refresh indicator */}
       {(isPulling || isRefreshing) && (
-        <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-background/95 border-b border-border backdrop-blur-sm">
+        <div className="fixed top-[var(--mobile-top-offset)] lg:top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-background/95 border-b border-border backdrop-blur-sm">
           {isRefreshing ? (
             <div className="flex items-center gap-2 text-primary text-xs font-medium">
               <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />

@@ -145,3 +145,22 @@ reliable. Do NOT rely on a `<head>` inline script for native detection: `window.
 - Compatible with the probe: the probe never writes 0 and the fallback only sets when best==0, so neither
   clobbers the seed; a real positive sample still refines 59→44 on older notch devices (one-time, acceptable).
 - Still web-layer → reaches the native app only after a manual VPS deploy; verify on-device with `?sadebug`.
+
+## Refinement #6 — the freeze protects the PERSISTENT header; page-level sticky/fixed bars are separate "impostors"
+
+A user reported the header "si alza" (rises under the status bar) after a search→beer→Home flow. Don't
+assume it's the persistent global MobileHeader: it is rendered OUTSIDE the keyed route-fade `<Switch>`, so it
+is never remounted on navigation; there is NO transform/`will-change` trap on `.main-content-wrapper`; and the
+ONLY code that clears `--frozen-sat/sab` is `resampleFromScratch()` on `orientationchange`. So a static px
+lock genuinely PERSISTS across SPA navigation and the persistent header does not lose its padding in-flow.
+**Suspect instead page-level chrome that ignores the offset:**
+- A page's own sub-header at `sticky top-0` slides UNDER the global fixed header on scroll (the global header
+  occupies `0..var(--mobile-top-offset)`). Fix: `sticky top-[var(--mobile-top-offset)] lg:top-16`.
+- A `fixed top-16` overlay (hardcoded desktop 4rem header height) ignores `--frozen-sat` on notched devices.
+  Fix: `fixed top-[var(--mobile-top-offset)] lg:top-16`.
+
+**How to apply:** any page-level sticky/fixed bar meant to sit below the global header must anchor to
+`var(--mobile-top-offset)` on mobile (= `calc(3.5rem + var(--frozen-sat))`, and `4rem` at the `lg` breakpoint),
+never `top-0`/`top-16`. Pre-release grep `sticky top-0`, `fixed top-16`, and raw `env(safe-area-inset-top)` in
+chrome-adjacent UI. Note the Replit iOS-app preview has `isIosEdgeToEdge()===false` (freeze disabled) and
+anchors `position:fixed` to the full document in screenshots → it's an UNRELIABLE mirror of on-device behavior.

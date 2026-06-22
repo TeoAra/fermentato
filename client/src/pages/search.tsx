@@ -150,7 +150,7 @@ export default function SearchPage() {
     <div className="min-h-screen bg-background">
 
       {/* Header section */}
-      <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-border sticky top-0 z-50">
+      <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-border sticky top-[var(--mobile-top-offset)] lg:top-16 z-50">
         <div className="max-w-3xl mx-auto px-4 pt-4 pb-3">
           <div className="flex items-center gap-3 mb-3">
             <Link href="/">
