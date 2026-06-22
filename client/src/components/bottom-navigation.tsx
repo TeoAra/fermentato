@@ -1,10 +1,11 @@
 import { User, Home, Bell, Zap, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
+import { useState, useEffect, useCallback, useRef, createContext, useContext, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import { isIosEdgeToEdge } from "@/lib/safe-area-estimate";
 
 /**
  * Renderizza i dock interni dei dashboard tramite portal direttamente in
@@ -84,6 +85,66 @@ export function useAnyModalOpen(): boolean {
     return () => observer.disconnect();
   }, []);
   return open;
+}
+
+/**
+ * iOS WKWebView lascia i layer GPU dei fixed chrome (header globale + dock dei
+ * dashboard, compositati con translateZ(0)) "incollati" a un offset di scroll
+ * stale quando un overlay Radix (Dialog/Sheet/AlertDialog → react-remove-scroll)
+ * toglie il lock dello scroll del body. Effetto visibile alla CHIUSURA del
+ * modale: l'header risale sotto la status bar e il dock si stacca dal bordo
+ * inferiore, e ci restano finché un reflow successivo non li ri-ancora.
+ *
+ * Qui forziamo quel reflow: alla transizione modale aperto→chiuso aggiungiamo
+ * per un frame la classe `.fix-chrome-repaint` su <html> (vedi index.css), che
+ * azzera il transform sui soli fixed chrome → iOS ricrea il layer alla posizione
+ * corretta rispetto al viewport. transform:none e translateZ(0) dipingono alla
+ * stessa posizione (nessun salto) e le --frozen-sat/sab non vengono toccate
+ * (nessun ritorno del jump di env()). No-op fuori da iOS edge-to-edge.
+ *
+ * Va chiamato UNA sola volta a livello di App (non per pagina).
+ */
+export function useRepaintFixedChromeOnModalClose(): void {
+  const isAnyModalOpen = useAnyModalOpen();
+  const wasOpenRef = useRef(false);
+  useEffect(() => {
+    const wasOpen = wasOpenRef.current;
+    wasOpenRef.current = isAnyModalOpen;
+    // Solo sulla transizione aperto→chiuso, e solo su iOS edge-to-edge.
+    if (!wasOpen || isAnyModalOpen) return;
+    if (!isIosEdgeToEdge()) return;
+
+    const root = document.documentElement;
+    let removeRaf = 0;
+    const kick = () => {
+      root.classList.add("fix-chrome-repaint");
+      // Forza un reflow: il layer composito viene distrutto e ri-posizionato
+      // rispetto al viewport corrente.
+      void root.offsetHeight;
+      cancelAnimationFrame(removeRaf);
+      removeRaf = requestAnimationFrame(() => {
+        root.classList.remove("fix-chrome-repaint");
+      });
+    };
+
+    // Aspetta che l'animazione di uscita Radix + il cleanup di react-remove-scroll
+    // siano atterrati prima del repaint (doppio rAF), con un fallback a tempo per
+    // le chiusure più lente in PWA standalone. Eseguire kick più volte è innocuo:
+    // su chrome già corretto transform:none dipinge alla stessa posizione.
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(kick);
+    });
+    const tFallback = window.setTimeout(kick, 180);
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      cancelAnimationFrame(removeRaf);
+      clearTimeout(tFallback);
+      root.classList.remove("fix-chrome-repaint");
+    };
+  }, [isAnyModalOpen]);
 }
 
 export function BottomNavigation() {

@@ -164,3 +164,26 @@ lock genuinely PERSISTS across SPA navigation and the persistent header does not
 never `top-0`/`top-16`. Pre-release grep `sticky top-0`, `fixed top-16`, and raw `env(safe-area-inset-top)` in
 chrome-adjacent UI. Note the Replit iOS-app preview has `isIosEdgeToEdge()===false` (freeze disabled) and
 anchors `position:fixed` to the full document in screenshots → it's an UNRELIABLE mirror of on-device behavior.
+
+## Refinement #7 — header/dock DETACH on modal CLOSE is a stale-scroll composite layer, NOT a frozen-var bug
+
+A user reported the global header AND the bottom dock both shift UPWARD (header under the status bar, dock lifts
+off the bottom with a gap) specifically AFTER closing a Radix Sheet/Dialog (editing a drink in the pub
+dashboard). This is a DIFFERENT failure mode from the env() jump: the frozen vars are untouched. Cause: the
+fixed chrome is GPU-composited (`translateZ(0)`), and when a Radix overlay's `react-remove-scroll` toggles body
+scroll-lock **open→closed**, iOS WKWebView leaves the composited layer painted at the document's *stale scrolled
+offset* instead of re-anchoring to the viewport. So it detaches only on overlay CLOSE, and stays wrong until some
+later reflow.
+**Cure:** a one-frame "repaint" of ONLY the composited chrome, fired on the modal open→close edge, gated to
+`isIosEdgeToEdge()`. Toggle the chrome's `transform` from `translateZ(0)` → `none` (+`will-change:auto`) for a
+single frame via a `<html>` class, force a reflow (`void offsetHeight`), then rAF-remove the class. WebKit drops
+& recreates the layer, re-anchored to the viewport. `transform:none` and `translateZ(0)` paint at the SAME pixel
+position, so the repaint is invisible on already-correct chrome — it only snaps the wrong→correct case.
+**Keep these invariants:** the repaint CSS must mirror the EXACT existing compositing selectors (native header =
+`[data-capacitor="true"] header`; docks = `.bottom-nav-fixed`; PWA = `.pwa-standalone .fixed` + inline
+`position:fixed` variants) so it covers precisely the stuck-able set and needs zero per-element marking — and so a
+NON-composited element (e.g. a semantic `<header>` in PWA) is never needlessly repainted. Schedule via double-rAF
+(+ a ~180ms timeout fallback for slow PWA exit animations); detect the open→close edge with a `useRef`; call the
+hook ONCE at App level. Do NOT instead drop `translateZ(0)` permanently (re-introduces the env() jump), change
+the Radix scroll-lock strategy, or touch `--frozen-sat/sab`. Web-layer → reaches the native app only after a
+manual VPS deploy.

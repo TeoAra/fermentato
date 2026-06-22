@@ -782,6 +782,28 @@ html.dark {
     backface-visibility: hidden;
   }
 
+  /* ── iOS: re-ancora i fixed chrome compositi dopo la chiusura di un overlay ──
+   * Quando un overlay Radix (Dialog/Sheet/AlertDialog via react-remove-scroll)
+   * toglie il lock dello scroll del body, iOS WKWebView lascia i layer GPU dei
+   * fixed chrome (header globale + dock dei dashboard) "incollati" a un offset
+   * di scroll stale: alla chiusura del modale l'header risale sotto la status
+   * bar e il dock si stacca dal bordo inferiore. La classe `.fix-chrome-repaint`
+   * viene aggiunta su <html> per UN frame dal JS (useRepaintFixedChromeOnModalClose):
+   * azzera il transform SOLO sugli stessi elementi che ricevono translateZ(0)
+   * qui sopra, forzando la distruzione e il ri-posizionamento del layer rispetto
+   * al viewport. transform:none e translateZ(0) dipingono alla stessa posizione
+   * → nessun salto; le --frozen-sat/sab non vengono toccate → nessun ritorno del
+   * "jump" di env(). */
+  html.fix-chrome-repaint[data-capacitor="true"] header,
+  html.fix-chrome-repaint .bottom-nav-fixed,
+  html.fix-chrome-repaint.pwa-standalone .fixed,
+  html.fix-chrome-repaint.pwa-standalone [style*="position: fixed"],
+  html.fix-chrome-repaint.pwa-standalone [style*="position:fixed"] {
+    -webkit-transform: none !important;
+    transform: none !important;
+    will-change: auto !important;
+  }
+
   /* touch-action: manipulation → disabilita double-tap zoom su tutti i
      pulsanti e link interattivi (preserva scroll e altri gesti) */
   button, a, [role="button"] {
