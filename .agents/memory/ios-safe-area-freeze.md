@@ -217,3 +217,22 @@ specifically — so the correct dependency is "a layer changed", observed broadl
 invariant (transform:none ≡ translateZ(0) → invisible on correct chrome) and the `isIosEdgeToEdge()` gate. Still
 web-layer → reaches the native app only after a manual VPS deploy; mobile-Safari (non-standalone) dev testing is a
 no-op because `isIosEdgeToEdge()` is false there.
+
+## Refinement #9 — in-app toast ("pill nera") + push: add eventless-dismiss bursts and a pointerdown safety net
+
+User re-hit the detach on the pub Taplist after changing a tap beer when the small black IN-APP notification (the
+custom `Toaster` pill, `bg-gray-900`) appeared. That pill is a child of a PERSISTENT container (always-mounted, static
+`translateZ(0)` + `contain:layout style paint`), animated only by inline `opacity` transition. So #8's `transition{run,end}`
+capture listeners DO fire on fade-in/out — but two gaps remain: (a) the pill's UNMOUNT after the ~3.5s auto-dismiss
+changes the childList of the persistent container, NOT of `document.body`, so the `subtree:false` MutationObserver misses
+it; (b) a native push banner re-composites with no DOM event at all.
+**Additions (belt-and-suspenders over #8, same `schedule()`/`kick()` machinery):**
+1. Listen on `window` for the CustomEvents `capacitor-native.ts` already dispatches — `native-push-received`,
+   `native-push-action`, `native-app-resume` — and on each fire a staggered BURST (`schedule()` now + setTimeouts at
+   ~400/1200/2600/4000ms) to cover both the appearance and the EVENTLESS auto-dismiss/banner-slide-away. No-op on web
+   (events never emitted there).
+2. **`document.addEventListener("pointerdown", schedule, true)`** — the definitive safety net: whatever stranded the
+   chrome (toast, banner, any eventless re-composite), the user's very next touch re-anchors it. Cheap (debounced, one
+   schedule per gesture) and invisible on already-correct chrome.
+Clean up all three window listeners, the pointerdown capture listener, and the burst timers on unmount. Still web-layer →
+reaches the native app only after a manual VPS deploy, so it cannot be validated on-device until fermenta.to is redeployed.

@@ -56,6 +56,14 @@ function ToastPill({ id, title, description, variant, open, action, dismiss }: {
 export function Toaster() {
   const { toasts, dismiss } = useToast()
 
+  // Segnala all'hook di re-anchor del chrome iOS (bottom-navigation.tsx) ogni
+  // apertura/dismiss di una pill: comparsa/sparizione del layer toast può
+  // ri-comporre header/dock su WKWebView edge-to-edge. La pill vive in un
+  // container persistente, quindi un MutationObserver su document.body la perde.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent("app-toast-changed"))
+  }, [toasts])
+
   return (
     /*
      * PERSISTENT container — always in the DOM, never conditionally rendered.

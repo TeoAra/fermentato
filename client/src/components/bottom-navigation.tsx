@@ -187,6 +187,37 @@ export function useReanchorIosFixedChrome(): void {
     vv?.addEventListener("resize", onViewport);
     vv?.addEventListener("scroll", onViewport);
 
+    // 4) Notifiche IN-APP (la "pill" nera del Toaster) e push native: la comparsa
+    //    e soprattutto l'AUTO-dismiss (~3.5s) della pill — e il banner push nativo —
+    //    possono ri-comporre i layer GPU senza un evento DOM affidabile sull'USCITA
+    //    (la pill è figlia di un container persistente: il suo unmount NON cambia il
+    //    childList del body). Su questi segnali facciamo un "burst" di re-anchor
+    //    scaglionati che coprono sia la comparsa sia la sparizione. capacitor-native.ts
+    //    dispatcha questi CustomEvent su window; sul web non vengono mai emessi → innocui.
+    let burstTimers: number[] = [];
+    const scheduleBurst = () => {
+      schedule();
+      // Limita l'insieme dei timer: azzera il burst precedente così trigger
+      // frequenti (es. toast in serie) non accumulano setTimeout pendenti.
+      for (const t of burstTimers) window.clearTimeout(t);
+      burstTimers = [];
+      for (const d of [400, 1200, 2600, 4000]) {
+        burstTimers.push(window.setTimeout(schedule, d));
+      }
+    };
+    window.addEventListener("native-push-received", scheduleBurst);
+    window.addEventListener("native-push-action", scheduleBurst);
+    window.addEventListener("native-app-resume", scheduleBurst);
+    // Toast IN-APP (la "pill" nera): la Toaster dispatcha questo evento a ogni
+    // apertura/dismiss. La pill è figlia di un container persistente, quindi il
+    // MutationObserver su document.body non la vede → segnale esplicito.
+    window.addEventListener("app-toast-changed", scheduleBurst);
+
+    // 5) Rete di sicurezza definitiva: qualunque cosa abbia "staccato" il chrome
+    //    (toast, banner, re-composite senza evento intercettabile), il primo tocco
+    //    dell'utente lo ri-ancora. Su chrome già corretto il repaint è invisibile.
+    document.addEventListener("pointerdown", schedule, true);
+
     return () => {
       observer.disconnect();
       for (const ev of animEvents) {
@@ -196,8 +227,14 @@ export function useReanchorIosFixedChrome(): void {
       window.removeEventListener("orientationchange", schedule);
       window.removeEventListener("pageshow", schedule);
       document.removeEventListener("visibilitychange", schedule);
+      window.removeEventListener("native-push-received", scheduleBurst);
+      window.removeEventListener("native-push-action", scheduleBurst);
+      window.removeEventListener("native-app-resume", scheduleBurst);
+      window.removeEventListener("app-toast-changed", scheduleBurst);
+      document.removeEventListener("pointerdown", schedule, true);
       vv?.removeEventListener("resize", onViewport);
       vv?.removeEventListener("scroll", onViewport);
+      for (const t of burstTimers) window.clearTimeout(t);
       window.clearTimeout(debounceTimer);
       window.clearTimeout(maxWaitTimer);
       window.clearTimeout(vvThrottle);
