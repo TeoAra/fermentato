@@ -817,6 +817,37 @@ html.dark {
     will-change: auto !important;
   }
 
+  /* ── iOS NATIVE (Capacitor WKWebView): NON compositare il chrome fisso ──────
+   * CAUSA-RADICE del "detach" ricorrente di header globale + dock: i layer GPU
+   * del chrome (translateZ(0)/will-change:transform) vengono ri-ancorati da
+   * WKWebView a un offset di scroll STALE ogni volta che nasce o muore un altro
+   * layer composito (la pill del Toaster, un overlay, un banner push). Effetto:
+   * l'header risale sotto la status bar e il dock si stacca dal bordo inferiore.
+   *
+   * Il repaint forzato (sopra) trattava il sintomo ma RIPRISTINAVA subito la
+   * stessa condizione (translateZ(0)), e con will-change attivo WebKit tiene vivo
+   * il layer → il repaint spesso non ri-ancora davvero. Dopo 9 affinamenti il
+   * problema persisteva on-device.
+   *
+   * Nell'app NATIVA i due motivi storici del compositing non valgono più:
+   *  (a) niente address bar di Safari che appare/sparisce in scroll;
+   *  (b) le posizioni usano px CONGELATI (--frozen-sat/sab), non env() live →
+   *      nessun "jump" 0→59 da prevenire.
+   * Quindi rimuoviamo il compositing dal chrome: senza layer composito non c'è
+   * nulla che WKWebView possa incollare a un offset stale. La PWA standalone /
+   * Safari mobile mantengono il loro workaround (.pwa-standalone .fixed) e il
+   * repaint hook resta attivo solo lì. Scoping su [data-platform="ios"] →
+   * Android nativo non viene toccato. */
+  [data-platform="ios"] header,
+  [data-platform="ios"] .bottom-nav-fixed,
+  [data-platform="ios"] .ios-fixed-chrome {
+    -webkit-transform: none !important;
+    transform: none !important;
+    will-change: auto !important;
+    -webkit-backface-visibility: visible !important;
+    backface-visibility: visible !important;
+  }
+
   /* touch-action: manipulation → disabilita double-tap zoom su tutti i
      pulsanti e link interattivi (preserva scroll e altri gesti) */
   button, a, [role="button"] {

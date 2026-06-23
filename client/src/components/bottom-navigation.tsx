@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { isIosEdgeToEdge } from "@/lib/safe-area-estimate";
+import { isNativeApp } from "@/lib/platform";
 
 /**
  * Renderizza i dock interni dei dashboard tramite portal direttamente in
@@ -113,6 +114,12 @@ export function useAnyModalOpen(): boolean {
 export function useReanchorIosFixedChrome(): void {
   useEffect(() => {
     if (!isIosEdgeToEdge()) return;
+    // iOS NATIVO: il chrome non è più GPU-compositato (de-compositing CSS scoped
+    // [data-platform="ios"] in index.css) → non esiste alcun layer da ri-ancorare
+    // e qualsiasi reflow forzato qui non farebbe che perturbare WKWebView senza
+    // motivo. Questo hook resta attivo SOLO per la PWA standalone / Safari mobile,
+    // dove il chrome è ancora compositato e il repaint serve davvero.
+    if (isNativeApp) return;
 
     const root = document.documentElement;
     let debounceTimer = 0;
