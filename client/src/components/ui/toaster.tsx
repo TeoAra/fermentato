@@ -2,6 +2,7 @@ import { useEffect } from "react"
 import { AlertCircle, CheckCircle2, Info } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { cn } from "@/lib/utils"
+import { isIosNative } from "@/lib/platform"
 
 function ToastPill({ id, title, description, variant, open, action, dismiss }: {
   id: string
@@ -27,7 +28,11 @@ function ToastPill({ id, title, description, variant, open, action, dismiss }: {
       aria-live={isError ? "assertive" : "polite"}
       style={{
         opacity: open ? 1 : 0,
-        transition: "opacity 0.2s ease",
+        // iOS nativo: NIENTE transition opacity → WebKit non promuove un layer
+        // composito temporaneo durante l'animazione (la cui nascita/morte fa
+        // ri-ancorare header/dock fissi in WKWebView). Comparsa/sparizione
+        // istantanea. Fuori da iOS nativo resta la dissolvenza.
+        transition: isIosNative ? "none" : "opacity 0.2s ease",
         pointerEvents: open ? "auto" : "none",
       }}
       className={cn(
@@ -92,9 +97,14 @@ export function Toaster() {
         gap: "0.5rem",
         padding: "0 1rem",
         pointerEvents: "none",
-        transform: "translateZ(0)",
-        WebkitTransform: "translateZ(0)",
-        contain: "layout style paint",
+        // iOS nativo: NIENTE layer composito per il toast. translateZ(0) +
+        // contain:paint creano un layer GPU la cui nascita/morte fa ri-ancorare
+        // gli elementi position:fixed (header/dock) a un offset di scroll stale
+        // in WKWebView → "detach" del chrome. Su web/PWA resta il single-layer
+        // pre-allocato per evitare i jump dell'address bar di Safari.
+        transform: isIosNative ? "none" : "translateZ(0)",
+        WebkitTransform: isIosNative ? "none" : "translateZ(0)",
+        contain: isIosNative ? "none" : "layout style paint",
       }}
     >
       {toasts.map(({ id, title, description, variant, open, action }) => (

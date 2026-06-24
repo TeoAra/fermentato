@@ -1,4 +1,6 @@
 import * as React from "react"
+import { Capacitor } from "@capacitor/core"
+import { isIosNative } from "@/lib/platform"
 
 import type {
   ToastActionElement,
@@ -139,7 +141,39 @@ function dispatch(action: Action) {
 
 type Toast = Omit<ToasterToast, "id">
 
-function toast({ ...props }: Toast) {
+/**
+ * Fix DEFINITIVO del "detach" del chrome fisso su iOS nativo (WKWebView):
+ * mostra la notifica come TOAST NATIVO dell'OS (@capacitor/toast) invece che
+ * come overlay HTML position:fixed dentro la WebView. Una notifica disegnata
+ * dall'OS vive FUORI dalla WebView → non crea/distrugge layer compositi e non
+ * può ri-ancorare header/dock fissi (la causa storica del problema).
+ *
+ * Attivo solo su iOS nativo e solo se il plugin Toast è presente nel binario
+ * installato (isPluginAvailable): le build precedenti senza plugin ricadono sul
+ * toast HTML (che su iOS resta de-compositato, vedi toaster.tsx). I toast con
+ * `action` (es. "Annulla") o con contenuto React non testuale restano HTML,
+ * perché un toast OS è solo testo.
+ */
+function nodeToText(node: React.ReactNode): string | null {
+  if (node == null || node === false || node === true) return null
+  if (typeof node === "string" || typeof node === "number") return String(node)
+  return null
+}
+
+/** Testo per il toast OS, oppure null se il toast NON deve usare la via nativa
+ * (non iOS nativo, plugin assente, presenza di `action`, o contenuto non testo). */
+function nativeToastText(props: Toast): string | null {
+  if (!isIosNative) return null
+  if (!Capacitor.isPluginAvailable("Toast")) return null
+  if (props.action) return null
+  const title = nodeToText(props.title)
+  const description = nodeToText(props.description)
+  if (title == null && description == null) return null
+  const text = [title, description].filter(Boolean).join("\n")
+  return text || null
+}
+
+function createHtmlToast({ ...props }: Toast) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
@@ -166,6 +200,29 @@ function toast({ ...props }: Toast) {
     dismiss,
     update,
   }
+}
+
+function toast({ ...props }: Toast) {
+  // iOS nativo: instrada al toast nativo dell'OS quando disponibile (fuori dalla
+  // WebView → non sposta header/dock). Se l'import o Toast.show falliscono
+  // nonostante isPluginAvailable, ricade sul toast HTML così la notifica non
+  // viene mai persa. Su web/PWA/Android resta sempre il toast HTML.
+  const text = nativeToastText(props)
+  if (text != null) {
+    const id = genId()
+    import("@capacitor/toast")
+      .then((m) => m.Toast.show({ text, duration: "short", position: "top" }))
+      .catch(() => {
+        createHtmlToast(props)
+      })
+    return {
+      id,
+      dismiss: () => {},
+      update: (_props: ToasterToast) => {},
+    }
+  }
+
+  return createHtmlToast(props)
 }
 
 function useToast() {
