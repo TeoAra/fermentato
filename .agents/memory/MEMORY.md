@@ -9,3 +9,4 @@
 - [iOS safe-area / fixed-chrome](ios-safe-area-freeze.md) — freeze env()→--frozen-sat/sab px (write only POSITIVE); and on NATIVE iOS do NOT GPU-composite fixed chrome — compositing is what strands header/dock when a toast/overlay layer appears.
 - [Drizzle typing footguns](drizzle-typing-footguns.md) — keep server/db.ts typed (was `any`, masked ~20 bugs); decimal=string (Number/String), reassigned builders need .$dynamic(), select({count}) without .from() reads 0.
 - [Taplist feed ordering](taplist-feed-ordering.md) — home feed ordered by id DESC buries in-place row updates (bot "cambia birra" keeps the id); order by updated_at, bump it on every mutation path, and bust the home cache (bot uses raw db.update, not storage).
+- [iOS Codemagic build 403](ios-build-codemagic.md) — "required agreement missing" from app-store-connect fetch-signing-files = unsigned Apple account agreement, NOT a code/CI bug; Account Holder signs in App Store Connect.
