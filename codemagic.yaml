@@ -74,12 +74,14 @@ workflows:
           grep -q "google-cast-sdk" Podfile.lock || { echo "ERRORE: google-cast-sdk non in Podfile.lock"; exit 1; }
           echo "google-cast-sdk installato correttamente"
 
-      - name: Genera splash screen iOS (resources/splash.png → native Assets)
+      - name: Genera splash screen iOS (logo Fermenta.to → native Assets)
         script: |
-          # Sostituisce il default Capacitor (X blu) con il logo Fermenta.to
-          npm install -D @capacitor/assets --no-audit --no-fund 2>/dev/null || true
-          npx @capacitor/assets generate --splashscreen --ios || true
-          echo "Splash screen iOS generato da resources/splash.png"
+          # Sostituisce il default Capacitor (X blu) con il logo Fermenta.to.
+          # generate-native-splash.js usa resources/splash.png (2732x2732) come
+          # Splash.imageset universale; salta Android se la cartella non esiste.
+          node scripts/generate-native-splash.js
+          echo "=== Splash.imageset generato ==="
+          ls -la ios/App/App/Assets.xcassets/Splash.imageset
 
       - name: Copia web assets e plugin Swift nel progetto iOS
         script: |
@@ -311,12 +313,14 @@ workflows:
           grep -q "google-cast-sdk" Podfile.lock || { echo "ERRORE: google-cast-sdk non in Podfile.lock"; exit 1; }
           echo "google-cast-sdk installato correttamente"
 
-      - name: Genera splash screen iOS (resources/splash.png → native Assets)
+      - name: Genera splash screen iOS (logo Fermenta.to → native Assets)
         script: |
-          # Sostituisce il default Capacitor (X blu) con il logo Fermenta.to
-          npm install -D @capacitor/assets --no-audit --no-fund 2>/dev/null || true
-          npx @capacitor/assets generate --splashscreen --ios || true
-          echo "Splash screen iOS generato da resources/splash.png"
+          # Sostituisce il default Capacitor (X blu) con il logo Fermenta.to.
+          # generate-native-splash.js usa resources/splash.png (2732x2732) come
+          # Splash.imageset universale; salta Android se la cartella non esiste.
+          node scripts/generate-native-splash.js
+          echo "=== Splash.imageset generato ==="
+          ls -la ios/App/App/Assets.xcassets/Splash.imageset
 
       - name: Copia web assets e plugin Swift nel progetto iOS
         script: |

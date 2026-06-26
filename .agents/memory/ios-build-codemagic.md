@@ -19,3 +19,13 @@ Once the agreement 403 is cleared, the next failure is at PUBLISH (upload to App
 **Fix (applied):** add Codemagic's auto-incrementing `$BUILD_NUMBER` to the derived value (`... + BUILD_NUMBER`) in ALL build-number steps (both iOS workflows + the Android `versionCode` steps). Build number is then always unique and monotonic even when the version string is unchanged; in bash arithmetic an unset BUILD_NUMBER is 0, but in Codemagic CI it is always a positive incrementing integer so the result always exceeds the prior same-version upload.
 
 **Durable rule:** CFBundleVersion (build number) must be unique+monotonic per upload; CFBundleShortVersionString (marketing version) MAY repeat across builds. Never tie the build number solely to the marketing version.
+
+## iOS splash showed the Capacitor default (X blu) instead of the Fermenta logo
+
+**Symptom:** the IPA launched with the default Capacitor splash, not the brand logo.
+**Cause:** the codemagic splash step ran `npx @capacitor/assets generate --splashscreen --ios` — that tool reads source images from `assets/` (its DEFAULT folder), but this repo keeps brand sources in `resources/` (resources/icon.png, resources/splash.png). With no `assets/` folder the command found nothing and the step ended in `|| true`, silently swallowing the failure → the default Splash.imageset created by `cap add ios` stayed in the IPA.
+**Fix:** generate the iOS Splash.imageset directly with `scripts/generate-native-splash.js` (sharp): it wipes the default imageset and writes resources/splash.png (2732x2732) as the single universal image + Contents.json. The script now skips Android when `android/` is absent so it works in the iOS-only Codemagic workflow (it previously HARD-EXITED if the Android res dir was missing — that was why it couldn't just be reused in CI).
+**Durable rules:**
+- `@capacitor/assets` defaults to `assets/`, not `resources/`; a wrong/absent asset folder combined with `|| true` hides the failure and silently ships the Capacitor default.
+- Native-asset generators must tolerate a missing platform dir (iOS-only vs Android-only CI builds), never hard-exit on one platform's absence.
+- Source of truth for the iOS launch image is `ios/App/App/Assets.xcassets/Splash.imageset` (referenced by name "Splash" in LaunchScreen.storyboard); one universal 2732x2732 PNG is sufficient.
