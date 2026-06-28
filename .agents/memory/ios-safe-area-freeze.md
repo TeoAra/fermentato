@@ -293,3 +293,20 @@ correct estimate but never latches, so the volatile listeners keep running forev
 can still inflate. **Do NOT** switch chrome/toast back to live `env()` (the user asked for it) — that reverses
 the whole freeze and reintroduces the GPU-layer jump. App-shell layout was NOT needed for this symptom.
 Web-layer → reaches the native app only after a manual `sudo fermenta-deploy` + reload.
+
+**Addendum to #13 (food-menu Dialog edit still shifted):** the acquire-once+latch wasn't fully closed —
+`applyFallbackIfNeeded()` set `topLocked=true` but kept `bestSat=0`, and the BOOT TIMERS + `load` call
+`sample()` DIRECTLY (not the gated `sampleIfUnlocked`), so after fallback a later direct `sample()` could
+still ACQUIRE a keyboard-transition spike (editing a food product opens a Radix Dialog with text inputs →
+keyboard → on save the Dialog closes → visualViewport resize). Also the anti-spike clamp's `+6` tolerance
+let `est 59 + 6 = 65px` through — exactly the reported spike range. **Closure:** guard the acquisition
+itself with `!topLocked` (so NO caller, gated or direct, can fix a new value once cache/probe/fallback has
+locked), and tighten the clamp to `+4` (rejects gross keyboard spikes ≥64 while still accepting newest-device
+real insets ~62). `saveCache` stays OUTSIDE the lock so a real probe still PERSISTS for the next boot →
+the device self-refines across sessions without any in-session jump. **Diagnosis rule going forward:** if the
+shift persists after a confirmed `sudo fermenta-deploy`+reload, capture `?sadebug` — if `--frozen-sat/sab`
+GROW it's still Mode A (sampler), if they DON'T change it's Mode B (the Radix Dialog open/close churning a
+GPU layer re-anchors fixed chrome even when de-composited). Mode B's targeted fix is to stop the Dialog's
+layer churn on iOS native (or route its success toast through the persistent pill) BEFORE escalating to the
+high-risk app-shell migration (body non-scrollable + single inner scroll container) — architect's order:
+verify deploy → close Mode A → target Dialog → app-shell only as last resort.

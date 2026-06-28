@@ -675,15 +675,26 @@ function App() {
       // più una piccola tolleranza: il notch reale non può superarla, quindi una
       // lettura oltre soglia è certamente un picco da scartare.
       const est = estimateIosInsets();
-      const satOk = saneSat(sat) && (!est || sat <= est.sat + 6);
-      const sabOk = saneSab(sab) && (!est || sab <= est.sab + 6);
+      // Tolleranza stretta: il notch reale non supera mai la stima device-class
+      // (già il valore PIÙ ALTO della classe). +4 lascia passare gli inset dei
+      // device più recenti (~62px) ma rifiuta i picchi grossolani da tastiera
+      // (es. 65px su stima 59) che altrimenti verrebbero acquisiti/cachati.
+      const satOk = saneSat(sat) && (!est || sat <= est.sat + 4);
+      const sabOk = saneSab(sab) && (!est || sab <= est.sab + 4);
       // ACQUISIZIONE UNA-TANTUM: l'inset è una COSTANTE del device, quindi lo
       // fissiamo alla PRIMA lettura sana e poi non lo cambiamo più (né cresce né
       // cala) finché la rotazione non resetta (resampleFromScratch). Così NESSUN
       // evento successivo — timer di boot, load, tastiera/foreground — può
       // gonfiarlo e far scivolare la UI in basso quando appare un toast.
-      if (bestSat === 0 && satOk) bestSat = sat;
-      if (bestSab === 0 && sabOk) bestSab = sab;
+      // Acquisiamo SOLO finché il top non è bloccato. Dopo il lock (cache reale,
+      // probe riuscito o stima di fallback) NESSUN chiamante — nemmeno i timer di
+      // boot o `load`, che invocano sample() DIRETTAMENTE, non via
+      // sampleIfUnlocked — può fissare una nuova misura. Così una lettura
+      // transitoria della tastiera (chiudere il dialog di modifica di un prodotto
+      // del menu chiude la tastiera → resize del visual viewport) non può più
+      // essere congelata e far scivolare la UI in basso. Mode A chiuso.
+      if (!topLocked && bestSat === 0 && satOk) bestSat = sat;
+      if (!topLocked && bestSab === 0 && sabOk) bestSab = sab;
       // MAI scrivere 0: clobbererebbe il fallback env() lasciando header SOTTO la
       // status bar / Dynamic Island e bottom-nav SOTTO l'home indicator (overlap).
       // Congeliamo solo valori positivi.
@@ -717,9 +728,12 @@ function App() {
       if (bestSat === 0 && est.sat > 0) {
         root.style.setProperty('--frozen-sat', est.sat + 'px');
         // Stima applicata: la UI è già spaziata correttamente → blocca i sampler
-        // volatili (niente ricalcolo da tastiera). bestSat resta 0 di proposito,
-        // così un probe REALE successivo (timer di boot) può ancora fissare il
-        // valore esatto via acquisizione una-tantum.
+        // volatili E l'acquisizione (guard !topLocked in sample()), così la
+        // tastiera non può più ricalcolare la safe-area in questa sessione. Un
+        // probe REALE successivo non sovrascrive più il valore in-sessione, ma
+        // viene comunque PERSISTITO in cache (saveCache resta attivo): al boot
+        // successivo la stima viene rifinita al valore esatto del device — senza
+        // alcun salto in questa sessione.
         topLocked = true;
       }
       if (bestSab === 0 && est.sab > 0) root.style.setProperty('--frozen-sab', est.sab + 'px');
