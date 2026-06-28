@@ -645,6 +645,14 @@ function App() {
     // NON deve sovrascrivere un notch già rilevato.
     let bestSat = 0;
     let bestSab = 0;
+    // Una volta noto l'inset TOP reale (bestSat>0) "blocchiamo" il campionamento
+    // dai soli eventi VOLATILI (resize del visualViewport per la tastiera,
+    // visibilitychange, resume, primo tocco). Il notch è una COSTANTE del device:
+    // ri-campionare durante una transizione della tastiera può leggere un valore
+    // transitorio più grande che "max-non-zero" congelerebbe → header e contenuto
+    // scivolano in basso ad ogni toast (che spesso segue la chiusura della
+    // tastiera). I probe di BOOT (timer) e la rotazione restano attivi.
+    let topLocked = false;
 
     // Applica subito il valore in cache per l'orientamento corrente (se sano).
     function applyCache() {
@@ -652,22 +660,44 @@ function App() {
       if (!c) return;
       if (saneSat(c.sat) && c.sat > bestSat) { bestSat = c.sat; root.style.setProperty('--frozen-sat', bestSat + 'px'); }
       if (saneSab(c.sab) && c.sab > bestSab) { bestSab = c.sab; root.style.setProperty('--frozen-sab', bestSab + 'px'); }
+      // La cache è il valore REALE del device (persistito da una sessione prec.):
+      // se dà un top valido, blocca subito i sampler volatili → nessun salto di
+      // boot e nessun ricalcolo da tastiera/foreground.
+      if (bestSat > 0) topLocked = true;
       if (debug) console.log('[safe-area] applyCache', cacheKey(), c);
     }
 
     function sample() {
       const { sat, sab } = readSafeArea();
-      if (sat > bestSat) bestSat = sat;
-      if (sab > bestSab) bestSab = sab;
+      // Difesa anti-spike: durante una transizione del visual viewport (tastiera)
+      // il probe può leggere un inset transitorio troppo grande. Lo rifiutiamo se
+      // supera la stima device-class (che è già il valore PIÙ ALTO della classe)
+      // più una piccola tolleranza: il notch reale non può superarla, quindi una
+      // lettura oltre soglia è certamente un picco da scartare.
+      const est = estimateIosInsets();
+      const satOk = saneSat(sat) && (!est || sat <= est.sat + 6);
+      const sabOk = saneSab(sab) && (!est || sab <= est.sab + 6);
+      // ACQUISIZIONE UNA-TANTUM: l'inset è una COSTANTE del device, quindi lo
+      // fissiamo alla PRIMA lettura sana e poi non lo cambiamo più (né cresce né
+      // cala) finché la rotazione non resetta (resampleFromScratch). Così NESSUN
+      // evento successivo — timer di boot, load, tastiera/foreground — può
+      // gonfiarlo e far scivolare la UI in basso quando appare un toast.
+      if (bestSat === 0 && satOk) bestSat = sat;
+      if (bestSab === 0 && sabOk) bestSab = sab;
       // MAI scrivere 0: clobbererebbe il fallback env() lasciando header SOTTO la
       // status bar / Dynamic Island e bottom-nav SOTTO l'home indicator (overlap).
       // Congeliamo solo valori positivi.
       if (bestSat > 0) root.style.setProperty('--frozen-sat', bestSat + 'px');
       if (bestSab > 0) root.style.setProperty('--frozen-sab', bestSab + 'px');
-      // Persistiamo la misura GREZZA sana (non bestSat) così la cache può anche
-      // correggersi verso il basso ai boot futuri.
-      if (saneSat(sat) || saneSab(sab)) saveCache(cacheKey(), sat, sab);
-      if (debug) console.log('[safe-area] sample', { sat, sab, bestSat, bestSab });
+      // Persistiamo la misura GREZZA sana così la cache può correggersi ai boot
+      // futuri; i picchi rifiutati (passati come 0) NON sovrascrivono la cache
+      // (saveCache mantiene il valore precedente).
+      if (satOk || sabOk) saveCache(cacheKey(), satOk ? sat : 0, sabOk ? sab : 0);
+      if (debug) console.log('[safe-area] sample', { sat, sab, bestSat, bestSab, satOk, sabOk });
+      // Top acquisito → blocca i sampler volatili (la tastiera/foreground non
+      // possono più ricalcolare la safe-area). La rotazione lo sblocca in
+      // resampleFromScratch.
+      if (bestSat > 0) topLocked = true;
     }
 
     // estimateIosInsets è condivisa con il pre-seed pre-paint in main.tsx
@@ -684,7 +714,14 @@ function App() {
       if (bestSat > 0 && bestSab > 0) return;
       const est = estimateIosInsets();
       if (!est) return;
-      if (bestSat === 0 && est.sat > 0) root.style.setProperty('--frozen-sat', est.sat + 'px');
+      if (bestSat === 0 && est.sat > 0) {
+        root.style.setProperty('--frozen-sat', est.sat + 'px');
+        // Stima applicata: la UI è già spaziata correttamente → blocca i sampler
+        // volatili (niente ricalcolo da tastiera). bestSat resta 0 di proposito,
+        // così un probe REALE successivo (timer di boot) può ancora fissare il
+        // valore esatto via acquisizione una-tantum.
+        topLocked = true;
+      }
       if (bestSab === 0 && est.sab > 0) root.style.setProperty('--frozen-sab', est.sab + 'px');
       if (debug) console.log('[safe-area] fallback', est, { bestSat, bestSab });
     }
@@ -696,6 +733,7 @@ function App() {
     function resampleFromScratch() {
       bestSat = 0;
       bestSab = 0;
+      topLocked = false;
       root.style.removeProperty('--frozen-sat');
       root.style.removeProperty('--frozen-sab');
       applyCache();
@@ -720,27 +758,31 @@ function App() {
 
     const onOrient = () => setTimeout(resampleFromScratch, 200);
     window.addEventListener('orientationchange', onOrient);
-    // visualViewport resize (barra browser / tastiera): ri-campiona col max,
-    // non declassa mai l'header a 0.
-    const onVV = () => sample();
+    // Sampler VOLATILE: ri-campiona SOLO finché il top non è bloccato. Dopo il
+    // lock questi eventi (tastiera/foreground/primo tocco) NON toccano più la
+    // safe-area → niente "ricalcolo" e niente salto della UI quando appare un
+    // toast (che tipicamente segue la chiusura della tastiera).
+    const sampleIfUnlocked = () => { if (!topLocked) sample(); };
+    // visualViewport resize = barra browser / tastiera.
+    const onVV = sampleIfUnlocked;
     window.visualViewport?.addEventListener('resize', onVV);
     const onLoad = () => sample();
     window.addEventListener('load', onLoad);
     // Ritorno in foreground / cambio tab: gli inset possono essere esposti ora.
-    const onVis = () => { if (document.visibilityState === 'visible') sample(); };
+    const onVis = () => { if (!topLocked && document.visibilityState === 'visible') sample(); };
     document.addEventListener('visibilitychange', onVis);
     // Primo tocco: alcune WKWebView espongono gli inset solo dopo interazione.
-    const onFirstTouch = () => sample();
+    const onFirstTouch = sampleIfUnlocked;
     window.addEventListener('pointerdown', onFirstTouch, { once: true });
     window.addEventListener('touchstart', onFirstTouch, { once: true } as any);
 
-    // Capacitor: ri-campiona al resume dell'app (gli inset possono cambiare
-    // quando l'app torna in foreground). Nessun import: plugin globale opzionale.
+    // Capacitor: ri-campiona al resume dell'app SOLO finché il top non è bloccato
+    // (gli inset sono costanti per device). Nessun import: plugin globale opzionale.
     let removeResume: (() => void) | null = null;
     try {
       const appPlugin = (window as any).Capacitor?.Plugins?.App;
       if (appPlugin?.addListener) {
-        Promise.resolve(appPlugin.addListener('resume', sample))
+        Promise.resolve(appPlugin.addListener('resume', sampleIfUnlocked))
           .then((h: any) => { removeResume = () => { try { h?.remove?.(); } catch {} }; })
           .catch(() => {});
       }

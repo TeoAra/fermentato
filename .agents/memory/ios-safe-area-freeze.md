@@ -264,3 +264,32 @@ Context: the user could NOT rebuild the iOS app (Codemagic blocked by an Apple A
 **Status/honesty:** this is the strongest WEB-ONLY mitigation; the guaranteed end of the jump is still the native OS toast (#11 part 2), which needs the build unblocked. If even this still jumps, next steps are an app-shell layout (body non-scrollable, only an inner div scrolls, so fixed chrome has no document scroll offset to re-anchor to) or suppressing HTML toasts on iOS native entirely until the native build ships.
 
 **Descendant churn also removed (same refinement):** `IosPersistentPill` renders a FULLY stable inner skeleton — icon slot with BOTH icons toggled via `display`, plus always-present title/description/action nodes. Only text content, `display`, className and the outer `visibility` change, so NO node inside the fixed subtree mounts/unmounts either (the architect's remaining caveat). If even this still jumps on-device, escalate to the app-shell layout.
+
+## Refinement #13 — the shift can be the SAMPLER re-inflating the frozen inset, NOT a compositing re-anchor
+
+A user reported the UI shifting DOWN ("safe area / header / bottom bar raised or RECALCULATED") when an
+in-app toast appears — and crucially the shift PERSISTS (not a transient flicker that self-heals). That
+signature points away from the #7–#12 compositing re-anchor (which moves fixed chrome WITHOUT changing
+`--frozen-sat/sab`) and toward the safe-area sampler itself REWRITING the frozen vars larger.
+**Mechanism:** `sample()` ran on VOLATILE events — `visualViewport 'resize'` (fires on keyboard
+open/close), `visibilitychange`, Capacitor App `resume`, first touch — and used "max-non-zero wins"
+(only ever grows the inset). A toast usually follows a form submit → keyboard dismiss →
+`visualViewport resize` → a transient larger probe reading during the viewport transition gets frozen
+permanently → everything padded by `--frozen-sat` slides down and STAYS down.
+**Fix (web-only, all in the App.tsx safe-area effect):**
+1. **Acquire-once, not max-grow.** The inset is a device CONSTANT, so set `bestSat/bestSab` on the FIRST
+   sane reading (`if (bestSat === 0 && satOk) bestSat = sat`) and never change it again until rotation.
+   This stops EVERY later caller (boot timers, `load`, keyboard) from inflating it — not just the gated ones.
+2. **Latch + gate volatile re-samplers.** A `topLocked` flag is set the moment a usable top is known —
+   from a real reading, from the localStorage cache (`applyCache`), OR when the device-class estimate is
+   applied (`applyFallbackIfNeeded`, which sets the latch WITHOUT mutating `bestSat` so a later real probe
+   can still acquire). Volatile handlers run through `sampleIfUnlocked` and no-op once latched. `orientationchange`
+   → `resampleFromScratch` resets `topLocked=false` so rotation legitimately re-acquires.
+3. **Anti-spike clamp** in `sample()`: reject a probe reading above `estimateIosInsets()` (already the TALLEST
+   per device class) + ~6px tolerance; rejected readings are neither frozen nor persisted (passed as 0 so the
+   cache keeps its previous value). Defense-in-depth for the first acquisition.
+**Why latch from cache/fallback too:** otherwise a probe-failing device (env() 0 all session) shows the
+correct estimate but never latches, so the volatile listeners keep running forever and a keyboard transition
+can still inflate. **Do NOT** switch chrome/toast back to live `env()` (the user asked for it) — that reverses
+the whole freeze and reintroduces the GPU-layer jump. App-shell layout was NOT needed for this symptom.
+Web-layer → reaches the native app only after a manual `sudo fermenta-deploy` + reload.
