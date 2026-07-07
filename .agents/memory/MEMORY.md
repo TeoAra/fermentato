@@ -5,7 +5,7 @@
 - [Android FCM native push](android-fcm-push.md) — "invalid API key" = build via build-apk.sh (not gradlew); real-vs-placeholder google-services.json detection needs >1 signal (placeholder key also starts with AIza).
 - [beer_reviews table missing](beer-reviews-missing.md) — beer_reviews is referenced in raw SQL in routes.ts but doesn't exist in the DB; any query against it must use .catch(() => 0) or similar fallback.
 - [Nullable boolean gate](nullable-boolean-gate.md) — gate Drizzle nullable booleans with `=== false`, never `!field` (null/undefined would false-positive).
-- [Gemini OCR only](gemini-removed.md) — Gemini 2.0 Flash Vision re-added as primary engine in /api/scan/ocr only (beer label prompt); GEMINI_API_KEY required. Bot still uses regex, image finders still use Untappd+DDG.
+- [Gemini removed + free image search](gemini-removed.md) — Gemini only in /api/scan/ocr; beer-card image/logo search is intentionally free (Untappd+OFF+SearXNG+DDG). OFF cgi 503s → use search.openfoodfacts.org.
 - [iOS safe-area / fixed-chrome](ios-safe-area-freeze.md) — freeze env()→--frozen-sat/sab px (write only POSITIVE); and on NATIVE iOS do NOT GPU-composite fixed chrome — compositing is what strands header/dock when a toast/overlay layer appears.
 - [Drizzle typing footguns](drizzle-typing-footguns.md) — keep server/db.ts typed (was `any`, masked ~20 bugs); decimal=string (Number/String), reassigned builders need .$dynamic(), select({count}) without .from() reads 0.
 - [Codemagic iOS build/publish](ios-build-codemagic.md) — iOS CI gotchas: App Store agreement 403, duplicate CFBundleVersion 409 (add CI BUILD_NUMBER), splash falls back to Capacitor logo (@capacitor/assets reads assets/ not resources/).

@@ -1,18 +1,22 @@
 ---
-name: Gemini fully removed
-description: All Gemini API calls have been removed from the codebase to eliminate billing costs.
+name: Gemini removed + free image-search stack
+description: Beer-card image/logo search is intentionally free (no Gemini/paid API); Gemini survives only in the camera OCR path. Plus the durable gotchas of the free stack.
 ---
 
-All Google Generative Language API usage was removed. The GEMINI_API_KEY env var is no longer read by any server file.
+## Gemini scope (as of this codebase)
+- All Google Generative Language usage was removed EXCEPT the camera scanner `/api/scan/ocr` (still `gemini-2.0-flash`, needs `GEMINI_API_KEY`, with free fallbacks PaddleOCR/Tesseract/OCR.space). Translate/embeddings/bot-parser are stubs or regex.
+- **The beer-card "Cerca sul web" image/logo search must stay free.** It uses NO Gemini and NO paid API.
 
-**Files changed and their replacement:**
-- `server/translate.ts` — translateToItalian/translateText stub to return null; looksItalian() kept.
-- `server/embeddings.ts` — generateEmbedding stubs to return null; pgVector/beerEmbedText kept (still imported elsewhere).
-- `server/bot-commands.ts` — parseCommand replaced with regex-based Italian parser; handles all BotAction types via regex.
-- `server/routes.ts` — runGeminiOCR removed; PaddleOCR is now primary OCR engine in /api/scan/ocr.
-- `server/beer-image-finder.ts` — googleViaGeminiGrounding, geminiPickBestImage, scrapeWhataBeerPage, extractOgImages all removed; findBestBeerImage uses Untappd + brewery og:image + DuckDuckGo.
-- `server/brewery-image-finder.ts` — googlePagesForBrewery, geminiPickBestLogo, scrapeWhataBeerBreweryLogo, fetchImageBase64 all removed; findBestBreweryLogo uses Untappd + website.
+**Why:** unexpected billing (a ~€260 spike) came from an earlier version of the *image finder* that used Gemini grounding + image-picking. That was removed. If prod is still charged, it's the manual-deploy VPS running old code — the fix is deploying current code, not editing code again.
 
-**Why:** User chose "Opzione A — rimuovi tutto Gemini" to eliminate unexpected billing from gemini-2.5-flash vision/grounding calls.
+## Free image-search stack (the "pacchetto gratis")
+- `findBestBeerImage`: Untappd → brewery site og:image → Open Food Facts → (SearXNG + DuckDuckGo pool). First three are trusted/high; SearXNG/DDG are low-confidence and only used on forced re-search.
+- `findBestBreweryLogo`: Untappd → website → SearXNG.
+- SearXNG is optional/self-hosted: `server/searxng.ts` reads `SEARXNG_URL`; returns `[]` when unset so everything degrades cleanly.
 
-**How to apply:** If Gemini is ever re-enabled, the bot parser (regex) is the most likely candidate for replacement with an LLM — the regex handles common cases but lacks natural language understanding for ambiguous commands.
+**Gotchas (not obvious from code):**
+- Open Food Facts: the legacy `world.openfoodfacts.org/cgi/search.pl` returns **503 from datacenter IPs** — use `https://search.openfoodfacts.org/search?q=` (search-a-licious). Response key is `hits`, and `brands` is an **array**.
+- OFF full-text is fuzzy: a bare beer name ("Nazionale") matches unrelated supermarket products — require BOTH beer-name and brewery match to disambiguate.
+- SearXNG needs `formats: [html, json]` enabled in its `settings.yml` or JSON output 404s. Its JSON `img_src` is usually a direct URL; if it's an instance-proxied path and `SEARXNG_URL` is localhost/private, that URL is unreachable by Cloudinary/browser — skip it.
+
+**How to apply:** before touching image search, confirm the change stays free; never reintroduce a paid/AI image picker here.

@@ -1,17 +1,20 @@
 /**
  * Beer Image Finder — finds the best web image for a beer after scan confirmation.
  *
- * Strategy (in order):
- *  1. Brewery website — scrape beer product page og:image
- *  2. Untappd — search for the beer, grab beer_logos CDN image
- *  3. DuckDuckGo image search (multiple targeted queries, prefers square/medallion)
- *  4. Upload winner to Cloudinary + update beers.image_url
+ * 100% free stack (no paid API, no AI):
+ *  1. Untappd — search for the beer, grab the beer_logos CDN label
+ *  2. Brewery website — scrape beer product page og:image
+ *  3. Open Food Facts — free product database, name-matched front image
+ *  4. SearXNG (self-hosted meta-search) — best web results, if SEARXNG_URL is set
+ *  5. DuckDuckGo image search — fallback when SearXNG is not configured
+ *  6. Upload winner to Cloudinary + update beers.image_url
  *
  * The function is fire-and-forget: call without await in confirmation handler.
  */
 
 import { v2 as cloudinary } from "cloudinary";
 import { pool } from "./db";
+import { searxngSearchImages, type SearchImage } from "./searxng";
 
 // ─── 1. Brewery website og:image ─────────────────────────────────────────────
 
@@ -146,6 +149,71 @@ async function fetchUntappdImage(beerName: string, breweryName: string): Promise
 }
 
 
+// ─── 3b. Open Food Facts (free product database) ─────────────────────────────
+
+/** Normalise a string for loose token matching (lowercase, unaccented). */
+function normalizeText(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Look up the beer on Open Food Facts (free, no key) via the search-a-licious
+ * service and return the product front image — but only when BOTH the beer name
+ * and the brewery match well enough. OFF full-text search is fuzzy (a bare beer
+ * name like "Nazionale" matches unrelated supermarket products), so the brewery
+ * name is used as the disambiguator to avoid returning a wrong label.
+ */
+async function fetchOpenFoodFactsImage(beerName: string, breweryName: string): Promise<string | null> {
+  try {
+    const terms = `${beerName} ${breweryName}`.trim();
+    const url =
+      `https://search.openfoodfacts.org/search?q=${encodeURIComponent(terms)}&page_size=12` +
+      `&fields=product_name,brands,image_front_url,image_url,categories_tags`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Fermentato/1.0 (fermenta.to)", Accept: "application/json" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!res.ok) return null;
+    const data: any = await res.json();
+    const hits: any[] = Array.isArray(data?.hits) ? data.hits : [];
+    if (hits.length === 0) return null;
+
+    const beerWords = normalizeText(beerName).split(" ").filter(w => w.length >= 3);
+    if (beerWords.length === 0) return null;
+    const breweryWords = normalizeText(breweryName).split(" ").filter(w => w.length >= 3);
+
+    for (const p of hits) {
+      const img: string | undefined = p.image_front_url || p.image_url;
+      if (!img || !img.startsWith("http")) continue;
+      const brands = Array.isArray(p.brands) ? p.brands.join(" ") : (p.brands ?? "");
+      const hay = normalizeText(`${p.product_name ?? ""} ${brands}`);
+      const nameMatch = beerWords.filter(w => hay.includes(w)).length / beerWords.length;
+      const brandMatch = breweryWords.length
+        ? breweryWords.filter(w => hay.includes(w)).length / breweryWords.length
+        : 0;
+      // With a brewery: need a name match AND a brewery match (the disambiguator).
+      // Without a brewery: require a very strong name match.
+      const ok = breweryWords.length
+        ? nameMatch >= 0.6 && brandMatch >= 0.5
+        : nameMatch >= 0.85;
+      if (ok) {
+        console.log(`[beer-img] open food facts match for "${beerName}": ${img.substring(0, 80)}`);
+        return img;
+      }
+    }
+    return null;
+  } catch (e: any) {
+    console.warn(`[beer-img] open food facts failed: ${e?.message?.substring(0, 60)}`);
+    return null;
+  }
+}
+
 // ─── 4. DuckDuckGo image search ──────────────────────────────────────────────
 
 interface DdgImage { image: string; url: string; width: number; height: number; }
@@ -256,7 +324,7 @@ async function isImageUrl(url: string): Promise<boolean> {
 
 export type BeerImageResult = {
   url: string | null;
-  source: string | null;          // 'untappd' | 'brewery' | 'ddg'
+  source: string | null;          // 'untappd' | 'brewery' | 'openfoodfacts' | 'searxng' | 'ddg'
   confidence: 'high' | 'low' | 'none';
 };
 
@@ -282,12 +350,14 @@ export async function findBestBeerImage(
     if (!candidates.some(x => x.url === c.url)) candidates.push(c);
   };
 
-  // Run all sources in parallel
-  const [untappdImg, breweryOg, ddgMedaglione, ddgLabel, ddgBeerOnly] = await Promise.all([
+  // Run all free sources in parallel. SearXNG returns [] unless SEARXNG_URL is
+  // set, so DDG stays as the automatic fallback web engine.
+  const [untappdImg, breweryOg, offImg, searxImgs, ddgMedaglione, ddgBeerOnly] = await Promise.all([
     fetchUntappdImage(beerName, breweryName),
     fetchBreweryOgImage(breweryWebsite ?? "", beerName),
-    ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 10),
-    ddgSearchImages(`"${beerName}" "${breweryName}" birra etichetta badge`, 6),
+    fetchOpenFoodFactsImage(beerName, breweryName),
+    searxngSearchImages(`${beerName} ${breweryName} birra etichetta label`, 14),
+    ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 8),
     ddgSearchImages(`"${beerName}" birra artigianale etichetta label medaglione`, 6),
   ]);
 
@@ -301,16 +371,26 @@ export async function findBestBeerImage(
     push({ url: breweryOg, source: "brewery", trusted: true });
   }
 
-  // Priority 3 — DDG (scored to prefer square/medallion shots)
-  const allDdg = [...ddgMedaglione, ...ddgLabel, ...ddgBeerOnly];
-  const scoredDdg = allDdg
-    .filter(r => r.image?.startsWith("http"))
-    .map(r => ({ r, score: scoreDdgImage(r) }))
+  // Priority 3 — Open Food Facts (name-matched product front image)
+  if (offImg?.startsWith("http") && (await isImageUrl(offImg))) {
+    push({ url: offImg, source: "openfoodfacts", trusted: true });
+  }
+
+  // Priority 4 — SearXNG (preferred web engine) + DDG (fallback), scored
+  // together to prefer square/medallion shots.
+  const webPool: Array<{ img: SearchImage | DdgImage; source: string }> = [
+    ...searxImgs.map(img => ({ img, source: "searxng" })),
+    ...ddgMedaglione.map(img => ({ img, source: "ddg" })),
+    ...ddgBeerOnly.map(img => ({ img, source: "ddg" })),
+  ];
+  const scoredWeb = webPool
+    .filter(p => p.img.image?.startsWith("http"))
+    .map(p => ({ p, score: scoreDdgImage(p.img) }))
     .filter(({ score }) => score >= 0)
     .sort((a, b) => b.score - a.score);
-  for (const { r } of scoredDdg) {
+  for (const { p } of scoredWeb) {
     if (candidates.length >= 8) break;
-    push({ url: r.image, source: "ddg", trusted: false });
+    push({ url: p.img.image, source: p.source, trusted: false });
   }
 
   if (candidates.length === 0) {
@@ -318,18 +398,18 @@ export async function findBestBeerImage(
     return { url: null, source: null, confidence: "none" };
   }
 
-  // Return first trusted source (Untappd/brewery website)
+  // Return first trusted source (Untappd / brewery website / Open Food Facts)
   const trusted = candidates.find(c => c.trusted);
   if (trusted) {
     console.log(`[beer-img] using trusted source (${trusted.source}) for "${beerName}"`);
     return { url: trusted.url, source: trusted.source, confidence: "high" };
   }
 
-  // Return best DDG result as low confidence
-  const bestDdg = candidates[0];
-  if (bestDdg) {
-    console.log(`[beer-img] using DDG result for "${beerName}": ${bestDdg.url.substring(0, 60)}`);
-    return { url: bestDdg.url, source: bestDdg.source, confidence: "low" };
+  // Return best web result (SearXNG/DDG) as low confidence
+  const bestWeb = candidates[0];
+  if (bestWeb) {
+    console.log(`[beer-img] using web result (${bestWeb.source}) for "${beerName}": ${bestWeb.url.substring(0, 60)}`);
+    return { url: bestWeb.url, source: bestWeb.source, confidence: "low" };
   }
 
   console.log(`[beer-img] no confident match for "${beerName}" — ignoring`);

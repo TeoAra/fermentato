@@ -33,6 +33,19 @@ Per forzare l'aggiornamento in-app dopo un deploy importante:
 
 Questo trigger forza i client (PWA e APK) a ricaricare/aggiornare quando la versione installata è inferiore a `APP_MIN_VERSION`.
 
+### Ricerca immagini birra/logo — pacchetto gratis (SearXNG + Open Food Facts + Untappd)
+Il bottone "Cerca sul web" nella scheda birra/birrificio NON usa più AI né API a pagamento (niente Gemini/Google/SerpAPI). Stack 100% gratuito:
+- `server/beer-image-finder.ts` (`findBestBeerImage`): priorità Untappd → sito birrificio (og:image) → Open Food Facts (match nome birra **+** birrificio) → SearXNG → DuckDuckGo (fallback). Le prime tre sono "trusted" (alta confidenza); SearXNG/DDG sono a bassa confidenza e vengono usate solo su ricerca forzata.
+- `server/brewery-image-finder.ts` (`findBestBreweryLogo`): Untappd → sito birrificio → SearXNG.
+- Client condiviso `server/searxng.ts` (`searxngSearchImages`): legge l'env `SEARXNG_URL`. Se non impostata ritorna `[]` e l'app usa solo le altre fonti (nessun errore, degrada in modo pulito).
+- **Open Food Facts**: usare l'endpoint affidabile `https://search.openfoodfacts.org/search?q=...` (il vecchio `world.openfoodfacts.org/cgi/search.pl` restituisce 503 dai datacenter). Il match richiede nome birra **e** nome birrificio per evitare falsi positivi (es. "Nazionale" che matchava un prodotto Bennet). `brands` nella risposta è un array.
+
+**SearXNG self-hosted sul VPS** (opzionale, migliora la qualità):
+1. Installare con Docker: `docker run -d --name searxng --restart always -p 8888:8080 -v /root/searxng:/etc/searxng searxng/searxng`.
+2. Abilitare l'output JSON in `/root/searxng/settings.yml`: sotto `search:` mettere `formats: [html, json]`, poi `docker restart searxng`.
+3. Impostare nell'ambiente del server `SEARXNG_URL=http://127.0.0.1:8888` (o l'URL pubblico dell'istanza).
+Senza `SEARXNG_URL` tutto continua a funzionare (Untappd + Open Food Facts + DuckDuckGo).
+
 ### Nginx VPS — non riscrivere mai Cache-Control degli assets
 File: `/www/server/panel/vhost/nginx/proxy/fermenta.to/d6f6cb5cbb19f6acb9f6745957a7b2f2_fermenta.to.conf` (aaPanel/BT Panel).
 NON usare `expires Xm` né `add_header Cache-Control` né `add_header X-Cache` nel proxy verso `127.0.0.1:5000`. Express invia già gli header corretti (`immutable` per `/assets/*`, `no-store` per `/index.html` e API). Se Nginx li sovrascrive, Cloudflare può cachare HTML al posto di JS per ore causando "Expected JavaScript but got text/html" → "Failed to fetch dynamically imported module".

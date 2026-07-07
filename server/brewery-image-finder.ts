@@ -9,8 +9,23 @@
  */
 
 import { v2 as cloudinary } from "cloudinary";
+import { searxngSearchImages, type SearchImage } from "./searxng";
 
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
+/** Score a candidate logo image: prefer square marks and trusted domains. */
+function scoreLogoImage(img: SearchImage): number {
+  let score = 0;
+  const url = (img.url || "").toLowerCase();
+  const ratio = img.width > 0 && img.height > 0 ? img.width / img.height : 1;
+  if (ratio >= 0.85 && ratio <= 1.18) score += 3; // square → logo mark
+  else if (ratio >= 0.6 && ratio <= 1.6) score += 1;
+  if (img.width >= 200 && img.height >= 200) score += 1;
+  if (url.includes("untappd.com")) score += 3;
+  if (url.includes("wp-content/uploads") || url.includes("cdn.") || url.includes("logo")) score += 1;
+  if (url.includes("facebook") || url.includes("instagram")) score -= 2;
+  return score;
+}
 
 // ─── 1. Brewery website — favicon + og:image ─────────────────────────────────
 
@@ -129,9 +144,10 @@ export async function findBestBreweryLogo(
     if (!candidates.some(x => x.url === c.url)) candidates.push(c);
   };
 
-  const [websiteImgs, untappdLogo] = await Promise.all([
+  const [websiteImgs, untappdLogo, searxImgs] = await Promise.all([
     fetchBreweryWebsiteLogo(websiteUrl ?? ""),
     fetchUntappdBreweryLogo(breweryName, location),
+    searxngSearchImages(`${breweryName} ${location ?? ""} birrificio logo`.trim(), 10),
   ]);
 
   // Priority 1 — Untappd brewery logo (search matched the brewery name)
@@ -139,6 +155,14 @@ export async function findBestBreweryLogo(
 
   // Priority 2 — official website assets (favicon + og:image)
   for (const img of websiteImgs.slice(0, 3)) push({ url: img, source: "website", trusted: false });
+
+  // Priority 3 — SearXNG web results (only when SEARXNG_URL is configured)
+  const scoredSearx = searxImgs
+    .filter(r => r.image?.startsWith("http"))
+    .map(r => ({ r, score: scoreLogoImage(r) }))
+    .filter(({ score }) => score >= 0)
+    .sort((a, b) => b.score - a.score);
+  for (const { r } of scoredSearx.slice(0, 4)) push({ url: r.image, source: "searxng", trusted: false });
 
   if (candidates.length === 0) {
     console.log(`[brew-img] no candidates for "${breweryName}"`);
@@ -152,11 +176,11 @@ export async function findBestBreweryLogo(
     return { url: trusted.url, source: trusted.source, confidence: "high" };
   }
 
-  // Fallback: website source at low confidence
-  const website = candidates.find(c => c.source === "website");
-  if (website) {
-    console.log(`[brew-img] using website source for "${breweryName}"`);
-    return { url: website.url, source: website.source, confidence: "low" };
+  // Fallback: first non-trusted candidate (website, then SearXNG) at low confidence
+  const fallback = candidates.find(c => !c.trusted);
+  if (fallback) {
+    console.log(`[brew-img] using ${fallback.source} source for "${breweryName}"`);
+    return { url: fallback.url, source: fallback.source, confidence: "low" };
   }
 
   console.log(`[brew-img] no confident logo for "${breweryName}" — ignoring`);
