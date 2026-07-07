@@ -15,6 +15,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import { pool } from "./db";
 import { searxngSearchImages, type SearchImage } from "./searxng";
+import { normalizeText, webResultMatchesBeer } from "./image-match";
 
 // ─── 1. Brewery website og:image ─────────────────────────────────────────────
 
@@ -151,17 +152,6 @@ async function fetchUntappdImage(beerName: string, breweryName: string): Promise
 
 // ─── 3b. Open Food Facts (free product database) ─────────────────────────────
 
-/** Normalise a string for loose token matching (lowercase, unaccented). */
-function normalizeText(s: string): string {
-  return s
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 /**
  * Look up the beer on Open Food Facts (free, no key) via the search-a-licious
  * service and return the product front image — but only when BOTH the beer name
@@ -216,7 +206,7 @@ async function fetchOpenFoodFactsImage(beerName: string, breweryName: string): P
 
 // ─── 4. DuckDuckGo image search ──────────────────────────────────────────────
 
-interface DdgImage { image: string; url: string; width: number; height: number; }
+interface DdgImage { image: string; url: string; width: number; height: number; title?: string; }
 
 async function ddgSearchImages(query: string, limit = 8): Promise<DdgImage[]> {
   try {
@@ -235,7 +225,13 @@ async function ddgSearchImages(query: string, limit = 8): Promise<DdgImage[]> {
     );
     if (!imgRes.ok) return [];
     const data: any = await imgRes.json();
-    return (data.results ?? []).slice(0, limit) as DdgImage[];
+    return (data.results ?? []).slice(0, limit).map((r: any) => ({
+      image: String(r?.image ?? ""),
+      url: String(r?.url ?? ""),
+      width: Number(r?.width) || 0,
+      height: Number(r?.height) || 0,
+      title: typeof r?.title === "string" ? r.title : "",
+    })) as DdgImage[];
   } catch { return []; }
 }
 
@@ -378,6 +374,12 @@ export async function findBestBeerImage(
 
   // Priority 4 — SearXNG (preferred web engine) + DDG (fallback), scored
   // together to prefer square/medallion shots.
+  //
+  // These are UNTRUSTED open-web results: they must pass a text-relevance gate
+  // before we accept them. A bare beer name matches same-name beers from OTHER
+  // breweries ("Belvedere" by Rebel's vs "Belvedere Bock" by another brewery),
+  // so we require the result's text (title + page URL + snippet) to reference
+  // this beer AND this brewery. Better to return nothing than a wrong label.
   const webPool: Array<{ img: SearchImage | DdgImage; source: string }> = [
     ...searxImgs.map(img => ({ img, source: "searxng" })),
     ...ddgMedaglione.map(img => ({ img, source: "ddg" })),
@@ -385,6 +387,10 @@ export async function findBestBeerImage(
   ];
   const scoredWeb = webPool
     .filter(p => p.img.image?.startsWith("http"))
+    .filter(p => {
+      const hay = `${p.img.title ?? ""} ${p.img.url ?? ""} ${(p.img as SearchImage).content ?? ""}`;
+      return webResultMatchesBeer(hay, beerName, breweryName);
+    })
     .map(p => ({ p, score: scoreDdgImage(p.img) }))
     .filter(({ score }) => score >= 0)
     .sort((a, b) => b.score - a.score);

@@ -10,6 +10,7 @@
 
 import { v2 as cloudinary } from "cloudinary";
 import { searxngSearchImages, type SearchImage } from "./searxng";
+import { webResultMatchesBrewery } from "./image-match";
 
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
@@ -156,9 +157,12 @@ export async function findBestBreweryLogo(
   // Priority 2 — official website assets (favicon + og:image)
   for (const img of websiteImgs.slice(0, 3)) push({ url: img, source: "website", trusted: false });
 
-  // Priority 3 — SearXNG web results (only when SEARXNG_URL is configured)
+  // Priority 3 — SearXNG web results (only when SEARXNG_URL is configured).
+  // Untrusted open-web results must reference THIS brewery in their text
+  // (title + page URL + snippet) or a same-name/other brewery's logo can win.
   const scoredSearx = searxImgs
     .filter(r => r.image?.startsWith("http"))
+    .filter(r => webResultMatchesBrewery(`${r.title ?? ""} ${r.url ?? ""} ${r.content ?? ""}`, breweryName))
     .map(r => ({ r, score: scoreLogoImage(r) }))
     .filter(({ score }) => score >= 0)
     .sort((a, b) => b.score - a.score);

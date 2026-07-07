@@ -19,6 +19,8 @@ export interface SearchImage {
   url: string; // source/page URL
   width: number;
   height: number;
+  title?: string; // result title (used for relevance matching)
+  content?: string; // result snippet (used for relevance matching)
 }
 
 function baseUrl(): string | null {
@@ -106,6 +108,8 @@ export async function searxngSearchImages(query: string, limit = 10): Promise<Se
         url: String(r?.url ?? image),
         width,
         height,
+        title: typeof r?.title === "string" ? r.title : "",
+        content: typeof r?.content === "string" ? r.content : "",
       });
       if (out.length >= limit) break;
     }
