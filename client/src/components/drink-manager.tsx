@@ -45,19 +45,25 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
   const invalidate = () => queryClient.invalidateQueries({ queryKey: QK });
 
   // ── Data ─────────────────────────────────────────────
-  const { data: categories = [], isLoading } = useQuery<any[]>({
+  const { data, isLoading } = useQuery<any[]>({
     queryKey: QK,
     queryFn: () => apiRequest(`/api/pubs/${pubId}/drink-categories/all`),
     staleTime: 0,
   });
+  // Coerce to array once; guards against error/undefined bodies.
+  const categories = Array.isArray(data) ? data : [];
 
   // ── Local ordered state for drag-and-drop ────────────
   const [localCats, setLocalCats] = useState<any[]>([]);
   const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
   const dragFromIdx = useRef<number | null>(null);
+  // Depend on the raw query `data` (stable `undefined` while loading/error), NOT on the
+  // defaulted `categories`: a fresh `[]` identity every render made this effect re-run on
+  // every render whenever the query returned no array → setState loop → React #185.
   useEffect(() => {
-    setLocalCats([...categories].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
-  }, [categories]);
+    if (!Array.isArray(data)) return;
+    setLocalCats([...data].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+  }, [data]);
 
   const reorderMutation = useMutation({
     mutationFn: (order: { id: number; orderIndex: number }[]) =>

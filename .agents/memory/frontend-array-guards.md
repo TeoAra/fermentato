@@ -39,3 +39,24 @@ with idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` — see
 `migrations/vps_migration_soft_archive_columns.sql`. Same pattern as the other
 `migrations/vps_migration_*.sql` files, which are also manual/idempotent and not
 journaled.
+
+# React #185 infinite loop from `data: x = []` used as a useEffect dep
+
+A locally-computed default like `const { data: cats = [] } = useQuery(...)` produces a
+**fresh `[]` identity on every render** whenever `data` is `undefined` (loading OR error).
+If that defaulted value is then used as a `useEffect` dependency whose body calls
+`setState`, the effect re-runs every render → setState → re-render → new `[]` → loop →
+React error #185 ("Maximum update depth exceeded"). This fired on the drinks tab
+(`drink-manager.tsx`) after the DB restore left `/drink-categories/all` returning no array.
+
+**Why:** the identity churn only happens when the query returns no array, so it hides in
+dev (where the DB is complete) and only explodes in prod after schema drift.
+
+**How to apply:**
+- Depend on the **raw** query `data` (stable `undefined` across renders), not the defaulted
+  alias: `useEffect(() => { if (!Array.isArray(data)) return; setLocal([...data]...); }, [data])`.
+- Keep the defaulted alias (`const cats = Array.isArray(data) ? data : []`) for render/handlers.
+- Prop-based variants (`taplist-manager`, `menu-category-manager` take `categories`/`tapList`
+  as props) do NOT self-loop: the child's setState doesn't re-render the parent, so the prop
+  identity stays stable across the child's re-renders. Only the local-default-in-same-component
+  case loops.
