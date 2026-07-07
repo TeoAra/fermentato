@@ -125,7 +125,7 @@ const beerFullEditSchema = z.object({
 });
 type BeerFullEditValues = z.infer<typeof beerFullEditSchema>;
 
-function BeerFullEditDialog({ beer, open, onOpenChange, onSaved }: {
+export function BeerFullEditDialog({ beer, open, onOpenChange, onSaved }: {
   beer: { id: number; name: string; style?: string; abv?: string | number | null; ibu?: string | number | null; description?: string | null; color?: string | null; imageUrl?: string | null; isGlutenFree?: boolean; isAlcoholFree?: boolean; isCollaboration?: boolean; collaborationBreweries?: { id: number; name: string }[] };
   open: boolean;
   onOpenChange: (v: boolean) => void;

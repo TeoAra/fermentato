@@ -22,6 +22,7 @@ import {
   Loader2
 } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
+import { BeerFullEditDialog } from "./taplist-manager";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -63,6 +64,7 @@ interface BottleListManagerProps {
 export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }: BottleListManagerProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BottleItem | null>(null);
+  const [fullEditOpen, setFullEditOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [formData, setFormData] = useState({
     beerId: "",
@@ -94,6 +96,16 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
     staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
+  // Full beer details for the "Modifica scheda" dialog (editing an existing bottle).
+  // Loaded before opening BeerFullEditDialog so we never PATCH partial data over the real beer.
+  const editingBeerId = editingItem?.beer?.id;
+  const { data: selectedBeerFull } = useQuery<any>({
+    queryKey: ["/api/beers", String(editingBeerId)],
+    queryFn: () => apiRequest(`/api/beers/${editingBeerId}`),
+    enabled: !!editingBeerId && isAddDialogOpen,
+    staleTime: 60000,
+  });
+
   // Add bottle item mutation
   const addBottleMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -118,6 +130,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
     onSuccess: () => {
       toast({ title: "Birra aggiornata!" });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
+      setIsAddDialogOpen(false);
       setEditingItem(null);
       resetForm();
     },
@@ -310,7 +323,14 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Gestione Cantina Birre</span>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <Dialog open={isAddDialogOpen} onOpenChange={(open) => {
+            setIsAddDialogOpen(open);
+            if (!open) {
+              setEditingItem(null);
+              setFullEditOpen(false);
+              resetForm();
+            }
+          }}>
             <DialogTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5 text-sm font-medium">
                 <Plus className="w-3.5 h-3.5" />
@@ -416,14 +436,34 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                 )}
 
                 {/* Birra Selezionata (per editing) */}
-                {editingItem && (
+                {editingItem && (() => {
+                  const displayBeer = selectedBeerFull ?? editingItem.beer;
+                  return (
                   <div className="p-4 bg-gray-50 dark:bg-[#1A1D24] rounded-lg border">
-                    <div className="font-semibold text-gray-900 dark:text-white">{editingItem.beer?.name || "Birra sconosciuta"}</div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      {editingItem.beer?.brewery?.name || "Birrificio sconosciuto"} • {editingItem.beer?.style || "Stile sconosciuto"} • {editingItem.beer?.abv || "0"}% ABV
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="font-semibold text-gray-900 dark:text-white">{displayBeer?.name || "Birra sconosciuta"}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          {displayBeer?.brewery?.name || "Birrificio sconosciuto"} • {displayBeer?.style || "Stile sconosciuto"} • {displayBeer?.abv || "0"}% ABV
+                        </div>
+                      </div>
+                      {editingItem.beer?.id && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="flex-shrink-0 gap-1.5"
+                          disabled={!selectedBeerFull?.id}
+                          onClick={() => setFullEditOpen(true)}
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                          Modifica scheda
+                        </Button>
+                      )}
                     </div>
                   </div>
-                )}
+                  );
+                })()}
 
                 {/* Prezzo e Formato Inline */}
                 <div className="grid grid-cols-2 gap-4">
@@ -550,6 +590,19 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Modifica Scheda Birra — riusa lo stesso dialog della taplist */}
+          {fullEditOpen && selectedBeerFull?.id && (
+            <BeerFullEditDialog
+              beer={selectedBeerFull}
+              open={fullEditOpen}
+              onOpenChange={setFullEditOpen}
+              onSaved={() => {
+                queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
+                if (editingBeerId) queryClient.invalidateQueries({ queryKey: ["/api/beers", String(editingBeerId)] });
+              }}
+            />
+          )}
         </CardTitle>
         <CardDescription>
           Gestisci le birre in bottiglia della cantina
