@@ -108,6 +108,7 @@
     "express-session": "^1.18.1",
     "framer-motion": "^12.38.0",
     "google-auth-library": "^10.6.2",
+    "helmet": "^8.2.0",
     "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",
     "isomorphic-dompurify": "^3.13.0",

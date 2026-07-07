@@ -1,4 +1,5 @@
 import rateLimit from "express-rate-limit";
+import type { Request } from "express";
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -48,6 +49,23 @@ export const searchRateLimit = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   skip: (req) => {
+    const ip = req.ip ?? "";
+    return ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
+  },
+});
+
+/**
+ * Limite generale su tutte le API: 300 richieste ogni 5 minuti per IP.
+ * Blocca flooding e brute-force su endpoint non altrimenti protetti.
+ * Il loopback (pre-warming, task interni) viene escluso automaticamente.
+ */
+export const generalApiRateLimit = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: isDev ? 5000 : 300,
+  message: { message: "Troppe richieste. Riprova tra qualche minuto." },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req: Request) => {
     const ip = req.ip ?? "";
     return ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
   },

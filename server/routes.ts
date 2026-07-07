@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { searchRateLimit } from "./middleware/rate-limit";
+import { searchRateLimit, generalApiRateLimit } from "./middleware/rate-limit";
 import { createServer, type Server } from "http";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
@@ -245,6 +245,11 @@ if (!process.env.FCM_SERVICE_ACCOUNT) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ── Rate limit globale su tutte le API ───────────────────────────────────────
+  // 300 req / 5 min per IP (loopback escluso). Ogni endpoint critico ha poi
+  // il proprio limite più stretto (login, register, search, ecc.).
+  app.use("/api/", generalApiRateLimit);
+
   // Setup authentication (email/password + Google OAuth)
   try {
     await setupAuth(app);
@@ -1143,6 +1148,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const queryStr = (query as string).trim();
       const limitNum = Math.min(parseInt(limit as string) || 20, 50);
       if (queryStr.length < 2) return res.json([]);
+      if (queryStr.length > 200) return res.status(400).json({ message: "Query troppo lunga" });
 
       // Shared accent-insensitive search (see server/search-normalize.ts):
       // UNION(exact phrase + most-selective tokens) then a full uncapped AND
@@ -1867,6 +1873,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const query = ((req.query.q as string) || "").trim();
       if (!query) {
         return res.status(400).json({ message: "Query parameter 'q' is required" });
+      }
+      if (query.length > 200) {
+        return res.status(400).json({ message: "Query troppo lunga" });
       }
       logSearchTerm(query);
 

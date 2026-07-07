@@ -1,5 +1,6 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
+import helmet from "helmet";
 import http from "node:http";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -32,6 +33,15 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 app.use(compression());
+
+// ── Header di sicurezza HTTP ──────────────────────────────────────────────────
+// CSP e COEP disabilitati: la SPA carica script/immagini da più domini (CDN,
+// Cloudinary, OpenStreetMap, ecc.); configurare CSP è un task separato.
+// Tutti gli altri header helmet sono attivi (X-Frame-Options, HSTS, ecc.).
+app.use(helmet({
+  contentSecurityPolicy: false,
+  crossOriginEmbedderPolicy: false,
+}));
 
 // CORS per Capacitor (app nativa) — deve stare PRIMA di qualsiasi route
 const CAPACITOR_ORIGINS = [
@@ -89,8 +99,14 @@ app.post(
   }
 );
 
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: false, limit: "10mb" }));
+// Body parser per gli endpoint /api/scan/* che ricevono immagini base64 (max 10 MB).
+// DEVE stare PRIMA del parser globale da 1 MB: body-parser non rilegge il body
+// se req._body è già impostato, quindi il parser 10mb vince per questi path.
+app.use("/api/scan", express.json({ limit: "10mb" }));
+
+// Limite body globale ridotto a 1 MB (default sicuro — previene DoS da payload JSON enormi).
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 
 app.use((req, res, next) => {
   if (!req.path.includes('cast-receiver')) {
