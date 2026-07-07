@@ -30,7 +30,7 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
     <img src={user.profile_image_url} alt={name} className={`${sz} rounded-full object-cover flex-shrink-0`} />
   ) : (
     <div className={`${sz} rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0`}>
-      <span className="text-primary text-sm font-bold">{name[0].toUpperCase()}</span>
+      <span className="text-primary text-sm font-bold">{(name?.[0] ?? "?").toUpperCase()}</span>
     </div>
   );
 }
@@ -168,7 +168,12 @@ export default function SocialFeed() {
 
   const { data: news = [] } = useQuery<any[]>({
     queryKey: ["/api/news", "feed"],
-    queryFn: () => fetch("/api/news?limit=5").then(r => r.json()),
+    queryFn: async () => {
+      const r = await fetch("/api/news?limit=5");
+      if (!r.ok) return [];
+      const j = await r.json();
+      return Array.isArray(j) ? j : [];
+    },
   });
 
   // Merged timeline: check-ins + microblog posts, sorted by date
@@ -184,7 +189,12 @@ export default function SocialFeed() {
 
   const { data: searchResults = [], isLoading: searchLoading } = useQuery<any[]>({
     queryKey: ["/api/users/search", debouncedSearch],
-    queryFn: () => fetch(`/api/users/search?q=${encodeURIComponent(debouncedSearch)}`).then(r => r.json()),
+    queryFn: async () => {
+      const r = await fetch(`/api/users/search?q=${encodeURIComponent(debouncedSearch)}`);
+      if (!r.ok) return [];
+      const j = await r.json();
+      return Array.isArray(j) ? j : [];
+    },
     enabled: debouncedSearch.length >= 2,
   });
 

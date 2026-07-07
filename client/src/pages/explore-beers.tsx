@@ -235,7 +235,9 @@ export default function ExploreBeers() {
   // ── Computed values ──
   const styleCount = useMemo(() => {
     const map = new Map<string, number>();
-    (popularStyles ?? []).forEach(s => map.set(s.style.toLowerCase(), s.count));
+    (Array.isArray(popularStyles) ? popularStyles : []).forEach(s => {
+      if (s?.style) map.set(s.style.toLowerCase(), s.count);
+    });
     return (api: string) => map.get(api.toLowerCase()) ?? 0;
   }, [popularStyles]);
 
@@ -247,8 +249,8 @@ export default function ExploreBeers() {
   const activeCount = activeStyle ? styleCount(activeStyle) : 0;
 
   const beers: any[] = useMemo(() => {
-    if (activeStyle) return styleBeers ?? [];
-    if (searchQ) return searchResults?.beers ?? [];
+    if (activeStyle) return Array.isArray(styleBeers) ? styleBeers : [];
+    if (searchQ) return Array.isArray(searchResults?.beers) ? searchResults!.beers : [];
     return [];
   }, [activeStyle, styleBeers, searchQ, searchResults]);
 
@@ -266,7 +268,7 @@ export default function ExploreBeers() {
   const styleSuggestion = useMemo(() => {
     const q = inputValue.trim().toLowerCase();
     if (q.length < 2 || activeStyle || searchQ) return null;
-    const all = popularStyles ?? [];
+    const all = (Array.isArray(popularStyles) ? popularStyles : []).filter(s => s?.style);
     // exact → starts-with → contains (min 3 chars)
     return (
       all.find(s => s.style.toLowerCase() === q) ??
@@ -567,9 +569,9 @@ export default function ExploreBeers() {
                 <div className="space-y-2.5">
                   {[...Array(4)].map((_, i) => <BeerCardSkeleton key={i} />)}
                 </div>
-              ) : (trendingBeers?.length ?? 0) > 0 ? (
+              ) : (Array.isArray(trendingBeers) ? trendingBeers.length : 0) > 0 ? (
                 <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-                  {(trendingBeers ?? []).slice(0, 8).map((beer: any) => <BeerCard key={beer.id} beer={beer} />)}
+                  {(Array.isArray(trendingBeers) ? trendingBeers : []).slice(0, 8).map((beer: any) => <BeerCard key={beer.id} beer={beer} />)}
                 </div>
               ) : null}
             </section>

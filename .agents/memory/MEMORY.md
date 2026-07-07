@@ -10,3 +10,4 @@
 - [Drizzle typing footguns](drizzle-typing-footguns.md) — keep server/db.ts typed (was `any`, masked ~20 bugs); decimal=string (Number/String), reassigned builders need .$dynamic(), select({count}) without .from() reads 0.
 - [Codemagic iOS build/publish](ios-build-codemagic.md) — iOS CI gotchas: App Store agreement 403, duplicate CFBundleVersion 409 (add CI BUILD_NUMBER), splash falls back to Capacitor logo (@capacitor/assets reads assets/ not resources/).
 - [Taplist feed ordering](taplist-feed-ordering.md) — home feed ordered by id DESC buries in-place row updates (bot "cambia birra" keeps the id); order by updated_at, bump it on every mutation path, and bust the home cache (bot uses raw db.update, not storage).
+- [Frontend array-shape crashes](frontend-array-guards.md) — custom queryFns without r.ok checks turn API error objects into "data", crashing .map/.forEach; DB drift (missing columns) is the usual trigger.

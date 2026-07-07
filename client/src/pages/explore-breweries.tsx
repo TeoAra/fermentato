@@ -146,7 +146,7 @@ export default function ExploreBreweries() {
   });
 
   const breweries = useMemo(() => {
-    if (quickFilter === "nearby" && nearbyBreweries) {
+    if (quickFilter === "nearby" && Array.isArray(nearbyBreweries)) {
       return nearbyBreweries
         .map((b: any) => {
           const air = b._distance;
@@ -155,7 +155,7 @@ export default function ExploreBreweries() {
         })
         .filter((b: any) => !distanceKm || (b._distance ?? 999) <= distanceKm);
     }
-    return data?.breweries || [];
+    return Array.isArray(data?.breweries) ? data!.breweries : [];
   }, [data, quickFilter, nearbyBreweries, distanceKm, useRealRoute, realDistances]);
 
   useEffect(() => {
@@ -164,7 +164,7 @@ export default function ExploreBreweries() {
   }, [useRealRoute, userLocation?.lat, userLocation?.lng]);
 
   useEffect(() => {
-    if (!useRealRoute || !userLocation || quickFilter !== "nearby" || !nearbyBreweries) return;
+    if (!useRealRoute || !userLocation || quickFilter !== "nearby" || !Array.isArray(nearbyBreweries)) return;
     const candidates = nearbyBreweries
       .filter((b: any) => b.latitude && b.longitude && !requestedIdsRef.current.has(b.id))
       .slice(0, 15)
@@ -190,26 +190,28 @@ export default function ExploreBreweries() {
     })();
     return () => ctrl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [useRealRoute, userLocation?.lat, userLocation?.lng, quickFilter, (nearbyBreweries || []).map((b: any) => b.id).join(",")]);
+  }, [useRealRoute, userLocation?.lat, userLocation?.lng, quickFilter, (Array.isArray(nearbyBreweries) ? nearbyBreweries : []).map((b: any) => b.id).join(",")]);
 
   const total = quickFilter === "nearby" ? breweries.length : (data?.total || 0);
   const totalPages = quickFilter === "nearby" ? 1 : Math.ceil(total / PAGE_SIZE);
 
   const topCountries = useMemo(() => {
-    const sorted = countries.filter(c => c.country?.trim()).sort((a, b) => b.count - a.count).slice(0, 20);
+    const list = Array.isArray(countries) ? countries : [];
+    const sorted = list.filter(c => c.country?.trim()).sort((a, b) => b.count - a.count).slice(0, 20);
     const italy = sorted.find(c => c.country === "Italy" || c.country === "Italia");
     const rest = sorted.filter(c => c.country !== "Italy" && c.country !== "Italia");
     return italy ? [italy, ...rest] : sorted;
   }, [countries]);
 
   const italyCount = useMemo(() => {
-    const c = countries.find(c => c.country === "Italy" || c.country === "Italia");
+    const list = Array.isArray(countries) ? countries : [];
+    const c = list.find(c => c.country === "Italy" || c.country === "Italia");
     return c?.count ?? 0;
   }, [countries]);
 
   const featured = useMemo(() => {
-    if (!data?.breweries) return [];
-    return data.breweries.filter((b: any) => b.coverImageUrl || b.logoUrl).slice(0, 6);
+    if (!Array.isArray(data?.breweries)) return [];
+    return data!.breweries.filter((b: any) => b.coverImageUrl || b.logoUrl).slice(0, 6);
   }, [data?.breweries]);
 
   const handleLocate = () => {
