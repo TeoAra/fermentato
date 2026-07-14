@@ -2439,6 +2439,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reorder bottle list items
+  app.post('/api/pubs/:pubId/bottles/reorder', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const pubId = parseInt(req.params.pubId);
+      const userPubs = await storage.getPubsByOwner(userId);
+      const userRoles = req.user?.roles ?? [];
+      if (!userRoles.includes('admin') && !userPubs.some((p: any) => p.id === pubId)) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      const { order } = req.body as { order: { id: number; orderIndex: number }[] };
+      if (!Array.isArray(order)) return res.status(400).json({ message: "order must be an array" });
+      await storage.reorderBottleItems(order);
+      res.json({ ok: true });
+    } catch (error) {
+      console.error('Error reordering bottle items:', error);
+      res.status(500).json({ message: 'Failed to reorder bottle items' });
+    }
+  });
+
   // ── Drink items routes ─────────────────────────────────────────────────────
   app.get("/api/pubs/:id/drinks", async (req, res) => {
     try {
@@ -3200,6 +3221,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Bulk reorder menu categories (array of {id, orderIndex})
+  // Reorder menu items within a category
+  app.post("/api/pubs/:pubId/menu-categories/:catId/items/reorder", isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = (req.user as any)?.id;
+      if (!userId) return res.status(401).json({ message: "Unauthorized" });
+      const pubId = parseInt(req.params.pubId);
+      const userPubs = await storage.getPubsByOwner(userId);
+      const userRoles = req.user?.roles ?? [];
+      if (!userRoles.includes('admin') && !userPubs.some((p: any) => p.id === pubId)) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      const { order } = req.body as { order: { id: number; orderIndex: number }[] };
+      if (!Array.isArray(order)) return res.status(400).json({ message: "order must be an array" });
+      await storage.reorderMenuItems(order);
+      res.json({ ok: true });
+    } catch (error) {
+      console.error("Error reordering menu items:", error);
+      res.status(500).json({ message: "Failed to reorder menu items" });
+    }
+  });
+
   app.post("/api/pubs/:id/menu-categories/reorder", isAuthenticated, async (req: any, res) => {
     try {
       const userId = (req.user as any)?.id;

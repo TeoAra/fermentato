@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,8 @@ import {
   Eye, 
   EyeOff,
   Search,
-  Loader2
+  Loader2,
+  GripVertical,
 } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { BeerFullEditDialog } from "./taplist-manager";
@@ -52,6 +53,7 @@ interface BottleItem {
   vintage?: string;
   description?: string;
   isVisible?: boolean;
+  orderIndex?: number;
 }
 
 interface BottleListManagerProps {
@@ -79,7 +81,51 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
+  // ── Local ordered state for drag-and-drop ──────────────────────────────────
+  const [localBottles, setLocalBottles] = useState<any[]>([]);
+  const bottleDragFrom = useRef<number | null>(null);
+  const [bottleDragOver, setBottleDragOver] = useState<number | null>(null);
+
+  useEffect(() => {
+    setLocalBottles([...bottleList].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+  }, [bottleList]);
+
+  const reorderBottlesMutation = useMutation({
+    mutationFn: (order: { id: number; orderIndex: number }[]) =>
+      apiRequest(`/api/pubs/${pubId}/bottles/reorder`, { method: "POST" }, { order }),
+    onError: () => {
+      toast({ title: "Errore ordinamento", variant: "destructive" });
+      setLocalBottles([...bottleList].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] }),
+  });
+
+  const handleBottleDragStart = (e: React.DragEvent, idx: number) => {
+    bottleDragFrom.current = idx;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(idx));
+  };
+  const handleBottleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setBottleDragOver(idx);
+  };
+  const handleBottleDrop = (e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault();
+    const from = bottleDragFrom.current;
+    setBottleDragOver(null);
+    bottleDragFrom.current = null;
+    if (from === null || from === dropIdx) return;
+    const next = [...localBottles];
+    const [moved] = next.splice(from, 1);
+    next.splice(dropIdx, 0, moved);
+    setLocalBottles(next);
+    reorderBottlesMutation.mutate(next.map((b, i) => ({ id: b.id, orderIndex: i })));
+  };
+  const handleBottleDragEnd = () => { setBottleDragOver(null); bottleDragFrom.current = null; };
+  // ───────────────────────────────────────────────────────────────────────────
+
   // Debounce search term for better performance
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
@@ -622,7 +668,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
               </div>
             ))}
           </div>
-        ) : bottleList.length === 0 ? (
+        ) : localBottles.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Wine className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>Nessuna birra in cantina.</p>
@@ -630,7 +676,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
           </div>
         ) : (
           <div className="space-y-3">
-            {bottleList.map((item) => {
+            {localBottles.map((item, itemIdx) => {
               if (!item || !item.id) return null;
               
               const safeItem = {
@@ -654,10 +700,19 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
               return (
                 <div
                   key={item.id}
-                  className={`border rounded-lg p-4 transition-colors ${!safeItem.isVisible ? 'opacity-60 bg-gray-50 dark:bg-[#1A1D24]/50' : 'bg-white dark:bg-[#0B0D10]'}`}
+                  draggable
+                  onDragStart={(e) => handleBottleDragStart(e, itemIdx)}
+                  onDragOver={(e) => handleBottleDragOver(e, itemIdx)}
+                  onDrop={(e) => handleBottleDrop(e, itemIdx)}
+                  onDragEnd={handleBottleDragEnd}
+                  onDragLeave={() => setBottleDragOver(null)}
+                  className={`border rounded-lg p-4 transition-colors cursor-grab active:cursor-grabbing ${
+                    bottleDragOver === itemIdx ? 'border-primary ring-2 ring-primary/20' : ''
+                  } ${!safeItem.isVisible ? 'opacity-60 bg-gray-50 dark:bg-[#1A1D24]/50' : 'bg-white dark:bg-[#0B0D10]'}`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0 cursor-grab" />
                       <ImageWithFallback
                         src={safeBeer.logoUrl}
                         alt={safeBeer.name}
@@ -668,7 +723,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-semibold text-base text-gray-900 dark:text-white truncate">{safeBeer.name}</h3>
+                          <h3 className="font-semibold text-base text-gray-900 dark:text-white break-words">{safeBeer.name}</h3>
                           {safeItem.vintage && (
                             <Badge variant="outline" className="text-xs flex-shrink-0 border-purple-300 text-purple-700 dark:text-purple-400">
                               {safeItem.vintage}

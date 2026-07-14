@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,8 @@ import {
   FolderPlus,
   ChevronDown,
   ChevronRight,
-  Beer
+  Beer,
+  GripVertical,
 } from "lucide-react";
 
 const ALLERGENS_LIST = [
@@ -100,6 +101,59 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
+
+  // ── Local ordered state for item drag-and-drop ─────────────────────────────
+  const [localMenu, setLocalMenu] = useState<MenuCategory[]>([]);
+  const itemDragFrom = useRef<{ catId: number; idx: number } | null>(null);
+  const [itemDragOver, setItemDragOver] = useState<{ catId: number; idx: number } | null>(null);
+
+  useEffect(() => {
+    setLocalMenu(menu.map(cat => ({
+      ...cat,
+      items: [...cat.items].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)),
+    })));
+  }, [menu]);
+
+  const reorderMenuItemsMutation = useMutation({
+    mutationFn: ({ catId, order }: { catId: number; order: { id: number; orderIndex: number }[] }) =>
+      apiRequest(`/api/pubs/${pubId}/menu-categories/${catId}/items/reorder`, { method: "POST" }, { order }),
+    onError: () => {
+      toast({ title: "Errore ordinamento", variant: "destructive" });
+      setLocalMenu(menu.map(cat => ({ ...cat, items: [...cat.items].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)) })));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu", "full"] });
+    },
+  });
+
+  const handleItemDragStart = (e: React.DragEvent, catId: number, idx: number) => {
+    itemDragFrom.current = { catId, idx };
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(idx));
+  };
+  const handleItemDragOver = (e: React.DragEvent, catId: number, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setItemDragOver({ catId, idx });
+  };
+  const handleItemDrop = (e: React.DragEvent, dropCatId: number, dropIdx: number) => {
+    e.preventDefault();
+    const from = itemDragFrom.current;
+    setItemDragOver(null);
+    itemDragFrom.current = null;
+    if (!from || from.catId !== dropCatId || from.idx === dropIdx) return;
+    setLocalMenu(prev => prev.map(cat => {
+      if (cat.id !== dropCatId) return cat;
+      const items = [...cat.items];
+      const [moved] = items.splice(from.idx, 1);
+      items.splice(dropIdx, 0, moved);
+      reorderMenuItemsMutation.mutate({ catId: dropCatId, order: items.map((it, i) => ({ id: it.id, orderIndex: i })) });
+      return { ...cat, items };
+    }));
+  };
+  const handleItemDragEnd = () => { setItemDragOver(null); itemDragFrom.current = null; };
+  // ───────────────────────────────────────────────────────────────────────────
 
   // Category mutations
   const addCategoryMutation = useMutation({
@@ -635,7 +689,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6">
-        {menu.length === 0 ? (
+        {localMenu.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-stone-300 rounded-2xl text-muted-foreground">
             <Utensils className="w-12 h-12 mx-auto mb-4 text-primary opacity-20" />
             <p className="font-semibold text-foreground">Nessuna categoria nel menu.</p>
@@ -644,7 +698,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
         ) : (
           <div className="space-y-6">
             <div className="flex flex-wrap gap-2 mb-4">
-              {menu.map((category) => (
+              {localMenu.map((category) => (
                 <button
                   key={category.id}
                   onClick={() => toggleCategoryExpanded(category.id)}
@@ -659,7 +713,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
               ))}
             </div>
 
-            {menu.map((category) => (
+            {localMenu.map((category) => (
               <div
                 key={category.id}
                 className={`transition-all ${!category.isVisible ? 'opacity-60 grayscale-[0.5]' : ''}`}
@@ -750,14 +804,21 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         <p className="text-sm font-medium">Aggiungi il primo prodotto</p>
                       </div>
                     ) : (
-                      category.items.map((item) => (
+                      category.items.map((item, itemIdx) => (
                         <div
                           key={item.id}
-                          className={`bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4 relative group transition-all hover:shadow-md ${
-                            !item.isVisible ? 'opacity-60 grayscale-[0.3]' : ''
-                          }`}
+                          draggable
+                          onDragStart={(e) => handleItemDragStart(e, category.id, itemIdx)}
+                          onDragOver={(e) => handleItemDragOver(e, category.id, itemIdx)}
+                          onDrop={(e) => handleItemDrop(e, category.id, itemIdx)}
+                          onDragEnd={handleItemDragEnd}
+                          onDragLeave={() => setItemDragOver(null)}
+                          className={`bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4 relative group transition-all hover:shadow-md cursor-grab active:cursor-grabbing ${
+                            itemDragOver?.catId === category.id && itemDragOver?.idx === itemIdx ? 'border-primary ring-2 ring-primary/20' : ''
+                          } ${!item.isVisible ? 'opacity-60 grayscale-[0.3]' : ''}`}
                         >
-                          <div className="flex gap-4">
+                          <div className="flex gap-3">
+                            <GripVertical className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-1 cursor-grab" />
                             {item.imageUrl && (
                               <img loading="lazy" 
                                 src={item.imageUrl} 
@@ -767,7 +828,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                             )}
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-2">
-                                <h4 className="font-bold text-foreground text-lg leading-tight truncate">{item.name}</h4>
+                                <h4 className="font-bold text-foreground text-lg leading-tight break-words">{item.name}</h4>
                                 <span className="font-black text-primary text-lg shrink-0">€{item.price}</span>
                               </div>
                               

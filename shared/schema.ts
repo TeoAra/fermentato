@@ -239,6 +239,7 @@ export const bottleList = pgTable("bottle_list", {
   description: text("description"),
   addedAt: timestamp("added_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  orderIndex: integer("order_index").default(0),
 });
 
 // Drink items (vini, spirits, cocktails, bibite) - gestiti separatamente dal menu food

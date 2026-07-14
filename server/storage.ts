@@ -250,6 +250,7 @@ export interface IStorage {
   removeFromBottleList(id: number): Promise<void>;
   removeBottleItem(id: number): Promise<void>;
   removeBeerFromBottles(id: number): Promise<void>;
+  reorderBottleItems(order: { id: number; orderIndex: number }[]): Promise<void>;
 
   // Menu operations
   getMenuCategories(pubId: number): Promise<MenuCategory[]>;
@@ -262,6 +263,7 @@ export interface IStorage {
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItem(id: number, updates: Partial<InsertMenuItem>): Promise<MenuItem>;
   deleteMenuItem(id: number): Promise<void>;
+  reorderMenuItems(order: { id: number; orderIndex: number }[]): Promise<void>;
 
   // Drink items operations
   getDrinkItems(pubId: number, includeHidden?: boolean): Promise<DrinkItem[]>;
@@ -911,7 +913,7 @@ export class DatabaseStorage implements IStorage {
         WHERE bl.pub_id = ${pubId}
           AND COALESCE(bl.is_active, true) = true
           AND COALESCE(bl.is_visible, true) = true
-        ORDER BY bl.id ASC
+        ORDER BY COALESCE(bl.order_index, 0) ASC, bl.id ASC
       `);
       
       return result.rows.map((row: any) => mapBottleDbRowToDto(row));
@@ -934,7 +936,7 @@ export class DatabaseStorage implements IStorage {
         INNER JOIN beers b ON bl.beer_id = b.id  
         LEFT JOIN breweries br ON b.brewery_id = br.id
         WHERE bl.pub_id = ${pubId}
-        ORDER BY bl.id ASC
+        ORDER BY COALESCE(bl.order_index, 0) ASC, bl.id ASC
       `);
       
       return result.rows.map((row: any) => mapBottleDbRowToDto(row));
@@ -982,6 +984,14 @@ export class DatabaseStorage implements IStorage {
 
   async removeBottleItem(id: number): Promise<void> {
     await db.delete(bottleList).where(eq(bottleList.id, id));
+  }
+
+  async reorderBottleItems(order: { id: number; orderIndex: number }[]): Promise<void> {
+    await Promise.all(
+      order.map(({ id, orderIndex }) =>
+        db.update(bottleList).set({ orderIndex }).where(eq(bottleList.id, id))
+      )
+    );
   }
 
   // Drink items operations
@@ -1149,6 +1159,14 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMenuItem(id: number): Promise<void> {
     await db.delete(menuItems).where(eq(menuItems.id, id));
+  }
+
+  async reorderMenuItems(order: { id: number; orderIndex: number }[]): Promise<void> {
+    await Promise.all(
+      order.map(({ id, orderIndex }) =>
+        db.update(menuItems).set({ orderIndex }).where(eq(menuItems.id, id))
+      )
+    );
   }
 
   // Allergen operations
@@ -2453,6 +2471,10 @@ class StorageWrapper implements IStorage {
     );
   }
 
+  async reorderBottleItems(order: { id: number; orderIndex: number }[]): Promise<void> {
+    return this.dbCall(() => this.databaseStorage.reorderBottleItems(order), async () => {});
+  }
+
   async getBeerAvailability(beerId: number): Promise<any> {
     return this.dbCall(
       () => this.databaseStorage.getBeerAvailability(beerId),
@@ -2560,6 +2582,10 @@ class StorageWrapper implements IStorage {
       () => this.databaseStorage.deleteMenuItem(id),
       async () => { }
     );
+  }
+
+  async reorderMenuItems(order: { id: number; orderIndex: number }[]): Promise<void> {
+    return this.dbCall(() => this.databaseStorage.reorderMenuItems(order), async () => {});
   }
 
   // Allergen operations

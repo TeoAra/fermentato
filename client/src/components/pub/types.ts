@@ -53,6 +53,7 @@ export interface BottleItem {
   imageUrl?: string | null;
   isVisible?: boolean | null;
   isActive?: boolean | null;
+  orderIndex?: number | null;
 }
 
 export interface MenuItemAllergen {
