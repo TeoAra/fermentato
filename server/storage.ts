@@ -169,6 +169,7 @@ function mapBottleDbRowToDto(row: any): any {
     vintage: row.vintage,
     quantity: row.quantity,
     description: row.description,
+    orderIndex: row.order_index ?? row.orderIndex ?? 0,
     addedAt: row.added_at || row.addedAt,
     updatedAt: row.updated_at || row.updatedAt,
     beer: {
@@ -903,7 +904,7 @@ export class DatabaseStorage implements IStorage {
       const result = await db.execute(sql`
         SELECT 
           bl.id, bl.pub_id, bl.beer_id, bl.is_active, bl.is_visible, bl.price_bottle, bl.bottle_size, bl.quantity,
-          bl.description, bl.added_at, bl.updated_at, bl.prices,
+          bl.description, bl.added_at, bl.updated_at, bl.prices, bl.order_index,
           b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url, b.logo_url as beer_logo_url,
           b.is_gluten_free as beer_is_gluten_free, b.is_alcohol_free as beer_is_alcohol_free,
           br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url
@@ -928,7 +929,7 @@ export class DatabaseStorage implements IStorage {
       const result = await db.execute(sql`
         SELECT 
           bl.id, bl.pub_id, bl.beer_id, bl.is_active, bl.is_visible, bl.price_bottle, bl.bottle_size, bl.quantity,
-          bl.description, bl.added_at, bl.updated_at, bl.prices,
+          bl.description, bl.added_at, bl.updated_at, bl.prices, bl.order_index,
           b.name as beer_name, b.style as beer_style, b.abv as beer_abv, b.image_url as beer_image_url, b.logo_url as beer_logo_url,
           b.is_gluten_free as beer_is_gluten_free, b.is_alcohol_free as beer_is_alcohol_free,
           br.id as brewery_id, br.name as brewery_name, br.logo_url as brewery_logo_url

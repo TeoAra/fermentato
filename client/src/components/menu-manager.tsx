@@ -103,7 +103,12 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
   const queryClient = useQueryClient();
 
   // ── Local ordered state for item drag-and-drop ─────────────────────────────
-  const [localMenu, setLocalMenu] = useState<MenuCategory[]>([]);
+  const [localMenu, setLocalMenu] = useState<MenuCategory[]>(() =>
+    (menu || []).map(cat => ({
+      ...cat,
+      items: [...(cat.items || [])].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)),
+    }))
+  );
   const itemDragFrom = useRef<{ catId: number; idx: number } | null>(null);
   const [itemDragOver, setItemDragOver] = useState<{ catId: number; idx: number } | null>(null);
 
@@ -689,7 +694,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="p-6">
-        {localMenu.length === 0 ? (
+        {menu.length === 0 ? (
           <div className="text-center py-12 border-2 border-dashed border-stone-300 rounded-2xl text-muted-foreground">
             <Utensils className="w-12 h-12 mx-auto mb-4 text-primary opacity-20" />
             <p className="font-semibold text-foreground">Nessuna categoria nel menu.</p>

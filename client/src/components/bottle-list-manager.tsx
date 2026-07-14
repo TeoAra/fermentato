@@ -83,7 +83,9 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
   const queryClient = useQueryClient();
 
   // ── Local ordered state for drag-and-drop ──────────────────────────────────
-  const [localBottles, setLocalBottles] = useState<any[]>([]);
+  const [localBottles, setLocalBottles] = useState<any[]>(() =>
+    [...(bottleList || [])].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+  );
   const bottleDragFrom = useRef<number | null>(null);
   const [bottleDragOver, setBottleDragOver] = useState<number | null>(null);
 
@@ -668,7 +670,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
               </div>
             ))}
           </div>
-        ) : localBottles.length === 0 ? (
+        ) : bottleList.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <Wine className="w-12 h-12 mx-auto mb-4 text-gray-300" />
             <p>Nessuna birra in cantina.</p>
