@@ -2627,6 +2627,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/pubs/:pubId/drink-categories/:catId/items/reorder", isAuthenticated, async (req: any, res) => {
+    const ctx = await drinkAuthMiddleware(req, res);
+    if (!ctx) return;
+    try {
+      await storage.reorderDrinkItems(req.body.order);
+      broadcastPubUpdate(ctx.pubId, "drinks");
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ message: "Failed to reorder items" });
+    }
+  });
+
   app.patch("/api/pubs/:pubId/drink-items/:id/toggle-visibility", isAuthenticated, async (req: any, res) => {
     const ctx = await drinkAuthMiddleware(req, res);
     if (!ctx) return;

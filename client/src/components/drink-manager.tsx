@@ -100,6 +100,53 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
   };
   const handleDragEnd = () => { setDragOverIdx(null); dragFromIdx.current = null; };
 
+  // ── Per-item drag-and-drop ────────────────────────────
+  const itemDragFrom = useRef<{ catIdx: number; itemIdx: number } | null>(null);
+  const [itemDragOver, setItemDragOver] = useState<{ catIdx: number; itemIdx: number } | null>(null);
+
+  const reorderItemsMutation = useMutation({
+    mutationFn: ({ catId, order }: { catId: number; order: { id: number; orderIndex: number }[] }) =>
+      apiRequest(`/api/pubs/${pubId}/drink-categories/${catId}/items/reorder`, { method: "POST" }, { order }),
+    onError: () => {
+      toast({ title: "Errore ordinamento prodotti", variant: "destructive" });
+      if (Array.isArray(data)) setLocalCats([...data].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+      invalidate();
+    },
+    onSuccess: () => invalidate(),
+  });
+
+  const handleItemDragStart = (e: React.DragEvent, catIdx: number, itemIdx: number) => {
+    e.stopPropagation();
+    itemDragFrom.current = { catIdx, itemIdx };
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", `item-${catIdx}-${itemIdx}`);
+  };
+  const handleItemDragOver = (e: React.DragEvent, catIdx: number, itemIdx: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = "move";
+    setItemDragOver({ catIdx, itemIdx });
+  };
+  const handleItemDrop = (e: React.DragEvent, catIdx: number, dropItemIdx: number) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const from = itemDragFrom.current;
+    setItemDragOver(null);
+    itemDragFrom.current = null;
+    if (!from || from.catIdx !== catIdx || from.itemIdx === dropItemIdx) return;
+    const nextCats = [...localCats];
+    const items = [...(nextCats[catIdx].items || [])];
+    const [moved] = items.splice(from.itemIdx, 1);
+    items.splice(dropItemIdx, 0, moved);
+    nextCats[catIdx] = { ...nextCats[catIdx], items };
+    setLocalCats(nextCats);
+    reorderItemsMutation.mutate({
+      catId: nextCats[catIdx].id,
+      order: items.map((item: any, i: number) => ({ id: item.id, orderIndex: i })),
+    });
+  };
+  const handleItemDragEnd = () => { setItemDragOver(null); itemDragFrom.current = null; };
+
   // ── Expand / collapse ────────────────────────────────
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const toggleExpand = (id: number) =>
@@ -378,16 +425,30 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                         Nessun prodotto — aggiungi il primo
                       </p>
                     ) : (
-                      (cat.items || []).map((item: any) => (
+                      (cat.items || []).map((item: any, itemIdx: number) => {
+                        const isItemDragOver =
+                          itemDragOver?.catIdx === idx && itemDragOver?.itemIdx === itemIdx;
+                        return (
                         <Card
                           key={item.id}
+                          draggable
+                          onDragStart={e => handleItemDragStart(e, idx, itemIdx)}
+                          onDragOver={e => handleItemDragOver(e, idx, itemIdx)}
+                          onDrop={e => handleItemDrop(e, idx, itemIdx)}
+                          onDragEnd={handleItemDragEnd}
+                          onDragLeave={() => setItemDragOver(null)}
                           className={`border transition-all ${
-                            item.isVisible
+                            isItemDragOver
+                              ? "border-primary border-dashed bg-primary/5"
+                              : item.isVisible
                               ? "border-stone-100 dark:border-border"
                               : "opacity-50 border-dashed border-stone-200 dark:border-border"
                           }`}
                         >
-                          <CardContent className="p-3 flex items-center gap-3">
+                          <CardContent className="p-3 flex items-center gap-2">
+                            <div className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                              <GripVertical className="w-3.5 h-3.5" />
+                            </div>
                             {item.imageUrl ? (
                               <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                             ) : (
@@ -396,7 +457,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                               </div>
                             )}
                             <div className="flex-1 min-w-0">
-                              <p className="font-semibold text-sm text-foreground truncate">{item.name}</p>
+                              <p className="font-semibold text-sm text-foreground leading-snug">{item.name}</p>
                               <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                                 {item.vintage && <span className="text-xs text-muted-foreground">{item.vintage}</span>}
                                 {item.distillery && <span className="text-xs text-muted-foreground">{item.distillery}</span>}
@@ -408,7 +469,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                                 {item.alcoholDegree && <span className="text-xs text-muted-foreground">{item.alcoholDegree}%</span>}
                               </div>
                               {item.description && (
-                                <p className="text-xs text-muted-foreground mt-0.5 truncate">{item.description}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
                               )}
                             </div>
                             <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -436,7 +497,8 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                             </div>
                           </CardContent>
                         </Card>
-                      ))
+                        );
+                      })
                     )}
                     <Button
                       size="sm" variant="outline"

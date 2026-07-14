@@ -275,6 +275,7 @@ export interface IStorage {
   updateDrinkCategory(id: number, updates: Partial<InsertDrinkCategory>): Promise<DrinkCategory>;
   deleteDrinkCategory(id: number): Promise<void>;
   reorderDrinkCategories(order: { id: number; orderIndex: number }[]): Promise<void>;
+  reorderDrinkItems(order: { id: number; orderIndex: number }[]): Promise<void>;
 
   // Allergen operations
   getAllergens(): Promise<Allergen[]>;
@@ -1043,6 +1044,14 @@ export class DatabaseStorage implements IStorage {
     await Promise.all(
       order.map(({ id, orderIndex }) =>
         db.update(drinkCategories).set({ orderIndex }).where(eq(drinkCategories.id, id))
+      )
+    );
+  }
+
+  async reorderDrinkItems(order: { id: number; orderIndex: number }[]): Promise<void> {
+    await Promise.all(
+      order.map(({ id, orderIndex }) =>
+        db.update(drinkItems).set({ orderIndex }).where(eq(drinkItems.id, id))
       )
     );
   }
@@ -2541,6 +2550,9 @@ class StorageWrapper implements IStorage {
   }
   async reorderDrinkCategories(order: { id: number; orderIndex: number }[]): Promise<void> {
     return this.dbCall(() => this.databaseStorage.reorderDrinkCategories(order), async () => {});
+  }
+  async reorderDrinkItems(order: { id: number; orderIndex: number }[]): Promise<void> {
+    return this.dbCall(() => this.databaseStorage.reorderDrinkItems(order), async () => {});
   }
 
   async deleteMenuItem(id: number): Promise<void> {

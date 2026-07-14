@@ -58,14 +58,14 @@ function DrinkItemRow({ item, emoji }: { item: any; emoji: string }) {
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm text-[#151515] dark:text-[#F5F5F5] truncate">{item.name}</p>
+        <p className="font-semibold text-sm text-[#151515] dark:text-[#F5F5F5] leading-snug">{item.name}</p>
         {(item.vintage || item.distillery || item.producer) && (
-          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] truncate mt-0.5">
+          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5">
             {[item.producer, item.vintage, item.distillery].filter(Boolean).join(" · ")}
           </p>
         )}
         {item.description && (
-          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5 line-clamp-1">{item.description}</p>
+          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5 line-clamp-2">{item.description}</p>
         )}
       </div>
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
