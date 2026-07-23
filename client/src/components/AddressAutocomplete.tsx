@@ -66,29 +66,16 @@ export function AddressAutocomplete({
     if (query.length < 2) { setSuggestions([]); setIsOpen(false); return; }
     setIsLoading(true);
     try {
-      // Photon (komoot) — OpenStreetMap POI + address search, free, no key needed
-      const params = new URLSearchParams({
-        q: query,
-        limit: "7",
-        lang: "it",
-      });
-      if (countryRestriction?.toUpperCase() === 'IT') {
-        params.set("lat", "42.5");
-        params.set("lon", "12.5");
-        params.set("location_bias_scale", "0.5");
-      }
+      // Chiama il proxy server-side così evita CSP/blocchi browser sul VPS
+      const params = new URLSearchParams({ q: query });
+      if (countryRestriction) params.set("country", countryRestriction.toUpperCase());
 
-      const res = await fetch(`https://photon.komoot.io/api/?${params}`, {
-        headers: { "User-Agent": "Fermentato/1.0 (fermenta.to)" },
-        signal: AbortSignal.timeout(6000),
+      const res = await fetch(`/api/geocode?${params}`, {
+        signal: AbortSignal.timeout(8000),
       });
       if (!res.ok) return;
       const data: { features: PhotonFeature[] } = await res.json();
-      const features = (data.features ?? []).filter(f => {
-        if (!countryRestriction) return true;
-        const cc = f.properties.country_code?.toUpperCase();
-        return !cc || cc === countryRestriction.toUpperCase();
-      });
+      const features = data.features ?? [];
       setSuggestions(features);
       setIsOpen(features.length > 0);
     } catch {

@@ -1915,6 +1915,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Database statistics endpoint
+  // GET /api/geocode?q=...&country=IT
+  // Proxy verso Photon (OSM) così è il server a fare la chiamata esterna,
+  // evitando CSP / blocchi browser sul VPS.
+  app.get("/api/geocode", async (req, res) => {
+    try {
+      const q = String(req.query.q ?? "").trim();
+      if (q.length < 2) return res.json({ features: [] });
+      const country = String(req.query.country ?? "").toUpperCase();
+
+      const params = new URLSearchParams({ q, limit: "7", lang: "it" });
+      if (country === "IT") {
+        params.set("lat", "42.5");
+        params.set("lon", "12.5");
+        params.set("location_bias_scale", "0.5");
+      }
+
+      const photonRes = await fetch(`https://photon.komoot.io/api/?${params}`, {
+        headers: { "User-Agent": "Fermentato/1.0 (fermenta.to)" },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!photonRes.ok) return res.json({ features: [] });
+      const data: any = await photonRes.json();
+
+      // Filtra per country se richiesto
+      const features = (data.features ?? []).filter((f: any) => {
+        if (!country) return true;
+        const cc = f.properties?.country_code?.toUpperCase();
+        return !cc || cc === country;
+      });
+      res.json({ features });
+    } catch {
+      res.json({ features: [] });
+    }
+  });
+
   app.get("/api/stats", async (req, res) => {
     try {
       const stats = await memCached("stats:global:v2", 5 * 60 * 1000, async () => {
