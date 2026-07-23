@@ -87,6 +87,7 @@ export function AddressAutocomplete({
 
   const formatLabel = (f: PhotonFeature): string => {
     const p = f.properties;
+    if ((p as any)._formatted) return (p as any)._formatted;
     const parts = [
       p.name,
       p.street && p.housenumber ? `${p.street} ${p.housenumber}` : p.street,
@@ -111,7 +112,7 @@ export function AddressAutocomplete({
     const route = p.street ?? "";
     const streetNumber = p.housenumber ?? "";
     const [lng, lat] = f.geometry.coordinates;
-    const formattedAddress = formatLabel(f);
+    const formattedAddress = (p as any)._formatted || formatLabel(f);
 
     setInputValue(formattedAddress);
     setIsOpen(false);

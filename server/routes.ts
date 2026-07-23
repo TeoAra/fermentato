@@ -1916,35 +1916,119 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Database statistics endpoint
   // GET /api/geocode?q=...&country=IT
-  // Proxy verso Photon (OSM) così è il server a fare la chiamata esterna,
-  // evitando CSP / blocchi browser sul VPS.
+  // Geocoding proxy: usa Google Places Text Search se VITE_GOOGLE_MAPS_API_KEY è impostata,
+  // altrimenti Photon + Nominatim in parallelo come fallback gratuito.
   app.get("/api/geocode", async (req, res) => {
     try {
       const q = String(req.query.q ?? "").trim();
       if (q.length < 2) return res.json({ features: [] });
       const country = String(req.query.country ?? "").toUpperCase();
 
-      const params = new URLSearchParams({ q, limit: "7", lang: "it" });
-      if (country === "IT") {
-        params.set("lat", "42.5");
-        params.set("lon", "12.5");
-        params.set("location_bias_scale", "0.5");
+      const googleKey = process.env.VITE_GOOGLE_MAPS_API_KEY || process.env.GOOGLE_MAPS_API_KEY || "";
+
+      // ── Google Places Text Search (se disponibile) ───────────────────────────
+      if (googleKey) {
+        try {
+          const gParams = new URLSearchParams({
+            query: q,
+            key: googleKey,
+            language: "it",
+            region: country.toLowerCase() || "it",
+            fields: "formatted_address,geometry,name,address_components",
+          });
+          const gRes = await fetch(
+            `https://maps.googleapis.com/maps/api/place/textsearch/json?${gParams}`,
+            { signal: AbortSignal.timeout(6000) }
+          );
+          if (gRes.ok) {
+            const gData: any = await gRes.json();
+            if (gData.status === "OK" && gData.results?.length) {
+              // Converte il formato Google in GeoJSON Photon-like per compatibilità col frontend
+              const features = (gData.results as any[]).slice(0, 7).map((r: any) => {
+                const comps: any[] = r.address_components ?? [];
+                const get = (...types: string[]) =>
+                  comps.find((c: any) => types.some(t => c.types.includes(t)))?.long_name ?? "";
+                return {
+                  geometry: { coordinates: [r.geometry.location.lng, r.geometry.location.lat] },
+                  properties: {
+                    name: r.name,
+                    city: get("locality", "administrative_area_level_3"),
+                    state: get("administrative_area_level_1"),
+                    postcode: get("postal_code"),
+                    street: get("route"),
+                    housenumber: get("street_number"),
+                    country: get("country"),
+                    country_code: comps.find((c: any) => c.types.includes("country"))?.short_name ?? "",
+                    osm_id: 0,
+                    _formatted: r.formatted_address,
+                  },
+                };
+              });
+              return res.json({ features, source: "google" });
+            }
+          }
+        } catch { /* fallthrough to Photon */ }
       }
 
-      const photonRes = await fetch(`https://photon.komoot.io/api/?${params}`, {
-        headers: { "User-Agent": "Fermentato/1.0 (fermenta.to)" },
-        signal: AbortSignal.timeout(6000),
-      });
-      if (!photonRes.ok) return res.json({ features: [] });
-      const data: any = await photonRes.json();
+      // ── Photon + Nominatim in parallelo (fallback gratuito) ──────────────────
+      const photonParams = new URLSearchParams({ q, limit: "6", lang: "it" });
+      if (country === "IT") {
+        photonParams.set("lat", "42.5");
+        photonParams.set("lon", "12.5");
+        photonParams.set("location_bias_scale", "0.5");
+      }
 
-      // Filtra per country se richiesto
-      const features = (data.features ?? []).filter((f: any) => {
+      const nominatimParams = new URLSearchParams({
+        q, format: "json", addressdetails: "1", limit: "6", "accept-language": "it",
+      });
+      if (country) nominatimParams.set("countrycodes", country.toLowerCase());
+
+      const [photonData, nominatimData] = await Promise.allSettled([
+        fetch(`https://photon.komoot.io/api/?${photonParams}`, {
+          headers: { "User-Agent": "Fermentato/1.0 (fermenta.to)" },
+          signal: AbortSignal.timeout(6000),
+        }).then(r => r.ok ? r.json() : { features: [] }),
+        fetch(`https://nominatim.openstreetmap.org/search?${nominatimParams}`, {
+          headers: { "User-Agent": "Fermentato/1.0 (fermenta.to)" },
+          signal: AbortSignal.timeout(6000),
+        }).then(r => r.ok ? r.json() : []),
+      ]);
+
+      const photonFeatures: any[] = photonData.status === "fulfilled"
+        ? (photonData.value?.features ?? []) : [];
+
+      // Converte Nominatim in formato Photon-like
+      const nominatimRaw: any[] = nominatimData.status === "fulfilled"
+        ? (Array.isArray(nominatimData.value) ? nominatimData.value : []) : [];
+      const nominatimFeatures = nominatimRaw.map((r: any) => ({
+        geometry: { coordinates: [parseFloat(r.lon), parseFloat(r.lat)] },
+        properties: {
+          name: r.name || r.display_name?.split(",")[0] || "",
+          city: r.address?.city ?? r.address?.town ?? r.address?.village ?? "",
+          state: r.address?.state ?? "",
+          postcode: r.address?.postcode ?? "",
+          street: r.address?.road ?? "",
+          housenumber: r.address?.house_number ?? "",
+          country: r.address?.country ?? "",
+          country_code: r.address?.country_code?.toUpperCase() ?? "",
+          osm_id: r.place_id ?? 0,
+        },
+      }));
+
+      // Unisce i risultati, deduplicando per coordinate approssimate
+      const seen = new Set<string>();
+      const merged = [...photonFeatures, ...nominatimFeatures].filter((f: any) => {
         if (!country) return true;
         const cc = f.properties?.country_code?.toUpperCase();
-        return !cc || cc === country;
-      });
-      res.json({ features });
+        if (cc && cc !== country) return false;
+        const [lng, lat] = f.geometry?.coordinates ?? [0, 0];
+        const key = `${Math.round(lat * 100)},${Math.round(lng * 100)}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 7);
+
+      res.json({ features: merged, source: "osm" });
     } catch {
       res.json({ features: [] });
     }

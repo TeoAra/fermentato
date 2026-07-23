@@ -75,6 +75,7 @@ export default function AddressAutocomplete({
 
   const formatLabel = (f: PhotonFeature): string => {
     const p = f.properties;
+    if ((p as any)._formatted) return (p as any)._formatted;
     const parts = [
       p.name,
       p.street && p.housenumber ? `${p.street} ${p.housenumber}` : p.street,
@@ -89,7 +90,7 @@ export default function AddressAutocomplete({
     const region = p.state ?? "";
     const postalCode = p.postcode ?? "";
     const [lng, lat] = f.geometry.coordinates;
-    const label = formatLabel(f);
+    const label = p.name ? `${p.name}, ${[city, region].filter(Boolean).join(", ")}` : formatLabel(f);
     onChange(label, city, region, postalCode, lat, lng);
     setIsOpen(false);
     setSuggestions([]);
