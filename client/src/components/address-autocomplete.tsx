@@ -11,60 +11,71 @@ interface AddressAutocompleteProps {
   countryRestriction?: string | null;
 }
 
-interface NominatimResult {
-  display_name: string;
-  address: {
+interface PhotonFeature {
+  geometry: { coordinates: [number, number] };
+  properties: {
+    name?: string;
     city?: string;
     town?: string;
     village?: string;
-    municipality?: string;
     state?: string;
     postcode?: string;
-    road?: string;
-    house_number?: string;
+    street?: string;
+    housenumber?: string;
+    country?: string;
     country_code?: string;
+    osm_key?: string;
+    osm_value?: string;
   };
-  lat: string;
-  lon: string;
 }
 
 export default function AddressAutocomplete({
   value,
   onChange,
-  placeholder = "Inserisci l'indirizzo...",
+  placeholder = "Inserisci il nome del locale o l'indirizzo…",
   className,
   searchType = 'address',
   countryRestriction = 'IT',
 }: AddressAutocompleteProps) {
-  const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
+  const [suggestions, setSuggestions] = useState<PhotonFeature[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const searchNominatim = useCallback(async (query: string) => {
-    if (query.length < 3) { setSuggestions([]); setIsOpen(false); return; }
+  const search = useCallback(async (query: string) => {
+    if (query.length < 2) { setSuggestions([]); setIsOpen(false); return; }
     setIsLoading(true);
     try {
+      // Photon (komoot) — OpenStreetMap POI + address search, free, no key
       const params = new URLSearchParams({
         q: query,
-        format: "json",
-        addressdetails: "1",
-        limit: "6",
-        "accept-language": "it",
+        limit: "7",
+        lang: "it",
       });
-      if (countryRestriction) params.set("countrycodes", countryRestriction.toLowerCase());
-      if (searchType === 'cities') params.set("featuretype", "city");
-      if (searchType === 'regions') params.set("featuretype", "state");
+      // Italy bounding box bias (not hard filter, still works for other countries)
+      if (countryRestriction?.toUpperCase() === 'IT') {
+        params.set("lat", "42.5");
+        params.set("lon", "12.5");
+        params.set("location_bias_scale", "0.5");
+      }
+      if (searchType === 'cities' || searchType === 'regions') {
+        params.set("osm_tag", "place:city");
+      }
 
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+      const res = await fetch(`https://photon.komoot.io/api/?${params}`, {
         headers: { "User-Agent": "Fermentato/1.0 (fermenta.to)" },
         signal: AbortSignal.timeout(6000),
       });
       if (!res.ok) return;
-      const data: NominatimResult[] = await res.json();
-      setSuggestions(data);
-      setIsOpen(data.length > 0);
+      const data: { features: PhotonFeature[] } = await res.json();
+      const features = (data.features ?? []).filter(f => {
+        if (!countryRestriction) return true;
+        const cc = f.properties.country_code?.toUpperCase();
+        return !cc || cc === countryRestriction.toUpperCase();
+      });
+      setSuggestions(features);
+      setIsOpen(features.length > 0);
     } catch {
       setSuggestions([]);
     } finally {
@@ -76,16 +87,26 @@ export default function AddressAutocomplete({
     const v = e.target.value;
     onChange(v);
     if (debounceRef.current) clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => searchNominatim(v), 400);
+    debounceRef.current = setTimeout(() => search(v), 350);
   };
 
-  const handleSelect = (result: NominatimResult) => {
-    const city = result.address.city ?? result.address.town ?? result.address.village ?? result.address.municipality ?? "";
-    const region = result.address.state ?? "";
-    const postalCode = result.address.postcode ?? "";
-    const lat = parseFloat(result.lat);
-    const lng = parseFloat(result.lon);
-    const label = result.display_name.split(",").slice(0, 3).join(",").trim();
+  const formatLabel = (f: PhotonFeature): string => {
+    const p = f.properties;
+    const parts = [
+      p.name,
+      p.street && p.housenumber ? `${p.street} ${p.housenumber}` : p.street,
+      p.city ?? p.town ?? p.village,
+    ].filter(Boolean);
+    return parts.join(", ");
+  };
+
+  const handleSelect = (f: PhotonFeature) => {
+    const p = f.properties;
+    const city = p.city ?? p.town ?? p.village ?? "";
+    const region = p.state ?? "";
+    const postalCode = p.postcode ?? "";
+    const [lng, lat] = f.geometry.coordinates;
+    const label = formatLabel(f);
     onChange(label, city, region, postalCode, lat, lng);
     setIsOpen(false);
     setSuggestions([]);
@@ -114,18 +135,17 @@ export default function AddressAutocomplete({
         />
       </div>
       {isOpen && suggestions.length > 0 && (
-        <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-xl shadow-lg overflow-hidden">
-          {suggestions.map((s, i) => {
-            const city = s.address.city ?? s.address.town ?? s.address.village ?? "";
-            const region = s.address.state ?? "";
-            const parts = s.display_name.split(",");
-            const main = parts[0].trim();
-            const sub = [city, region].filter(Boolean).join(", ");
+        <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-xl shadow-lg overflow-hidden max-h-60 overflow-y-auto">
+          {suggestions.map((f, i) => {
+            const p = f.properties;
+            const name = p.name ?? "";
+            const sub = [p.city ?? p.town ?? p.village, p.state].filter(Boolean).join(", ");
+            const main = name || formatLabel(f);
             return (
               <li
                 key={i}
                 className="px-3 py-2 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-900/40 text-sm border-b border-stone-100 dark:border-border last:border-0"
-                onMouseDown={() => handleSelect(s)}
+                onMouseDown={() => handleSelect(f)}
               >
                 <div className="font-medium text-foreground truncate">{main}</div>
                 {sub && <div className="text-xs text-muted-foreground truncate">{sub}</div>}
