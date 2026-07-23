@@ -204,7 +204,62 @@ async function fetchOpenFoodFactsImage(beerName: string, breweryName: string): P
   }
 }
 
-// ─── 4. DuckDuckGo image search ──────────────────────────────────────────────
+// ─── 4. Online beer shops (1001birre, Birra del Borgo shop, etc.) ─────────────
+
+async function fetch1001BirreImage(beerName: string, breweryName: string): Promise<string | null> {
+  try {
+    const query = `${beerName} ${breweryName}`.trim();
+    const searchUrl = `https://www.1001birre.com/ricerca?q=${encodeURIComponent(query)}`;
+    const searchRes = await fetch(searchUrl, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml",
+        "Accept-Language": "it-IT,it;q=0.9",
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!searchRes.ok) return null;
+    const html = await searchRes.text();
+
+    // Find first product link on results page
+    const productLinkMatch = html.match(/href="(\/[^"]*(?:birra|beer)[^"]*)"[^>]*>/i) ??
+      html.match(/href="(\/prodotti?\/[^"]+)"/i) ??
+      html.match(/class="[^"]*product[^"]*"[^>]*href="([^"]+)"/i);
+    if (!productLinkMatch) return null;
+
+    let productPath = productLinkMatch[1];
+    if (!productPath.startsWith("http")) productPath = `https://www.1001birre.com${productPath}`;
+
+    const pageRes = await fetch(productPath, {
+      headers: { "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36" },
+      signal: AbortSignal.timeout(8000),
+    });
+    if (!pageRes.ok) return null;
+    const pageHtml = await pageRes.text();
+
+    // Verify the page is about this beer (title must contain beer name words)
+    const beerWords = normalizeText(beerName).split(" ").filter(w => w.length >= 3);
+    const titleMatch = pageHtml.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] ?? "";
+    const titleNorm = normalizeText(titleMatch);
+    const matchScore = beerWords.filter(w => titleNorm.includes(w)).length / Math.max(beerWords.length, 1);
+    if (matchScore < 0.5) return null;
+
+    // Extract og:image
+    const ogImage =
+      pageHtml.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
+      pageHtml.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
+    if (ogImage?.startsWith("http")) {
+      console.log(`[beer-img] 1001birre match for "${beerName}": ${ogImage.substring(0, 80)}`);
+      return ogImage;
+    }
+    return null;
+  } catch (e: any) {
+    console.warn(`[beer-img] 1001birre failed: ${e?.message?.substring(0, 60)}`);
+    return null;
+  }
+}
+
+// ─── 5. DuckDuckGo image search ──────────────────────────────────────────────
 
 interface DdgImage { image: string; url: string; width: number; height: number; title?: string; }
 
@@ -348,10 +403,11 @@ export async function findBestBeerImage(
 
   // Run all free sources in parallel. SearXNG returns [] unless SEARXNG_URL is
   // set, so DDG stays as the automatic fallback web engine.
-  const [untappdImg, breweryOg, offImg, searxImgs, ddgMedaglione, ddgBeerOnly] = await Promise.all([
+  const [untappdImg, breweryOg, offImg, shopImg, searxImgs, ddgMedaglione, ddgBeerOnly] = await Promise.all([
     fetchUntappdImage(beerName, breweryName),
     fetchBreweryOgImage(breweryWebsite ?? "", beerName),
     fetchOpenFoodFactsImage(beerName, breweryName),
+    fetch1001BirreImage(beerName, breweryName),
     searxngSearchImages(`${beerName} ${breweryName} birra etichetta label`, 14),
     ddgSearchImages(`"${beerName}" "${breweryName}" beer label logo medaglione`, 8),
     ddgSearchImages(`"${beerName}" birra artigianale etichetta label medaglione`, 6),
@@ -370,6 +426,11 @@ export async function findBestBeerImage(
   // Priority 3 — Open Food Facts (name-matched product front image)
   if (offImg?.startsWith("http") && (await isImageUrl(offImg))) {
     push({ url: offImg, source: "openfoodfacts", trusted: true });
+  }
+
+  // Priority 3b — Online beer shop (1001birre, name-verified)
+  if (shopImg?.startsWith("http") && (await isImageUrl(shopImg))) {
+    push({ url: shopImg, source: "1001birre", trusted: true });
   }
 
   // Priority 4 — SearXNG (preferred web engine) + DDG (fallback), scored

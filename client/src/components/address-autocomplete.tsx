@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import { loadGoogleMapsLibrary } from "@/lib/googleMapsLoader";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Input } from "@/components/ui/input";
 import { MapPin } from "lucide-react";
 
@@ -12,6 +11,23 @@ interface AddressAutocompleteProps {
   countryRestriction?: string | null;
 }
 
+interface NominatimResult {
+  display_name: string;
+  address: {
+    city?: string;
+    town?: string;
+    village?: string;
+    municipality?: string;
+    state?: string;
+    postcode?: string;
+    road?: string;
+    house_number?: string;
+    country_code?: string;
+  };
+  lat: string;
+  lon: string;
+}
+
 export default function AddressAutocomplete({
   value,
   onChange,
@@ -20,114 +36,104 @@ export default function AddressAutocomplete({
   searchType = 'address',
   countryRestriction = 'IT',
 }: AddressAutocompleteProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const autocompleteRef = useRef<any>(null);
+  const [suggestions, setSuggestions] = useState<NominatimResult[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const initializeAutocomplete = async () => {
-      if (!inputRef.current) return;
+  const searchNominatim = useCallback(async (query: string) => {
+    if (query.length < 3) { setSuggestions([]); setIsOpen(false); return; }
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams({
+        q: query,
+        format: "json",
+        addressdetails: "1",
+        limit: "6",
+        "accept-language": "it",
+      });
+      if (countryRestriction) params.set("countrycodes", countryRestriction.toLowerCase());
+      if (searchType === 'cities') params.set("featuretype", "city");
+      if (searchType === 'regions') params.set("featuretype", "state");
 
-      try {
-        setIsLoading(true);
-        setError(null);
-
-        await loadGoogleMapsLibrary("places");
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const g = (window as any).google;
-        if (!g?.maps?.places?.Autocomplete) {
-          setError("Google Places non disponibile");
-          setIsLoading(false);
-          return;
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const autocompleteOptions: any = {
-          ...(countryRestriction ? { componentRestrictions: { country: countryRestriction } } : {}),
-          fields: ['address_components', 'formatted_address', 'geometry', 'name'],
-        };
-
-        if (searchType !== 'all') {
-          const typesMap: Record<string, string[]> = {
-            address: ['address'],
-            cities: ['(cities)'],
-            regions: ['(regions)'],
-          };
-          autocompleteOptions.types = typesMap[searchType];
-        }
-
-        const autocomplete = new g.maps.places.Autocomplete(inputRef.current, autocompleteOptions);
-        autocompleteRef.current = autocomplete;
-
-        autocomplete.addListener('place_changed', () => {
-          const place = autocomplete.getPlace();
-          if (!place.address_components && !place.name) return;
-
-          let city = '';
-          let region = '';
-          let postalCode = '';
-
-          if (place.address_components) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            place.address_components.forEach((component: any) => {
-              const types: string[] = component.types;
-              if (types.includes('locality')) city = component.long_name;
-              else if (types.includes('administrative_area_level_1')) region = component.long_name;
-              else if (types.includes('postal_code')) postalCode = component.long_name;
-            });
-          }
-
-          const placeName: string = place.name || '';
-          const formattedAddress: string = place.formatted_address || value;
-
-          let finalAddress = formattedAddress;
-          if (placeName && searchType === 'all' && city) finalAddress = `${placeName}, ${city}`;
-          else if (placeName && searchType === 'all') finalAddress = placeName;
-
-          const lat = place.geometry?.location?.lat();
-          const lng = place.geometry?.location?.lng();
-          onChange(finalAddress, city, region, postalCode, lat, lng);
-        });
-      } catch (err) {
-        console.error('Error loading Google Maps:', err);
-        setError("Errore nel caricamento dell'autocompletamento indirizzi");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    initializeAutocomplete();
-
-    return () => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const g = (window as any).google;
-      if (autocompleteRef.current && g?.maps?.event) {
-        g.maps.event.clearInstanceListeners(autocompleteRef.current);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?${params}`, {
+        headers: { "User-Agent": "Fermentato/1.0 (fermenta.to)" },
+        signal: AbortSignal.timeout(6000),
+      });
+      if (!res.ok) return;
+      const data: NominatimResult[] = await res.json();
+      setSuggestions(data);
+      setIsOpen(data.length > 0);
+    } catch {
+      setSuggestions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [countryRestriction, searchType]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange(e.target.value);
+    const v = e.target.value;
+    onChange(v);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchNominatim(v), 400);
   };
 
+  const handleSelect = (result: NominatimResult) => {
+    const city = result.address.city ?? result.address.town ?? result.address.village ?? result.address.municipality ?? "";
+    const region = result.address.state ?? "";
+    const postalCode = result.address.postcode ?? "";
+    const lat = parseFloat(result.lat);
+    const lng = parseFloat(result.lon);
+    const label = result.display_name.split(",").slice(0, 3).join(",").trim();
+    onChange(label, city, region, postalCode, lat, lng);
+    setIsOpen(false);
+    setSuggestions([]);
+  };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
-    <div className="relative">
+    <div className="relative" ref={containerRef}>
       <div className="relative">
         <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={16} />
         <Input
-          ref={inputRef}
           value={value}
           onChange={handleInputChange}
-          placeholder={isLoading ? "Caricamento..." : placeholder}
+          placeholder={isLoading ? "Cerco…" : placeholder}
           className={`pl-10 ${className}`}
-          disabled={isLoading}
+          autoComplete="off"
         />
       </div>
-      {error && <p className="text-sm text-red-600 mt-1">{error}</p>}
+      {isOpen && suggestions.length > 0 && (
+        <ul className="absolute z-50 w-full mt-1 bg-white dark:bg-card border border-stone-200 dark:border-border rounded-xl shadow-lg overflow-hidden">
+          {suggestions.map((s, i) => {
+            const city = s.address.city ?? s.address.town ?? s.address.village ?? "";
+            const region = s.address.state ?? "";
+            const parts = s.display_name.split(",");
+            const main = parts[0].trim();
+            const sub = [city, region].filter(Boolean).join(", ");
+            return (
+              <li
+                key={i}
+                className="px-3 py-2 cursor-pointer hover:bg-stone-50 dark:hover:bg-stone-900/40 text-sm border-b border-stone-100 dark:border-border last:border-0"
+                onMouseDown={() => handleSelect(s)}
+              >
+                <div className="font-medium text-foreground truncate">{main}</div>
+                {sub && <div className="text-xs text-muted-foreground truncate">{sub}</div>}
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

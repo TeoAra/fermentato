@@ -19,7 +19,9 @@ export default function Header() {
   const [location, setLocation] = useLocation();
   const typedUser = user as UserType | undefined;
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [showResults, setShowResults] = useState(false);
+  const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -126,10 +128,16 @@ export default function Header() {
                     placeholder="Cerca pub, birre…"
                     value={searchQuery}
                     onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setShowResults(e.target.value.length > 2);
+                      const v = e.target.value;
+                      setSearchQuery(v);
+                      setShowResults(v.length > 2);
+                      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
+                      searchDebounceRef.current = setTimeout(() => setDebouncedQuery(v), 300);
                     }}
-                    onFocus={() => setShowResults(searchQuery.length > 2)}
+                    onFocus={() => {
+                      setShowResults(searchQuery.length > 2);
+                      if (searchQuery.length > 2) setDebouncedQuery(searchQuery);
+                    }}
                     className="pl-8 pr-16 h-8 text-[13px] bg-[hsl(40,14%,94%)] dark:bg-muted border-transparent focus:border-[hsl(24,93%,49%)] dark:focus:border-[hsl(24,93%,55%)] focus:ring-0 focus:bg-white dark:focus:bg-card transition-all duration-200 placeholder:text-[hsl(30,8%,60%)] dark:placeholder:text-[hsl(35,8%,50%)]"
                     data-testid="search-input-desktop"
                   />
@@ -142,8 +150,8 @@ export default function Header() {
                     </button>
                   </Link>
                 </form>
-                {showResults && (
-                  <SearchResults query={searchQuery} onClose={() => setShowResults(false)} />
+                {showResults && debouncedQuery.length > 2 && (
+                  <SearchResults query={debouncedQuery} onClose={() => setShowResults(false)} />
                 )}
               </div>
             </div>

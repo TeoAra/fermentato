@@ -7870,7 +7870,9 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
       }
 
       const result = await findBestBeerImage(info.name, info.brewery_name ?? "", info.website_url);
-      if (result.confidence !== "high" || !result.url) {
+      // Return also low-confidence results: the user sees a preview and confirms before applying,
+      // so showing something is better than returning null.
+      if (!result.url) {
         return res.json({ imageUrl: null, confidence: result.confidence, source: result.source });
       }
 

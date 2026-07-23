@@ -295,7 +295,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
 
       {/* Create dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md rounded-2xl border-stone-100 dark:border-border">
+        <DialogContent className="max-w-md rounded-2xl border-stone-100 dark:border-border overflow-y-auto max-h-[90dvh]">
           <DialogHeader>
             <DialogTitle>Nuovo Annuncio</DialogTitle>
           </DialogHeader>
