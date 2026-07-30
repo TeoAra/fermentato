@@ -3947,6 +3947,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       await db.update(users).set(updateData).where(eq(users.id, targetId));
 
+      // When admin manually grants brewery_owner role, clear any rejected/pending brewery requests
+      // so the user is no longer stuck on the "Richiesta Rifiutata" screen.
+      if (userType === 'brewery_owner') {
+        await db.update(breweryRequests).set({
+          status: 'approved',
+          reviewedAt: new Date(),
+          reviewedBy: (req as any).user?.id || null,
+          adminNotes: 'Approvato manualmente dall\'amministratore',
+        }).where(
+          and(
+            eq(breweryRequests.userId, targetId),
+            sql`${breweryRequests.status} IN ('rejected', 'pending')`
+          )
+        );
+      }
+
+      // Same for pub_owner: clear rejected/pending publican requests
+      if (userType === 'pub_owner') {
+        await db.update(publicanRequests).set({
+          status: 'approved',
+          reviewedAt: new Date(),
+          reviewedBy: (req as any).user?.id || null,
+          adminNotes: 'Approvato manualmente dall\'amministratore',
+        }).where(
+          and(
+            eq(publicanRequests.userId, targetId),
+            sql`${publicanRequests.status} IN ('rejected', 'pending')`
+          )
+        );
+      }
+
       res.json({ success: true });
     } catch (error) {
       console.error("Error updating user:", error);
