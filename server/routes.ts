@@ -3920,7 +3920,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch('/api/admin/users/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const targetId = req.params.id;
-      const { userType } = req.body;
+      const { userType, breweryId } = req.body;
       if (!userType) return res.status(400).json({ message: "userType required" });
 
       const [existingUser] = await db.select({ roles: users.roles }).from(users).where(eq(users.id, targetId));
@@ -3935,12 +3935,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newRole = roleMap[userType] || userType;
       const newRoles = currentRoles.includes(newRole) ? currentRoles : ['customer', ...currentRoles.filter(r => r !== 'customer'), newRole];
 
-      await db.update(users).set({
+      const updateData: any = {
         userType,
         roles: newRoles,
         activeRole: userType === 'customer' ? 'customer' : newRole,
         updatedAt: new Date(),
-      }).where(eq(users.id, targetId));
+      };
+      if (userType === 'brewery_owner' && breweryId) {
+        updateData.breweryId = breweryId;
+      }
+
+      await db.update(users).set(updateData).where(eq(users.id, targetId));
 
       res.json({ success: true });
     } catch (error) {

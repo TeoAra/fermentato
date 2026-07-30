@@ -79,6 +79,12 @@ export default function AdminDashboard() {
   const [showUnverifiedOnly, setShowUnverifiedOnly] = useState(false);
   const [editTarget, setEditTarget] = useState<any>(null);
   const [editRole, setEditRole] = useState("");
+  const [editBreweryId, setEditBreweryId] = useState<number | null>(null);
+  const [editBrewerySearch, setEditBrewerySearch] = useState("");
+  const [editBreweryName, setEditBreweryName] = useState("");
+  const [showCreateBrewery, setShowCreateBrewery] = useState(false);
+  const [newBreweryName, setNewBreweryName] = useState("");
+  const [newBreweryCity, setNewBreweryCity] = useState("");
   const [banTarget, setBanTarget] = useState<any>(null);
   const [unbanTarget, setUnbanTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -144,9 +150,36 @@ export default function AdminDashboard() {
     },
   });
 
+  const { data: brewerySearchResults = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/breweries/search", editBrewerySearch],
+    queryFn: async () => {
+      if (editBrewerySearch.trim().length < 2) return [];
+      const res = await fetch(`/api/admin/breweries/search?q=${encodeURIComponent(editBrewerySearch)}&limit=10`);
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: editRole === "brewery_owner" && editBrewerySearch.trim().length >= 2,
+  });
+
+  const createBreweryMutation = useMutation({
+    mutationFn: async (data: { name: string; location?: string }) =>
+      apiRequest("/api/admin/breweries", { method: "POST" }, data),
+    onSuccess: (brewery: any) => {
+      setEditBreweryId(brewery.id);
+      setEditBreweryName(brewery.name);
+      setShowCreateBrewery(false);
+      setNewBreweryName("");
+      setNewBreweryCity("");
+      toast({ title: "Birrificio creato", description: `"${brewery.name}" aggiunto al database` });
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err?.message || "Impossibile creare il birrificio", variant: "destructive" });
+    },
+  });
+
   const updateUserMutation = useMutation({
-    mutationFn: async ({ userId, userType }: { userId: string; userType: string }) =>
-      apiRequest(`/api/admin/users/${userId}`, { method: "PATCH" }, { userType }),
+    mutationFn: async ({ userId, userType, breweryId }: { userId: string; userType: string; breweryId?: number | null }) =>
+      apiRequest(`/api/admin/users/${userId}`, { method: "PATCH" }, { userType, ...(breweryId ? { breweryId } : {}) }),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
@@ -880,8 +913,18 @@ export default function AdminDashboard() {
       </Dialog>
 
       {/* ===== EDIT ROLE DIALOG ===== */}
-      <Dialog open={!!editTarget} onOpenChange={(open) => { if (!open) setEditTarget(null); }}>
-        <DialogContent className="max-w-sm">
+      <Dialog open={!!editTarget} onOpenChange={(open) => {
+        if (!open) {
+          setEditTarget(null);
+          setEditBreweryId(null);
+          setEditBrewerySearch("");
+          setEditBreweryName("");
+          setShowCreateBrewery(false);
+          setNewBreweryName("");
+          setNewBreweryCity("");
+        }
+      }}>
+        <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Edit3 className="w-4 h-4" />
@@ -901,11 +944,17 @@ export default function AdminDashboard() {
             </div>
             <div>
               <label className="text-sm font-medium text-muted-foreground dark:text-stone-300 block mb-2">Nuovo ruolo</label>
-              <Select value={editRole} onValueChange={setEditRole}>
+              <Select value={editRole} onValueChange={(v) => {
+                setEditRole(v);
+                setEditBreweryId(null);
+                setEditBrewerySearch("");
+                setEditBreweryName("");
+                setShowCreateBrewery(false);
+              }}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[200]">
                   <SelectItem value="customer">Cliente</SelectItem>
                   <SelectItem value="pub_owner">Pub Owner</SelectItem>
                   <SelectItem value="brewery_owner">Brewery Owner</SelectItem>
@@ -913,14 +962,116 @@ export default function AdminDashboard() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Brewery picker — visible only when brewery_owner is selected */}
+            {editRole === "brewery_owner" && (
+              <div className="space-y-2 border border-stone-200 dark:border-stone-700 rounded-lg p-3">
+                <label className="text-sm font-medium text-muted-foreground dark:text-stone-300 block">
+                  <Building2 className="w-3.5 h-3.5 inline mr-1" />
+                  Birrificio associato
+                </label>
+
+                {/* Selected brewery chip */}
+                {editBreweryId && (
+                  <div className="flex items-center justify-between bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+                    <span className="text-sm font-medium text-amber-800 dark:text-amber-300">{editBreweryName}</span>
+                    <button
+                      className="text-amber-500 hover:text-amber-700 text-xs ml-2"
+                      onClick={() => { setEditBreweryId(null); setEditBreweryName(""); setEditBrewerySearch(""); }}
+                    >✕</button>
+                  </div>
+                )}
+
+                {!editBreweryId && !showCreateBrewery && (
+                  <>
+                    <Input
+                      placeholder="Cerca birrificio nel database..."
+                      value={editBrewerySearch}
+                      onChange={e => setEditBrewerySearch(e.target.value)}
+                      className="text-sm"
+                    />
+                    {editBrewerySearch.trim().length >= 2 && (
+                      <div className="border border-stone-200 dark:border-stone-700 rounded-md overflow-hidden max-h-40 overflow-y-auto">
+                        {brewerySearchResults.length === 0 ? (
+                          <p className="text-xs text-stone-400 p-2 text-center">Nessun risultato</p>
+                        ) : (
+                          brewerySearchResults.map((b: any) => (
+                            <button
+                              key={b.id}
+                              className="w-full text-left px-3 py-2 text-sm hover:bg-stone-50 dark:hover:bg-stone-800 border-b border-stone-100 dark:border-stone-800 last:border-0"
+                              onClick={() => {
+                                setEditBreweryId(b.id);
+                                setEditBreweryName(b.name);
+                                setEditBrewerySearch("");
+                              }}
+                            >
+                              <span className="font-medium">{b.name}</span>
+                              {b.location && <span className="text-stone-400 ml-2 text-xs">{b.location}</span>}
+                            </button>
+                          ))
+                        )}
+                      </div>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full text-xs text-stone-500 border border-dashed border-stone-300 dark:border-stone-600"
+                      onClick={() => setShowCreateBrewery(true)}
+                    >
+                      <Building2 className="w-3 h-3 mr-1" /> Crea nuovo birrificio
+                    </Button>
+                  </>
+                )}
+
+                {showCreateBrewery && (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Nome birrificio *"
+                      value={newBreweryName}
+                      onChange={e => setNewBreweryName(e.target.value)}
+                      className="text-sm"
+                    />
+                    <Input
+                      placeholder="Città (opzionale)"
+                      value={newBreweryCity}
+                      onChange={e => setNewBreweryCity(e.target.value)}
+                      className="text-sm"
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="flex-1 text-xs"
+                        onClick={() => { setShowCreateBrewery(false); setNewBreweryName(""); setNewBreweryCity(""); }}
+                      >
+                        Annulla
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="flex-1 text-xs"
+                        disabled={!newBreweryName.trim() || createBreweryMutation.isPending}
+                        onClick={() => createBreweryMutation.mutate({ name: newBreweryName.trim(), location: newBreweryCity.trim() || undefined })}
+                      >
+                        {createBreweryMutation.isPending ? "Creazione..." : "Crea birrificio"}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex gap-3">
               <Button variant="outline" className="flex-1" onClick={() => setEditTarget(null)}>
                 Annulla
               </Button>
               <Button
                 className="flex-1"
-                disabled={updateUserMutation.isPending || editRole === editTarget?.userType}
-                onClick={() => updateUserMutation.mutate({ userId: editTarget.id, userType: editRole })}
+                disabled={
+                  updateUserMutation.isPending ||
+                  (editRole === editTarget?.userType && !editBreweryId) ||
+                  (editRole === "brewery_owner" && !editBreweryId)
+                }
+                onClick={() => updateUserMutation.mutate({ userId: editTarget.id, userType: editRole, breweryId: editBreweryId })}
               >
                 {updateUserMutation.isPending ? "Salvataggio..." : "Salva"}
               </Button>
