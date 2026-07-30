@@ -3954,6 +3954,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: edit user profile fields (email, name, nickname, bio)
+  app.patch('/api/admin/users/:id/profile', isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const targetId = req.params.id;
+      const { email, firstName, lastName, nickname, bio, phone } = req.body;
+
+      const updateData: any = { updatedAt: new Date() };
+      if (email !== undefined) updateData.email = email.trim() || null;
+      if (firstName !== undefined) updateData.firstName = firstName.trim() || null;
+      if (lastName !== undefined) updateData.lastName = lastName.trim() || null;
+      if (nickname !== undefined) updateData.nickname = nickname.trim() || null;
+      if (bio !== undefined) updateData.bio = bio.trim() || null;
+
+      await db.update(users).set(updateData).where(eq(users.id, targetId));
+      res.json({ success: true });
+    } catch (error: any) {
+      if (error?.code === '23505') {
+        return res.status(409).json({ message: "Email o nickname già in uso da un altro utente" });
+      }
+      console.error("Error updating user profile:", error);
+      res.status(500).json({ message: "Impossibile aggiornare il profilo" });
+    }
+  });
+
   // Admin: resend verification email to a specific user by ID
   app.post('/api/admin/users/:id/resend-verification', isAuthenticated, isAdmin, async (req: any, res) => {
     try {

@@ -85,6 +85,8 @@ export default function AdminDashboard() {
   const [showCreateBrewery, setShowCreateBrewery] = useState(false);
   const [newBreweryName, setNewBreweryName] = useState("");
   const [newBreweryCity, setNewBreweryCity] = useState("");
+  const [editProfileForm, setEditProfileForm] = useState({ email: "", firstName: "", lastName: "", nickname: "", bio: "" });
+  const [editSection, setEditSection] = useState<"profile" | "role">("profile");
   const [banTarget, setBanTarget] = useState<any>(null);
   const [unbanTarget, setUnbanTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
@@ -177,13 +179,26 @@ export default function AdminDashboard() {
     },
   });
 
+  const updateProfileMutation = useMutation({
+    mutationFn: async ({ userId, data }: { userId: string; data: typeof editProfileForm }) =>
+      apiRequest(`/api/admin/users/${userId}/profile`, { method: "PATCH" }, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Profilo aggiornato", description: "Dati utente salvati con successo" });
+      setEditTarget(null);
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err?.message || "Impossibile aggiornare il profilo", variant: "destructive" });
+    },
+  });
+
   const updateUserMutation = useMutation({
     mutationFn: async ({ userId, userType, breweryId }: { userId: string; userType: string; breweryId?: number | null }) =>
       apiRequest(`/api/admin/users/${userId}`, { method: "PATCH" }, { userType, ...(breweryId ? { breweryId } : {}) }),
     onSuccess: (_, vars) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
-      toast({ title: "Utente aggiornato", description: `Ruolo cambiato in: ${ROLE_LABELS[vars.userType] || vars.userType}` });
+      toast({ title: "Ruolo aggiornato", description: `Ruolo cambiato in: ${ROLE_LABELS[vars.userType] || vars.userType}` });
       setEditTarget(null);
       setBanTarget(null);
       setUnbanTarget(null);
@@ -632,8 +647,15 @@ export default function AdminDashboard() {
                                         size="sm"
                                         variant="ghost"
                                         className="h-7 w-7 p-0 hover:bg-stone-50 dark:hover:bg-stone-900/20 hover:text-primary text-muted-foreground"
-                                        title="Modifica ruolo"
-                                        onClick={() => { setEditTarget(u); setEditRole(isBanned ? "customer" : u.userType); }}
+                                        title="Modifica utente"
+                                        onClick={() => {
+                                          setEditTarget(u);
+                                          setEditRole(isBanned ? "customer" : u.userType);
+                                          setEditProfileForm({ email: u.email || "", firstName: u.firstName || "", lastName: u.lastName || "", nickname: u.nickname || "", bio: u.bio || "" });
+                                          setEditSection("profile");
+                                          setEditBreweryId(null);
+                                          setEditBreweryName("");
+                                        }}
                                       >
                                         <Edit3 className="w-3.5 h-3.5" />
                                       </Button>
@@ -912,7 +934,7 @@ export default function AdminDashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* ===== EDIT ROLE DIALOG ===== */}
+      {/* ===== EDIT USER DIALOG ===== */}
       <Dialog open={!!editTarget} onOpenChange={(open) => {
         if (!open) {
           setEditTarget(null);
@@ -928,159 +950,235 @@ export default function AdminDashboard() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Edit3 className="w-4 h-4" />
-              Modifica ruolo — {editTarget?.nickname || editTarget?.firstName || "Utente"}
+              Modifica utente — {editTarget?.nickname || editTarget?.firstName || "Utente"}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-[#1A1D24] rounded-lg">
-              <Avatar className="w-10 h-10">
-                <AvatarImage src={editTarget?.profileImageUrl} />
-                <AvatarFallback>{(editTarget?.nickname?.[0] || "U").toUpperCase()}</AvatarFallback>
-              </Avatar>
-              <div>
-                <p className="font-medium text-sm">{editTarget?.nickname || editTarget?.firstName || "Utente"}</p>
-                <p className="text-xs text-stone-400">{editTarget?.email}</p>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground dark:text-stone-300 block mb-2">Nuovo ruolo</label>
-              <Select value={editRole} onValueChange={(v) => {
-                setEditRole(v);
-                setEditBreweryId(null);
-                setEditBrewerySearch("");
-                setEditBreweryName("");
-                setShowCreateBrewery(false);
-              }}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="z-[200]">
-                  <SelectItem value="customer">Cliente</SelectItem>
-                  <SelectItem value="pub_owner">Pub Owner</SelectItem>
-                  <SelectItem value="brewery_owner">Brewery Owner</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
 
-            {/* Brewery picker — visible only when brewery_owner is selected */}
-            {editRole === "brewery_owner" && (
-              <div className="space-y-2 border border-stone-200 dark:border-stone-700 rounded-lg p-3">
-                <label className="text-sm font-medium text-muted-foreground dark:text-stone-300 block">
-                  <Building2 className="w-3.5 h-3.5 inline mr-1" />
-                  Birrificio associato
-                </label>
-
-                {/* Selected brewery chip */}
-                {editBreweryId && (
-                  <div className="flex items-center justify-between bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
-                    <span className="text-sm font-medium text-amber-800 dark:text-amber-300">{editBreweryName}</span>
-                    <button
-                      className="text-amber-500 hover:text-amber-700 text-xs ml-2"
-                      onClick={() => { setEditBreweryId(null); setEditBreweryName(""); setEditBrewerySearch(""); }}
-                    >✕</button>
-                  </div>
-                )}
-
-                {!editBreweryId && !showCreateBrewery && (
-                  <>
-                    <Input
-                      placeholder="Cerca birrificio nel database..."
-                      value={editBrewerySearch}
-                      onChange={e => setEditBrewerySearch(e.target.value)}
-                      className="text-sm"
-                    />
-                    {editBrewerySearch.trim().length >= 2 && (
-                      <div className="border border-stone-200 dark:border-stone-700 rounded-md overflow-hidden max-h-40 overflow-y-auto">
-                        {brewerySearchResults.length === 0 ? (
-                          <p className="text-xs text-stone-400 p-2 text-center">Nessun risultato</p>
-                        ) : (
-                          brewerySearchResults.map((b: any) => (
-                            <button
-                              key={b.id}
-                              className="w-full text-left px-3 py-2 text-sm hover:bg-stone-50 dark:hover:bg-stone-800 border-b border-stone-100 dark:border-stone-800 last:border-0"
-                              onClick={() => {
-                                setEditBreweryId(b.id);
-                                setEditBreweryName(b.name);
-                                setEditBrewerySearch("");
-                              }}
-                            >
-                              <span className="font-medium">{b.name}</span>
-                              {b.location && <span className="text-stone-400 ml-2 text-xs">{b.location}</span>}
-                            </button>
-                          ))
-                        )}
-                      </div>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-xs text-stone-500 border border-dashed border-stone-300 dark:border-stone-600"
-                      onClick={() => setShowCreateBrewery(true)}
-                    >
-                      <Building2 className="w-3 h-3 mr-1" /> Crea nuovo birrificio
-                    </Button>
-                  </>
-                )}
-
-                {showCreateBrewery && (
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="Nome birrificio *"
-                      value={newBreweryName}
-                      onChange={e => setNewBreweryName(e.target.value)}
-                      className="text-sm"
-                    />
-                    <Input
-                      placeholder="Città (opzionale)"
-                      value={newBreweryCity}
-                      onChange={e => setNewBreweryCity(e.target.value)}
-                      className="text-sm"
-                    />
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 text-xs"
-                        onClick={() => { setShowCreateBrewery(false); setNewBreweryName(""); setNewBreweryCity(""); }}
-                      >
-                        Annulla
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="flex-1 text-xs"
-                        disabled={!newBreweryName.trim() || createBreweryMutation.isPending}
-                        onClick={() => createBreweryMutation.mutate({ name: newBreweryName.trim(), location: newBreweryCity.trim() || undefined })}
-                      >
-                        {createBreweryMutation.isPending ? "Creazione..." : "Crea birrificio"}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              <Button variant="outline" className="flex-1" onClick={() => setEditTarget(null)}>
-                Annulla
-              </Button>
-              <Button
-                className="flex-1"
-                disabled={
-                  updateUserMutation.isPending ||
-                  (editRole === editTarget?.userType && !editBreweryId) ||
-                  (editRole === "brewery_owner" && !editBreweryId)
-                }
-                onClick={() => updateUserMutation.mutate({ userId: editTarget.id, userType: editRole, breweryId: editBreweryId })}
-              >
-                {updateUserMutation.isPending ? "Salvataggio..." : "Salva"}
-              </Button>
+          {/* User avatar row */}
+          <div className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-[#1A1D24] rounded-lg">
+            <Avatar className="w-10 h-10">
+              <AvatarImage src={editTarget?.profileImageUrl} />
+              <AvatarFallback>{(editTarget?.nickname?.[0] || "U").toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="font-medium text-sm truncate">{editTarget?.nickname || editTarget?.firstName || "Utente"}</p>
+              <p className="text-xs text-stone-400 truncate">{editTarget?.email || "nessuna email"}</p>
             </div>
           </div>
+
+          {/* Section tabs */}
+          <div className="flex gap-1 bg-stone-100 dark:bg-stone-800/50 rounded-lg p-1">
+            <button
+              className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${editSection === "profile" ? "bg-white dark:bg-stone-700 text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setEditSection("profile")}
+            >
+              Profilo
+            </button>
+            <button
+              className={`flex-1 text-xs py-1.5 rounded-md font-medium transition-all ${editSection === "role" ? "bg-white dark:bg-stone-700 text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
+              onClick={() => setEditSection("role")}
+            >
+              Ruolo &amp; Birrificio
+            </button>
+          </div>
+
+          {/* ---- PROFILE SECTION ---- */}
+          {editSection === "profile" && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Nome</label>
+                  <Input
+                    value={editProfileForm.firstName}
+                    onChange={e => setEditProfileForm(f => ({ ...f, firstName: e.target.value }))}
+                    placeholder="Nome"
+                    className="text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground block mb-1">Cognome</label>
+                  <Input
+                    value={editProfileForm.lastName}
+                    onChange={e => setEditProfileForm(f => ({ ...f, lastName: e.target.value }))}
+                    placeholder="Cognome"
+                    className="text-sm"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">Nickname</label>
+                <Input
+                  value={editProfileForm.nickname}
+                  onChange={e => setEditProfileForm(f => ({ ...f, nickname: e.target.value }))}
+                  placeholder="nickname"
+                  className="text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">Email</label>
+                <Input
+                  type="email"
+                  value={editProfileForm.email}
+                  onChange={e => setEditProfileForm(f => ({ ...f, email: e.target.value }))}
+                  placeholder="email@esempio.it"
+                  className="text-sm"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground block mb-1">Bio</label>
+                <textarea
+                  value={editProfileForm.bio}
+                  onChange={e => setEditProfileForm(f => ({ ...f, bio: e.target.value }))}
+                  placeholder="Bio dell'utente..."
+                  rows={3}
+                  className="w-full text-sm rounded-md border border-input bg-background px-3 py-2 resize-none focus:outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+              {/* Quick links to associated entity */}
+              {editTarget?.userType === "brewery_owner" && editTarget?.breweryId && (
+                <a
+                  href={`/admin/edit-brewery/${editTarget.breweryId}`}
+                  className="flex items-center gap-2 text-xs text-blue-600 hover:text-blue-800 p-2 border border-blue-100 rounded-md hover:bg-blue-50 transition-colors"
+                >
+                  <Building2 className="w-3.5 h-3.5" />
+                  Modifica birrificio associato →
+                </a>
+              )}
+              {editTarget?.userType === "pub_owner" && (
+                <a
+                  href={`/admin/content`}
+                  className="flex items-center gap-2 text-xs text-primary hover:text-primary/80 p-2 border border-amber-100 rounded-md hover:bg-amber-50 transition-colors"
+                >
+                  <Store className="w-3.5 h-3.5" />
+                  Gestisci pub dell'utente →
+                </a>
+              )}
+              <div className="flex gap-3 pt-1">
+                <Button variant="outline" className="flex-1" onClick={() => setEditTarget(null)}>
+                  Annulla
+                </Button>
+                <Button
+                  className="flex-1"
+                  disabled={updateProfileMutation.isPending}
+                  onClick={() => updateProfileMutation.mutate({ userId: editTarget.id, data: editProfileForm })}
+                >
+                  {updateProfileMutation.isPending ? "Salvataggio..." : "Salva profilo"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* ---- ROLE SECTION ---- */}
+          {editSection === "role" && (
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium text-muted-foreground dark:text-stone-300 block mb-2">Ruolo</label>
+                <Select value={editRole} onValueChange={(v) => {
+                  setEditRole(v);
+                  setEditBreweryId(null);
+                  setEditBrewerySearch("");
+                  setEditBreweryName("");
+                  setShowCreateBrewery(false);
+                }}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-[200]">
+                    <SelectItem value="customer">Cliente</SelectItem>
+                    <SelectItem value="pub_owner">Pub Owner</SelectItem>
+                    <SelectItem value="brewery_owner">Brewery Owner</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Brewery picker — visible only when brewery_owner is selected */}
+              {editRole === "brewery_owner" && (
+                <div className="space-y-2 border border-stone-200 dark:border-stone-700 rounded-lg p-3">
+                  <label className="text-sm font-medium text-muted-foreground dark:text-stone-300 block">
+                    <Building2 className="w-3.5 h-3.5 inline mr-1" />
+                    Birrificio associato
+                  </label>
+                  {editBreweryId && (
+                    <div className="flex items-center justify-between bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md px-3 py-2">
+                      <span className="text-sm font-medium text-amber-800 dark:text-amber-300">{editBreweryName}</span>
+                      <button
+                        className="text-amber-500 hover:text-amber-700 text-xs ml-2"
+                        onClick={() => { setEditBreweryId(null); setEditBreweryName(""); setEditBrewerySearch(""); }}
+                      >✕</button>
+                    </div>
+                  )}
+                  {!editBreweryId && !showCreateBrewery && (
+                    <>
+                      <Input
+                        placeholder="Cerca birrificio nel database..."
+                        value={editBrewerySearch}
+                        onChange={e => setEditBrewerySearch(e.target.value)}
+                        className="text-sm"
+                      />
+                      {editBrewerySearch.trim().length >= 2 && (
+                        <div className="border border-stone-200 dark:border-stone-700 rounded-md overflow-hidden max-h-40 overflow-y-auto">
+                          {brewerySearchResults.length === 0 ? (
+                            <p className="text-xs text-stone-400 p-2 text-center">Nessun risultato</p>
+                          ) : (
+                            brewerySearchResults.map((b: any) => (
+                              <button
+                                key={b.id}
+                                className="w-full text-left px-3 py-2 text-sm hover:bg-stone-50 dark:hover:bg-stone-800 border-b border-stone-100 dark:border-stone-800 last:border-0"
+                                onClick={() => { setEditBreweryId(b.id); setEditBreweryName(b.name); setEditBrewerySearch(""); }}
+                              >
+                                <span className="font-medium">{b.name}</span>
+                                {b.location && <span className="text-stone-400 ml-2 text-xs">{b.location}</span>}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-xs text-stone-500 border border-dashed border-stone-300 dark:border-stone-600"
+                        onClick={() => setShowCreateBrewery(true)}
+                      >
+                        <Building2 className="w-3 h-3 mr-1" /> Crea nuovo birrificio
+                      </Button>
+                    </>
+                  )}
+                  {showCreateBrewery && (
+                    <div className="space-y-2">
+                      <Input placeholder="Nome birrificio *" value={newBreweryName} onChange={e => setNewBreweryName(e.target.value)} className="text-sm" />
+                      <Input placeholder="Città (opzionale)" value={newBreweryCity} onChange={e => setNewBreweryCity(e.target.value)} className="text-sm" />
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => { setShowCreateBrewery(false); setNewBreweryName(""); setNewBreweryCity(""); }}>Annulla</Button>
+                        <Button size="sm" className="flex-1 text-xs" disabled={!newBreweryName.trim() || createBreweryMutation.isPending} onClick={() => createBreweryMutation.mutate({ name: newBreweryName.trim(), location: newBreweryCity.trim() || undefined })}>
+                          {createBreweryMutation.isPending ? "Creazione..." : "Crea birrificio"}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <Button variant="outline" className="flex-1" onClick={() => setEditTarget(null)}>Annulla</Button>
+                <Button
+                  className="flex-1"
+                  disabled={
+                    updateUserMutation.isPending ||
+                    (editRole === editTarget?.userType && !editBreweryId) ||
+                    (editRole === "brewery_owner" && !editBreweryId)
+                  }
+                  onClick={() => updateUserMutation.mutate({ userId: editTarget.id, userType: editRole, breweryId: editBreweryId })}
+                >
+                  {updateUserMutation.isPending ? "Salvataggio..." : "Salva ruolo"}
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
-      {/* ===== BAN CONFIRM DIALOG ===== */}
+            {/* ===== BAN CONFIRM DIALOG ===== */}
       <AlertDialog open={!!banTarget} onOpenChange={(open) => { if (!open) setBanTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
