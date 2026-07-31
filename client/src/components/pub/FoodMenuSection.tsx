@@ -202,7 +202,7 @@ export default function FoodMenuSection({
                           </span>
                         </div>
                         {item.description && (
-                          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-snug mt-1 line-clamp-3">
+                          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-snug mt-1">
                             {item.description}
                           </p>
                         )}
