@@ -572,12 +572,19 @@ export async function registerSocialRoutes(app: Express) {
     if (mentionNicknames.length > 0) {
       try {
         const placeholders = mentionNicknames.map((_, i) => `$${i + 2}`).join(", ");
-        const { rows: mentionedUsers } = await pool.query(
+        const { rows: mentionedUsersRaw } = await pool.query(
           `SELECT id, nickname,
                   COALESCE(nickname, NULLIF(TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')), ''), 'qualcuno') AS display_name
            FROM users WHERE lower(nickname) = ANY(ARRAY[${mentionNicknames.map((_, i) => `$${i + 1}`).join(", ")}]::text[])`,
           mentionNicknames,
         );
+        // Deduplicate by user ID so a user mentioned multiple times gets exactly one notification
+        const seenIds = new Set<string>();
+        const mentionedUsers = mentionedUsersRaw.filter((u) => {
+          if (seenIds.has(u.id)) return false;
+          seenIds.add(u.id);
+          return true;
+        });
         // Get poster display name for notification
         const { rows: [poster] } = await pool.query(
           `SELECT COALESCE(nickname, NULLIF(TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')), ''), 'qualcuno') AS display_name FROM users WHERE id = $1`,
