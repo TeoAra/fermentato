@@ -48,7 +48,7 @@ function directionsUrl(lat: string | number, lng: string | number, name: string)
 function PubCard({ pub, onlyOpen }: { pub: any; onlyOpen: boolean }) {
   const open = isOpenNow(pub.openingHours);
   if (onlyOpen && !open) return null;
-  const href = pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`;
+  const href = `/pub/${pub.id}`;
   return (
     <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99] transition-all">
       <Link href={href} className="flex items-center gap-3 flex-1 min-w-0">
@@ -383,7 +383,7 @@ export default function NearbyPage() {
                 Pub in <span className="text-foreground">{citySearch}</span> ({cityPubs.length})
               </p>
               {cityPubs.map((pub: any) => (
-                <Link key={pub.id} href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}>
+                <Link key={pub.id} href={`/pub/${pub.id}`}>
                   <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.05)] hover:border-primary/30 active:scale-[0.99] transition-all cursor-pointer">
                     <ImageWithFallback
                       src={pub.logoUrl}

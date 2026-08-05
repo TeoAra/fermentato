@@ -673,17 +673,79 @@ export default function Activity() {
             <div className="bg-white dark:bg-[#1A1D24] rounded-2xl p-4 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Feed amici</p>
               {feedLoading ? (
-                <div className="text-sm text-stone-400">Caricamento...</div>
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+                </div>
               ) : feed.length === 0 ? (
-                <p className="text-sm text-stone-400">Nessuna attività recente</p>
+                <div className="text-center py-6">
+                  <Users className="w-8 h-8 text-stone-300 mx-auto mb-2" />
+                  <p className="text-sm text-stone-400">Nessuna attività recente</p>
+                  <p className="text-xs text-stone-400 mt-1">Segui qualcuno per vedere i loro check-in</p>
+                </div>
               ) : (
-                feed.map((item: any) => (
-                  <div key={item.id} className="py-3 border-t first:border-t-0 border-stone-100 dark:border-[#23262E]/30">
-                    <p className="text-sm font-semibold">{item.beer_name}</p>
-                    <p className="text-xs text-stone-400">{item.brewery_name}</p>
-                    {item.notes && <p className="text-xs italic text-stone-500">"{item.notes}"</p>}
-                  </div>
-                ))
+                <div className="space-y-0">
+                  {feed.map((item: any) => {
+                    const name = item.display_name ?? item.username ?? "Utente";
+                    const handle = item.username ?? item.nickname;
+                    const rating = item.rating ? parseFloat(item.rating) : null;
+                    return (
+                      <div key={item.id} className="py-3.5 border-t first:border-t-0 border-stone-100 dark:border-[#23262E]/30">
+                        {/* User row */}
+                        <div className="flex items-center gap-2.5 mb-2.5">
+                          <Link href={`/user/${handle}`}>
+                            <UserAvatar user={{ display_name: name, profile_image_url: item.profile_image_url }} size={8} />
+                          </Link>
+                          <div className="flex-1 min-w-0">
+                            <Link href={`/user/${handle}`}>
+                              <p className="text-sm font-bold text-stone-900 dark:text-stone-50 hover:text-primary transition-colors">{name}</p>
+                            </Link>
+                            <p className="text-[10px] text-stone-400 flex items-center gap-1">
+                              <Clock className="w-2.5 h-2.5" />
+                              {item.tasted_at ? formatDistanceToNow(new Date(item.tasted_at), { addSuffix: true, locale: it }) : ""}
+                              <span className="text-stone-200 dark:text-stone-700">·</span>
+                              <span className="font-semibold text-primary/70">check-in</span>
+                            </p>
+                          </div>
+                          {rating !== null && (
+                            <span className="text-xs font-bold text-amber-500">{"★".repeat(Math.round(rating))} {rating.toFixed(1)}</span>
+                          )}
+                        </div>
+                        {/* Beer info */}
+                        <Link href={`/beer/${item.beer_id}`}>
+                          <div className="flex items-center gap-2.5 bg-stone-50 dark:bg-[#12151A] rounded-xl px-3 py-2 hover:bg-stone-100 dark:hover:bg-[#0B0D10] transition-colors">
+                            {item.beer_image ? (
+                              <img src={item.beer_image} alt={item.beer_name} className="w-9 h-9 rounded-lg object-contain bg-white flex-shrink-0" />
+                            ) : (
+                              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                <Beer className="w-4 h-4 text-primary" />
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p className="text-sm font-semibold text-stone-800 dark:text-stone-100 truncate">{item.beer_name}</p>
+                              {item.brewery_name && <p className="text-xs text-stone-400 truncate">{item.brewery_name}</p>}
+                            </div>
+                          </div>
+                        </Link>
+                        {/* Notes */}
+                        {item.notes && (
+                          <p className="mt-2 text-xs italic text-stone-500 dark:text-stone-400 px-1 line-clamp-2">"{item.notes}"</p>
+                        )}
+                        {/* Photo */}
+                        {item.photo_url && (
+                          <img src={item.photo_url} alt="" className="mt-2 w-full rounded-xl object-cover max-h-48" />
+                        )}
+                        {/* Pub */}
+                        {item.pub_id && item.pub_name && (
+                          <Link href={`/pub/${item.pub_id}`}>
+                            <p className="mt-1.5 text-xs text-primary font-semibold flex items-center gap-1 px-1">
+                              <MapPin className="w-3 h-3" />{item.pub_name}{item.pub_city ? `, ${item.pub_city}` : ""}
+                            </p>
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
             <div className="bg-white dark:bg-[#1A1D24] rounded-2xl p-4 shadow-sm">
