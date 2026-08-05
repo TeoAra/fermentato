@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
 import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/components/events-manager";
@@ -20,6 +20,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
 import { ZoomableImage } from "@/components/ImageLightbox";
+import { InlinePostComposer } from "@/components/social/InlinePostComposer";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -646,14 +647,9 @@ export default function Activity() {
         <TabsContent value="sociale" className="mt-0">
           <div className="p-4 space-y-5">
             {/* Compose bar */}
-            <Link href="/microblog/nuovo">
-              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-sm p-3 flex items-center gap-2.5 border border-[#E8DED1] dark:border-white/[0.06]">
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <PenSquare className="w-4 h-4 text-primary" />
-                </div>
-                <span className="text-sm text-stone-400 flex-1">Cosa stai bevendo? Scrivi un post…</span>
-              </div>
-            </Link>
+            {isAuthenticated && currentUser && (
+              <InlinePostComposer user={currentUser} />
+            )}
             <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-sm p-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
