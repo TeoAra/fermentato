@@ -46,6 +46,7 @@ async function runSocialMigrations() {
         brewery_id INTEGER,
         created_at TIMESTAMP DEFAULT NOW()
       );
+      ALTER TABLE microblog_posts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
       CREATE INDEX IF NOT EXISTS idx_microblog_user ON microblog_posts(user_id);
       CREATE INDEX IF NOT EXISTS idx_microblog_created ON microblog_posts(created_at DESC);
 
@@ -641,7 +642,7 @@ export async function registerSocialRoutes(app: Express) {
     // wrap plain text in <p> tags; leave HTML as-is
     const html = raw.startsWith("<") ? raw : `<p>${raw.replace(/\n/g, "</p><p>")}</p>`;
     const { rowCount } = await pool.query(
-      `UPDATE microblog_posts SET content = $1 WHERE id = $2 AND user_id = $3`,
+      `UPDATE microblog_posts SET content = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3`,
       [html, postId, userId],
     );
     if (!rowCount) return res.status(404).json({ message: "Post non trovato o non autorizzato" });
@@ -670,7 +671,7 @@ export async function registerSocialRoutes(app: Express) {
   app.get("/api/microblog/feed", isAuthenticated, async (req: any, res) => {
     const userId = req.user.id;
     const { rows } = await pool.query(`
-      SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id, p.created_at,
+      SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id, p.created_at, p.updated_at,
              u.id AS user_id, u.nickname AS username,
              COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,
@@ -755,7 +756,7 @@ export async function registerSocialRoutes(app: Express) {
 
     const sql = `
       SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id,
-             p.event_id, p.event_source_type, p.hashtags, p.created_at,
+             p.event_id, p.event_source_type, p.hashtags, p.created_at, p.updated_at,
              u.id AS user_id, u.nickname AS username,
              COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,
@@ -807,7 +808,7 @@ export async function registerSocialRoutes(app: Express) {
 
   app.get("/api/microblog/discover", async (_req, res) => {
     const { rows } = await pool.query(`
-      SELECT p.id, p.content, p.image_url, p.created_at,
+      SELECT p.id, p.content, p.image_url, p.created_at, p.updated_at,
              u.id AS user_id, u.nickname AS username,
              COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,

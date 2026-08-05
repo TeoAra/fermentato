@@ -241,6 +241,12 @@ function MicroblogCard({ post }: { post: any }) {
             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: it })}
             <span className="text-stone-200 dark:text-stone-700">·</span>
             <span className="font-semibold text-amber-500/80">📝 post</span>
+            {post.updated_at && new Date(post.updated_at) > new Date(post.created_at) && (
+              <>
+                <span className="text-stone-200 dark:text-stone-700">·</span>
+                <span className="italic text-stone-400/70">modificato</span>
+              </>
+            )}
           </p>
         </div>
       </div>

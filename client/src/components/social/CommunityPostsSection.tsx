@@ -66,6 +66,9 @@ function CommunityPostCard({ post }: { post: any }) {
           </Link>
           <p className="text-[11px] text-stone-400">
             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: it })} · 📝 post
+            {post.updated_at && new Date(post.updated_at) > new Date(post.created_at) && (
+              <span className="italic text-stone-400/70"> · modificato</span>
+            )}
           </p>
         </div>
       </div>
