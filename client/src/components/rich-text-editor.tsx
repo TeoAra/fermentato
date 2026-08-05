@@ -207,10 +207,25 @@ export default function RichTextEditor({
 
   // Build the Mention extension only when enableMentions is true
   const mentionExtension = enableMentions
-    ? Mention.configure({
-        HTMLAttributes: {
-          class: "mention text-blue-600 dark:text-blue-400 font-semibold",
+    ? Mention.extend({
+        // Render mention nodes as anchor links so the stored HTML is already
+        // a clickable <a href="/user/:label"> tag — no post-processing needed.
+        renderHTML({ node }) {
+          const label = (node.attrs.label as string) ?? "";
+          return [
+            "a",
+            {
+              href: `/user/${encodeURIComponent(label)}`,
+              class: "mention text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer",
+              "data-type": "mention",
+              "data-id": String(node.attrs.id ?? ""),
+              "data-label": label,
+            },
+            `@${label}`,
+          ];
         },
+      }).configure({
+        HTMLAttributes: {},
         suggestion: {
           items: async ({ query }: { query: string }) => fetchMentionItems(query),
           render: () => {

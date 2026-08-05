@@ -13,6 +13,31 @@ function linkifyInHtml(html: string): string {
   const root = doc.getElementById("__root");
   if (!root) return html;
 
+  // Backward-compat: convert <span data-type="mention" data-label="..."> nodes
+  // (produced by the old Mention renderHTML) to anchor links so they are
+  // clickable even in posts written before the renderHTML override was added.
+  const mentionSpans = root.querySelectorAll<HTMLElement>('span[data-type="mention"]');
+  for (const span of mentionSpans) {
+    const label = span.getAttribute("data-label") || span.textContent?.replace(/^@/, "") || "";
+    if (!label) continue;
+    const a = doc.createElement("a");
+    a.setAttribute("href", `/user/${encodeURIComponent(label)}`);
+    a.setAttribute("data-mention", label);
+    a.className = "mention text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer";
+    a.textContent = `@${label}`;
+    span.parentNode?.replaceChild(a, span);
+  }
+
+  // Also treat <a data-type="mention"> nodes (new format) as mention anchors
+  // so clicking them shows the MentionCard popup instead of navigating away.
+  const mentionAnchors = root.querySelectorAll<HTMLAnchorElement>('a[data-type="mention"]');
+  for (const a of mentionAnchors) {
+    const label = a.getAttribute("data-label") || a.textContent?.replace(/^@/, "") || "";
+    if (label && !a.hasAttribute("data-mention")) {
+      a.setAttribute("data-mention", label);
+    }
+  }
+
   const walker = doc.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const textNodes: Text[] = [];
   let cur: Node | null;
