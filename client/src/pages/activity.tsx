@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
 import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/components/events-manager";
@@ -188,12 +188,13 @@ export default function Activity() {
     } catch { return new Set(); }
   });
 
-  const [activeTab, setActiveTab] = useState(() => {
-    if (typeof window !== "undefined") {
-      return new URLSearchParams(window.location.search).get("tab") || "inzona";
-    }
-    return "inzona";
-  });
+  const search = useSearch();
+  const [activeTab, setActiveTab] = useState("inzona");
+  // Sync tab from URL param (works with wouter navigation in Capacitor too)
+  useEffect(() => {
+    const tab = new URLSearchParams(search).get("tab");
+    if (tab) setActiveTab(tab);
+  }, [search]);
 
   const queryClient = useQueryClient();
   const handleRefresh = useCallback(async () => {
