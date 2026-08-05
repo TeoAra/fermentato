@@ -1296,6 +1296,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Personal check-in history for a beer (authenticated user only)
+  app.get("/api/beers/:id/my-checkins", isAuthenticated, async (req: any, res) => {
+    try {
+      const beerId = parseInt(req.params.id);
+      const userId = req.user.id;
+      const result = await pool.query(
+        `SELECT
+           ubt.id,
+           ubt.rating::float                 AS "rating",
+           ubt.personal_notes                AS "personalNotes",
+           ubt.format,
+           ubt.photo_url                     AS "photoUrl",
+           ubt.tasted_at                     AS "tastedAt",
+           ubt.pub_id                        AS "pubId",
+           p.name                            AS "pubName",
+           p.slug                            AS "pubSlug",
+           p.city                            AS "pubCity"
+         FROM user_beer_tastings ubt
+         LEFT JOIN pubs p ON p.id = ubt.pub_id
+         WHERE ubt.user_id = $1
+           AND ubt.beer_id = $2
+         ORDER BY ubt.tasted_at DESC`,
+        [userId, beerId]
+      );
+      res.json(result.rows);
+    } catch (error: any) {
+      console.error("Error fetching user beer check-ins:", error.message);
+      res.status(500).json({ message: "Failed to fetch check-ins" });
+    }
+  });
+
   // Explore breweries (paginated, filterable by name + country)
   app.get("/api/breweries/explore", async (req, res) => {
     try {

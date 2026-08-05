@@ -27,6 +27,7 @@ interface BeerHeroProps {
   beerCollabs?: Array<{ id: number | string; name: string }>;
   reviewsData?: { avgRating?: number; reviewCount?: number } | null;
   totalLocations?: number;
+  checkinCount?: number;
   isAdmin: boolean;
   isAuthenticated: boolean;
   isSearchingImage?: boolean;
@@ -50,6 +51,7 @@ export default function BeerHero({
   beerCollabs = [],
   reviewsData,
   totalLocations = 0,
+  checkinCount = 0,
   isAdmin,
   isAuthenticated,
   isSearchingImage,
@@ -240,6 +242,12 @@ export default function BeerHero({
                 <span className="inline-flex items-center gap-1.5 text-xs font-bold bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-700/40 px-2.5 py-1 rounded-full">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
                   {totalLocations} {totalLocations === 1 ? "locale" : "locali"}
+                </span>
+              )}
+              {checkinCount > 0 && (
+                <span className="inline-flex items-center gap-1 text-xs font-bold bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-700/40 px-2.5 py-1 rounded-full">
+                  <BeerIcon className="w-3 h-3" />
+                  {checkinCount === 1 ? "Già bevuta" : `Bevuta ${checkinCount} volt${checkinCount === 1 ? "a" : "e"}`}
                 </span>
               )}
             </div>

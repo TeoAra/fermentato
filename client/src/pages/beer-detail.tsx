@@ -52,6 +52,7 @@ import BeerStatsStrip from "@/components/beer/BeerStatsStrip";
 import BeerAvailabilitySection from "@/components/beer/BeerAvailabilitySection";
 import BeerInfoSection from "@/components/beer/BeerInfoSection";
 import BeerReviewsSection from "@/components/beer/BeerReviewsSection";
+import MyBeerHistory from "@/components/beer/MyBeerHistory";
 
 const BEER_TABS: StickyTabDef[] = [
   { value: "overview", label: "Panoramica", icon: <HomeIcon className="w-4 h-4" /> },
@@ -381,6 +382,14 @@ export default function BeerDetail() {
 
   const existingTasting = userTastings.find((tasting: any) => tasting.beerId === parseInt(id || '0'));
   const hasTasted = !!existingTasting;
+
+  // Personal check-in history for this beer
+  const { data: myCheckins = [] } = useQuery<any[]>({
+    queryKey: ["/api/beers", id, "my-checkins"],
+    queryFn: () => fetch(`/api/beers/${id}/my-checkins`, { credentials: "include" }).then(r => r.ok ? r.json() : []),
+    enabled: isAuthenticated && !!id,
+    staleTime: 2 * 60_000,
+  });
 
   // Cellar check
   const { data: cellarItem, refetch: refetchCellar } = useQuery<any>({
@@ -739,6 +748,7 @@ export default function BeerDetail() {
         beerCollabs={beerCollabs}
         reviewsData={reviewsData ? { avgRating: reviewsData.avgRating ?? undefined, reviewCount: reviewsData.reviewCount } : null}
         totalLocations={totalLocations}
+        checkinCount={myCheckins.length}
         isAdmin={isAdmin}
         isAuthenticated={isAuthenticated}
         isSearchingImage={isSearchingImage}
@@ -898,6 +908,11 @@ export default function BeerDetail() {
                 </div>
               )}
             </div>
+          )}
+
+          {/* ═══════════ Personal check-in history ═══════════ */}
+          {isAuthenticated && myCheckins.length > 0 && (
+            <MyBeerHistory checkins={myCheckins} beerId={parseInt(id || '0')} />
           )}
         </div>
 
