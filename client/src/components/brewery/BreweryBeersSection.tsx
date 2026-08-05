@@ -107,19 +107,19 @@ export default function BreweryBeersSection({
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
             {visible.map((beer) => {
               const hidden = beer.isVisible === false;
               return (
                 <div
                   key={beer.id}
-                  className={`relative bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex flex-col ${
+                  className={`relative bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-3 flex flex-col ${
                     hidden ? "opacity-60" : ""
                   }`}
                   data-testid={`brewery-beer-${beer.id}`}
                 >
                   <Link href={`/beer/${beer.id}`} className="block">
-                    <div className="w-full aspect-square rounded-2xl overflow-hidden bg-[#FAF7F1] dark:bg-[#12151A] mb-2 flex items-center justify-center">
+                    <div className="w-full h-32 sm:h-36 rounded-xl overflow-hidden bg-[#FAF7F1] dark:bg-[#12151A] mb-2.5 flex items-center justify-center">
                       <ImageWithFallback
                         src={beer.imageUrl || beer.logoUrl}
                         alt={beer.name}
