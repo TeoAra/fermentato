@@ -111,7 +111,8 @@ export default function BreweryQuickStats({ breweryId }: BreweryQuickStatsProps)
     queryKey: ["/api/breweries", String(breweryId), "stats-extended"],
     queryFn: () => apiRequest(`/api/breweries/${breweryId}/stats-extended`),
     enabled: !!breweryId,
-    staleTime: 60 * 60 * 1000, // 1h — matches server-side memCached TTL
+    staleTime: 10 * 1000,        // 10 s — server cache is busted on mutations; treat data stale quickly
+    refetchInterval: 10 * 1000, // poll every 10 s so an open dashboard picks up changes without a manual refresh
   });
 
   /* derive prev-7-day views for ↑↓ trend */

@@ -57,3 +57,22 @@ export function bustPubStats(pubId: number) {
     try { fn(pubId); } catch { /* non-blocking */ }
   }
 }
+
+// ── Per-brewery stats cache ───────────────────────────────────────────────────
+// The brewery-stats-extended TTL cache lives in routes.ts. Tasting mutations
+// must invalidate it without creating an import cycle — register the deleter
+// here once and call bustBreweryStats(breweryId) from anywhere.
+type BreweryStatsBuster = (breweryId: number) => void;
+const breweryStatsBusters = new Set<BreweryStatsBuster>();
+
+/** Register the callback that deletes a per-brewery stats cache entry. */
+export function registerBreweryStatsBuster(fn: BreweryStatsBuster) {
+  breweryStatsBusters.add(fn);
+}
+
+/** Invalidate the cached stats for a specific brewery. Safe to call from any module. */
+export function bustBreweryStats(breweryId: number) {
+  for (const fn of breweryStatsBusters) {
+    try { fn(breweryId); } catch { /* non-blocking */ }
+  }
+}

@@ -40,7 +40,7 @@ import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
 import { breweryActiveSql, beerVisibleSql, rawBreweryActive, rawBeerVisibleJoined, rawBeerVisibleExists } from "./visibility";
 import { normalizeBeerSearch, buildBeerSearchFragments } from "./search-normalize";
-import { registerCatalogCacheBuster, registerHomeCacheBuster, registerPubStatsBuster } from "./catalog-cache";
+import { registerCatalogCacheBuster, registerHomeCacheBuster, registerPubStatsBuster, registerBreweryStatsBuster, bustBreweryStats } from "./catalog-cache";
 import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations, festivals, beerViews } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
@@ -86,6 +86,8 @@ registerCatalogCacheBuster(clearCatalogCaches);
 registerHomeCacheBuster(() => _memCache.delete("home:taplist-activity"));
 // Per-pub stats cache buster — called by bot mutations and HTTP taplist routes
 registerPubStatsBuster((pubId: number) => _memCache.delete(`stats-extended:${pubId}`));
+// Per-brewery stats cache buster — called whenever a tasting is created/updated/deleted
+registerBreweryStatsBuster((breweryId: number) => _memCache.delete(`brewery-stats-extended:${breweryId}`));
 
 // ── Popular search-term logging + cache pre-warming ─────────────────────────
 // Track how often each term is searched so we can periodically re-warm the
@@ -3728,6 +3730,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const updatedTasting = await storage.updateBeerTasting(tastingId, updateData, userId);
       res.json(updatedTasting);
+
+      // Bust brewery stats cache for the affected brewery (fire-and-forget)
+      pool.query(
+        `SELECT b.brewery_id FROM user_beer_tastings t JOIN beers b ON b.id = t.beer_id WHERE t.id = $1`,
+        [tastingId]
+      ).then(r => { if (r.rows[0]?.brewery_id) bustBreweryStats(r.rows[0].brewery_id); })
+       .catch(() => {});
     } catch (error) {
       console.error("Error updating beer tasting:", error);
       res.status(500).json({ message: "Failed to update beer tasting" });
@@ -5479,6 +5488,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tasting = await storage.addBeerTasting(tastingData);
       res.status(201).json(tasting);
 
+      // Bust brewery stats cache for the affected brewery (fire-and-forget)
+      if (tastingData.beerId) {
+        pool.query(`SELECT brewery_id FROM beers WHERE id = $1`, [tastingData.beerId])
+          .then(r => { if (r.rows[0]?.brewery_id) bustBreweryStats(r.rows[0].brewery_id); })
+          .catch(() => {});
+      }
+
       // Notify followers asynchronously
       try {
         const user = req.user as any;
@@ -5547,6 +5563,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const beerId = parseInt(req.params.beerId);
       await storage.removeBeerTasting(userId, beerId);
       res.status(200).json({ success: true });
+
+      // Bust brewery stats cache for the affected brewery (fire-and-forget)
+      pool.query(`SELECT brewery_id FROM beers WHERE id = $1`, [beerId])
+        .then(r => { if (r.rows[0]?.brewery_id) bustBreweryStats(r.rows[0].brewery_id); })
+        .catch(() => {});
     } catch (error) {
       console.error("Error removing beer tasting:", error);
       res.status(500).json({ message: "Failed to remove beer tasting" });
