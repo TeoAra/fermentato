@@ -233,7 +233,7 @@ export class MemoryStorage {
     return updatedPub;
   }
 
-  async searchPubs(query: string): Promise<Pub[]> {
+  async searchPubs(query: string, _city?: string): Promise<Pub[]> {
     const lowerQuery = query.toLowerCase();
     return Array.from(this.pubs.values()).filter(pub => 
       pub.name.toLowerCase().includes(lowerQuery) ||

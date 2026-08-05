@@ -208,7 +208,7 @@ export interface IStorage {
   updatePub(id: number, updates: Partial<InsertPub>): Promise<Pub>;
   deletePub(id: number): Promise<void>;
   getPubsByOwner(ownerId: string): Promise<Pub[]>;
-  searchPubs(query: string): Promise<Pub[]>;
+  searchPubs(query: string, city?: string): Promise<Pub[]>;
 
   // Brewery operations
   getBreweries(): Promise<Brewery[]>;
@@ -467,19 +467,24 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(pubs).where(eq(pubs.ownerId, ownerId));
   }
 
-  async searchPubs(query: string): Promise<Pub[]> {
+  async searchPubs(query: string, city?: string): Promise<Pub[]> {
     const q = `%${query}%`;
+    const baseCondition = or(
+      sql`unaccent(lower(${pubs.name})) LIKE unaccent(lower(${q}))`,
+      sql`unaccent(lower(${pubs.city})) LIKE unaccent(lower(${q}))`,
+      ilike(pubs.address, q),
+      ilike(pubs.description, q)
+    );
+    const cityCondition = city
+      ? sql`unaccent(lower(COALESCE(${pubs.city},''))) LIKE unaccent(lower(${'%' + city + '%'}))`
+      : undefined;
+    const whereClause = cityCondition ? and(baseCondition, cityCondition) : baseCondition;
     return await db
       .select()
       .from(pubs)
-      .where(or(
-        sql`unaccent(lower(${pubs.name})) LIKE unaccent(lower(${q}))`,
-        sql`unaccent(lower(${pubs.city})) LIKE unaccent(lower(${q}))`,
-        ilike(pubs.address, q),
-        ilike(pubs.description, q)
-      ))
+      .where(whereClause)
       .orderBy(asc(pubs.name))
-      .limit(10);
+      .limit(15);
   }
 
   // Brewery operations
@@ -2228,10 +2233,10 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async searchPubs(query: string): Promise<Pub[]> {
+  async searchPubs(query: string, city?: string): Promise<Pub[]> {
     return this.dbCall(
-      () => this.databaseStorage.searchPubs(query),
-      () => memoryStorageInstance.searchPubs(query)
+      () => this.databaseStorage.searchPubs(query, city),
+      () => memoryStorageInstance.searchPubs(query, city)
     );
   }
 

@@ -98,10 +98,10 @@ function normalizeSearchTerm(raw: string) {
 // case/spacing misses, e.g. "IPA" vs "ipa").
 function buildSearchCacheKey(
   query: string,
-  f: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number },
+  f: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number; city?: string },
   type: string = "all",
 ) {
-  return `search:${normalizeSearchTerm(query)}:${type}:${!!f.glutenFree}:${!!f.alcoholFree}:${f.style}:${f.minAbv}:${f.maxAbv}:${f.minIbu}:${f.maxIbu}`;
+  return `search:${normalizeSearchTerm(query)}:${type}:${!!f.glutenFree}:${!!f.alcoholFree}:${f.style ?? ""}:${f.minAbv ?? ""}:${f.maxAbv ?? ""}:${f.minIbu ?? ""}:${f.maxIbu ?? ""}:${f.city ?? ""}`;
 }
 function logSearchTerm(raw: string) {
   const t = normalizeSearchTerm(raw);
@@ -119,7 +119,7 @@ function logSearchTerm(raw: string) {
 async function performGlobalSearch(query: string, filters: any, type: string = "all") {
   const runAll = type === "all";
   const [pubs, breweries, beersResult, usersResult] = await Promise.all([
-    (runAll || type === "pubs") ? storage.searchPubs(query) : Promise.resolve([]),
+    (runAll || type === "pubs") ? storage.searchPubs(query, filters.city) : Promise.resolve([]),
     (runAll || type === "breweries") ? storage.searchBreweries(query) : Promise.resolve([]),
     (runAll || type === "beers") ? storage.searchBeers(query, filters) : Promise.resolve([]),
     pool.query(
@@ -1882,13 +1882,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const glutenFree = req.query.glutenFree === 'true';
       const alcoholFree = req.query.alcoholFree === 'true';
       const style = (req.query.style as string) || undefined;
+      const city = ((req.query.city as string) || "").trim() || undefined;
       const minAbv = req.query.minAbv ? parseFloat(req.query.minAbv as string) : undefined;
       const maxAbv = req.query.maxAbv ? parseFloat(req.query.maxAbv as string) : undefined;
       const minIbu = req.query.minIbu ? parseFloat(req.query.minIbu as string) : undefined;
       const maxIbu = req.query.maxIbu ? parseFloat(req.query.maxIbu as string) : undefined;
 
       const type = ((req.query.type as string) || "all").trim();
-      const cacheKey = buildSearchCacheKey(query, { glutenFree, alcoholFree, style, minAbv, maxAbv, minIbu, maxIbu }, type);
+      const cacheKey = buildSearchCacheKey(query, { glutenFree, alcoholFree, style, minAbv, maxAbv, minIbu, maxIbu, city }, type);
       const cached = getCached(cacheKey);
       if (cached) {
         res.setHeader('X-Cache', 'HIT');
@@ -1899,6 +1900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (glutenFree) filters.glutenFree = true;
       if (alcoholFree) filters.alcoholFree = true;
       if (style) filters.style = style;
+      if (city) filters.city = city;
       if (minAbv !== undefined) filters.minAbv = minAbv;
       if (maxAbv !== undefined) filters.maxAbv = maxAbv;
       if (minIbu !== undefined) filters.minIbu = minIbu;
