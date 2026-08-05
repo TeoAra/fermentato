@@ -35,7 +35,7 @@ export default function StickyPubTabs({ tabs, activeTab, onTabChange }: StickyPu
       aria-label="Sezioni del pub"
       data-testid="sticky-pub-tabs"
     >
-      <div className="max-w-md mx-auto flex items-stretch justify-between px-1 py-1.5 gap-1">
+      <div className="flex items-stretch justify-center px-1 py-1.5 gap-1">
         {tabs.map((tab) => {
           const isActive = tab.value === activeTab;
           return (
@@ -48,7 +48,7 @@ export default function StickyPubTabs({ tabs, activeTab, onTabChange }: StickyPu
               aria-label={tab.label}
               onClick={() => onTabChange(tab.value)}
               data-testid={`pub-tab-${tab.value}`}
-              className={`relative flex-1 flex flex-col items-center justify-center gap-1 py-1.5 px-1 rounded-2xl transition-colors duration-200 active:scale-95 ${
+              className={`relative flex flex-col items-center justify-center gap-1 py-1.5 px-3 min-w-[60px] rounded-2xl transition-colors duration-200 active:scale-95 ${
                 isActive
                   ? "text-[#F59E0B]"
                   : "text-[#6B6357] dark:text-[#B7BDC7] hover:text-[#151515] dark:hover:text-[#F5F5F5]"
