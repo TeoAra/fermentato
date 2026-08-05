@@ -72,7 +72,7 @@ export default function BeerHero({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
-      className="relative max-w-[720px] mx-auto"
+      className="relative max-w-[720px] lg:max-w-7xl mx-auto"
       data-testid="beer-hero"
     >
       {/* Cover artwork */}

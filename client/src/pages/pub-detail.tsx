@@ -715,7 +715,11 @@ export default function PubDetail() {
         className="max-w-[720px] lg:max-w-7xl mx-auto px-4 lg:px-8"
         style={{ paddingBottom: "calc(80px + var(--frozen-sab))" }}
       >
-          {canManage && (
+        <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-10 lg:items-start">
+
+          {/* ── LEFT: tab sections ─────────────────────────────────────── */}
+          <div>
+            {canManage && (
               <div className="pt-3">
                 <Link
                   href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}
@@ -771,6 +775,89 @@ export default function PubDetail() {
                 menuInfoBox={(pub as any)?.menuInfoBox ?? null}
               />
             </div>
+          </div>
+
+          {/* ── RIGHT: Desktop sticky sidebar ──────────────────────────── */}
+          <aside className="hidden lg:flex flex-col gap-4 sticky top-[116px] pt-3">
+
+            {/* Status + quick info card */}
+            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-4 space-y-3">
+
+              {/* Open/closed badge */}
+              <div className="flex items-center justify-between">
+                <span className={`inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full ${
+                  openStatus?.status === 'open' || openStatus?.status === 'closing_soon'
+                    ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                    : "bg-red-50 text-red-600 dark:bg-red-950/30 dark:text-red-400"
+                }`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${openStatus?.status === 'open' || openStatus?.status === 'closing_soon' ? "bg-emerald-500" : "bg-red-500"}`} />
+                  {openStatus?.label ?? (openStatus?.status === 'open' ? "Aperto" : "Chiuso")}
+                </span>
+                {pubData?.beerRatingAvg && pubData?.beerRatingCount > 0 && (
+                  <span className="flex items-center gap-1 text-sm font-bold text-amber-500">
+                    <Star className="w-3.5 h-3.5 fill-current" />
+                    {Number(pubData.beerRatingAvg).toFixed(1)}
+                    <span className="text-xs font-normal text-stone-400">({pubData.beerRatingCount})</span>
+                  </span>
+                )}
+              </div>
+
+              {/* Divider */}
+              <div className="border-t border-[#E8DED1] dark:border-white/[0.06]" />
+
+              {/* Address */}
+              {pubData?.address && (
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-snug">{pubData.address}</p>
+                    {pubData.city && (
+                      <p className="text-xs text-stone-400 mt-0.5">{pubData.city}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Phone */}
+              {pubData?.phone && (
+                <div className="flex items-center gap-2.5">
+                  <Phone className="w-4 h-4 text-primary flex-shrink-0" />
+                  <a href={`tel:${pubData.phone}`} className="text-sm text-stone-700 dark:text-stone-300 hover:text-primary transition-colors">
+                    {pubData.phone}
+                  </a>
+                </div>
+              )}
+
+              {/* Favorites */}
+              {(favoritesCountData?.count ?? 0) > 0 && (
+                <p className="text-xs text-stone-400 flex items-center gap-1">
+                  <Star className="w-3 h-3" />
+                  {favoritesCountData!.count} persone hanno salvato questo pub
+                </p>
+              )}
+            </div>
+
+            {/* Action buttons */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={handleDirections}
+                className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-primary/10 hover:bg-primary/15 text-primary text-sm font-semibold transition-colors"
+              >
+                <Navigation className="w-4 h-4" />
+                Indicazioni
+              </button>
+              <button
+                onClick={handleCall}
+                disabled={!pubData?.phone}
+                className="flex items-center justify-center gap-1.5 h-10 rounded-xl bg-stone-100 dark:bg-white/[0.05] hover:bg-stone-200 dark:hover:bg-white/[0.08] text-stone-700 dark:text-stone-300 text-sm font-semibold transition-colors disabled:opacity-40"
+              >
+                <Phone className="w-4 h-4" />
+                Chiama
+              </button>
+            </div>
+
+          </aside>
+        </div>
       </main>
 
       {/* Check-in modal */}
