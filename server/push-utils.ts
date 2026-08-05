@@ -203,7 +203,8 @@ export type NotifCategory =
   | 'tapChanges' | 'events' | 'newPubs'
   | 'checkinLikes' | 'checkinComments'
   | 'newFollowers' | 'breweryReplies'
-  | 'reportUpdates' | 'adminBroadcasts';
+  | 'reportUpdates' | 'adminBroadcasts'
+  | 'mentions';
 
 export function initVapid() {
   if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {

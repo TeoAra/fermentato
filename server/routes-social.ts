@@ -166,6 +166,10 @@ async function runSocialMigrations() {
       CREATE INDEX IF NOT EXISTS idx_microblog_beer_id ON microblog_posts(beer_id) WHERE beer_id IS NOT NULL;
       CREATE INDEX IF NOT EXISTS idx_microblog_event ON microblog_posts(event_id, event_source_type) WHERE event_id IS NOT NULL;
       CREATE INDEX IF NOT EXISTS idx_microblog_hashtags ON microblog_posts USING GIN (hashtags);
+
+      -- @mentions support
+      ALTER TABLE microblog_posts ADD COLUMN IF NOT EXISTS mentions TEXT[] DEFAULT '{}';
+      CREATE INDEX IF NOT EXISTS idx_microblog_mentions ON microblog_posts USING GIN (mentions);
     `);
 
     // Backfill: copia review_reports → content_reports una sola volta
@@ -537,12 +541,63 @@ export async function registerSocialRoutes(app: Express) {
       if (hashtagSet.size >= 10) break;
     }
     const hashtags = Array.from(hashtagSet);
+
+    // Extract @mentions: username 2-30 word chars, preceded by non-word or start
+    const mentionSet = new Set<string>();
+    const mre = /(?:^|[^A-Za-z0-9_@])@([A-Za-z0-9_]{2,30})/g;
+    let mm: RegExpExecArray | null;
+    // Strip HTML tags first so we match only visible text
+    const plainContent = content.replace(/<[^>]+>/g, " ");
+    while ((mm = mre.exec(plainContent)) !== null) {
+      mentionSet.add(mm[1].toLowerCase());
+      if (mentionSet.size >= 10) break;
+    }
+    const mentionNicknames = Array.from(mentionSet);
+
     const { rows } = await pool.query(
-      `INSERT INTO microblog_posts (user_id, content, image_url, beer_id, pub_id, brewery_id, event_id, event_source_type, hashtags)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
-      [userId, content, imageUrl, beerId, pubId, breweryId, eventId, eventSourceType, hashtags],
+      `INSERT INTO microblog_posts (user_id, content, image_url, beer_id, pub_id, brewery_id, event_id, event_source_type, hashtags, mentions)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [userId, content, imageUrl, beerId, pubId, breweryId, eventId, eventSourceType, hashtags, mentionNicknames],
     );
-    res.json(rows[0]);
+    const newPost = rows[0];
+    res.json(newPost);
+
+    // Fire mention notifications (non-blocking, after response)
+    if (mentionNicknames.length > 0) {
+      try {
+        const placeholders = mentionNicknames.map((_, i) => `$${i + 2}`).join(", ");
+        const { rows: mentionedUsers } = await pool.query(
+          `SELECT id, nickname,
+                  COALESCE(nickname, NULLIF(TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')), ''), 'qualcuno') AS display_name
+           FROM users WHERE lower(nickname) = ANY(ARRAY[${mentionNicknames.map((_, i) => `$${i + 1}`).join(", ")}]::text[])`,
+          mentionNicknames,
+        );
+        // Get poster display name for notification
+        const { rows: [poster] } = await pool.query(
+          `SELECT COALESCE(nickname, NULLIF(TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,'')), ''), 'qualcuno') AS display_name FROM users WHERE id = $1`,
+          [userId],
+        );
+        const posterName = poster?.display_name || "qualcuno";
+        const snippet = plainContent.replace(/\s+/g, " ").trim().slice(0, 100);
+        for (const mu of mentionedUsers) {
+          if (mu.id === userId) continue; // don't notify yourself
+          sendPushToUser(mu.id, {
+            title: `@${posterName} ti ha menzionato`,
+            body: snippet || "Hai una nuova menzione",
+            url: `/feed`,
+            tag: `mention-${newPost.id}`,
+            category: "mentions",
+          });
+          // Also insert in-app notification
+          pool.query(
+            `INSERT INTO notifications (user_id, type, title, message, url) VALUES ($1, 'mention', $2, $3, $4)`,
+            [mu.id, `@${posterName} ti ha menzionato`, snippet || "Hai una nuova menzione", `/feed`],
+          ).catch(() => {});
+        }
+      } catch (e: any) {
+        console.warn("[social] mention notifications failed:", e.message);
+      }
+    }
   });
 
   app.delete("/api/microblog/posts/:id", isAuthenticated, async (req: any, res) => {
