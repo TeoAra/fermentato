@@ -63,7 +63,8 @@ export default function BreweryHero({
       className="relative max-w-[720px] lg:max-w-7xl mx-auto"
       data-testid="brewery-hero"
     >
-      {/* Cover */}
+      {/* Cover — on lg+ inset to match the card's horizontal padding */}
+      <div className="lg:px-8">
       <div className="relative h-[260px] sm:h-[300px] overflow-hidden rounded-b-[28px] bg-stone-200 dark:bg-stone-900">
         {brewery?.coverImageUrl ? (
           <img src={brewery.coverImageUrl} alt="" className="w-full h-full object-cover" loading="lazy" decoding="async" />
@@ -126,6 +127,7 @@ export default function BreweryHero({
             ) : null}
           </div>
         </div>
+      </div>
       </div>
 
       {/* Overlapping card */}

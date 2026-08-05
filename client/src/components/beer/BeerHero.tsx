@@ -75,7 +75,8 @@ export default function BeerHero({
       className="relative max-w-[720px] lg:max-w-7xl mx-auto"
       data-testid="beer-hero"
     >
-      {/* Cover artwork */}
+      {/* Cover artwork — on lg+ inset to match the card's horizontal padding */}
+      <div className="lg:px-8">
       <div className="relative h-[260px] sm:h-[300px] overflow-hidden rounded-b-[28px] bg-stone-900">
         {heroImg ? (
           <>
@@ -151,6 +152,7 @@ export default function BeerHero({
             )}
           </div>
         </div>
+      </div>
       </div>
 
       {/* Overlapping card */}

@@ -68,7 +68,8 @@ export default function PubHero({
       className="relative max-w-[720px] lg:max-w-7xl mx-auto"
       data-testid="pub-hero"
     >
-      {/* Cover */}
+      {/* Cover — on lg+ inset to match the card's horizontal padding */}
+      <div className="lg:px-8">
       <div className="relative h-[260px] sm:h-[300px] overflow-hidden rounded-b-[28px] bg-stone-200">
         <ImageWithFallback
           src={cover}
@@ -121,6 +122,7 @@ export default function PubHero({
             </span>
           </div>
         )}
+      </div>
       </div>
 
       {/* Overlapping card */}
