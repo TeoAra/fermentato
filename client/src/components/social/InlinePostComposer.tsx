@@ -1,12 +1,14 @@
 /**
- * InlinePostComposer — Facebook-style expanding composer.
- * Used in social feed (desktop) and activity Sociale tab (mobile).
+ * InlinePostComposer — Facebook/Instagram-style expanding composer.
+ * - @mention picker triggers automatically when you type "@"
+ * - #hashtag and @mention chips shown inline (Instagram/TikTok style)
+ * - No separate "Menziona" button
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
-  Send, AtSign, Loader2, X, Camera, PenSquare, Search,
+  Send, Loader2, X, Camera, PenSquare,
   Beer as BeerIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,43 +30,48 @@ function Avatar({ user, size = 9 }: { user: any; size?: number }) {
   );
 }
 
-/* ── mention picker ── */
-function MentionPicker({ onSelect, onClose }: { onSelect: (u: any) => void; onClose: () => void }) {
-  const [query, setQuery]     = useState("");
+/* ── mention picker (query controlled by parent) ── */
+function MentionPicker({
+  query,
+  onSelect,
+  onClose,
+}: {
+  query: string;
+  onSelect: (u: any) => void;
+  onClose: () => void;
+}) {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { inputRef.current?.focus(); }, []);
+
   useEffect(() => {
-    if (query.trim().length < 2) { setResults([]); return; }
+    if (query.trim().length < 1) { setResults([]); return; }
     const t = setTimeout(async () => {
       setLoading(true);
       try {
         const r = await fetch(`/api/users/search?q=${encodeURIComponent(query.trim())}`);
         if (r.ok) setResults(await r.json());
+        else setResults([]);
       } finally { setLoading(false); }
-    }, 280);
+    }, 200);
     return () => clearTimeout(t);
   }, [query]);
+
+  if (!loading && results.length === 0) return null;
+
   return (
-    <div className="bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-[#23262E] rounded-2xl shadow-lg overflow-hidden">
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-stone-100 dark:border-[#23262E]">
-        <Search className="w-4 h-4 text-stone-400 shrink-0" />
-        <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
-          placeholder="Cerca utente…"
-          className="flex-1 text-sm bg-transparent outline-none placeholder:text-stone-400" />
-        {loading && <Loader2 className="w-4 h-4 animate-spin text-stone-400 shrink-0" />}
-        <button onClick={onClose} className="p-0.5 rounded-full hover:bg-stone-100 dark:hover:bg-[#23262E]">
-          <X className="w-4 h-4 text-stone-400" />
-        </button>
-      </div>
-      {results.length > 0 ? (
+    <div className="bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden">
+      {loading && results.length === 0 ? (
+        <div className="flex items-center gap-2 px-4 py-3 text-sm text-stone-400">
+          <Loader2 className="w-4 h-4 animate-spin" /> Cercando…
+        </div>
+      ) : (
         <ul className="max-h-44 overflow-y-auto divide-y divide-stone-50 dark:divide-[#23262E]">
           {results.map(u => {
             const display = u.nickname || [u.first_name, u.last_name].filter(Boolean).join(" ") || "utente";
             return (
               <li key={u.id}>
-                <button onClick={() => onSelect(u)}
+                <button
+                  onMouseDown={e => { e.preventDefault(); onSelect(u); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-stone-50 dark:hover:bg-[#23262E] text-left transition-colors">
                   {u.profile_image_url
                     ? <img src={u.profile_image_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
@@ -80,11 +87,46 @@ function MentionPicker({ onSelect, onClose }: { onSelect: (u: any) => void; onCl
             );
           })}
         </ul>
-      ) : query.trim().length >= 2 && !loading ? (
-        <p className="px-4 py-3 text-sm text-stone-400 text-center">Nessun utente trovato</p>
-      ) : (
-        <p className="px-4 py-3 text-xs text-stone-400 text-center">Digita almeno 2 caratteri</p>
       )}
+    </div>
+  );
+}
+
+/* ── tag chips (hashtags + mentions counted) ── */
+function TagChips({ text }: { text: string }) {
+  const hashCounts: Record<string, number> = {};
+  const mentionCounts: Record<string, number> = {};
+
+  for (const m of text.matchAll(/#([\w\u00C0-\u024F]+)/g))
+    hashCounts[m[1]] = (hashCounts[m[1]] ?? 0) + 1;
+  for (const m of text.matchAll(/@([\w\u00C0-\u024F]+)/g))
+    mentionCounts[m[1]] = (mentionCounts[m[1]] ?? 0) + 1;
+
+  const hashes  = Object.entries(hashCounts);
+  const mentions = Object.entries(mentionCounts);
+
+  if (hashes.length === 0 && mentions.length === 0) return null;
+
+  return (
+    <div className="flex flex-wrap gap-1.5 px-1">
+      {hashes.map(([tag, count]) => (
+        <span key={`h-${tag}`}
+          className="inline-flex items-center gap-1 bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-full px-2.5 py-0.5 text-xs font-semibold">
+          #{tag}
+          {count > 1 && (
+            <span className="bg-amber-200 dark:bg-amber-700 text-amber-800 dark:text-amber-200 rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">{count}</span>
+          )}
+        </span>
+      ))}
+      {mentions.map(([name, count]) => (
+        <span key={`m-${name}`}
+          className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-full px-2.5 py-0.5 text-xs font-semibold">
+          @{name}
+          {count > 1 && (
+            <span className="bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-200 rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">{count}</span>
+          )}
+        </span>
+      ))}
     </div>
   );
 }
@@ -92,16 +134,20 @@ function MentionPicker({ onSelect, onClose }: { onSelect: (u: any) => void; onCl
 /* ── main component ── */
 interface InlinePostComposerProps {
   user: any;
-  /** extra query keys to invalidate on success (in addition to the feed ones) */
   extraInvalidate?: string[][];
 }
 
 export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposerProps) {
-  const [expanded, setExpanded]     = useState(false);
-  const [text, setText]             = useState("");
-  const [imageUrl, setImageUrl]     = useState<string | null>(null);
-  const [uploading, setUploading]   = useState(false);
-  const [mentionOpen, setMentionOpen] = useState(false);
+  const [expanded, setExpanded]   = useState(false);
+  const [text, setText]           = useState("");
+  const [imageUrl, setImageUrl]   = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  /* mention state */
+  const [mentionOpen, setMentionOpen]     = useState(false);
+  const [mentionQuery, setMentionQuery]   = useState("");
+  const [mentionStart, setMentionStart]   = useState(0); // index of "@" in text
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef     = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -120,7 +166,52 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
   }, [expanded]);
 
   const reset = () => {
-    setText(""); setImageUrl(null); setMentionOpen(false); setExpanded(false);
+    setText(""); setImageUrl(null);
+    setMentionOpen(false); setMentionQuery(""); setExpanded(false);
+  };
+
+  /* detect @mention context on every keystroke */
+  const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setText(val);
+
+    const cursor = e.target.selectionStart ?? val.length;
+    const before = val.slice(0, cursor);
+    const match  = before.match(/@([\w\u00C0-\u024F]*)$/);
+
+    if (match) {
+      setMentionStart(cursor - match[0].length);
+      setMentionQuery(match[1]);
+      setMentionOpen(true);
+    } else {
+      setMentionOpen(false);
+    }
+  }, []);
+
+  /* pick a user from the mention dropdown */
+  const completeMention = useCallback((u: any) => {
+    const nick     = u.nickname || u.first_name || "utente";
+    const before   = text.slice(0, mentionStart);
+    const after    = text.slice(mentionStart + 1 + mentionQuery.length); // skip "@query"
+    const newText  = before + "@" + nick + " " + after.replace(/^\s*/, "");
+    setText(newText);
+    setMentionOpen(false);
+    setMentionQuery("");
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const pos = (before + "@" + nick + " ").length;
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(pos, pos);
+      }
+    }, 0);
+  }, [text, mentionStart, mentionQuery]);
+
+  /* close mention picker on Escape */
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Escape" && mentionOpen) {
+      setMentionOpen(false);
+      e.stopPropagation();
+    }
   };
 
   const postMut = useMutation({
@@ -157,13 +248,6 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
     } finally { setUploading(false); }
   };
 
-  const appendMention = (u: any) => {
-    const nick = u.nickname || u.first_name || "utente";
-    setText(prev => prev ? prev + " @" + nick : "@" + nick);
-    setMentionOpen(false);
-    setTimeout(() => textareaRef.current?.focus(), 50);
-  };
-
   const canSubmit = text.trim().length > 0 && !postMut.isPending && !uploading;
   const firstName = user?.firstName ?? user?.first_name ?? "appassionato";
 
@@ -171,7 +255,7 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
     <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-3 transition-all duration-200">
 
       {/* top row — always visible */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-start gap-2.5">
         <Avatar user={user} size={9} />
         {!expanded ? (
           <button onClick={() => setExpanded(true)}
@@ -179,23 +263,37 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
             Cosa stai bevendo, {firstName}?
           </button>
         ) : (
-          <textarea
-            ref={textareaRef}
-            value={text}
-            onChange={e => setText(e.target.value)}
-            placeholder={`Cosa stai bevendo, ${firstName}? Usa @nome e #hashtag…`}
-            rows={1}
-            className="flex-1 resize-none overflow-hidden text-sm bg-stone-50 dark:bg-[#12151A] rounded-xl px-4 py-2.5 outline-none placeholder:text-stone-400 text-stone-800 dark:text-stone-100 leading-relaxed min-h-[40px] max-h-60"
-          />
+          <div className="flex-1 min-w-0">
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={handleTextChange}
+              onKeyDown={handleKeyDown}
+              placeholder={`Cosa stai bevendo, ${firstName}? Digita @ per menzionare, # per hashtag…`}
+              rows={1}
+              className="w-full resize-none overflow-hidden text-sm bg-stone-50 dark:bg-[#12151A] rounded-xl px-4 py-2.5 outline-none placeholder:text-stone-400 text-stone-800 dark:text-stone-100 leading-relaxed min-h-[40px] max-h-60"
+            />
+          </div>
         )}
       </div>
 
       {/* expanded panel */}
       {expanded && (
-        <div className="mt-3 space-y-3">
+        <div className="mt-2 space-y-2.5">
+
+          {/* inline mention picker — appears right below textarea */}
           {mentionOpen && (
-            <MentionPicker onSelect={appendMention} onClose={() => setMentionOpen(false)} />
+            <MentionPicker
+              query={mentionQuery}
+              onSelect={completeMention}
+              onClose={() => setMentionOpen(false)}
+            />
           )}
+
+          {/* tag chips preview */}
+          <TagChips text={text} />
+
+          {/* image preview */}
           {imageUrl && (
             <div className="relative">
               <img src={imageUrl} alt="" className="w-full rounded-xl object-cover max-h-64" />
@@ -205,19 +303,13 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
               </button>
             </div>
           )}
-          <p className="text-[11px] text-stone-400 px-1">
-            <span className="text-amber-500 font-semibold">#hashtag</span> e{" "}
-            <span className="text-blue-500 font-semibold">@menzioni</span> supportati
-          </p>
+
+          {/* action row — NO "Menziona" button */}
           <div className="flex items-center gap-1 border-t border-stone-100 dark:border-white/[0.04] pt-2.5">
             <button onClick={() => fileRef.current?.click()} disabled={uploading}
               className="flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-primary hover:bg-primary/5 rounded-xl px-3 py-2 transition-colors">
               {uploading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
               Foto
-            </button>
-            <button onClick={() => setMentionOpen(v => !v)}
-              className={`flex items-center gap-1.5 text-xs font-semibold rounded-xl px-3 py-2 transition-colors ${mentionOpen ? "text-blue-600 bg-blue-50 dark:bg-blue-900/20" : "text-stone-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"}`}>
-              <AtSign className="w-3.5 h-3.5" /> Menziona
             </button>
             <div className="flex-1" />
             <button onClick={reset}
