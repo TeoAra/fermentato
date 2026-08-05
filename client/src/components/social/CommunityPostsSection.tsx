@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { Heart, MessageCircle, PenSquare, Users } from "lucide-react";
+import { PenSquare, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { PostContent } from "./PostContent";
 import { EntityPreviewCard, type EntityType } from "./EntityPreviewCard";
+import { MicroblogSocialBar } from "./MicroblogSocialBar";
 
 export type TaggedEntity =
   | { kind: "pub"; id: number; name: string }
@@ -47,29 +47,13 @@ function PostAvatar({ post, size = 8 }: { post: any; size?: number }) {
 }
 
 function CommunityPostCard({ post }: { post: any }) {
-  const queryClient = useQueryClient();
-  const { isAuthenticated } = useAuth();
   const [entityPreview, setEntityPreview] = useState<{
     type: "brewery" | "pub" | "beer"; id: number; rect: DOMRect;
   } | null>(null);
 
-  const likeMut = useMutation({
-    mutationFn: () => apiRequest(`/api/microblog/posts/${post.id}/like`, { method: post.liked ? "DELETE" : "POST" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/posts"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
-    },
-  });
-
-  const handleEntityChip = (
-    e: React.MouseEvent,
-    type: "brewery" | "pub" | "beer",
-    id: number,
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setEntityPreview({ type, id, rect });
+  const handleEntityChip = (e: React.MouseEvent, type: "brewery" | "pub" | "beer", id: number) => {
+    e.preventDefault(); e.stopPropagation();
+    setEntityPreview({ type, id, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() });
   };
 
   return (
@@ -92,45 +76,34 @@ function CommunityPostCard({ post }: { post: any }) {
       {(post.beer_name || post.pub_name || post.brewery_name) && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {post.beer_name && post.beer_id && (
-            <button
-              onClick={(e) => handleEntityChip(e, "beer", post.beer_id)}
-              className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold cursor-pointer hover:bg-primary/20 transition-colors"
-            >
+            <button onClick={(e) => handleEntityChip(e, "beer", post.beer_id)}
+              className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold cursor-pointer hover:bg-primary/20 transition-colors">
               🍺 {post.beer_name}
             </button>
           )}
           {post.pub_name && post.pub_id && (
-            <button
-              onClick={(e) => handleEntityChip(e, "pub", post.pub_id)}
-              className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A] transition-colors"
-            >
+            <button onClick={(e) => handleEntityChip(e, "pub", post.pub_id)}
+              className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A] transition-colors">
               📍 {post.pub_name}
             </button>
           )}
           {post.brewery_name && post.brewery_id && (
-            <button
-              onClick={(e) => handleEntityChip(e, "brewery", post.brewery_id)}
-              className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A] transition-colors"
-            >
+            <button onClick={(e) => handleEntityChip(e, "brewery", post.brewery_id)}
+              className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A] transition-colors">
               🏭 {post.brewery_name}
             </button>
           )}
         </div>
       )}
-      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40 flex items-center gap-4">
-        <button
-          onClick={() => isAuthenticated && likeMut.mutate()}
-          disabled={!isAuthenticated || likeMut.isPending}
-          className={`flex items-center gap-1.5 text-xs font-semibold transition-colors ${post.liked ? "text-red-500" : "text-stone-500 hover:text-red-500"} disabled:opacity-60`}
-          data-testid={`post-like-${post.id}`}
-        >
-          <Heart className="w-4 h-4" fill={post.liked ? "currentColor" : "none"} />
-          {post.likes_count ?? 0}
-        </button>
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-stone-500">
-          <MessageCircle className="w-4 h-4" />
-          {post.comments_count ?? 0}
-        </span>
+      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40">
+        <MicroblogSocialBar
+          postId={post.id}
+          postUserId={post.user_id}
+          liked={post.liked ?? false}
+          likesCount={post.likes_count ?? 0}
+          commentsCount={post.comments_count ?? 0}
+          content={post.content ?? ""}
+        />
       </div>
 
       {entityPreview && (

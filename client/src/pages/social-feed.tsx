@@ -285,6 +285,7 @@ function MicroblogCard({ post }: { post: any }) {
           liked={post.liked}
           likesCount={post.likes_count ?? 0}
           commentsCount={post.comments_count ?? 0}
+          content={post.content ?? ""}
         />
       </div>
 

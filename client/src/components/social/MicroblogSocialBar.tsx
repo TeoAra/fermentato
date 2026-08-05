@@ -7,7 +7,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
 import {
-  Heart, MessageCircle, MoreHorizontal, Flag, Trash2, Send, Loader2,
+  Heart, MessageCircle, MoreHorizontal, Flag, Trash2, Send, Loader2, Pencil, Check, X,
 } from "lucide-react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
@@ -227,9 +227,10 @@ interface Props {
   liked: boolean;
   likesCount: number;
   commentsCount: number;
+  content: string; // raw HTML content for editing
 }
 
-export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, commentsCount }: Props) {
+export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, commentsCount, content }: Props) {
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -239,9 +240,24 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
   const [reportCommentId, setReportCommentId] = useState<number | null>(null);
   const [commentText, setCommentText] = useState("");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editText, setEditText] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const editRef = useRef<HTMLTextAreaElement>(null);
 
   const isOwn = user && String((user as any).id) === String(postUserId);
+
+  const startEdit = () => {
+    // strip HTML to plain text for editing
+    const plain = content
+      .replace(/<\/p>\s*<p>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .trim();
+    setEditText(plain);
+    setEditing(true);
+    setMenuOpen(false);
+    setTimeout(() => editRef.current?.focus(), 50);
+  };
 
   const likeMut = useMutation({
     mutationFn: () =>
@@ -249,7 +265,21 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/posts"] });
     },
+  });
+
+  const editMut = useMutation({
+    mutationFn: () =>
+      apiRequest(`/api/microblog/posts/${postId}`, { method: "PATCH" }, { content: editText.trim() }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/posts"] });
+      setEditing(false);
+      toast({ title: "Post aggiornato ✓" });
+    },
+    onError: () => toast({ title: "Errore modifica", variant: "destructive" }),
   });
 
   const deleteMut = useMutation({
@@ -257,6 +287,7 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/posts"] });
       toast({ title: "Post eliminato" });
     },
     onError: () => toast({ title: "Errore", variant: "destructive" }),
@@ -292,7 +323,38 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
 
   return (
     <div>
-      {/* social bar row */}
+      {/* ── edit mode ── */}
+      {editing && (
+        <div className="space-y-2">
+          <textarea
+            ref={editRef}
+            value={editText}
+            onChange={e => setEditText(e.target.value)}
+            rows={3}
+            maxLength={5000}
+            className="w-full resize-none text-sm bg-stone-50 dark:bg-[#12151A] rounded-xl px-3 py-2 outline-none placeholder:text-stone-400 leading-relaxed"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={() => editText.trim() && editMut.mutate()}
+              disabled={!editText.trim() || editMut.isPending}
+              className="flex items-center gap-1.5 text-xs font-semibold text-primary bg-primary/10 hover:bg-primary/20 disabled:opacity-40 px-3 py-1.5 rounded-full transition-colors"
+            >
+              {editMut.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+              Salva
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              className="flex items-center gap-1.5 text-xs font-semibold text-stone-400 hover:text-stone-600 px-3 py-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-white/[0.05] transition-colors"
+            >
+              <X className="w-3 h-3" /> Annulla
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── normal mode ── */}
+      {!editing && (
       <div className="flex items-center gap-4">
         {/* like */}
         <button
@@ -331,15 +393,23 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
             {menuOpen && (
               <div className="absolute right-0 bottom-full mb-1 z-30 bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-white/[0.08] rounded-xl shadow-lg min-w-[140px] py-1">
                 {isOwn ? (
-                  <button
-                    onMouseDown={() => {
-                      setMenuOpen(false);
-                      if (confirm("Eliminare questo post?")) deleteMut.mutate();
-                    }}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl font-semibold transition-colors flex items-center gap-2"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" /> Elimina
-                  </button>
+                  <>
+                    <button
+                      onMouseDown={startEdit}
+                      className="w-full text-left px-4 py-2.5 text-sm text-stone-700 dark:text-stone-200 hover:bg-stone-50 dark:hover:bg-white/[0.05] rounded-xl font-semibold transition-colors flex items-center gap-2"
+                    >
+                      <Pencil className="w-3.5 h-3.5" /> Modifica
+                    </button>
+                    <button
+                      onMouseDown={() => {
+                        setMenuOpen(false);
+                        if (confirm("Eliminare questo post?")) deleteMut.mutate();
+                      }}
+                      className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl font-semibold transition-colors flex items-center gap-2"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" /> Elimina
+                    </button>
+                  </>
                 ) : (
                   <button
                     onMouseDown={() => { setMenuOpen(false); setReportPostOpen(true); }}
@@ -353,6 +423,7 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
           </div>
         )}
       </div>
+      )}
 
       {/* comment section */}
       {commentsOpen && (

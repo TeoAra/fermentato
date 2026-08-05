@@ -633,6 +633,21 @@ export async function registerSocialRoutes(app: Express) {
     }
   });
 
+  app.patch("/api/microblog/posts/:id", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.id, 10);
+    const raw = String(req.body?.content ?? "").trim().slice(0, 5000);
+    if (!raw) return res.status(400).json({ message: "Contenuto vuoto" });
+    // wrap plain text in <p> tags; leave HTML as-is
+    const html = raw.startsWith("<") ? raw : `<p>${raw.replace(/\n/g, "</p><p>")}</p>`;
+    const { rowCount } = await pool.query(
+      `UPDATE microblog_posts SET content = $1 WHERE id = $2 AND user_id = $3`,
+      [html, postId, userId],
+    );
+    if (!rowCount) return res.status(404).json({ message: "Post non trovato o non autorizzato" });
+    res.json({ updated: true });
+  });
+
   app.delete("/api/microblog/posts/:id", isAuthenticated, async (req: any, res) => {
     const userId = req.user.id;
     const postId = parseInt(req.params.id, 10);

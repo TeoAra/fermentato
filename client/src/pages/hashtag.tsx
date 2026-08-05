@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PostContent } from "@/components/social/PostContent";
 import TrendingHashtags from "@/components/social/TrendingHashtags";
+import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
 
 function PostAvatar({ post }: { post: any }) {
   const name = post.display_name ?? post.username ?? "?";
@@ -106,6 +107,16 @@ export default function HashtagPage() {
                   )}
                 </div>
               )}
+              <div className="mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
+                <MicroblogSocialBar
+                  postId={post.id}
+                  postUserId={post.user_id}
+                  liked={post.liked ?? false}
+                  likesCount={post.likes_count ?? 0}
+                  commentsCount={post.comments_count ?? 0}
+                  content={post.content ?? ""}
+                />
+              </div>
             </div>
           ))
         )}
