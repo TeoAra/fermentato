@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import {
-  BarChart3, Eye, TrendingUp, Beer, Calendar, Flame,
+  BarChart3, Eye, TrendingUp, Beer, Calendar, Flame, MapPin, Store,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { it } from "date-fns/locale";
@@ -35,12 +35,41 @@ interface StatsExtended {
   topBeersByViews?: TopBeerByViews[];
 }
 
+interface BeerOnTap {
+  beerId: number;
+  beerName: string;
+  imageUrl?: string | null;
+  updatedAt: string | null;
+}
+
+interface DistributionPub {
+  id: number;
+  name: string;
+  address?: string | null;
+  city?: string | null;
+  region?: string | null;
+  logo_url?: string | null;
+  beer_count: number;
+  last_updated: string | null;
+  beers_on_tap: BeerOnTap[];
+}
+
 /** Format a date string like "2026-07-01" → "1 lug" */
 function fmtDay(dateStr: string): string {
   try {
     return format(parseISO(dateStr), "d MMM", { locale: it });
   } catch {
     return dateStr;
+  }
+}
+
+/** Format a timestamp to a relative-friendly string */
+function fmtRelative(dateStr: string | null): string {
+  if (!dateStr) return "—";
+  try {
+    return format(new Date(dateStr), "d MMM yyyy", { locale: it });
+  } catch {
+    return "—";
   }
 }
 
@@ -59,9 +88,17 @@ export default function BreweryAnalyticsTab({ breweryId }: BreweryAnalyticsTabPr
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: distribution, isLoading: isLoadingDist } = useQuery<DistributionPub[]>({
+    queryKey: ["/api/breweries", breweryId, "distribution"],
+    queryFn: () => apiRequest(`/api/breweries/${breweryId}/distribution`),
+    enabled: !!breweryId,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const viewsSeries: ViewsSeries[] = stats?.viewsSeries ?? [];
   const topBeersByViews: TopBeerByViews[] = stats?.topBeersByViews ?? [];
   const maxViews = viewsSeries.length > 0 ? Math.max(...viewsSeries.map((d) => d.views), 1) : 1;
+  const pubList: DistributionPub[] = distribution ?? [];
 
   return (
     <div className="space-y-6">
@@ -339,6 +376,102 @@ export default function BreweryAnalyticsTab({ breweryId }: BreweryAnalyticsTabPr
           </Card>
         </div>
       )}
+
+      {/* Distribuzione — Pub che servono le tue birre */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <Store className="h-4 w-4 text-primary" />
+            Pub che servono le tue birre
+          </h3>
+          {!isLoadingDist && pubList.length > 0 && (
+            <span className="text-xs text-muted-foreground bg-stone-100 dark:bg-stone-800 px-2 py-0.5 rounded-full font-medium">
+              {pubList.length} {pubList.length === 1 ? "locale" : "locali"}
+            </span>
+          )}
+        </div>
+
+        <Card className="border-stone-200 dark:border-white/[0.06] overflow-hidden">
+          {isLoadingDist ? (
+            <div className="p-8 text-center text-muted-foreground text-sm">Caricamento...</div>
+          ) : pubList.length === 0 ? (
+            <div className="p-8 text-center">
+              <Store className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">
+                Nessun pub sta attualmente servendo le tue birre alla spina.
+              </p>
+              <p className="text-xs text-muted-foreground/70 mt-1">
+                Quando un pub aggiunge una tua birra alla sua taplist, apparirà qui.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
+              {pubList.map((pub) => {
+                const beers = Array.isArray(pub.beers_on_tap) ? pub.beers_on_tap : [];
+                return (
+                  <div key={pub.id} className="px-4 py-4 hover:bg-stone-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                    <div className="flex items-start gap-3">
+                      {/* Pub logo / placeholder */}
+                      {pub.logo_url ? (
+                        <ImageWithFallback
+                          src={pub.logo_url}
+                          alt={pub.name}
+                          imageType="pub"
+                          className="w-10 h-10 rounded-xl object-cover flex-shrink-0 border border-stone-100 dark:border-white/[0.06]"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-stone-800 flex items-center justify-center flex-shrink-0">
+                          <Store className="h-5 w-5 text-muted-foreground/50" />
+                        </div>
+                      )}
+
+                      <div className="flex-1 min-w-0">
+                        {/* Pub name + beer count badge */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="text-sm font-semibold text-foreground truncate">{pub.name}</span>
+                          <span className="text-[10px] font-medium bg-primary/10 text-primary px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                            {pub.beer_count} {pub.beer_count === 1 ? "birra" : "birre"}
+                          </span>
+                        </div>
+
+                        {/* Location */}
+                        {(pub.city || pub.region) && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <MapPin className="h-3 w-3 flex-shrink-0" />
+                            {[pub.city, pub.region].filter(Boolean).join(", ")}
+                          </p>
+                        )}
+
+                        {/* Beers on tap chips */}
+                        {beers.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {beers.map((b) => (
+                              <span
+                                key={b.beerId}
+                                className="inline-flex items-center gap-1 text-[11px] bg-stone-100 dark:bg-stone-800 text-foreground px-2 py-0.5 rounded-full"
+                              >
+                                <Beer className="h-3 w-3 text-muted-foreground" />
+                                {b.beerName}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Last updated */}
+                        {pub.last_updated && (
+                          <p className="text-[10px] text-muted-foreground/60 mt-1.5">
+                            Aggiornato il {fmtRelative(pub.last_updated)}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

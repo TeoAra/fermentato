@@ -9056,14 +9056,29 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
 
   // ─── Brewery Distribution ────────────────────────────────────────────────────
   // GET pubs that have at least one beer from this brewery on their taplist
-  app.get("/api/breweries/:id/distribution", async (req, res) => {
+  app.get("/api/breweries/:id/distribution", isAuthenticated, async (req: any, res) => {
     try {
       const breweryId = parseInt(req.params.id);
+      const userId = req.user?.id;
+      const user = await storage.getUser(userId);
+      const isOwner = user?.breweryId === breweryId;
+      const isAdminUser = req.user?.activeRole === "admin" || req.user?.userType === "admin";
+      if (!isOwner && !isAdminUser) { res.status(403).json({ message: "Non autorizzato" }); return; }
+
       const rows = await db.execute(sql`
-        SELECT DISTINCT
+        SELECT
           p.id, p.name, p.address, p.city, p.region,
           p.latitude, p.longitude, p.logo_url,
-          COUNT(DISTINCT tl.beer_id)::int AS beer_count
+          COUNT(DISTINCT tl.beer_id)::int AS beer_count,
+          MAX(tl.updated_at) AS last_updated,
+          JSON_AGG(
+            JSON_BUILD_OBJECT(
+              'beerId', b.id,
+              'beerName', b.name,
+              'imageUrl', b.image_url,
+              'updatedAt', tl.updated_at
+            ) ORDER BY b.name ASC
+          ) AS beers_on_tap
         FROM tap_list tl
         JOIN beers b ON b.id = tl.beer_id AND b.brewery_id = ${breweryId}
         JOIN pubs p ON p.id = tl.pub_id AND p.is_active = true
