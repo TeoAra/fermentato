@@ -92,6 +92,7 @@ import { PubQRCode } from "@/components/pub-qr-code";
 import { QRCodeSVG } from "qrcode.react";
 import { Cast, Share2, Link as LinkIcon, Tv, Info, QrCode, Bot } from "lucide-react";
 import BotConnectCard from "@/components/BotConnectCard";
+import PubQuickStats from "@/components/pub-quick-stats";
 
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
@@ -787,6 +788,9 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           { icon: Star,     label: "Preferiti",     value: favoritesCount,         accent: "red" },
         ]}
       />
+
+      {/* Statistiche rapide */}
+      {currentPub && <PubQuickStats pubId={currentPub.id} />}
 
       {/* Strumenti — azioni rapide */}
       <div>
