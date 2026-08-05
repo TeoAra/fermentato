@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown, Factory, Store, CalendarDays, Heart, X, BellOff, ArrowRight, Moon, MessageCircle, Users, Megaphone, Flag, AtSign } from "lucide-react";
+import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown, Factory, Store, CalendarDays, Heart, X, BellOff, ArrowRight, Moon, MessageCircle, Users, Megaphone, Flag, AtSign, UserPlus } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -61,6 +61,10 @@ function getNotificationIcon(type: string) {
       return { icon: <Heart className={`${base} text-rose-500`} />, bg: 'bg-rose-50 dark:bg-rose-950/30' };
     case 'checkin_comment':
       return { icon: <MessageCircle className={`${base} text-violet-600`} />, bg: 'bg-violet-50 dark:bg-violet-950/30' };
+    case 'mention':
+      return { icon: <AtSign className={`${base} text-indigo-600`} />, bg: 'bg-indigo-50 dark:bg-indigo-950/30' };
+    case 'new_follower':
+      return { icon: <UserPlus className={`${base} text-sky-600`} />, bg: 'bg-sky-50 dark:bg-sky-950/30' };
     case 'moderation':
       return { icon: <Flag className={`${base} text-red-500`} />, bg: 'bg-red-50 dark:bg-red-950/30' };
     case 'festival':
@@ -265,10 +269,25 @@ export default function Notifications() {
   const getLink = (n: Notification): string | null => {
     switch (n.type) {
       case 'new_brewery_request': return '/admin/publican-requests?section=brewery';
-      case 'new_pub_request': return '/admin/publican-requests?section=pub';
-      default:
-        if (n.pubId) return `/pub/${n.pubId}`;
+      case 'new_pub_request':     return '/admin/publican-requests?section=pub';
+      case 'mention':             return '/feed';
+      case 'new_follower':        return '/activity';
+      case 'checkin_like':
+      case 'checkin_comment':
+        if (n.beerId) return `/beer/${n.beerId}`;
+        if (n.pubId)  return `/pub/${n.pubId}`;
+        return '/activity';
+      case 'event':
+      case 'festival':
+      case 'festival_interest':
+      case 'festival_update':
+        if (n.pubId)     return `/pub/${n.pubId}`;
         if (n.breweryId) return `/brewery/${n.breweryId}`;
+        return '/activity';
+      default:
+        if (n.pubId)     return `/pub/${n.pubId}`;
+        if (n.breweryId) return `/brewery/${n.breweryId}`;
+        if (n.beerId)    return `/beer/${n.beerId}`;
         return null;
     }
   };
