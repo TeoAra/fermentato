@@ -14,7 +14,13 @@ import {
   Award,
   Wine,
   Activity as ActivityIcon,
+  PenSquare,
 } from "lucide-react";
+import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
+import { PostContent } from "@/components/social/PostContent";
+import { EntityPreviewCard } from "@/components/social/EntityPreviewCard";
+import { formatDistanceToNow } from "date-fns";
+import { it as itLocale } from "date-fns/locale";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,6 +106,70 @@ const CATEGORY_COLORS: Record<AchievementCategory, string> = {
 const GLASS_CARD =
   "bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:bg-white/[0.04] dark:border-white/[0.06] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] rounded-2xl";
 
+/* ── UserPostCard ─────────────────────────────────────────────────────── */
+function UserPostCard({ post }: { post: any }) {
+  const [entityPreview, setEntityPreview] = useState<{
+    type: "brewery" | "pub" | "beer"; id: number; rect: DOMRect;
+  } | null>(null);
+
+  const handleEntityChip = (e: React.MouseEvent, type: "brewery" | "pub" | "beer", id: number) => {
+    e.preventDefault(); e.stopPropagation();
+    setEntityPreview({ type, id, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() });
+  };
+
+  return (
+    <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-stone-100 dark:border-[#23262E] shadow-sm p-4">
+      <p className="text-[11px] text-stone-400 mb-2">
+        {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: itLocale })} · 📝 post
+      </p>
+      <PostContent content={post.content} />
+      {post.image_url && (
+        <img src={post.image_url} alt="" className="mt-3 rounded-xl w-full max-h-96 object-cover" loading="lazy" />
+      )}
+      {(post.beer_name || post.pub_name || post.brewery_name) && (
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {post.beer_name && post.beer_id && (
+            <button onClick={(e) => handleEntityChip(e, "beer", post.beer_id)}
+              className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold cursor-pointer hover:bg-primary/20 transition-colors">
+              🍺 {post.beer_name}
+            </button>
+          )}
+          {post.pub_name && post.pub_id && (
+            <button onClick={(e) => handleEntityChip(e, "pub", post.pub_id)}
+              className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A] transition-colors">
+              📍 {post.pub_name}
+            </button>
+          )}
+          {post.brewery_name && post.brewery_id && (
+            <button onClick={(e) => handleEntityChip(e, "brewery", post.brewery_id)}
+              className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A] transition-colors">
+              🏭 {post.brewery_name}
+            </button>
+          )}
+        </div>
+      )}
+      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40">
+        <MicroblogSocialBar
+          postId={post.id}
+          postUserId={post.user_id}
+          liked={post.liked ?? false}
+          likesCount={post.likes_count ?? 0}
+          commentsCount={post.comments_count ?? 0}
+          content={post.content ?? ""}
+        />
+      </div>
+      {entityPreview && (
+        <EntityPreviewCard
+          type={entityPreview.type}
+          id={entityPreview.id}
+          anchorRect={entityPreview.rect}
+          onClose={() => setEntityPreview(null)}
+        />
+      )}
+    </div>
+  );
+}
+
 export default function UserPublicProfile() {
   const { nickname } = useParams<{ nickname: string }>();
   const { toast } = useToast();
@@ -129,6 +199,14 @@ export default function UserPublicProfile() {
     }),
     enabled: !!nickname,
     retry: false,
+  });
+
+  const { data: userPosts = [], isLoading: postsLoading } = useQuery<any[]>({
+    queryKey: ["/api/microblog/posts", { username: nickname }],
+    queryFn: () =>
+      fetch(`/api/microblog/posts?username=${encodeURIComponent(nickname || "")}&limit=30`, { credentials: "include" })
+        .then(r => r.ok ? r.json() : []),
+    enabled: !!nickname,
   });
 
   const handleShare = async () => {
@@ -430,9 +508,28 @@ export default function UserPublicProfile() {
       case 'recensioni': return 'Recensioni';
       case 'cellar': return 'Cellar';
       case 'attivita': return 'Attività';
+      case 'post': return 'Post';
       default: return '';
     }
   };
+
+  const PostsSection = (
+    <div className="space-y-3">
+      {postsLoading ? (
+        <div className="space-y-3">
+          {[0, 1].map(i => <div key={i} className={`${GLASS_CARD} h-32 animate-pulse`} />)}
+        </div>
+      ) : userPosts.length === 0 ? (
+        <div className={`${GLASS_CARD} p-8 text-center`}>
+          <PenSquare className="h-10 w-10 text-stone-300 dark:text-stone-600 mx-auto mb-3" />
+          <h3 className="font-bold text-foreground mb-1">Nessun post</h3>
+          <p className="text-sm text-muted-foreground">{displayName} non ha ancora pubblicato post.</p>
+        </div>
+      ) : (
+        userPosts.map((post: any) => <UserPostCard key={post.id} post={post} />)
+      )}
+    </div>
+  );
 
   const seoTitle = `${displayName} — Profilo | Fermenta.to`;
   const seoDesc = `Scopri il profilo di ${displayName} su Fermenta.to: ${profile.reviewCount || 0} recensioni di birre artigianali italiane.`;
@@ -481,6 +578,15 @@ export default function UserPublicProfile() {
           {AchievementsSection}
           {BadgeProgressionSection}
           {RecentReviewsSection}
+          {userPosts.length > 0 && (
+            <div>
+              <h2 className="font-bold text-foreground dark:text-white mb-3 flex items-center gap-2">
+                <PenSquare className="h-5 w-5 text-primary" />
+                Post ({userPosts.length})
+              </h2>
+              {PostsSection}
+            </div>
+          )}
         </div>
 
         {/* ── MOBILE TABS ── */}
@@ -655,6 +761,11 @@ export default function UserPublicProfile() {
               )}
               {BadgeProgressionSection}
             </TabsContent>
+
+            {/* Post */}
+            <TabsContent value="post" className="mt-0 space-y-4">
+              {PostsSection}
+            </TabsContent>
           </Tabs>
         </div>
       </PageContainer>
@@ -720,7 +831,7 @@ export default function UserPublicProfile() {
               {[
                 { id: 'overview',   label: 'Overview',   Icon: HomeIcon },
                 { id: 'recensioni', label: 'Recensioni', Icon: Star },
-                { id: 'cellar',     label: 'Cellar',     Icon: Wine },
+                { id: 'post',       label: 'Post',       Icon: PenSquare },
                 { id: 'attivita',   label: 'Attività',   Icon: ActivityIcon },
               ].map(({ id, label, Icon }) => {
                 const active = activeTab === id;

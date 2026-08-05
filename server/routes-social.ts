@@ -701,9 +701,15 @@ export async function registerSocialRoutes(app: Express) {
     const offset = Math.max(parseInt((req.query.offset as string) || "0", 10), 0);
     const taggedEntity = (req.query.taggedEntity as string) || "";
     const hashtag = ((req.query.hashtag as string) || "").trim().toLowerCase().replace(/^#/, "");
+    const usernameFilter = ((req.query.username as string) || "").trim();
 
     const where: string[] = [];
     const params: any[] = [];
+
+    if (usernameFilter) {
+      params.push(usernameFilter);
+      where.push(`u.nickname = $${params.length}`);
+    }
 
     if (taggedEntity) {
       const parts = taggedEntity.split(":");
@@ -737,7 +743,7 @@ export async function registerSocialRoutes(app: Express) {
     }
 
     if (where.length === 0) {
-      return res.status(400).json({ message: "Specificare taggedEntity o hashtag" });
+      return res.status(400).json({ message: "Specificare taggedEntity, hashtag o username" });
     }
 
     const viewerId: string | null = req.user?.id ?? null;
