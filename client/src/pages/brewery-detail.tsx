@@ -591,6 +591,7 @@ export default function BreweryDetail() {
             )}
 
             <div className={`${activeTab === "overview" ? "" : "hidden"} lg:!block`}>
+              <h2 className="hidden lg:block text-xl font-black text-[#151515] dark:text-[#F5F5F5] pt-4 mb-0">Panoramica</h2>
               <BreweryOverviewSection brewery={brewery} onDirections={handleDirections} />
             </div>
 
@@ -607,6 +608,7 @@ export default function BreweryDetail() {
             </div>
 
             <div className={`${activeTab === "serate" ? "" : "hidden"} lg:!block pt-4`}>
+              <h2 className="hidden lg:block text-xl font-black text-[#151515] dark:text-[#F5F5F5] mb-0">Serate & Annunci</h2>
               {announcements.length === 0 && breweryEvents.length === 0 ? (
                 <div className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] py-16 text-center">
                   <div className="w-16 h-16 rounded-2xl bg-[#FAF7F1] dark:bg-[#12151A] mx-auto mb-4 flex items-center justify-center">

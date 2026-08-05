@@ -732,6 +732,7 @@ export default function PubDetail() {
             )}
 
             <div className={`${activeTab === "overview" ? "" : "hidden"} lg:!block`}>
+              <h2 className="hidden lg:block text-xl font-black text-[#151515] dark:text-[#F5F5F5] pt-4 mb-0">Panoramica</h2>
               <OverviewSection
                 pub={pubData}
                 events={Array.isArray(pubEvents) ? pubEvents : []}
