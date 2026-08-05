@@ -87,7 +87,12 @@ registerHomeCacheBuster(() => _memCache.delete("home:taplist-activity"));
 // Per-pub stats cache buster — called by bot mutations and HTTP taplist routes
 registerPubStatsBuster((pubId: number) => _memCache.delete(`stats-extended:${pubId}`));
 // Per-brewery stats cache buster — called whenever a tasting is created/updated/deleted
-registerBreweryStatsBuster((breweryId: number) => _memCache.delete(`brewery-stats-extended:${breweryId}`));
+// Invalidate all period-scoped keys (7d, 30d, 90d) so every window refreshes after a mutation
+registerBreweryStatsBuster((breweryId: number) => {
+  for (const d of [7, 30, 90]) {
+    _memCache.delete(`brewery-stats-extended:${breweryId}:${d}`);
+  }
+});
 
 // ── Popular search-term logging + cache pre-warming ─────────────────────────
 // Track how often each term is searched so we can periodically re-warm the
@@ -8787,9 +8792,13 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
       const isAdminUser = req.user?.activeRole === "admin" || req.user?.userType === "admin";
       if (!isOwner && !isAdminUser) { res.status(403).json({ message: "Non autorizzato" }); return; }
 
-      const payload = await memCached(`brewery-stats-extended:${breweryId}`, 60 * 60 * 1000, async () => {
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const rawDays = parseInt(req.query.days as string) || 30;
+      const days = Math.min(Math.max(rawDays, 1), 90);
+
+      const payload = await memCached(`brewery-stats-extended:${breweryId}:${days}`, 60 * 60 * 1000, async () => {
+        const windowStart = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const intervalExpr = `${days - 1} days`;
 
         const [favs, viewsWeekRows, checkinSeriesRows, viewsSeriesRows, topBeersByViewsRows] = await Promise.all([
           // Favorites count (brewery-level favorites)
@@ -8801,42 +8810,42 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
             .from(beerViews)
             .innerJoin(beers, eq(beerViews.beerId, beers.id))
             .where(and(eq(beers.breweryId, breweryId), gte(beerViews.viewedAt, sevenDaysAgo))),
-          // 30-day daily check-in series (tastings of beers from this brewery — bounded to 30 days)
+          // Daily check-in series for the selected window
           pool.query(
             `SELECT d.day::text AS date, COALESCE(COUNT(t.id)::int, 0) AS checkins
-             FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, '1 day') AS d(day)
+             FROM generate_series(CURRENT_DATE - INTERVAL '${intervalExpr}', CURRENT_DATE, '1 day') AS d(day)
              LEFT JOIN (
                SELECT t2.id, t2.created_at
                FROM user_beer_tastings t2
                JOIN beers b2 ON b2.id = t2.beer_id AND b2.brewery_id = $1
-               WHERE t2.created_at >= CURRENT_DATE - INTERVAL '29 days'
+               WHERE t2.created_at >= CURRENT_DATE - INTERVAL '${intervalExpr}'
              ) t ON DATE(t.created_at) = d.day
              GROUP BY d.day
              ORDER BY d.day ASC`,
             [breweryId]
           ),
-          // 30-day daily views series (beer_views for beers from this brewery — bounded to 30 days)
+          // Daily views series for the selected window
           pool.query(
             `SELECT d.day::text AS date, COALESCE(COUNT(bv.id)::int, 0) AS views
-             FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, '1 day') AS d(day)
+             FROM generate_series(CURRENT_DATE - INTERVAL '${intervalExpr}', CURRENT_DATE, '1 day') AS d(day)
              LEFT JOIN (
                SELECT bv2.id, bv2.viewed_at
                FROM beer_views bv2
                JOIN beers b2 ON b2.id = bv2.beer_id AND b2.brewery_id = $1
-               WHERE bv2.viewed_at >= CURRENT_DATE - INTERVAL '29 days'
+               WHERE bv2.viewed_at >= CURRENT_DATE - INTERVAL '${intervalExpr}'
              ) bv ON DATE(bv.viewed_at) = d.day
              GROUP BY d.day
              ORDER BY d.day ASC`,
             [breweryId]
           ),
-          // Top 10 beers by views in last 30 days
+          // Top 10 beers by views in the selected window
           pool.query(
             `SELECT b.id AS "beerId", b.name AS "beerName", b.image_url AS "imageUrl",
                     COUNT(bv.id)::int AS views
              FROM beer_views bv
              JOIN beers b ON b.id = bv.beer_id
              WHERE b.brewery_id = $1
-               AND bv.viewed_at >= CURRENT_DATE - INTERVAL '29 days'
+               AND bv.viewed_at >= CURRENT_DATE - INTERVAL '${intervalExpr}'
              GROUP BY b.id, b.name, b.image_url
              ORDER BY COUNT(bv.id) DESC
              LIMIT 10`,
@@ -8851,7 +8860,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
              FROM user_beer_tastings t
              JOIN beers b ON b.id = t.beer_id AND b.brewery_id = $1
              WHERE t.created_at >= $2`,
-            [breweryId, thirtyDaysAgo]
+            [breweryId, windowStart]
           ),
           pool.query(
             `SELECT COUNT(t.id)::int AS n

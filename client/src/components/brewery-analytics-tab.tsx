@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
@@ -54,6 +55,12 @@ interface DistributionPub {
   beers_on_tap: BeerOnTap[];
 }
 
+const PERIOD_OPTIONS = [
+  { label: "7g", days: 7 },
+  { label: "30g", days: 30 },
+  { label: "90g", days: 90 },
+] as const;
+
 /** Format a date string like "2026-07-01" → "1 lug" */
 function fmtDay(dateStr: string): string {
   try {
@@ -77,13 +84,15 @@ function fmtRelative(dateStr: string | null): string {
 function shouldShowLabel(idx: number, total: number): boolean {
   if (total <= 10) return true;
   if (total <= 20) return idx % 3 === 0;
-  return idx % 5 === 0 || idx === total - 1;
+  return idx % 7 === 0 || idx === total - 1;
 }
 
 export default function BreweryAnalyticsTab({ breweryId }: BreweryAnalyticsTabProps) {
+  const [selectedDays, setSelectedDays] = useState<7 | 30 | 90>(30);
+
   const { data: stats, isLoading } = useQuery<StatsExtended>({
-    queryKey: ["/api/breweries", breweryId, "stats-extended"],
-    queryFn: () => apiRequest(`/api/breweries/${breweryId}/stats-extended`),
+    queryKey: ["/api/breweries", breweryId, "stats-extended", selectedDays],
+    queryFn: () => apiRequest(`/api/breweries/${breweryId}/stats-extended?days=${selectedDays}`),
     enabled: !!breweryId,
     staleTime: 5 * 60 * 1000,
   });
@@ -100,13 +109,15 @@ export default function BreweryAnalyticsTab({ breweryId }: BreweryAnalyticsTabPr
   const maxViews = viewsSeries.length > 0 ? Math.max(...viewsSeries.map((d) => d.views), 1) : 1;
   const pubList: DistributionPub[] = distribution ?? [];
 
+  const periodLabel = selectedDays === 7 ? "7 giorni" : selectedDays === 90 ? "90 giorni" : "30 giorni";
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold text-foreground">Analytics Birrificio</h2>
         <p className="text-muted-foreground text-sm mt-0.5">
-          Visite alle pagine birra negli ultimi 30 giorni
+          Visite alle pagine birra negli ultimi {periodLabel}
         </p>
       </div>
 
@@ -129,7 +140,7 @@ export default function BreweryAnalyticsTab({ breweryId }: BreweryAnalyticsTabPr
         <Card className="p-4 border-stone-200 dark:border-white/[0.06]">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Visite 30g</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Visite {periodLabel}</p>
               <p className="text-2xl font-bold text-foreground mt-1">
                 {isLoading ? "—" : (stats?.viewsLast30 ?? 0).toLocaleString("it")}
               </p>
@@ -143,7 +154,7 @@ export default function BreweryAnalyticsTab({ breweryId }: BreweryAnalyticsTabPr
         <Card className="p-4 border-stone-200 dark:border-white/[0.06]">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Check-in 30g</p>
+              <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Check-in {periodLabel}</p>
               <p className="text-2xl font-bold text-foreground mt-1">
                 {isLoading ? "—" : (stats?.checkinsMonth ?? 0).toLocaleString("it")}
               </p>
@@ -174,10 +185,28 @@ export default function BreweryAnalyticsTab({ breweryId }: BreweryAnalyticsTabPr
 
       {/* Views Bar Chart */}
       <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
-          <BarChart3 className="h-4 w-4 text-primary" />
-          Visite giornaliere (ultimi 30 giorni)
-        </h3>
+        {/* Chart header with period selector */}
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
+            <BarChart3 className="h-4 w-4 text-primary" />
+            Visite giornaliere
+          </h3>
+          <div className="flex items-center gap-1 bg-stone-100 dark:bg-stone-800 rounded-lg p-1">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.days}
+                onClick={() => setSelectedDays(opt.days as 7 | 30 | 90)}
+                className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                  selectedDays === opt.days
+                    ? "bg-white dark:bg-stone-700 text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <Card className="border-stone-200 dark:border-white/[0.06] p-4 sm:p-6">
           {isLoading ? (
@@ -242,7 +271,7 @@ export default function BreweryAnalyticsTab({ breweryId }: BreweryAnalyticsTabPr
       <div className="space-y-3">
         <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-primary" />
-          Birre più visitate (ultimi 30 giorni)
+          Birre più visitate (ultimi {periodLabel})
         </h3>
 
         <Card className="border-stone-200 dark:border-white/[0.06] overflow-hidden">
@@ -324,7 +353,7 @@ export default function BreweryAnalyticsTab({ breweryId }: BreweryAnalyticsTabPr
         <div className="space-y-3">
           <h3 className="text-base font-semibold text-foreground flex items-center gap-2">
             <Calendar className="h-4 w-4 text-primary" />
-            Check-in giornalieri (ultimi 30 giorni)
+            Check-in giornalieri (ultimi {periodLabel})
           </h3>
 
           <Card className="border-stone-200 dark:border-white/[0.06] p-4 sm:p-6">
