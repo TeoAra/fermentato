@@ -239,7 +239,7 @@ export default function Activity() {
   const auth = !!currentUser;
   const { data: feed = [], isLoading: feedLoading } = useQuery<any[]>({ queryKey: ["/api/user/feed"], enabled: auth });
   const { data: socialPosts = [], isLoading: socialPostsLoading } = useQuery<any[]>({
-    queryKey: ["/api/microblog/posts"],
+    queryKey: ["/api/microblog/feed"],
     enabled: activeTab === "sociale",
   });
   const { data: following = [], isLoading: followingLoading } = useQuery<any[]>({ queryKey: ["/api/user/following"], enabled: auth });
