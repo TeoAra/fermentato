@@ -124,7 +124,7 @@ export default function PubQuickStats({ pubId }: PubQuickStatsProps) {
     queryKey: ["/api/pubs", String(pubId), "stats-extended"],
     queryFn: () => apiRequest(`/api/pubs/${pubId}/stats-extended`),
     enabled: !!pubId,
-    staleTime: 24 * 60 * 60 * 1000,
+    staleTime: 60 * 60 * 1000, // 1h — matches server-side memCached TTL
   });
 
   /* derive prev-7-day views for ↑↓ trend */

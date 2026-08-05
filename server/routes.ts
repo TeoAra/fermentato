@@ -40,7 +40,7 @@ import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
 import { breweryActiveSql, beerVisibleSql, rawBreweryActive, rawBeerVisibleJoined, rawBeerVisibleExists } from "./visibility";
 import { normalizeBeerSearch, buildBeerSearchFragments } from "./search-normalize";
-import { registerCatalogCacheBuster, registerHomeCacheBuster } from "./catalog-cache";
+import { registerCatalogCacheBuster, registerHomeCacheBuster, registerPubStatsBuster } from "./catalog-cache";
 import { breweries, beers, pubs, users, tapList, bottleList, userBeerTastings, favorites, menuCategories, menuItems, pubSizes, notifications, pushSubscriptions, breweryRequests, pubEvents, breweryEvents, insertBreweryEventSchema, reviewReports, oauthAccounts, userActivities, ratings, publicanRequests, notificationPreferences, staticPages, additionRequests, scanLogs, pubPageViews, breweryAnnouncements, insertBreweryAnnouncementSchema, beerCollaborations, festivals, beerViews } from "@shared/schema";
 
 import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMenuCategorySchema, insertMenuItemSchema, pubRegistrationSchema, insertPubEventSchema } from "@shared/schema";
@@ -84,6 +84,8 @@ function clearCatalogCaches() {
 // deletes) can invalidate these caches without an import cycle.
 registerCatalogCacheBuster(clearCatalogCaches);
 registerHomeCacheBuster(() => _memCache.delete("home:taplist-activity"));
+// Per-pub stats cache buster — called by bot mutations and HTTP taplist routes
+registerPubStatsBuster((pubId: number) => _memCache.delete(`stats-extended:${pubId}`));
 
 // ── Popular search-term logging + cache pre-warming ─────────────────────────
 // Track how often each term is searched so we can periodically re-warm the
@@ -2377,6 +2379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         )
       );
       broadcastPubUpdate(pubId, "taplist");
+      _memCache.delete(`stats-extended:${pubId}`);
       res.json({ ok: true });
     } catch (error) {
       console.error('Error reordering taplist:', error);
@@ -2422,6 +2425,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       broadcastPubUpdate(parseInt(pubId), "taplist");
       _memCache.delete("home:taplist-activity");
+      _memCache.delete(`stats-extended:${parseInt(pubId)}`);
       res.json(item);
     } catch (error) {
       console.error('Error updating tap list item:', error);
@@ -2461,6 +2465,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       broadcastPubUpdate(parseInt(pubId), "taplist");
       _memCache.delete("home:taplist-activity");
+      _memCache.delete(`stats-extended:${parseInt(pubId)}`);
       res.status(200).json({ success: true });
     } catch (error) {
       console.error('Error deleting tap list item:', error);
@@ -2520,6 +2525,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       broadcastPubUpdate(pubId, "taplist");
       _memCache.delete("home:taplist-activity");
+      _memCache.delete(`stats-extended:${pubId}`);
       res.status(201).json(tapItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -2537,6 +2543,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const tapId = parseInt(req.params.id);
       const tapData = insertTapListSchema.partial().parse(req.body);
       const updatedTap = await storage.updateTapListItem(tapId, tapData);
+      // Bust the per-pub stats cache so the owner dashboard reflects the change immediately
+      if ((updatedTap as any)?.pubId) {
+        _memCache.delete(`stats-extended:${(updatedTap as any).pubId}`);
+      }
       res.json(updatedTap);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -5261,6 +5271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       broadcastPubUpdate(pubId, "taplist");
       _memCache.delete("home:taplist-activity");
+      _memCache.delete(`stats-extended:${pubId}`);
       res.json(updatedItem);
     } catch (error) {
       console.error("Error replacing beer:", error);
@@ -8658,73 +8669,77 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
       const isAdminUser = req.user?.activeRole === "admin" || req.user?.userType === "admin";
       if (!isOwner && !isAdminUser) { res.status(403).json({ message: "Non autorizzato" }); return; }
 
-      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const payload = await memCached(`stats-extended:${pubId}`, 60 * 60 * 1000, async () => {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-      const [taps, bottles, favs, ratingAgg, checkinsTotal, checkinsMonth, topBeerOnTapRows, topBeerCheckinRows, checkinSeriesRows] = await Promise.all([
-        // Active beers on tap
-        db.select({ n: sql<number>`COUNT(*)::int` }).from(tapList).where(and(eq(tapList.pubId, pubId), eq(tapList.isActive, true))),
-        // Active bottles
-        db.select({ n: sql<number>`COUNT(*)::int` }).from(bottleList).where(and(eq(bottleList.pubId, pubId), eq(bottleList.isActive, true))),
-        // Favorites count
-        db.select({ n: sql<number>`COUNT(*)::int` }).from(favorites).where(and(eq(favorites.itemType, 'pub'), eq(favorites.itemId, pubId))),
-        // Pub rating aggregate
-        db.select({ avg: sql<number>`COALESCE(AVG(rating)::float, 0)`, n: sql<number>`COUNT(*)::int` }).from(ratings).where(eq(ratings.pubId, pubId)),
-        // All-time checkins (tastings) at this pub
-        db.select({ n: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(eq(userBeerTastings.pubId, pubId)),
-        // Last 30d checkins
-        db.select({ n: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(and(eq(userBeerTastings.pubId, pubId), gte(userBeerTastings.createdAt, thirtyDaysAgo))),
-        // Top beer currently on tap (by checkins/tastings at this pub, last 90d)
-        db.execute(sql`
-          SELECT b.id, b.name, br.name AS brewery, b.style, b.image_url AS "imageUrl",
-                 COUNT(t.id)::int AS tastings,
-                 ROUND(COALESCE(AVG(t.rating)::numeric, 0), 1)::float AS "avgRating"
-          FROM tap_list tl
-          JOIN beers b      ON b.id = tl.beer_id
-          LEFT JOIN breweries br ON br.id = b.brewery_id
-          LEFT JOIN user_beer_tastings t ON t.beer_id = b.id AND t.pub_id = ${pubId}
-                AND t.created_at >= NOW() - INTERVAL '90 days'
-          WHERE tl.pub_id = ${pubId} AND tl.is_active = true
-          GROUP BY b.id, b.name, br.name, b.style, b.image_url
-          ORDER BY COUNT(t.id) DESC, b.name ASC
-          LIMIT 5
-        `),
-        // Top beer overall by checkins at this pub
-        db.execute(sql`
-          SELECT b.id, b.name, br.name AS brewery, b.style, b.image_url AS "imageUrl",
-                 COUNT(t.id)::int AS checkins,
-                 ROUND(COALESCE(AVG(t.rating)::numeric, 0), 1)::float AS "avgRating"
-          FROM user_beer_tastings t
-          JOIN beers b ON b.id = t.beer_id
-          LEFT JOIN breweries br ON br.id = b.brewery_id
-          WHERE t.pub_id = ${pubId}
-          GROUP BY b.id, b.name, br.name, b.style, b.image_url
-          ORDER BY COUNT(t.id) DESC
-          LIMIT 5
-        `),
-        // 30-day daily check-in series (for sparkline)
-        pool.query(
-          `SELECT d.day::text AS date, COALESCE(COUNT(t.id)::int, 0) AS checkins
-           FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, '1 day') AS d(day)
-           LEFT JOIN user_beer_tastings t
-             ON DATE(t.created_at) = d.day AND t.pub_id = $1
-           GROUP BY d.day
-           ORDER BY d.day ASC`,
-          [pubId]
-        ),
-      ]);
+        const [taps, bottles, favs, ratingAgg, checkinsTotal, checkinsMonth, topBeerOnTapRows, topBeerCheckinRows, checkinSeriesRows] = await Promise.all([
+          // Active beers on tap
+          db.select({ n: sql<number>`COUNT(*)::int` }).from(tapList).where(and(eq(tapList.pubId, pubId), eq(tapList.isActive, true))),
+          // Active bottles
+          db.select({ n: sql<number>`COUNT(*)::int` }).from(bottleList).where(and(eq(bottleList.pubId, pubId), eq(bottleList.isActive, true))),
+          // Favorites count
+          db.select({ n: sql<number>`COUNT(*)::int` }).from(favorites).where(and(eq(favorites.itemType, 'pub'), eq(favorites.itemId, pubId))),
+          // Pub rating aggregate
+          db.select({ avg: sql<number>`COALESCE(AVG(rating)::float, 0)`, n: sql<number>`COUNT(*)::int` }).from(ratings).where(eq(ratings.pubId, pubId)),
+          // All-time checkins (tastings) at this pub
+          db.select({ n: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(eq(userBeerTastings.pubId, pubId)),
+          // Last 30d checkins
+          db.select({ n: sql<number>`COUNT(*)::int` }).from(userBeerTastings).where(and(eq(userBeerTastings.pubId, pubId), gte(userBeerTastings.createdAt, thirtyDaysAgo))),
+          // Top beer currently on tap (by checkins/tastings at this pub, last 90d)
+          db.execute(sql`
+            SELECT b.id, b.name, br.name AS brewery, b.style, b.image_url AS "imageUrl",
+                   COUNT(t.id)::int AS tastings,
+                   ROUND(COALESCE(AVG(t.rating)::numeric, 0), 1)::float AS "avgRating"
+            FROM tap_list tl
+            JOIN beers b      ON b.id = tl.beer_id
+            LEFT JOIN breweries br ON br.id = b.brewery_id
+            LEFT JOIN user_beer_tastings t ON t.beer_id = b.id AND t.pub_id = ${pubId}
+                  AND t.created_at >= NOW() - INTERVAL '90 days'
+            WHERE tl.pub_id = ${pubId} AND tl.is_active = true
+            GROUP BY b.id, b.name, br.name, b.style, b.image_url
+            ORDER BY COUNT(t.id) DESC, b.name ASC
+            LIMIT 5
+          `),
+          // Top beer overall by checkins at this pub
+          db.execute(sql`
+            SELECT b.id, b.name, br.name AS brewery, b.style, b.image_url AS "imageUrl",
+                   COUNT(t.id)::int AS checkins,
+                   ROUND(COALESCE(AVG(t.rating)::numeric, 0), 1)::float AS "avgRating"
+            FROM user_beer_tastings t
+            JOIN beers b ON b.id = t.beer_id
+            LEFT JOIN breweries br ON br.id = b.brewery_id
+            WHERE t.pub_id = ${pubId}
+            GROUP BY b.id, b.name, br.name, b.style, b.image_url
+            ORDER BY COUNT(t.id) DESC
+            LIMIT 5
+          `),
+          // 30-day daily check-in series (for sparkline)
+          pool.query(
+            `SELECT d.day::text AS date, COALESCE(COUNT(t.id)::int, 0) AS checkins
+             FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, '1 day') AS d(day)
+             LEFT JOIN user_beer_tastings t
+               ON DATE(t.created_at) = d.day AND t.pub_id = $1
+             GROUP BY d.day
+             ORDER BY d.day ASC`,
+            [pubId]
+          ),
+        ]);
 
-      res.json({
-        beersOnTap: taps[0]?.n ?? 0,
-        bottlesActive: bottles[0]?.n ?? 0,
-        favorites: favs[0]?.n ?? 0,
-        ratingAvg: Number((ratingAgg[0]?.avg ?? 0).toFixed(2)),
-        ratingCount: ratingAgg[0]?.n ?? 0,
-        checkinsTotal: checkinsTotal[0]?.n ?? 0,
-        checkinsMonth: checkinsMonth[0]?.n ?? 0,
-        topBeersOnTap: ((topBeerOnTapRows as any).rows ?? topBeerOnTapRows),
-        topBeersAllTime: ((topBeerCheckinRows as any).rows ?? topBeerCheckinRows),
-        checkinSeries: (checkinSeriesRows.rows ?? []).map((r: any) => ({ date: r.date, checkins: Number(r.checkins) })),
+        return {
+          beersOnTap: taps[0]?.n ?? 0,
+          bottlesActive: bottles[0]?.n ?? 0,
+          favorites: favs[0]?.n ?? 0,
+          ratingAvg: Number((ratingAgg[0]?.avg ?? 0).toFixed(2)),
+          ratingCount: ratingAgg[0]?.n ?? 0,
+          checkinsTotal: checkinsTotal[0]?.n ?? 0,
+          checkinsMonth: checkinsMonth[0]?.n ?? 0,
+          topBeersOnTap: ((topBeerOnTapRows as any).rows ?? topBeerOnTapRows),
+          topBeersAllTime: ((topBeerCheckinRows as any).rows ?? topBeerCheckinRows),
+          checkinSeries: (checkinSeriesRows.rows ?? []).map((r: any) => ({ date: r.date, checkins: Number(r.checkins) })),
+        };
       });
+
+      res.json(payload);
     } catch (err: any) {
       console.error("Pub stats-extended error:", err.message);
       res.status(500).json({ message: "Errore stats pub" });

@@ -38,3 +38,22 @@ export function bustHomeCaches() {
     try { fn(); } catch { /* non-blocking */ }
   }
 }
+
+// ── Per-pub stats cache ───────────────────────────────────────────────────────
+// The stats-extended TTL cache lives in routes.ts, but the bot and other modules
+// need to bust it without an import cycle.  Register the deleter here once and
+// call bustPubStats(pubId) from anywhere.
+type PubStatsBuster = (pubId: number) => void;
+const pubStatsBusters = new Set<PubStatsBuster>();
+
+/** Register the callback that deletes a per-pub stats cache entry. */
+export function registerPubStatsBuster(fn: PubStatsBuster) {
+  pubStatsBusters.add(fn);
+}
+
+/** Invalidate the cached stats for a specific pub. Safe to call from any module. */
+export function bustPubStats(pubId: number) {
+  for (const fn of pubStatsBusters) {
+    try { fn(pubId); } catch { /* non-blocking */ }
+  }
+}

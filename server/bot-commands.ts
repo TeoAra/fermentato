@@ -11,7 +11,7 @@ import {
 import type { MenuCategory, MenuItem } from "@shared/schema";
 import { eq, and, ilike, asc } from "drizzle-orm";
 import crypto from "crypto";
-import { bustHomeCaches } from "./catalog-cache";
+import { bustHomeCaches, bustPubStats } from "./catalog-cache";
 
 // ── Tipi ─────────────────────────────────────────────────────────────────────
 
@@ -428,6 +428,7 @@ async function executeResolved(
       if (!item) return { ok: false, message: `❌ Birra non trovata in spillatura: "${action.beer}"` };
       await db.delete(tapList).where(eq(tapList.id, item.id));
       bustHomeCaches();
+      bustPubStats(pubId);
       return { ok: true, message: `🗑️ *${item.beerName}* rimossa dalla spillatura.` };
     }
 
@@ -451,6 +452,7 @@ async function executeResolved(
       if (already) return { ok: true, message: `ℹ️ *${found.name}* è già in spillatura.` };
       await db.insert(tapList).values({ pubId, beerId: found.id, isActive: true, isVisible: true });
       bustHomeCaches();
+      bustPubStats(pubId);
       const brewInfo = found.breweryName ? ` di *${found.breweryName}*` : "";
       return { ok: true, message: `✅ *${found.name}*${brewInfo} aggiunta alla spillatura.` };
     }
@@ -476,6 +478,7 @@ async function executeResolved(
       const newBeer = candidates[0];
       await db.update(tapList).set({ beerId: newBeer.id, updatedAt: new Date() }).where(eq(tapList.id, fromItem.id));
       bustHomeCaches();
+      bustPubStats(pubId);
       const brewInfo = newBeer.breweryName ? ` di *${newBeer.breweryName}*` : "";
       return { ok: true, message: `🔄 *${fromItem.beerName}* sostituita con *${newBeer.name}*${brewInfo} (prezzi mantenuti).` };
     }
@@ -645,6 +648,7 @@ async function resolveConfirmation(
     if (already) return { ok: true, message: `ℹ️ *${chosen.name}* è già in spillatura.` };
     await db.insert(tapList).values({ pubId, beerId: chosen.id, isActive: true, isVisible: true });
     bustHomeCaches();
+    bustPubStats(pubId);
     const brewInfo = chosen.breweryName ? ` di *${chosen.breweryName}*` : "";
     return { ok: true, message: `✅ *${chosen.name}*${brewInfo} aggiunta alla spillatura.` };
   }
@@ -654,6 +658,7 @@ async function resolveConfirmation(
     if (!fromItem) return { ok: false, message: `❌ Birra da sostituire non trovata: "${action.from}"` };
     await db.update(tapList).set({ beerId: chosen.id, updatedAt: new Date() }).where(eq(tapList.id, fromItem.id));
     bustHomeCaches();
+    bustPubStats(pubId);
     const brewInfo = chosen.breweryName ? ` di *${chosen.breweryName}*` : "";
     return { ok: true, message: `🔄 *${fromItem.beerName}* sostituita con *${chosen.name}*${brewInfo} (prezzi mantenuti).` };
   }
