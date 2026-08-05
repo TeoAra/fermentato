@@ -129,7 +129,7 @@ export default function BreweryHero({
       </div>
 
       {/* Overlapping card */}
-      <div className="relative px-4 -mt-10 pb-2">
+      <div className="relative px-4 lg:px-8 -mt-10 pb-2">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
