@@ -40,6 +40,7 @@ import { OwnerReportsSection } from "@/components/owner-reports";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
 import { StatsGrid } from "@/components/dashboard-primitives";
 import BreweryQuickStats from "@/components/brewery-quick-stats";
+import BreweryAnalyticsTab from "@/components/brewery-analytics-tab";
 
 function CollabBrewerySelector({ selected, onChange, excludeBreweryId }: { selected: { id: number; name: string }[]; onChange: (breweries: { id: number; name: string }[]) => void; excludeBreweryId?: number | null }) {
   const [query, setQuery] = useState("");
@@ -1042,10 +1043,14 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </Link>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="hidden lg:grid w-full grid-cols-5 h-auto gap-1">
+          <TabsList className="hidden lg:grid w-full grid-cols-6 h-auto gap-1">
             <TabsTrigger value="birre" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
               <BeerIcon className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Birre ({beers.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+              <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Analytics</span>
             </TabsTrigger>
             <TabsTrigger value="eventi" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
               <CalendarIcon className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -1100,6 +1105,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               <div className="space-y-2">
                 {[
                   { label: 'Catalogo Birre', sub: `${beers.length} birre in catalogo`, icon: BeerIcon, tab: 'birre' },
+                  { label: 'Analytics', sub: 'Visite e birre più popolari', icon: TrendingUp, tab: 'analytics' },
                   { label: 'Eventi', sub: 'Gestisci gli eventi del birrificio', icon: CalendarIcon, tab: 'eventi' },
                   { label: 'Distribuzione', sub: 'Dove siamo in spina', icon: Store, tab: 'distribuzione' },
                   { label: 'Annunci & Uscite', sub: 'Novità, release, collaborazioni', icon: Megaphone, tab: 'annunci' },
@@ -1361,6 +1367,10 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         )}
           </TabsContent>
 
+          <TabsContent value="analytics">
+            <BreweryAnalyticsTab breweryId={brewery.id} />
+          </TabsContent>
+
           <TabsContent value="eventi">
             <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8">
               <BreweryEventsManager breweryId={brewery.id} breweryName={brewery.name} />
@@ -1450,6 +1460,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   </div>
                   <div className="text-[10px] font-semibold text-primary capitalize leading-tight">
                     {activeTab === 'birre' && 'Catalogo Birre'}
+                    {activeTab === 'analytics' && 'Analytics'}
                     {activeTab === 'eventi' && 'Eventi'}
                     {activeTab === 'distribuzione' && 'Distribuzione'}
                     {activeTab === 'annunci' && 'Annunci & Uscite'}

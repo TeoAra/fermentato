@@ -8791,7 +8791,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
-        const [favs, viewsWeekRows, checkinSeriesRows, viewsSeriesRows] = await Promise.all([
+        const [favs, viewsWeekRows, checkinSeriesRows, viewsSeriesRows, topBeersByViewsRows] = await Promise.all([
           // Favorites count (brewery-level favorites)
           db.select({ n: sql<number>`COUNT(*)::int` })
             .from(favorites)
@@ -8827,6 +8827,19 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
              ) bv ON DATE(bv.viewed_at) = d.day
              GROUP BY d.day
              ORDER BY d.day ASC`,
+            [breweryId]
+          ),
+          // Top 10 beers by views in last 30 days
+          pool.query(
+            `SELECT b.id AS "beerId", b.name AS "beerName", b.image_url AS "imageUrl",
+                    COUNT(bv.id)::int AS views
+             FROM beer_views bv
+             JOIN beers b ON b.id = bv.beer_id
+             WHERE b.brewery_id = $1
+               AND bv.viewed_at >= CURRENT_DATE - INTERVAL '29 days'
+             GROUP BY b.id, b.name, b.image_url
+             ORDER BY COUNT(bv.id) DESC
+             LIMIT 10`,
             [breweryId]
           ),
         ]);
@@ -8871,6 +8884,12 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
           viewsWeek: viewsWeekRows[0]?.total ?? 0,
           viewsLast30,
           viewsSeries: (viewsSeriesRows.rows ?? []).map((r: any) => ({ date: r.date, views: Number(r.views) })),
+          topBeersByViews: (topBeersByViewsRows.rows ?? []).map((r: any) => ({
+            beerId: r.beerId,
+            beerName: r.beerName,
+            imageUrl: r.imageUrl ?? null,
+            views: Number(r.views),
+          })),
         };
       });
 
