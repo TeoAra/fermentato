@@ -1,7 +1,6 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useCallback } from "react";
 import { useLocation } from "wouter";
 import { normalizeRichContent } from "@/components/rich-text-editor";
-import { MentionCard } from "@/components/social/MentionCard";
 
 const HASHTAG_RE = /(^|[^A-Za-z0-9_#\u00C0-\u024F])(#([A-Za-z0-9_\u00C0-\u024F]{2,30}))/g;
 const MENTION_RE = /(^|[^A-Za-z0-9_@\u00C0-\u024F])(@([A-Za-z0-9_]{2,30}))/g;
@@ -113,11 +112,8 @@ function linkifyInHtml(html: string): string {
   return root.innerHTML;
 }
 
-interface ActiveMention { nickname: string; anchorRect: DOMRect }
-
 export function PostContent({ content, className }: { content: string; className?: string }) {
   const [, setLocation] = useLocation();
-  const [activeMention, setActiveMention] = useState<ActiveMention | null>(null);
 
   const html = useMemo(
     () => linkifyInHtml(normalizeRichContent(content)),
@@ -131,12 +127,9 @@ export function PostContent({ content, className }: { content: string; className
     e.preventDefault();
 
     if (anchor.hasAttribute("data-mention")) {
+      // Navigate directly — popup unreliable on iOS Capacitor (fixed positioning + touch)
       const nickname = anchor.getAttribute("data-mention") || "";
-      const rect = anchor.getBoundingClientRect();
-      // Toggle: close if same mention clicked again
-      setActiveMention(prev =>
-        prev?.nickname === nickname ? null : { nickname, anchorRect: rect }
-      );
+      if (nickname) setLocation(`/user/${nickname}`);
     } else {
       const href = anchor.getAttribute("href") || "/";
       setLocation(href);
@@ -153,13 +146,6 @@ export function PostContent({ content, className }: { content: string; className
         }
         dangerouslySetInnerHTML={{ __html: html }}
       />
-      {activeMention && (
-        <MentionCard
-          nickname={activeMention.nickname}
-          anchorRect={activeMention.anchorRect}
-          onClose={() => setActiveMention(null)}
-        />
-      )}
     </>
   );
 }

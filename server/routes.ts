@@ -7282,6 +7282,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ownerReply: userBeerTastings.ownerReply,
           ownerReplyAt: userBeerTastings.ownerReplyAt,
           userReviewCount: sql<number>`(SELECT COUNT(*) FROM user_beer_tastings ubt WHERE ubt.user_id = ${userBeerTastings.userId} AND ubt.rating IS NOT NULL)`,
+          photoUrl: sql<string | null>`"user_beer_tastings"."photo_url"`,
         })
         .from(userBeerTastings)
         .leftJoin(users, eq(userBeerTastings.userId, users.id))
