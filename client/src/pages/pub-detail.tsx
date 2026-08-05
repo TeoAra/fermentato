@@ -46,6 +46,7 @@ import {
   type BottleItem,
   type FoodMenu,
 } from "@/components/pub";
+import DesktopAnchorNav from "@/components/DesktopAnchorNav";
 
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
@@ -711,6 +712,8 @@ export default function PubDetail() {
 
       <div className="lg:hidden"><StickyPubTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} /></div>
 
+      <DesktopAnchorNav tabs={TABS} />
+
       <main
         className="max-w-[720px] lg:max-w-7xl mx-auto px-4 lg:px-8"
         style={{ paddingBottom: "calc(80px + var(--frozen-sab))" }}
@@ -727,7 +730,7 @@ export default function PubDetail() {
               </div>
             )}
 
-            <div className={`${activeTab === "overview" ? "" : "hidden"} lg:!block`}>
+            <div id="section-overview" className={`${activeTab === "overview" ? "" : "hidden"} lg:!block`}>
               <h2 className="hidden lg:block text-xl font-black text-[#151515] dark:text-[#F5F5F5] pt-4 mb-0">Panoramica</h2>
               <OverviewSection
                 pub={pubData}
@@ -738,7 +741,7 @@ export default function PubDetail() {
               />
             </div>
 
-            <div className={`${activeTab === "taplist" ? "" : "hidden"} lg:!block`}>
+            <div id="section-taplist" className={`${activeTab === "taplist" ? "" : "hidden"} lg:!block`}>
               <TaplistSection
                 taps={Array.isArray(tapList) ? tapList : []}
                 currentUserCanCheckin={isAuthenticated}
@@ -746,7 +749,7 @@ export default function PubDetail() {
               />
             </div>
 
-            <div className={`${activeTab === "bottles" ? "" : "hidden"} lg:!block`}>
+            <div id="section-bottles" className={`${activeTab === "bottles" ? "" : "hidden"} lg:!block`}>
               <BottlesSection
                 bottles={Array.isArray(bottles) ? bottles : []}
                 currentUserCanCheckin={isAuthenticated}
@@ -754,14 +757,14 @@ export default function PubDetail() {
               />
             </div>
 
-            <div className={`${activeTab === "drinks" ? "" : "hidden"} lg:!block`}>
+            <div id="section-drinks" className={`${activeTab === "drinks" ? "" : "hidden"} lg:!block`}>
               <DrinksPublicSection
                 categories={Array.isArray(drinkCategories) ? drinkCategories : []}
                 legacyItems={Array.isArray(drinkItems) ? drinkItems : []}
               />
             </div>
 
-            <div className={`${activeTab === "menu" ? "" : "hidden"} lg:!block`}>
+            <div id="section-menu" className={`${activeTab === "menu" ? "" : "hidden"} lg:!block`}>
               <FoodMenuSection
                 menu={foodMenu}
                 isOwner={!!canManage}

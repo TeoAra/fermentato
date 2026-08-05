@@ -46,6 +46,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { WebImageSearchButton } from "@/components/web-image-search-button";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import StickyPubTabs, { type StickyTabDef } from "@/components/pub/StickyPubTabs";
+import DesktopAnchorNav from "@/components/DesktopAnchorNav";
 import BeerHero from "@/components/beer/BeerHero";
 import BeerStatsStrip from "@/components/beer/BeerStatsStrip";
 import BeerAvailabilitySection from "@/components/beer/BeerAvailabilitySection";
@@ -754,6 +755,7 @@ export default function BeerDetail() {
         }}
       />
 
+      <DesktopAnchorNav tabs={BEER_TABS} />
 
       <main
         className="max-w-[720px] lg:max-w-7xl mx-auto px-4 lg:px-8"
@@ -761,7 +763,7 @@ export default function BeerDetail() {
           paddingBottom: 'calc(80px + var(--frozen-sab))',
         }}
       >
-        <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
+        <div id="section-overview" className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
           <h2 className="hidden lg:block text-xl font-black text-[#151515] dark:text-[#F5F5F5] pt-4 mb-0">Panoramica</h2>
           <div className="mt-3">
             <BeerStatsStrip beer={beer} />
@@ -899,7 +901,7 @@ export default function BeerDetail() {
           )}
         </div>
 
-        <div className={`${activeTab === 'disponibilita' ? '' : 'hidden'} lg:!block`}>
+        <div id="section-disponibilita" className={`${activeTab === 'disponibilita' ? '' : 'hidden'} lg:!block`}>
           <BeerAvailabilitySection
             isLoading={availabilityLoading}
             totalLocations={totalLocations}
@@ -910,7 +912,7 @@ export default function BeerDetail() {
           />
         </div>
 
-        <div className={`${activeTab === 'info' ? '' : 'hidden'} lg:!block`}>
+        <div id="section-info" className={`${activeTab === 'info' ? '' : 'hidden'} lg:!block`}>
           <BeerInfoSection
             beer={beer}
             translatedDesc={translatedDesc}
@@ -992,7 +994,7 @@ export default function BeerDetail() {
           )}
         </div>
 
-        <div className={`${activeTab === 'recensioni' ? '' : 'hidden'} lg:!block`}>
+        <div id="section-recensioni" className={`${activeTab === 'recensioni' ? '' : 'hidden'} lg:!block`}>
           <BeerReviewsSection
             beerId={parseInt(id || '0')}
             beerName={beer?.name}
