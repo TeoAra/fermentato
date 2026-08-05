@@ -90,7 +90,7 @@ import { ImageUpload } from "@/components/image-upload";
 import { EventsManager } from "@/components/events-manager";
 import { PubQRCode } from "@/components/pub-qr-code";
 import { QRCodeSVG } from "qrcode.react";
-import { Cast, Share2, Link as LinkIcon, Tv, Info, QrCode, Bot } from "lucide-react";
+import { Cast, Share2, Link as LinkIcon, Tv, Info, QrCode, Bot, Send } from "lucide-react";
 import BotConnectCard from "@/components/BotConnectCard";
 import PubQuickStats from "@/components/pub-quick-stats";
 
