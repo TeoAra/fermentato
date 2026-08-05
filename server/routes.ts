@@ -8660,7 +8660,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
 
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
-      const [taps, bottles, favs, ratingAgg, checkinsTotal, checkinsMonth, topBeerOnTapRows, topBeerCheckinRows] = await Promise.all([
+      const [taps, bottles, favs, ratingAgg, checkinsTotal, checkinsMonth, topBeerOnTapRows, topBeerCheckinRows, checkinSeriesRows] = await Promise.all([
         // Active beers on tap
         db.select({ n: sql<number>`COUNT(*)::int` }).from(tapList).where(and(eq(tapList.pubId, pubId), eq(tapList.isActive, true))),
         // Active bottles
@@ -8701,6 +8701,16 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
           ORDER BY COUNT(t.id) DESC
           LIMIT 5
         `),
+        // 30-day daily check-in series (for sparkline)
+        pool.query(
+          `SELECT d.day::text AS date, COALESCE(COUNT(t.id)::int, 0) AS checkins
+           FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, '1 day') AS d(day)
+           LEFT JOIN user_beer_tastings t
+             ON DATE(t.created_at) = d.day AND t.pub_id = $1
+           GROUP BY d.day
+           ORDER BY d.day ASC`,
+          [pubId]
+        ),
       ]);
 
       res.json({
@@ -8713,6 +8723,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
         checkinsMonth: checkinsMonth[0]?.n ?? 0,
         topBeersOnTap: ((topBeerOnTapRows as any).rows ?? topBeerOnTapRows),
         topBeersAllTime: ((topBeerCheckinRows as any).rows ?? topBeerCheckinRows),
+        checkinSeries: (checkinSeriesRows.rows ?? []).map((r: any) => ({ date: r.date, checkins: Number(r.checkins) })),
       });
     } catch (err: any) {
       console.error("Pub stats-extended error:", err.message);
