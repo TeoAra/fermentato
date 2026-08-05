@@ -8,6 +8,7 @@
  * but the component is designed as a list for forward compatibility.
  */
 import { Link } from "wouter";
+import { ZoomableImage } from "@/components/ImageLightbox";
 import { Star, MapPin, Clock, Beer as BeerIcon, ChevronRight } from "lucide-react";
 
 interface Checkin {
@@ -104,7 +105,7 @@ export default function MyBeerHistory({ checkins, beerId, maxVisible = 3 }: MyBe
             {/* Photo strip (if any) */}
             {c.photoUrl && (
               <div className="h-28 overflow-hidden">
-                <img src={c.photoUrl} alt="Foto assaggio" className="w-full h-full object-cover" />
+                <ZoomableImage src={c.photoUrl} alt="Foto assaggio" className="w-full h-full object-cover" />
               </div>
             )}
 

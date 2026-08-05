@@ -18,6 +18,7 @@ import { it } from "date-fns/locale";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import CheckinSocialBar from "@/components/social/CheckinSocialBar";
+import { ZoomableImage } from "@/components/ImageLightbox";
 
 /* ── helpers ── */
 const FORMAT_LABELS: Record<string, string> = {
@@ -226,10 +227,10 @@ function CheckinCard({ data }: { data: any }) {
         )}
       </div>
 
-      {/* Photo */}
+      {/* Photo — tap to zoom */}
       {data.photo_url && (
         <div className="px-4 pb-3">
-          <img src={data.photo_url} alt="Foto assaggio"
+          <ZoomableImage src={data.photo_url} alt="Foto assaggio"
             className="rounded-xl w-full max-h-80 object-cover" />
         </div>
       )}
@@ -279,7 +280,7 @@ function MicroblogCard({ post }: { post: any }) {
       </p>
 
       {post.image_url && (
-        <img src={post.image_url} alt=""
+        <ZoomableImage src={post.image_url} alt=""
           className="mt-3 rounded-xl w-full max-h-80 object-cover" />
       )}
 

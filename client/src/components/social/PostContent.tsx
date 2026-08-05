@@ -1,14 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { normalizeRichContent } from "@/components/rich-text-editor";
+import { MentionCard } from "@/components/social/MentionCard";
 
 const HASHTAG_RE = /(^|[^A-Za-z0-9_#\u00C0-\u024F])(#([A-Za-z0-9_\u00C0-\u024F]{2,30}))/g;
 const MENTION_RE = /(^|[^A-Za-z0-9_@\u00C0-\u024F])(@([A-Za-z0-9_]{2,30}))/g;
 
-/**
- * Walks HTML text nodes replacing #hashtag and @mention occurrences with
- * anchor tags. Skips text inside existing <a> tags to avoid double-wrapping.
- */
 function linkifyInHtml(html: string): string {
   if (!html) return "";
   if (typeof window === "undefined" || typeof DOMParser === "undefined") return html;
@@ -22,12 +19,10 @@ function linkifyInHtml(html: string): string {
   while ((cur = walker.nextNode())) textNodes.push(cur as Text);
 
   for (const tn of textNodes) {
-    // Skip text inside <a> to avoid double-wrapping
     if (tn.parentElement?.closest("a")) continue;
     const text = tn.nodeValue || "";
     if (!text.trim()) continue;
 
-    // Check if text needs any linkification
     HASHTAG_RE.lastIndex = 0;
     MENTION_RE.lastIndex = 0;
     const hasHash = HASHTAG_RE.test(text);
@@ -35,38 +30,35 @@ function linkifyInHtml(html: string): string {
     const hasMention = MENTION_RE.test(text);
     if (!hasHash && !hasMention) continue;
 
-    // Build a unified replacement by scanning for both patterns
-    const frag = doc.createDocumentFragment();
-    let lastIdx = 0;
-
-    // Collect all matches with their positions
-    interface Match { start: number; end: number; type: "hashtag" | "mention"; value: string; prefix: string }
+    interface Match { start: number; end: number; type: "hashtag" | "mention"; value: string }
     const matches: Match[] = [];
 
     HASHTAG_RE.lastIndex = 0;
     let m: RegExpExecArray | null;
     while ((m = HASHTAG_RE.exec(text)) !== null) {
-      const prefix = m[1];          // leading non-word char (or empty at ^)
-      const token = m[2];           // e.g. "#ipa"
-      const tag = m[3];             // bare tag
+      const prefix = m[1];
+      const token = m[2];
+      const tag = m[3];
       const start = m.index + prefix.length;
-      matches.push({ start, end: start + token.length, type: "hashtag", value: tag, prefix });
+      matches.push({ start, end: start + token.length, type: "hashtag", value: tag });
     }
 
     MENTION_RE.lastIndex = 0;
     while ((m = MENTION_RE.exec(text)) !== null) {
       const prefix = m[1];
-      const token = m[2];           // e.g. "@username"
-      const name = m[3];            // bare username
+      const token = m[2];
+      const name = m[3];
       const start = m.index + prefix.length;
-      matches.push({ start, end: start + token.length, type: "mention", value: name, prefix });
+      matches.push({ start, end: start + token.length, type: "mention", value: name });
     }
 
-    // Sort by position (ascending) and filter overlaps
     matches.sort((a, b) => a.start - b.start);
 
+    const frag = doc.createDocumentFragment();
+    let lastIdx = 0;
+
     for (const match of matches) {
-      if (match.start < lastIdx) continue; // overlapping — skip
+      if (match.start < lastIdx) continue;
       if (match.start > lastIdx) {
         frag.appendChild(doc.createTextNode(text.slice(lastIdx, match.start)));
       }
@@ -74,13 +66,11 @@ function linkifyInHtml(html: string): string {
       if (match.type === "hashtag") {
         a.setAttribute("href", `/hashtag/${encodeURIComponent(match.value.toLowerCase())}`);
         a.setAttribute("data-hashtag", match.value.toLowerCase());
-        a.setAttribute("data-testid", `hashtag-link-${match.value.toLowerCase()}`);
         a.className = "text-primary font-semibold hover:underline cursor-pointer";
         a.textContent = `#${match.value}`;
       } else {
         a.setAttribute("href", `/user/${encodeURIComponent(match.value)}`);
         a.setAttribute("data-mention", match.value);
-        a.setAttribute("data-testid", `mention-link-${match.value}`);
         a.className = "text-blue-600 dark:text-blue-400 font-semibold hover:underline cursor-pointer";
         a.textContent = `@${match.value}`;
       }
@@ -98,35 +88,53 @@ function linkifyInHtml(html: string): string {
   return root.innerHTML;
 }
 
-/**
- * Renders post content with clickable #hashtags and @mentions.
- * Supports both legacy plain-text posts and HTML from the rich text editor.
- */
+interface ActiveMention { nickname: string; anchorRect: DOMRect }
+
 export function PostContent({ content, className }: { content: string; className?: string }) {
   const [, setLocation] = useLocation();
+  const [activeMention, setActiveMention] = useState<ActiveMention | null>(null);
+
   const html = useMemo(
     () => linkifyInHtml(normalizeRichContent(content)),
     [content],
   );
 
-  const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const onClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement | null;
     const anchor = target?.closest("a[data-hashtag], a[data-mention]") as HTMLAnchorElement | null;
-    if (anchor) {
-      e.preventDefault();
+    if (!anchor) return;
+    e.preventDefault();
+
+    if (anchor.hasAttribute("data-mention")) {
+      const nickname = anchor.getAttribute("data-mention") || "";
+      const rect = anchor.getBoundingClientRect();
+      // Toggle: close if same mention clicked again
+      setActiveMention(prev =>
+        prev?.nickname === nickname ? null : { nickname, anchorRect: rect }
+      );
+    } else {
       const href = anchor.getAttribute("href") || "/";
       setLocation(href);
     }
-  };
+  }, [setLocation]);
 
   return (
-    <div
-      onClick={onClick}
-      className={
-        className ??
-        "prose prose-sm dark:prose-invert max-w-none text-sm text-stone-800 dark:text-stone-100 leading-relaxed [&_p]:my-1 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 prose-a:no-underline"
-      }
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
+    <>
+      <div
+        onClick={onClick}
+        className={
+          className ??
+          "prose prose-sm dark:prose-invert max-w-none text-sm text-stone-800 dark:text-stone-100 leading-relaxed [&_p]:my-1 [&_p:first-child]:mt-0 [&_p:last-child]:mb-0 prose-a:no-underline"
+        }
+        dangerouslySetInnerHTML={{ __html: html }}
+      />
+      {activeMention && (
+        <MentionCard
+          nickname={activeMention.nickname}
+          anchorRect={activeMention.anchorRect}
+          onClose={() => setActiveMention(null)}
+        />
+      )}
+    </>
   );
 }
