@@ -1054,6 +1054,20 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             </div>
           </div>
 
+          {/* Pubblica aggiornamento */}
+          <div
+            className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99]"
+            onClick={() => setLocation(`/microblog/new?pubId=${currentPub?.id}&pubName=${encodeURIComponent(currentPub?.name || '')}`)}
+          >
+            <div className="p-2.5 bg-blue-50 dark:bg-blue-950/20 rounded-xl shrink-0">
+              <Send className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm text-foreground leading-tight">Pubblica aggiornamento</p>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-tight">Post sulla community</p>
+            </div>
+          </div>
+
         </div>
       </div>
 

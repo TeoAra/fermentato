@@ -1011,7 +1011,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
         {/* Festival Mode CTA */}
         <Link href="/festival">
-          <div className={`bg-white dark:bg-card border border-primary/20 dark:border-primary/20 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/10 dark:to-card rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group ${activeTab !== 'overview' ? 'hidden lg:flex' : ''}`}>
+          <div className={`bg-white dark:bg-card border border-primary/20 dark:border-primary/20 bg-gradient-to-r from-orange-50 to-white dark:from-orange-950/10 dark:to-card rounded-2xl p-5 mb-4 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group ${activeTab !== 'overview' ? 'hidden lg:flex' : ''}`}>
             <div className="flex items-center gap-4 min-w-0">
               <div className="p-3 bg-primary rounded-xl shrink-0 shadow-sm group-hover:scale-110 transition-transform">
                 <QrCode className="h-6 w-6 text-white" />
@@ -1022,6 +1022,22 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               </div>
             </div>
             <ExternalLink className="h-5 w-5 text-primary shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </Link>
+
+        {/* Pubblica aggiornamento CTA */}
+        <Link href={`/microblog/new?breweryId=${brewery?.id}&breweryName=${encodeURIComponent(brewery?.name || '')}`}>
+          <div className={`bg-white dark:bg-card border border-blue-100 dark:border-blue-900/30 bg-gradient-to-r from-blue-50 to-white dark:from-blue-950/10 dark:to-card rounded-2xl p-5 mb-8 flex items-center justify-between gap-4 cursor-pointer hover:shadow-md transition-all group ${activeTab !== 'overview' ? 'hidden lg:flex' : ''}`}>
+            <div className="flex items-center gap-4 min-w-0">
+              <div className="p-3 bg-blue-500 rounded-xl shrink-0 shadow-sm group-hover:scale-110 transition-transform">
+                <Send className="h-6 w-6 text-white" />
+              </div>
+              <div className="min-w-0 text-left">
+                <p className="font-bold text-foreground">Pubblica aggiornamento</p>
+                <p className="text-sm text-muted-foreground truncate">Condividi novità, uscite o eventi con la community</p>
+              </div>
+            </div>
+            <ExternalLink className="h-5 w-5 text-blue-500 shrink-0 opacity-50 group-hover:opacity-100 transition-opacity" />
           </div>
         </Link>
 
@@ -1104,6 +1120,19 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     <ChevronRight className="h-4 w-4 text-stone-400 flex-shrink-0" />
                   </button>
                 ))}
+                {/* Pubblica aggiornamento — shortcut to community post composer */}
+                <Link href={`/microblog/new?breweryId=${brewery?.id}&breweryName=${encodeURIComponent(brewery?.name || '')}`}>
+                  <div className="w-full flex items-center gap-3 p-3 rounded-2xl bg-blue-50/70 dark:bg-blue-950/20 backdrop-blur-xl border border-blue-100 dark:border-blue-900/30 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.99] transition-all text-left">
+                    <div className="w-10 h-10 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center flex-shrink-0">
+                      <Send className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold text-foreground leading-tight">Pubblica aggiornamento</div>
+                      <div className="text-[11px] text-muted-foreground truncate mt-0.5">Scrivi un post sulla community</div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 text-stone-400 flex-shrink-0" />
+                  </div>
+                </Link>
               </div>
             </section>
           </TabsContent>
