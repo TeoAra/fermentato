@@ -566,17 +566,13 @@ export default function BreweryDetail() {
         onOpenSuggest={() => setIsSuggestDialogOpen(true)}
       />
 
-      <StickyPubTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+      <div className="lg:hidden"><StickyPubTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} /></div>
 
       <main
         className="max-w-[720px] lg:max-w-7xl mx-auto px-4 lg:px-8"
         style={{ paddingBottom: "calc(80px + var(--frozen-sab))" }}
       >
-        <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-10 lg:items-start">
-
-          {/* ── LEFT: tab sections ─────────────────────────────────────── */}
-          <div>
-            {isAdmin && (
+          {isAdmin && (
               <div className="pt-3">
                 <button
                   type="button"
@@ -640,94 +636,6 @@ export default function BreweryDetail() {
                 <BreweryDistributionSection distribution={distribution as any[]} />
               )}
             </div>
-          </div>
-
-          {/* ── RIGHT: Desktop sticky sidebar ──────────────────────────── */}
-          <aside className="hidden lg:flex flex-col gap-4 sticky top-[116px] pt-3">
-
-            {/* Quick info card */}
-            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-4 space-y-3">
-
-              {/* Rating row */}
-              {breweryRating?.avgRating && breweryRating.reviewCount > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1 text-amber-500">
-                    {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(Number(breweryRating.avgRating)) ? "fill-current" : "opacity-20"}`} />
-                    ))}
-                  </div>
-                  <span className="text-sm font-bold text-stone-800 dark:text-stone-100">
-                    {Number(breweryRating.avgRating).toFixed(1)}
-                  </span>
-                  <span className="text-xs text-stone-400">({breweryRating.reviewCount} recensioni)</span>
-                </div>
-              )}
-
-              {/* Divider if rating shown */}
-              {breweryRating?.avgRating && breweryRating.reviewCount > 0 && (
-                <div className="border-t border-[#E8DED1] dark:border-white/[0.06]" />
-              )}
-
-              {/* Location */}
-              {brewery?.location && (
-                <div className="flex items-start gap-2.5">
-                  <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-snug">{brewery.location}</p>
-                    {brewery.region && brewery.region !== brewery.location && (
-                      <p className="text-xs text-stone-400 mt-0.5">{brewery.region}</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Website */}
-              {(brewery as any)?.websiteUrl && (
-                <div className="flex items-center gap-2.5">
-                  <Globe className="w-4 h-4 text-primary flex-shrink-0" />
-                  <a
-                    href={(brewery as any).websiteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-primary hover:underline truncate"
-                  >
-                    {(brewery as any).websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                  </a>
-                </div>
-              )}
-
-              {/* Beer count */}
-              {beers.length > 0 && (
-                <div className="flex items-center gap-2.5">
-                  <BeerIcon className="w-4 h-4 text-primary flex-shrink-0" />
-                  <span className="text-sm text-stone-700 dark:text-stone-300">
-                    <strong>{beers.length}</strong> birre nel catalogo
-                  </span>
-                </div>
-              )}
-
-              {/* Favorites */}
-              {favCount > 0 && (
-                <div className="flex items-center gap-2.5">
-                  <Users className="w-4 h-4 text-stone-400 flex-shrink-0" />
-                  <span className="text-xs text-stone-400">{favCount} preferiti</span>
-                </div>
-              )}
-            </div>
-
-            {/* Directions CTA */}
-            {brewery?.location && (
-              <button
-                onClick={handleDirections}
-                className="flex items-center justify-center gap-2 h-11 rounded-xl bg-primary/10 hover:bg-primary/15 text-primary text-sm font-semibold transition-colors"
-              >
-                <MapPin className="w-4 h-4" />
-                Indicazioni stradali
-              </button>
-            )}
-
-          </aside>
-        </div>
       </main>
 
       {/* ── Admin Edit Dialog (modal={false} per Google Maps autocomplete) ── */}

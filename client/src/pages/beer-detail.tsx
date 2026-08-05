@@ -754,11 +754,6 @@ export default function BeerDetail() {
         }}
       />
 
-      <StickyPubTabs
-        tabs={BEER_TABS}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
 
       <main
         className="max-w-[720px] lg:max-w-7xl mx-auto px-4 lg:px-8"
@@ -766,9 +761,6 @@ export default function BeerDetail() {
           paddingBottom: 'calc(80px + var(--frozen-sab))',
         }}
       >
-        <div className="lg:grid lg:grid-cols-[1fr_320px] lg:gap-10 lg:items-start">
-        {/* ── LEFT: tab sections ─────────────────────────────────────── */}
-        <div>
         <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
           <h2 className="hidden lg:block text-xl font-black text-[#151515] dark:text-[#F5F5F5] pt-4 mb-0">Panoramica</h2>
           <div className="mt-3">
@@ -1024,119 +1016,7 @@ export default function BeerDetail() {
             onReport={(reviewId) => setReportDialogReviewId(reviewId)}
           />
         </div>
-        </div>{/* end left column */}
 
-        {/* ── RIGHT: Desktop sticky sidebar ──────────────────────────── */}
-        <aside className="hidden lg:flex flex-col gap-3 sticky top-[116px]">
-
-          {/* Birrificio card */}
-          {beer?.brewery && (
-            <Link href={`/brewery/${beer.brewery.id}`}>
-              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-4 flex items-center gap-3 hover:border-primary/30 transition-colors cursor-pointer group">
-                <div className="w-12 h-12 rounded-xl bg-[#FAF7F1] dark:bg-[#12151A] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {(beer.brewery as any).logoUrl ? (
-                    <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1" />
-                  ) : (
-                    <Building2 className="h-6 w-6 text-[#F59E0B]" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider mb-0.5">Birrificio</p>
-                  <p className="text-sm font-bold text-stone-900 dark:text-stone-100 group-hover:text-primary transition-colors truncate">{beer.brewery.name}</p>
-                  {beer.brewery.location && (
-                    <p className="text-xs text-stone-400 truncate mt-0.5">{beer.brewery.location}</p>
-                  )}
-                </div>
-                <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-primary transition-colors flex-shrink-0" />
-              </div>
-            </Link>
-          )}
-
-          {/* ABV / IBU / EBC stats card */}
-          {(beer?.abv || (beer as any)?.ibu || (beer as any)?.ebc) && (
-            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-4">
-              <div className="grid grid-cols-3 gap-2">
-                {beer?.abv && (
-                  <div className="flex flex-col items-center p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20">
-                    <span className="text-lg font-black text-amber-600 dark:text-amber-400 leading-none">{beer.abv}%</span>
-                    <span className="text-[10px] font-bold text-amber-500/70 uppercase tracking-wide mt-0.5">ABV</span>
-                  </div>
-                )}
-                {(beer as any)?.ibu && (
-                  <div className="flex flex-col items-center p-2.5 rounded-xl bg-lime-50 dark:bg-lime-950/20">
-                    <span className="text-lg font-black text-lime-700 dark:text-lime-400 leading-none">{(beer as any).ibu}</span>
-                    <span className="text-[10px] font-bold text-lime-600/70 uppercase tracking-wide mt-0.5">IBU</span>
-                  </div>
-                )}
-                {(beer as any)?.ebc && (
-                  <div className="flex flex-col items-center p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20">
-                    <span className="text-lg font-black text-orange-700 dark:text-orange-400 leading-none">{(beer as any).ebc}</span>
-                    <span className="text-[10px] font-bold text-orange-600/70 uppercase tracking-wide mt-0.5">EBC</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Rating + info card */}
-          {(reviewsData?.avgRating || totalLocations > 0 || (beer as any)?.country) && (
-            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-4 space-y-3">
-
-              {reviewsData?.avgRating && reviewsData.reviewCount > 0 && (
-                <>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider mb-1.5">Valutazione</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl font-black text-stone-900 dark:text-stone-100 leading-none">
-                        {Number(reviewsData.avgRating).toFixed(1)}
-                      </span>
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-0.5 text-amber-500">
-                          {[1,2,3,4,5].map(s => (
-                            <Star key={s} className={`w-3 h-3 ${s <= Math.round(Number(reviewsData.avgRating)) ? "fill-current" : "opacity-25"}`} />
-                          ))}
-                        </div>
-                        <span className="text-[10px] text-stone-400">{reviewsData.reviewCount} {reviewsData.reviewCount === 1 ? "recensione" : "recensioni"}</span>
-                      </div>
-                    </div>
-                  </div>
-                  {(totalLocations > 0 || (beer as any)?.country) && (
-                    <div className="border-t border-[#E8DED1] dark:border-white/[0.06]" />
-                  )}
-                </>
-              )}
-
-              {totalLocations > 0 && (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="w-3.5 h-3.5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Disponibilità</p>
-                    <p className="text-sm font-semibold text-stone-800 dark:text-stone-200">
-                      {totalLocations} {totalLocations === 1 ? "locale" : "locali"}
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {(beer as any)?.country && (
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 rounded-lg bg-stone-100 dark:bg-white/[0.05] flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">🌍</span>
-                  </div>
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Paese</p>
-                    <p className="text-sm font-semibold text-stone-800 dark:text-stone-200">{(beer as any).country}</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-        </aside>
-
-        </div>{/* end desktop grid */}
         </main>
 
       {/* Admin Edit Dialog */}

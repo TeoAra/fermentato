@@ -1,0 +1,46 @@
+root@luppolino:/www/nodeapps/fermenta# sudo fermenta-deploy
+==> [1/5] git pull
+remote: Enumerating objects: 47, done.
+remote: Counting objects: 100% (47/47), done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 31 (delta 28), reused 31 (delta 28), pack-reused 0 (from 0)
+Unpacking objects: 100% (31/31), 6.73 KiB | 140.00 KiB/s, done.
+From https://github.com/TeoAra/fermentato
+   3f39746..0184565  main       -> origin/main
+HEAD is now at 0184565 Update hero component imports and lockfile dependencies
+==> [2/5] npm install
+npm warn config init.module Use `--init-module` instead.
+⠦
+npm error code EAI_AGAIN
+npm error syscall getaddrinfo
+npm error errno EAI_AGAIN
+npm error request to http://package-firewall.replit.local/npm/caniuse-lite/-/caniuse-lite-1.0.30001806.tgz failed, reason: getaddrinfo EAI_AGAIN package-firewall.replit.local
+npm error A complete log of this run can be found in: /www/server/nodejs/v20.19.6/cache/_logs/2026-08-05T13_22_17_654Z-debug-0.log
+root@luppolino:/www/nodeapps/fermenta# sudo fermenta-deploy
+==> [1/5] git pull
+HEAD is now at 0184565 Update hero component imports and lockfile dependencies
+==> [2/5] npm install
+npm warn config init.module Use `--init-module` instead.
+⠹
+⠼^C
+root@luppolino:/www/nodeapps/fermenta# ^C
+root@luppolino:/www/nodeapps/fermenta# sudo fermenta-deploy
+==> [1/5] git pull
+remote: Enumerating objects: 19, done.
+remote: Counting objects: 100% (19/19), done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 11 (delta 9), reused 11 (delta 9), pack-reused 0 (from 0)
+Unpacking objects: 100% (11/11), 1.22 KiB | 104.00 KiB/s, done.
+From https://github.com/TeoAra/fermentato
+   0184565..415761f  main       -> origin/main
+HEAD is now at 415761f Hide StickyPubTabs on desktop and add section headings for detail pages
+==> [2/5] npm install
+npm warn config init.module Use `--init-module` instead.
+npm error code ENOTEMPTY
+npm error syscall rename
+npm error path /www/nodeapps/fermenta/node_modules/baseline-browser-mapping
+npm error dest /www/nodeapps/fermenta/node_modules/.baseline-browser-mapping-Lpsf8BS5
+npm error errno -39
+npm error ENOTEMPTY: directory not empty, rename '/www/nodeapps/fermenta/node_modules/baseline-browser-mapping' -> '/www/nodeapps/fermenta/node_modules/.baseline-browser-mapping-Lpsf8BS5'
+npm error A complete log of this run can be found in: /www/server/nodejs/v20.19.6/cache/_logs/2026-08-05T13_25_15_310Z-debug-0.log
+root@luppolino:/www/nodeapps/fermenta#
