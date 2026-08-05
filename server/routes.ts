@@ -530,6 +530,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_beer_views_beer_date ON beer_views(beer_id, viewed_at)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_beer_tastings_user ON user_beer_tastings(user_id)`);
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_beer_tastings_beer ON user_beer_tastings(beer_id)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_beer_tastings_beer_date ON user_beer_tastings(beer_id, created_at)`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_favorites_type_item ON favorites(item_type, item_id)`);
     } catch (e) {
       // ignored
     }
@@ -5144,7 +5146,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
 
-
   // Get global beer statistics
   app.get('/api/stats/global', async (req, res) => {
     try {
@@ -8752,6 +8753,110 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
     } catch (err: any) {
       console.error("Pub stats-extended error:", err.message);
       res.status(500).json({ message: "Errore stats pub" });
+    }
+  });
+
+  // ─── Brewery stats-extended for brewery owner dashboard ─────────────────────
+  app.get("/api/breweries/:id/stats-extended", isAuthenticated, async (req: any, res) => {
+    try {
+      const breweryId = parseInt(req.params.id);
+      const userId = req.user?.id;
+      const user = await storage.getUser(userId);
+      const isOwner = user?.breweryId === breweryId;
+      const isAdminUser = req.user?.activeRole === "admin" || req.user?.userType === "admin";
+      if (!isOwner && !isAdminUser) { res.status(403).json({ message: "Non autorizzato" }); return; }
+
+      const payload = await memCached(`brewery-stats-extended:${breweryId}`, 60 * 60 * 1000, async () => {
+        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+        const [favs, viewsWeekRows, checkinSeriesRows, viewsSeriesRows] = await Promise.all([
+          // Favorites count (brewery-level favorites)
+          db.select({ n: sql<number>`COUNT(*)::int` })
+            .from(favorites)
+            .where(and(eq(favorites.itemType, 'brewery'), eq(favorites.itemId, breweryId))),
+          // Views last 7 days (beer_views joined to beers)
+          db.select({ total: sql<number>`COUNT(*)::int` })
+            .from(beerViews)
+            .innerJoin(beers, eq(beerViews.beerId, beers.id))
+            .where(and(eq(beers.breweryId, breweryId), gte(beerViews.viewedAt, sevenDaysAgo))),
+          // 30-day daily check-in series (tastings of beers from this brewery — bounded to 30 days)
+          pool.query(
+            `SELECT d.day::text AS date, COALESCE(COUNT(t.id)::int, 0) AS checkins
+             FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, '1 day') AS d(day)
+             LEFT JOIN (
+               SELECT t2.id, t2.created_at
+               FROM user_beer_tastings t2
+               JOIN beers b2 ON b2.id = t2.beer_id AND b2.brewery_id = $1
+               WHERE t2.created_at >= CURRENT_DATE - INTERVAL '29 days'
+             ) t ON DATE(t.created_at) = d.day
+             GROUP BY d.day
+             ORDER BY d.day ASC`,
+            [breweryId]
+          ),
+          // 30-day daily views series (beer_views for beers from this brewery — bounded to 30 days)
+          pool.query(
+            `SELECT d.day::text AS date, COALESCE(COUNT(bv.id)::int, 0) AS views
+             FROM generate_series(CURRENT_DATE - INTERVAL '29 days', CURRENT_DATE, '1 day') AS d(day)
+             LEFT JOIN (
+               SELECT bv2.id, bv2.viewed_at
+               FROM beer_views bv2
+               JOIN beers b2 ON b2.id = bv2.beer_id AND b2.brewery_id = $1
+               WHERE bv2.viewed_at >= CURRENT_DATE - INTERVAL '29 days'
+             ) bv ON DATE(bv.viewed_at) = d.day
+             GROUP BY d.day
+             ORDER BY d.day ASC`,
+            [breweryId]
+          ),
+        ]);
+
+        // Run count queries separately (simpler SQL)
+        const [checkinsMonthRow, checkinsTotalRow, topBeerRows] = await Promise.all([
+          pool.query(
+            `SELECT COUNT(t.id)::int AS n
+             FROM user_beer_tastings t
+             JOIN beers b ON b.id = t.beer_id AND b.brewery_id = $1
+             WHERE t.created_at >= $2`,
+            [breweryId, thirtyDaysAgo]
+          ),
+          pool.query(
+            `SELECT COUNT(t.id)::int AS n
+             FROM user_beer_tastings t
+             JOIN beers b ON b.id = t.beer_id AND b.brewery_id = $1`,
+            [breweryId]
+          ),
+          pool.query(
+            `SELECT b.id, b.name, b.image_url AS "imageUrl",
+                    COUNT(t.id)::int AS checkins,
+                    ROUND(COALESCE(AVG(t.rating)::numeric, 0), 1)::float AS "avgRating"
+             FROM user_beer_tastings t
+             JOIN beers b ON b.id = t.beer_id
+             WHERE b.brewery_id = $1
+             GROUP BY b.id, b.name, b.image_url
+             ORDER BY COUNT(t.id) DESC
+             LIMIT 5`,
+            [breweryId]
+          ),
+        ]);
+
+        const viewsLast30 = (viewsSeriesRows.rows ?? []).reduce((s: number, r: any) => s + Number(r.views), 0);
+
+        return {
+          favorites: favs[0]?.n ?? 0,
+          checkinsMonth: Number(checkinsMonthRow.rows[0]?.n ?? 0),
+          checkinsTotal: Number(checkinsTotalRow.rows[0]?.n ?? 0),
+          topBeersAllTime: topBeerRows.rows ?? [],
+          checkinSeries: (checkinSeriesRows.rows ?? []).map((r: any) => ({ date: r.date, checkins: Number(r.checkins) })),
+          viewsWeek: viewsWeekRows[0]?.total ?? 0,
+          viewsLast30,
+          viewsSeries: (viewsSeriesRows.rows ?? []).map((r: any) => ({ date: r.date, views: Number(r.views) })),
+        };
+      });
+
+      res.json(payload);
+    } catch (err: any) {
+      console.error("Brewery stats-extended error:", err.message);
+      res.status(500).json({ message: "Errore stats birrificio" });
     }
   });
 

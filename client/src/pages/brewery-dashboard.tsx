@@ -39,6 +39,7 @@ import { BreweryEventsManager } from "@/components/events-manager";
 import { OwnerReportsSection } from "@/components/owner-reports";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
 import { StatsGrid } from "@/components/dashboard-primitives";
+import BreweryQuickStats from "@/components/brewery-quick-stats";
 
 function CollabBrewerySelector({ selected, onChange, excludeBreweryId }: { selected: { id: number; name: string }[]; onChange: (breweries: { id: number; name: string }[]) => void; excludeBreweryId?: number | null }) {
   const [query, setQuery] = useState("");
@@ -911,7 +912,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </div>
 
         {/* Stats Grid — uniformata su tutte le dashboard */}
-        <div className={`mb-8 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
+        <div className={`mb-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
           <StatsGrid
             cols={5}
             items={[
@@ -923,6 +924,13 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             ]}
           />
         </div>
+
+        {/* Quick Stats widget — desktop always visible, mobile hidden (shown in overview tab) */}
+        {brewery?.id && (
+          <div className={`mb-8 hidden lg:block`}>
+            <BreweryQuickStats breweryId={brewery.id} />
+          </div>
+        )}
 
         {/* Info section with contact details */}
         <div className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
@@ -1063,6 +1071,13 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 ))}
               </div>
             </section>
+
+            {/* Quick Stats widget — mobile overview */}
+            {brewery?.id && (
+              <section>
+                <BreweryQuickStats breweryId={brewery.id} />
+              </section>
+            )}
 
             <section>
               <h3 className="text-sm font-bold text-foreground tracking-tight mb-2">Gestisci</h3>
