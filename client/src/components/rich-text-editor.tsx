@@ -10,16 +10,138 @@ import Image from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
 import CharacterCount from "@tiptap/extension-character-count";
 import Highlight from "@tiptap/extension-highlight";
-import { useEffect, useCallback, useState } from "react";
+import Mention from "@tiptap/extension-mention";
+import { ReactRenderer } from "@tiptap/react";
+import { useEffect, useCallback, useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough,
   AlignLeft, AlignCenter, AlignRight, AlignJustify,
   List, ListOrdered, Quote, Minus, Link as LinkIcon,
   Highlighter, Heading1, Heading2, Heading3,
-  Undo, Redo, Type, Image as ImageIcon, X
+  Undo, Redo, Type, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+// ── Mention suggestion types ──────────────────────────────────────────────────
+type MentionItem = { id: string; label: string; avatarUrl?: string | null };
+
+type SuggestionPopupState = {
+  items: MentionItem[];
+  selectedIndex: number;
+  rect: DOMRect | null;
+  command: ((item: MentionItem) => void) | null;
+} | null;
+
+// ── Floating mention suggestion popup ────────────────────────────────────────
+interface MentionSuggestionListProps {
+  state: SuggestionPopupState;
+  onSelect: (item: MentionItem) => void;
+  keyHandlerRef: React.MutableRefObject<((e: KeyboardEvent) => boolean) | null>;
+}
+
+function MentionSuggestionList({ state, onSelect, keyHandlerRef }: MentionSuggestionListProps) {
+  const [localIndex, setLocalIndex] = useState(0);
+
+  useEffect(() => {
+    setLocalIndex(state?.selectedIndex ?? 0);
+  }, [state?.selectedIndex, state?.items]);
+
+  // Register keyboard handler for the editor to call
+  useEffect(() => {
+    keyHandlerRef.current = (e: KeyboardEvent) => {
+      if (!state?.items?.length) return false;
+      if (e.key === "ArrowDown") {
+        setLocalIndex(i => (i + 1) % state.items.length);
+        return true;
+      }
+      if (e.key === "ArrowUp") {
+        setLocalIndex(i => (i - 1 + state.items.length) % state.items.length);
+        return true;
+      }
+      if (e.key === "Enter" || e.key === "Tab") {
+        const item = state.items[localIndex];
+        if (item) { onSelect(item); }
+        return true;
+      }
+      if (e.key === "Escape") {
+        return true; // handled by suggestion plugin
+      }
+      return false;
+    };
+    return () => { keyHandlerRef.current = null; };
+  }, [state, localIndex, onSelect]);
+
+  if (!state?.items?.length || !state.rect) return null;
+
+  const rect = state.rect;
+  // Position popup below the caret
+  const top = rect.bottom + window.scrollY + 6;
+  const left = Math.max(8, rect.left + window.scrollX);
+
+  return createPortal(
+    <div
+      className="fixed z-[9999] bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-[#23262E] rounded-xl shadow-xl overflow-hidden"
+      style={{
+        top: `${top}px`,
+        left: `${left}px`,
+        minWidth: "200px",
+        maxWidth: "280px",
+      }}
+      onMouseDown={e => e.preventDefault()} // keep editor focus
+    >
+      <ul>
+        {state.items.map((item, idx) => (
+          <li key={item.id}>
+            <button
+              type="button"
+              onMouseDown={e => { e.preventDefault(); onSelect(item); }}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors text-sm
+                ${idx === localIndex
+                  ? "bg-amber-50 dark:bg-amber-900/20 text-amber-800 dark:text-amber-300"
+                  : "hover:bg-stone-50 dark:hover:bg-[#23262E] text-stone-800 dark:text-stone-200"
+                }`}
+            >
+              {item.avatarUrl ? (
+                <img
+                  src={item.avatarUrl}
+                  alt=""
+                  className="w-7 h-7 rounded-full object-cover shrink-0"
+                />
+              ) : (
+                <div className="w-7 h-7 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                  <span className="text-amber-700 dark:text-amber-400 text-xs font-bold">
+                    {item.label[0]?.toUpperCase() ?? "?"}
+                  </span>
+                </div>
+              )}
+              <span className="font-medium truncate">@{item.label}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>,
+    document.body
+  );
+}
+
+// ── Fetch mention suggestions from the API ────────────────────────────────────
+async function fetchMentionItems(query: string): Promise<MentionItem[]> {
+  if (!query || query.length < 2) return [];
+  try {
+    const r = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+    if (!r.ok) return [];
+    const data: Array<{ id: string; nickname?: string; first_name?: string; last_name?: string; profile_image_url?: string | null }> = await r.json();
+    return data.slice(0, 5).map(u => ({
+      id: String(u.id),
+      label: u.nickname || [u.first_name, u.last_name].filter(Boolean).join(" ") || "utente",
+      avatarUrl: u.profile_image_url ?? null,
+    }));
+  } catch {
+    return [];
+  }
+}
 
 interface RichTextEditorProps {
   content: string;
@@ -27,6 +149,8 @@ interface RichTextEditorProps {
   placeholder?: string;
   maxChars?: number;
   className?: string;
+  /** When true, enables inline @mention autocomplete (for post composers) */
+  enableMentions?: boolean;
 }
 
 const ToolbarButton = ({
@@ -68,9 +192,59 @@ export default function RichTextEditor({
   placeholder = "Scrivi qui la descrizione del birrificio…",
   maxChars = 5000,
   className = "",
+  enableMentions = false,
 }: RichTextEditorProps) {
   const [linkUrl, setLinkUrl] = useState("");
   const [showLinkInput, setShowLinkInput] = useState(false);
+
+  // ── Mention suggestion state (only used when enableMentions=true) ──────────
+  const [suggestionState, setSuggestionState] = useState<SuggestionPopupState>(null);
+  // Stable ref so the Mention extension config (created once) can read the latest setter
+  const setSuggestionRef = useRef(setSuggestionState);
+  setSuggestionRef.current = setSuggestionState;
+  // Key handler registered by the popup component
+  const keyHandlerRef = useRef<((e: KeyboardEvent) => boolean) | null>(null);
+
+  // Build the Mention extension only when enableMentions is true
+  const mentionExtension = enableMentions
+    ? Mention.configure({
+        HTMLAttributes: {
+          class: "mention text-blue-600 dark:text-blue-400 font-semibold",
+        },
+        suggestion: {
+          items: async ({ query }: { query: string }) => fetchMentionItems(query),
+          render: () => {
+            return {
+              onStart(props: any) {
+                setSuggestionRef.current({
+                  items: (props.items as MentionItem[]) ?? [],
+                  selectedIndex: 0,
+                  rect: props.clientRect?.() ?? null,
+                  command: (item: MentionItem) => props.command({ id: item.id, label: item.label }),
+                });
+              },
+              onUpdate(props: any) {
+                setSuggestionRef.current(prev => prev ? {
+                  ...prev,
+                  items: (props.items as MentionItem[]) ?? [],
+                  rect: props.clientRect?.() ?? null,
+                  command: (item: MentionItem) => props.command({ id: item.id, label: item.label }),
+                } : null);
+              },
+              onExit() {
+                setSuggestionRef.current(null);
+              },
+              onKeyDown({ event }: { event: KeyboardEvent }) {
+                if (keyHandlerRef.current) {
+                  return keyHandlerRef.current(event);
+                }
+                return false;
+              },
+            };
+          },
+        },
+      })
+    : null;
 
   const editor = useEditor({
     extensions: [
@@ -91,6 +265,7 @@ export default function RichTextEditor({
       Placeholder.configure({ placeholder }),
       CharacterCount.configure({ limit: maxChars }),
       Highlight.configure({ multicolor: true }),
+      ...(mentionExtension ? [mentionExtension] : []),
     ],
     content,
     onUpdate: ({ editor }) => {
@@ -119,6 +294,14 @@ export default function RichTextEditor({
     setLinkUrl("");
     setShowLinkInput(false);
   }, [editor, linkUrl]);
+
+  // Handler when user taps/clicks a suggestion item
+  const handleSelectSuggestion = useCallback((item: MentionItem) => {
+    if (suggestionState?.command) {
+      suggestionState.command(item);
+    }
+    setSuggestionState(null);
+  }, [suggestionState]);
 
   if (!editor) return null;
 
@@ -253,6 +436,15 @@ export default function RichTextEditor({
           {chars} / {maxChars.toLocaleString()} caratteri
         </span>
       </div>
+
+      {/* Floating mention suggestion popup (portal to document.body) */}
+      {enableMentions && (
+        <MentionSuggestionList
+          state={suggestionState}
+          onSelect={handleSelectSuggestion}
+          keyHandlerRef={keyHandlerRef}
+        />
+      )}
     </div>
   );
 }
@@ -269,7 +461,7 @@ const SANITIZE_CONFIG = {
     "ul", "ol", "li", "blockquote", "hr",
     "a", "img", "span", "div",
   ],
-  ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "title", "class", "style"],
+  ALLOWED_ATTR: ["href", "target", "rel", "src", "alt", "title", "class", "style", "data-type", "data-id", "data-label"],
   ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:|data:image\/(?:png|jpeg|gif|webp|svg\+xml);)/i,
   ALLOW_DATA_ATTR: false,
 };

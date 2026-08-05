@@ -270,6 +270,7 @@ export default function MicroblogNew() {
             "Cosa stai bevendo? Usa @nome per menzionare qualcuno, #hashtag per categorie."
           }
           maxChars={1000}
+          enableMentions
         />
 
         {mentionOpen && (
