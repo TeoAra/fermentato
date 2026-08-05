@@ -1,4 +1,4 @@
-import { User, Home, Bell, Zap, Search } from "lucide-react";
+import { User, Home, Bell, MapPin, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
@@ -297,7 +297,7 @@ export function BottomNavigation() {
 
   const homeActive    = isActive("/");
   const notifActive   = isActive("/notifications");
-  const activityActive = isActive("/activity");
+  const nearbyActive  = isActive("/nearby");
   const accountActive = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
 
   const Tab = ({
@@ -380,17 +380,17 @@ export function BottomNavigation() {
           {/* Spacer for FAB Cerca */}
           <div className="w-16 flex-shrink-0" aria-hidden="true" />
 
-          {/* Attività */}
-          <Link href="/activity" className="flex-1 flex">
+          {/* Vicino a me */}
+          <Link href="/nearby" className="flex-1 flex">
             <Tab
-              active={activityActive}
-              label="Attività"
+              active={nearbyActive}
+              label="Vicino"
               icon={
-                <Zap
+                <MapPin
                   className="h-[22px] w-[22px]"
-                  strokeWidth={activityActive ? 2.5 : 1.8}
-                  fill={activityActive ? "currentColor" : "none"}
-                  style={activityActive ? { fillOpacity: 0.12 } : {}}
+                  strokeWidth={nearbyActive ? 2.5 : 1.8}
+                  fill={nearbyActive ? "currentColor" : "none"}
+                  style={nearbyActive ? { fillOpacity: 0.12 } : {}}
                 />
               }
             />

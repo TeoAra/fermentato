@@ -748,6 +748,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Nearby pubs — sorted by haversine distance from user's position
+  app.get("/api/pubs/nearby", async (req, res) => {
+    try {
+      const lat = parseFloat(req.query.lat as string);
+      const lng = parseFloat(req.query.lng as string);
+      const radius = Math.min(parseFloat(req.query.radius as string) || 15, 100);
+      const limit = Math.min(parseInt(req.query.limit as string) || 30, 100);
+
+      if (isNaN(lat) || isNaN(lng)) {
+        return res.status(400).json({ message: "lat e lng sono obbligatori" });
+      }
+
+      const result = await db.execute(sql`
+        SELECT
+          p.id, p.name, p.slug, p.city, p.region, p.address,
+          p.logo_url        AS "logoUrl",
+          p.cover_image_url AS "coverImageUrl",
+          p.latitude, p.longitude,
+          p.opening_hours   AS "openingHours",
+          p.phone,
+          p.website_url     AS "websiteUrl",
+          p.rating,
+          (6371 * acos(
+            LEAST(1.0,
+              cos(radians(${lat})) * cos(radians(p.latitude::float))
+              * cos(radians(p.longitude::float) - radians(${lng}))
+              + sin(radians(${lat})) * sin(radians(p.latitude::float))
+            )
+          )) AS "distanceKm"
+        FROM pubs p
+        WHERE p.latitude  IS NOT NULL
+          AND p.longitude IS NOT NULL
+          AND p.latitude::text  NOT IN ('0', '')
+          AND p.longitude::text NOT IN ('0', '')
+          AND COALESCE(p.is_closed, false) = false
+        HAVING (6371 * acos(
+            LEAST(1.0,
+              cos(radians(${lat})) * cos(radians(p.latitude::float))
+              * cos(radians(p.longitude::float) - radians(${lng}))
+              + sin(radians(${lat})) * sin(radians(p.latitude::float))
+            )
+          )) <= ${radius}
+        ORDER BY "distanceKm" ASC
+        LIMIT ${limit}
+      `);
+
+      res.setHeader('Cache-Control', 'no-store');
+      res.json(result.rows);
+    } catch (error: any) {
+      console.error("Error fetching nearby pubs:", error.message);
+      res.status(500).json({ message: "Errore nel recupero dei pub vicini" });
+    }
+  });
+
   // Pubs serving a specific beer style on tap (used by Esplora Birre → Dove berle)
   app.get("/api/pubs/by-style", async (req, res) => {
     try {

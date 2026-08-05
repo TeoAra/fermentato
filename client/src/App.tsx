@@ -186,6 +186,7 @@ const HashtagPage        = lazy(() => import("@/pages/hashtag"));
 const NewsPage           = lazy(() => import("@/pages/news"));
 const AdminBroadcast     = lazy(() => import("@/pages/admin-broadcast"));
 const AppDownload        = lazy(() => import("@/pages/app-download"));
+const NearbyPage         = lazy(() => import("@/pages/nearby"));
 // ─────────────────────────────────────────────────────────────────────────────
 
 const PageSkeleton = () => (
@@ -487,6 +488,7 @@ function Router() {
           <Route path="/user/:nickname" component={UserPublicProfile} />
           <Route path="/search" component={SearchPage} />
           <Route path="/activity" component={Activity} />
+          <Route path="/nearby" component={NearbyPage} />
           <Route path="/eventi" component={Eventi} />
           <Route path="/events">{() => { window.location.replace("/eventi"); return null; }}</Route>
           <Route path="/eventi/:type/:id" component={EventDetail} />
