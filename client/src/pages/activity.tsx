@@ -21,6 +21,8 @@ import { useToast } from "@/hooks/use-toast";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
 import { ZoomableImage } from "@/components/ImageLightbox";
 import { InlinePostComposer } from "@/components/social/InlinePostComposer";
+import { PostContent } from "@/components/social/PostContent";
+import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -186,6 +188,13 @@ export default function Activity() {
     } catch { return new Set(); }
   });
 
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window !== "undefined") {
+      return new URLSearchParams(window.location.search).get("tab") || "inzona";
+    }
+    return "inzona";
+  });
+
   const queryClient = useQueryClient();
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
@@ -228,6 +237,10 @@ export default function Activity() {
 
   const auth = !!currentUser;
   const { data: feed = [], isLoading: feedLoading } = useQuery<any[]>({ queryKey: ["/api/user/feed"], enabled: auth });
+  const { data: socialPosts = [], isLoading: socialPostsLoading } = useQuery<any[]>({
+    queryKey: ["/api/microblog/posts"],
+    enabled: activeTab === "sociale",
+  });
   const { data: following = [], isLoading: followingLoading } = useQuery<any[]>({ queryKey: ["/api/user/following"], enabled: auth });
   const { data: searchResults = [], isLoading: searchLoading } = useQuery<any[]>({
     queryKey: ["/api/users/search", debouncedSearch],
@@ -436,7 +449,7 @@ export default function Activity() {
       )}
 
       <Helmet><title>Attività | Fermenta.to</title></Helmet>
-      <Tabs defaultValue="inzona">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full mb-6 bg-stone-100 dark:bg-[#1A1D24]/60 p-1 rounded-xl h-auto">
           <TabsTrigger value="inzona" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
             <MapPin className="h-3.5 w-3.5 mr-1" />
@@ -676,6 +689,55 @@ export default function Activity() {
                 </>
               )}
             </div>
+            {/* Post recenti */}
+            <div className="space-y-3">
+              <p className="text-xs font-black uppercase tracking-widest text-stone-400">Post recenti</p>
+              {socialPostsLoading ? (
+                <div className="flex items-center justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
+                </div>
+              ) : (socialPosts as any[]).length === 0 ? (
+                <p className="text-sm text-stone-400 text-center py-3">Nessun post recente</p>
+              ) : (
+                (socialPosts as any[]).slice(0, 10).map((post: any) => (
+                  <div key={post.id} className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-stone-100 dark:border-[#23262E] shadow-sm p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Link href={`/user/${post.username}`}>
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-stone-200 flex-shrink-0">
+                          {post.profile_image_url
+                            ? <img src={post.profile_image_url} alt="" className="w-full h-full object-cover" />
+                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-stone-500">{(post.display_name ?? post.username ?? "?")[0].toUpperCase()}</div>}
+                        </div>
+                      </Link>
+                      <div className="flex-1 min-w-0">
+                        <Link href={`/user/${post.username}`}>
+                          <p className="text-sm font-semibold text-stone-800 dark:text-stone-200 truncate">{post.display_name ?? post.username}</p>
+                        </Link>
+                        <p className="text-[11px] text-stone-400">
+                          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: it })}
+                          <span className="ml-1 text-primary/70 font-semibold">· post</span>
+                        </p>
+                      </div>
+                    </div>
+                    <PostContent content={post.content} />
+                    {post.image_url && (
+                      <img src={post.image_url} alt="" className="mt-2 rounded-xl w-full max-h-64 object-cover" loading="lazy" />
+                    )}
+                    <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40">
+                      <MicroblogSocialBar
+                        postId={post.id}
+                        postUserId={post.user_id}
+                        liked={post.liked ?? false}
+                        likesCount={post.likes_count ?? 0}
+                        commentsCount={post.comments_count ?? 0}
+                        content={post.content ?? ""}
+                      />
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
             <div className="bg-white dark:bg-[#1A1D24] rounded-2xl p-4 shadow-sm">
               <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Feed amici</p>
               {feedLoading ? (
