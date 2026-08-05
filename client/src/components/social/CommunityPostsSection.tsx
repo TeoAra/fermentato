@@ -50,7 +50,7 @@ function CommunityPostCard({ post }: { post: any }) {
   const queryClient = useQueryClient();
   const { isAuthenticated } = useAuth();
   const [entityPreview, setEntityPreview] = useState<{
-    type: "brewery" | "pub"; id: number; rect: DOMRect;
+    type: "brewery" | "pub" | "beer"; id: number; rect: DOMRect;
   } | null>(null);
 
   const likeMut = useMutation({
@@ -63,7 +63,7 @@ function CommunityPostCard({ post }: { post: any }) {
 
   const handleEntityChip = (
     e: React.MouseEvent,
-    type: "brewery" | "pub",
+    type: "brewery" | "pub" | "beer",
     id: number,
   ) => {
     e.preventDefault();
@@ -91,10 +91,13 @@ function CommunityPostCard({ post }: { post: any }) {
       )}
       {(post.beer_name || post.pub_name || post.brewery_name) && (
         <div className="mt-2 flex flex-wrap gap-1.5">
-          {post.beer_name && (
-            <Link href={`/beer/${post.beer_id}`}>
-              <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold cursor-pointer hover:bg-primary/20">🍺 {post.beer_name}</span>
-            </Link>
+          {post.beer_name && post.beer_id && (
+            <button
+              onClick={(e) => handleEntityChip(e, "beer", post.beer_id)}
+              className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold cursor-pointer hover:bg-primary/20 transition-colors"
+            >
+              🍺 {post.beer_name}
+            </button>
           )}
           {post.pub_name && post.pub_id && (
             <button

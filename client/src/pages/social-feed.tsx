@@ -271,12 +271,13 @@ function MicroblogCard({ post }: { post: any }) {
 
       {(post.beer_name || post.pub_name || post.brewery_name) && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
-          {post.beer_name && (
-            <Link href={`/beer/${post.beer_id}`}>
-              <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold cursor-pointer hover:bg-primary/20">
-                🍺 {post.beer_name}
-              </span>
-            </Link>
+          {post.beer_name && post.beer_id && (
+            <button
+              onClick={(e) => handleEntityChip(e, "beer", post.beer_id)}
+              className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold cursor-pointer hover:bg-primary/20 transition-colors"
+            >
+              🍺 {post.beer_name}
+            </button>
           )}
           {post.pub_name && post.pub_id && (
             <button
