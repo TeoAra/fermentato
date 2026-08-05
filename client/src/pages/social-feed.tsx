@@ -22,6 +22,7 @@ import { ZoomableImage } from "@/components/ImageLightbox";
 import TrendingHashtags from "@/components/social/TrendingHashtags";
 import { InlinePostComposer } from "@/components/social/InlinePostComposer";
 import { EntityPreviewCard, type EntityType } from "@/components/social/EntityPreviewCard";
+import { PostContent } from "@/components/social/PostContent";
 
 /* ── helpers ── */
 const FORMAT_LABELS: Record<string, string> = {
@@ -214,10 +215,15 @@ function CheckinCard({ data }: { data: any }) {
 
 /* ── MicroblogCard ── */
 function MicroblogCard({ post }: { post: any }) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { toast } = useToast();
   const [entityPreview, setEntityPreview] = useState<{
     type: EntityType; id: number; rect: DOMRect;
   } | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const isOwn = user && post.user_id && String(user.id) === String(post.user_id);
 
   const likeMut = useMutation({
     mutationFn: () =>
@@ -228,6 +234,16 @@ function MicroblogCard({ post }: { post: any }) {
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
     },
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: () => apiRequest(`/api/microblog/posts/${post.id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
+      toast({ title: "Post eliminato" });
+    },
+    onError: () => toast({ title: "Errore", description: "Riprova", variant: "destructive" }),
   });
 
   const handleEntityChip = (
@@ -258,11 +274,27 @@ function MicroblogCard({ post }: { post: any }) {
             <span className="font-semibold text-amber-500/80">📝 post</span>
           </p>
         </div>
+        {isOwn && (
+          <div className="relative">
+            <button onClick={() => setMenuOpen(v => !v)}
+              className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-stone-400">
+              <X className="w-4 h-4 rotate-0" style={{ display: menuOpen ? undefined : "none" }} />
+              {!menuOpen && <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/></svg>}
+            </button>
+            {menuOpen && (
+              <div className="absolute right-0 top-7 z-20 bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-white/[0.08] rounded-xl shadow-lg min-w-[120px]">
+                <button
+                  onClick={() => { setMenuOpen(false); if (confirm("Eliminare questo post?")) deleteMut.mutate(); }}
+                  className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl font-semibold transition-colors">
+                  🗑 Elimina
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <p className="text-sm text-stone-800 dark:text-stone-100 whitespace-pre-wrap leading-relaxed">
-        {post.content}
-      </p>
+      <PostContent content={post.content} />
 
       {post.image_url && (
         <ZoomableImage src={post.image_url} alt=""

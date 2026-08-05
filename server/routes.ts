@@ -9639,6 +9639,51 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     }
   });
 
+  /* Unified mention search: users + pubs + breweries */
+  app.get("/api/mentions/search", async (req, res) => {
+    try {
+      const q = ((req.query.q as string) || "").trim();
+      if (q.length < 1) return res.json([]);
+      const like = `%${q}%`;
+      const { rows } = await pool.query(`
+        SELECT 'user' AS kind, id AS id, id AS slug,
+               COALESCE(nickname, TRIM(COALESCE(first_name,'') || ' ' || COALESCE(last_name,''))) AS name,
+               nickname AS handle,
+               profile_image_url AS image
+        FROM users
+        WHERE is_public IS NOT FALSE
+          AND (
+            unaccent(lower(COALESCE(nickname,'')))    LIKE unaccent(lower($1))
+            OR unaccent(lower(COALESCE(first_name,''))) LIKE unaccent(lower($1))
+            OR unaccent(lower(COALESCE(last_name,'')))  LIKE unaccent(lower($1))
+          )
+
+        UNION ALL
+
+        SELECT 'pub' AS kind, id::text AS id, COALESCE(slug, id::text) AS slug,
+               name, slug AS handle, logo_url AS image
+        FROM pubs
+        WHERE unaccent(lower(COALESCE(name,''))) LIKE unaccent(lower($1))
+           OR lower(COALESCE(slug,'')) LIKE lower($1)
+
+        UNION ALL
+
+        SELECT 'brewery' AS kind, id::text AS id, COALESCE(slug, id::text) AS slug,
+               name, slug AS handle, logo_url AS image
+        FROM breweries
+        WHERE unaccent(lower(COALESCE(name,''))) LIKE unaccent(lower($1))
+           OR lower(COALESCE(slug,'')) LIKE lower($1)
+
+        ORDER BY name
+        LIMIT 20
+      `, [like]);
+      res.json(rows);
+    } catch (err) {
+      console.error("Mentions search error:", err);
+      res.status(500).json({ message: "Search failed" });
+    }
+  });
+
   // Activity feed from people I follow
   app.get("/api/user/feed", isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;

@@ -48,7 +48,7 @@ function MentionPicker({
     const t = setTimeout(async () => {
       setLoading(true);
       try {
-        const r = await fetch(`/api/users/search?q=${encodeURIComponent(query.trim())}`);
+        const r = await fetch(`/api/mentions/search?q=${encodeURIComponent(query.trim())}`);
         if (r.ok) setResults(await r.json());
         else setResults([]);
       } finally { setLoading(false); }
@@ -58,6 +58,11 @@ function MentionPicker({
 
   if (!loading && results.length === 0) return null;
 
+  const kindIcon = (kind: string) =>
+    kind === "pub" ? "📍" : kind === "brewery" ? "🏭" : "👤";
+  const kindLabel = (kind: string) =>
+    kind === "pub" ? "Pub" : kind === "brewery" ? "Birrificio" : null;
+
   return (
     <div className="bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden">
       {loading && results.length === 0 ? (
@@ -66,21 +71,28 @@ function MentionPicker({
         </div>
       ) : (
         <ul className="max-h-44 overflow-y-auto divide-y divide-stone-50 dark:divide-[#23262E]">
-          {results.map(u => {
-            const display = u.nickname || [u.first_name, u.last_name].filter(Boolean).join(" ") || "utente";
+          {results.map((r, i) => {
+            const display = r.name || r.handle || "?";
             return (
-              <li key={u.id}>
+              <li key={`${r.kind}-${r.id}-${i}`}>
                 <button
-                  onMouseDown={e => { e.preventDefault(); onSelect(u); }}
+                  onMouseDown={e => { e.preventDefault(); onSelect(r); }}
                   className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-stone-50 dark:hover:bg-[#23262E] text-left transition-colors">
-                  {u.profile_image_url
-                    ? <img src={u.profile_image_url} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
-                    : <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                        <span className="text-primary text-xs font-bold">{display[0]?.toUpperCase()}</span>
+                  {r.image
+                    ? <img src={r.image} alt="" className="w-8 h-8 rounded-full object-cover shrink-0" />
+                    : <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 text-base leading-none">
+                        {kindIcon(r.kind)}
                       </div>}
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold truncate">{display}</p>
-                    {u.nickname && <p className="text-xs text-stone-400">@{u.nickname}</p>}
+                    <p className="text-xs text-stone-400">
+                      {r.handle ? `@${r.handle}` : `@${r.slug}`}
+                      {kindLabel(r.kind) && (
+                        <span className="ml-1.5 text-[10px] bg-stone-100 dark:bg-[#23262E] rounded px-1 py-0.5 font-medium">
+                          {kindLabel(r.kind)}
+                        </span>
+                      )}
+                    </p>
                   </div>
                 </button>
               </li>
@@ -188,18 +200,21 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
     }
   }, []);
 
-  /* pick a user from the mention dropdown */
-  const completeMention = useCallback((u: any) => {
-    const nick     = u.nickname || u.first_name || "utente";
-    const before   = text.slice(0, mentionStart);
-    const after    = text.slice(mentionStart + 1 + mentionQuery.length); // skip "@query"
-    const newText  = before + "@" + nick + " " + after.replace(/^\s*/, "");
+  /* pick a user/pub/brewery from the mention dropdown */
+  const completeMention = useCallback((r: any) => {
+    // users: use nickname; pubs/breweries: use slug (the @-handle)
+    const handle = r.kind === "user"
+      ? (r.handle || r.nickname || r.first_name || "utente")
+      : (r.handle || r.slug || r.name?.toLowerCase().replace(/\s+/g, "-") || "entità");
+    const before  = text.slice(0, mentionStart);
+    const after   = text.slice(mentionStart + 1 + mentionQuery.length);
+    const newText = before + "@" + handle + " " + after.replace(/^\s*/, "");
     setText(newText);
     setMentionOpen(false);
     setMentionQuery("");
     setTimeout(() => {
       if (textareaRef.current) {
-        const pos = (before + "@" + nick + " ").length;
+        const pos = (before + "@" + handle + " ").length;
         textareaRef.current.focus();
         textareaRef.current.setSelectionRange(pos, pos);
       }
