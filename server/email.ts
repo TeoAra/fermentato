@@ -41,6 +41,86 @@ export async function testSmtpConnection(): Promise<void> {
 const FROM_ADDRESS = process.env.SMTP_FROM || "noreply@fermenta.to";
 const APP_URL = process.env.APP_URL || "https://fermenta.to";
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+export async function sendMentionEmail(
+  toEmail: string,
+  posterName: string,
+  snippet: string,
+): Promise<void> {
+  const transport = createTransport();
+  const feedUrl = `${APP_URL}/feed`;
+  const safePosterName = escapeHtml(posterName);
+  const safeSnippet = escapeHtml(snippet || "Hai una nuova menzione");
+  const subject = `@${posterName} ti ha menzionato su Fermenta.to`;
+  const html = `<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuova menzione su Fermenta.to</title>
+</head>
+<body style="margin:0;padding:0;background:#fafaf8;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#fafaf8;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background:linear-gradient(135deg,#f59e0b,#ea580c);padding:40px 40px 32px;text-align:center;">
+              <div style="font-size:48px;margin-bottom:8px;">🍺</div>
+              <h1 style="color:#ffffff;font-size:28px;font-weight:700;margin:0 0 8px;">Fermenta.to</h1>
+              <p style="color:rgba(255,255,255,0.9);font-size:15px;margin:0;">La birra artigianale italiana</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:40px;">
+              <h2 style="color:#1f2937;font-size:22px;font-weight:600;margin:0 0 16px;">@${safePosterName} ti ha menzionato</h2>
+              <p style="color:#4b5563;font-size:16px;line-height:1.6;margin:0 0 24px;">${safeSnippet}</p>
+              <div style="text-align:center;margin:32px 0;">
+                <a href="${feedUrl}" style="display:inline-block;background:linear-gradient(135deg,#f59e0b,#ea580c);color:#ffffff;font-size:16px;font-weight:600;text-decoration:none;padding:14px 36px;border-radius:10px;">
+                  Vedi il post
+                </a>
+              </div>
+              <hr style="border:none;border-top:1px solid #e5e7eb;margin:28px 0;">
+              <p style="color:#9ca3af;font-size:12px;margin:0;">
+                Non vuoi ricevere queste email? <a href="${APP_URL}/notifications" style="color:#f59e0b;">Gestisci le preferenze di notifica</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background:#f9fafb;padding:20px 40px;text-align:center;border-top:1px solid #e5e7eb;">
+              <p style="color:#9ca3af;font-size:12px;margin:0;">
+                © ${new Date().getFullYear()} Fermenta.to — La birra artigianale italiana<br>
+                <a href="${APP_URL}" style="color:#f59e0b;text-decoration:none;">fermenta.to</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+  if (!transport) {
+    console.log(`[email] mention email (no SMTP): to=${toEmail} subject="${subject}"`);
+    return;
+  }
+  try {
+    await transport.sendMail({ from: FROM_ADDRESS, to: toEmail, subject, html });
+    console.log(`[email] mention email sent to ${toEmail}`);
+  } catch (err: any) {
+    console.error(`[email] mention email failed for ${toEmail}:`, err.message);
+  }
+}
+
 function verificationEmailHtml(verificationUrl: string): string {
   return `<!DOCTYPE html>
 <html lang="it">

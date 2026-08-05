@@ -764,6 +764,7 @@ export const notificationPreferences = pgTable("notification_preferences", {
   breweryReplies: boolean("brewery_replies").default(true),
   reportUpdates: boolean("report_updates").default(true),
   adminBroadcasts: boolean("admin_broadcasts").default(true),
+  mentions: boolean("mentions").default(true),
   // Categorie — canale PUSH (controllo indipendente dall'in-app)
   tapChangesPush: boolean("tap_changes_push").default(true),
   eventsPush: boolean("events_push").default(true),
@@ -774,6 +775,7 @@ export const notificationPreferences = pgTable("notification_preferences", {
   breweryRepliesPush: boolean("brewery_replies_push").default(true),
   reportUpdatesPush: boolean("report_updates_push").default(true),
   adminBroadcastsPush: boolean("admin_broadcasts_push").default(true),
+  mentionsPush: boolean("mentions_push").default(true),
   // Categorie — canale EMAIL (default off per non-critiche; on per critiche)
   tapChangesEmail: boolean("tap_changes_email").default(false),
   eventsEmail: boolean("events_email").default(false),
@@ -784,6 +786,7 @@ export const notificationPreferences = pgTable("notification_preferences", {
   breweryRepliesEmail: boolean("brewery_replies_email").default(true),
   reportUpdatesEmail: boolean("report_updates_email").default(true),
   adminBroadcastsEmail: boolean("admin_broadcasts_email").default(true),
+  mentionsEmail: boolean("mentions_email").default(false),
   // Canali master
   pushEnabled: boolean("push_enabled").default(true),
   inAppEnabled: boolean("in_app_enabled").default(true),

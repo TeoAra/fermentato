@@ -1760,6 +1760,8 @@ export class DatabaseStorage implements IStorage {
       addition_approved: 'breweryReplies',
       addition_rejected: 'breweryReplies',
       brewery_reply: 'breweryReplies',
+      // Menzioni (@mention nei post)
+      mention: 'mentions',
       // Esito moderazione segnalazioni
       moderation: 'reportUpdates',
       // Comunicazioni ufficiali

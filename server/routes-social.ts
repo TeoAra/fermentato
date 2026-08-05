@@ -2,7 +2,8 @@ import type { Express } from "express";
 import { pool } from "./db";
 import { isAuthenticated, isAdmin } from "./auth";
 import { upload, uploadImage } from "./cloudinary";
-import { sendPushToUser, sendPushToAdmins } from "./push-utils";
+import { sendPushToUser, sendPushToAdmins, shouldSendEmailNotification } from "./push-utils";
+import { sendMentionEmail } from "./email";
 import { storage } from "./storage";
 import Parser from "rss-parser";
 
@@ -170,6 +171,11 @@ async function runSocialMigrations() {
       -- @mentions support
       ALTER TABLE microblog_posts ADD COLUMN IF NOT EXISTS mentions TEXT[] DEFAULT '{}';
       CREATE INDEX IF NOT EXISTS idx_microblog_mentions ON microblog_posts USING GIN (mentions);
+
+      -- Task #50: mentions notification preferences
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS mentions BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS mentions_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS mentions_email BOOLEAN DEFAULT FALSE;
     `);
 
     // Backfill: copia review_reports → content_reports una sola volta
@@ -581,6 +587,7 @@ export async function registerSocialRoutes(app: Express) {
         const snippet = plainContent.replace(/\s+/g, " ").trim().slice(0, 100);
         for (const mu of mentionedUsers) {
           if (mu.id === userId) continue; // don't notify yourself
+          // Push: sendPushToUser checks mentionsPush + master pushEnabled + quiet hours
           sendPushToUser(mu.id, {
             title: `@${posterName} ti ha menzionato`,
             body: snippet || "Hai una nuova menzione",
@@ -588,11 +595,26 @@ export async function registerSocialRoutes(app: Express) {
             tag: `mention-${newPost.id}`,
             category: "mentions",
           });
-          // Also insert in-app notification
-          pool.query(
-            `INSERT INTO notifications (user_id, type, title, message, url) VALUES ($1, 'mention', $2, $3, $4)`,
-            [mu.id, `@${posterName} ti ha menzionato`, snippet || "Hai una nuova menzione", `/feed`],
-          ).catch(() => {});
+          // In-app: routed through storage.createNotification which checks
+          // mentions category preference AND the master inAppEnabled switch
+          storage.createNotification({
+            userId: mu.id,
+            type: 'mention',
+            title: `@${posterName} ti ha menzionato`,
+            message: snippet || "Hai una nuova menzione",
+            isRead: false,
+          }).catch(() => {});
+          // Email: gated by mentionsEmail + master emailEnabled
+          shouldSendEmailNotification(mu.id, 'mentions').then(async (allowed) => {
+            if (!allowed) return;
+            // Look up recipient email
+            const { rows: [recipient] } = await pool.query(
+              `SELECT email FROM users WHERE id = $1`, [mu.id]
+            );
+            if (recipient?.email) {
+              sendMentionEmail(recipient.email, posterName, snippet || "Hai una nuova menzione").catch(() => {});
+            }
+          }).catch(() => {});
         }
       } catch (e: any) {
         console.warn("[social] mention notifications failed:", e.message);

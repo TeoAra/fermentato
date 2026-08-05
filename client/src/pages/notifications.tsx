@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown, Factory, Store, CalendarDays, Heart, X, BellOff, ArrowRight, Moon, MessageCircle, Users, Megaphone, Flag } from "lucide-react";
+import { Bell, Beer, Calendar, MapPin, Settings, AlertCircle, CheckCircle2, Trash2, CheckCheck, Loader2, ChevronDown, Factory, Store, CalendarDays, Heart, X, BellOff, ArrowRight, Moon, MessageCircle, Users, Megaphone, Flag, AtSign } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -17,7 +17,7 @@ const NOTIF_PAGE_SIZE = 20;
 // — `inAppKey` (es. tapChanges) e `pushKey` (es. tapChangesPush)
 type CatInAppKey = 'tapChanges' | 'events' | 'newPubs' |
   'checkinLikes' | 'checkinComments' | 'newFollowers' |
-  'breweryReplies' | 'reportUpdates' | 'adminBroadcasts';
+  'breweryReplies' | 'reportUpdates' | 'adminBroadcasts' | 'mentions';
 type CatPushKey = `${CatInAppKey}Push`;
 type CatEmailKey = `${CatInAppKey}Email`;
 const CATEGORIES: Array<{
@@ -38,6 +38,7 @@ const CATEGORIES: Array<{
   { inAppKey: 'breweryReplies', pushKey: 'breweryRepliesPush', emailKey: 'breweryRepliesEmail', label: 'Risposte birrificio',   description: 'Quando un birrificio risponde a te',                 icon: Factory,      iconColor: 'text-amber-600' },
   { inAppKey: 'reportUpdates',  pushKey: 'reportUpdatesPush',  emailKey: 'reportUpdatesEmail',  label: 'Esito segnalazioni',    description: 'Quando i moderatori gestiscono le tue segnalazioni', icon: Flag,         iconColor: 'text-red-500' },
   { inAppKey: 'adminBroadcasts',pushKey: 'adminBroadcastsPush',emailKey: 'adminBroadcastsEmail',label: 'Annunci Fermenta.to',   description: 'Comunicazioni ufficiali della redazione',            icon: Megaphone,    iconColor: 'text-primary' },
+  { inAppKey: 'mentions',       pushKey: 'mentionsPush',       emailKey: 'mentionsEmail',       label: 'Menzioni',              description: 'Quando qualcuno ti menziona in un post con @',       icon: AtSign,       iconColor: 'text-indigo-600' },
 ];
 
 function getNotificationIcon(type: string) {
