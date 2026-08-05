@@ -7,6 +7,7 @@ import { it } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { PostContent } from "@/components/social/PostContent";
+import TrendingHashtags from "@/components/social/TrendingHashtags";
 
 function PostAvatar({ post }: { post: any }) {
   const name = post.display_name ?? post.username ?? "?";
@@ -53,6 +54,9 @@ export default function HashtagPage() {
       </header>
 
       <div className="max-w-xl mx-auto px-4 pt-4 space-y-3">
+        {/* Trending hashtags strip */}
+        <TrendingHashtags limit={10} compact />
+
         {isLoading ? (
           <>{[0, 1, 2].map(i => <Skeleton key={i} className="h-32 rounded-2xl" />)}</>
         ) : posts.length === 0 ? (

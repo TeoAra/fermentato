@@ -735,6 +735,33 @@ export async function registerSocialRoutes(app: Express) {
     res.json(rows);
   });
 
+  // ─── TRENDING HASHTAGS (cached 1h) ──────────────────────────────────────
+  let trendingCache: { tags: { tag: string; count: number }[]; expiresAt: number } | null = null;
+
+  app.get("/api/microblog/trending-hashtags", async (req, res) => {
+    const limit = Math.min(parseInt((req.query.limit as string) || "10", 10), 50);
+    const now = Date.now();
+    if (trendingCache && now < trendingCache.expiresAt) {
+      return res.json(trendingCache.tags.slice(0, limit));
+    }
+    try {
+      const { rows } = await pool.query(`
+        SELECT unnest(hashtags) AS tag, COUNT(*)::int AS count
+        FROM microblog_posts
+        WHERE created_at >= NOW() - INTERVAL '7 days'
+          AND hashtags IS NOT NULL AND array_length(hashtags, 1) > 0
+        GROUP BY tag
+        ORDER BY count DESC, tag ASC
+        LIMIT 50
+      `);
+      trendingCache = { tags: rows, expiresAt: now + 60 * 60 * 1000 };
+      res.json(rows.slice(0, limit));
+    } catch (e: any) {
+      console.error("[social] trending-hashtags error:", e);
+      res.status(500).json({ message: "Errore nel recupero degli hashtag di tendenza" });
+    }
+  });
+
   app.get("/api/microblog/discover", async (_req, res) => {
     const { rows } = await pool.query(`
       SELECT p.id, p.content, p.image_url, p.created_at,

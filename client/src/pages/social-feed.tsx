@@ -19,6 +19,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import CheckinSocialBar from "@/components/social/CheckinSocialBar";
 import { ZoomableImage } from "@/components/ImageLightbox";
+import TrendingHashtags from "@/components/social/TrendingHashtags";
 
 /* ── helpers ── */
 const FORMAT_LABELS: Record<string, string> = {
@@ -460,6 +461,9 @@ function DesktopSidebar({
         </div>
       )}
 
+      {/* Trending hashtags sidebar */}
+      <TrendingHashtags limit={10} />
+
       {/* News sidebar */}
       {news?.length > 0 && (
         <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
@@ -670,6 +674,11 @@ export default function SocialFeed() {
                 {/* News strip — mobile only */}
                 <div className="lg:hidden">
                   <NewsStrip news={news} />
+                </div>
+
+                {/* Trending hashtags — mobile only */}
+                <div className="lg:hidden">
+                  <TrendingHashtags limit={10} compact />
                 </div>
 
                 {feedLoading ? (
