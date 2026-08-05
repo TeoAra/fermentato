@@ -761,14 +761,11 @@ export default function BeerDetail() {
       />
 
       <main
-        className="max-w-[720px] lg:max-w-5xl mx-auto px-4"
+        className="max-w-[720px] lg:max-w-7xl mx-auto px-4 lg:px-8"
         style={{
           paddingBottom: 'calc(80px + var(--frozen-sab))',
         }}
       >
-        <div className="lg:grid lg:grid-cols-[1fr_288px] lg:gap-8 lg:items-start">
-        {/* ── LEFT: tab sections ─────────────────────────────────────── */}
-        <div>
         <div className={`${activeTab === 'overview' ? '' : 'hidden'} lg:!block`}>
           <div className="mt-3">
             <BeerStatsStrip beer={beer} />
@@ -1023,108 +1020,6 @@ export default function BeerDetail() {
             onReport={(reviewId) => setReportDialogReviewId(reviewId)}
           />
         </div>
-        </div>{/* end left column */}
-
-        {/* ── RIGHT: Desktop sticky sidebar ──────────────────────────── */}
-        <aside className="hidden lg:flex flex-col gap-4 sticky top-[116px]">
-
-          {/* Stats card */}
-          <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-4 space-y-3">
-
-            {/* Rating */}
-            {reviewsData?.avgRating && reviewsData.reviewCount > 0 && (
-              <>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-0.5 text-amber-500">
-                    {[1,2,3,4,5].map(s => (
-                      <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(Number(reviewsData.avgRating)) ? "fill-current" : "opacity-20"}`} />
-                    ))}
-                  </div>
-                  <span className="text-sm font-bold text-stone-800 dark:text-stone-100">
-                    {Number(reviewsData.avgRating).toFixed(1)}
-                  </span>
-                  <span className="text-xs text-stone-400">({reviewsData.reviewCount})</span>
-                </div>
-                <div className="border-t border-[#E8DED1] dark:border-white/[0.06]" />
-              </>
-            )}
-
-            {/* ABV / IBU / EBC grid */}
-            <div className="grid grid-cols-3 gap-2">
-              {beer?.abv && (
-                <div className="flex flex-col items-center p-2.5 rounded-xl bg-amber-50 dark:bg-amber-950/20">
-                  <span className="text-lg font-black text-amber-600 dark:text-amber-400 leading-none">{beer.abv}%</span>
-                  <span className="text-[10px] font-bold text-amber-500/70 uppercase tracking-wide mt-0.5">ABV</span>
-                </div>
-              )}
-              {(beer as any)?.ibu && (
-                <div className="flex flex-col items-center p-2.5 rounded-xl bg-lime-50 dark:bg-lime-950/20">
-                  <span className="text-lg font-black text-lime-700 dark:text-lime-400 leading-none">{(beer as any).ibu}</span>
-                  <span className="text-[10px] font-bold text-lime-600/70 uppercase tracking-wide mt-0.5">IBU</span>
-                </div>
-              )}
-              {(beer as any)?.ebc && (
-                <div className="flex flex-col items-center p-2.5 rounded-xl bg-orange-50 dark:bg-orange-950/20">
-                  <span className="text-lg font-black text-orange-700 dark:text-orange-400 leading-none">{(beer as any).ebc}</span>
-                  <span className="text-[10px] font-bold text-orange-600/70 uppercase tracking-wide mt-0.5">EBC</span>
-                </div>
-              )}
-            </div>
-
-            {/* Style */}
-            {beer?.style && (
-              <div>
-                <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider mb-1">Stile</p>
-                <span className="inline-block text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full">{beer.style}</span>
-              </div>
-            )}
-
-            {/* Country */}
-            {(beer as any)?.country && (
-              <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
-                <MapPin className="w-3.5 h-3.5 text-stone-400" />
-                {(beer as any).country}
-              </div>
-            )}
-
-            {/* Availability */}
-            {totalLocations > 0 && (
-              <>
-                <div className="border-t border-[#E8DED1] dark:border-white/[0.06]" />
-                <div className="flex items-center gap-2 text-xs text-stone-500 dark:text-stone-400">
-                  <MapPin className="w-3.5 h-3.5 text-primary" />
-                  Disponibile in <strong className="text-stone-800 dark:text-stone-200">{totalLocations}</strong> {totalLocations === 1 ? "locale" : "locali"}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Brewery card */}
-          {beer?.brewery && (
-            <Link href={`/brewery/${beer.brewery.id}`}>
-              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3.5 flex items-center gap-3 hover:border-primary/30 transition-colors cursor-pointer group">
-                <div className="w-11 h-11 rounded-xl bg-[#FAF7F1] dark:bg-[#12151A] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                  {(beer.brewery as any).logoUrl ? (
-                    <img src={(beer.brewery as any).logoUrl} alt={beer.brewery.name} className="w-full h-full object-contain p-1" />
-                  ) : (
-                    <Building2 className="h-5 w-5 text-[#F59E0B]" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[10px] uppercase font-bold text-stone-400 tracking-wider">Birrificio</p>
-                  <p className="text-sm font-bold text-stone-900 dark:text-stone-100 group-hover:text-primary transition-colors truncate">{beer.brewery.name}</p>
-                  {beer.brewery.location && (
-                    <p className="text-xs text-stone-400 truncate">{beer.brewery.location}</p>
-                  )}
-                </div>
-                <ChevronRight className="w-4 h-4 text-stone-300 group-hover:text-primary transition-colors flex-shrink-0" />
-              </div>
-            </Link>
-          )}
-
-        </aside>
-
-        </div>{/* end desktop grid */}
         </main>
 
       {/* Admin Edit Dialog */}
