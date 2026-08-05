@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import CheckinSocialBar from "@/components/social/CheckinSocialBar";
 import { ZoomableImage } from "@/components/ImageLightbox";
 import TrendingHashtags from "@/components/social/TrendingHashtags";
+import { EntityPreviewCard, type EntityType } from "@/components/social/EntityPreviewCard";
 
 /* ── helpers ── */
 const FORMAT_LABELS: Record<string, string> = {
@@ -455,6 +456,10 @@ function CheckinCard({ data }: { data: any }) {
 /* ── MicroblogCard ── */
 function MicroblogCard({ post }: { post: any }) {
   const queryClient = useQueryClient();
+  const [entityPreview, setEntityPreview] = useState<{
+    type: EntityType; id: number; rect: DOMRect;
+  } | null>(null);
+
   const likeMut = useMutation({
     mutationFn: () =>
       apiRequest(`/api/microblog/posts/${post.id}/like`, {
@@ -465,6 +470,18 @@ function MicroblogCard({ post }: { post: any }) {
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
     },
   });
+
+  const handleEntityChip = (
+    e: React.MouseEvent,
+    type: EntityType,
+    id: number,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setEntityPreview({ type, id, rect });
+  };
+
   return (
     <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
       <div className="flex items-center gap-2.5 mb-3">
@@ -496,19 +513,27 @@ function MicroblogCard({ post }: { post: any }) {
       {(post.beer_name || post.pub_name || post.brewery_name) && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {post.beer_name && (
-            <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold">
-              🍺 {post.beer_name}
-            </span>
+            <Link href={`/beer/${post.beer_id}`}>
+              <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold cursor-pointer hover:bg-primary/20">
+                🍺 {post.beer_name}
+              </span>
+            </Link>
           )}
-          {post.pub_name && (
-            <span className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold">
+          {post.pub_name && post.pub_id && (
+            <button
+              onClick={(e) => handleEntityChip(e, "pub", post.pub_id)}
+              className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold hover:bg-stone-200 dark:hover:bg-[#0B0D10] transition-colors cursor-pointer"
+            >
               📍 {post.pub_name}
-            </span>
+            </button>
           )}
-          {post.brewery_name && (
-            <span className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold">
+          {post.brewery_name && post.brewery_id && (
+            <button
+              onClick={(e) => handleEntityChip(e, "brewery", post.brewery_id)}
+              className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold hover:bg-stone-200 dark:hover:bg-[#0B0D10] transition-colors cursor-pointer"
+            >
               🏭 {post.brewery_name}
-            </span>
+            </button>
           )}
         </div>
       )}
@@ -528,6 +553,15 @@ function MicroblogCard({ post }: { post: any }) {
           {post.comments_count ?? 0}
         </span>
       </div>
+
+      {entityPreview && (
+        <EntityPreviewCard
+          type={entityPreview.type}
+          id={entityPreview.id}
+          anchorRect={entityPreview.rect}
+          onClose={() => setEntityPreview(null)}
+        />
+      )}
     </div>
   );
 }
