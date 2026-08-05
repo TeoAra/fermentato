@@ -1106,7 +1106,12 @@ export function registerAdminRoutes(app: Express) {
         .select({
           id: breweryRequests.id,
           userId: breweryRequests.userId,
-          breweryName: breweryRequests.breweryName,
+          breweryName: sql<string>`COALESCE(
+            CASE WHEN ${breweryRequests.existingBreweryId} IS NOT NULL
+              THEN (SELECT name FROM breweries WHERE id = ${breweryRequests.existingBreweryId})
+              ELSE NULL END,
+            ${breweryRequests.breweryName}
+          )`.as('brewery_name'),
           breweryLocation: breweryRequests.breweryLocation,
           breweryRegion: breweryRequests.breweryRegion,
           breweryCountry: breweryRequests.breweryCountry,

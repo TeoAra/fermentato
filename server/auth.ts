@@ -401,9 +401,15 @@ export async function setupAuth(app: Express) {
         const trimmedBreweryWebsite = typeof breweryWebsite === 'string' ? breweryWebsite.trim() : null;
         const trimmedBreweryDesc = typeof breweryDescription === 'string' ? breweryDescription.trim() : null;
 
+        // When the user selected an existing brewery, look up its real name so the admin sees it.
+        let resolvedBreweryName = trimmedBreweryName;
+        if (!resolvedBreweryName && existingBreweryId) {
+          const [existingBrew] = await db.select({ name: breweries.name }).from(breweries).where(eq(breweries.id, parseInt(existingBreweryId)));
+          resolvedBreweryName = existingBrew?.name || '';
+        }
         await db.insert(breweryRequests).values({
           userId: userId,
-          breweryName: trimmedBreweryName || 'Birrificio',
+          breweryName: resolvedBreweryName || 'Birrificio',
           breweryLocation: trimmedBreweryLocation || 'N/A',
           breweryRegion: trimmedBreweryRegion || null,
           breweryCountry: trimmedBreweryCountry || null,
@@ -558,9 +564,15 @@ export async function setupAuth(app: Express) {
       if (isBrewpub) {
         const trimmedBreweryName = (breweryName || '').trim();
         if (trimmedBreweryName || existingBreweryId) {
+          // When the user selected an existing brewery, look up its real name.
+          let resolvedBrewpubBreweryName = trimmedBreweryName;
+          if (!resolvedBrewpubBreweryName && existingBreweryId) {
+            const [existingBrew] = await db.select({ name: breweries.name }).from(breweries).where(eq(breweries.id, parseInt(existingBreweryId)));
+            resolvedBrewpubBreweryName = existingBrew?.name || '';
+          }
           await db.insert(breweryRequests).values({
             userId,
-            breweryName: trimmedBreweryName || 'Birrificio',
+            breweryName: resolvedBrewpubBreweryName || 'Birrificio',
             breweryLocation: (breweryLocation || '').trim() || trimmedPubCity,
             breweryRegion: (breweryRegion || '').trim() || null,
             breweryCountry: (breweryCountry || '').trim() || null,

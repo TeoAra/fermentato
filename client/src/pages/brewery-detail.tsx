@@ -8,10 +8,13 @@ import {
   Building,
   Building2,
   Calendar,
+  Globe,
   Home as HomeIcon,
+  MapPin,
   Pencil,
   Save,
   Settings,
+  Star,
   Store,
   Trash2,
   Users,
@@ -566,70 +569,162 @@ export default function BreweryDetail() {
       <StickyPubTabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main
-        className="max-w-[720px] mx-auto px-4"
+        className="max-w-[720px] lg:max-w-5xl mx-auto px-4"
         style={{ paddingBottom: "calc(80px + var(--frozen-sab))" }}
       >
-        {isAdmin && (
-          <div className="pt-3">
-            <button
-              type="button"
-              onClick={openEditDialog}
-              className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] text-xs font-bold text-[#151515] dark:text-[#F5F5F5] hover:border-[#F59E0B] transition-colors"
-              data-testid="button-manage-brewery"
-            >
-              <Settings className="w-3.5 h-3.5" />
-              Modifica birrificio
-            </button>
+        <div className="lg:grid lg:grid-cols-[1fr_288px] lg:gap-8 lg:items-start">
+
+          {/* ── LEFT: tab sections ─────────────────────────────────────── */}
+          <div>
+            {isAdmin && (
+              <div className="pt-3">
+                <button
+                  type="button"
+                  onClick={openEditDialog}
+                  className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] text-xs font-bold text-[#151515] dark:text-[#F5F5F5] hover:border-[#F59E0B] transition-colors"
+                  data-testid="button-manage-brewery"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                  Modifica birrificio
+                </button>
+              </div>
+            )}
+
+            <div className={`${activeTab === "overview" ? "" : "hidden"} lg:!block`}>
+              <BreweryOverviewSection brewery={brewery} onDirections={handleDirections} />
+            </div>
+
+            <div className={`${activeTab === "birre" ? "" : "hidden"} lg:!block`}>
+              <BreweryBeersSection
+                beers={beers as any[]}
+                isAdmin={isAdmin}
+                canEditBeers={canEditBeers}
+                onEditBeer={canEditBeers ? openBeerEditDialog : undefined}
+                onToggleBeerVisibility={
+                  isAdmin ? (beerId) => hideBeerMutation.mutate(beerId) : undefined
+                }
+              />
+            </div>
+
+            <div className={`${activeTab === "serate" ? "" : "hidden"} lg:!block pt-4`}>
+              {announcements.length === 0 && breweryEvents.length === 0 ? (
+                <div className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] py-16 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-[#FAF7F1] dark:bg-[#12151A] mx-auto mb-4 flex items-center justify-center">
+                    <Calendar className="w-8 h-8 text-[#F59E0B]" />
+                  </div>
+                  <p className="text-sm font-semibold text-[#151515] dark:text-[#F5F5F5]">
+                    Nessun evento in programma
+                  </p>
+                </div>
+              ) : (
+                <BreweryEventsSection
+                  announcements={announcements as any[]}
+                  breweryEvents={breweryEvents as any[]}
+                />
+              )}
+            </div>
+
+            <div className={`${activeTab === "distribuzione" ? "" : "hidden"} lg:!block pt-4`}>
+              {distribution.length === 0 ? (
+                <div className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] py-16 text-center">
+                  <div className="w-16 h-16 rounded-2xl bg-[#FAF7F1] dark:bg-[#12151A] mx-auto mb-4 flex items-center justify-center">
+                    <Store className="w-8 h-8 text-[#F59E0B]" />
+                  </div>
+                  <p className="text-sm font-semibold text-[#151515] dark:text-[#F5F5F5]">
+                    Distribuzione non ancora disponibile
+                  </p>
+                </div>
+              ) : (
+                <BreweryDistributionSection distribution={distribution as any[]} />
+              )}
+            </div>
           </div>
-        )}
 
-        <div className={`${activeTab === "overview" ? "" : "hidden"} lg:!block`}>
-          <BreweryOverviewSection brewery={brewery} onDirections={handleDirections} />
-        </div>
+          {/* ── RIGHT: Desktop sticky sidebar ──────────────────────────── */}
+          <aside className="hidden lg:flex flex-col gap-4 sticky top-[116px] pt-3">
 
-        <div className={`${activeTab === "birre" ? "" : "hidden"} lg:!block`}>
-          <BreweryBeersSection
-            beers={beers as any[]}
-            isAdmin={isAdmin}
-            canEditBeers={canEditBeers}
-            onEditBeer={canEditBeers ? openBeerEditDialog : undefined}
-            onToggleBeerVisibility={
-              isAdmin ? (beerId) => hideBeerMutation.mutate(beerId) : undefined
-            }
-          />
-        </div>
+            {/* Quick info card */}
+            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.05)] p-4 space-y-3">
 
-        <div className={`${activeTab === "serate" ? "" : "hidden"} lg:!block pt-4`}>
-          {announcements.length === 0 && breweryEvents.length === 0 ? (
-            <div className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] py-16 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#FAF7F1] dark:bg-[#12151A] mx-auto mb-4 flex items-center justify-center">
-                <Calendar className="w-8 h-8 text-[#F59E0B]" />
-              </div>
-              <p className="text-sm font-semibold text-[#151515] dark:text-[#F5F5F5]">
-                Nessun evento in programma
-              </p>
+              {/* Rating row */}
+              {breweryRating?.avgRating && breweryRating.reviewCount > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 text-amber-500">
+                    {[1,2,3,4,5].map(s => (
+                      <Star key={s} className={`w-3.5 h-3.5 ${s <= Math.round(Number(breweryRating.avgRating)) ? "fill-current" : "opacity-20"}`} />
+                    ))}
+                  </div>
+                  <span className="text-sm font-bold text-stone-800 dark:text-stone-100">
+                    {Number(breweryRating.avgRating).toFixed(1)}
+                  </span>
+                  <span className="text-xs text-stone-400">({breweryRating.reviewCount} recensioni)</span>
+                </div>
+              )}
+
+              {/* Divider if rating shown */}
+              {breweryRating?.avgRating && breweryRating.reviewCount > 0 && (
+                <div className="border-t border-[#E8DED1] dark:border-white/[0.06]" />
+              )}
+
+              {/* Location */}
+              {brewery?.location && (
+                <div className="flex items-start gap-2.5">
+                  <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-stone-700 dark:text-stone-300 leading-snug">{brewery.location}</p>
+                    {brewery.region && brewery.region !== brewery.location && (
+                      <p className="text-xs text-stone-400 mt-0.5">{brewery.region}</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Website */}
+              {(brewery as any)?.websiteUrl && (
+                <div className="flex items-center gap-2.5">
+                  <Globe className="w-4 h-4 text-primary flex-shrink-0" />
+                  <a
+                    href={(brewery as any).websiteUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline truncate"
+                  >
+                    {(brewery as any).websiteUrl.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                  </a>
+                </div>
+              )}
+
+              {/* Beer count */}
+              {beers.length > 0 && (
+                <div className="flex items-center gap-2.5">
+                  <BeerIcon className="w-4 h-4 text-primary flex-shrink-0" />
+                  <span className="text-sm text-stone-700 dark:text-stone-300">
+                    <strong>{beers.length}</strong> birre nel catalogo
+                  </span>
+                </div>
+              )}
+
+              {/* Favorites */}
+              {favCount > 0 && (
+                <div className="flex items-center gap-2.5">
+                  <Users className="w-4 h-4 text-stone-400 flex-shrink-0" />
+                  <span className="text-xs text-stone-400">{favCount} preferiti</span>
+                </div>
+              )}
             </div>
-          ) : (
-            <BreweryEventsSection
-              announcements={announcements as any[]}
-              breweryEvents={breweryEvents as any[]}
-            />
-          )}
-        </div>
 
-        <div className={`${activeTab === "distribuzione" ? "" : "hidden"} lg:!block pt-4`}>
-          {distribution.length === 0 ? (
-            <div className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] py-16 text-center">
-              <div className="w-16 h-16 rounded-2xl bg-[#FAF7F1] dark:bg-[#12151A] mx-auto mb-4 flex items-center justify-center">
-                <Store className="w-8 h-8 text-[#F59E0B]" />
-              </div>
-              <p className="text-sm font-semibold text-[#151515] dark:text-[#F5F5F5]">
-                Distribuzione non ancora disponibile
-              </p>
-            </div>
-          ) : (
-            <BreweryDistributionSection distribution={distribution as any[]} />
-          )}
+            {/* Directions CTA */}
+            {brewery?.location && (
+              <button
+                onClick={handleDirections}
+                className="flex items-center justify-center gap-2 h-11 rounded-xl bg-primary/10 hover:bg-primary/15 text-primary text-sm font-semibold transition-colors"
+              >
+                <MapPin className="w-4 h-4" />
+                Indicazioni stradali
+              </button>
+            )}
+
+          </aside>
         </div>
       </main>
 
