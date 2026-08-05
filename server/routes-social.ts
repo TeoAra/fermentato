@@ -405,11 +405,12 @@ export async function registerSocialRoutes(app: Express) {
   });
 
   // ─── SEGNALAZIONI UNIFICATE ──────────────────────────────────────────────
-  // POST /api/reports  { targetType: 'review'|'checkin_comment', targetId, reason, description? }
+  // POST /api/reports  { targetType: 'review'|'checkin_comment'|'microblog_post'|'microblog_comment', targetId, reason, description? }
   app.post("/api/reports", isAuthenticated, async (req: any, res) => {
     try {
       const { targetType, targetId, reason, description } = req.body ?? {};
-      if (!["review", "checkin_comment"].includes(targetType)) {
+      const ALLOWED = ["review", "checkin_comment", "microblog_post", "microblog_comment"];
+      if (!ALLOWED.includes(targetType)) {
         return res.status(400).json({ message: "Tipo non valido" });
       }
       const tid = parseInt(targetId, 10);
@@ -418,9 +419,12 @@ export async function registerSocialRoutes(app: Express) {
         return res.status(400).json({ message: "Motivo obbligatorio" });
       }
       // Verifica esistenza del bersaglio
-      const exists = targetType === "review"
-        ? await pool.query(`SELECT 1 FROM user_beer_tastings WHERE id = $1`, [tid])
-        : await pool.query(`SELECT 1 FROM checkin_comments WHERE id = $1`, [tid]);
+      let existsQuery: any;
+      if (targetType === "review") existsQuery = pool.query(`SELECT 1 FROM user_beer_tastings WHERE id = $1`, [tid]);
+      else if (targetType === "checkin_comment") existsQuery = pool.query(`SELECT 1 FROM checkin_comments WHERE id = $1`, [tid]);
+      else if (targetType === "microblog_post") existsQuery = pool.query(`SELECT 1 FROM microblog_posts WHERE id = $1`, [tid]);
+      else existsQuery = pool.query(`SELECT 1 FROM microblog_comments WHERE id = $1`, [tid]);
+      const exists = await existsQuery;
       if (exists.rowCount === 0) return res.status(404).json({ message: "Contenuto non trovato" });
 
       // De-duplica: stesso reporter, stesso target, status pending → idempotente
@@ -633,6 +637,17 @@ export async function registerSocialRoutes(app: Express) {
     const userId = req.user.id;
     const postId = parseInt(req.params.id, 10);
     await pool.query(`DELETE FROM microblog_posts WHERE id = $1 AND user_id = $2`, [postId, userId]);
+    res.json({ deleted: true });
+  });
+
+  app.delete("/api/microblog/posts/:postId/comments/:commentId", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const postId = parseInt(req.params.postId, 10);
+    const commentId = parseInt(req.params.commentId, 10);
+    await pool.query(
+      `DELETE FROM microblog_comments WHERE id = $1 AND post_id = $2 AND user_id = $3`,
+      [commentId, postId, userId],
+    );
     res.json({ deleted: true });
   });
 

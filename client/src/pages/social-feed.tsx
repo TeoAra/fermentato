@@ -23,6 +23,7 @@ import TrendingHashtags from "@/components/social/TrendingHashtags";
 import { InlinePostComposer } from "@/components/social/InlinePostComposer";
 import { EntityPreviewCard, type EntityType } from "@/components/social/EntityPreviewCard";
 import { PostContent } from "@/components/social/PostContent";
+import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
 
 /* ── helpers ── */
 const FORMAT_LABELS: Record<string, string> = {
@@ -215,50 +216,18 @@ function CheckinCard({ data }: { data: any }) {
 
 /* ── MicroblogCard ── */
 function MicroblogCard({ post }: { post: any }) {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const { toast } = useToast();
   const [entityPreview, setEntityPreview] = useState<{
     type: EntityType; id: number; rect: DOMRect;
   } | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
 
-  const isOwn = user && post.user_id && String(user.id) === String(post.user_id);
-
-  const likeMut = useMutation({
-    mutationFn: () =>
-      apiRequest(`/api/microblog/posts/${post.id}/like`, {
-        method: post.liked ? "DELETE" : "POST",
-      }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
-    },
-  });
-
-  const deleteMut = useMutation({
-    mutationFn: () => apiRequest(`/api/microblog/posts/${post.id}`, { method: "DELETE" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
-      toast({ title: "Post eliminato" });
-    },
-    onError: () => toast({ title: "Errore", description: "Riprova", variant: "destructive" }),
-  });
-
-  const handleEntityChip = (
-    e: React.MouseEvent,
-    type: EntityType,
-    id: number,
-  ) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    setEntityPreview({ type, id, rect });
+  const handleEntityChip = (e: React.MouseEvent, type: EntityType, id: number) => {
+    e.preventDefault(); e.stopPropagation();
+    setEntityPreview({ type, id, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() });
   };
 
   return (
     <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
+      {/* header */}
       <div className="flex items-center gap-2.5 mb-3">
         <UserAvatar user={post} size={8} />
         <div className="flex-1 min-w-0">
@@ -274,26 +243,9 @@ function MicroblogCard({ post }: { post: any }) {
             <span className="font-semibold text-amber-500/80">📝 post</span>
           </p>
         </div>
-        {isOwn && (
-          <div className="relative">
-            <button onClick={() => setMenuOpen(v => !v)}
-              className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-stone-400">
-              <X className="w-4 h-4 rotate-0" style={{ display: menuOpen ? undefined : "none" }} />
-              {!menuOpen && <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor"><circle cx="4" cy="10" r="1.5"/><circle cx="10" cy="10" r="1.5"/><circle cx="16" cy="10" r="1.5"/></svg>}
-            </button>
-            {menuOpen && (
-              <div className="absolute right-0 top-7 z-20 bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-white/[0.08] rounded-xl shadow-lg min-w-[120px]">
-                <button
-                  onClick={() => { setMenuOpen(false); if (confirm("Eliminare questo post?")) deleteMut.mutate(); }}
-                  className="w-full text-left px-4 py-2.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl font-semibold transition-colors">
-                  🗑 Elimina
-                </button>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
+      {/* content */}
       <PostContent content={post.content} />
 
       {post.image_url && (
@@ -301,49 +253,39 @@ function MicroblogCard({ post }: { post: any }) {
           className="mt-3 rounded-xl w-full max-h-80 object-cover" />
       )}
 
+      {/* entity chips */}
       {(post.beer_name || post.pub_name || post.brewery_name) && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {post.beer_name && post.beer_id && (
-            <button
-              onClick={(e) => handleEntityChip(e, "beer", post.beer_id)}
-              className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold cursor-pointer hover:bg-primary/20 transition-colors"
-            >
+            <button onClick={(e) => handleEntityChip(e, "beer", post.beer_id)}
+              className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold cursor-pointer hover:bg-primary/20 transition-colors">
               🍺 {post.beer_name}
             </button>
           )}
           {post.pub_name && post.pub_id && (
-            <button
-              onClick={(e) => handleEntityChip(e, "pub", post.pub_id)}
-              className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold hover:bg-stone-200 dark:hover:bg-[#0B0D10] transition-colors cursor-pointer"
-            >
+            <button onClick={(e) => handleEntityChip(e, "pub", post.pub_id)}
+              className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold hover:bg-stone-200 dark:hover:bg-[#0B0D10] transition-colors cursor-pointer">
               📍 {post.pub_name}
             </button>
           )}
           {post.brewery_name && post.brewery_id && (
-            <button
-              onClick={(e) => handleEntityChip(e, "brewery", post.brewery_id)}
-              className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold hover:bg-stone-200 dark:hover:bg-[#0B0D10] transition-colors cursor-pointer"
-            >
+            <button onClick={(e) => handleEntityChip(e, "brewery", post.brewery_id)}
+              className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold hover:bg-stone-200 dark:hover:bg-[#0B0D10] transition-colors cursor-pointer">
               🏭 {post.brewery_name}
             </button>
           )}
         </div>
       )}
 
-      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.04] flex items-center gap-4">
-        <button
-          onClick={() => likeMut.mutate()}
-          className={`flex items-center gap-1.5 text-xs font-semibold transition-all active:scale-90 ${
-            post.liked ? "text-red-500" : "text-stone-400 hover:text-red-500"
-          }`}
-        >
-          <Heart className="w-4 h-4" fill={post.liked ? "currentColor" : "none"} />
-          {post.likes_count ?? 0}
-        </button>
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-stone-400">
-          <MessageCircle className="w-4 h-4" />
-          {post.comments_count ?? 0}
-        </span>
+      {/* social bar — like, comments, delete/report */}
+      <div className="mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.04]">
+        <MicroblogSocialBar
+          postId={post.id}
+          postUserId={post.user_id}
+          liked={post.liked}
+          likesCount={post.likes_count ?? 0}
+          commentsCount={post.comments_count ?? 0}
+        />
       </div>
 
       {entityPreview && (
