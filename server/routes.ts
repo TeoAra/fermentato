@@ -441,6 +441,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   })();
 
+  // Startup: ensure allergens.name unique constraint (drizzle-kit requires TTY to apply interactively)
+  (async () => {
+    try {
+      await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS allergens_name_unique ON allergens(name)`);
+    } catch (e: any) {
+      console.warn("[allergens] unique index skipped:", e.message);
+    }
+  })();
+
   // Startup: ensure breweries has social/contact columns
   (async () => {
     try {
