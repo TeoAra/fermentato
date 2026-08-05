@@ -15,6 +15,7 @@ import { RichTextDisplay } from "@/components/rich-text-editor";
 import { getBadgeForCount } from "@/lib/badges";
 import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 import CheckinSocialBar from "@/components/social/CheckinSocialBar";
+import { ZoomableImage } from "@/components/ImageLightbox";
 
 const BeerTastingForm = lazy(() => import("@/components/BeerTastingForm"));
 
@@ -304,6 +305,15 @@ export default function BeerReviewsSection({
                       <p className="text-sm text-[#151515] dark:text-[#F5F5F5] italic mb-1">
                         "{review.personalNotes}"
                       </p>
+                    )}
+                    {(review.photoUrl || review.photo_url) && (
+                      <div className="mt-2 mb-2 rounded-xl overflow-hidden max-h-64">
+                        <ZoomableImage
+                          src={review.photoUrl || review.photo_url}
+                          alt="Foto assaggio"
+                          className="w-full object-cover max-h-64"
+                        />
+                      </div>
                     )}
                     {review.ownerReply && (
                       <div className="mt-2 ml-1 pl-3 border-l-2 border-[#F59E0B]/40 rounded-sm">

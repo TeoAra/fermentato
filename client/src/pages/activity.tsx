@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Users, Package, Search, UserPlus, UserMinus, BarChart3, Award, TrendingUp, Star } from "lucide-react";
+import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Users, Package, Search, UserPlus, UserMinus, BarChart3, Award, TrendingUp, Star, PenSquare } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
 import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/components/events-manager";
@@ -19,6 +19,7 @@ import { Helmet } from "react-helmet-async";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
+import { ZoomableImage } from "@/components/ImageLightbox";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -644,6 +645,15 @@ export default function Activity() {
 
         <TabsContent value="sociale" className="mt-0">
           <div className="p-4 space-y-5">
+            {/* Compose bar */}
+            <Link href="/microblog/nuovo">
+              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-sm p-3 flex items-center gap-2.5 border border-[#E8DED1] dark:border-white/[0.06]">
+                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                  <PenSquare className="w-4 h-4 text-primary" />
+                </div>
+                <span className="text-sm text-stone-400 flex-1">Cosa stai bevendo? Scrivi un post…</span>
+              </div>
+            </Link>
             <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-sm p-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
@@ -732,7 +742,9 @@ export default function Activity() {
                         )}
                         {/* Photo */}
                         {item.photo_url && (
-                          <img src={item.photo_url} alt="" className="mt-2 w-full rounded-xl object-cover max-h-48" />
+                          <div className="mt-2 rounded-xl overflow-hidden">
+                            <ZoomableImage src={item.photo_url} alt="Foto assaggio" className="w-full object-cover max-h-48" />
+                          </div>
                         )}
                         {/* Pub */}
                         {item.pub_id && item.pub_name && (
