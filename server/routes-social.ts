@@ -923,7 +923,10 @@ export async function registerSocialRoutes(app: Express) {
       LEFT JOIN breweries br ON br.id = p.brewery_id
       LEFT JOIN pubs ep ON ep.id = p.author_entity_id AND p.author_type = 'pub'
       LEFT JOIN breweries eb ON eb.id = p.author_entity_id AND p.author_type = 'brewery'
-      WHERE p.user_id = $1 OR p.user_id IN (SELECT following_id FROM user_follows WHERE follower_id = $1)
+      WHERE p.user_id = $1
+         OR p.user_id IN (SELECT following_id FROM user_follows WHERE follower_id = $1)
+         OR (p.author_type = 'pub'     AND p.author_entity_id IN (SELECT item_id FROM favorites WHERE user_id = $1 AND item_type = 'pub'))
+         OR (p.author_type = 'brewery' AND p.author_entity_id IN (SELECT item_id FROM favorites WHERE user_id = $1 AND item_type = 'brewery'))
       ORDER BY p.created_at DESC
       LIMIT 60
     `, [userId]);
