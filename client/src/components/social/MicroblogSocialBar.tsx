@@ -228,9 +228,11 @@ interface Props {
   likesCount: number;
   commentsCount: number;
   content: string; // raw HTML content for editing
+  authorType?: string | null;
+  authorEntityId?: number | null;
 }
 
-export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, commentsCount, content }: Props) {
+export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, commentsCount, content, authorType, authorEntityId }: Props) {
   const { isAuthenticated, user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
@@ -246,6 +248,16 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
   const editRef = useRef<HTMLTextAreaElement>(null);
 
   const isOwn = user && String((user as any).id) === String(postUserId);
+
+  // Entity-post ownership: pub/brewery owner can edit/delete posts made on behalf of their venue.
+  // managedPubId is resolved server-side (pubs.owner_id) and returned by /api/auth/user.
+  // breweryId is stored directly on the user row (users.brewery_id).
+  const isEntityOwn = !isOwn && !!user && !!authorType && authorType !== "user" && !!authorEntityId && (
+    (authorType === "pub" && Number((user as any).managedPubId) === authorEntityId) ||
+    (authorType === "brewery" && Number((user as any).breweryId) === authorEntityId)
+  );
+
+  const canManage = isOwn || isEntityOwn;
 
   const startEdit = () => {
     // strip HTML to plain text for editing
@@ -269,13 +281,21 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
     },
   });
 
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/microblog/posts"] });
+    // Invalidate entity-post cards shown on pub/brewery profile overview sections
+    if (authorType && authorEntityId) {
+      queryClient.invalidateQueries({ queryKey: ["/api/microblog/entity-posts", authorType, authorEntityId] });
+    }
+  };
+
   const editMut = useMutation({
     mutationFn: () =>
       apiRequest(`/api/microblog/posts/${postId}`, { method: "PATCH" }, { content: editText.trim() }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/posts"] });
+      invalidateAll();
       setEditing(false);
       toast({ title: "Post aggiornato ✓" });
     },
@@ -285,9 +305,7 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
   const deleteMut = useMutation({
     mutationFn: () => apiRequest(`/api/microblog/posts/${postId}`, { method: "DELETE" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/microblog/posts"] });
+      invalidateAll();
       toast({ title: "Post eliminato" });
     },
     onError: () => toast({ title: "Errore", variant: "destructive" }),
@@ -392,7 +410,7 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
             </button>
             {menuOpen && (
               <div className="absolute right-0 bottom-full mb-1 z-30 bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-white/[0.08] rounded-xl shadow-lg min-w-[140px] py-1">
-                {isOwn ? (
+                {canManage ? (
                   <>
                     <button
                       onMouseDown={startEdit}

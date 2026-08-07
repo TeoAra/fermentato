@@ -19,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { PostContent } from "@/components/social/PostContent";
+import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
 
 interface OverviewSectionProps {
   pub: PubLike;
@@ -320,6 +321,18 @@ export default function OverviewSection({
                 {p.image_url && (
                   <img src={p.image_url} alt="" className="mt-2 rounded-xl w-full max-h-48 object-cover" />
                 )}
+                <div className="mt-2 pt-2 border-t border-[#E8DED1] dark:border-white/[0.04]">
+                  <MicroblogSocialBar
+                    postId={p.id}
+                    postUserId={p.user_id}
+                    liked={p.liked ?? false}
+                    likesCount={p.likes_count ?? 0}
+                    commentsCount={p.comments_count ?? 0}
+                    content={p.content ?? ""}
+                    authorType={p.author_type}
+                    authorEntityId={p.author_entity_id}
+                  />
+                </div>
               </div>
             ))}
           </div>

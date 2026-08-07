@@ -745,18 +745,79 @@ export async function registerSocialRoutes(app: Express) {
     if (!raw) return res.status(400).json({ message: "Contenuto vuoto" });
     // wrap plain text in <p> tags; leave HTML as-is
     const html = raw.startsWith("<") ? raw : `<p>${raw.replace(/\n/g, "</p><p>")}</p>`;
+
+    // Primary check: the post belongs to the user directly
     const { rowCount } = await pool.query(
       `UPDATE microblog_posts SET content = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3`,
       [html, postId, userId],
     );
-    if (!rowCount) return res.status(404).json({ message: "Post non trovato o non autorizzato" });
+    if (rowCount) return res.json({ updated: true });
+
+    // Secondary check: entity post where caller owns the pub or brewery
+    const { rows: [post] } = await pool.query(
+      `SELECT author_type, author_entity_id FROM microblog_posts WHERE id = $1`,
+      [postId],
+    );
+    if (!post) return res.status(404).json({ message: "Post non trovato" });
+
+    let owned = false;
+    if (post.author_type === "pub" && post.author_entity_id) {
+      const { rows } = await pool.query(
+        `SELECT 1 FROM pubs WHERE id = $1 AND owner_id = $2`,
+        [post.author_entity_id, userId],
+      );
+      owned = rows.length > 0;
+    } else if (post.author_type === "brewery" && post.author_entity_id) {
+      const { rows } = await pool.query(
+        `SELECT 1 FROM breweries WHERE id = $1 AND id = (SELECT brewery_id FROM users WHERE id = $2)`,
+        [post.author_entity_id, userId],
+      );
+      owned = rows.length > 0;
+    }
+    if (!owned) return res.status(403).json({ message: "Non autorizzato" });
+
+    await pool.query(
+      `UPDATE microblog_posts SET content = $1, updated_at = NOW() WHERE id = $2`,
+      [html, postId],
+    );
     res.json({ updated: true });
   });
 
   app.delete("/api/microblog/posts/:id", isAuthenticated, async (req: any, res) => {
     const userId = req.user.id;
     const postId = parseInt(req.params.id, 10);
-    await pool.query(`DELETE FROM microblog_posts WHERE id = $1 AND user_id = $2`, [postId, userId]);
+
+    // Primary check: the post belongs to the user directly
+    const { rowCount } = await pool.query(
+      `DELETE FROM microblog_posts WHERE id = $1 AND user_id = $2`,
+      [postId, userId],
+    );
+    if (rowCount) return res.json({ deleted: true });
+
+    // Secondary check: entity post where caller owns the pub or brewery
+    const { rows: [post] } = await pool.query(
+      `SELECT author_type, author_entity_id FROM microblog_posts WHERE id = $1`,
+      [postId],
+    );
+    if (!post) return res.json({ deleted: true }); // already gone
+
+    let owned = false;
+    if (post.author_type === "pub" && post.author_entity_id) {
+      const { rows } = await pool.query(
+        `SELECT 1 FROM pubs WHERE id = $1 AND owner_id = $2`,
+        [post.author_entity_id, userId],
+      );
+      owned = rows.length > 0;
+    } else if (post.author_type === "brewery" && post.author_entity_id) {
+      const { rows } = await pool.query(
+        `SELECT 1 FROM breweries WHERE id = $1 AND id = (SELECT brewery_id FROM users WHERE id = $2)`,
+        [post.author_entity_id, userId],
+      );
+      owned = rows.length > 0;
+    }
+    if (!owned) return res.status(403).json({ message: "Non autorizzato" });
+
+    await pool.query(`DELETE FROM microblog_posts WHERE id = $1`, [postId]);
     res.json({ deleted: true });
   });
 
@@ -933,6 +994,7 @@ export async function registerSocialRoutes(app: Express) {
     const sql = `
       SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id,
              p.event_id, p.event_source_type, p.hashtags, p.created_at, p.updated_at,
+             p.author_type, p.author_entity_id,
              u.id AS user_id, u.nickname AS username,
              COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,

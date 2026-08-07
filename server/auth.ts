@@ -932,11 +932,20 @@ export async function setupAuth(app: Express) {
   });
 
   // Get current user
-  app.get('/api/auth/user', (req, res) => {
+  app.get('/api/auth/user', async (req, res) => {
     if (req.isAuthenticated() && req.user) {
       const user = req.user as User;
       const { hashedPassword: _, ...userWithoutPassword } = user;
-      res.json({ ...userWithoutPassword, hasPassword: !!user.hashedPassword });
+      // Derive managedPubId: look up any pub owned by this user
+      let managedPubId: number | null = null;
+      try {
+        const [ownedPub] = await db.select({ id: pubs.id }).from(pubs).where(eq(pubs.ownerId, user.id)).limit(1);
+        managedPubId = ownedPub?.id ?? null;
+      } catch {
+        // non-blocking: fall back to null
+      }
+      // breweryId is already stored directly on the user row (users.brewery_id)
+      res.json({ ...userWithoutPassword, hasPassword: !!user.hashedPassword, managedPubId });
     } else {
       res.status(401).json({ message: 'Non autenticato' });
     }

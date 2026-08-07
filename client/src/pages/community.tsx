@@ -221,6 +221,8 @@ function MicroblogCard({ post }: { post: any }) {
           likesCount={post.likes_count ?? 0}
           commentsCount={post.comments_count ?? 0}
           content={post.content ?? ""}
+          authorType={post.author_type}
+          authorEntityId={post.author_entity_id}
         />
       </div>
       {entityPreview && (
