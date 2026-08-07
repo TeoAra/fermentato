@@ -40,7 +40,7 @@ export default function HashtagPage() {
       </Helmet>
 
       <header className="sticky top-0 z-10 bg-white/95 dark:bg-[#1A1D24]/95 backdrop-blur-xl border-b border-stone-100 dark:border-[#23262E] px-4 py-3 flex items-center gap-3">
-        <Link href="/feed">
+        <Link href="/community">
           <button className="p-1.5 rounded-full hover:bg-stone-100 dark:hover:bg-[#1A1D24]" data-testid="btn-back-feed">
             <ArrowLeft className="w-5 h-5" />
           </button>

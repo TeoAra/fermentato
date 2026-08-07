@@ -1,10 +1,8 @@
-import { User, Home, Bell, Activity, Search } from "lucide-react";
+import { User, Home, Users, Activity, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { useQuery } from "@tanstack/react-query";
-import { cn } from "@/lib/utils";
 import { isIosEdgeToEdge } from "@/lib/safe-area-estimate";
 import { isNativeApp } from "@/lib/platform";
 
@@ -256,13 +254,6 @@ export function BottomNavigation() {
   const { isAuthenticated, user } = useAuth();
   const { isHidden } = useContext(BottomNavHideCtx);
 
-  const { data: unreadData } = useQuery<{ count: number }>({
-    queryKey: ["/api/notifications/unread-count"],
-    enabled: isAuthenticated,
-    refetchInterval: 30000,
-  });
-  const unreadCount = unreadData?.count ?? 0;
-
   // Nascosta esplicitamente da un dock interno (context — blindato, indipendente dalla route)
   if (isHidden) return null;
 
@@ -295,10 +286,10 @@ export function BottomNavigation() {
     return location.startsWith(path);
   };
 
-  const homeActive     = isActive("/");
-  const notifActive    = isActive("/notifications");
-  const activityActive = isActive("/activity");
-  const accountActive  = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
+  const homeActive      = isActive("/");
+  const communityActive = isActive("/community");
+  const activityActive  = isActive("/activity");
+  const accountActive   = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
 
   const Tab = ({
     active,
@@ -354,25 +345,18 @@ export function BottomNavigation() {
             />
           </Link>
 
-          {/* Notifiche */}
-          <Link href="/notifications" className="flex-1 flex">
+          {/* Community */}
+          <Link href="/community" className="flex-1 flex">
             <Tab
-              active={notifActive}
-              label="Notifiche"
+              active={communityActive}
+              label="Community"
               icon={
-                <Bell
+                <Users
                   className="h-[22px] w-[22px]"
-                  strokeWidth={notifActive ? 2.5 : 1.8}
-                  fill={notifActive ? "currentColor" : "none"}
-                  style={notifActive ? { fillOpacity: 0.12 } : {}}
+                  strokeWidth={communityActive ? 2.5 : 1.8}
+                  fill={communityActive ? "currentColor" : "none"}
+                  style={communityActive ? { fillOpacity: 0.12 } : {}}
                 />
-              }
-              badge={
-                unreadCount > 0 ? (
-                  <span className="absolute -top-1 -right-2 min-w-[14px] h-[14px] bg-red-500 text-white text-[9px] font-black rounded-full flex items-center justify-center px-[3px] leading-none">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                ) : undefined
               }
             />
           </Link>

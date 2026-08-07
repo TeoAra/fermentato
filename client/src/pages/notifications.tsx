@@ -270,7 +270,7 @@ export default function Notifications() {
     switch (n.type) {
       case 'new_brewery_request': return '/admin/publican-requests?section=brewery';
       case 'new_pub_request':     return '/admin/publican-requests?section=pub';
-      case 'mention':             return '/activity?tab=sociale';
+      case 'mention':             return '/community';
       case 'new_follower':        return '/activity';
       case 'checkin_like':
       case 'checkin_comment':

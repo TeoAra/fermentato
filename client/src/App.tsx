@@ -181,6 +181,7 @@ const MyStats            = lazy(() => import("@/pages/my-stats"));
 const Scan               = lazy(() => import("@/pages/scan"));
 const ScanHistory        = lazy(() => import("@/pages/scan-history"));
 const SocialFeed         = lazy(() => import("@/pages/social-feed"));
+const CommunityPage      = lazy(() => import("@/pages/community"));
 const MicroblogNew       = lazy(() => import("@/pages/microblog-new"));
 const HashtagPage        = lazy(() => import("@/pages/hashtag"));
 const NewsPage           = lazy(() => import("@/pages/news"));
@@ -507,7 +508,8 @@ function Router() {
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/scan/history" component={ScanHistory} />
           <Route path="/scan" component={Scan} />
-          <Route path="/feed" component={SocialFeed} />
+          <Route path="/community" component={CommunityPage} />
+          <Route path="/feed">{() => { window.location.replace("/community"); return null; }}</Route>
           <Route path="/microblog/nuovo" component={MicroblogNew} />
           <Route path="/hashtag/:tag" component={HashtagPage} />
           <Route path="/news" component={NewsPage} />

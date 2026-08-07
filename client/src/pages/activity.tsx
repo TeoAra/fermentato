@@ -462,7 +462,7 @@ export default function Activity() {
           </TabsTrigger>
           <TabsTrigger value="sociale" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
             <Users className="h-3.5 w-3.5 mr-1" />
-            Sociale
+            Community
           </TabsTrigger>
         </TabsList>
 

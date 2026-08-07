@@ -67,7 +67,7 @@ export function DesktopSidebar() {
     { icon: CalendarDays, label: "Eventi", href: "/eventi" },
     ...(isIosNative ? [] : [{ icon: QrCode, label: "Festival", href: "/festival" }]),
     { icon: Newspaper, label: "News", href: "/news" },
-    { icon: UsersIcon, label: "Sociale", href: "/feed" },
+    { icon: UsersIcon, label: "Community", href: "/community" },
   ];
 
   const unread = unreadData?.count ?? 0;
