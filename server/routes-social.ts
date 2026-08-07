@@ -644,16 +644,26 @@ export async function registerSocialRoutes(app: Express) {
           ? await storage.getUsersWhoFavoritedPub(authorEntityId)
           : await storage.getUsersWhoFavoritedBrewery(authorEntityId);
 
+        console.log(`[venue-push] entity post ${newPost.id} by ${authorType}#${authorEntityId} (${entityName}): ${followerIds.length} follower(s)`);
+
         const plainText = plainContent.replace(/\s+/g, " ").trim().slice(0, 120);
         const notifTitle = `${entityName} ha pubblicato un aggiornamento`;
         const notifBody  = plainText || "Nuovo aggiornamento";
 
         for (const followerId of followerIds) {
-          if (followerId === userId) continue;
+          if (followerId === userId) {
+            console.log(`[venue-push]   skip ${followerId} (is author)`);
+            continue;
+          }
 
           // In-app notification: gated by venueUpdates preference (default true)
           const prefs = await storage.getNotificationPreferences(followerId);
-          if ((prefs as any)?.venueUpdates !== false) {
+          const inAppAllowed = (prefs as any)?.venueUpdates !== false;
+          const pushEnabled  = prefs?.pushEnabled !== false;
+          const pushCatOn    = (prefs as any)?.venueUpdatesPush !== false;
+          console.log(`[venue-push]   follower ${followerId}: inApp=${inAppAllowed} pushMaster=${pushEnabled} pushCat=${pushCatOn}`);
+
+          if (inAppAllowed) {
             storage.createNotification({
               userId: followerId,
               type: "venue_update",
