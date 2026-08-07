@@ -17,7 +17,7 @@ const NOTIF_PAGE_SIZE = 20;
 // — `inAppKey` (es. tapChanges) e `pushKey` (es. tapChangesPush)
 type CatInAppKey = 'tapChanges' | 'events' | 'newPubs' |
   'checkinLikes' | 'checkinComments' | 'newFollowers' |
-  'breweryReplies' | 'reportUpdates' | 'adminBroadcasts' | 'mentions';
+  'breweryReplies' | 'reportUpdates' | 'adminBroadcasts' | 'mentions' | 'venueUpdates';
 type CatPushKey = `${CatInAppKey}Push`;
 type CatEmailKey = `${CatInAppKey}Email`;
 const CATEGORIES: Array<{
@@ -39,6 +39,7 @@ const CATEGORIES: Array<{
   { inAppKey: 'reportUpdates',  pushKey: 'reportUpdatesPush',  emailKey: 'reportUpdatesEmail',  label: 'Esito segnalazioni',    description: 'Quando i moderatori gestiscono le tue segnalazioni', icon: Flag,         iconColor: 'text-red-500' },
   { inAppKey: 'adminBroadcasts',pushKey: 'adminBroadcastsPush',emailKey: 'adminBroadcastsEmail',label: 'Annunci Fermenta.to',   description: 'Comunicazioni ufficiali della redazione',            icon: Megaphone,    iconColor: 'text-primary' },
   { inAppKey: 'mentions',       pushKey: 'mentionsPush',       emailKey: 'mentionsEmail',       label: 'Menzioni',              description: 'Quando qualcuno ti menziona in un post con @',       icon: AtSign,       iconColor: 'text-indigo-600' },
+  { inAppKey: 'venueUpdates',   pushKey: 'venueUpdatesPush',   emailKey: 'venueUpdatesEmail',   label: 'Aggiornamenti locali',  description: 'Post e novità dai pub e birrifici che segui',         icon: Megaphone,    iconColor: 'text-blue-600' },
 ];
 
 function getNotificationIcon(type: string) {

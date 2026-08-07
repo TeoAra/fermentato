@@ -87,6 +87,8 @@ type PrefillTag = {
   pubId?: number; pubName?: string;
   breweryId?: number; breweryName?: string;
   eventId?: number; eventSourceType?: "pub" | "brewery"; eventName?: string;
+  authorType?: "pub" | "brewery";
+  authorEntityId?: number;
 };
 
 export default function MicroblogNew() {
@@ -105,6 +107,7 @@ export default function MicroblogNew() {
       return Number.isFinite(n) ? n : undefined;
     };
     const evType = sp.get("eventSourceType");
+    const aType = sp.get("authorType");
     return {
       beerId: intOrUndef("beerId"),
       beerName: sp.get("beerName") || undefined,
@@ -115,6 +118,8 @@ export default function MicroblogNew() {
       eventId: intOrUndef("eventId"),
       eventSourceType: evType === "pub" || evType === "brewery" ? evType : undefined,
       eventName: sp.get("eventName") || undefined,
+      authorType: aType === "pub" || aType === "brewery" ? aType : undefined,
+      authorEntityId: intOrUndef("authorEntityId"),
     };
   }, [search]);
 
@@ -159,18 +164,22 @@ export default function MicroblogNew() {
         breweryId: tag.breweryId ?? null,
         eventId: tag.eventId ?? null,
         eventSourceType: tag.eventSourceType ?? null,
+        authorType: tag.authorType ?? null,
+        authorEntityId: tag.authorEntityId ?? null,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/feed"] });
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/discover"] });
       queryClient.invalidateQueries({ queryKey: ["/api/microblog/posts"] });
       toast({ title: "Post pubblicato!" });
-      // Bounce back to the entity page if we came from one, otherwise to /feed
-      if (tag.pubId) navigate(`/pub/${tag.pubId}`);
+      // Bounce back to the entity page if we came from one, otherwise to /community
+      if (tag.authorType === "pub" && tag.authorEntityId) navigate(`/pub/${tag.pubId || tag.authorEntityId}`);
+      else if (tag.authorType === "brewery" && tag.authorEntityId) navigate(`/brewery/${tag.breweryId || tag.authorEntityId}`);
+      else if (tag.pubId) navigate(`/pub/${tag.pubId}`);
       else if (tag.breweryId) navigate(`/brewery/${tag.breweryId}`);
       else if (tag.beerId) navigate(`/beer/${tag.beerId}`);
       else if (tag.eventId && tag.eventSourceType) navigate(`/eventi/${tag.eventSourceType}/${tag.eventId}`);
-      else navigate("/feed");
+      else navigate("/community");
     },
     onError: () => toast({ title: "Errore", description: "Riprova", variant: "destructive" }),
   });

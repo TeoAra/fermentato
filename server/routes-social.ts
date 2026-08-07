@@ -177,6 +177,36 @@ async function runSocialMigrations() {
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS mentions BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS mentions_push BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS mentions_email BOOLEAN DEFAULT FALSE;
+
+      -- Task #84: entity posts (pub/brewery as post author)
+      ALTER TABLE microblog_posts ADD COLUMN IF NOT EXISTS author_type TEXT DEFAULT 'user';
+      ALTER TABLE microblog_posts ADD COLUMN IF NOT EXISTS author_entity_id INTEGER;
+      CREATE INDEX IF NOT EXISTS idx_microblog_author_entity ON microblog_posts(author_type, author_entity_id) WHERE author_type IS DISTINCT FROM 'user';
+
+      CREATE TABLE IF NOT EXISTS pub_follows (
+        id SERIAL PRIMARY KEY,
+        follower_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        pub_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(follower_id, pub_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_pub_follows_pub ON pub_follows(pub_id);
+      CREATE INDEX IF NOT EXISTS idx_pub_follows_follower ON pub_follows(follower_id);
+
+      CREATE TABLE IF NOT EXISTS brewery_follows (
+        id SERIAL PRIMARY KEY,
+        follower_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        brewery_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(follower_id, brewery_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_brewery_follows_brewery ON brewery_follows(brewery_id);
+      CREATE INDEX IF NOT EXISTS idx_brewery_follows_follower ON brewery_follows(follower_id);
+
+      -- Task #84: venue update notification preferences
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates_email BOOLEAN DEFAULT FALSE;
     `);
 
     // Backfill: copia review_reports → content_reports una sola volta
@@ -543,6 +573,32 @@ export async function registerSocialRoutes(app: Express) {
     const eventSourceType = req.body?.eventSourceType
       && ["pub", "brewery"].includes(String(req.body.eventSourceType))
       ? String(req.body.eventSourceType) : null;
+
+    // Entity post: posted on behalf of a pub or brewery
+    const rawAuthorType = req.body?.authorType;
+    const rawAuthorEntityId = req.body?.authorEntityId ? parseInt(String(req.body.authorEntityId), 10) : NaN;
+    let authorType: string = "user";
+    let authorEntityId: number | null = null;
+
+    if (rawAuthorType === "pub" && Number.isFinite(rawAuthorEntityId)) {
+      // Verify caller owns this pub
+      const { rows: pubRows } = await pool.query(
+        `SELECT id FROM pubs WHERE id = $1 AND owner_id = $2`,
+        [rawAuthorEntityId, userId],
+      );
+      if (pubRows.length === 0) return res.status(403).json({ message: "Non sei il titolare di questo locale" });
+      authorType = "pub";
+      authorEntityId = rawAuthorEntityId;
+    } else if (rawAuthorType === "brewery" && Number.isFinite(rawAuthorEntityId)) {
+      // Verify caller owns this brewery (ownership tracked via users.brewery_id)
+      const { rows: brRows } = await pool.query(
+        `SELECT id FROM breweries WHERE id = $1 AND id = (SELECT brewery_id FROM users WHERE id = $2)`,
+        [rawAuthorEntityId, userId],
+      );
+      if (brRows.length === 0) return res.status(403).json({ message: "Non sei il titolare di questo birrificio" });
+      authorType = "brewery";
+      authorEntityId = rawAuthorEntityId;
+    }
     // Extract hashtags (#parola): unicode-friendly, lowercased, deduped, capped
     const hashtagSet = new Set<string>();
     const re = /(?:^|[^A-Za-z0-9_#\u00C0-\u024F])#([A-Za-z0-9_\u00C0-\u024F]{2,30})/g;
@@ -566,12 +622,60 @@ export async function registerSocialRoutes(app: Express) {
     const mentionNicknames = Array.from(mentionSet);
 
     const { rows } = await pool.query(
-      `INSERT INTO microblog_posts (user_id, content, image_url, beer_id, pub_id, brewery_id, event_id, event_source_type, hashtags, mentions)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-      [userId, content, imageUrl, beerId, pubId, breweryId, eventId, eventSourceType, hashtags, mentionNicknames],
+      `INSERT INTO microblog_posts (user_id, content, image_url, beer_id, pub_id, brewery_id, event_id, event_source_type, hashtags, mentions, author_type, author_entity_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [userId, content, imageUrl, beerId, pubId, breweryId, eventId, eventSourceType, hashtags, mentionNicknames, authorType, authorEntityId],
     );
     const newPost = rows[0];
     res.json(newPost);
+
+    // Fire venue-follower notifications for entity posts (non-blocking, after response)
+    if (authorType !== "user" && authorEntityId !== null) {
+      try {
+        const entityTable = authorType === "pub" ? "pubs" : "breweries";
+        const { rows: entityRows } = await pool.query(
+          `SELECT name FROM ${entityTable} WHERE id = $1`, [authorEntityId],
+        );
+        const entityName = entityRows[0]?.name ?? (authorType === "pub" ? "Un locale" : "Un birrificio");
+
+        // Use the existing favorites mechanism as the follower relationship:
+        // users who saved/favorited this pub or brewery receive venue-update notifications
+        const followerIds = authorType === "pub"
+          ? await storage.getUsersWhoFavoritedPub(authorEntityId)
+          : await storage.getUsersWhoFavoritedBrewery(authorEntityId);
+
+        const plainText = plainContent.replace(/\s+/g, " ").trim().slice(0, 120);
+        const notifTitle = `${entityName} ha pubblicato un aggiornamento`;
+        const notifBody  = plainText || "Nuovo aggiornamento";
+
+        for (const followerId of followerIds) {
+          if (followerId === userId) continue;
+
+          // In-app notification: gated by venueUpdates preference (default true)
+          const prefs = await storage.getNotificationPreferences(followerId);
+          if ((prefs as any)?.venueUpdates !== false) {
+            storage.createNotification({
+              userId: followerId,
+              type: "venue_update",
+              title: notifTitle,
+              message: notifBody,
+              isRead: false,
+            }).catch(() => {});
+          }
+
+          // Push notification: sendPushToUser checks venueUpdatesPush + master pushEnabled
+          sendPushToUser(followerId, {
+            title: notifTitle,
+            body: notifBody,
+            url: `/community`,
+            tag: `entity-post-${newPost.id}`,
+            category: "venueUpdates",
+          });
+        }
+      } catch (e: any) {
+        console.warn("[social] venue-follower notifications failed:", e.message);
+      }
+    }
 
     // Fire mention notifications (non-blocking, after response)
     if (mentionNicknames.length > 0) {
@@ -667,17 +771,87 @@ export async function registerSocialRoutes(app: Express) {
     res.json({ deleted: true });
   });
 
+  // Entity posts: posts published by a pub or brewery
+  // GET /api/microblog/entity-posts?type=pub&id=42
+  app.get("/api/microblog/entity-posts", async (req: any, res) => {
+    const type = (req.query.type as string) || "";
+    const id = parseInt((req.query.id as string) || "0", 10);
+    const limit = Math.min(parseInt((req.query.limit as string) || "10", 10), 30);
+    const offset = Math.max(parseInt((req.query.offset as string) || "0", 10), 0);
+
+    if (!["pub", "brewery"].includes(type) || !Number.isFinite(id) || id < 1) {
+      return res.status(400).json({ message: "Parametri non validi" });
+    }
+
+    const viewerId: string | null = req.user?.id ?? null;
+    const likedSelect = viewerId
+      ? `EXISTS(SELECT 1 FROM microblog_likes ml2 WHERE ml2.post_id = p.id AND ml2.user_id = $3) AS liked`
+      : `FALSE AS liked`;
+    const params: any[] = [type, id];
+    if (viewerId) params.push(viewerId);
+    params.push(limit, offset);
+
+    let entityJoin = "";
+    let entityNameSelect = "";
+    let entityLogoSelect = "";
+    if (type === "pub") {
+      entityJoin = `LEFT JOIN pubs ep ON ep.id = p.author_entity_id`;
+      entityNameSelect = `ep.name AS entity_name`;
+      entityLogoSelect = `ep.image_url AS entity_logo_url`;
+    } else {
+      entityJoin = `LEFT JOIN breweries eb ON eb.id = p.author_entity_id`;
+      entityNameSelect = `eb.name AS entity_name`;
+      entityLogoSelect = `eb.logo_url AS entity_logo_url`;
+    }
+
+    const sql = `
+      SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id,
+             p.author_type, p.author_entity_id, p.created_at, p.updated_at,
+             p.hashtags,
+             u.id AS user_id, u.nickname AS username,
+             COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
+             u.profile_image_url,
+             ${entityNameSelect}, ${entityLogoSelect},
+             (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
+             (SELECT COUNT(*)::int FROM microblog_comments mc WHERE mc.post_id = p.id) AS comments_count,
+             ${likedSelect}
+      FROM microblog_posts p
+      JOIN users u ON u.id = p.user_id
+      ${entityJoin}
+      WHERE p.author_type = $1 AND p.author_entity_id = $2
+      ORDER BY p.created_at DESC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+    `;
+    try {
+      const { rows } = await pool.query(sql, params);
+      res.json(rows);
+    } catch (e: any) {
+      console.error("[social] entity-posts error:", e.message);
+      res.status(500).json({ message: "Errore server" });
+    }
+  });
+
   // Public feed: posts from people I follow + my own
   app.get("/api/microblog/feed", isAuthenticated, async (req: any, res) => {
     const userId = req.user.id;
     const { rows } = await pool.query(`
-      SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id, p.created_at, p.updated_at,
+      SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id,
+             p.author_type, p.author_entity_id, p.created_at, p.updated_at,
              u.id AS user_id, u.nickname AS username,
              COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,
              b.name AS beer_name, b.image_url AS beer_image,
              pb.name AS pub_name, pb.city AS pub_city,
              br.name AS brewery_name,
+             -- Entity identity for pub/brewery authored posts
+             CASE
+               WHEN p.author_type = 'pub'      THEN ep.name
+               WHEN p.author_type = 'brewery'  THEN eb.name
+             END AS entity_name,
+             CASE
+               WHEN p.author_type = 'pub'      THEN ep.image_url
+               WHEN p.author_type = 'brewery'  THEN eb.logo_url
+             END AS entity_logo_url,
              (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
              (SELECT COUNT(*)::int FROM microblog_comments mc WHERE mc.post_id = p.id) AS comments_count,
              EXISTS(SELECT 1 FROM microblog_likes ml2 WHERE ml2.post_id = p.id AND ml2.user_id = $1) AS liked
@@ -686,6 +860,8 @@ export async function registerSocialRoutes(app: Express) {
       LEFT JOIN beers b ON b.id = p.beer_id
       LEFT JOIN pubs pb ON pb.id = p.pub_id
       LEFT JOIN breweries br ON br.id = p.brewery_id
+      LEFT JOIN pubs ep ON ep.id = p.author_entity_id AND p.author_type = 'pub'
+      LEFT JOIN breweries eb ON eb.id = p.author_entity_id AND p.author_type = 'brewery'
       WHERE p.user_id = $1 OR p.user_id IN (SELECT following_id FROM user_follows WHERE follower_id = $1)
       ORDER BY p.created_at DESC
       LIMIT 60
@@ -809,13 +985,24 @@ export async function registerSocialRoutes(app: Express) {
   app.get("/api/microblog/discover", async (_req, res) => {
     const { rows } = await pool.query(`
       SELECT p.id, p.content, p.image_url, p.created_at, p.updated_at,
+             p.author_type, p.author_entity_id,
              u.id AS user_id, u.nickname AS username,
              COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
              u.profile_image_url,
+             CASE
+               WHEN p.author_type = 'pub'      THEN ep.name
+               WHEN p.author_type = 'brewery'  THEN eb.name
+             END AS entity_name,
+             CASE
+               WHEN p.author_type = 'pub'      THEN ep.image_url
+               WHEN p.author_type = 'brewery'  THEN eb.logo_url
+             END AS entity_logo_url,
              (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
              (SELECT COUNT(*)::int FROM microblog_comments mc WHERE mc.post_id = p.id) AS comments_count
       FROM microblog_posts p
       JOIN users u ON u.id = p.user_id
+      LEFT JOIN pubs ep ON ep.id = p.author_entity_id AND p.author_type = 'pub'
+      LEFT JOIN breweries eb ON eb.id = p.author_entity_id AND p.author_type = 'brewery'
       ORDER BY p.created_at DESC
       LIMIT 50
     `);

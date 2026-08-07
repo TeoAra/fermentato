@@ -1,9 +1,13 @@
 import { motion } from "framer-motion";
-import { Globe, MapPin, Navigation as NavIcon, Building2, Factory } from "lucide-react";
+import { Globe, MapPin, Navigation as NavIcon, Building2, Factory, Megaphone } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
 import { cartoPositronProvider } from "@/lib/map-tiles";
 import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
+import { useQuery } from "@tanstack/react-query";
+import { formatDistanceToNow } from "date-fns";
+import { it } from "date-fns/locale";
+import { PostContent } from "@/components/social/PostContent";
 
 interface BreweryOverviewSectionProps {
   brewery: any;
@@ -33,6 +37,18 @@ export default function BreweryOverviewSection({
     brewery?.instagramUrl ||
     brewery?.facebookUrl ||
     brewery?.tiktokUrl;
+
+  const { data: entityPosts } = useQuery<any[]>({
+    queryKey: [`/api/microblog/entity-posts`, "brewery", brewery?.id],
+    queryFn: async () => {
+      if (!brewery?.id) return [];
+      const r = await fetch(`/api/microblog/entity-posts?type=brewery&id=${brewery.id}&limit=5`);
+      if (!r.ok) return [];
+      return r.json();
+    },
+    enabled: !!brewery?.id,
+    staleTime: 60_000,
+  });
 
   return (
     <motion.div
@@ -196,6 +212,34 @@ export default function BreweryOverviewSection({
                 .filter(Boolean)
                 .join(", ")}
             </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Aggiornamenti dal birrificio */}
+      {Array.isArray(entityPosts) && entityPosts.length > 0 && (
+        <motion.div
+          variants={item}
+          className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
+        >
+          <div className="flex items-center gap-2 mb-3">
+            <Megaphone className="w-4 h-4 text-blue-500 flex-shrink-0" />
+            <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5]">Aggiornamenti</h3>
+          </div>
+          <div className="space-y-3">
+            {entityPosts.map((p: any) => (
+              <div key={p.id} className="border-t border-[#E8DED1] dark:border-white/[0.04] pt-3 first:border-t-0 first:pt-0">
+                <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mb-1">
+                  {formatDistanceToNow(new Date(p.created_at), { addSuffix: true, locale: it })}
+                </p>
+                <div className="text-sm text-[#151515] dark:text-[#F5F5F5] leading-snug line-clamp-3">
+                  <PostContent content={p.content} />
+                </div>
+                {p.image_url && (
+                  <img src={p.image_url} alt="" className="mt-2 rounded-xl w-full max-h-48 object-cover" />
+                )}
+              </div>
+            ))}
           </div>
         </motion.div>
       )}

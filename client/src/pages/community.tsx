@@ -143,21 +143,44 @@ function MicroblogCard({ post }: { post: any }) {
     e.preventDefault(); e.stopPropagation();
     setEntityPreview({ type, id, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() });
   };
+  const isEntityPost = post.author_type && post.author_type !== "user";
   return (
     <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
       <div className="flex items-center gap-2.5 mb-3">
-        <UserAvatar user={post} size={8} />
+        {isEntityPost ? (
+          post.entity_logo_url ? (
+            <img src={post.entity_logo_url} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-[#E8DED1] dark:border-white/[0.06]" />
+          ) : (
+            <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center flex-shrink-0">
+              <span className="text-blue-600 dark:text-blue-400 text-xs font-bold">
+                {(post.entity_name ?? "?")[0].toUpperCase()}
+              </span>
+            </div>
+          )
+        ) : (
+          <UserAvatar user={post} size={8} />
+        )}
         <div className="flex-1 min-w-0">
-          <Link href={`/user/${post.username}`}>
-            <p className="text-sm font-bold text-stone-900 dark:text-stone-50 hover:text-primary transition-colors">
-              {post.display_name ?? post.username}
+          {isEntityPost ? (
+            <p className="text-sm font-bold text-stone-900 dark:text-stone-50">
+              {post.entity_name ?? (post.author_type === "pub" ? "Locale" : "Birrificio")}
             </p>
-          </Link>
+          ) : (
+            <Link href={`/user/${post.username}`}>
+              <p className="text-sm font-bold text-stone-900 dark:text-stone-50 hover:text-primary transition-colors">
+                {post.display_name ?? post.username}
+              </p>
+            </Link>
+          )}
           <p className="text-[10px] text-stone-400 flex items-center gap-1 mt-0.5">
             <Clock className="w-2.5 h-2.5 flex-shrink-0" />
             {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: it })}
             <span className="text-stone-200 dark:text-stone-700">·</span>
-            <span className="font-semibold text-amber-500/80">📝 post</span>
+            {isEntityPost ? (
+              <span className="font-semibold text-blue-500/80">📢 aggiornamento</span>
+            ) : (
+              <span className="font-semibold text-amber-500/80">📝 post</span>
+            )}
             {post.updated_at && new Date(post.updated_at) > new Date(post.created_at) && (
               <><span className="text-stone-200 dark:text-stone-700">·</span><span className="italic text-stone-400/70">modificato</span></>
             )}

@@ -787,6 +787,10 @@ export const notificationPreferences = pgTable("notification_preferences", {
   reportUpdatesEmail: boolean("report_updates_email").default(true),
   adminBroadcastsEmail: boolean("admin_broadcasts_email").default(true),
   mentionsEmail: boolean("mentions_email").default(false),
+  // Task #84: venue update notifications (post dai pub/birrifici seguiti)
+  venueUpdates: boolean("venue_updates").default(true),
+  venueUpdatesPush: boolean("venue_updates_push").default(true),
+  venueUpdatesEmail: boolean("venue_updates_email").default(false),
   // Canali master
   pushEnabled: boolean("push_enabled").default(true),
   inAppEnabled: boolean("in_app_enabled").default(true),
@@ -1216,6 +1220,9 @@ export const microblogPosts = pgTable("microblog_posts", {
   pubId: integer("pub_id"),
   breweryId: integer("brewery_id"),
   createdAt: timestamp("created_at").defaultNow(),
+  // Task #84: entity posts (pub/brewery as author)
+  authorType: text("author_type").default("user"),
+  authorEntityId: integer("author_entity_id"),
 });
 export const microblogLikes = pgTable("microblog_likes", {
   id: serial("id").primaryKey(),
