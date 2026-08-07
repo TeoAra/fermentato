@@ -740,6 +740,8 @@ export async function registerSocialRoutes(app: Express) {
 
   app.patch("/api/microblog/posts/:id", isAuthenticated, async (req: any, res) => {
     const userId = req.user.id;
+    const effectiveRole = req.user.activeRole || req.user.userType;
+    const admin = effectiveRole === 'admin' || (req.user.roles ?? []).includes('admin');
     const postId = parseInt(req.params.id, 10);
     const raw = String(req.body?.content ?? "").trim().slice(0, 5000);
     if (!raw) return res.status(400).json({ message: "Contenuto vuoto" });
@@ -753,13 +755,23 @@ export async function registerSocialRoutes(app: Express) {
     );
     if (rowCount) return res.json({ updated: true });
 
-    // Secondary check: entity post where caller owns the pub or brewery
+    // Fetch post for secondary checks
     const { rows: [post] } = await pool.query(
       `SELECT author_type, author_entity_id FROM microblog_posts WHERE id = $1`,
       [postId],
     );
     if (!post) return res.status(404).json({ message: "Post non trovato" });
 
+    // Admin override: can edit any post
+    if (admin) {
+      await pool.query(
+        `UPDATE microblog_posts SET content = $1, updated_at = NOW() WHERE id = $2`,
+        [html, postId],
+      );
+      return res.json({ updated: true });
+    }
+
+    // Secondary check: entity post where caller owns the pub or brewery
     let owned = false;
     if (post.author_type === "pub" && post.author_entity_id) {
       const { rows } = await pool.query(
@@ -785,7 +797,15 @@ export async function registerSocialRoutes(app: Express) {
 
   app.delete("/api/microblog/posts/:id", isAuthenticated, async (req: any, res) => {
     const userId = req.user.id;
+    const effectiveRole = req.user.activeRole || req.user.userType;
+    const admin = effectiveRole === 'admin' || (req.user.roles ?? []).includes('admin');
     const postId = parseInt(req.params.id, 10);
+
+    // Admin override: can delete any post directly
+    if (admin) {
+      await pool.query(`DELETE FROM microblog_posts WHERE id = $1`, [postId]);
+      return res.json({ deleted: true });
+    }
 
     // Primary check: the post belongs to the user directly
     const { rowCount } = await pool.query(

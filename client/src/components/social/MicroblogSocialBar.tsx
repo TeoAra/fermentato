@@ -257,7 +257,14 @@ export function MicroblogSocialBar({ postId, postUserId, liked, likesCount, comm
     (authorType === "brewery" && Number((user as any).breweryId) === authorEntityId)
   );
 
-  const canManage = isOwn || isEntityOwn;
+  // Admins can manage any post (matches server-side role check in routes-social.ts)
+  const isAdminUser = !!user && (
+    (user as any).userType === 'admin' ||
+    (user as any).activeRole === 'admin' ||
+    ((user as any).roles ?? []).includes('admin')
+  );
+
+  const canManage = isOwn || isEntityOwn || isAdminUser;
 
   const startEdit = () => {
     // strip HTML to plain text for editing
