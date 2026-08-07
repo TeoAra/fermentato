@@ -27,6 +27,14 @@ ok()    { echo -e "${GREEN}✓ $*${NC}"; }
 fail()  { echo -e "${RED}✗ $*${NC}"; exit 1; }
 
 # ── 1. Installa dipendenze e compila il frontend ───────────────────────────
+# Sanity-check: package-lock.json must not contain Replit-internal registry URLs.
+# If it does, swap them back to the public npm registry before installing.
+if grep -q "package-firewall.replit.local" package-lock.json 2>/dev/null; then
+  step "Pulizia URL interni Replit da package-lock.json"
+  sed -i 's|http://package-firewall\.replit\.local/npm/|https://registry.npmjs.org/|g' package-lock.json
+  ok "package-lock.json pulito"
+fi
+
 step "npm install + build web"
 npm install --legacy-peer-deps --silent
 npm run build
