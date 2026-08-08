@@ -535,10 +535,14 @@ export default function CommunityPage() {
   const { data: feed = [], isLoading: feedLoading } = useQuery<any[]>({
     queryKey: ["/api/user/feed"],
     enabled: isAuthenticated,
+    staleTime: 2 * 60_000,
+    refetchInterval: 3 * 60_000,
   });
   const { data: microblogFeed = [], isLoading: microblogLoading } = useQuery<any[]>({
     queryKey: ["/api/microblog/feed"],
     enabled: isAuthenticated,
+    staleTime: 2 * 60_000,
+    refetchInterval: 3 * 60_000,
   });
   const { data: news = [] } = useQuery<any[]>({
     queryKey: ["/api/news", "feed"],
