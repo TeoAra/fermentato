@@ -358,7 +358,11 @@ export default function BeerReviewsSection({
                         </button>
                       )}
                     </div>
-                    <CheckinSocialBar tastingId={review.id} compact />
+                    <CheckinSocialBar
+                      tastingId={review.id}
+                      compact
+                      initialLikes={review.likesCount != null ? { count: review.likesCount, liked: review.liked ?? false, commentsCount: review.commentsCount ?? 0 } : undefined}
+                    />
                   </div>
                 </div>
               );

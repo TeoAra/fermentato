@@ -7265,6 +7265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const beerId = parseInt(req.params.beerId);
       if (isNaN(beerId)) return res.status(400).json({ message: "Invalid beer ID" });
 
+      const currentUserId = (req.user as any)?.id || null;
       const reviews = await db
         .select({
           id: userBeerTastings.id,
@@ -7283,6 +7284,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ownerReplyAt: userBeerTastings.ownerReplyAt,
           userReviewCount: sql<number>`(SELECT COUNT(*) FROM user_beer_tastings ubt WHERE ubt.user_id = ${userBeerTastings.userId} AND ubt.rating IS NOT NULL)`,
           photoUrl: sql<string | null>`"user_beer_tastings"."photo_url"`,
+          likesCount: sql<number>`(SELECT COUNT(*)::int FROM checkin_likes WHERE tasting_id = ${userBeerTastings.id})`,
+          commentsCount: sql<number>`(SELECT COUNT(*)::int FROM checkin_comments WHERE tasting_id = ${userBeerTastings.id})`,
+          liked: currentUserId
+            ? sql<boolean>`EXISTS(SELECT 1 FROM checkin_likes WHERE tasting_id = ${userBeerTastings.id} AND user_id = ${currentUserId})`
+            : sql<boolean>`false`,
         })
         .from(userBeerTastings)
         .leftJoin(users, eq(userBeerTastings.userId, users.id))
@@ -7400,6 +7406,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         format: userBeerTastings.format,
         pubId: userBeerTastings.pubId,
         pubName: pubs.name,
+        likesCount: sql<number>`(SELECT COUNT(*)::int FROM checkin_likes WHERE tasting_id = ${userBeerTastings.id})`,
+        commentsCount: sql<number>`(SELECT COUNT(*)::int FROM checkin_comments WHERE tasting_id = ${userBeerTastings.id})`,
+        liked: currentUserId
+          ? sql<boolean>`EXISTS(SELECT 1 FROM checkin_likes WHERE tasting_id = ${userBeerTastings.id} AND user_id = ${currentUserId})`
+          : sql<boolean>`false`,
       })
       .from(userBeerTastings)
       .leftJoin(beers, eq(userBeerTastings.beerId, beers.id))
@@ -9880,17 +9891,27 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
   });
 
   app.get("/api/users/:userId/tastings", async (req, res) => {
+    const currentUserId = (req.user as any)?.id || null;
     const { rows } = await pool.query(`
       SELECT ubt.id, ubt.rating, ubt.notes, ubt.photo_url, ubt.format, ubt.tasted_at,
              b.id as beer_id, b.name as beer_name, b.style as beer_style, b.image_url as beer_image,
-             br.name as brewery_name
+             br.name as brewery_name,
+             COALESCE(lc.likes_count, 0)::int AS likes_count,
+             COALESCE(cc.comments_count, 0)::int AS comments_count,
+             (EXISTS(SELECT 1 FROM checkin_likes cl2 WHERE cl2.tasting_id = ubt.id AND cl2.user_id = $2)) AS liked
       FROM user_beer_tastings ubt
       JOIN beers b ON b.id = ubt.beer_id
       LEFT JOIN breweries br ON br.id = b.brewery_id
+      LEFT JOIN (
+        SELECT tasting_id, COUNT(*)::int AS likes_count FROM checkin_likes GROUP BY tasting_id
+      ) lc ON lc.tasting_id = ubt.id
+      LEFT JOIN (
+        SELECT tasting_id, COUNT(*)::int AS comments_count FROM checkin_comments GROUP BY tasting_id
+      ) cc ON cc.tasting_id = ubt.id
       WHERE ubt.user_id = $1
       ORDER BY ubt.tasted_at DESC
       LIMIT 20
-    `, [req.params.userId]);
+    `, [req.params.userId, currentUserId]);
     res.json(rows);
   });
 

@@ -17,6 +17,7 @@ import {
   PenSquare,
 } from "lucide-react";
 import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
+import CheckinSocialBar from "@/components/social/CheckinSocialBar";
 import { PostContent } from "@/components/social/PostContent";
 import { EntityPreviewCard } from "@/components/social/EntityPreviewCard";
 import { formatDistanceToNow } from "date-fns";
@@ -496,6 +497,13 @@ export default function UserPublicProfile() {
                     {review.format && <span className="ml-1">· {review.format}</span>}
                     {review.pubName && <span className="ml-1">· {review.pubName}</span>}
                   </p>
+                  <div onClick={(e) => e.preventDefault()}>
+                    <CheckinSocialBar
+                      tastingId={review.id}
+                      compact
+                      initialLikes={review.likesCount != null ? { count: review.likesCount, liked: review.liked ?? false, commentsCount: review.commentsCount ?? 0 } : undefined}
+                    />
+                  </div>
                 </div>
               </div>
             </Link>
