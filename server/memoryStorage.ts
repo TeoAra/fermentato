@@ -160,7 +160,8 @@ export class MemoryStorage {
       passwordLastUpdated: user.passwordLastUpdated || null,
       joinedAt: user.joinedAt || null,
       createdAt: existingUser?.createdAt || new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      suspendedUntil: (user as any).suspendedUntil ?? existingUser?.suspendedUntil ?? null,
     };
     this.users.set(user.id, newUser);
     return newUser;

@@ -1189,6 +1189,19 @@ export async function setupAuth(app: Express) {
 // Middleware to check if user is authenticated
 export const isAuthenticated: RequestHandler = (req, res, next) => {
   if (req.isAuthenticated()) {
+    // Check temporary suspension on write operations
+    const user = req.user as any;
+    if (
+      ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) &&
+      user?.suspendedUntil &&
+      new Date(user.suspendedUntil) > new Date()
+    ) {
+      return res.status(403).json({
+        message: `Il tuo account è temporaneamente sospeso fino al ${new Date(user.suspendedUntil).toLocaleString('it-IT', { dateStyle: 'short', timeStyle: 'short' })}.`,
+        suspendedUntil: user.suspendedUntil,
+        suspended: true,
+      });
+    }
     return next();
   }
   res.status(401).json({ message: 'Non autenticato' });

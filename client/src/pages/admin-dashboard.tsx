@@ -554,6 +554,7 @@ export default function AdminDashboard() {
                           const isSelf = u.id === (user as any)?.id;
                           const hasEmail = !!u.email;
                           const isVerified = !!u.isEmailVerified;
+                          const isSuspended = !!u.suspendedUntil && new Date(u.suspendedUntil) > new Date();
                           return (
                             <tr key={u.id} className={`hover:bg-stone-50/30 dark:hover:bg-stone-900/10 ${isBanned ? "opacity-60" : ""}`}>
                               <td className="px-4 py-3">
@@ -594,17 +595,24 @@ export default function AdminDashboard() {
                                 </div>
                               </td>
                               <td className="px-4 py-3">
-                                <Badge
-                                  className={`text-xs whitespace-nowrap ${
-                                    u.userType === "admin" ? "bg-purple-100 text-purple-700 hover:bg-purple-100/80" :
-                                    u.userType === "pub_owner" ? "bg-stone-50 text-primary hover:bg-stone-50/80" :
-                                    u.userType === "brewery_owner" ? "bg-blue-50 text-blue-700 hover:bg-blue-50/80" :
-                                    u.userType === "banned" ? "bg-red-100 text-red-700 hover:bg-red-100/80" :
-                                    "bg-stone-50/60 text-muted-foreground hover:bg-stone-50/80"
-                                  }`}
-                                >
-                                  {isBanned ? "🚫 Bannato" : ROLE_LABELS[u.userType] || u.userType}
-                                </Badge>
+                                <div className="flex flex-col gap-1">
+                                  <Badge
+                                    className={`text-xs whitespace-nowrap w-fit ${
+                                      u.userType === "admin" ? "bg-purple-100 text-purple-700 hover:bg-purple-100/80" :
+                                      u.userType === "pub_owner" ? "bg-stone-50 text-primary hover:bg-stone-50/80" :
+                                      u.userType === "brewery_owner" ? "bg-blue-50 text-blue-700 hover:bg-blue-50/80" :
+                                      u.userType === "banned" ? "bg-red-100 text-red-700 hover:bg-red-100/80" :
+                                      "bg-stone-50/60 text-muted-foreground hover:bg-stone-50/80"
+                                    }`}
+                                  >
+                                    {isBanned ? "🚫 Bannato" : ROLE_LABELS[u.userType] || u.userType}
+                                  </Badge>
+                                  {isSuspended && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold w-fit px-1.5 py-0.5 rounded-full bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400">
+                                      ⏸ Sospeso
+                                    </span>
+                                  )}
+                                </div>
                               </td>
                               <td className="px-4 py-3 text-xs text-muted-foreground hidden md:table-cell whitespace-nowrap">
                                 {u.createdAt ? formatDistanceToNow(new Date(u.createdAt), { addSuffix: true, locale: it }) : "—"}

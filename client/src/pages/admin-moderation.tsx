@@ -5,6 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
   Shield, 
   CheckCircle, 
@@ -19,6 +26,9 @@ import {
   ArrowLeft,
   BeerIcon,
   Zap,
+  Ban,
+  ChevronDown,
+  Clock,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +46,14 @@ interface SuspiciousAccount {
   total_violations: number;
   last_violation_at: string;
   violations_by_endpoint: Record<string, number>;
+  suspended_until: string | null;
 }
+
+const SUSPEND_DURATIONS = [
+  { label: "1 ora", value: "1h" },
+  { label: "24 ore", value: "24h" },
+  { label: "7 giorni", value: "7d" },
+] as const;
 
 const ENDPOINT_LABELS: Record<string, string> = {
   checkin: "check-in",
@@ -117,6 +134,31 @@ export default function AdminModeration() {
     },
     enabled: isAuthenticated && user?.userType === "admin",
     refetchInterval: 5 * 60 * 1000,
+  });
+
+  const suspendMutation = useMutation({
+    mutationFn: async ({ userId, duration }: { userId: string; duration: string }) =>
+      apiRequest(`/api/admin/users/${userId}/suspend`, { method: "POST" }, { duration }),
+    onSuccess: (_, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/security-events/suspicious"] });
+      const label = SUSPEND_DURATIONS.find((d) => d.value === vars.duration)?.label ?? vars.duration;
+      toast({ title: "Account sospeso", description: `L'account è sospeso per ${label}.` });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile sospendere l'account", variant: "destructive" });
+    },
+  });
+
+  const unsuspendMutation = useMutation({
+    mutationFn: async (userId: string) =>
+      apiRequest(`/api/admin/users/${userId}/suspend`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/security-events/suspicious"] });
+      toast({ title: "Sospensione rimossa", description: "L'account può tornare ad operare normalmente." });
+    },
+    onError: () => {
+      toast({ title: "Errore", description: "Impossibile rimuovere la sospensione", variant: "destructive" });
+    },
   });
 
   const reportActionMutation = useMutation({
@@ -415,6 +457,7 @@ export default function AdminModeration() {
                 const name = acct.nickname || [acct.first_name, acct.last_name].filter(Boolean).join(" ") || `Utente ${acct.user_id.slice(0, 6)}`;
                 const initials = name.slice(0, 2).toUpperCase();
                 const endpointCounts = acct.violations_by_endpoint ?? {};
+                const isSuspended = !!acct.suspended_until && new Date(acct.suspended_until) > new Date();
                 return (
                   <Card key={acct.user_id} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl">
                     <CardContent className="p-4 flex items-center gap-4">
@@ -430,6 +473,12 @@ export default function AdminModeration() {
                           <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400 text-xs rounded-full px-2">
                             {acct.total_violations} violazioni
                           </Badge>
+                          {isSuspended && (
+                            <Badge className="bg-red-100 text-red-700 dark:bg-red-950/30 dark:text-red-400 text-xs rounded-full px-2 gap-1 flex items-center">
+                              <Ban className="w-3 h-3" />
+                              Sospeso fino a {new Date(acct.suspended_until!).toLocaleString("it-IT", { dateStyle: "short", timeStyle: "short" })}
+                            </Badge>
+                          )}
                         </div>
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {Object.entries(endpointCounts).map(([ep, n]) => (
@@ -439,11 +488,54 @@ export default function AdminModeration() {
                           ))}
                         </div>
                       </div>
-                      <div className="text-right flex-shrink-0">
-                        <p className="text-xs text-muted-foreground">Ultima violazione</p>
-                        <p className="text-xs font-medium text-foreground">
-                          {formatDistanceToNow(new Date(acct.last_violation_at), { addSuffix: true, locale: it })}
-                        </p>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <div className="text-right hidden sm:block">
+                          <p className="text-xs text-muted-foreground">Ultima violazione</p>
+                          <p className="text-xs font-medium text-foreground">
+                            {formatDistanceToNow(new Date(acct.last_violation_at), { addSuffix: true, locale: it })}
+                          </p>
+                        </div>
+                        {isSuspended ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 rounded-xl font-semibold gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs"
+                            disabled={unsuspendMutation.isPending}
+                            onClick={() => unsuspendMutation.mutate(acct.user_id)}
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Revoca
+                          </Button>
+                        ) : (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/20 rounded-xl font-semibold gap-1.5 text-red-600 dark:text-red-400 text-xs"
+                                disabled={suspendMutation.isPending}
+                              >
+                                <Ban className="w-3.5 h-3.5" />
+                                Sospendi
+                                <ChevronDown className="w-3 h-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="rounded-xl">
+                              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground">Durata sospensione</div>
+                              <DropdownMenuSeparator />
+                              {SUSPEND_DURATIONS.map((d) => (
+                                <DropdownMenuItem
+                                  key={d.value}
+                                  className="gap-2 cursor-pointer"
+                                  onClick={() => suspendMutation.mutate({ userId: acct.user_id, duration: d.value })}
+                                >
+                                  <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                                  {d.label}
+                                </DropdownMenuItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        )}
                       </div>
                     </CardContent>
                   </Card>

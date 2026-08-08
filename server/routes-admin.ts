@@ -392,7 +392,9 @@ export function registerAdminRoutes(app: Express) {
           activeRole: users.activeRole,
           profileImageUrl: users.profileImageUrl,
           isPublic: users.isPublic,
+          isEmailVerified: users.isEmailVerified,
           createdAt: users.createdAt,
+          suspendedUntil: users.suspendedUntil,
         })
         .from(users);
 

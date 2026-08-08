@@ -209,6 +209,9 @@ async function runSocialMigrations() {
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates_push BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates_email BOOLEAN DEFAULT FALSE;
 
+      -- Task #108: temporary account suspension
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_until TIMESTAMP;
+
       -- Task #107: security events per rate-limit violations (bucket-upsert, bounded)
       -- Migrazione: se la tabella esiste con lo schema vecchio (colonna created_at ma
       -- senza bucket) la ricrea — è solo log interno, nessun dato utente da preservare.
@@ -1293,13 +1296,14 @@ export async function registerSocialRoutes(app: Express) {
           u.first_name,
           u.last_name,
           u.profile_image_url,
+          u.suspended_until,
           SUM(se.violation_count)::int                        AS total_violations,
           MAX(se.last_violation_at)                           AS last_violation_at,
           jsonb_object_agg(se.endpoint, SUM(se.violation_count)::int) AS violations_by_endpoint
         FROM security_events se
         JOIN users u ON u.id = se.user_id
         WHERE se.bucket > NOW() - INTERVAL '24 hours'
-        GROUP BY se.user_id, u.nickname, u.first_name, u.last_name, u.profile_image_url
+        GROUP BY se.user_id, u.nickname, u.first_name, u.last_name, u.profile_image_url, u.suspended_until
         HAVING SUM(se.violation_count) >= 3
         ORDER BY total_violations DESC, last_violation_at DESC
         LIMIT 50
@@ -1310,6 +1314,48 @@ export async function registerSocialRoutes(app: Express) {
       if (e?.code === "42P01") return res.json([]);
       console.error("[security-events]", e);
       res.status(500).json({ message: "Errore nel recupero degli account sospetti" });
+    }
+  });
+
+  // ─── SOSPENSIONE TEMPORANEA ACCOUNT ──────────────────────────────────────
+  // POST /api/admin/users/:id/suspend { duration: '1h'|'24h'|'7d' }
+  // DELETE /api/admin/users/:id/suspend → rimuove sospensione
+  app.post("/api/admin/users/:id/suspend", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      const adminId = req.user?.id;
+      if (userId === adminId) {
+        return res.status(400).json({ message: "Non puoi sospendere te stesso" });
+      }
+      const { duration } = req.body as { duration: string };
+      const DURATIONS: Record<string, number> = {
+        "1h":  1 * 60 * 60 * 1000,
+        "24h": 24 * 60 * 60 * 1000,
+        "7d":  7 * 24 * 60 * 60 * 1000,
+      };
+      if (!DURATIONS[duration]) {
+        return res.status(400).json({ message: "Durata non valida. Usa: 1h, 24h, 7d" });
+      }
+      const suspendedUntil = new Date(Date.now() + DURATIONS[duration]);
+      await pool.query(
+        `UPDATE users SET suspended_until = $1 WHERE id = $2`,
+        [suspendedUntil, userId],
+      );
+      res.json({ message: "Account sospeso", userId, suspendedUntil });
+    } catch (e) {
+      console.error("[admin] suspend error:", e);
+      res.status(500).json({ message: "Errore nella sospensione" });
+    }
+  });
+
+  app.delete("/api/admin/users/:id/suspend", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const userId = req.params.id;
+      await pool.query(`UPDATE users SET suspended_until = NULL WHERE id = $1`, [userId]);
+      res.json({ message: "Sospensione rimossa", userId });
+    } catch (e) {
+      console.error("[admin] unsuspend error:", e);
+      res.status(500).json({ message: "Errore nella rimozione della sospensione" });
     }
   });
 

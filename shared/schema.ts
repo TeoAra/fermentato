@@ -57,6 +57,7 @@ export const users = pgTable("users", {
   joinedAt: timestamp("joined_at").defaultNow(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+  suspendedUntil: timestamp("suspended_until"), // Temporary suspension expiry (null = not suspended)
 });
 
 // OAuth accounts for social login (Google, Facebook, etc.)
