@@ -602,6 +602,9 @@ export default function CommunityPage() {
           {/* Trending beers — visible without auth */}
           <TrendingBeersStrip />
 
+          {/* Trending hashtags — visible without auth */}
+          <TrendingHashtags limit={10} compact />
+
           {/* Auth CTA */}
           <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-8">
             <div className="text-center space-y-4 max-w-xs mx-auto">
