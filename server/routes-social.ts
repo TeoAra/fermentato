@@ -888,7 +888,7 @@ export async function registerSocialRoutes(app: Express) {
     if (type === "pub") {
       entityJoin = `LEFT JOIN pubs ep ON ep.id = p.author_entity_id`;
       entityNameSelect = `ep.name AS entity_name`;
-      entityLogoSelect = `ep.image_url AS entity_logo_url`;
+      entityLogoSelect = `COALESCE(ep.logo_url, ep.image_url) AS entity_logo_url`;
     } else {
       entityJoin = `LEFT JOIN breweries eb ON eb.id = p.author_entity_id`;
       entityNameSelect = `eb.name AS entity_name`;
@@ -940,7 +940,7 @@ export async function registerSocialRoutes(app: Express) {
                WHEN p.author_type = 'brewery'  THEN eb.name
              END AS entity_name,
              CASE
-               WHEN p.author_type = 'pub'      THEN ep.image_url
+               WHEN p.author_type = 'pub'      THEN COALESCE(ep.logo_url, ep.image_url)
                WHEN p.author_type = 'brewery'  THEN eb.logo_url
              END AS entity_logo_url,
              (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
@@ -1039,7 +1039,7 @@ export async function registerSocialRoutes(app: Express) {
                WHEN p.author_type = 'brewery'  THEN eb.name
              END AS entity_name,
              CASE
-               WHEN p.author_type = 'pub'      THEN ep.image_url
+               WHEN p.author_type = 'pub'      THEN COALESCE(ep.logo_url, ep.image_url)
                WHEN p.author_type = 'brewery'  THEN eb.logo_url
              END AS entity_logo_url,
              (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
@@ -1099,7 +1099,7 @@ export async function registerSocialRoutes(app: Express) {
                WHEN p.author_type = 'brewery'  THEN eb.name
              END AS entity_name,
              CASE
-               WHEN p.author_type = 'pub'      THEN ep.image_url
+               WHEN p.author_type = 'pub'      THEN COALESCE(ep.logo_url, ep.image_url)
                WHEN p.author_type = 'brewery'  THEN eb.logo_url
              END AS entity_logo_url,
              (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
