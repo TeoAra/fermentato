@@ -301,7 +301,7 @@ function TrendingBeerDrinkers({
         </div>
       ) : drinkers.length === 0 ? (
         <p className="text-xs text-stone-400 text-center py-3">
-          {isAuthenticated ? "Sei l'unico ad averla bevuta questa settimana!" : "Accedi per vedere chi l'ha bevuta"}
+          {"Nessuno l'ha bevuta questa settimana"}
         </p>
       ) : (
         <div className="space-y-0.5">
@@ -322,7 +322,7 @@ function TrendingBeerDrinkers({
                     <p className="text-[10px] text-stone-400 truncate">@{u.username}</p>
                   )}
                 </div>
-                {isAuthenticated && (
+                {isAuthenticated ? (
                   <button
                     onClick={() => followMut.mutate({ id: u.id, isFollowing })}
                     disabled={followMut.isPending}
@@ -335,6 +335,14 @@ function TrendingBeerDrinkers({
                     {isFollowing ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
                     {isFollowing ? "Segui già" : "Segui"}
                   </button>
+                ) : (
+                  <Link
+                    href="/auth"
+                    className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-full border border-stone-200 dark:border-white/[0.10] text-stone-400 dark:text-stone-500 hover:border-primary hover:text-primary transition-colors flex-shrink-0"
+                  >
+                    <UserPlus className="w-3 h-3" />
+                    Accedi
+                  </Link>
                 )}
               </div>
             );
@@ -581,23 +589,36 @@ export default function CommunityPage() {
   /* Unauthenticated gate */
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[hsl(36,10%,96%)] dark:bg-[#0B0D10] flex items-center justify-center p-6">
+      <div className="min-h-screen bg-[hsl(36,10%,96%)] dark:bg-[#0B0D10] pb-28">
         <Helmet><title>Community | Fermenta.to</title></Helmet>
-        <div className="text-center space-y-4 max-w-xs">
-          <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center mx-auto shadow-sm">
-            <Users className="w-9 h-9 text-stone-300" />
+        <div className="bg-white/90 dark:bg-[#0B0D10]/90 backdrop-blur-xl border-b border-stone-100/80 dark:border-white/[0.05] sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4 pb-3">
+            <h1 className="text-xl font-black text-stone-900 dark:text-stone-50 font-poppins">Community</h1>
           </div>
-          <div>
-            <p className="font-black text-stone-800 dark:text-stone-100 font-poppins text-lg">
-              Community
-            </p>
-            <p className="text-sm text-stone-500 mt-1">
-              Accedi per vedere i post e i check-in dei tuoi amici
-            </p>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4 space-y-4">
+          {/* Trending beers — visible without auth */}
+          <TrendingBeersStrip />
+
+          {/* Auth CTA */}
+          <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-8">
+            <div className="text-center space-y-4 max-w-xs mx-auto">
+              <div className="w-16 h-16 rounded-3xl bg-[hsl(36,10%,96%)] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center mx-auto">
+                <Users className="w-7 h-7 text-stone-300" />
+              </div>
+              <div>
+                <p className="font-black text-stone-800 dark:text-stone-100 font-poppins">
+                  Unisciti alla community
+                </p>
+                <p className="text-sm text-stone-500 mt-1">
+                  Accedi per vedere i post e i check-in dei tuoi amici
+                </p>
+              </div>
+              <Link href="/auth">
+                <Button className="w-full bg-primary text-white rounded-xl font-bold">Accedi o registrati</Button>
+              </Link>
+            </div>
           </div>
-          <Link href="/auth">
-            <Button className="w-full bg-primary text-white rounded-xl font-bold">Accedi o registrati</Button>
-          </Link>
         </div>
       </div>
     );
