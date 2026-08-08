@@ -1034,6 +1034,14 @@ export async function registerSocialRoutes(app: Express) {
              b.name AS beer_name, b.image_url AS beer_image,
              pb.name AS pub_name, pb.city AS pub_city,
              br.name AS brewery_name,
+             CASE
+               WHEN p.author_type = 'pub'      THEN ep.name
+               WHEN p.author_type = 'brewery'  THEN eb.name
+             END AS entity_name,
+             CASE
+               WHEN p.author_type = 'pub'      THEN ep.image_url
+               WHEN p.author_type = 'brewery'  THEN eb.logo_url
+             END AS entity_logo_url,
              (SELECT COUNT(*)::int FROM microblog_likes ml WHERE ml.post_id = p.id) AS likes_count,
              (SELECT COUNT(*)::int FROM microblog_comments mc WHERE mc.post_id = p.id) AS comments_count,
              ${likedSelect}
@@ -1042,6 +1050,8 @@ export async function registerSocialRoutes(app: Express) {
       LEFT JOIN beers b ON b.id = p.beer_id
       LEFT JOIN pubs pb ON pb.id = p.pub_id
       LEFT JOIN breweries br ON br.id = p.brewery_id
+      LEFT JOIN pubs ep ON ep.id = p.author_entity_id AND p.author_type = 'pub'
+      LEFT JOIN breweries eb ON eb.id = p.author_entity_id AND p.author_type = 'brewery'
       WHERE ${where.join(" AND ")}
       ORDER BY p.created_at DESC
       LIMIT $${params.length - 1} OFFSET $${params.length}
