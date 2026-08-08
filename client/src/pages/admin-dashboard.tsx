@@ -45,7 +45,9 @@ import {
   UserPlus,
   MailCheck,
   MailX,
-  ShieldCheck
+  ShieldCheck,
+  PauseCircle,
+  PlayCircle
 } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -90,6 +92,8 @@ export default function AdminDashboard() {
   const [banTarget, setBanTarget] = useState<any>(null);
   const [unbanTarget, setUnbanTarget] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<any>(null);
+  const [suspendTarget, setSuspendTarget] = useState<any>(null);
+  const [suspendDuration, setSuspendDuration] = useState<"1h" | "24h" | "7d">("24h");
   const [activityFilter, setActivityFilter] = useState("all");
   const [createOpen, setCreateOpen] = useState(false);
   const [createForm, setCreateForm] = useState({
@@ -231,6 +235,31 @@ export default function AdminDashboard() {
       }
       toast({ title: "Errore", description: err?.message || "Impossibile eliminare l'utente", variant: "destructive" });
       setDeleteTarget(null);
+    },
+  });
+
+  const suspendMutation = useMutation({
+    mutationFn: async ({ userId, duration }: { userId: string; duration: string }) =>
+      apiRequest(`/api/admin/users/${userId}/suspend`, { method: "POST" }, { duration }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Account sospeso", description: "L'utente è stato sospeso temporaneamente" });
+      setSuspendTarget(null);
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err?.message || "Impossibile sospendere l'utente", variant: "destructive" });
+    },
+  });
+
+  const unsuspendMutation = useMutation({
+    mutationFn: async (userId: string) =>
+      apiRequest(`/api/admin/users/${userId}/suspend`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({ title: "Sospensione revocata", description: "L'utente può accedere di nuovo" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Errore", description: err?.message || "Impossibile revocare la sospensione", variant: "destructive" });
     },
   });
 
@@ -678,15 +707,39 @@ export default function AdminDashboard() {
                                           <CheckCircle className="w-3.5 h-3.5" />
                                         </Button>
                                       ) : (
-                                        <Button
-                                          size="sm"
-                                          variant="ghost"
-                                          className="h-7 w-7 p-0 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 text-muted-foreground"
-                                          title="Banna utente"
-                                          onClick={() => setBanTarget(u)}
-                                        >
-                                          <Ban className="w-3.5 h-3.5" />
-                                        </Button>
+                                        <>
+                                          {isSuspended ? (
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-7 w-7 p-0 hover:bg-emerald-50 dark:hover:bg-emerald-950/20 hover:text-emerald-600 text-orange-500"
+                                              title="Revoca sospensione"
+                                              disabled={unsuspendMutation.isPending}
+                                              onClick={() => unsuspendMutation.mutate(u.id)}
+                                            >
+                                              <PlayCircle className="w-3.5 h-3.5" />
+                                            </Button>
+                                          ) : (
+                                            <Button
+                                              size="sm"
+                                              variant="ghost"
+                                              className="h-7 w-7 p-0 hover:bg-orange-50 dark:hover:bg-orange-950/20 hover:text-orange-600 text-muted-foreground"
+                                              title="Sospendi temporaneamente"
+                                              onClick={() => { setSuspendTarget(u); setSuspendDuration("24h"); }}
+                                            >
+                                              <PauseCircle className="w-3.5 h-3.5" />
+                                            </Button>
+                                          )}
+                                          <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            className="h-7 w-7 p-0 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-red-600 text-muted-foreground"
+                                            title="Banna utente"
+                                            onClick={() => setBanTarget(u)}
+                                          >
+                                            <Ban className="w-3.5 h-3.5" />
+                                          </Button>
+                                        </>
                                       )}
                                       <Button
                                         size="sm"
@@ -1253,6 +1306,44 @@ export default function AdminDashboard() {
             >
               <Trash2 className="w-4 h-4 mr-2" />
               {deleteUserMutation.isPending ? "Eliminazione..." : "Elimina definitivamente"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Suspend confirmation dialog */}
+      <AlertDialog open={!!suspendTarget} onOpenChange={(open) => { if (!open) setSuspendTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <PauseCircle className="w-5 h-5 text-orange-500" />
+              Sospendi {suspendTarget?.nickname || suspendTarget?.firstName || "questo utente"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              L'utente non potrà accedere all'app per la durata selezionata. La sospensione può essere revocata in qualsiasi momento.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="px-1 py-2">
+            <label className="text-sm font-medium text-foreground block mb-2">Durata sospensione</label>
+            <Select value={suspendDuration} onValueChange={(v) => setSuspendDuration(v as "1h" | "24h" | "7d")}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="1h">1 ora</SelectItem>
+                <SelectItem value="24h">24 ore</SelectItem>
+                <SelectItem value="7d">7 giorni</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annulla</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-orange-600 hover:bg-orange-700 text-white"
+              disabled={suspendMutation.isPending}
+              onClick={() => suspendMutation.mutate({ userId: suspendTarget.id, duration: suspendDuration })}
+            >
+              {suspendMutation.isPending ? "Sospensione..." : "Sospendi"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
