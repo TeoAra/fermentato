@@ -9696,12 +9696,21 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
              u.profile_image_url,
              b.id as beer_id, b.name as beer_name, b.style as beer_style, b.image_url as beer_image,
              br.name as brewery_name,
-             p.id as pub_id, p.name as pub_name, p.city as pub_city
+             p.id as pub_id, p.name as pub_name, p.city as pub_city,
+             COALESCE(lc.likes_count, 0)::int AS likes_count,
+             COALESCE(cc.comments_count, 0)::int AS comments_count,
+             (EXISTS(SELECT 1 FROM checkin_likes cl2 WHERE cl2.tasting_id = ubt.id AND cl2.user_id = $1)) AS liked
       FROM user_beer_tastings ubt
       JOIN users u ON u.id = ubt.user_id
       JOIN beers b ON b.id = ubt.beer_id
       LEFT JOIN breweries br ON br.id = b.brewery_id
       LEFT JOIN pubs p ON p.id = ubt.pub_id
+      LEFT JOIN (
+        SELECT tasting_id, COUNT(*)::int AS likes_count FROM checkin_likes GROUP BY tasting_id
+      ) lc ON lc.tasting_id = ubt.id
+      LEFT JOIN (
+        SELECT tasting_id, COUNT(*)::int AS comments_count FROM checkin_comments GROUP BY tasting_id
+      ) cc ON cc.tasting_id = ubt.id
       WHERE ubt.user_id IN (
         SELECT following_id FROM user_follows WHERE follower_id = $1
       )

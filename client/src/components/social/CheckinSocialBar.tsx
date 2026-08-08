@@ -209,7 +209,17 @@ function CheckinCommentRow({ comment, tastingId, onReport }: { comment: any; tas
   );
 }
 
-export default function CheckinSocialBar({ tastingId, compact = false }: { tastingId: number; compact?: boolean }) {
+export default function CheckinSocialBar({
+  tastingId,
+  compact = false,
+  initialLikes,
+  initialCommentsCount,
+}: {
+  tastingId: number;
+  compact?: boolean;
+  initialLikes?: { count: number; liked: boolean; commentsCount: number };
+  initialCommentsCount?: number;
+}) {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const [commentsOpen, setCommentsOpen] = useState(false);
@@ -257,6 +267,8 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
   const { data: likes } = useQuery<{ count: number; liked: boolean; commentsCount: number }>({
     queryKey: ["/api/checkin", tastingId, "likes"],
     queryFn: () => fetch(`/api/checkin/${tastingId}/likes`, { credentials: "include" }).then(r => r.json()),
+    initialData: initialLikes,
+    staleTime: initialLikes ? 30_000 : 0,
   });
 
   const { data: comments = [], isLoading: commentsLoading } = useQuery<any[]>({

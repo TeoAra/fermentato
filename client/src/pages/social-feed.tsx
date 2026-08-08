@@ -208,7 +208,14 @@ function CheckinCard({ data }: { data: any }) {
 
       {/* Social bar */}
       <div className="border-t border-stone-100 dark:border-white/[0.04] px-4 pb-3">
-        <CheckinSocialBar tastingId={data.id} />
+        <CheckinSocialBar
+          tastingId={data.id}
+          initialLikes={
+            data.likes_count != null
+              ? { count: data.likes_count, liked: data.liked ?? false, commentsCount: data.comments_count ?? 0 }
+              : undefined
+          }
+        />
       </div>
     </div>
   );
