@@ -1245,5 +1245,41 @@ export async function registerSocialRoutes(app: Express) {
     res.json({ ok: true, totalItems: rows[0].c });
   });
 
+  // ── Community: trending beers (most check-ins last 7 days) ─────────────────
+  app.get("/api/community/trending-beers", async (_req, res) => {
+    try {
+      const { rows } = await pool.query(`
+        SELECT b.id, b.name, b.image_url, b.style,
+               br.name AS brewery_name,
+               COUNT(*) AS checkin_count
+        FROM user_beer_tastings ubt
+        JOIN beers b ON b.id = ubt.beer_id
+        LEFT JOIN breweries br ON br.id = b.brewery_id
+        WHERE ubt.tasted_at > NOW() - INTERVAL '7 days'
+        GROUP BY b.id, b.name, b.image_url, b.style, br.name
+        ORDER BY checkin_count DESC
+        LIMIT 12
+      `);
+      res.json(rows);
+    } catch {
+      res.json([]);
+    }
+  });
+
+  // ── Community: quick activity stats ─────────────────────────────────────────
+  app.get("/api/community/stats", async (_req, res) => {
+    try {
+      const { rows } = await pool.query(`
+        SELECT
+          (SELECT COUNT(*)::int FROM user_beer_tastings WHERE tasted_at > NOW() - INTERVAL '24 hours') AS checkins_today,
+          (SELECT COUNT(*)::int FROM microblog_posts    WHERE created_at > NOW() - INTERVAL '24 hours') AS posts_today,
+          (SELECT COUNT(DISTINCT user_id)::int FROM user_beer_tastings WHERE tasted_at > NOW() - INTERVAL '7 days') AS active_week
+      `);
+      res.json(rows[0]);
+    } catch {
+      res.json({ checkins_today: 0, posts_today: 0, active_week: 0 });
+    }
+  });
+
   console.log("[social] routes registered");
 }

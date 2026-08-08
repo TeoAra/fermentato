@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { Link } from "wouter";
-import { Heart, MessageCircle, Send, MoreHorizontal, Flag, Pencil, Trash2, Check, X, AtSign } from "lucide-react";
+import { Heart, MessageCircle, Send, MoreHorizontal, Flag, Pencil, Trash2, Check, X } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -210,9 +210,9 @@ function CheckinCommentRow({ comment, tastingId, onReport }: { comment: any; tas
 }
 
 export default function CheckinSocialBar({ tastingId, compact = false }: { tastingId: number; compact?: boolean }) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
   const [newComment, setNewComment] = useState("");
   const [reportCommentId, setReportCommentId] = useState<number | null>(null);
   const [mentionQuery, setMentionQuery] = useState<string | null>(null);
@@ -220,7 +220,7 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
 
   const { data: following = [] } = useQuery<any[]>({
     queryKey: ["/api/user/following"],
-    enabled: isAuthenticated && dialogOpen,
+    enabled: isAuthenticated && commentsOpen,
     staleTime: 5 * 60_000,
   });
 
@@ -262,7 +262,7 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
   const { data: comments = [], isLoading: commentsLoading } = useQuery<any[]>({
     queryKey: ["/api/checkin", tastingId, "comments"],
     queryFn: () => fetch(`/api/checkin/${tastingId}/comments`, { credentials: "include" }).then(r => r.json()),
-    enabled: dialogOpen,
+    enabled: commentsOpen,
   });
 
   const likeMut = useMutation({
@@ -292,86 +292,58 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
   const likeCount = likes?.count ?? 0;
   const commentCount = likes?.commentsCount ?? 0;
 
+  const toggleComments = () => {
+    const next = !commentsOpen;
+    setCommentsOpen(next);
+    if (next) setTimeout(() => textareaRef.current?.focus(), 150);
+  };
+
   return (
     <>
-      <div className={`flex items-center gap-4 ${compact ? "" : "mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40"}`}>
+      <ReportCommentDialog commentId={reportCommentId} onClose={() => setReportCommentId(null)} />
+
+      {/* ── Action bar ── */}
+      <div className={`flex items-center gap-4 ${compact ? "" : "pt-2"}`}>
         <button
           onClick={() => isAuthenticated && likeMut.mutate(undefined)}
           disabled={!isAuthenticated}
-          className={`flex items-center gap-1.5 text-xs font-semibold transition-all tap-scale ${
-            likes?.liked ? "text-red-500" : "text-stone-500 hover:text-red-500"
+          className={`flex items-center gap-1.5 text-xs font-semibold transition-all active:scale-90 ${
+            likes?.liked ? "text-red-500" : "text-stone-400 hover:text-red-500"
           }`}
         >
           <Heart className="w-4 h-4" fill={likes?.liked ? "currentColor" : "none"} />
-          <span>{likeCount > 0 ? likeCount : ""}</span>
-          <span className="text-stone-400 font-normal">{likes?.liked ? "Mi piace" : "Mi piace"}</span>
+          {likeCount}
         </button>
         <button
-          onClick={() => setDialogOpen(true)}
-          className="flex items-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-primary transition-colors tap-scale"
+          onClick={toggleComments}
+          className={`flex items-center gap-1.5 text-xs font-semibold transition-colors active:scale-90 ${
+            commentsOpen ? "text-primary" : "text-stone-400 hover:text-primary"
+          }`}
         >
           <MessageCircle className="w-4 h-4" />
-          <span>{commentCount > 0 ? commentCount : ""}</span>
-          <span className="text-stone-400 font-normal">Commenta</span>
+          {commentCount}
         </button>
       </div>
 
-      {/* ── Discussion modal ────────────────────────────────────────── */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg rounded-2xl max-h-[85vh] flex flex-col p-0 gap-0 [&>button]:hidden">
-          <DialogHeader className="px-5 pt-5 pb-3 border-b border-stone-100 dark:border-[#23262E] flex-shrink-0">
-            <div className="flex items-center justify-between">
-              <DialogTitle className="text-base font-black flex items-center gap-2">
-                <MessageCircle className="w-4 h-4 text-primary" />
-                Discussione
-                {commentCount > 0 && (
-                  <span className="text-sm font-normal text-stone-400">· {commentCount} {commentCount === 1 ? "commento" : "commenti"}</span>
-                )}
-              </DialogTitle>
-              <button onClick={() => setDialogOpen(false)} className="text-stone-400 hover:text-stone-600 transition-colors p-1 rounded-full hover:bg-stone-100 dark:hover:bg-white/5">
-                <X className="w-4 h-4" />
-              </button>
+      {/* ── Inline comment section ── */}
+      {commentsOpen && (
+        <div className="mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.04] space-y-3">
+          {commentsLoading ? (
+            <p className="text-xs text-stone-400 text-center py-2">Caricamento…</p>
+          ) : comments.length === 0 ? (
+            <p className="text-xs text-stone-400 text-center py-1">Nessun commento ancora</p>
+          ) : (
+            <div className="space-y-3">
+              {comments.map((c: any) => (
+                <CheckinCommentRow key={c.id} comment={c} tastingId={tastingId} onReport={id => setReportCommentId(id)} />
+              ))}
             </div>
-            {/* Mini like bar */}
-            <div className="flex items-center gap-3 mt-2">
-              <button
-                onClick={() => isAuthenticated && likeMut.mutate(undefined)}
-                disabled={!isAuthenticated}
-                className={`flex items-center gap-1.5 text-xs font-semibold transition-all tap-scale ${
-                  likes?.liked ? "text-red-500" : "text-stone-500 hover:text-red-500"
-                }`}
-              >
-                <Heart className="w-3.5 h-3.5" fill={likes?.liked ? "currentColor" : "none"} />
-                {likeCount > 0 ? likeCount : ""} Mi piace
-              </button>
-            </div>
-          </DialogHeader>
+          )}
 
-          {/* Comments list */}
-          <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4 min-h-0">
-            {commentsLoading ? (
-              <div className="flex justify-center py-8">
-                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : comments.length === 0 ? (
-              <div className="text-center py-8 text-stone-400">
-                <MessageCircle className="w-8 h-8 mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Nessun commento ancora</p>
-                <p className="text-xs mt-1">Sii il primo a commentare!</p>
-              </div>
-            ) : (
-              comments.map((c: any) => (
-                <CheckinCommentRow key={c.id} comment={c} tastingId={tastingId} onReport={setReportCommentId} />
-              ))
-            )}
-          </div>
-
-          {/* New comment input */}
           {isAuthenticated && (
-            <div className="px-4 py-3 border-t border-stone-100 dark:border-[#23262E] flex-shrink-0">
-              {/* @mention dropdown */}
+            <div className="space-y-1.5">
               {mentionQuery !== null && mentionSuggestions.length > 0 && (
-                <div className="mb-2 bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-[#23262E] rounded-2xl shadow-lg overflow-hidden">
+                <div className="bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-[#23262E] rounded-2xl shadow-lg overflow-hidden">
                   {mentionSuggestions.map((f: any) => (
                     <button
                       key={f.id}
@@ -393,8 +365,7 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
                   ))}
                 </div>
               )}
-              <div className="flex gap-2.5 items-center">
-                <UserAvatar user={user as any} size={7} />
+              <div className="flex gap-2 items-center">
                 <div className="flex-1 relative">
                   <Textarea
                     ref={textareaRef}
@@ -423,16 +394,12 @@ export default function CheckinSocialBar({ tastingId, compact = false }: { tasti
             </div>
           )}
           {!isAuthenticated && (
-            <div className="px-5 py-3 border-t border-stone-100 dark:border-[#23262E] text-center flex-shrink-0">
-              <p className="text-xs text-stone-400">
-                <Link href="/auth" className="text-primary font-semibold hover:underline">Accedi</Link> per lasciare un commento
-              </p>
-            </div>
+            <p className="text-xs text-stone-400 text-center py-1">
+              <Link href="/auth" className="text-primary font-semibold hover:underline">Accedi</Link> per commentare
+            </p>
           )}
-        </DialogContent>
-      </Dialog>
-
-      <ReportCommentDialog commentId={reportCommentId} onClose={() => setReportCommentId(null)} />
+        </div>
+      )}
     </>
   );
 }

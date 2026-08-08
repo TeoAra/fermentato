@@ -207,7 +207,7 @@ function CheckinCard({ data }: { data: any }) {
       )}
 
       {/* Social bar */}
-      <div className="border-t border-stone-100 dark:border-white/[0.04] px-2">
+      <div className="border-t border-stone-100 dark:border-white/[0.04] px-4 pb-3">
         <CheckinSocialBar tastingId={data.id} />
       </div>
     </div>

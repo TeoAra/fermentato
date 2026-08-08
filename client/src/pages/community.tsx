@@ -6,6 +6,7 @@ import {
   Users, Package, MapPin, Search, UserPlus, UserMinus,
   Star, Heart, MessageCircle, PenSquare, Newspaper,
   ChevronRight, ExternalLink, Clock, Loader2, Building2,
+  Flame, TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -129,7 +130,7 @@ function CheckinCard({ data }: { data: any }) {
           <ZoomableImage src={data.photo_url} alt="Foto assaggio" className="rounded-xl w-full max-h-80 object-cover" />
         </div>
       )}
-      <div className="border-t border-stone-100 dark:border-white/[0.04] px-2">
+      <div className="border-t border-stone-100 dark:border-white/[0.04] px-4 pb-3">
         <CheckinSocialBar tastingId={data.id} />
       </div>
     </div>
@@ -227,6 +228,69 @@ function MicroblogCard({ post }: { post: any }) {
       </div>
       {entityPreview && (
         <EntityPreviewCard type={entityPreview.type} id={entityPreview.id} anchorRect={entityPreview.rect} onClose={() => setEntityPreview(null)} />
+      )}
+    </div>
+  );
+}
+
+/* ── TrendingBeersStrip ── */
+function TrendingBeersStrip() {
+  const { data: beers = [] } = useQuery<any[]>({
+    queryKey: ["/api/community/trending-beers"],
+    staleTime: 5 * 60_000,
+  });
+  if (beers.length === 0) return null;
+  return (
+    <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
+      <div className="flex items-center gap-1.5 mb-3">
+        <Flame className="w-3.5 h-3.5 text-amber-500" />
+        <p className="text-[11px] font-black uppercase tracking-widest text-stone-400">In tendenza questa settimana</p>
+      </div>
+      <div className="flex gap-4 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
+        {beers.map((beer: any) => (
+          <Link key={beer.id} href={`/beer/${beer.id}`} className="flex-shrink-0 w-[72px] group">
+            <div className="w-[72px] h-[72px] mx-auto rounded-xl bg-[#FAF7F1] dark:bg-[#12151A] border border-stone-100 dark:border-white/[0.04] overflow-hidden flex items-center justify-center mb-1.5 group-hover:border-primary/30 transition-colors">
+              {beer.image_url ? (
+                <img src={beer.image_url} alt={beer.name} className="w-full h-full object-contain p-1.5" loading="lazy" />
+              ) : (
+                <span className="text-2xl">🍺</span>
+              )}
+            </div>
+            <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300 text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">{beer.name}</p>
+            <p className="text-[9px] text-amber-500 font-semibold text-center mt-0.5">{beer.checkin_count} {beer.checkin_count === "1" ? "assaggio" : "assaggi"}</p>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ── CommunityStats ── */
+function CommunityStats() {
+  const { data: stats } = useQuery<{ checkins_today: number; posts_today: number; active_week: number }>({
+    queryKey: ["/api/community/stats"],
+    staleTime: 5 * 60_000,
+  });
+  if (!stats || (stats.checkins_today === 0 && stats.posts_today === 0)) return null;
+  return (
+    <div className="flex items-center gap-3 px-1">
+      {stats.checkins_today > 0 && (
+        <div className="flex items-center gap-1.5 text-[10px] text-stone-500 dark:text-stone-400">
+          <span className="text-base leading-none">🍺</span>
+          <span><span className="font-black text-stone-700 dark:text-stone-200">{stats.checkins_today}</span> {stats.checkins_today === 1 ? "check-in" : "check-in"} oggi</span>
+        </div>
+      )}
+      {stats.posts_today > 0 && (
+        <div className="flex items-center gap-1.5 text-[10px] text-stone-500 dark:text-stone-400">
+          <span className="text-base leading-none">📝</span>
+          <span><span className="font-black text-stone-700 dark:text-stone-200">{stats.posts_today}</span> {stats.posts_today === 1 ? "post" : "post"} oggi</span>
+        </div>
+      )}
+      {stats.active_week > 0 && (
+        <div className="flex items-center gap-1.5 text-[10px] text-stone-500 dark:text-stone-400">
+          <TrendingUp className="w-3 h-3 text-primary" />
+          <span><span className="font-black text-stone-700 dark:text-stone-200">{stats.active_week}</span> attivi</span>
+        </div>
       )}
     </div>
   );
@@ -429,6 +493,9 @@ export default function CommunityPage() {
           <div className="space-y-3">
             {/* Composer */}
             <InlinePostComposer user={user as any} />
+
+            {/* Trending beers strip */}
+            <TrendingBeersStrip />
 
             {/* Trending hashtags — mobile only */}
             <div className="lg:hidden">
