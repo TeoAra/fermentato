@@ -1,7 +1,95 @@
 import rateLimit from "express-rate-limit";
 import type { Request } from "express";
+import { pool } from "../db";
 
 const isDev = process.env.NODE_ENV !== "production";
+
+// ── Sicurezza: log eventi al superamento del limite per-utente ─────────────
+// Usa un bucket orario con upsert: max 1 riga per (user, endpoint, ora).
+// Violazioni ripetute nella stessa ora incrementano il contatore — nessun
+// rischio di unbounded table growth da flooding intenzionale.
+async function logSecurityEvent(userId: string, endpoint: string, _ip: string) {
+  try {
+    await pool.query(
+      `INSERT INTO security_events (user_id, endpoint, bucket, violation_count, last_violation_at)
+       VALUES ($1, $2, date_trunc('hour', NOW()), 1, NOW())
+       ON CONFLICT (user_id, endpoint, bucket)
+       DO UPDATE SET
+         violation_count   = security_events.violation_count + 1,
+         last_violation_at = NOW()`,
+      [userId, endpoint],
+    );
+  } catch {
+    // La tabella potrebbe non esistere ancora: skip silenzioso
+  }
+}
+
+/**
+ * Rate limit per-utente autenticato su azioni di scrittura social.
+ * Key = user:<userId>:<endpoint> — non tocca gli utenti anonimi (già coperti da generalApiRateLimit).
+ * In dev il limite è 100× per non bloccare il testing.
+ */
+function createUserRateLimit(opts: {
+  windowMs: number;
+  max: number;
+  message: string;
+  endpoint: string;
+}) {
+  return rateLimit({
+    windowMs: opts.windowMs,
+    max: isDev ? opts.max * 100 : opts.max,
+    keyGenerator: (req: Request) => {
+      const user = (req as any).user;
+      return user?.id ? `user:${user.id}:${opts.endpoint}` : (req.ip ?? "anon");
+    },
+    handler: (req: Request, res: any) => {
+      const user = (req as any).user;
+      if (user?.id) {
+        logSecurityEvent(user.id, opts.endpoint, req.ip ?? "").catch(() => {});
+      }
+      res.status(429).json({ message: opts.message });
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    // IP fallback nel keyGenerator non viene mai raggiunto: skip esclude gli anonimi.
+    // La validazione statica di express-rate-limit non lo sa → disabilitarla esplicitamente.
+    validate: { keyGeneratorIpFallback: false },
+    // Gli utenti anonimi sono già coperti da generalApiRateLimit
+    skip: (req: Request) => !(req as any).user?.id,
+  });
+}
+
+/** POST /api/user/beer-tastings — max 10 check-in ogni 10 min */
+export const checkinRateLimit = createUserRateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 10,
+  message: "Stai facendo troppi check-in. Riprova tra 10 minuti.",
+  endpoint: "checkin",
+});
+
+/** POST *\/like — max 30 like al minuto */
+export const likeRateLimit = createUserRateLimit({
+  windowMs: 60 * 1000,
+  max: 30,
+  message: "Stai mettendo troppi like. Riprova tra un minuto.",
+  endpoint: "like",
+});
+
+/** POST *\/comments — max 20 commenti ogni 10 min */
+export const commentRateLimit = createUserRateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 20,
+  message: "Stai commentando troppo velocemente. Riprova tra 10 minuti.",
+  endpoint: "comment",
+});
+
+/** POST /api/microblog/posts — max 5 post ogni 10 min */
+export const microblogPostRateLimit = createUserRateLimit({
+  windowMs: 10 * 60 * 1000,
+  max: 5,
+  message: "Stai pubblicando troppi post. Riprova tra 10 minuti.",
+  endpoint: "microblog_post",
+});
 
 /**
  * Login brute-force protection: 10 tentativi ogni 15 minuti per IP.

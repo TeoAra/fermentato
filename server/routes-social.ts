@@ -5,6 +5,7 @@ import { upload, uploadImage } from "./cloudinary";
 import { sendPushToUser, sendPushToAdmins, shouldSendEmailNotification } from "./push-utils";
 import { sendMentionEmail } from "./email";
 import { storage } from "./storage";
+import { likeRateLimit, commentRateLimit, microblogPostRateLimit } from "./middleware/rate-limit";
 import Parser from "rss-parser";
 
 const rssParser = new Parser({
@@ -207,6 +208,31 @@ async function runSocialMigrations() {
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates_push BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates_email BOOLEAN DEFAULT FALSE;
+
+      -- Task #107: security events per rate-limit violations (bucket-upsert, bounded)
+      -- Migrazione: se la tabella esiste con lo schema vecchio (colonna created_at ma
+      -- senza bucket) la ricrea — è solo log interno, nessun dato utente da preservare.
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name = 'security_events' AND column_name = 'created_at'
+        ) THEN
+          DROP TABLE security_events;
+        END IF;
+      END $$;
+
+      CREATE TABLE IF NOT EXISTS security_events (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        endpoint VARCHAR(50) NOT NULL,
+        bucket TIMESTAMP NOT NULL,
+        violation_count INTEGER NOT NULL DEFAULT 1,
+        last_violation_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        UNIQUE(user_id, endpoint, bucket)
+      );
+      CREATE INDEX IF NOT EXISTS idx_security_events_user ON security_events(user_id);
+      CREATE INDEX IF NOT EXISTS idx_security_events_bucket ON security_events(bucket DESC);
     `);
 
     // Backfill: copia review_reports → content_reports una sola volta
@@ -318,7 +344,7 @@ export async function registerSocialRoutes(app: Express) {
   });
 
   // ─── CHECK-IN: likes & comments ───────────────────────────────────────────
-  app.post("/api/checkin/:id/like", isAuthenticated, async (req: any, res) => {
+  app.post("/api/checkin/:id/like", isAuthenticated, likeRateLimit, async (req: any, res) => {
     const userId = req.user.id;
     const tastingId = parseInt(req.params.id, 10);
     if (Number.isNaN(tastingId)) return res.status(400).json({ message: "ID non valido" });
@@ -401,7 +427,7 @@ export async function registerSocialRoutes(app: Express) {
   });
 
   // Like/unlike singolo commento
-  app.post("/api/checkin-comments/:id/like", isAuthenticated, async (req: any, res) => {
+  app.post("/api/checkin-comments/:id/like", isAuthenticated, likeRateLimit, async (req: any, res) => {
     const commentId = parseInt(req.params.id, 10);
     if (Number.isNaN(commentId)) return res.status(400).json({ message: "ID non valido" });
     await pool.query(
@@ -488,7 +514,7 @@ export async function registerSocialRoutes(app: Express) {
     }
   });
 
-  app.post("/api/checkin/:id/comments", isAuthenticated, async (req: any, res) => {
+  app.post("/api/checkin/:id/comments", isAuthenticated, commentRateLimit, async (req: any, res) => {
     const userId = req.user.id;
     const tastingId = parseInt(req.params.id, 10);
     const content = String(req.body?.content ?? "").trim().slice(0, 500);
@@ -561,7 +587,7 @@ export async function registerSocialRoutes(app: Express) {
     }
   });
 
-  app.post("/api/microblog/posts", isAuthenticated, async (req: any, res) => {
+  app.post("/api/microblog/posts", isAuthenticated, microblogPostRateLimit, async (req: any, res) => {
     const userId = req.user.id;
     const content = String(req.body?.content ?? "").trim().slice(0, 1000);
     if (!content) return res.status(400).json({ message: "Contenuto obbligatorio" });
@@ -1114,7 +1140,7 @@ export async function registerSocialRoutes(app: Express) {
     res.json(rows);
   });
 
-  app.post("/api/microblog/posts/:id/like", isAuthenticated, async (req: any, res) => {
+  app.post("/api/microblog/posts/:id/like", isAuthenticated, likeRateLimit, async (req: any, res) => {
     const postId = parseInt(req.params.id, 10);
     await pool.query(
       `INSERT INTO microblog_likes (post_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
@@ -1145,7 +1171,7 @@ export async function registerSocialRoutes(app: Express) {
     res.json(rows);
   });
 
-  app.post("/api/microblog/posts/:id/comments", isAuthenticated, async (req: any, res) => {
+  app.post("/api/microblog/posts/:id/comments", isAuthenticated, commentRateLimit, async (req: any, res) => {
     const postId = parseInt(req.params.id, 10);
     const content = String(req.body?.content ?? "").trim().slice(0, 500);
     if (!content) return res.status(400).json({ message: "Commento vuoto" });
@@ -1254,6 +1280,52 @@ export async function registerSocialRoutes(app: Express) {
     const { rows } = await pool.query(`SELECT COUNT(*)::int AS c FROM rss_items`);
     res.json({ ok: true, totalItems: rows[0].c });
   });
+
+  // ─── ACCOUNT SOSPETTI: utenti con 3+ violazioni nelle ultime 24h ─────────
+  // Usa il bucket-upsert schema: ogni riga è un'ora, violation_count è il totale
+  // dei tentativi bloccati in quella finestra. Niente array illimitati.
+  app.get("/api/admin/security-events/suspicious", isAuthenticated, isAdmin, async (_req, res) => {
+    try {
+      const { rows } = await pool.query(`
+        SELECT
+          se.user_id,
+          u.nickname,
+          u.first_name,
+          u.last_name,
+          u.profile_image_url,
+          SUM(se.violation_count)::int                        AS total_violations,
+          MAX(se.last_violation_at)                           AS last_violation_at,
+          jsonb_object_agg(se.endpoint, SUM(se.violation_count)::int) AS violations_by_endpoint
+        FROM security_events se
+        JOIN users u ON u.id = se.user_id
+        WHERE se.bucket > NOW() - INTERVAL '24 hours'
+        GROUP BY se.user_id, u.nickname, u.first_name, u.last_name, u.profile_image_url
+        HAVING SUM(se.violation_count) >= 3
+        ORDER BY total_violations DESC, last_violation_at DESC
+        LIMIT 50
+      `);
+      res.json(rows);
+    } catch (e: any) {
+      // Tabella non ancora creata (primo avvio)
+      if (e?.code === "42P01") return res.json([]);
+      console.error("[security-events]", e);
+      res.status(500).json({ message: "Errore nel recupero degli account sospetti" });
+    }
+  });
+
+  // Cleanup: elimina bucket più vecchi di 7 giorni (retention automatica)
+  async function cleanupSecurityEvents() {
+    try {
+      const r = await pool.query(
+        `DELETE FROM security_events WHERE bucket < NOW() - INTERVAL '7 days'`
+      );
+      if ((r.rowCount ?? 0) > 0) {
+        console.log(`[security-events] cleaned up ${r.rowCount} old buckets`);
+      }
+    } catch { /* tabella non ancora esistente: skip */ }
+  }
+  setTimeout(cleanupSecurityEvents, 60_000);
+  setInterval(cleanupSecurityEvents, 24 * 60 * 60 * 1000);
 
   // ── Community: trending beers (most check-ins last 7 days) ─────────────────
   app.get("/api/community/trending-beers", async (_req, res) => {

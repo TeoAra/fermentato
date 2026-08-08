@@ -17,7 +17,8 @@ import {
   Calendar,
   Filter,
   ArrowLeft,
-  BeerIcon
+  BeerIcon,
+  Zap,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +26,24 @@ import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { PageContainer } from "@/components/layout/page-container";
 import { it } from "date-fns/locale";
+
+interface SuspiciousAccount {
+  user_id: string;
+  nickname: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  profile_image_url: string | null;
+  total_violations: number;
+  last_violation_at: string;
+  violations_by_endpoint: Record<string, number>;
+}
+
+const ENDPOINT_LABELS: Record<string, string> = {
+  checkin: "check-in",
+  like: "like",
+  comment: "commento",
+  microblog_post: "post",
+};
 
 interface ReviewReport {
   id: number;
@@ -87,6 +106,17 @@ export default function AdminModeration() {
     },
     enabled: isAuthenticated && user?.userType === "admin",
     refetchInterval: 60000,
+  });
+
+  const { data: suspiciousAccounts = [], isLoading: suspiciousLoading } = useQuery<SuspiciousAccount[]>({
+    queryKey: ["/api/admin/security-events/suspicious"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/security-events/suspicious", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: isAuthenticated && user?.userType === "admin",
+    refetchInterval: 5 * 60 * 1000,
   });
 
   const reportActionMutation = useMutation({
@@ -353,6 +383,75 @@ export default function AdminModeration() {
             })}
           </div>
         )}
+        {/* ─── Account sospetti ─────────────────────────────────────── */}
+        <div className="pt-4 border-t border-border/50">
+          <div className="flex items-center gap-3 mb-4">
+            <Zap className="w-5 h-5 text-amber-500" />
+            <div>
+              <h2 className="text-lg font-bold text-foreground">Account sospetti</h2>
+              <p className="text-xs text-muted-foreground">Utenti con 3+ violazioni rate-limit nelle ultime 24 ore</p>
+            </div>
+            {suspiciousAccounts.length > 0 && (
+              <Badge className="ml-auto bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400 text-xs rounded-full px-2.5">
+                {suspiciousAccounts.length} account
+              </Badge>
+            )}
+          </div>
+
+          {suspiciousLoading ? (
+            <div className="text-center py-6">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-amber-500 mx-auto" />
+            </div>
+          ) : suspiciousAccounts.length === 0 ? (
+            <Card className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl">
+              <CardContent className="p-6 text-center text-sm text-muted-foreground">
+                <Shield className="w-8 h-8 mx-auto mb-2 text-emerald-500" />
+                Nessun account sospetto nelle ultime 24 ore.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {suspiciousAccounts.map((acct) => {
+                const name = acct.nickname || [acct.first_name, acct.last_name].filter(Boolean).join(" ") || `Utente ${acct.user_id.slice(0, 6)}`;
+                const initials = name.slice(0, 2).toUpperCase();
+                const endpointCounts = acct.violations_by_endpoint ?? {};
+                return (
+                  <Card key={acct.user_id} className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl">
+                    <CardContent className="p-4 flex items-center gap-4">
+                      <Avatar className="w-10 h-10 flex-shrink-0">
+                        {acct.profile_image_url && <AvatarImage src={acct.profile_image_url} />}
+                        <AvatarFallback className="bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 font-semibold text-sm">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold text-sm text-foreground">@{name}</span>
+                          <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-950/30 dark:text-amber-400 text-xs rounded-full px-2">
+                            {acct.total_violations} violazioni
+                          </Badge>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {Object.entries(endpointCounts).map(([ep, n]) => (
+                            <span key={ep} className="text-xs bg-stone-100 dark:bg-white/[0.04] text-muted-foreground rounded-full px-2 py-0.5">
+                              {n}× {ENDPOINT_LABELS[ep] ?? ep}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        <p className="text-xs text-muted-foreground">Ultima violazione</p>
+                        <p className="text-xs font-medium text-foreground">
+                          {formatDistanceToNow(new Date(acct.last_violation_at), { addSuffix: true, locale: it })}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </PageContainer>
     </div>
   );

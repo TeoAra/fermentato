@@ -1,6 +1,6 @@
 import type { Express } from "express";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { searchRateLimit, generalApiRateLimit } from "./middleware/rate-limit";
+import { searchRateLimit, generalApiRateLimit, checkinRateLimit } from "./middleware/rate-limit";
 import { createServer, type Server } from "http";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
@@ -5486,7 +5486,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/user/beer-tastings", isAuthenticated, async (req: any, res) => {
+  app.post("/api/user/beer-tastings", isAuthenticated, checkinRateLimit, async (req: any, res) => {
     try {
       const userId = (req.user as any).id;
       const tastingData = { ...req.body, userId };
