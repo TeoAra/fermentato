@@ -1341,6 +1341,32 @@ export async function registerSocialRoutes(app: Express) {
         `UPDATE users SET suspended_until = $1 WHERE id = $2`,
         [suspendedUntil, userId],
       );
+
+      // Notifica in-app per l'utente sospeso
+      const durationLabels: Record<string, string> = {
+        "1h":  "1 ora",
+        "24h": "24 ore",
+        "7d":  "7 giorni",
+      };
+      const label = durationLabels[duration] || duration;
+      try {
+        await storage.createNotification({
+          userId,
+          type: "account_suspended",
+          title: "⚠️ Account sospeso",
+          message: `Il tuo account è stato sospeso per ${label}. Se ritieni si tratti di un errore, contattaci dalla pagina /contact.`,
+          isRead: false,
+        });
+        sendPushToUser(userId, {
+          title: "⚠️ Account sospeso",
+          body: `Il tuo account è stato sospeso per ${label}. Tocca per saperne di più.`,
+          url: "/contact",
+          tag: `account-suspended-${userId}`,
+        });
+      } catch (notifErr) {
+        console.error("[admin] suspend notification error:", notifErr);
+      }
+
       res.json({ message: "Account sospeso", userId, suspendedUntil });
     } catch (e) {
       console.error("[admin] suspend error:", e);
