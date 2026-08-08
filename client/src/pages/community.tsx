@@ -257,6 +257,7 @@ function TrendingBeerDrinkers({
       return Array.isArray(j) ? j : [];
     },
     staleTime: 2 * 60_000,
+    refetchInterval: 3 * 60_000,
   });
 
   // local optimistic follow state: Map<userId, isFollowing>
@@ -359,6 +360,7 @@ function TrendingBeersStrip() {
   const { data: beers = [] } = useQuery<any[]>({
     queryKey: ["/api/community/trending-beers"],
     staleTime: 5 * 60_000,
+    refetchInterval: 3 * 60_000,
   });
   if (beers.length === 0) return null;
   return (
