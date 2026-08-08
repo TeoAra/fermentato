@@ -416,6 +416,7 @@ function CommunityStats() {
   const { data: stats } = useQuery<{ checkins_today: number; posts_today: number; active_week: number }>({
     queryKey: ["/api/community/stats"],
     staleTime: 5 * 60_000,
+    refetchInterval: 3 * 60_000,
   });
   if (!stats || (stats.checkins_today === 0 && stats.posts_today === 0)) return null;
   return (
@@ -644,6 +645,9 @@ export default function CommunityPage() {
             <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Tutti</FilterChip>
             <FilterChip active={filter === "post"} onClick={() => setFilter("post")}>📝 Post</FilterChip>
             <FilterChip active={filter === "checkin"} onClick={() => setFilter("checkin")}>🍺 Check-in</FilterChip>
+          </div>
+          <div className="mt-2">
+            <CommunityStats />
           </div>
         </div>
       </div>
