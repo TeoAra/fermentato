@@ -241,7 +241,113 @@ function MicroblogCard({ post }: { post: any }) {
 }
 
 /* ── TrendingBeersStrip ── */
+function TrendingBeerDrinkers({
+  beerId, beerName, onClose,
+}: { beerId: number; beerName: string; onClose: () => void }) {
+  const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const { data: drinkers = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/community/trending-beers", beerId, "drinkers"],
+    queryFn: async () => {
+      const r = await fetch(`/api/community/trending-beers/${beerId}/drinkers`);
+      if (!r.ok) return [];
+      const j = await r.json();
+      return Array.isArray(j) ? j : [];
+    },
+    staleTime: 2 * 60_000,
+  });
+
+  // local optimistic follow state: Map<userId, isFollowing>
+  const [localFollow, setLocalFollow] = useState<Record<string, boolean>>({});
+
+  const followMut = useMutation({
+    mutationFn: ({ id, isFollowing }: { id: string; isFollowing: boolean }) =>
+      apiRequest(`/api/users/${id}/follow`, { method: isFollowing ? "DELETE" : "POST" }),
+    onMutate: ({ id, isFollowing }) => {
+      setLocalFollow(prev => ({ ...prev, [id]: !isFollowing }));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/user/following"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/user/feed"] });
+    },
+    onError: (_err, { id, isFollowing }) => {
+      setLocalFollow(prev => ({ ...prev, [id]: isFollowing })); // revert
+      toast({ title: "Errore", description: "Riprova tra poco", variant: "destructive" });
+    },
+  });
+
+  return (
+    <div className="mt-3 pt-3 border-t border-stone-100 dark:border-white/[0.06]">
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[11px] font-black uppercase tracking-widest text-stone-400">
+          Chi ha bevuto questa settimana
+        </p>
+        <Link href={`/beer/${beerId}`}
+          className="text-[10px] font-bold text-primary hover:underline flex items-center gap-0.5">
+          Vai alla birra <ChevronRight className="w-3 h-3" />
+        </Link>
+      </div>
+      {isLoading ? (
+        <div className="space-y-2 py-1">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="flex items-center gap-2.5">
+              <Skeleton className="w-8 h-8 rounded-full flex-shrink-0" />
+              <Skeleton className="h-3 flex-1 rounded" />
+              <Skeleton className="h-7 w-16 rounded-full" />
+            </div>
+          ))}
+        </div>
+      ) : drinkers.length === 0 ? (
+        <p className="text-xs text-stone-400 text-center py-3">
+          {isAuthenticated ? "Sei l'unico ad averla bevuta questa settimana!" : "Accedi per vedere chi l'ha bevuta"}
+        </p>
+      ) : (
+        <div className="space-y-0.5">
+          {drinkers.map((u: any) => {
+            const isFollowing = u.id in localFollow ? localFollow[u.id] : u.is_following;
+            return (
+              <div key={u.id} className="flex items-center gap-2.5 py-2">
+                <Link href={`/user/${u.username}`} className="flex-shrink-0">
+                  <UserAvatar user={u} size={8} />
+                </Link>
+                <div className="flex-1 min-w-0">
+                  <Link href={`/user/${u.username}`}>
+                    <p className="text-sm font-bold text-stone-800 dark:text-stone-100 truncate hover:text-primary transition-colors">
+                      {u.display_name || u.username}
+                    </p>
+                  </Link>
+                  {u.username && (
+                    <p className="text-[10px] text-stone-400 truncate">@{u.username}</p>
+                  )}
+                </div>
+                {isAuthenticated && (
+                  <button
+                    onClick={() => followMut.mutate({ id: u.id, isFollowing })}
+                    disabled={followMut.isPending}
+                    className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 flex-shrink-0 ${
+                      isFollowing
+                        ? "bg-stone-100 dark:bg-[#12151A] text-stone-500 dark:text-stone-400"
+                        : "bg-primary text-white shadow-sm shadow-primary/20"
+                    }`}
+                  >
+                    {isFollowing ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
+                    {isFollowing ? "Segui già" : "Segui"}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function TrendingBeersStrip() {
+  const [selectedBeer, setSelectedBeer] = useState<{ id: number; name: string } | null>(null);
+
   const { data: beers = [] } = useQuery<any[]>({
     queryKey: ["/api/community/trending-beers"],
     staleTime: 5 * 60_000,
@@ -254,20 +360,43 @@ function TrendingBeersStrip() {
         <p className="text-[11px] font-black uppercase tracking-widest text-stone-400">In tendenza questa settimana</p>
       </div>
       <div className="flex gap-4 overflow-x-auto pb-1 -mx-1 px-1" style={{ scrollbarWidth: "none" }}>
-        {beers.map((beer: any) => (
-          <Link key={beer.id} href={`/beer/${beer.id}`} className="flex-shrink-0 w-[72px] group">
-            <div className="w-[72px] h-[72px] mx-auto rounded-xl bg-[#FAF7F1] dark:bg-[#12151A] border border-stone-100 dark:border-white/[0.04] overflow-hidden flex items-center justify-center mb-1.5 group-hover:border-primary/30 transition-colors">
-              {beer.image_url ? (
-                <img src={beer.image_url} alt={beer.name} className="w-full h-full object-contain p-1.5" loading="lazy" />
-              ) : (
-                <span className="text-2xl">🍺</span>
-              )}
-            </div>
-            <p className="text-[10px] font-bold text-stone-700 dark:text-stone-300 text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors">{beer.name}</p>
-            <p className="text-[9px] text-amber-500 font-semibold text-center mt-0.5">{beer.checkin_count} {beer.checkin_count === "1" ? "assaggio" : "assaggi"}</p>
-          </Link>
-        ))}
+        {beers.map((beer: any) => {
+          const isSelected = selectedBeer?.id === beer.id;
+          return (
+            <button
+              key={beer.id}
+              onClick={() => setSelectedBeer(isSelected ? null : { id: beer.id, name: beer.name })}
+              className="flex-shrink-0 w-[72px] group text-left"
+            >
+              <div className={`w-[72px] h-[72px] mx-auto rounded-xl bg-[#FAF7F1] dark:bg-[#12151A] border overflow-hidden flex items-center justify-center mb-1.5 transition-colors ${
+                isSelected
+                  ? "border-primary/60 ring-2 ring-primary/20"
+                  : "border-stone-100 dark:border-white/[0.04] group-hover:border-primary/30"
+              }`}>
+                {beer.image_url ? (
+                  <img src={beer.image_url} alt={beer.name} className="w-full h-full object-contain p-1.5" loading="lazy" />
+                ) : (
+                  <span className="text-2xl">🍺</span>
+                )}
+              </div>
+              <p className={`text-[10px] font-bold text-center leading-tight line-clamp-2 transition-colors ${
+                isSelected ? "text-primary" : "text-stone-700 dark:text-stone-300 group-hover:text-primary"
+              }`}>{beer.name}</p>
+              <p className="text-[9px] text-amber-500 font-semibold text-center mt-0.5">
+                {beer.checkin_count} {beer.checkin_count === "1" ? "assaggio" : "assaggi"}
+              </p>
+            </button>
+          );
+        })}
       </div>
+      {selectedBeer && (
+        <TrendingBeerDrinkers
+          key={selectedBeer.id}
+          beerId={selectedBeer.id}
+          beerName={selectedBeer.name}
+          onClose={() => setSelectedBeer(null)}
+        />
+      )}
     </div>
   );
 }

@@ -1276,6 +1276,41 @@ export async function registerSocialRoutes(app: Express) {
     }
   });
 
+  // ── Trending beer: who drank it this week ─────────────────────────────────
+  app.get("/api/community/trending-beers/:beerId/drinkers", async (req: any, res) => {
+    const beerId = parseInt(req.params.beerId, 10);
+    if (Number.isNaN(beerId)) return res.status(400).json({ message: "ID non valido" });
+    const me: string | null = req.user?.id ?? null;
+    try {
+      const { rows } = await pool.query(`
+        SELECT DISTINCT ON (ubt.user_id)
+               u.id,
+               u.nickname AS username,
+               COALESCE(
+                 NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''),
+                 u.nickname
+               ) AS display_name,
+               u.profile_image_url,
+               ubt.tasted_at,
+               ($2::varchar IS NOT NULL AND EXISTS(
+                 SELECT 1 FROM user_follows uf
+                 WHERE uf.follower_id = $2 AND uf.following_id = u.id
+               )) AS is_following
+        FROM user_beer_tastings ubt
+        JOIN users u ON u.id = ubt.user_id
+        WHERE ubt.beer_id = $1
+          AND ubt.tasted_at > NOW() - INTERVAL '7 days'
+          AND ($2::varchar IS NULL OR u.id <> $2)
+        ORDER BY ubt.user_id, ubt.tasted_at DESC
+        LIMIT 10
+      `, [beerId, me]);
+      res.json(rows);
+    } catch (e: any) {
+      console.error("[trending-drinkers]", e.message);
+      res.json([]);
+    }
+  });
+
   // ── Community: quick activity stats ─────────────────────────────────────────
   app.get("/api/community/stats", async (_req, res) => {
     try {
