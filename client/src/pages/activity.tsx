@@ -1,15 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Users, Package, Search, UserPlus, UserMinus, BarChart3, Award, TrendingUp, Star, PenSquare } from "lucide-react";
+import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Package, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Link, useSearch } from "wouter";
+import { Link } from "wouter";
 import { formatDistanceToNow, format } from "date-fns";
 import { it } from "date-fns/locale";
 import { EventCategoryBadge, EventShareButtons, EventInterestButton } from "@/components/events-manager";
@@ -20,9 +18,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
 import { ZoomableImage } from "@/components/ImageLightbox";
-import { InlinePostComposer } from "@/components/social/InlinePostComposer";
-import { PostContent } from "@/components/social/PostContent";
-import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
 
 type OpenStatus = 'open' | 'closing_soon' | 'opening_soon' | 'closed';
 
@@ -98,69 +93,6 @@ function RatingStars({ rating }: { rating: number }) {
   return <span className="text-primary font-bold text-xs">{"★".repeat(Math.round(r))}{"☆".repeat(5 - Math.round(r))} {r.toFixed(1)}</span>;
 }
 
-function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
-  const name = user.display_name ?? user.nickname ?? "?";
-  const sizeClass = `w-${size} h-${size}`;
-  return user.profile_image_url ? (
-    <img loading="lazy" src={user.profile_image_url} alt={name} className={`${sizeClass} rounded-full object-cover flex-shrink-0`} />
-  ) : (
-    <div className={`${sizeClass} rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0`}>
-      <span className="text-primary text-sm font-bold">{name[0].toUpperCase()}</span>
-    </div>
-  );
-}
-
-function UserRow({ user, followingIds, onToggle }: { user: any; followingIds: Set<string>; onToggle: (id: string, following: boolean) => void }) {
-  const handle = user.username ?? user.nickname;
-  const name = user.display_name ?? ([user.first_name, user.last_name].filter(Boolean).join(" ") || handle);
-  const isFollowing = followingIds.has(user.id);
-  return (
-    <div className="flex items-center gap-3 py-3 px-1">
-      <Link href={`/user/${handle}`}>
-        <UserAvatar user={{ ...user, display_name: name }} size={10} />
-      </Link>
-      <div className="flex-1 min-w-0">
-        <Link href={`/user/${handle}`}>
-          <p className="font-semibold text-stone-800 dark:text-stone-100 text-sm truncate">{name}</p>
-          {handle && <p className="text-xs text-stone-400 truncate">@{handle}</p>}
-        </Link>
-      </div>
-      <button
-        onClick={() => onToggle(user.id, isFollowing)}
-        className={`flex items-center gap-1 text-xs font-semibold px-3 py-1.5 rounded-full transition-all ${
-          isFollowing ? "bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300" : "bg-primary text-white"
-        }`}
-      >
-        {isFollowing ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
-        {isFollowing ? "Segui già" : "Segui"}
-      </button>
-    </div>
-  );
-}
-
-const BADGE_DEFS = [
-  { key: "primo_sorso", icon: "🍺", name: "Primo Sorso" },
-  { key: "esploratore", icon: "🧭", name: "Esploratore" },
-  { key: "degustatore", icon: "🎓", name: "Degustatore" },
-  { key: "sommelier", icon: "🏆", name: "Sommelier" },
-  { key: "guru", icon: "⭐", name: "Guru della Birra" },
-  { key: "critico", icon: "✍️", name: "Critico" },
-  { key: "fotografo", icon: "📸", name: "Fotografo" },
-  { key: "cacciatore_stili", icon: "🎯", name: "Cacciatore di Stili" },
-  { key: "globe_trotter", icon: "🌍", name: "Globe Trotter" },
-  { key: "perfezionista", icon: "💎", name: "Perfezionista" },
-  { key: "sociale", icon: "👥", name: "Sociale" },
-];
-
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 text-center">
-      <p className="text-2xl font-bold text-stone-900 dark:text-stone-50 font-poppins">{value}</p>
-      <p className="text-xs text-stone-500 mt-0.5 font-medium">{label}</p>
-      {sub && <p className="text-xs text-primary mt-0.5">{sub}</p>}
-    </div>
-  );
-}
 const FORMAT_LABELS: Record<string, string> = { spina: "Alla spina", bottiglia: "Bottiglia", lattina: "Lattina", growler: "Growler" };
 
 function formatDistance(distance: number): string {
@@ -173,10 +105,7 @@ export default function Activity() {
   const isAuthenticated = !!currentUser;
   const { toast } = useToast();
   const [radius, setRadius] = useState("10");
-  const [userSearch, setUserSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  useEffect(() => { const t = setTimeout(() => setDebouncedSearch(userSearch), 350); return () => clearTimeout(t); }, [userSearch]);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [requestingLocation, setRequestingLocation] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -188,13 +117,6 @@ export default function Activity() {
     } catch { return new Set(); }
   });
 
-  const search = useSearch();
-  const [activeTab, setActiveTab] = useState("inzona");
-  // Sync tab from URL param (works with wouter navigation in Capacitor too)
-  useEffect(() => {
-    const tab = new URLSearchParams(search).get("tab");
-    if (tab) setActiveTab(tab);
-  }, [search]);
 
   const queryClient = useQueryClient();
   const handleRefresh = useCallback(async () => {
@@ -237,24 +159,6 @@ export default function Activity() {
   }, []);
 
   const auth = !!currentUser;
-  const { data: feed = [], isLoading: feedLoading } = useQuery<any[]>({ queryKey: ["/api/user/feed"], enabled: auth });
-  const { data: socialPosts = [], isLoading: socialPostsLoading } = useQuery<any[]>({
-    queryKey: ["/api/microblog/feed"],
-    enabled: activeTab === "sociale",
-  });
-  const { data: following = [], isLoading: followingLoading } = useQuery<any[]>({ queryKey: ["/api/user/following"], enabled: auth });
-  const { data: searchResults = [], isLoading: searchLoading } = useQuery<any[]>({
-    queryKey: ["/api/users/search", debouncedSearch],
-    queryFn: () => fetch(`/api/users/search?q=${encodeURIComponent(debouncedSearch)}`).then(r => r.json()),
-    enabled: debouncedSearch.length >= 2,
-  });
-  const { data: stats, isLoading: statsLoading } = useQuery<any>({ queryKey: ["/api/user/stats"], enabled: auth });
-  const { data: badges = [], isLoading: badgesLoading } = useQuery<any[]>({ queryKey: ["/api/user/badges"], enabled: auth });
-  const followingIds = new Set<string>((following as any[]).map((u: any) => u.id));
-  const followMutation = useMemo(() => ({
-    mutate: ({ id, following }: { id: string; following: boolean }) => apiRequest(`/api/users/${id}/follow`, { method: following ? "DELETE" : "POST" })
-  }), []);
-  const earnedBadges = badges.filter((b: any) => b.earned);
   const { data: allPubs, isLoading: loadingPubs } = useQuery({ queryKey: ["/api/pubs"] });
   const { data: favoriteBeers = [], isLoading: loadingFavoriteBeers } = useQuery<any[]>({ queryKey: ["/api/favorites/beer"], enabled: auth });
   const { data: popularBeersNearbyData = [], isLoading: loadingPopularBeers } = useQuery<any[]>({
@@ -450,24 +354,7 @@ export default function Activity() {
       )}
 
       <Helmet><title>Attività | Fermenta.to</title></Helmet>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="w-full mb-6 bg-stone-100 dark:bg-[#1A1D24]/60 p-1 rounded-xl h-auto">
-          <TabsTrigger value="inzona" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
-            <MapPin className="h-3.5 w-3.5 mr-1" />
-            In Zona
-          </TabsTrigger>
-          <TabsTrigger value="festival" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
-            <CalendarDays className="h-3.5 w-3.5 mr-1" />
-            Festival
-          </TabsTrigger>
-          <TabsTrigger value="sociale" className="flex-1 rounded-lg text-xs font-semibold data-[state=active]:bg-white dark:data-[state=active]:bg-stone-700 data-[state=active]:shadow-sm py-2">
-            <Users className="h-3.5 w-3.5 mr-1" />
-            Community
-          </TabsTrigger>
-        </TabsList>
-
-        {/* TAB: IN ZONA */}
-        <TabsContent value="inzona" className="space-y-8 mt-0">
+      <div className="space-y-8">
 
           {/* Locali Vicini */}
           <section>
@@ -656,190 +543,8 @@ export default function Activity() {
               </div>
             )}
           </section>
-        </TabsContent>
 
-        <TabsContent value="sociale" className="mt-0">
-          <div className="p-4 space-y-5">
-            {/* Compose bar */}
-            {isAuthenticated && currentUser && (
-              <InlinePostComposer user={currentUser} />
-            )}
-            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-sm p-4">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
-                <Input value={userSearch} onChange={e => setUserSearch(e.target.value)} placeholder="Cerca per nome o nickname…" className="pl-9 rounded-xl" />
-              </div>
-              {debouncedSearch.length >= 2 && (
-                <div className="mt-3 divide-y divide-stone-100 dark:divide-stone-700/30">
-                  {searchLoading ? (
-                    <div className="py-4 text-sm text-stone-400">Caricamento...</div>
-                  ) : (
-                    searchResults.map((u: any) => (
-                      <UserRow key={u.id} user={u} followingIds={followingIds} onToggle={(id, following) => followMutation.mutate({ id, following })} />
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              {statsLoading ? null : (
-                <>
-                  <StatCard label="Assaggi" value={stats?.total ?? 0} />
-                  <StatCard label="Voto medio" value={stats?.avgRating ? `${stats.avgRating} ★` : "—"} />
-                  <StatCard label="Streak" value={stats?.currentStreak ? `${stats.currentStreak}🔥` : "—"} />
-                </>
-              )}
-            </div>
-            {/* Post recenti */}
-            <div className="space-y-3">
-              <p className="text-xs font-black uppercase tracking-widest text-stone-400">Post recenti</p>
-              {socialPostsLoading ? (
-                <div className="flex items-center justify-center py-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
-                </div>
-              ) : (socialPosts as any[]).length === 0 ? (
-                <p className="text-sm text-stone-400 text-center py-3">Nessun post recente</p>
-              ) : (
-                (socialPosts as any[]).slice(0, 10).map((post: any) => (
-                  <div key={post.id} className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-stone-100 dark:border-[#23262E] shadow-sm p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Link href={`/user/${post.username}`}>
-                        <div className="w-8 h-8 rounded-full overflow-hidden bg-stone-200 flex-shrink-0">
-                          {post.profile_image_url
-                            ? <img src={post.profile_image_url} alt="" className="w-full h-full object-cover" />
-                            : <div className="w-full h-full flex items-center justify-center text-xs font-bold text-stone-500">{(post.display_name ?? post.username ?? "?")[0].toUpperCase()}</div>}
-                        </div>
-                      </Link>
-                      <div className="flex-1 min-w-0">
-                        <Link href={`/user/${post.username}`}>
-                          <p className="text-sm font-semibold text-stone-800 dark:text-stone-200 truncate">{post.display_name ?? post.username}</p>
-                        </Link>
-                        <p className="text-[11px] text-stone-400">
-                          {formatDistanceToNow(new Date(post.created_at), { addSuffix: true, locale: it })}
-                          <span className="ml-1 text-primary/70 font-semibold">· post</span>
-                        </p>
-                      </div>
-                    </div>
-                    <PostContent content={post.content} />
-                    {post.image_url && (
-                      <img src={post.image_url} alt="" className="mt-2 rounded-xl w-full max-h-64 object-cover" loading="lazy" />
-                    )}
-                    <div className="mt-3 pt-3 border-t border-stone-100 dark:border-[#23262E]/40">
-                      <MicroblogSocialBar
-                        postId={post.id}
-                        postUserId={post.user_id}
-                        liked={post.liked ?? false}
-                        likesCount={post.likes_count ?? 0}
-                        commentsCount={post.comments_count ?? 0}
-                        content={post.content ?? ""}
-                        authorType={post.author_type}
-                        authorEntityId={post.author_entity_id}
-                      />
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl p-4 shadow-sm">
-              <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Feed amici</p>
-              {feedLoading ? (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="w-5 h-5 animate-spin text-stone-400" />
-                </div>
-              ) : feed.length === 0 ? (
-                <div className="text-center py-6">
-                  <Users className="w-8 h-8 text-stone-300 mx-auto mb-2" />
-                  <p className="text-sm text-stone-400">Nessuna attività recente</p>
-                  <p className="text-xs text-stone-400 mt-1">Segui qualcuno per vedere i loro check-in</p>
-                </div>
-              ) : (
-                <div className="space-y-0">
-                  {feed.map((item: any) => {
-                    const name = item.display_name ?? item.username ?? "Utente";
-                    const handle = item.username ?? item.nickname;
-                    const rating = item.rating ? parseFloat(item.rating) : null;
-                    return (
-                      <div key={item.id} className="py-3.5 border-t first:border-t-0 border-stone-100 dark:border-[#23262E]/30">
-                        {/* User row */}
-                        <div className="flex items-center gap-2.5 mb-2.5">
-                          <Link href={`/user/${handle}`}>
-                            <UserAvatar user={{ display_name: name, profile_image_url: item.profile_image_url }} size={8} />
-                          </Link>
-                          <div className="flex-1 min-w-0">
-                            <Link href={`/user/${handle}`}>
-                              <p className="text-sm font-bold text-stone-900 dark:text-stone-50 hover:text-primary transition-colors">{name}</p>
-                            </Link>
-                            <p className="text-[10px] text-stone-400 flex items-center gap-1">
-                              <Clock className="w-2.5 h-2.5" />
-                              {item.tasted_at ? formatDistanceToNow(new Date(item.tasted_at), { addSuffix: true, locale: it }) : ""}
-                              <span className="text-stone-200 dark:text-stone-700">·</span>
-                              <span className="font-semibold text-primary/70">check-in</span>
-                            </p>
-                          </div>
-                          {rating !== null && (
-                            <span className="text-xs font-bold text-amber-500">{"★".repeat(Math.round(rating))} {rating.toFixed(1)}</span>
-                          )}
-                        </div>
-                        {/* Beer info */}
-                        <Link href={`/beer/${item.beer_id}`}>
-                          <div className="flex items-center gap-2.5 bg-stone-50 dark:bg-[#12151A] rounded-xl px-3 py-2 hover:bg-stone-100 dark:hover:bg-[#0B0D10] transition-colors">
-                            {item.beer_image ? (
-                              <img src={item.beer_image} alt={item.beer_name} className="w-9 h-9 rounded-lg object-contain bg-white flex-shrink-0" />
-                            ) : (
-                              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                <Beer className="w-4 h-4 text-primary" />
-                              </div>
-                            )}
-                            <div className="min-w-0">
-                              <p className="text-sm font-semibold text-stone-800 dark:text-stone-100 truncate">{item.beer_name}</p>
-                              {item.brewery_name && <p className="text-xs text-stone-400 truncate">{item.brewery_name}</p>}
-                            </div>
-                          </div>
-                        </Link>
-                        {/* Notes */}
-                        {item.notes && (
-                          <p className="mt-2 text-xs italic text-stone-500 dark:text-stone-400 px-1 line-clamp-2">"{item.notes}"</p>
-                        )}
-                        {/* Photo */}
-                        {item.photo_url && (
-                          <div className="mt-2 rounded-xl overflow-hidden">
-                            <ZoomableImage src={item.photo_url} alt="Foto assaggio" className="w-full object-cover max-h-48" />
-                          </div>
-                        )}
-                        {/* Pub */}
-                        {item.pub_id && item.pub_name && (
-                          <Link href={`/pub/${item.pub_id}`}>
-                            <p className="mt-1.5 text-xs text-primary font-semibold flex items-center gap-1 px-1">
-                              <MapPin className="w-3 h-3" />{item.pub_name}{item.pub_city ? `, ${item.pub_city}` : ""}
-                            </p>
-                          </Link>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl p-4 shadow-sm">
-              <p className="text-xs font-black uppercase tracking-widest text-stone-400 mb-3">Badge · {earnedBadges.length}/{BADGE_DEFS.length}</p>
-              <div className="grid grid-cols-4 gap-2">
-                {BADGE_DEFS.map((def: any) => {
-                  const earned = badges.find((b: any) => b.key === def.key)?.earned;
-                  return (
-                    <div key={def.key} className={`flex flex-col items-center gap-1 p-2 rounded-xl text-center ${earned ? "bg-primary/10" : "bg-stone-50 dark:bg-[#1A1D24] opacity-40"}`}>
-                      <span className="text-2xl">{def.icon}</span>
-                      <p className="text-[9px] font-bold text-stone-600 dark:text-stone-300 leading-tight">{def.name}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </TabsContent>
-
-        {/* TAB: FESTIVAL */}
-        <TabsContent value="festival" className="mt-0">
+          {/* Festival in evidenza */}
           <section>
             <h2 className="text-base font-semibold text-foreground dark:text-white mb-3 flex items-center gap-2">
               <CalendarDays className="h-4 w-4 text-amber-600" />
@@ -911,9 +616,8 @@ export default function Activity() {
               </div>
             )}
           </section>
-        </TabsContent>
+        </div>
 
-      </Tabs>
 
       {/* Event Detail Popup */}
       <Dialog open={!!selectedEvent} onOpenChange={(open) => { if (!open) setSelectedEvent(null); }}>
