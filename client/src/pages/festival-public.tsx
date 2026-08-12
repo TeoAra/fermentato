@@ -646,22 +646,9 @@ export default function FestivalPublic() {
   const [search, setSearch] = useState("");
   const [showUnavailable, setShowUnavailable] = useState(true);
   const [descExpanded, setDescExpanded] = useState(false);
-  // SSR-safe: parte da "taps" (vista valida sia su desktop che mobile);
-  // su mobile switchiamo a "overview" tramite useEffect.
-  const [activeTab, setActiveTab] = useState<string>("taps");
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 1024px)");
-    setActiveTab((prev) => (!mq.matches && prev === "taps" ? "overview" : prev));
-    const handler = (e: MediaQueryListEvent) => {
-      setActiveTab((prev) => {
-        if (e.matches && prev === "overview") return "taps";
-        return prev;
-      });
-    };
-    mq.addEventListener?.("change", handler);
-    return () => mq.removeEventListener?.("change", handler);
-  }, []);
+  // Parte da "overview" su tutti i dispositivi; su desktop la tab taps è
+  // sempre visibile nel layout a due colonne, quindi non serve switch.
+  const [activeTab, setActiveTab] = useState<string>("overview");
   const isFestivalModalOpen = useAnyModalOpen();
   // Nasconde la global BottomNavigation: questa pagina ha il proprio dock
   useHideGlobalBottomNav();
@@ -1201,13 +1188,13 @@ export default function FestivalPublic() {
           className="ios-fixed-chrome lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
         >
-          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+          <div className="bg-white/90 dark:bg-[#0B0B0C]/90 border-b border-stone-200/60 dark:border-white/[0.06]">
             <div className="flex items-center gap-3 px-3 h-14">
               <button
                 type="button"
                 onClick={() => setActiveTab('overview')}
                 aria-label="Torna alla home del festival"
-                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:opacity-80 transition-opacity"
               >
                 <ArrowLeft className="h-5 w-5 text-foreground" />
               </button>
@@ -1232,7 +1219,7 @@ export default function FestivalPublic() {
                 type="button"
                 onClick={handleFestivalShare}
                 aria-label="Condividi"
-                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:opacity-80 transition-opacity"
               >
                 <Share2 className="h-[18px] w-[18px] text-foreground" />
               </button>
