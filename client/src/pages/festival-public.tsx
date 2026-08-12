@@ -590,17 +590,27 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
 }
 
 // ── Rankings Tab ─────────────────────────────────────────────────────────────
-function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
+function RankingsTab({ rankings, lastUpdated }: { rankings: FestivalData["rankings"]; lastUpdated?: number }) {
+  const updatedLabel = lastUpdated
+    ? `aggiornata alle ${new Date(lastUpdated).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`
+    : null;
+
   if (rankings.length === 0) return (
     <div className="text-center py-10 text-muted-foreground">
       <Trophy className="h-8 w-8 mx-auto mb-2 opacity-30" />
       <p>Ancora nessun voto</p>
       <p className="text-xs mt-1">Espandi le birre per votarle!</p>
+      {updatedLabel && (
+        <p className="text-xs mt-2 opacity-50">{updatedLabel}</p>
+      )}
     </div>
   );
 
   return (
     <div className="space-y-2">
+      {updatedLabel && (
+        <p className="text-xs text-muted-foreground text-right px-1 pb-1">{updatedLabel}</p>
+      )}
       {rankings.map((t, i) => (
         <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] p-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
           <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold flex-shrink-0 ${
@@ -666,7 +676,7 @@ export default function FestivalPublic() {
     } catch {}
   };
 
-  const { data, isLoading, isError, error } = useQuery<FestivalData, { status: number; message: string }>({
+  const { data, isLoading, isError, error, dataUpdatedAt } = useQuery<FestivalData, { status: number; message: string }>({
     queryKey: ["/api/festivals", slug],
     queryFn: async () => {
       const r = await fetch(`/api/festivals/${slug}`, { credentials: "include" });
@@ -678,6 +688,7 @@ export default function FestivalPublic() {
       }
       return r.json();
     },
+    staleTime: 0,
     refetchInterval: 30000,
     retry: false,
   });
@@ -1169,7 +1180,7 @@ export default function FestivalPublic() {
             )}
 
             <TabsContent value="rankings" className="space-y-4">
-              <RankingsTab rankings={rankings} />
+              <RankingsTab rankings={rankings} lastUpdated={dataUpdatedAt} />
             </TabsContent>
           </Tabs>
         </div>
