@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTouchReorderInGroup } from "@/hooks/useTouchReorder";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -158,6 +159,23 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     }));
   };
   const handleItemDragEnd = () => { setItemDragOver(null); itemDragFrom.current = null; };
+
+  // ── Touch drag for items (iOS / Capacitor) ────────────────────────────────
+  const { startTouchDragInGroup } = useTouchReorderInGroup({
+    onReorder: (groupStr, fromIdx, toIdx) => {
+      const catId = parseInt(groupStr, 10);
+      setLocalMenu(prev => prev.map(cat => {
+        if (cat.id !== catId) return cat;
+        const items = [...cat.items];
+        const [moved] = items.splice(fromIdx, 1);
+        items.splice(toIdx, 0, moved);
+        reorderMenuItemsMutation.mutate({ catId, order: items.map((it, i) => ({ id: it.id, orderIndex: i })) });
+        return { ...cat, items };
+      }));
+    },
+    setDragOver: (state) =>
+      setItemDragOver(state ? { catId: parseInt(state.group, 10), idx: state.idx } : null),
+  });
   // ───────────────────────────────────────────────────────────────────────────
 
   // Category mutations
@@ -813,17 +831,25 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         <div
                           key={item.id}
                           draggable
+                          data-touch-sort-idx={itemIdx}
+                          data-touch-sort-group={String(category.id)}
                           onDragStart={(e) => handleItemDragStart(e, category.id, itemIdx)}
                           onDragOver={(e) => handleItemDragOver(e, category.id, itemIdx)}
                           onDrop={(e) => handleItemDrop(e, category.id, itemIdx)}
                           onDragEnd={handleItemDragEnd}
                           onDragLeave={() => setItemDragOver(null)}
-                          className={`bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4 relative group transition-all hover:shadow-md cursor-grab active:cursor-grabbing ${
+                          className={`bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border shadow-sm p-4 relative group transition-all hover:shadow-md ${
                             itemDragOver?.catId === category.id && itemDragOver?.idx === itemIdx ? 'border-primary ring-2 ring-primary/20' : ''
                           } ${!item.isVisible ? 'opacity-60 grayscale-[0.3]' : ''}`}
                         >
                           <div className="flex gap-3">
-                            <GripVertical className="w-4 h-4 text-muted-foreground/40 flex-shrink-0 mt-1 cursor-grab" />
+                            <div
+                              className="cursor-grab flex-shrink-0 mt-1"
+                              style={{ touchAction: 'none' }}
+                              onTouchStart={(e) => startTouchDragInGroup(e, String(category.id), itemIdx)}
+                            >
+                              <GripVertical className="w-4 h-4 text-muted-foreground/40" />
+                            </div>
                             {item.imageUrl && (
                               <img loading="lazy" 
                                 src={item.imageUrl} 

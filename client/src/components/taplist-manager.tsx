@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useDragReorder } from "@/hooks/use-drag-reorder";
+import { useTouchReorder } from "@/hooks/useTouchReorder";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -524,6 +524,8 @@ interface TapListManagerProps {
 export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: TapListManagerProps) {
   // ── Drag-and-drop ordering ────────────────────────────────────────────────
   const [localTapList, setLocalTapList] = useState<TapItem[]>([]);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
+  const dragFromIdx = useRef<number | null>(null);
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -544,12 +546,40 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     },
   });
 
-  const { dragOverIdx, draggingIdx: tapDraggingIdx, gripProps: tapGripProps, rowDataAttr: tapRowAttr } = useDragReorder({
-    items: localTapList,
-    onReorder: (next) => {
+  const handleDragStart = (e: React.DragEvent, idx: number) => {
+    dragFromIdx.current = idx;
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", String(idx));
+  };
+  const handleDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setDragOverIdx(idx);
+  };
+  const handleDrop = (e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault();
+    const from = dragFromIdx.current;
+    setDragOverIdx(null);
+    dragFromIdx.current = null;
+    if (from === null || from === dropIdx) return;
+    const next = [...localTapList];
+    const [moved] = next.splice(from, 1);
+    next.splice(dropIdx, 0, moved);
+    setLocalTapList(next);
+    reorderMutation.mutate(next.map((item, i) => ({ id: item.id, tapNumber: i + 1 })));
+  };
+  const handleDragEnd = () => { setDragOverIdx(null); dragFromIdx.current = null; };
+
+  // ── Touch drag (iOS / Capacitor) ──────────────────────────────────────────
+  const { startTouchDrag } = useTouchReorder({
+    onReorder: (from, to) => {
+      const next = [...localTapList];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
       setLocalTapList(next);
       reorderMutation.mutate(next.map((item, i) => ({ id: item.id, tapNumber: i + 1 })));
     },
+    setDragOver: setDragOverIdx,
   });
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -2146,12 +2176,16 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
             {localTapList.map((item, idx) => (
               <div
                 key={item.id}
-                {...tapRowAttr(idx)}
+                draggable
+                data-touch-sort-idx={idx}
+                onDragStart={e => handleDragStart(e, idx)}
+                onDragOver={e => handleDragOver(e, idx)}
+                onDrop={e => handleDrop(e, idx)}
+                onDragEnd={handleDragEnd}
+                onDragLeave={() => setDragOverIdx(null)}
                 className={`border rounded-2xl p-4 transition-colors ${
                   dragOverIdx === idx
                     ? 'border-primary border-dashed bg-primary/5'
-                    : tapDraggingIdx === idx
-                    ? 'opacity-50'
                     : !item.isVisible
                     ? 'border-stone-100 dark:border-border opacity-60 bg-stone-50/30 dark:bg-[#0B0D10]/10'
                     : 'border-stone-100 dark:border-border bg-white dark:bg-card'
@@ -2159,7 +2193,11 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
               >
                 {/* Row 1: drag handle + full name + action buttons */}
                 <div className="flex items-start gap-2">
-                  <div {...tapGripProps(idx)} className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 mt-1">
+                  <div
+                    className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 mt-1"
+                    style={{ touchAction: 'none' }}
+                    onTouchStart={e => startTouchDrag(e, idx)}
+                  >
                     <GripVertical className="w-4 h-4" />
                   </div>
                   <h3 className="flex-1 font-bold text-base text-foreground leading-snug">{item.beer.name}</h3>
