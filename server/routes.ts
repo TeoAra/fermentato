@@ -110,7 +110,12 @@ function buildSearchCacheKey(
   f: { glutenFree?: boolean; alcoholFree?: boolean; style?: string; minAbv?: number; maxAbv?: number; minIbu?: number; maxIbu?: number; city?: string },
   type: string = "all",
 ) {
-  return `search:${normalizeSearchTerm(query)}:${type}:${!!f.glutenFree}:${!!f.alcoholFree}:${f.style ?? ""}:${f.minAbv ?? ""}:${f.maxAbv ?? ""}:${f.minIbu ?? ""}:${f.maxIbu ?? ""}:${f.city ?? ""}`;
+  // Normalize style and city to lowercase so the key is consistent between the
+  // request path (which receives them verbatim from the UI, e.g. "IPA") and the
+  // warmer (which reads them from the DB with original casing).
+  const styleKey = (f.style ?? "").toLowerCase().trim();
+  const cityKey  = (f.city  ?? "").toLowerCase().trim();
+  return `search:${normalizeSearchTerm(query)}:${type}:${!!f.glutenFree}:${!!f.alcoholFree}:${styleKey}:${f.minAbv ?? ""}:${f.maxAbv ?? ""}:${f.minIbu ?? ""}:${f.maxIbu ?? ""}:${cityKey}`;
 }
 function logSearchTerm(raw: string) {
   const t = normalizeSearchTerm(raw);
@@ -235,11 +240,113 @@ async function warmStaticSearchTerms() {
     }
   } catch { /* non-fatal: DB may not be ready yet on first boot */ }
 }
+// ── Filtered warm-up ─────────────────────────────────────────────────────────
+// Warm the most common FILTERED searches (style, gluten-free, city) so they
+// are served from cache on first use after a restart.
+//
+// The search UI requires query.length > 1 before it fires, and the server
+// returns 400 for an empty query, so we MUST warm with real typed prefixes —
+// not empty strings. We re-use the same prefix corpus that warmStaticSearchTerms
+// builds, then cross it with three filter dimensions:
+//
+//  1. glutenFree=true × ALL corpus prefixes
+//     (gluten-free is the most-used boolean filter, applied while typing anything)
+//  2. Each top style × prefixes of that style's own name
+//     (users who filter by "IPA" typically type "i" → "ip" → "ipa")
+//  3. Each top city × prefixes of that city's name
+//     (same pattern: type the city name with the city filter active)
+//
+// All warming is sequential with a 50 ms pause to avoid starving the pool.
+async function warmFilteredSearchTerms() {
+  try {
+    // Fetch corpus ingredients (styles + brewery/pub first-word tokens + cities)
+    const [stylesResult, breweryWordsResult, pubWordsResult, citiesResult] = await Promise.all([
+      pool.query<{ style: string }>(
+        `SELECT style FROM beers WHERE style IS NOT NULL GROUP BY style ORDER BY count(*) DESC LIMIT 30`
+      ),
+      pool.query<{ word: string }>(
+        `SELECT lower(split_part(name, ' ', 1)) AS word
+         FROM breweries
+         WHERE is_closed IS NOT TRUE AND length(split_part(name, ' ', 1)) >= 1
+         GROUP BY word ORDER BY count(*) DESC LIMIT 40`
+      ),
+      pool.query<{ word: string }>(
+        `SELECT lower(split_part(name, ' ', 1)) AS word
+         FROM pubs WHERE length(split_part(name, ' ', 1)) >= 1
+         GROUP BY word ORDER BY count(*) DESC LIMIT 20`
+      ),
+      pool.query<{ city: string }>(
+        `SELECT city FROM pubs WHERE city IS NOT NULL AND city <> '' GROUP BY city ORDER BY count(*) DESC LIMIT 15`
+      ),
+    ]);
+
+    // ── Build the same prefix corpus as warmStaticSearchTerms ──────────────
+    const fullTerms = new Set<string>();
+    for (const row of stylesResult.rows) {
+      const t = normalizeSearchTerm(row.style);
+      if (t.length >= 1) fullTerms.add(t);
+    }
+    for (const row of [...breweryWordsResult.rows, ...pubWordsResult.rows]) {
+      const t = normalizeSearchTerm(row.word);
+      if (t.length >= 1) fullTerms.add(t);
+    }
+    const allPrefixes: string[] = [];
+    {
+      const prefixSet = new Set<string>();
+      for (const term of fullTerms) {
+        for (let len = 1; len <= term.length; len++) prefixSet.add(term.slice(0, len));
+      }
+      allPrefixes.push(...[...prefixSet].sort((a, b) => a.length - b.length || a.localeCompare(b)));
+    }
+
+    // Helper: sequential warmer for a list of (prefix, filters) pairs
+    async function warmList(items: Array<{ prefix: string; filters: Parameters<typeof buildSearchCacheKey>[1] }>) {
+      for (const { prefix, filters } of items) {
+        const cacheKey = buildSearchCacheKey(prefix, filters);
+        if (getCached(cacheKey)) continue;
+        try {
+          const result = await performGlobalSearch(prefix, filters);
+          setCache(cacheKey, result);
+        } catch { /* best-effort */ }
+        await new Promise(r => setTimeout(r, 50));
+      }
+    }
+
+    // 1. glutenFree=true × ALL corpus prefixes
+    await warmList(allPrefixes.map(prefix => ({ prefix, filters: { glutenFree: true } as const })));
+
+    // 2. Each top style × prefixes of that style's own name (+ with glutenFree)
+    for (const row of stylesResult.rows) {
+      const style = row.style.trim(); // original casing for the actual DB query
+      const normalized = normalizeSearchTerm(style);
+      if (!normalized) continue;
+      const stylePrefixes = Array.from({ length: normalized.length }, (_, i) => normalized.slice(0, i + 1));
+
+      await warmList(stylePrefixes.map(prefix => ({ prefix, filters: { style } })));
+      await warmList(stylePrefixes.map(prefix => ({ prefix, filters: { style, glutenFree: true } as const })));
+    }
+
+    // 3. Each top city × prefixes of that city's name
+    for (const row of citiesResult.rows) {
+      const city = row.city.trim(); // original casing for the actual DB query
+      const normalized = normalizeSearchTerm(city);
+      if (!normalized) continue;
+      const cityPrefixes = Array.from({ length: normalized.length }, (_, i) => normalized.slice(0, i + 1));
+
+      await warmList(cityPrefixes.map(prefix => ({ prefix, filters: { city } })));
+    }
+  } catch { /* non-fatal */ }
+}
+
 // Delay slightly so the DB connection pool is fully ready before we hit it.
 setTimeout(() => { warmStaticSearchTerms().catch(() => {}); }, 5000).unref();
+// Filtered warm-up runs shortly after the static one (give static a head-start).
+setTimeout(() => { warmFilteredSearchTerms().catch(() => {}); }, 8000).unref();
 // Re-warm the static corpus slightly ahead of TTL expiry so corpus prefix entries
 // never go cold between restarts. Interval is 13 min < SEARCH_CACHE_TTL (15 min).
 setInterval(() => { warmStaticSearchTerms().catch(() => {}); }, 13 * 60 * 1000).unref();
+// Re-warm filtered combos on the same cadence.
+setInterval(() => { warmFilteredSearchTerms().catch(() => {}); }, 13 * 60 * 1000).unref();
 
 // ── Shared helper: base64 dataURL → temp file ───────────────────────────────
 async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: string } | null> {
