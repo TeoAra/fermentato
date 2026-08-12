@@ -1161,6 +1161,33 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
   };
   const handleCatDragEnd = () => { setCatDragOver(null); catDragFrom.current = null; };
 
+  // ── Touch drag for categories (iOS) ─────────────────────────────────────
+  const catTouchFrom = useRef<number | null>(null);
+  const handleCatTouchStart = (_e: React.TouchEvent, idx: number) => {
+    catTouchFrom.current = idx;
+  };
+  const handleCatTouchMove = (e: React.TouchEvent) => {
+    if (catTouchFrom.current === null) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = el?.closest('[data-cat-idx]');
+    const overIdx = target ? parseInt(target.getAttribute('data-cat-idx')!) : null;
+    setCatDragOver(overIdx ?? null);
+  };
+  const handleCatTouchEnd = () => {
+    const from = catTouchFrom.current;
+    const dropIdx = catDragOver;
+    setCatDragOver(null);
+    catTouchFrom.current = null;
+    if (from === null || dropIdx === null || from === dropIdx) return;
+    const next = [...localCategories];
+    const [moved] = next.splice(from, 1);
+    next.splice(dropIdx, 0, moved);
+    setLocalCategories(next);
+    reorderCategoryMutation.mutate(next);
+  };
+
   // ── Drag-and-drop: items within a category ───────────────────────────────
   const [localFood, setLocalFood] = useState<FoodItem[]>([]);
   const [itemDragOver, setItemDragOver] = useState<{ cat: string; idx: number } | null>(null);
@@ -1194,6 +1221,36 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
     reorderFoodMutation.mutate(catItems.map((item, i) => ({ id: item.id, orderIndex: i })));
   };
   const handleItemDragEnd = () => { setItemDragOver(null); itemDragFrom.current = null; };
+
+  // ── Touch drag for items within a category (iOS) ─────────────────────────
+  const itemTouchFrom = useRef<{ cat: string; idx: number } | null>(null);
+  const handleItemTouchStart = (_e: React.TouchEvent, cat: string, idx: number) => {
+    itemTouchFrom.current = { cat, idx };
+  };
+  const handleItemTouchMove = (e: React.TouchEvent, cat: string) => {
+    if (!itemTouchFrom.current || itemTouchFrom.current.cat !== cat) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = el?.closest('[data-item-cat]');
+    if (!target) return;
+    const targetCat = target.getAttribute('data-item-cat');
+    const targetIdx = parseInt(target.getAttribute('data-item-idx') ?? '-1');
+    if (targetCat === cat && targetIdx >= 0) setItemDragOver({ cat, idx: targetIdx });
+  };
+  const handleItemTouchEnd = (cat: string) => {
+    const from = itemTouchFrom.current;
+    const dropOver = itemDragOver;
+    setItemDragOver(null);
+    itemTouchFrom.current = null;
+    if (!from || !dropOver || from.cat !== cat || dropOver.cat !== cat || from.idx === dropOver.idx) return;
+    const catItems = localFood.filter(i => (i.category || "Altro") === cat);
+    const others = localFood.filter(i => (i.category || "Altro") !== cat);
+    const [moved] = catItems.splice(from.idx, 1);
+    catItems.splice(dropOver.idx, 0, moved);
+    setLocalFood([...others, ...catItems]);
+    reorderFoodMutation.mutate(catItems.map((item, i) => ({ id: item.id, orderIndex: i })));
+  };
 
   const toggleCategory = (cat: string) => {
     setExpandedCategories(prev => {
@@ -1356,11 +1413,16 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
         return (
           <div
             key={cat}
+            data-cat-idx={catIdx}
             draggable
             onDragStart={e => handleCatDragStart(e, catIdx)}
             onDragOver={e => handleCatDragOver(e, catIdx)}
             onDrop={e => handleCatDrop(e, catIdx)}
             onDragEnd={handleCatDragEnd}
+            onTouchStart={e => handleCatTouchStart(e, catIdx)}
+            onTouchMove={handleCatTouchMove}
+            onTouchEnd={handleCatTouchEnd}
+            style={{ touchAction: catTouchFrom.current !== null ? 'none' : 'pan-y' }}
             className={`transition-all ${catDragOver === catIdx ? 'ring-2 ring-primary/50 opacity-80 rounded-xl' : ''}`}
           >
           <Card className="overflow-hidden">
@@ -1404,11 +1466,17 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
                     {items.map((item, itemIdx) => (
                       <div
                         key={item.id}
+                        data-item-cat={cat}
+                        data-item-idx={itemIdx}
                         draggable
                         onDragStart={e => handleItemDragStart(e, cat, itemIdx)}
                         onDragOver={e => handleItemDragOver(e, cat, itemIdx)}
                         onDrop={e => handleItemDrop(e, cat, itemIdx)}
                         onDragEnd={handleItemDragEnd}
+                        onTouchStart={e => handleItemTouchStart(e, cat, itemIdx)}
+                        onTouchMove={e => handleItemTouchMove(e, cat)}
+                        onTouchEnd={() => handleItemTouchEnd(cat)}
+                        style={{ touchAction: itemTouchFrom.current?.cat === cat ? 'none' : 'pan-y' }}
                         className={`flex items-start gap-3 px-4 py-3 transition-all ${!item.isAvailable ? "opacity-60" : ""} ${itemDragOver?.cat === cat && itemDragOver?.idx === itemIdx ? 'ring-1 ring-inset ring-primary/40 bg-primary/5' : ''}`}
                       >
                         <div className="cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-400 shrink-0 mt-0.5">
@@ -1696,6 +1764,33 @@ export default function FestivalDashboard() {
     reorderTapsMutation.mutate(next.map((t, i) => ({ id: t.id, orderIndex: i })));
   };
   const handleTapDragEnd = () => { setTapDragOver(null); tapDragFrom.current = null; };
+
+  // ── Touch drag for taps (iOS) ────────────────────────────────────────────
+  const tapTouchFrom = useRef<number | null>(null);
+  const handleTapTouchStart = (_e: React.TouchEvent, idx: number) => {
+    tapTouchFrom.current = idx;
+  };
+  const handleTapTouchMove = (e: React.TouchEvent) => {
+    if (tapTouchFrom.current === null) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const el = document.elementFromPoint(touch.clientX, touch.clientY);
+    const target = el?.closest('[data-tap-idx]');
+    const overIdx = target ? parseInt(target.getAttribute('data-tap-idx')!) : null;
+    setTapDragOver(overIdx ?? null);
+  };
+  const handleTapTouchEnd = (e: React.TouchEvent) => {
+    const from = tapTouchFrom.current;
+    const dropIdx = tapDragOver;
+    setTapDragOver(null);
+    tapTouchFrom.current = null;
+    if (from === null || dropIdx === null || from === dropIdx) return;
+    const next = [...localTaps];
+    const [moved] = next.splice(from, 1);
+    next.splice(dropIdx, 0, moved);
+    setLocalTaps(next);
+    reorderTapsMutation.mutate(next.map((t, i) => ({ id: t.id, orderIndex: i })));
+  };
 
   // Update festival info
   const updateFestMutation = useMutation({
@@ -2093,11 +2188,16 @@ export default function FestivalDashboard() {
                           {localTaps.map((tap, idx) => (
                             <div
                               key={tap.id}
+                              data-tap-idx={idx}
                               draggable
                               onDragStart={e => handleTapDragStart(e, idx)}
                               onDragOver={e => handleTapDragOver(e, idx)}
                               onDrop={e => handleTapDrop(e, idx)}
                               onDragEnd={handleTapDragEnd}
+                              onTouchStart={e => handleTapTouchStart(e, idx)}
+                              onTouchMove={handleTapTouchMove}
+                              onTouchEnd={handleTapTouchEnd}
+                              style={{ touchAction: tapTouchFrom.current !== null ? 'none' : 'pan-y' }}
                               className={`rounded-xl transition-all ${tapDragOver === idx ? 'ring-2 ring-primary/50 opacity-80' : ''}`}
                             >
                               <TapRow
