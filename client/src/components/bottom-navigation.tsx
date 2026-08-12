@@ -411,7 +411,7 @@ export function BottomNavigation() {
             type="button"
             onClick={() => setLocation("/search")}
             aria-label="Cerca"
-            className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-[0_8px_20px_rgba(232,119,34,0.45)] border-4 border-white dark:border-[#0B0D10] transition-transform active:scale-95 z-[1]"
+            className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-[0_8px_20px_rgba(232,119,34,0.45)] border-4 border-white dark:border-[#0B0D10] active:opacity-80 transition-opacity z-[1]"
           >
             <Search className="w-6 h-6" strokeWidth={2.5} />
           </button>
