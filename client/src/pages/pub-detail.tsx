@@ -47,6 +47,7 @@ import {
   type FoodMenu,
 } from "@/components/pub";
 import DesktopAnchorNav from "@/components/DesktopAnchorNav";
+import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
@@ -739,6 +740,12 @@ export default function PubDetail() {
                 onCall={handleCall}
                 onDirections={handleDirections}
               />
+              {pubNumericId && pubData?.name && (
+                <CommunityPostsSection
+                  entity={{ kind: "pub", id: pubNumericId, name: pubData.name }}
+                  title="Post della community su questo locale"
+                />
+              )}
             </div>
 
             <div id="section-taplist" className={`${activeTab === "taplist" ? "" : "hidden"} lg:!block`}>

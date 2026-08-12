@@ -45,6 +45,7 @@ import {
   type StickyTabDef,
 } from "@/components/brewery";
 import DesktopAnchorNav from "@/components/DesktopAnchorNav";
+import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
@@ -592,6 +593,12 @@ export default function BreweryDetail() {
             <div id="section-overview" className={`${activeTab === "overview" ? "" : "hidden"} lg:!block`}>
               <h2 className="hidden lg:block text-xl font-black text-[#151515] dark:text-[#F5F5F5] pt-4 mb-0">Panoramica</h2>
               <BreweryOverviewSection brewery={brewery} onDirections={handleDirections} />
+              {brewery?.id && brewery?.name && (
+                <CommunityPostsSection
+                  entity={{ kind: "brewery", id: brewery.id, name: brewery.name }}
+                  title="Post della community su questo birrificio"
+                />
+              )}
             </div>
 
             <div id="section-birre" className={`${activeTab === "birre" ? "" : "hidden"} lg:!block`}>

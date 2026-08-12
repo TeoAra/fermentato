@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { PenSquare, Users } from "lucide-react";
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/useAuth";
 import { PostContent } from "./PostContent";
-import { EntityPreviewCard, type EntityType } from "./EntityPreviewCard";
+import { EntityChip } from "./EntityChip";
 import { MicroblogSocialBar } from "./MicroblogSocialBar";
 
 export type TaggedEntity =
@@ -47,15 +46,6 @@ function PostAvatar({ post, size = 8 }: { post: any; size?: number }) {
 }
 
 function CommunityPostCard({ post }: { post: any }) {
-  const [entityPreview, setEntityPreview] = useState<{
-    type: "brewery" | "pub" | "beer"; id: number; rect: DOMRect;
-  } | null>(null);
-
-  const handleEntityChip = (e: React.MouseEvent, type: "brewery" | "pub" | "beer", id: number) => {
-    e.preventDefault(); e.stopPropagation();
-    setEntityPreview({ type, id, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() });
-  };
-
   return (
     <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-stone-100 dark:border-[#23262E] shadow-sm p-4" data-testid={`community-post-${post.id}`}>
       <div className="flex items-center gap-2 mb-2">
@@ -79,22 +69,13 @@ function CommunityPostCard({ post }: { post: any }) {
       {(post.beer_name || post.pub_name || post.brewery_name) && (
         <div className="mt-2 flex flex-wrap gap-1.5">
           {post.beer_name && post.beer_id && (
-            <button onClick={(e) => handleEntityChip(e, "beer", post.beer_id)}
-              className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-full font-bold cursor-pointer hover:bg-primary/20 transition-colors">
-              🍺 {post.beer_name}
-            </button>
+            <EntityChip type="beer" id={post.beer_id} label={post.beer_name} />
           )}
           {post.pub_name && post.pub_id && (
-            <button onClick={(e) => handleEntityChip(e, "pub", post.pub_id)}
-              className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A] transition-colors">
-              📍 {post.pub_name}
-            </button>
+            <EntityChip type="pub" id={post.pub_id} label={post.pub_name} />
           )}
           {post.brewery_name && post.brewery_id && (
-            <button onClick={(e) => handleEntityChip(e, "brewery", post.brewery_id)}
-              className="text-[10px] bg-stone-100 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 px-2 py-0.5 rounded-full cursor-pointer hover:bg-stone-200 dark:hover:bg-[#12151A] transition-colors">
-              🏭 {post.brewery_name}
-            </button>
+            <EntityChip type="brewery" id={post.brewery_id} label={post.brewery_name} />
           )}
         </div>
       )}
@@ -110,15 +91,6 @@ function CommunityPostCard({ post }: { post: any }) {
           authorEntityId={post.author_entity_id}
         />
       </div>
-
-      {entityPreview && (
-        <EntityPreviewCard
-          type={entityPreview.type}
-          id={entityPreview.id}
-          anchorRect={entityPreview.rect}
-          onClose={() => setEntityPreview(null)}
-        />
-      )}
     </div>
   );
 }

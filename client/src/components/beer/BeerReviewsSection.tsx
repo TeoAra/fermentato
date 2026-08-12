@@ -13,7 +13,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { RichTextDisplay } from "@/components/rich-text-editor";
 import { getBadgeForCount } from "@/lib/badges";
-import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 import CheckinSocialBar from "@/components/social/CheckinSocialBar";
 import { ZoomableImage } from "@/components/ImageLightbox";
 
@@ -396,13 +395,6 @@ export default function BeerReviewsSection({
         </div>
       )}
 
-      {/* Community posts */}
-      {beerId && beerName && (
-        <CommunityPostsSection
-          entity={{ kind: "beer", id: beerId, name: beerName }}
-          title="Post della community su questa birra"
-        />
-      )}
     </div>
   );
 }

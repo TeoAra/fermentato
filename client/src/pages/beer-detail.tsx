@@ -53,6 +53,7 @@ import BeerAvailabilitySection from "@/components/beer/BeerAvailabilitySection";
 import BeerInfoSection from "@/components/beer/BeerInfoSection";
 import BeerReviewsSection from "@/components/beer/BeerReviewsSection";
 import MyBeerHistory from "@/components/beer/MyBeerHistory";
+import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 
 const BEER_TABS: StickyTabDef[] = [
   { value: "overview", label: "Panoramica", icon: <HomeIcon className="w-4 h-4" /> },
@@ -1006,6 +1007,12 @@ export default function BeerDetail() {
                 ))}
               </div>
             </div>
+          )}
+          {beer?.id && beer?.name && (
+            <CommunityPostsSection
+              entity={{ kind: "beer", id: beer.id, name: beer.name }}
+              title="Post della community su questa birra"
+            />
           )}
         </div>
 
