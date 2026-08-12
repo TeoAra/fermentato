@@ -1752,9 +1752,9 @@ export default function FestivalDashboard() {
     const next = [...localTaps];
     const [moved] = next.splice(from, 1);
     next.splice(dropIdx, 0, moved);
-    const renumbered = next.map((t, i) => ({ ...t, tapNumber: i + 1, orderIndex: i }));
-    setLocalTaps(renumbered);
-    reorderTapsMutation.mutate(renumbered.map(t => ({ id: t.id, orderIndex: t.orderIndex, tapNumber: t.tapNumber })));
+    const reordered = next.map((t, i) => ({ ...t, orderIndex: i }));
+    setLocalTaps(reordered);
+    reorderTapsMutation.mutate(reordered.map(t => ({ id: t.id, orderIndex: t.orderIndex })));
   };
   const handleTapDragEnd = () => { setTapDragOver(null); tapDragFrom.current = null; };
 
@@ -1764,9 +1764,9 @@ export default function FestivalDashboard() {
       const next = [...localTaps];
       const [moved] = next.splice(from, 1);
       next.splice(to, 0, moved);
-      const renumbered = next.map((t, i) => ({ ...t, tapNumber: i + 1, orderIndex: i }));
-      setLocalTaps(renumbered);
-      reorderTapsMutation.mutate(renumbered.map(t => ({ id: t.id, orderIndex: t.orderIndex, tapNumber: t.tapNumber })));
+      const reordered = next.map((t, i) => ({ ...t, orderIndex: i }));
+      setLocalTaps(reordered);
+      reorderTapsMutation.mutate(reordered.map(t => ({ id: t.id, orderIndex: t.orderIndex })));
     },
     setDragOver: setTapDragOver,
   });
