@@ -1,4 +1,5 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useDragReorder } from "@/hooks/use-drag-reorder";
 import { useChromecast } from "@/hooks/useChromecast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ImageUpload } from "@/components/image-upload";
@@ -1114,21 +1115,15 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [itemForm, setItemForm] = useState({ name: "", description: "", price: "", isAvailable: true, allergens: [] as string[] });
 
-  // ── Drag-and-drop: categories ─────────────────────────────────────────────
+  // ── Drag-and-drop: categories (pointer events via useDragReorder) ────────
   const [localCategories, setLocalCategories] = useState<string[]>([]);
-  const [catDragOver, setCatDragOver] = useState<number | null>(null);
-  const catDragFrom = useRef<number | null>(null);
 
   // Initialise / sync localCategories: honour persisted order, append unknowns at end
   useEffect(() => {
     setLocalCategories(prev => {
       const known = new Set(categories);
-      // Start from the persisted order (filtered to only existing categories)
       const persisted = (foodCategoryOrder ?? []).filter(c => known.has(c));
-      // Append categories not yet in the persisted list (newly added)
       const remainder = categories.filter(c => !persisted.includes(c));
-      // If prev already has a user-reordered state (session-local), preserve it
-      // but fall back to persisted order on first mount (prev is empty)
       if (prev.length === 0) return [...persisted, ...remainder];
       const filtered = prev.filter(c => known.has(c));
       const added = categories.filter(c => !filtered.includes(c));
@@ -1142,56 +1137,20 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
     onError: () => toast({ title: "Errore nel riordinamento categorie", variant: "destructive" }),
   });
 
-  const handleCatDragStart = (e: React.DragEvent, idx: number) => {
-    catDragFrom.current = idx; e.dataTransfer.effectAllowed = "move";
-  };
-  const handleCatDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault(); setCatDragOver(idx);
-  };
-  const handleCatDrop = (e: React.DragEvent, dropIdx: number) => {
-    e.preventDefault();
-    const from = catDragFrom.current;
-    setCatDragOver(null); catDragFrom.current = null;
-    if (from === null || from === dropIdx) return;
-    const next = [...localCategories];
-    const [moved] = next.splice(from, 1);
-    next.splice(dropIdx, 0, moved);
-    setLocalCategories(next);
-    reorderCategoryMutation.mutate(next);
-  };
-  const handleCatDragEnd = () => { setCatDragOver(null); catDragFrom.current = null; };
+  const { dragOverIdx: catDragOver, draggingIdx: catDraggingIdx, gripProps: catGripProps, rowDataAttr: catRowAttr } = useDragReorder({
+    items: localCategories,
+    onReorder: (next) => {
+      setLocalCategories(next);
+      reorderCategoryMutation.mutate(next);
+    },
+  });
 
-  // ── Touch drag for categories (iOS) ─────────────────────────────────────
-  const catTouchFrom = useRef<number | null>(null);
-  const handleCatTouchStart = (_e: React.TouchEvent, idx: number) => {
-    catTouchFrom.current = idx;
-  };
-  const handleCatTouchMove = (e: React.TouchEvent) => {
-    if (catTouchFrom.current === null) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    const target = el?.closest('[data-cat-idx]');
-    const overIdx = target ? parseInt(target.getAttribute('data-cat-idx')!) : null;
-    setCatDragOver(overIdx ?? null);
-  };
-  const handleCatTouchEnd = () => {
-    const from = catTouchFrom.current;
-    const dropIdx = catDragOver;
-    setCatDragOver(null);
-    catTouchFrom.current = null;
-    if (from === null || dropIdx === null || from === dropIdx) return;
-    const next = [...localCategories];
-    const [moved] = next.splice(from, 1);
-    next.splice(dropIdx, 0, moved);
-    setLocalCategories(next);
-    reorderCategoryMutation.mutate(next);
-  };
-
-  // ── Drag-and-drop: items within a category ───────────────────────────────
+  // ── Drag-and-drop: items within a category (pointer events, category-scoped) ──
   const [localFood, setLocalFood] = useState<FoodItem[]>([]);
   const [itemDragOver, setItemDragOver] = useState<{ cat: string; idx: number } | null>(null);
-  const itemDragFrom = useRef<{ cat: string; idx: number } | null>(null);
+  const itemDragFromRef = useRef<{ cat: string; idx: number } | null>(null);
+  const localFoodRef = useRef(localFood);
+  useEffect(() => { localFoodRef.current = localFood; }, [localFood]);
   useEffect(() => {
     if (Array.isArray(food)) setLocalFood([...food].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
   }, [food]);
@@ -1202,55 +1161,53 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
     onError: () => toast({ title: "Errore nel riordinamento", variant: "destructive" }),
   });
 
-  const handleItemDragStart = (e: React.DragEvent, cat: string, idx: number) => {
-    itemDragFrom.current = { cat, idx }; e.dataTransfer.effectAllowed = "move";
-  };
-  const handleItemDragOver = (e: React.DragEvent, cat: string, idx: number) => {
-    e.preventDefault(); setItemDragOver({ cat, idx });
-  };
-  const handleItemDrop = (e: React.DragEvent, cat: string, dropIdx: number) => {
-    e.preventDefault();
-    const from = itemDragFrom.current;
-    setItemDragOver(null); itemDragFrom.current = null;
-    if (!from || from.cat !== cat || from.idx === dropIdx) return;
-    const catItems = localFood.filter(i => (i.category || "Altro") === cat);
-    const others = localFood.filter(i => (i.category || "Altro") !== cat);
-    const [moved] = catItems.splice(from.idx, 1);
-    catItems.splice(dropIdx, 0, moved);
-    setLocalFood([...others, ...catItems]);
-    reorderFoodMutation.mutate(catItems.map((item, i) => ({ id: item.id, orderIndex: i })));
-  };
-  const handleItemDragEnd = () => { setItemDragOver(null); itemDragFrom.current = null; };
-
-  // ── Touch drag for items within a category (iOS) ─────────────────────────
-  const itemTouchFrom = useRef<{ cat: string; idx: number } | null>(null);
-  const handleItemTouchStart = (_e: React.TouchEvent, cat: string, idx: number) => {
-    itemTouchFrom.current = { cat, idx };
-  };
-  const handleItemTouchMove = (e: React.TouchEvent, cat: string) => {
-    if (!itemTouchFrom.current || itemTouchFrom.current.cat !== cat) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    const target = el?.closest('[data-item-cat]');
-    if (!target) return;
-    const targetCat = target.getAttribute('data-item-cat');
-    const targetIdx = parseInt(target.getAttribute('data-item-idx') ?? '-1');
-    if (targetCat === cat && targetIdx >= 0) setItemDragOver({ cat, idx: targetIdx });
-  };
-  const handleItemTouchEnd = (cat: string) => {
-    const from = itemTouchFrom.current;
-    const dropOver = itemDragOver;
-    setItemDragOver(null);
-    itemTouchFrom.current = null;
-    if (!from || !dropOver || from.cat !== cat || dropOver.cat !== cat || from.idx === dropOver.idx) return;
-    const catItems = localFood.filter(i => (i.category || "Altro") === cat);
-    const others = localFood.filter(i => (i.category || "Altro") !== cat);
-    const [moved] = catItems.splice(from.idx, 1);
-    catItems.splice(dropOver.idx, 0, moved);
-    setLocalFood([...others, ...catItems]);
-    reorderFoodMutation.mutate(catItems.map((item, i) => ({ id: item.id, orderIndex: i })));
-  };
+  const foodItemGripProps = useCallback((cat: string, idx: number) => ({
+    onPointerDown(e: React.PointerEvent) {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      itemDragFromRef.current = { cat, idx };
+      document.body.style.userSelect = "none";
+      (document.body.style as any).webkitUserSelect = "none";
+    },
+    onPointerMove(e: React.PointerEvent) {
+      if (!itemDragFromRef.current || itemDragFromRef.current.cat !== cat) return;
+      e.preventDefault();
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const row = el?.closest("[data-food-cat]") as HTMLElement | null;
+      if (!row) return;
+      const rowCat = row.getAttribute("data-food-cat");
+      const rowIdx = parseInt(row.getAttribute("data-food-idx") ?? "", 10);
+      if (rowCat === cat && !isNaN(rowIdx)) setItemDragOver({ cat, idx: rowIdx });
+    },
+    onPointerUp() {
+      document.body.style.userSelect = "";
+      (document.body.style as any).webkitUserSelect = "";
+      const from = itemDragFromRef.current;
+      itemDragFromRef.current = null;
+      setItemDragOver(prev => {
+        if (from && prev && from.cat === prev.cat && from.idx !== prev.idx) {
+          const allFood = localFoodRef.current;
+          const catItems = allFood.filter(i => (i.category || "Altro") === cat);
+          const others = allFood.filter(i => (i.category || "Altro") !== cat);
+          const [moved] = catItems.splice(from.idx, 1);
+          catItems.splice(prev.idx, 0, moved);
+          setLocalFood([...others, ...catItems]);
+          reorderFoodMutation.mutate(catItems.map((item, i) => ({ id: item.id, orderIndex: i })));
+        }
+        return null;
+      });
+    },
+    onPointerCancel() {
+      document.body.style.userSelect = "";
+      (document.body.style as any).webkitUserSelect = "";
+      itemDragFromRef.current = null;
+      setItemDragOver(null);
+    },
+    onDragStart(e: React.DragEvent) { e.preventDefault(); },
+    style: { touchAction: "none" } as React.CSSProperties,
+  }), [reorderFoodMutation]);
 
   const toggleCategory = (cat: string) => {
     setExpandedCategories(prev => {
@@ -1413,22 +1370,13 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
         return (
           <div
             key={cat}
-            data-cat-idx={catIdx}
-            draggable
-            onDragStart={e => handleCatDragStart(e, catIdx)}
-            onDragOver={e => handleCatDragOver(e, catIdx)}
-            onDrop={e => handleCatDrop(e, catIdx)}
-            onDragEnd={handleCatDragEnd}
-            onTouchStart={e => handleCatTouchStart(e, catIdx)}
-            onTouchMove={handleCatTouchMove}
-            onTouchEnd={handleCatTouchEnd}
-            style={{ touchAction: catTouchFrom.current !== null ? 'none' : 'pan-y' }}
-            className={`transition-all ${catDragOver === catIdx ? 'ring-2 ring-primary/50 opacity-80 rounded-xl' : ''}`}
+            {...catRowAttr(catIdx)}
+            className={`transition-all ${catDragOver === catIdx ? 'ring-2 ring-primary/50 rounded-xl' : ''} ${catDraggingIdx === catIdx ? 'opacity-50' : ''}`}
           >
           <Card className="overflow-hidden">
             <CardHeader className="p-0">
               <div className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50 dark:hover:bg-[#1A1D24] transition-colors">
-                <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-400 shrink-0">
+                <div {...catGripProps(catIdx)} className="cursor-grab text-stone-300 hover:text-stone-400 shrink-0">
                   <GripVertical className="h-4 w-4" />
                 </div>
                 <button
@@ -1466,20 +1414,11 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
                     {items.map((item, itemIdx) => (
                       <div
                         key={item.id}
-                        data-item-cat={cat}
-                        data-item-idx={itemIdx}
-                        draggable
-                        onDragStart={e => handleItemDragStart(e, cat, itemIdx)}
-                        onDragOver={e => handleItemDragOver(e, cat, itemIdx)}
-                        onDrop={e => handleItemDrop(e, cat, itemIdx)}
-                        onDragEnd={handleItemDragEnd}
-                        onTouchStart={e => handleItemTouchStart(e, cat, itemIdx)}
-                        onTouchMove={e => handleItemTouchMove(e, cat)}
-                        onTouchEnd={() => handleItemTouchEnd(cat)}
-                        style={{ touchAction: itemTouchFrom.current?.cat === cat ? 'none' : 'pan-y' }}
+                        data-food-cat={cat}
+                        data-food-idx={itemIdx}
                         className={`flex items-start gap-3 px-4 py-3 transition-all ${!item.isAvailable ? "opacity-60" : ""} ${itemDragOver?.cat === cat && itemDragOver?.idx === itemIdx ? 'ring-1 ring-inset ring-primary/40 bg-primary/5' : ''}`}
                       >
-                        <div className="cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-400 shrink-0 mt-0.5">
+                        <div {...foodItemGripProps(cat, itemIdx)} className="cursor-grab text-stone-300 hover:text-stone-400 shrink-0 mt-0.5">
                           <GripVertical className="h-4 w-4" />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -1725,10 +1664,8 @@ export default function FestivalDashboard() {
     onError: () => toast({ title: "Errore nell'eliminazione", variant: "destructive" }),
   });
 
-  // ── Tap drag-and-drop ──────────────────────────────────────────────────────
+  // ── Tap drag-and-drop (pointer events via useDragReorder) ────────────────
   const [localTaps, setLocalTaps] = useState<FestivalTap[]>([]);
-  const [tapDragOver, setTapDragOver] = useState<number | null>(null);
-  const tapDragFrom = useRef<number | null>(null);
   useEffect(() => {
     if (Array.isArray(taps)) setLocalTaps([...taps].sort((a, b) => ((a as any).orderIndex ?? 0) - ((b as any).orderIndex ?? 0)));
   }, [taps]);
@@ -1742,55 +1679,13 @@ export default function FestivalDashboard() {
     },
   });
 
-  const handleTapDragStart = (e: React.DragEvent, idx: number) => {
-    tapDragFrom.current = idx;
-    e.dataTransfer.effectAllowed = "move";
-  };
-  const handleTapDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setTapDragOver(idx);
-  };
-  const handleTapDrop = (e: React.DragEvent, dropIdx: number) => {
-    e.preventDefault();
-    const from = tapDragFrom.current;
-    setTapDragOver(null);
-    tapDragFrom.current = null;
-    if (from === null || from === dropIdx) return;
-    const next = [...localTaps];
-    const [moved] = next.splice(from, 1);
-    next.splice(dropIdx, 0, moved);
-    setLocalTaps(next);
-    reorderTapsMutation.mutate(next.map((t, i) => ({ id: t.id, orderIndex: i })));
-  };
-  const handleTapDragEnd = () => { setTapDragOver(null); tapDragFrom.current = null; };
-
-  // ── Touch drag for taps (iOS) ────────────────────────────────────────────
-  const tapTouchFrom = useRef<number | null>(null);
-  const handleTapTouchStart = (_e: React.TouchEvent, idx: number) => {
-    tapTouchFrom.current = idx;
-  };
-  const handleTapTouchMove = (e: React.TouchEvent) => {
-    if (tapTouchFrom.current === null) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    const el = document.elementFromPoint(touch.clientX, touch.clientY);
-    const target = el?.closest('[data-tap-idx]');
-    const overIdx = target ? parseInt(target.getAttribute('data-tap-idx')!) : null;
-    setTapDragOver(overIdx ?? null);
-  };
-  const handleTapTouchEnd = (e: React.TouchEvent) => {
-    const from = tapTouchFrom.current;
-    const dropIdx = tapDragOver;
-    setTapDragOver(null);
-    tapTouchFrom.current = null;
-    if (from === null || dropIdx === null || from === dropIdx) return;
-    const next = [...localTaps];
-    const [moved] = next.splice(from, 1);
-    next.splice(dropIdx, 0, moved);
-    setLocalTaps(next);
-    reorderTapsMutation.mutate(next.map((t, i) => ({ id: t.id, orderIndex: i })));
-  };
+  const { dragOverIdx: tapDragOver, draggingIdx: tapDraggingIdx, gripProps: tapGripProps, rowDataAttr: tapRowAttr } = useDragReorder({
+    items: localTaps,
+    onReorder: (next) => {
+      setLocalTaps(next);
+      reorderTapsMutation.mutate(next.map((t, i) => ({ id: t.id, orderIndex: i })));
+    },
+  });
 
   // Update festival info
   const updateFestMutation = useMutation({
@@ -2188,25 +2083,21 @@ export default function FestivalDashboard() {
                           {localTaps.map((tap, idx) => (
                             <div
                               key={tap.id}
-                              data-tap-idx={idx}
-                              draggable
-                              onDragStart={e => handleTapDragStart(e, idx)}
-                              onDragOver={e => handleTapDragOver(e, idx)}
-                              onDrop={e => handleTapDrop(e, idx)}
-                              onDragEnd={handleTapDragEnd}
-                              onTouchStart={e => handleTapTouchStart(e, idx)}
-                              onTouchMove={handleTapTouchMove}
-                              onTouchEnd={handleTapTouchEnd}
-                              style={{ touchAction: tapTouchFrom.current !== null ? 'none' : 'pan-y' }}
-                              className={`rounded-xl transition-all ${tapDragOver === idx ? 'ring-2 ring-primary/50 opacity-80' : ''}`}
+                              {...tapRowAttr(idx)}
+                              className={`flex items-center gap-2 rounded-xl transition-all ${tapDragOver === idx ? 'ring-2 ring-primary/50' : ''} ${tapDraggingIdx === idx ? 'opacity-50' : ''}`}
                             >
-                              <TapRow
-                                tap={tap}
-                                festivalId={festId!}
-                                onToggle={t => toggleMutation.mutate(t)}
-                                onDelete={t => deleteTapMutation.mutate(t)}
-                                onEdit={t => setEditingTap({ tapNumber: t.tapNumber, existing: t })}
-                              />
+                              <div {...tapGripProps(idx)} className="cursor-grab text-stone-300 hover:text-stone-500 shrink-0 pl-1">
+                                <GripVertical className="h-5 w-5" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <TapRow
+                                  tap={tap}
+                                  festivalId={festId!}
+                                  onToggle={t => toggleMutation.mutate(t)}
+                                  onDelete={t => deleteTapMutation.mutate(t)}
+                                  onEdit={t => setEditingTap({ tapNumber: t.tapNumber, existing: t })}
+                                />
+                              </div>
                             </div>
                           ))}
                         </div>

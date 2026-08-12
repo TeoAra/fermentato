@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useDragReorder } from "@/hooks/use-drag-reorder";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -55,8 +56,6 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
 
   // ── Local ordered state for drag-and-drop ────────────
   const [localCats, setLocalCats] = useState<any[]>([]);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
-  const dragFromIdx = useRef<number | null>(null);
   // Depend on the raw query `data` (stable `undefined` while loading/error), NOT on the
   // defaulted `categories`: a fresh `[]` identity every render made this effect re-run on
   // every render whenever the query returned no array → setState loop → React #185.
@@ -76,33 +75,20 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
     onSuccess: () => invalidate(),
   });
 
-  const handleDragStart = (e: React.DragEvent, idx: number) => {
-    dragFromIdx.current = idx;
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", String(idx));
-  };
-  const handleDragOver = (e: React.DragEvent, idx: number) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setDragOverIdx(idx);
-  };
-  const handleDrop = (e: React.DragEvent, dropIdx: number) => {
-    e.preventDefault();
-    const from = dragFromIdx.current;
-    setDragOverIdx(null);
-    dragFromIdx.current = null;
-    if (from === null || from === dropIdx) return;
-    const next = [...localCats];
-    const [moved] = next.splice(from, 1);
-    next.splice(dropIdx, 0, moved);
-    setLocalCats(next);
-    reorderMutation.mutate(next.map((c, i) => ({ id: c.id, orderIndex: i })));
-  };
-  const handleDragEnd = () => { setDragOverIdx(null); dragFromIdx.current = null; };
+  // Category drag via pointer events (works on iOS + desktop)
+  const { dragOverIdx, draggingIdx: catDraggingIdx, gripProps: catGripProps, rowDataAttr: catRowAttr } = useDragReorder({
+    items: localCats,
+    onReorder: (next) => {
+      setLocalCats(next);
+      reorderMutation.mutate(next.map((c: any, i: number) => ({ id: c.id, orderIndex: i })));
+    },
+  });
 
-  // ── Per-item drag-and-drop ────────────────────────────
-  const itemDragFrom = useRef<{ catIdx: number; itemIdx: number } | null>(null);
+  // ── Per-item drag-and-drop (pointer events, category-scoped) ─────────────
   const [itemDragOver, setItemDragOver] = useState<{ catIdx: number; itemIdx: number } | null>(null);
+  const itemDragFromRef = useRef<{ catIdx: number; itemIdx: number } | null>(null);
+  const localCatsRef = useRef(localCats);
+  useEffect(() => { localCatsRef.current = localCats; }, [localCats]);
 
   const reorderItemsMutation = useMutation({
     mutationFn: ({ catId, order }: { catId: number; order: { id: number; orderIndex: number }[] }) =>
@@ -115,37 +101,57 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
     onSuccess: () => invalidate(),
   });
 
-  const handleItemDragStart = (e: React.DragEvent, catIdx: number, itemIdx: number) => {
-    e.stopPropagation();
-    itemDragFrom.current = { catIdx, itemIdx };
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", `item-${catIdx}-${itemIdx}`);
-  };
-  const handleItemDragOver = (e: React.DragEvent, catIdx: number, itemIdx: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = "move";
-    setItemDragOver({ catIdx, itemIdx });
-  };
-  const handleItemDrop = (e: React.DragEvent, catIdx: number, dropItemIdx: number) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const from = itemDragFrom.current;
-    setItemDragOver(null);
-    itemDragFrom.current = null;
-    if (!from || from.catIdx !== catIdx || from.itemIdx === dropItemIdx) return;
-    const nextCats = [...localCats];
-    const items = [...(nextCats[catIdx].items || [])];
-    const [moved] = items.splice(from.itemIdx, 1);
-    items.splice(dropItemIdx, 0, moved);
-    nextCats[catIdx] = { ...nextCats[catIdx], items };
-    setLocalCats(nextCats);
-    reorderItemsMutation.mutate({
-      catId: nextCats[catIdx].id,
-      order: items.map((item: any, i: number) => ({ id: item.id, orderIndex: i })),
-    });
-  };
-  const handleItemDragEnd = () => { setItemDragOver(null); itemDragFrom.current = null; };
+  const itemGripProps = useCallback((catIdx: number, itemIdx: number) => ({
+    onPointerDown(e: React.PointerEvent) {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      itemDragFromRef.current = { catIdx, itemIdx };
+      document.body.style.userSelect = "none";
+      (document.body.style as any).webkitUserSelect = "none";
+    },
+    onPointerMove(e: React.PointerEvent) {
+      if (!itemDragFromRef.current || itemDragFromRef.current.catIdx !== catIdx) return;
+      e.preventDefault();
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const row = el?.closest("[data-item-cat-idx]") as HTMLElement | null;
+      if (!row) return;
+      const rowCat = parseInt(row.getAttribute("data-item-cat-idx") ?? "", 10);
+      const rowItem = parseInt(row.getAttribute("data-item-idx") ?? "", 10);
+      if (rowCat === catIdx && !isNaN(rowItem)) setItemDragOver({ catIdx, itemIdx: rowItem });
+    },
+    onPointerUp() {
+      document.body.style.userSelect = "";
+      (document.body.style as any).webkitUserSelect = "";
+      const from = itemDragFromRef.current;
+      itemDragFromRef.current = null;
+      setItemDragOver(prev => {
+        if (from && prev && from.catIdx === prev.catIdx && from.itemIdx !== prev.itemIdx) {
+          const cats = localCatsRef.current;
+          const nextCats = [...cats];
+          const items = [...(nextCats[from.catIdx].items || [])];
+          const [moved] = items.splice(from.itemIdx, 1);
+          items.splice(prev.itemIdx, 0, moved);
+          nextCats[from.catIdx] = { ...nextCats[from.catIdx], items };
+          setLocalCats(nextCats);
+          reorderItemsMutation.mutate({
+            catId: nextCats[from.catIdx].id,
+            order: items.map((item: any, i: number) => ({ id: item.id, orderIndex: i })),
+          });
+        }
+        return null;
+      });
+    },
+    onPointerCancel() {
+      document.body.style.userSelect = "";
+      (document.body.style as any).webkitUserSelect = "";
+      itemDragFromRef.current = null;
+      setItemDragOver(null);
+    },
+    onDragStart(e: React.DragEvent) { e.preventDefault(); },
+    style: { touchAction: "none" } as React.CSSProperties,
+  }), [reorderItemsMutation]);
 
   // ── Expand / collapse ────────────────────────────────
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
@@ -346,15 +352,12 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             return (
               <div
                 key={cat.id}
-                draggable
-                onDragStart={e => handleDragStart(e, idx)}
-                onDragOver={e => handleDragOver(e, idx)}
-                onDrop={e => handleDrop(e, idx)}
-                onDragEnd={handleDragEnd}
-                onDragLeave={() => setDragOverIdx(null)}
+                {...catRowAttr(idx)}
                 className={`rounded-2xl border transition-all ${
                   isDragOver
                     ? "border-primary border-dashed bg-primary/5"
+                    : catDraggingIdx === idx
+                    ? "opacity-50"
                     : cat.isVisible
                     ? "border-stone-200 dark:border-border bg-card"
                     : "border-dashed border-stone-200 dark:border-border bg-card opacity-60"
@@ -362,7 +365,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               >
                 {/* Category header */}
                 <div className="flex items-center gap-2 p-3">
-                  <div className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                  <div {...catGripProps(idx)} className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
                     <GripVertical className="w-4 h-4" />
                   </div>
                   <button
@@ -431,12 +434,8 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                         return (
                         <Card
                           key={item.id}
-                          draggable
-                          onDragStart={e => handleItemDragStart(e, idx, itemIdx)}
-                          onDragOver={e => handleItemDragOver(e, idx, itemIdx)}
-                          onDrop={e => handleItemDrop(e, idx, itemIdx)}
-                          onDragEnd={handleItemDragEnd}
-                          onDragLeave={() => setItemDragOver(null)}
+                          data-item-cat-idx={idx}
+                          data-item-idx={itemIdx}
                           className={`border transition-all ${
                             isItemDragOver
                               ? "border-primary border-dashed bg-primary/5"
@@ -446,7 +445,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                           }`}
                         >
                           <CardContent className="p-3 flex items-center gap-2">
-                            <div className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
+                            <div {...itemGripProps(idx, itemIdx)} className="cursor-grab text-muted-foreground hover:text-foreground transition-colors flex-shrink-0">
                               <GripVertical className="w-3.5 h-3.5" />
                             </div>
                             {item.imageUrl ? (
