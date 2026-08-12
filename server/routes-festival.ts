@@ -934,12 +934,12 @@ export function registerFestivalRoutes(app: Express) {
       const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId));
       if (!fest) return res.status(404).json({ message: "Non trovato" });
       if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
-      const { order } = req.body; // [{id, orderIndex}]
+      const { order } = req.body; // [{id, orderIndex, tapNumber}]
       if (!Array.isArray(order)) return res.status(400).json({ message: "order deve essere un array" });
       await Promise.all(
-        order.map(({ id, orderIndex }: { id: number; orderIndex: number }) =>
+        order.map(({ id, orderIndex, tapNumber }: { id: number; orderIndex: number; tapNumber: number }) =>
           db.update(festivalTaps)
-            .set({ orderIndex })
+            .set({ orderIndex, tapNumber })
             .where(and(eq(festivalTaps.id, id), eq(festivalTaps.festivalId, festId)))
         )
       );
