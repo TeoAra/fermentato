@@ -1425,25 +1425,34 @@ function CreateFestivalDialog({ onClose, onCreated }: { onClose: () => void; onC
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest("/api/admin/festivals", { method: "POST" }, data),
-    onSuccess: (data: any) => {
+    mutationFn: async (data: any) => {
+      // 1. Create the festival
+      const fest: Festival = await apiRequest("/api/admin/festivals", { method: "POST" }, data);
+      // 2. Immediately activate it for free (admin privilege)
+      const activated: Festival = await apiRequest(`/api/admin/festivals/${fest.id}/activate-free`, { method: "POST" });
+      return activated;
+    },
+    onSuccess: (data: Festival) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
-      toast({ title: "Festival creato! Ora completa il pagamento per attivarlo." });
+      toast({ title: `Festival "${data.name}" creato e attivato gratuitamente!` });
       onCreated(data);
       onClose();
     },
-    onError: (err: any) => toast({ title: err?.message || "Errore", variant: "destructive" }),
+    onError: (err: any) => toast({ title: err?.message || "Errore nella creazione", variant: "destructive" }),
   });
 
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-        <DialogHeader><DialogTitle>Crea nuovo festival</DialogTitle></DialogHeader>
+        <DialogHeader>
+          <DialogTitle>Crea nuovo festival</DialogTitle>
+          <p className="text-sm text-muted-foreground mt-1">Il festival sarà attivato immediatamente senza pagamento.</p>
+        </DialogHeader>
         <FestivalForm
           initial={{}}
           onSubmit={data => createMutation.mutate(data)}
           isPending={createMutation.isPending}
-          submitLabel="Crea festival"
+          submitLabel="Crea e attiva gratis"
           isAdmin={true}
         />
       </DialogContent>
