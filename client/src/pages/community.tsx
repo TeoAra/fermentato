@@ -479,6 +479,85 @@ function UserRow({ user, followingIds, onToggle }: { user: any; followingIds: Se
   );
 }
 
+/* ── GuestPeopleSidebar ── */
+function GuestPeopleSidebar() {
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 350);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  const { data: results = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/users/search", debouncedQuery],
+    queryFn: async () => {
+      const r = await fetch(`/api/users/search?q=${encodeURIComponent(debouncedQuery)}`);
+      if (!r.ok) return [];
+      const j = await r.json();
+      return Array.isArray(j) ? j : [];
+    },
+    enabled: debouncedQuery.length >= 2,
+  });
+
+  return (
+    <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
+      <p className="text-[11px] font-black uppercase tracking-widest text-stone-400 mb-3 flex items-center gap-1.5">
+        <Users className="w-3 h-3" /> Scopri persone
+      </p>
+      <div className="relative mb-3">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+        <Input
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          placeholder="Cerca per nome o nickname…"
+          className="pl-9 rounded-xl h-9 text-xs bg-stone-50 dark:bg-[#12151A] border-stone-200 dark:border-white/[0.06]"
+        />
+      </div>
+      {debouncedQuery.length >= 2 ? (
+        isLoading ? (
+          <div className="py-2 space-y-2">
+            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 rounded-xl" />)}
+          </div>
+        ) : results.length === 0 ? (
+          <p className="py-3 text-xs text-stone-400 text-center">Nessun utente trovato</p>
+        ) : (
+          <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
+            {results.slice(0, 5).map((u: any) => {
+              const handle = u.username ?? u.nickname;
+              const name = u.display_name ?? ([u.first_name, u.last_name].filter(Boolean).join(" ") || handle);
+              return (
+                <div key={u.id} className="flex items-center gap-2.5 py-2.5">
+                  <Link href={`/user/${handle}`} className="flex-shrink-0">
+                    <UserAvatar user={{ ...u, display_name: name }} size={8} />
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/user/${handle}`}>
+                      <p className="text-sm font-bold text-stone-800 dark:text-stone-100 truncate hover:text-primary transition-colors">{name}</p>
+                      {handle && <p className="text-[10px] text-stone-400 truncate">@{handle}</p>}
+                    </Link>
+                  </div>
+                  <Link
+                    href="/auth"
+                    className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1.5 rounded-full border border-stone-200 dark:border-white/[0.10] text-stone-400 dark:text-stone-500 hover:border-primary hover:text-primary transition-colors flex-shrink-0"
+                  >
+                    <UserPlus className="w-3 h-3" />
+                    Segui
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        )
+      ) : (
+        <p className="text-xs text-stone-500 dark:text-stone-400 text-center py-2">
+          Cerca un nome per trovare appassionati da seguire
+        </p>
+      )}
+    </div>
+  );
+}
+
 /* ── FeedSkeleton ── */
 function FeedSkeleton() {
   return (
@@ -610,31 +689,66 @@ export default function CommunityPage() {
             <h1 className="text-xl font-black text-stone-900 dark:text-stone-50 font-poppins">Community</h1>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4 space-y-4">
-          {/* Trending beers — visible without auth */}
-          <TrendingBeersStrip />
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4">
+          <div className="lg:grid lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] lg:gap-8 lg:items-start">
 
-          {/* Trending hashtags — visible without auth */}
-          <TrendingHashtags limit={10} compact />
+            {/* ── Left column ── */}
+            <div className="space-y-4">
+              {/* Trending beers — visible without auth */}
+              <TrendingBeersStrip />
 
-          {/* Auth CTA */}
-          <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-8">
-            <div className="text-center space-y-4 max-w-xs mx-auto">
-              <div className="w-16 h-16 rounded-3xl bg-[hsl(36,10%,96%)] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center mx-auto">
-                <Users className="w-7 h-7 text-stone-300" />
+              {/* Trending hashtags — visible on all screen sizes in left column */}
+              <TrendingHashtags limit={10} compact />
+
+              {/* Auth CTA */}
+              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-8">
+                <div className="text-center space-y-4 max-w-xs mx-auto">
+                  <div className="w-16 h-16 rounded-3xl bg-[hsl(36,10%,96%)] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center mx-auto">
+                    <Users className="w-7 h-7 text-stone-300" />
+                  </div>
+                  <div>
+                    <p className="font-black text-stone-800 dark:text-stone-100 font-poppins">
+                      Unisciti alla community
+                    </p>
+                    <p className="text-sm text-stone-500 mt-1">
+                      Accedi per vedere i post e i check-in dei tuoi amici
+                    </p>
+                  </div>
+                  <Link href="/auth">
+                    <Button className="w-full bg-primary text-white rounded-xl font-bold">Accedi o registrati</Button>
+                  </Link>
+                </div>
               </div>
-              <div>
-                <p className="font-black text-stone-800 dark:text-stone-100 font-poppins">
-                  Unisciti alla community
-                </p>
-                <p className="text-sm text-stone-500 mt-1">
-                  Accedi per vedere i post e i check-in dei tuoi amici
-                </p>
-              </div>
-              <Link href="/auth">
-                <Button className="w-full bg-primary text-white rounded-xl font-bold">Accedi o registrati</Button>
-              </Link>
             </div>
+
+            {/* ── Desktop sidebar ── */}
+            <aside className="hidden lg:flex flex-col gap-4 sticky top-[72px] self-start max-h-[calc(100vh-88px)] overflow-y-auto [scrollbar-width:thin]">
+
+              {/* People discovery — search with sign-in prompts */}
+              <GuestPeopleSidebar />
+
+              {/* Unisciti CTA card */}
+              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Users className="w-4 h-4 text-primary" />
+                  </div>
+                  <p className="font-black text-stone-800 dark:text-stone-100 text-sm font-poppins leading-tight">
+                    Unisciti alla community
+                  </p>
+                </div>
+                <p className="text-xs text-stone-500 dark:text-stone-400 mb-4 leading-relaxed">
+                  Registrati per condividere i tuoi assaggi, seguire altri appassionati e partecipare alle discussioni.
+                </p>
+                <Link href="/auth">
+                  <Button className="w-full bg-primary text-white rounded-xl font-bold text-sm h-9">
+                    Accedi o registrati
+                  </Button>
+                </Link>
+              </div>
+
+            </aside>
+
           </div>
         </div>
       </div>
