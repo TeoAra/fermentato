@@ -27,7 +27,8 @@ import {
   X, Search, ChevronDown, Clock, Monitor, Copy, Heart, MessageSquare, Reply, Send, Tv,
   Home as HomeIcon, Info as InfoIcon, ArrowLeft, Share2, ChevronRight,
 } from "lucide-react";
-import { useAnyModalOpen, DockPortal } from "@/components/bottom-navigation";
+import { useAnyModalOpen, DockPortal, useHideGlobalBottomNav } from "@/components/bottom-navigation";
+import { Browser } from "@capacitor/browser";
 import { Capacitor } from "@capacitor/core";
 import { format } from "date-fns";
 import { it } from "date-fns/locale";
@@ -284,6 +285,7 @@ function QRModal({ slug, name, onClose }: { slug: string; name: string; onClose:
   const appBase = import.meta.env.VITE_APP_URL || "https://fermenta.to";
   const url = `${appBase}/festival/${slug}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(url)}`;
+  const [, navigate] = useLocation();
   return (
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-w-sm text-center">
@@ -293,10 +295,10 @@ function QRModal({ slug, name, onClose }: { slug: string; name: string; onClose:
         <img src={qrUrl} alt="QR Code festival" className="mx-auto rounded-xl" />
         <p className="text-xs text-muted-foreground break-all">{url}</p>
         <div className="flex gap-2 justify-center mt-2">
-          <Button size="sm" variant="outline" onClick={() => window.open(qrUrl, "_blank")}>
+          <Button size="sm" variant="outline" onClick={() => Browser.open({ url: qrUrl })}>
             Scarica QR
           </Button>
-          <Button size="sm" onClick={() => window.open(url, "_blank")}>
+          <Button size="sm" onClick={() => { onClose(); navigate(`/festival/${slug}`); }}>
             <ExternalLink className="h-4 w-4 mr-1" />Anteprima
           </Button>
         </div>
@@ -1466,6 +1468,7 @@ export default function FestivalDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  useHideGlobalBottomNav();
   const isAdmin = (user as any)?.userType === 'admin' || (user as any)?.activeRole === 'admin';
 
   const [selectedFestId, setSelectedFestId] = useState<number | null>(null);
@@ -1643,7 +1646,7 @@ export default function FestivalDashboard() {
                   <QrCode className="h-4 w-4 mr-1" />QR Code
                 </Button>
                 <Button size="sm" variant="outline"
-                  onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
+                  onClick={() => navigate(`/festival/${selectedFest.slug}`)}>
                   <ExternalLink className="h-4 w-4 mr-1" />Anteprima
                 </Button>
                 <TVModeButton slug={selectedFest.slug} festivalName={selectedFest.name} />
@@ -1873,7 +1876,7 @@ export default function FestivalDashboard() {
                         <Button size="sm" variant="outline" className="w-full" onClick={() => setShowQR(true)}>
                           <QrCode className="h-4 w-4 mr-1" />QR Code
                         </Button>
-                        <Button size="sm" variant="outline" className="w-full" onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
+                        <Button size="sm" variant="outline" className="w-full" onClick={() => navigate(`/festival/${selectedFest.slug}`)}>
                           <ExternalLink className="h-4 w-4 mr-1" />Anteprima
                         </Button>
                       </div>
@@ -2030,7 +2033,7 @@ export default function FestivalDashboard() {
                         <Badge variant={selectedFest.isActive ? "default" : "secondary"}>
                           {status === "unpaid" ? "Non pagato" : status === "expired" ? "Scaduto" : "Attivo"}
                         </Badge>
-                        <Button size="sm" variant="outline" onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
+                        <Button size="sm" variant="outline" onClick={() => navigate(`/festival/${selectedFest.slug}`)}>
                           <ExternalLink className="h-4 w-4 mr-1" />Pagina pubblica
                         </Button>
                         <Button size="sm" variant="outline" onClick={() => setShowQR(true)}>
