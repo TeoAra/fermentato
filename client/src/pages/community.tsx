@@ -98,7 +98,11 @@ function CheckinCard({ data }: { data: any }) {
           <button
             onClick={(e) => {
               e.preventDefault();
-              setBeerPreviewRect((e.currentTarget as HTMLElement).getBoundingClientRect());
+              if (beerPreviewRect) {
+                setBeerPreviewRect(null);
+              } else {
+                setBeerPreviewRect((e.currentTarget as HTMLElement).getBoundingClientRect());
+              }
             }}
             className="flex-shrink-0 cursor-pointer"
           >
@@ -114,7 +118,11 @@ function CheckinCard({ data }: { data: any }) {
             <button
               onClick={(e) => {
                 e.preventDefault();
-                setBeerPreviewRect((e.currentTarget as HTMLElement).getBoundingClientRect());
+                if (beerPreviewRect) {
+                  setBeerPreviewRect(null);
+                } else {
+                  setBeerPreviewRect((e.currentTarget as HTMLElement).getBoundingClientRect());
+                }
               }}
               className="text-left w-full"
             >
