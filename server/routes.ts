@@ -348,6 +348,88 @@ setInterval(() => { warmStaticSearchTerms().catch(() => {}); }, 13 * 60 * 1000).
 // Re-warm filtered combos on the same cadence.
 setInterval(() => { warmFilteredSearchTerms().catch(() => {}); }, 13 * 60 * 1000).unref();
 
+// ── Persistent search-term store (PostgreSQL) ────────────────────────────────
+// Keeps the top-N user-searched terms across server restarts so popular
+// searches are served from cache immediately after a deploy/restart, not just
+// after the first wave of organic traffic rebuilds the in-memory counts.
+
+async function ensureSearchWarmTermsTable() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS search_warm_terms (
+      term TEXT PRIMARY KEY,
+      count INTEGER NOT NULL DEFAULT 1,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    )
+  `);
+}
+
+/** Load persisted terms into searchTermCounts at startup. */
+async function loadPersistedSearchTerms() {
+  try {
+    await ensureSearchWarmTermsTable();
+    const res = await pool.query<{ term: string; count: string }>(
+      `SELECT term, count FROM search_warm_terms ORDER BY count DESC LIMIT 1000`
+    );
+    for (const { term, count } of res.rows) {
+      const n = parseInt(count as string, 10) || 1;
+      // Merge: keep the higher count (in-memory may already have some traffic)
+      const existing = searchTermCounts.get(term) ?? 0;
+      if (n > existing) searchTermCounts.set(term, n);
+    }
+    if (res.rows.length > 0) {
+      console.log(`[search-warm] Loaded ${res.rows.length} persisted search terms from DB`);
+      // Immediately warm the cache for the most popular persisted terms so users
+      // get fast responses right after a restart, before organic traffic rebuilds it.
+      warmPopularSearches().catch(() => {});
+    }
+  } catch (e: any) {
+    console.warn("[search-warm] Could not load persisted terms:", e?.message);
+  }
+}
+
+/** Upsert the top-1000 in-memory search terms to the DB. */
+async function persistSearchTerms() {
+  if (searchTermCounts.size === 0) return;
+  try {
+    await ensureSearchWarmTermsTable();
+    const top = [...searchTermCounts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 1000);
+    if (top.length === 0) return;
+    // Build a single multi-row upsert for efficiency
+    const values = top.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2}, now())`).join(", ");
+    const params = top.flatMap(([term, count]) => [term, count]);
+    await pool.query(
+      `INSERT INTO search_warm_terms (term, count, updated_at)
+       VALUES ${values}
+       ON CONFLICT (term) DO UPDATE
+         SET count = EXCLUDED.count,
+             updated_at = EXCLUDED.updated_at`,
+      params
+    );
+  } catch (e: any) {
+    console.warn("[search-warm] Could not persist search terms:", e?.message);
+  }
+}
+
+// Load persisted terms on startup (2 s — before the static warm-up at 5 s).
+// This seeds searchTermCounts so warmPopularSearches() (called inside) can
+// warm real user queries before any organic traffic arrives.
+setTimeout(() => { loadPersistedSearchTerms().catch(() => {}); }, 2000).unref();
+
+// Persist terms periodically so counts survive across restarts.
+setInterval(() => { persistSearchTerms().catch(() => {}); }, 10 * 60 * 1000).unref();
+
+// Persist on graceful shutdown (SIGTERM from systemd/Replit, SIGINT from Ctrl-C).
+// Use a safety timeout so a hung DB query never blocks the process from exiting.
+function _flushSearchTermsAndExit() {
+  const safety = setTimeout(() => process.exit(0), 4000);
+  if (safety.unref) safety.unref();
+  persistSearchTerms().finally(() => { clearTimeout(safety); process.exit(0); });
+}
+process.once("SIGTERM", _flushSearchTermsAndExit);
+process.once("SIGINT",  _flushSearchTermsAndExit);
+
 // ── Shared helper: base64 dataURL → temp file ───────────────────────────────
 async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: string } | null> {
   const m = dataUrl.match(/^data:(image\/(\w+));base64,(.+)$/);
