@@ -28,6 +28,10 @@
  *    useTouchReorderInGroup resolves drop targets via [data-touch-sort-group]
  *    exclusively, which only matches grouped items — never flat entries.
  *
+ * 4. DRAG GHOST — on touchstart a semi-transparent clone of the row is
+ *    appended to <body> and positioned fixed so it follows the finger.
+ *    It is removed on touchend / touchcancel.
+ *
  * Usage – flat list
  * ─────────────────
  *   const { startTouchDrag } = useTouchReorder({
@@ -61,6 +65,71 @@
  */
 
 import { useRef } from "react";
+
+// ── Ghost drag helpers ────────────────────────────────────────────────────────
+
+/**
+ * Create a semi-transparent clone of `sourceEl` positioned at its current
+ * screen location. The clone tracks `touchX / touchY` relative to the offset
+ * at which the user grabbed the element so it doesn't jump.
+ *
+ * Returns { ghost, offsetX, offsetY } so the caller can move it on subsequent
+ * touchmove events.
+ */
+function createDragGhost(
+  sourceEl: HTMLElement,
+  touchX: number,
+  touchY: number,
+): { ghost: HTMLElement; rect: DOMRect; offsetX: number; offsetY: number } {
+  const rect = sourceEl.getBoundingClientRect();
+  const offsetX = touchX - rect.left;
+  const offsetY = touchY - rect.top;
+
+  const clone = sourceEl.cloneNode(true) as HTMLElement;
+  clone.style.cssText = [
+    "position:fixed",
+    `top:${rect.top}px`,
+    `left:${rect.left}px`,
+    `width:${rect.width}px`,
+    `height:${rect.height}px`,
+    "margin:0",
+    "opacity:0.75",
+    "pointer-events:none",
+    "z-index:99999",
+    "transform:scale(1.03)",
+    "box-shadow:0 8px 28px rgba(0,0,0,0.35)",
+    "border-radius:8px",
+    "transition:none",
+    "will-change:top,left",
+  ].join(";");
+
+  document.body.appendChild(clone);
+  return { ghost: clone, rect, offsetX, offsetY };
+}
+
+/**
+ * Reposition an existing ghost clone so it follows the finger.
+ */
+function moveDragGhost(
+  ghost: HTMLElement,
+  rect: DOMRect,
+  offsetX: number,
+  offsetY: number,
+  touchX: number,
+  touchY: number,
+) {
+  ghost.style.top = `${touchY - offsetY}px`;
+  ghost.style.left = `${touchX - offsetX}px`;
+}
+
+/**
+ * Remove the ghost clone from the DOM.
+ */
+function removeDragGhost(ghost: HTMLElement | null) {
+  if (ghost && ghost.parentNode) {
+    ghost.parentNode.removeChild(ghost);
+  }
+}
 
 // ── Zone target helpers ───────────────────────────────────────────────────────
 
@@ -119,11 +188,35 @@ export function useTouchReorder({
 
     dragFromRef.current = idx;
 
+    // ── Ghost setup ──────────────────────────────────────────────────────────
+    const touch0 = e.touches[0];
+    const rowEl = (e.currentTarget as HTMLElement).closest(
+      "[data-touch-sort-idx]",
+    ) as HTMLElement | null;
+
+    let ghostInfo: ReturnType<typeof createDragGhost> | null = null;
+    if (rowEl) {
+      ghostInfo = createDragGhost(rowEl, touch0.clientX, touch0.clientY);
+    }
+
     const handleMove = (ev: TouchEvent) => {
       // touch-action: none on the handle means the browser will not scroll
       // for this gesture; preventDefault() reinforces that for old WebKit.
       ev.preventDefault();
       const touch = ev.touches[0];
+
+      // Move ghost clone
+      if (ghostInfo) {
+        moveDragGhost(
+          ghostInfo.ghost,
+          ghostInfo.rect,
+          ghostInfo.offsetX,
+          ghostInfo.offsetY,
+          touch.clientX,
+          touch.clientY,
+        );
+      }
+
       const target = resolveFlatTarget(touch.clientX, touch.clientY);
       if (target) {
         const toIdx = parseInt(target.dataset.touchSortIdx ?? "-1", 10);
@@ -136,6 +229,8 @@ export function useTouchReorder({
       const from = dragFromRef.current;
       dragFromRef.current = null;
       setDragOver(null);
+      removeDragGhost(ghostInfo?.ghost ?? null);
+      ghostInfo = null;
       cleanup();
       if (from === null) return;
       const target = resolveFlatTarget(touch.clientX, touch.clientY);
@@ -145,15 +240,23 @@ export function useTouchReorder({
       onReorder(from, toIdx);
     };
 
+    const handleCancel = () => {
+      dragFromRef.current = null;
+      setDragOver(null);
+      removeDragGhost(ghostInfo?.ghost ?? null);
+      ghostInfo = null;
+      cleanup();
+    };
+
     const cleanup = () => {
       document.removeEventListener("touchmove", handleMove);
       document.removeEventListener("touchend", handleEnd);
-      document.removeEventListener("touchcancel", cleanup);
+      document.removeEventListener("touchcancel", handleCancel);
     };
 
     document.addEventListener("touchmove", handleMove, { passive: false });
     document.addEventListener("touchend", handleEnd);
-    document.addEventListener("touchcancel", cleanup);
+    document.addEventListener("touchcancel", handleCancel);
   };
 
   return { startTouchDrag };
@@ -186,9 +289,33 @@ export function useTouchReorderInGroup({
 
     dragFromRef.current = { group, idx };
 
+    // ── Ghost setup ──────────────────────────────────────────────────────────
+    const touch0 = e.touches[0];
+    const rowEl = (e.currentTarget as HTMLElement).closest(
+      "[data-touch-sort-group]",
+    ) as HTMLElement | null;
+
+    let ghostInfo: ReturnType<typeof createDragGhost> | null = null;
+    if (rowEl) {
+      ghostInfo = createDragGhost(rowEl, touch0.clientX, touch0.clientY);
+    }
+
     const handleMove = (ev: TouchEvent) => {
       ev.preventDefault();
       const touch = ev.touches[0];
+
+      // Move ghost clone
+      if (ghostInfo) {
+        moveDragGhost(
+          ghostInfo.ghost,
+          ghostInfo.rect,
+          ghostInfo.offsetX,
+          ghostInfo.offsetY,
+          touch.clientX,
+          touch.clientY,
+        );
+      }
+
       const info = resolveGroupedTarget(touch.clientX, touch.clientY);
       if (info) setDragOver({ group: info.toGroup, idx: info.toIdx });
     };
@@ -198,6 +325,8 @@ export function useTouchReorderInGroup({
       const from = dragFromRef.current;
       dragFromRef.current = null;
       setDragOver(null);
+      removeDragGhost(ghostInfo?.ghost ?? null);
+      ghostInfo = null;
       cleanup();
       if (!from) return;
       const info = resolveGroupedTarget(touch.clientX, touch.clientY);
@@ -206,15 +335,23 @@ export function useTouchReorderInGroup({
       onReorder(from.group, from.idx, info.toIdx);
     };
 
+    const handleCancel = () => {
+      dragFromRef.current = null;
+      setDragOver(null);
+      removeDragGhost(ghostInfo?.ghost ?? null);
+      ghostInfo = null;
+      cleanup();
+    };
+
     const cleanup = () => {
       document.removeEventListener("touchmove", handleMove);
       document.removeEventListener("touchend", handleEnd);
-      document.removeEventListener("touchcancel", cleanup);
+      document.removeEventListener("touchcancel", handleCancel);
     };
 
     document.addEventListener("touchmove", handleMove, { passive: false });
     document.addEventListener("touchend", handleEnd);
-    document.addEventListener("touchcancel", cleanup);
+    document.addEventListener("touchcancel", handleCancel);
   };
 
   return { startTouchDragInGroup };
