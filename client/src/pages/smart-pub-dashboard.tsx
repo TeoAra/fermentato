@@ -814,7 +814,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
           {/* Festival Mode */}
           <Link href="/festival">
-            <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99] h-full">
+            <div className="bg-white dark:bg-[#1A1D24] border border-border rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-colors duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 h-full">
               <div className="p-2.5 bg-orange-50 dark:bg-orange-950/20 rounded-xl shrink-0">
                 <QrCode className="h-5 w-5 text-primary" />
               </div>
@@ -828,7 +828,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           {/* TV Mode */}
           <Sheet>
             <SheetTrigger asChild>
-              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99]">
+              <div className="bg-white dark:bg-[#1A1D24] border border-border rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-colors duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30">
                 <div className="p-2.5 bg-stone-100 dark:bg-[#1A1D24]/60 rounded-xl shrink-0">
                   <Cast className="h-5 w-5 text-foreground" />
                 </div>
@@ -1028,7 +1028,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
           {/* Pagina Pub */}
           <div
-            className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99]"
+            className="bg-white dark:bg-[#1A1D24] border border-border rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-colors duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30"
             onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
           >
             <div className="p-2.5 bg-stone-100 dark:bg-[#1A1D24]/60 rounded-xl shrink-0">
@@ -1042,7 +1042,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
           {/* Bot Manager */}
           <div
-            className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99]"
+            className="bg-white dark:bg-[#1A1D24] border border-border rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-colors duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30"
             onClick={() => setCurrentSection('bot')}
           >
             <div className="p-2.5 bg-violet-50 dark:bg-violet-950/20 rounded-xl shrink-0">
@@ -1056,7 +1056,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
           {/* Pubblica aggiornamento */}
           <div
-            className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30 active:scale-[0.99]"
+            className="bg-white dark:bg-[#1A1D24] border border-border rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-colors duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30"
             onClick={() => setLocation(`/microblog/nuovo?pubId=${currentPub?.id}&pubName=${encodeURIComponent(currentPub?.name || '')}&authorType=pub&authorEntityId=${currentPub?.id}`)}
           >
             <div className="p-2.5 bg-blue-50 dark:bg-blue-950/20 rounded-xl shrink-0">
@@ -1090,7 +1090,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       </div>
 
       {/* Taplist manager */}
-      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] transition-all duration-200">
+      <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border">
         <TapListManager
           pubId={currentPub?.id || 0}
           tapList={typedTapList}
@@ -1100,12 +1100,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       </div>
 
       {/* Magazzino fusti */}
-      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] p-5">
+      <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border p-5">
         {currentPub && <KegWarehouse pubId={currentPub.id} />}
       </div>
 
       {/* Lavaggi linee */}
-      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] p-5">
+      <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border p-5">
         {currentPub && <PubLineCleaning pubId={currentPub.id} tapList={typedTapList} />}
       </div>
     </div>
@@ -1709,7 +1709,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
             Visibilità e Privacy
           </h3>
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-[#12151A] border border-border rounded-xl">
               <div>
                 <p className="font-medium">Pub Attivo</p>
                 <p className="text-sm text-muted-foreground">Il pub è operativo e visibile al pubblico</p>
@@ -1720,7 +1720,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 data-testid="switch-pub-active"
               />
             </div>
-            <div className="flex items-center justify-between p-4 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-[#12151A] border border-border rounded-xl">
               <div>
                 <p className="font-medium">Listato nei Risultati</p>
                 <p className="text-sm text-muted-foreground">Il pub appare nelle ricerche e nelle mappe</p>
@@ -1817,7 +1817,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         </div>
       </div>
       
-      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] transition-all duration-200">
+      <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border">
         <BottleListManager
           pubId={currentPub?.id || 0}
           bottleList={typedBottleList}
@@ -1831,7 +1831,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Drinks (Bevande) Section
   const renderDrinks = () => (
     <div className="space-y-6">
-      <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] p-4 md:p-6">
+      <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border p-4 md:p-6">
         <DrinkManager pubId={currentPub?.id || 0} />
       </div>
     </div>

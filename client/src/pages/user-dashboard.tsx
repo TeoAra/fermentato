@@ -116,7 +116,7 @@ export default function UserDashboard() {
     description?: string;
     badge?: string;
   }) => (
-    <div className="glass-card rounded-2xl p-6 hover:scale-105 transition-all duration-300 group relative overflow-hidden">
+    <div className="bg-white dark:bg-[#12151A] border border-border rounded-2xl p-6 group relative overflow-hidden">
       {/* Background Gradient */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 group-hover:opacity-10 transition-opacity duration-300`}></div>
       
@@ -174,8 +174,8 @@ export default function UserDashboard() {
     icon: any;
     unlocked?: boolean;
   }) => (
-    <div className={`glass-card rounded-xl p-4 transition-all duration-300 ${
-      unlocked ? 'hover:scale-105' : 'opacity-60'
+    <div className={`bg-white dark:bg-[#12151A] border border-border rounded-xl p-4 ${
+      unlocked ? '' : 'opacity-60'
     }`}>
       <div className="flex items-center space-x-3">
         <div className={`p-2 rounded-lg ${
@@ -203,7 +203,7 @@ export default function UserDashboard() {
   const renderOverview = () => (
     <div className="space-y-8 fade-in">
       {/* Hero Welcome Section */}
-      <div className="glass-card rounded-2xl p-8 relative overflow-hidden">
+      <div className="bg-white dark:bg-[#12151A] border border-border rounded-2xl p-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-purple-500/10 to-pink-500/10"></div>
         <div className="relative z-10">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -422,7 +422,7 @@ export default function UserDashboard() {
           return (
             <div
               key={section.id}
-              className="glass-card rounded-xl p-6 text-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200"
+              className="bg-white dark:bg-[#12151A] border border-border rounded-xl p-6 text-center cursor-pointer transition-colors duration-200"
               onClick={() => setActiveTab(section.id as DashboardSection)}
             >
               <div className={`w-12 h-12 mx-auto mb-3 rounded-xl bg-gradient-to-br ${section.gradient} flex items-center justify-center`}>
@@ -472,7 +472,7 @@ export default function UserDashboard() {
                 </div>
               ) : (
                 pubFavorites.slice(0, 5).map((fav: any) => (
-                  <div key={fav.id} className="flex items-center gap-3 p-3 glass-card rounded-lg hover:scale-102 transition-transform">
+                  <div key={fav.id} className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-[#12151A] border border-border rounded-lg">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-orange-600 flex items-center justify-center text-white">
                       <Store className="h-5 w-5" />
                     </div>
@@ -515,7 +515,7 @@ export default function UserDashboard() {
                 </div>
               ) : (
                 breweryFavorites.slice(0, 5).map((fav: any) => (
-                  <div key={fav.id} className="flex items-center gap-3 p-3 glass-card rounded-lg hover:scale-102 transition-transform">
+                  <div key={fav.id} className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-[#12151A] border border-border rounded-lg">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white">
                       <Beer className="h-5 w-5" />
                     </div>
@@ -558,7 +558,7 @@ export default function UserDashboard() {
                 </div>
               ) : (
                 beerFavorites.slice(0, 5).map((fav: any) => (
-                  <div key={fav.id} className="flex items-center gap-3 p-3 glass-card rounded-lg hover:scale-102 transition-transform">
+                  <div key={fav.id} className="flex items-center gap-3 p-3 bg-stone-50 dark:bg-[#12151A] border border-border rounded-lg">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center text-white">
                       <Sparkles className="h-5 w-5" />
                     </div>
