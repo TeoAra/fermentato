@@ -25,7 +25,7 @@ import {
   CheckCircle2, XCircle, Loader2, Pencil, Trash2, ExternalLink,
   Trophy, Users, Droplets, CreditCard, AlertCircle, RefreshCw, Lock, Star,
   X, Search, ChevronDown, Clock, Monitor, Copy, Heart, MessageSquare, Reply, Send, Tv,
-  Home as HomeIcon, Info as InfoIcon, ArrowLeft, Share2, ChevronRight,
+  Home as HomeIcon, Info as InfoIcon, ArrowLeft, Share2, ChevronRight, GripVertical,
 } from "lucide-react";
 import { useAnyModalOpen, DockPortal, useHideGlobalBottomNav } from "@/components/bottom-navigation";
 import { Browser } from "@capacitor/browser";
@@ -93,6 +93,7 @@ interface FestivalTap {
 interface FoodItem {
   id: number; name: string; description: string | null;
   price: string | null; category: string | null; isAvailable: boolean;
+  orderIndex?: number;
   allergens: string[] | null;
 }
 
@@ -1112,6 +1113,71 @@ function FestivalFoodManager({ festId }: { festId: number }) {
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [itemForm, setItemForm] = useState({ name: "", description: "", price: "", isAvailable: true, allergens: [] as string[] });
 
+  // ── Drag-and-drop: categories (local order, no persistence) ──────────────
+  const [localCategories, setLocalCategories] = useState<string[]>([]);
+  const [catDragOver, setCatDragOver] = useState<number | null>(null);
+  const catDragFrom = useRef<number | null>(null);
+  useEffect(() => {
+    setLocalCategories(prev => {
+      const known = new Set(categories);
+      const filtered = prev.filter(c => known.has(c));
+      const added = categories.filter(c => !prev.includes(c));
+      return [...filtered, ...added];
+    });
+  }, [categories]);
+
+  const handleCatDragStart = (e: React.DragEvent, idx: number) => {
+    catDragFrom.current = idx; e.dataTransfer.effectAllowed = "move";
+  };
+  const handleCatDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault(); setCatDragOver(idx);
+  };
+  const handleCatDrop = (e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault();
+    const from = catDragFrom.current;
+    setCatDragOver(null); catDragFrom.current = null;
+    if (from === null || from === dropIdx) return;
+    const next = [...localCategories];
+    const [moved] = next.splice(from, 1);
+    next.splice(dropIdx, 0, moved);
+    setLocalCategories(next);
+  };
+  const handleCatDragEnd = () => { setCatDragOver(null); catDragFrom.current = null; };
+
+  // ── Drag-and-drop: items within a category ───────────────────────────────
+  const [localFood, setLocalFood] = useState<FoodItem[]>([]);
+  const [itemDragOver, setItemDragOver] = useState<{ cat: string; idx: number } | null>(null);
+  const itemDragFrom = useRef<{ cat: string; idx: number } | null>(null);
+  useEffect(() => {
+    if (Array.isArray(food)) setLocalFood([...food].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+  }, [food]);
+
+  const reorderFoodMutation = useMutation({
+    mutationFn: (order: { id: number; orderIndex: number }[]) =>
+      apiRequest(`/api/admin/festivals/${festId}/food/reorder`, { method: "POST" }, { order }),
+    onError: () => toast({ title: "Errore nel riordinamento", variant: "destructive" }),
+  });
+
+  const handleItemDragStart = (e: React.DragEvent, cat: string, idx: number) => {
+    itemDragFrom.current = { cat, idx }; e.dataTransfer.effectAllowed = "move";
+  };
+  const handleItemDragOver = (e: React.DragEvent, cat: string, idx: number) => {
+    e.preventDefault(); setItemDragOver({ cat, idx });
+  };
+  const handleItemDrop = (e: React.DragEvent, cat: string, dropIdx: number) => {
+    e.preventDefault();
+    const from = itemDragFrom.current;
+    setItemDragOver(null); itemDragFrom.current = null;
+    if (!from || from.cat !== cat || from.idx === dropIdx) return;
+    const catItems = localFood.filter(i => (i.category || "Altro") === cat);
+    const others = localFood.filter(i => (i.category || "Altro") !== cat);
+    const [moved] = catItems.splice(from.idx, 1);
+    catItems.splice(dropIdx, 0, moved);
+    setLocalFood([...others, ...catItems]);
+    reorderFoodMutation.mutate(catItems.map((item, i) => ({ id: item.id, orderIndex: i })));
+  };
+  const handleItemDragEnd = () => { setItemDragOver(null); itemDragFrom.current = null; };
+
   const toggleCategory = (cat: string) => {
     setExpandedCategories(prev => {
       const next = new Set(prev);
@@ -1267,17 +1333,29 @@ function FestivalFoodManager({ festId }: { festId: number }) {
       )}
 
       {/* Categories */}
-      {categories.map(cat => {
-        const items = food.filter(i => (i.category || "Altro") === cat);
+      {localCategories.map((cat, catIdx) => {
+        const items = localFood.filter(i => (i.category || "Altro") === cat);
         const isExpanded = expandedCategories.has(cat);
         return (
-          <Card key={cat} className="overflow-hidden">
+          <div
+            key={cat}
+            draggable
+            onDragStart={e => handleCatDragStart(e, catIdx)}
+            onDragOver={e => handleCatDragOver(e, catIdx)}
+            onDrop={e => handleCatDrop(e, catIdx)}
+            onDragEnd={handleCatDragEnd}
+            className={`transition-all ${catDragOver === catIdx ? 'ring-2 ring-primary/50 opacity-80 rounded-xl' : ''}`}
+          >
+          <Card className="overflow-hidden">
             <CardHeader className="p-0">
-              <button
-                className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50 dark:hover:bg-[#1A1D24] transition-colors text-left"
-                onClick={() => toggleCategory(cat)}
-              >
-                <div className="flex items-center gap-3">
+              <div className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50 dark:hover:bg-[#1A1D24] transition-colors">
+                <div className="flex items-center gap-2 cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-400 shrink-0">
+                  <GripVertical className="h-4 w-4" />
+                </div>
+                <button
+                  className="flex-1 flex items-center gap-3 text-left"
+                  onClick={() => toggleCategory(cat)}
+                >
                   <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0">
                     <UtensilsCrossed className="h-4 w-4 text-amber-600 dark:text-amber-400" />
                   </div>
@@ -1285,14 +1363,16 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                     <p className="font-semibold text-sm">{cat}</p>
                     <p className="text-xs text-muted-foreground">{items.length} voc{items.length === 1 ? "e" : "i"}</p>
                   </div>
-                </div>
+                </button>
                 <div className="flex items-center gap-2">
                   <Button size="sm" variant="outline" className="h-7 text-xs" onClick={e => { e.stopPropagation(); openAddItem(cat); }}>
                     <Plus className="h-3 w-3 mr-1" />Aggiungi
                   </Button>
-                  <ChevronDown className={`h-4 w-4 text-stone-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  <button onClick={() => toggleCategory(cat)}>
+                    <ChevronDown className={`h-4 w-4 text-stone-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                  </button>
                 </div>
-              </button>
+              </div>
             </CardHeader>
 
             {isExpanded && (
@@ -1304,8 +1384,19 @@ function FestivalFoodManager({ festId }: { festId: number }) {
                   </div>
                 ) : (
                   <div className="divide-y dark:divide-gray-700">
-                    {items.map(item => (
-                      <div key={item.id} className={`flex items-start gap-3 px-4 py-3 ${!item.isAvailable ? "opacity-60" : ""}`}>
+                    {items.map((item, itemIdx) => (
+                      <div
+                        key={item.id}
+                        draggable
+                        onDragStart={e => handleItemDragStart(e, cat, itemIdx)}
+                        onDragOver={e => handleItemDragOver(e, cat, itemIdx)}
+                        onDrop={e => handleItemDrop(e, cat, itemIdx)}
+                        onDragEnd={handleItemDragEnd}
+                        className={`flex items-start gap-3 px-4 py-3 transition-all ${!item.isAvailable ? "opacity-60" : ""} ${itemDragOver?.cat === cat && itemDragOver?.idx === itemIdx ? 'ring-1 ring-inset ring-primary/40 bg-primary/5' : ''}`}
+                      >
+                        <div className="cursor-grab active:cursor-grabbing text-stone-300 hover:text-stone-400 shrink-0 mt-0.5">
+                          <GripVertical className="h-4 w-4" />
+                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className={`text-sm font-medium ${!item.isAvailable ? "line-through text-stone-400" : ""}`}>{item.name}</p>
@@ -1342,6 +1433,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
               </CardContent>
             )}
           </Card>
+          </div>
         );
       })}
 
@@ -1547,6 +1639,46 @@ export default function FestivalDashboard() {
     },
     onError: () => toast({ title: "Errore nell'eliminazione", variant: "destructive" }),
   });
+
+  // ── Tap drag-and-drop ──────────────────────────────────────────────────────
+  const [localTaps, setLocalTaps] = useState<FestivalTap[]>([]);
+  const [tapDragOver, setTapDragOver] = useState<number | null>(null);
+  const tapDragFrom = useRef<number | null>(null);
+  useEffect(() => {
+    if (Array.isArray(taps)) setLocalTaps([...taps].sort((a, b) => ((a as any).orderIndex ?? 0) - ((b as any).orderIndex ?? 0)));
+  }, [taps]);
+
+  const reorderTapsMutation = useMutation({
+    mutationFn: (order: { id: number; orderIndex: number }[]) =>
+      apiRequest(`/api/admin/festivals/${festId}/taps/reorder`, { method: "POST" }, { order }),
+    onError: () => {
+      toast({ title: "Errore nel riordinamento", variant: "destructive" });
+      setLocalTaps([...taps].sort((a, b) => ((a as any).orderIndex ?? 0) - ((b as any).orderIndex ?? 0)));
+    },
+  });
+
+  const handleTapDragStart = (e: React.DragEvent, idx: number) => {
+    tapDragFrom.current = idx;
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const handleTapDragOver = (e: React.DragEvent, idx: number) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    setTapDragOver(idx);
+  };
+  const handleTapDrop = (e: React.DragEvent, dropIdx: number) => {
+    e.preventDefault();
+    const from = tapDragFrom.current;
+    setTapDragOver(null);
+    tapDragFrom.current = null;
+    if (from === null || from === dropIdx) return;
+    const next = [...localTaps];
+    const [moved] = next.splice(from, 1);
+    next.splice(dropIdx, 0, moved);
+    setLocalTaps(next);
+    reorderTapsMutation.mutate(next.map((t, i) => ({ id: t.id, orderIndex: i })));
+  };
+  const handleTapDragEnd = () => { setTapDragOver(null); tapDragFrom.current = null; };
 
   // Update festival info
   const updateFestMutation = useMutation({
@@ -1934,22 +2066,31 @@ export default function FestivalDashboard() {
                       <>
                         <div className="flex items-center justify-between gap-3 flex-wrap">
                           <p className="text-sm text-muted-foreground dark:text-stone-400">
-                            {taps.filter(t => t.isAvailable).length} di {taps.length} disponibili
+                            {localTaps.filter(t => t.isAvailable).length} di {localTaps.length} disponibili
                           </p>
-                          <Button size="sm" variant="outline" onClick={() => setEditingTap({ tapNumber: taps.length + 1 })}>
+                          <Button size="sm" variant="outline" onClick={() => setEditingTap({ tapNumber: localTaps.length + 1 })}>
                             <Plus className="h-4 w-4 mr-1" />Aggiungi spina
                           </Button>
                         </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {taps.map(tap => (
-                            <TapRow
+                        <div className="flex flex-col gap-2">
+                          {localTaps.map((tap, idx) => (
+                            <div
                               key={tap.id}
-                              tap={tap}
-                              festivalId={festId!}
-                              onToggle={t => toggleMutation.mutate(t)}
-                              onDelete={t => deleteTapMutation.mutate(t)}
-                              onEdit={t => setEditingTap({ tapNumber: t.tapNumber, existing: t })}
-                            />
+                              draggable
+                              onDragStart={e => handleTapDragStart(e, idx)}
+                              onDragOver={e => handleTapDragOver(e, idx)}
+                              onDrop={e => handleTapDrop(e, idx)}
+                              onDragEnd={handleTapDragEnd}
+                              className={`rounded-xl transition-all ${tapDragOver === idx ? 'ring-2 ring-primary/50 opacity-80' : ''}`}
+                            >
+                              <TapRow
+                                tap={tap}
+                                festivalId={festId!}
+                                onToggle={t => toggleMutation.mutate(t)}
+                                onDelete={t => deleteTapMutation.mutate(t)}
+                                onEdit={t => setEditingTap({ tapNumber: t.tapNumber, existing: t })}
+                              />
+                            </div>
                           ))}
                         </div>
                       </>
@@ -2144,22 +2285,15 @@ export default function FestivalDashboard() {
         </DockPortal>
       )}
 
-      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      {/* ── BOTTOM DOCK (mobile only) — fixed to bottom like main nav ── */}
       {selectedFest && (
         <nav
-          className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+          className={`ios-fixed-chrome bottom-nav-fixed lg:hidden fixed left-0 right-0 bottom-0 z-[55] bg-white dark:bg-[#0B0D10] border-t border-stone-100 dark:border-white/[0.06] rounded-t-[32px] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.12)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
             isFestModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
           }`}
-          style={{ bottom: 'calc(var(--frozen-sab) + 12px)' }}
           aria-label="Navigazione del festival"
         >
-          <div className="mx-auto max-w-md px-4">
-            <div
-              role="tablist"
-              aria-label="Sezioni del festival"
-              className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]"
-            >
-              <div className="flex items-stretch justify-between p-1.5 gap-1">
+          <div className="flex items-stretch justify-between px-2 pt-2" style={{ paddingBottom: 'max(var(--frozen-sab), 10px)' }}>
                 {[
                   { id: 'overview', label: 'Overview', Icon: HomeIcon },
                   { id: 'taps',     label: 'Spine',    Icon: Beer },
@@ -2195,8 +2329,6 @@ export default function FestivalDashboard() {
                     </button>
                   );
                 })}
-              </div>
-            </div>
           </div>
         </nav>
       )}

@@ -1085,6 +1085,7 @@ export const festivalTaps = pgTable("festival_taps", {
   notes: text("notes"),
   isAvailable: boolean("is_available").default(true),
   tapType: varchar("tap_type", { length: 20 }).default("spina"),
+  orderIndex: integer("order_index").default(0),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (t) => [unique().on(t.festivalId, t.tapNumber)]);
 export const insertFestivalTapSchema = createInsertSchema(festivalTaps).omit({ id: true, updatedAt: true });
@@ -1099,6 +1100,7 @@ export const festivalFoodItems = pgTable("festival_food_items", {
   price: decimal("price", { precision: 8, scale: 2 }),
   category: varchar("category", { length: 100 }),
   isAvailable: boolean("is_available").default(true),
+  orderIndex: integer("order_index").default(0),
   allergens: jsonb("allergens").$type<string[]>(),
 });
 export const insertFestivalFoodItemSchema = createInsertSchema(festivalFoodItems).omit({ id: true });

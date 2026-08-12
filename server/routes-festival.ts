@@ -46,6 +46,17 @@ export async function runFestivalMigrations() {
   } catch (e) {
     // Constraint may already exist with correct definition — safe to ignore
   }
+  try {
+    await pool.query(`ALTER TABLE festival_taps ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0`);
+    await pool.query(`UPDATE festival_taps SET order_index = tap_number WHERE order_index = 0 AND tap_number IS NOT NULL`);
+  } catch (e) {
+    console.error("[festival_taps] order_index migration error:", e);
+  }
+  try {
+    await pool.query(`ALTER TABLE festival_food_items ADD COLUMN IF NOT EXISTS order_index INTEGER DEFAULT 0`);
+  } catch (e) {
+    console.error("[festival_food_items] order_index migration error:", e);
+  }
 }
 
 export function registerFestivalRoutes(app: Express) {
@@ -889,6 +900,52 @@ export function registerFestivalRoutes(app: Express) {
       );
       res.json(users.rows);
     } catch (err) {
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // ── Reorder festival taps ─────────────────────────────────────────────────────
+  app.post("/api/admin/festivals/:id/taps/reorder", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const festId = parseInt(req.params.id);
+      const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId));
+      if (!fest) return res.status(404).json({ message: "Non trovato" });
+      if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
+      const { order } = req.body; // [{id, orderIndex}]
+      if (!Array.isArray(order)) return res.status(400).json({ message: "order deve essere un array" });
+      await Promise.all(
+        order.map(({ id, orderIndex }: { id: number; orderIndex: number }) =>
+          db.update(festivalTaps)
+            .set({ orderIndex })
+            .where(and(eq(festivalTaps.id, id), eq(festivalTaps.festivalId, festId)))
+        )
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Error reordering festival taps:", err);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // ── Reorder festival food items ───────────────────────────────────────────────
+  app.post("/api/admin/festivals/:id/food/reorder", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const festId = parseInt(req.params.id);
+      const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId));
+      if (!fest) return res.status(404).json({ message: "Non trovato" });
+      if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
+      const { order } = req.body; // [{id, orderIndex}]
+      if (!Array.isArray(order)) return res.status(400).json({ message: "order deve essere un array" });
+      await Promise.all(
+        order.map(({ id, orderIndex }: { id: number; orderIndex: number }) =>
+          db.update(festivalFoodItems)
+            .set({ orderIndex })
+            .where(and(eq(festivalFoodItems.id, id), eq(festivalFoodItems.festivalId, festId)))
+        )
+      );
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Error reordering festival food items:", err);
       res.status(500).json({ message: "Errore" });
     }
   });
