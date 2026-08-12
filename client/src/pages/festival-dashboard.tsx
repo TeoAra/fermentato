@@ -1457,6 +1457,7 @@ export default function FestivalDashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [, navigate] = useLocation();
+  const isAdmin = (user as any)?.userType === 'admin' || (user as any)?.activeRole === 'admin';
 
   const [selectedFestId, setSelectedFestId] = useState<number | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
@@ -1618,32 +1619,33 @@ export default function FestivalDashboard() {
   return (
     <div className="min-h-screen bg-stone-50 dark:bg-[#0B0D10]">
       {/* Header */}
-      <div className={`bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
+      <div className={`bg-white/95 dark:bg-[#0B0D10]/95 backdrop-blur-xl border-b border-stone-100 dark:border-white/[0.05] py-3 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
         <PageContainer variant="standard" className="flex items-center justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <Beer className="h-6 w-6" />Festival Dashboard
+            <h1 className="text-lg font-black text-stone-900 dark:text-stone-50 flex items-center gap-2 font-poppins">
+              <Beer className="h-5 w-5 text-primary" />Festival Dashboard
             </h1>
-            <p className="text-amber-100 text-sm">Gestisci spine, cibo e valutazioni in tempo reale</p>
+            <p className="text-stone-500 dark:text-stone-400 text-xs mt-0.5">Gestisci spine, cibo e valutazioni in tempo reale</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             {selectedFest && (
               <>
-                <Button size="sm" variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-                  onClick={() => setShowQR(true)}>
+                <Button size="sm" variant="outline" onClick={() => setShowQR(true)}>
                   <QrCode className="h-4 w-4 mr-1" />QR Code
                 </Button>
-                <Button size="sm" variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                <Button size="sm" variant="outline"
                   onClick={() => window.open(`/festival/${selectedFest.slug}`, "_blank")}>
                   <ExternalLink className="h-4 w-4 mr-1" />Anteprima
                 </Button>
                 <TVModeButton slug={selectedFest.slug} festivalName={selectedFest.name} />
               </>
             )}
-            <Button size="sm" className="bg-white text-amber-700 hover:bg-amber-50"
-              onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4 mr-1" />Nuovo festival
-            </Button>
+            {isAdmin && (
+              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white"
+                onClick={() => setShowCreateDialog(true)}>
+                <Plus className="h-4 w-4 mr-1" />Nuovo festival
+              </Button>
+            )}
           </div>
         </PageContainer>
       </div>
@@ -1664,16 +1666,11 @@ export default function FestivalDashboard() {
             <CardContent className="py-10 text-center space-y-3">
               <Beer className="h-10 w-10 text-stone-300 mx-auto" />
               <p className="text-muted-foreground">Nessun festival ancora</p>
-              <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                <Button asChild className="bg-amber-500 hover:bg-amber-600 text-white">
-                  <a href="/festival"><Plus className="h-4 w-4 mr-1" />Crea il tuo festival</a>
+              {isAdmin && (
+                <Button className="bg-primary hover:bg-primary/90 text-white" onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="h-4 w-4 mr-1" />Crea il tuo festival
                 </Button>
-                {user?.userType === 'admin' && (
-                  <Button variant="outline" onClick={() => setShowCreateDialog(true)}>
-                    <Plus className="h-4 w-4 mr-1" />Crea (admin)
-                  </Button>
-                )}
-              </div>
+              )}
             </CardContent>
           </Card>
         ) : (

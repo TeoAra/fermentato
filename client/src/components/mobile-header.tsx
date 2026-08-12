@@ -325,9 +325,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             <MenuItem href="/explore/beers" icon={Beer} label="Catalogo birre" desc="Oltre 1M di birre" />
             <MenuItem href="/explore/breweries" icon={Building2Icon} label="Birrifici" desc="Artigianali italiani e internazionali" />
             <MenuItem href="/explore/pubs" icon={MapPin} label="Pub & Locali" desc="Dove bere artigianale in Italia" />
-            {!isIosNative && (
-              <MenuItem href="/festival" icon={QrCode} label="Festival" desc="Festival di birra artigianale" />
-            )}
+            <MenuItem href="/festival" icon={QrCode} label="Festival" desc="Festival di birra artigianale" />
 
             {isAuthenticated && (
               <>

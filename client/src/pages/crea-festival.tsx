@@ -301,19 +301,10 @@ export default function CreaFestival() {
     setShowForm(false);
   };
 
+  const isAdmin = (user as any)?.userType === 'admin' || (user as any)?.activeRole === 'admin';
+
   const handleStartCreate = () => {
-    if (!isAuthenticated) {
-      navigate("/registra-festival");
-      return;
-    }
-    const userType = (user as any)?.userType;
-    const activeRole = (user as any)?.activeRole;
-    const canCreate = ["pub_owner", "brewery_owner", "admin"].includes(userType) ||
-                      ["pub_owner", "brewery_owner", "admin"].includes(activeRole);
-    if (!canCreate) {
-      navigate("/registra-festival");
-      return;
-    }
+    if (!isAuthenticated || !isAdmin) return;
     setShowForm(true);
   };
 
@@ -347,21 +338,23 @@ export default function CreaFestival() {
             Taplist QR in tempo reale, valutazioni dai visitatori, menu cibo, classifiche live.
             Attivazione immediata con un pagamento unico.
           </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-            <Button
-              size="lg"
-              className="bg-white text-amber-700 hover:bg-amber-50 font-bold text-base px-8"
-              onClick={handleStartCreate}
-            >
-              <Beer className="h-5 w-5 mr-2" />
-              Crea il tuo festival
-              <ArrowRight className="h-5 w-5 ml-2" />
-            </Button>
-            <div className="flex items-center gap-2 text-amber-100">
-              <CreditCard className="h-4 w-4" />
-              <span className="text-sm font-medium">€{PRICE} una tantum · nessun abbonamento</span>
+          {isAdmin && (
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+              <Button
+                size="lg"
+                className="bg-white text-amber-700 hover:bg-amber-50 font-bold text-base px-8"
+                onClick={handleStartCreate}
+              >
+                <Beer className="h-5 w-5 mr-2" />
+                Crea il tuo festival
+                <ArrowRight className="h-5 w-5 ml-2" />
+              </Button>
+              <div className="flex items-center gap-2 text-amber-100">
+                <CreditCard className="h-4 w-4" />
+                <span className="text-sm font-medium">€{PRICE} una tantum · nessun abbonamento</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
 

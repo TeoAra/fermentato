@@ -349,11 +349,10 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
             <PenSquare className="w-3.5 h-3.5" /> Post
           </button>
           <div className="w-px h-4 bg-stone-100 dark:bg-white/[0.06]" />
-          <Link href="/scan" className="flex-1">
-            <button className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-primary hover:bg-primary/5 rounded-xl py-2 transition-colors">
-              <Camera className="w-3.5 h-3.5" /> Scansiona
-            </button>
-          </Link>
+          <button onClick={() => { setExpanded(true); setTimeout(() => fileRef.current?.click(), 80); }}
+            className="flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-primary hover:bg-primary/5 rounded-xl py-2 transition-colors">
+            <Camera className="w-3.5 h-3.5" /> Foto
+          </button>
           <div className="w-px h-4 bg-stone-100 dark:bg-white/[0.06]" />
           <Link href="/explore/beers" className="flex-1">
             <button className="w-full flex items-center justify-center gap-1.5 text-xs font-semibold text-stone-500 hover:text-primary hover:bg-primary/5 rounded-xl py-2 transition-colors">

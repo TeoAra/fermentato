@@ -503,8 +503,8 @@ function Router() {
           <Route path="/supporto" component={SupportoPage} />
           <Route path="/festival/:slug" component={FestivalPublic} />
           <Route path="/festival-dashboard" component={FestivalDashboard} />
-          <Route path="/festival" component={isIosNative ? IosWebOnlyPage : CreaFestival} />
-          <Route path="/registra-festival" component={isIosNative ? IosWebOnlyPage : RegistraFestival} />
+          <Route path="/festival" component={CreaFestival} />
+          <Route path="/registra-festival" component={RegistraFestival} />
           <Route path="/reset-password" component={ResetPassword} />
           <Route path="/scan/history" component={ScanHistory} />
           <Route path="/scan" component={Scan} />

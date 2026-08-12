@@ -6,7 +6,7 @@ import {
   Users, Package, MapPin, Search, UserPlus, UserMinus,
   Star, Heart, MessageCircle, PenSquare, Newspaper,
   ChevronRight, ExternalLink, Clock, Loader2, Building2,
-  Flame, TrendingUp,
+  Flame, TrendingUp, Beer as BeerIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -60,6 +60,45 @@ function RatingStars({ rating }: { rating: number }) {
   );
 }
 
+/* ── EntityChip — unified entity tag with preview popup ── */
+function EntityChip({ type, id, label }: { type: EntityType; id: number; label: string }) {
+  const [anchorRect, setAnchorRect] = useState<DOMRect | null>(null);
+
+  const icon =
+    type === "pub"      ? <MapPin    className="w-3 h-3 flex-shrink-0" /> :
+    type === "brewery"  ? <Building2 className="w-3 h-3 flex-shrink-0" /> :
+                          <BeerIcon  className="w-3 h-3 flex-shrink-0" />;
+
+  const chipCls =
+    type === "beer"
+      ? "bg-primary/10 text-primary hover:bg-primary/20"
+      : "bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-[#0B0D10]";
+
+  return (
+    <>
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          setAnchorRect((e.currentTarget as HTMLElement).getBoundingClientRect());
+        }}
+        className={`inline-flex items-center gap-1 text-[10px] px-2.5 py-1 rounded-full font-semibold transition-colors cursor-pointer ${chipCls}`}
+      >
+        {icon}
+        <span className="truncate max-w-[140px]">{label}</span>
+      </button>
+      {anchorRect && (
+        <EntityPreviewCard
+          type={type}
+          id={id}
+          anchorRect={anchorRect}
+          onClose={() => setAnchorRect(null)}
+        />
+      )}
+    </>
+  );
+}
+
 /* ── CheckinCard ── */
 function CheckinCard({ data }: { data: any }) {
   return (
@@ -110,12 +149,13 @@ function CheckinCard({ data }: { data: any }) {
             {data.brewery_name && <p className="text-xs text-stone-400 mt-0.5 truncate">{data.brewery_name}</p>}
             {data.rating && <div className="mt-1.5"><RatingStars rating={data.rating} /></div>}
             {data.pub_id && data.pub_name && (
-              <Link href={`/pub/${data.pub_id}`}>
-                <p className="text-xs text-primary font-semibold mt-1.5 flex items-center gap-1 hover:underline">
-                  <MapPin className="w-3 h-3 flex-shrink-0" />
-                  <span className="truncate">{data.pub_name}{data.pub_city ? `, ${data.pub_city}` : ""}</span>
-                </p>
-              </Link>
+              <div className="mt-1.5">
+                <EntityChip
+                  type="pub"
+                  id={data.pub_id}
+                  label={`${data.pub_name}${data.pub_city ? `, ${data.pub_city}` : ""}`}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -146,11 +186,6 @@ function CheckinCard({ data }: { data: any }) {
 
 /* ── MicroblogCard ── */
 function MicroblogCard({ post }: { post: any }) {
-  const [entityPreview, setEntityPreview] = useState<{ type: EntityType; id: number; rect: DOMRect } | null>(null);
-  const handleEntityChip = (e: React.MouseEvent, type: EntityType, id: number) => {
-    e.preventDefault(); e.stopPropagation();
-    setEntityPreview({ type, id, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() });
-  };
   const isEntityPost = post.author_type && post.author_type !== "user";
   return (
     <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
@@ -202,22 +237,13 @@ function MicroblogCard({ post }: { post: any }) {
       {(post.beer_name || post.pub_name || post.brewery_name) && (
         <div className="mt-2.5 flex flex-wrap gap-1.5">
           {post.beer_name && post.beer_id && (
-            <button onClick={(e) => handleEntityChip(e, "beer", post.beer_id)}
-              className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold cursor-pointer hover:bg-primary/20 transition-colors">
-              🍺 {post.beer_name}
-            </button>
+            <EntityChip type="beer" id={post.beer_id} label={post.beer_name} />
           )}
           {post.pub_name && post.pub_id && (
-            <button onClick={(e) => handleEntityChip(e, "pub", post.pub_id)}
-              className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold hover:bg-stone-200 dark:hover:bg-[#0B0D10] transition-colors cursor-pointer">
-              📍 {post.pub_name}
-            </button>
+            <EntityChip type="pub" id={post.pub_id} label={post.pub_name} />
           )}
           {post.brewery_name && post.brewery_id && (
-            <button onClick={(e) => handleEntityChip(e, "brewery", post.brewery_id)}
-              className="text-[10px] bg-stone-100 dark:bg-[#12151A] text-stone-600 dark:text-stone-300 px-2.5 py-1 rounded-full font-semibold hover:bg-stone-200 dark:hover:bg-[#0B0D10] transition-colors cursor-pointer">
-              🏭 {post.brewery_name}
-            </button>
+            <EntityChip type="brewery" id={post.brewery_id} label={post.brewery_name} />
           )}
         </div>
       )}
@@ -233,9 +259,6 @@ function MicroblogCard({ post }: { post: any }) {
           authorEntityId={post.author_entity_id}
         />
       </div>
-      {entityPreview && (
-        <EntityPreviewCard type={entityPreview.type} id={entityPreview.id} anchorRect={entityPreview.rect} onClose={() => setEntityPreview(null)} />
-      )}
     </div>
   );
 }
@@ -664,15 +687,7 @@ export default function CommunityPage() {
             {/* Composer */}
             <InlinePostComposer user={user as any} />
 
-            {/* Trending beers strip */}
-            <TrendingBeersStrip />
-
-            {/* Trending hashtags — mobile only */}
-            <div className="lg:hidden">
-              <TrendingHashtags limit={8} compact />
-            </div>
-
-            {/* Feed */}
+            {/* Feed — mobile shows trending interstitial after 3rd item */}
             {isLoading ? (
               <FeedSkeleton />
             ) : timeline.length === 0 ? (
@@ -704,19 +719,38 @@ export default function CommunityPage() {
                     <Users className="w-4 h-4 mr-2" /> Scopri persone
                   </Button>
                 </div>
+                {/* On mobile show trending even on empty feed */}
+                <div className="lg:hidden w-full space-y-3 mt-2">
+                  <TrendingBeersStrip />
+                  <TrendingHashtags limit={8} compact />
+                </div>
               </div>
             ) : (
-              timeline.map(entry =>
-                entry.kind === "post" ? (
-                  <MicroblogCard key={`p-${entry.data.id}`} post={entry.data} />
-                ) : (
-                  <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
-                )
-              )
+              <>
+                {timeline.slice(0, 3).map(entry =>
+                  entry.kind === "post" ? (
+                    <MicroblogCard key={`p-${entry.data.id}`} post={entry.data} />
+                  ) : (
+                    <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
+                  )
+                )}
+                {/* Mobile interstitial trending section (hidden on desktop — sidebar shows these) */}
+                <div className="lg:hidden space-y-3">
+                  <TrendingBeersStrip />
+                  <TrendingHashtags limit={8} compact />
+                </div>
+                {timeline.slice(3).map(entry =>
+                  entry.kind === "post" ? (
+                    <MicroblogCard key={`p-${entry.data.id}`} post={entry.data} />
+                  ) : (
+                    <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
+                  )
+                )}
+              </>
             )}
 
-            {/* Scopri persone — collapsible section */}
-            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
+            {/* Scopri persone — mobile only (desktop has it permanently in sidebar) */}
+            <div className="lg:hidden bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
               <button
                 className="w-full flex items-center justify-between px-4 py-3.5 text-left"
                 onClick={() => setShowPeople(p => !p)}
@@ -777,41 +811,64 @@ export default function CommunityPage() {
           </div>
 
           {/* ── Desktop sidebar ── */}
-          <aside className="hidden lg:flex flex-col gap-4 sticky top-[72px] self-start">
-            {/* Trending hashtags */}
+          <aside className="hidden lg:flex flex-col gap-4 sticky top-[72px] self-start max-h-[calc(100vh-88px)] overflow-y-auto [scrollbar-width:thin]">
+
+            {/* 1. Trending beers */}
+            <TrendingBeersStrip />
+
+            {/* 2. Trending hashtags */}
             <TrendingHashtags limit={10} />
 
-            {/* Find friends CTA */}
-            {(following as any[]).length === 0 && (
-              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
-                <p className="text-[11px] font-black uppercase tracking-widest text-stone-400 mb-2 flex items-center gap-1.5">
-                  <Users className="w-3 h-3" /> Trova amici
-                </p>
-                <p className="text-xs text-stone-500 dark:text-stone-400 leading-relaxed">
-                  Cerca appassionati nella sezione <strong>Scopri persone</strong> per vedere i loro assaggi nel feed.
-                </p>
+            {/* 3. Scopri persone — always open on desktop */}
+            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
+              <p className="text-[11px] font-black uppercase tracking-widest text-stone-400 mb-3 flex items-center gap-1.5">
+                <Users className="w-3 h-3" /> Scopri persone
+              </p>
+              <div className="relative mb-3">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
+                <Input
+                  value={userSearch}
+                  onChange={e => setUserSearch(e.target.value)}
+                  placeholder="Cerca per nome o nickname…"
+                  className="pl-9 rounded-xl h-9 text-xs bg-stone-50 dark:bg-[#12151A] border-stone-200 dark:border-white/[0.06]"
+                />
               </div>
-            )}
-
-            {/* Who you follow */}
-            {(following as any[]).length > 0 && (
-              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
-                <p className="text-[11px] font-black uppercase tracking-widest text-stone-400 mb-2 flex items-center gap-1.5">
-                  <Users className="w-3 h-3" /> Chi segui · {following.length}
-                </p>
+              {debouncedSearch.length >= 2 ? (
                 <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
-                  {(following as any[]).slice(0, 6).map((u: any) => (
+                  {searchLoading ? (
+                    <div className="py-2 space-y-2">
+                      {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 rounded-xl" />)}
+                    </div>
+                  ) : searchResults.length === 0 ? (
+                    <p className="py-3 text-xs text-stone-400 text-center">Nessun utente trovato</p>
+                  ) : (
+                    searchResults.slice(0, 5).map((u: any) => (
+                      <UserRow key={u.id} user={u} followingIds={followingIds}
+                        onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })} />
+                    ))
+                  )}
+                </div>
+              ) : following.length > 0 ? (
+                <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 pb-2">
+                    Chi segui · {following.length}
+                  </p>
+                  {(following as any[]).slice(0, 5).map((u: any) => (
                     <UserRow key={u.id} user={u} followingIds={followingIds}
                       onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })} />
                   ))}
+                  {following.length > 5 && (
+                    <p className="text-xs text-stone-400 text-center pt-2">+{following.length - 5} altri</p>
+                  )}
                 </div>
-                {following.length > 6 && (
-                  <p className="text-xs text-stone-400 text-center mt-2">+{following.length - 6} altri</p>
-                )}
-              </div>
-            )}
+              ) : (
+                <p className="text-xs text-stone-500 dark:text-stone-400 text-center py-2">
+                  Cerca un nome per trovare appassionati da seguire
+                </p>
+              )}
+            </div>
 
-            {/* News sidebar */}
+            {/* 4. News */}
             {news.length > 0 && (
               <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
                 <div className="flex items-center justify-between mb-3">
