@@ -57,7 +57,7 @@ const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY || '';
 
 // Simple in-memory search cache with TTL
 const searchCache = new Map<string, { data: any; ts: number }>();
-const SEARCH_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const SEARCH_CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 function getCached(key: string) {
   const entry = searchCache.get(key);
   if (!entry) return null;
@@ -65,8 +65,8 @@ function getCached(key: string) {
   return entry.data;
 }
 function setCache(key: string, data: any) {
-  if (searchCache.size > 500) {
-    const oldest = [...searchCache.entries()].sort((a, b) => a[1].ts - b[1].ts).slice(0, 100);
+  if (searchCache.size > 2000) {
+    const oldest = [...searchCache.entries()].sort((a, b) => a[1].ts - b[1].ts).slice(0, 400);
     oldest.forEach(([k]) => searchCache.delete(k));
   }
   searchCache.set(key, { data, ts: Date.now() });
@@ -114,7 +114,7 @@ function buildSearchCacheKey(
 }
 function logSearchTerm(raw: string) {
   const t = normalizeSearchTerm(raw);
-  if (t.length < 2 || t.length > 80) return;
+  if (t.length < 1 || t.length > 80) return;
   searchTermCounts.set(t, (searchTermCounts.get(t) || 0) + 1);
   if (searchTermCounts.size > 2000) {
     const top = [...searchTermCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 1000);
@@ -147,7 +147,7 @@ async function performGlobalSearch(query: string, filters: any, type: string = "
   return { pubs, breweries, beers: beersResult, users: usersResult.rows };
 }
 
-async function warmPopularSearches(topN = 20) {
+async function warmPopularSearches(topN = 100) {
   const top = [...searchTermCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, topN);
   for (const [term] of top) {
     const cacheKey = buildSearchCacheKey(term, {});
@@ -158,8 +158,88 @@ async function warmPopularSearches(topN = 20) {
     } catch { /* warming is best-effort */ }
   }
 }
-// Re-warm the most popular searches every 5 minutes (best-effort, non-blocking).
-setInterval(() => { warmPopularSearches().catch(() => {}); }, 5 * 60 * 1000).unref();
+// Re-warm the most popular searches every 15 minutes (best-effort, non-blocking).
+setInterval(() => { warmPopularSearches().catch(() => {}); }, 15 * 60 * 1000).unref();
+
+// ── Static startup warm-up ───────────────────────────────────────────────────
+// On boot, pre-warm the cache with EVERY keystroke prefix of the most common
+// beer styles and brewery/pub name tokens so that first-letter queries ("i",
+// "ip", "ipa"…) are already cached before any user types them.
+//
+// Strategy:
+//  1. Pull top styles + brewery/pub first-word tokens from the DB.
+//  2. For each full term, generate ALL its prefixes (1-char onward).
+//  3. Deduplicate and warm all prefix queries in parallel batches of 5,
+//     skipping any key already present in the cache.
+async function warmStaticSearchTerms() {
+  try {
+    // Gather corpus from DB in parallel
+    const [stylesResult, breweryWordsResult, pubWordsResult] = await Promise.all([
+      pool.query<{ style: string }>(
+        `SELECT style FROM beers WHERE style IS NOT NULL GROUP BY style ORDER BY count(*) DESC LIMIT 60`
+      ),
+      pool.query<{ word: string }>(
+        `SELECT lower(split_part(name, ' ', 1)) AS word
+         FROM breweries
+         WHERE is_closed IS NOT TRUE
+           AND length(split_part(name, ' ', 1)) >= 1
+         GROUP BY word ORDER BY count(*) DESC LIMIT 40`
+      ),
+      pool.query<{ word: string }>(
+        `SELECT lower(split_part(name, ' ', 1)) AS word
+         FROM pubs
+         WHERE length(split_part(name, ' ', 1)) >= 1
+         GROUP BY word ORDER BY count(*) DESC LIMIT 20`
+      ),
+    ]);
+
+    // Build the full-term corpus (normalized)
+    const fullTerms = new Set<string>();
+    for (const row of stylesResult.rows) {
+      const t = normalizeSearchTerm(row.style);
+      if (t.length >= 1) fullTerms.add(t);
+    }
+    for (const row of [...breweryWordsResult.rows, ...pubWordsResult.rows]) {
+      const t = normalizeSearchTerm(row.word);
+      if (t.length >= 1) fullTerms.add(t);
+    }
+
+    // Expand to ALL keystroke prefixes (1-char, 2-char, …, full term).
+    // This ensures typing "i" → "ip" → "ipa" all hit the cache.
+    const allPrefixes = new Set<string>();
+    for (const term of fullTerms) {
+      for (let len = 1; len <= term.length; len++) {
+        allPrefixes.add(term.slice(0, len));
+      }
+    }
+
+    // Sort shortest-first so single-char ("i", "s", …) and two-char ("ip", "st", …)
+    // prefixes are cached before longer terms — these are the ones users type first.
+    const todo = [...allPrefixes]
+      .sort((a, b) => a.length - b.length || a.localeCompare(b))
+      .filter(prefix => !getCached(buildSearchCacheKey(prefix, {})));
+
+    // Warm ONE prefix at a time with a small inter-query pause.
+    // performGlobalSearch itself fires 4 sub-queries in parallel (pubs + breweries +
+    // beers + users), so running just 1 warm-up query at a time is already 4 concurrent
+    // DB statements — plenty for a background task without starving the connection pool.
+    // A 50 ms pause between prefixes lets the event loop serve any waiting HTTP requests.
+    for (const prefix of todo) {
+      const cacheKey = buildSearchCacheKey(prefix, {});
+      if (getCached(cacheKey)) continue;
+      try {
+        const result = await performGlobalSearch(prefix, {});
+        setCache(cacheKey, result);
+      } catch { /* best-effort */ }
+      await new Promise(r => setTimeout(r, 50));
+    }
+  } catch { /* non-fatal: DB may not be ready yet on first boot */ }
+}
+// Delay slightly so the DB connection pool is fully ready before we hit it.
+setTimeout(() => { warmStaticSearchTerms().catch(() => {}); }, 5000).unref();
+// Re-warm the static corpus slightly ahead of TTL expiry so corpus prefix entries
+// never go cold between restarts. Interval is 13 min < SEARCH_CACHE_TTL (15 min).
+setInterval(() => { warmStaticSearchTerms().catch(() => {}); }, 13 * 60 * 1000).unref();
 
 // ── Shared helper: base64 dataURL → temp file ───────────────────────────────
 async function writeTempImage(dataUrl: string): Promise<{ path: string; ext: string } | null> {
