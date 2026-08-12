@@ -57,6 +57,11 @@ export async function runFestivalMigrations() {
   } catch (e) {
     console.error("[festival_food_items] order_index migration error:", e);
   }
+  try {
+    await pool.query(`ALTER TABLE festivals ADD COLUMN IF NOT EXISTS food_category_order jsonb DEFAULT '[]'`);
+  } catch (e) {
+    console.error("[festivals] food_category_order migration error:", e);
+  }
 }
 
 export function registerFestivalRoutes(app: Express) {
@@ -134,9 +139,23 @@ export function registerFestivalRoutes(app: Express) {
         if (r.prices) pricesMap[r.id] = r.prices;
       });
 
-      const food = festival.showFood
+      const rawFood = festival.showFood
         ? await db.select().from(festivalFoodItems).where(eq(festivalFoodItems.festivalId, festival.id))
         : [];
+
+      // Sort food items so categories follow the persisted order
+      const categoryOrder: string[] = Array.isArray(festival.foodCategoryOrder) ? (festival.foodCategoryOrder as string[]) : [];
+      const catIndex = (cat: string) => {
+        const i = categoryOrder.indexOf(cat);
+        return i === -1 ? categoryOrder.length : i;
+      };
+      const food = [...rawFood].sort((a, b) => {
+        const catA = a.category || "Altro";
+        const catB = b.category || "Altro";
+        const diff = catIndex(catA) - catIndex(catB);
+        if (diff !== 0) return diff;
+        return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
+      });
 
       // User's own ratings for this festival (if authenticated)
       let userRatings: Record<number, number> = {};
@@ -355,6 +374,7 @@ export function registerFestivalRoutes(app: Express) {
             priceEur: festivals.priceEur, logoUrl: festivals.logoUrl,
             coverImageUrl: festivals.coverImageUrl, createdAt: festivals.createdAt,
             useTokens: festivals.useTokens, tokenName: festivals.tokenName,
+            foodCategoryOrder: festivals.foodCategoryOrder,
             ownerEmail: users.email,
             ownerUsername: users.nickname,
           }).from(festivals).leftJoin(users, eq(festivals.ownerId, users.id)).orderBy(desc(festivals.createdAt))
@@ -367,6 +387,7 @@ export function registerFestivalRoutes(app: Express) {
             priceEur: festivals.priceEur, logoUrl: festivals.logoUrl,
             coverImageUrl: festivals.coverImageUrl, createdAt: festivals.createdAt,
             useTokens: festivals.useTokens, tokenName: festivals.tokenName,
+            foodCategoryOrder: festivals.foodCategoryOrder,
             ownerEmail: users.email,
             ownerUsername: users.nickname,
           }).from(festivals).leftJoin(users, eq(festivals.ownerId, users.id)).where(eq(festivals.ownerId, user.id)).orderBy(desc(festivals.createdAt));
@@ -946,6 +967,27 @@ export function registerFestivalRoutes(app: Express) {
       res.json({ ok: true });
     } catch (err) {
       console.error("Error reordering festival food items:", err);
+      res.status(500).json({ message: "Errore" });
+    }
+  });
+
+  // ── Reorder festival food categories ─────────────────────────────────────────
+  app.post("/api/admin/festivals/:id/food/categories/reorder", isAuthenticated as any, async (req: any, res) => {
+    try {
+      const festId = parseInt(req.params.id);
+      const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId));
+      if (!fest) return res.status(404).json({ message: "Non trovato" });
+      if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
+      const { categories } = req.body; // string[]
+      if (!Array.isArray(categories) || categories.some(c => typeof c !== "string")) {
+        return res.status(400).json({ message: "categories deve essere un array di stringhe" });
+      }
+      await db.update(festivals)
+        .set({ foodCategoryOrder: categories })
+        .where(eq(festivals.id, festId));
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Error reordering festival food categories:", err);
       res.status(500).json({ message: "Errore" });
     }
   });

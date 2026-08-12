@@ -1068,6 +1068,7 @@ export const festivals = pgTable("festivals", {
   schedule: jsonb("schedule").$type<Array<{ label: string; date?: string; openFrom: string; openTo: string }>>(),
   useTokens: boolean("use_tokens").default(false),
   tokenName: varchar("token_name", { length: 50 }).default("token"),
+  foodCategoryOrder: jsonb("food_category_order").$type<string[]>().default([]),
 });
 export const insertFestivalSchema = createInsertSchema(festivals).omit({ id: true, createdAt: true });
 export type InsertFestival = z.infer<typeof insertFestivalSchema>;

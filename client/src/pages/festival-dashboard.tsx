@@ -72,6 +72,7 @@ interface Festival {
   logoUrl: string | null; coverImageUrl: string | null;
   schedule: ScheduleSlot[] | null;
   useTokens: boolean | null; tokenName: string | null;
+  foodCategoryOrder: string[] | null;
 }
 
 function festivalStatus(f: Festival): "unpaid" | "active" | "expired" {
@@ -1086,7 +1087,7 @@ function FestivalCommentsManager({ festId }: { festId: number }) {
   );
 }
 
-function FestivalFoodManager({ festId }: { festId: number }) {
+function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; foodCategoryOrder?: string[] | null }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -1113,18 +1114,33 @@ function FestivalFoodManager({ festId }: { festId: number }) {
   const [editingItem, setEditingItem] = useState<FoodItem | null>(null);
   const [itemForm, setItemForm] = useState({ name: "", description: "", price: "", isAvailable: true, allergens: [] as string[] });
 
-  // ── Drag-and-drop: categories (local order, no persistence) ──────────────
+  // ── Drag-and-drop: categories ─────────────────────────────────────────────
   const [localCategories, setLocalCategories] = useState<string[]>([]);
   const [catDragOver, setCatDragOver] = useState<number | null>(null);
   const catDragFrom = useRef<number | null>(null);
+
+  // Initialise / sync localCategories: honour persisted order, append unknowns at end
   useEffect(() => {
     setLocalCategories(prev => {
       const known = new Set(categories);
+      // Start from the persisted order (filtered to only existing categories)
+      const persisted = (foodCategoryOrder ?? []).filter(c => known.has(c));
+      // Append categories not yet in the persisted list (newly added)
+      const remainder = categories.filter(c => !persisted.includes(c));
+      // If prev already has a user-reordered state (session-local), preserve it
+      // but fall back to persisted order on first mount (prev is empty)
+      if (prev.length === 0) return [...persisted, ...remainder];
       const filtered = prev.filter(c => known.has(c));
-      const added = categories.filter(c => !prev.includes(c));
+      const added = categories.filter(c => !filtered.includes(c));
       return [...filtered, ...added];
     });
-  }, [categories]);
+  }, [categories]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const reorderCategoryMutation = useMutation({
+    mutationFn: (cats: string[]) =>
+      apiRequest(`/api/admin/festivals/${festId}/food/categories/reorder`, { method: "POST" }, { categories: cats }),
+    onError: () => toast({ title: "Errore nel riordinamento categorie", variant: "destructive" }),
+  });
 
   const handleCatDragStart = (e: React.DragEvent, idx: number) => {
     catDragFrom.current = idx; e.dataTransfer.effectAllowed = "move";
@@ -1141,6 +1157,7 @@ function FestivalFoodManager({ festId }: { festId: number }) {
     const [moved] = next.splice(from, 1);
     next.splice(dropIdx, 0, moved);
     setLocalCategories(next);
+    reorderCategoryMutation.mutate(next);
   };
   const handleCatDragEnd = () => { setCatDragOver(null); catDragFrom.current = null; };
 
@@ -2108,7 +2125,7 @@ export default function FestivalDashboard() {
                         </CardContent>
                       </Card>
                     ) : (
-                      <FestivalFoodManager festId={festId!} />
+                      <FestivalFoodManager festId={festId!} foodCategoryOrder={selectedFest?.foodCategoryOrder as string[] | null} />
                     )}
                   </TabsContent>
 
