@@ -789,12 +789,12 @@ export default function UserPublicProfile() {
           className="ios-fixed-chrome lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
         >
-          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+          <div className="bg-white dark:bg-[#0B0D10] border-b border-stone-200/60 dark:border-white/[0.06]">
             <div className="flex items-center gap-3 px-3 h-14">
               <button
                 onClick={() => setActiveTab('overview')}
                 aria-label="Torna alla home del profilo"
-                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:opacity-70 transition-opacity"
               >
                 <ArrowLeft className="h-5 w-5 text-foreground" />
               </button>
@@ -813,7 +813,7 @@ export default function UserPublicProfile() {
               <button
                 onClick={handleShare}
                 aria-label="Condividi profilo"
-                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center tap-scale active:scale-95"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:opacity-70 transition-opacity"
               >
                 <Share2 className="h-[18px] w-[18px] text-foreground" />
               </button>
@@ -835,7 +835,7 @@ export default function UserPublicProfile() {
           <div
             role="tablist"
             aria-label="Sezioni del profilo"
-            className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]"
+            className="bg-white/95 dark:bg-[#121315] rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]"
           >
             <div className="flex items-stretch justify-between p-1.5 gap-1">
               {[
@@ -854,7 +854,7 @@ export default function UserPublicProfile() {
                     aria-current={active ? 'page' : undefined}
                     aria-label={label}
                     data-testid={`user-dock-${id}`}
-                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
+                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-opacity duration-200 active:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
                       active
                         ? 'bg-primary/10 dark:bg-primary/15 text-primary'
                         : 'text-stone-500 dark:text-stone-400 hover:text-foreground'

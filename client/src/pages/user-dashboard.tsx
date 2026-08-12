@@ -739,12 +739,12 @@ export default function UserDashboard() {
           className="ios-fixed-chrome lg:hidden fixed inset-x-0 z-[49]"
           style={{ top: 'var(--mobile-top-offset)' }}
         >
-          <div className="bg-white/70 dark:bg-[#0B0B0C]/70 backdrop-blur-xl border-b border-stone-200/60 dark:border-white/[0.06]">
+          <div className="bg-white dark:bg-[#0B0D10] border-b border-stone-200/60 dark:border-white/[0.06]">
             <div className="flex items-center gap-3 px-3 h-14">
               <button
                 onClick={() => setActiveTab('overview')}
                 aria-label="Torna alla home"
-                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+                className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:opacity-70 transition-opacity"
               >
                 <ArrowLeft className="h-5 w-5 text-foreground" />
               </button>
@@ -767,7 +767,7 @@ export default function UserDashboard() {
               <Link href="/notifications">
                 <button
                   aria-label="Notifiche"
-                  className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:scale-95 transition-transform"
+                  className="w-10 h-10 rounded-full bg-stone-100 dark:bg-white/[0.06] flex items-center justify-center active:opacity-70 transition-opacity"
                 >
                   <Bell className="h-[18px] w-[18px] text-foreground" />
                 </button>
