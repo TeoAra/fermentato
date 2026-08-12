@@ -20,7 +20,6 @@ import CheckinSocialBar from "@/components/social/CheckinSocialBar";
 import { ZoomableImage } from "@/components/ImageLightbox";
 import TrendingHashtags from "@/components/social/TrendingHashtags";
 import { InlinePostComposer } from "@/components/social/InlinePostComposer";
-import { EntityPreviewCard, type EntityType } from "@/components/social/EntityPreviewCard";
 import { EntityChip } from "@/components/social/EntityChip";
 import { PostContent } from "@/components/social/PostContent";
 import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
@@ -63,8 +62,6 @@ function RatingStars({ rating }: { rating: number }) {
 
 /* ── CheckinCard ── */
 function CheckinCard({ data }: { data: any }) {
-  const [beerPreviewRect, setBeerPreviewRect] = useState<DOMRect | null>(null);
-
   return (
     <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
       {/* Header */}
@@ -95,62 +92,35 @@ function CheckinCard({ data }: { data: any }) {
       {/* Beer body */}
       <div className="px-4 pb-3">
         <div className="flex gap-3">
-          <button
-            onClick={(e) => {
-              e.preventDefault();
-              if (beerPreviewRect) {
-                setBeerPreviewRect(null);
-              } else {
-                setBeerPreviewRect((e.currentTarget as HTMLElement).getBoundingClientRect());
-              }
-            }}
-            className="flex-shrink-0 cursor-pointer"
-          >
-            <div className="w-[72px] h-[72px] sm:w-20 sm:h-20 rounded-xl bg-[#FAF7F1] dark:bg-[#12151A] overflow-hidden flex items-center justify-center border border-stone-100 dark:border-white/[0.04] hover:border-primary/40 transition-colors">
+          <div className="flex-shrink-0">
+            <div className="w-[72px] h-[72px] sm:w-20 sm:h-20 rounded-xl bg-[#FAF7F1] dark:bg-[#12151A] overflow-hidden flex items-center justify-center border border-stone-100 dark:border-white/[0.04]">
               {data.beer_image ? (
                 <img src={data.beer_image} alt={data.beer_name} className="w-full h-full object-contain p-1.5" />
               ) : (
                 <Package className="w-6 h-6 text-stone-300" />
               )}
             </div>
-          </button>
+          </div>
           <div className="flex-1 min-w-0">
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                if (beerPreviewRect) {
-                  setBeerPreviewRect(null);
-                } else {
-                  setBeerPreviewRect((e.currentTarget as HTMLElement).getBoundingClientRect());
-                }
-              }}
-              className="text-left w-full"
-            >
-              <p className="font-bold text-stone-900 dark:text-stone-50 leading-tight hover:text-primary transition-colors line-clamp-2">
-                {data.beer_name}
-              </p>
-            </button>
+            <p className="font-bold text-stone-900 dark:text-stone-50 leading-tight line-clamp-2">
+              {data.beer_name}
+            </p>
             {data.brewery_name && <p className="text-xs text-stone-400 mt-0.5 truncate">{data.brewery_name}</p>}
             {data.rating && <div className="mt-1.5"><RatingStars rating={data.rating} /></div>}
-            {data.pub_id && data.pub_name && (
-              <div className="mt-1.5">
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {data.beer_id && data.beer_name && (
+                <EntityChip type="beer" id={data.beer_id} label={data.beer_name} />
+              )}
+              {data.pub_id && data.pub_name && (
                 <EntityChip
                   type="pub"
                   id={data.pub_id}
                   label={`${data.pub_name}${data.pub_city ? `, ${data.pub_city}` : ""}`}
                 />
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-        {beerPreviewRect && (
-          <EntityPreviewCard
-            type="beer"
-            id={data.beer_id}
-            anchorRect={beerPreviewRect}
-            onClose={() => setBeerPreviewRect(null)}
-          />
-        )}
         {data.notes && (
           <div className="mt-2.5 bg-stone-50 dark:bg-[#12151A] rounded-xl px-3 py-2 border border-stone-100/80 dark:border-white/[0.03]">
             <p className="text-xs text-stone-600 dark:text-stone-400 italic leading-relaxed line-clamp-3">"{data.notes}"</p>
