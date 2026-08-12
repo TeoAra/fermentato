@@ -1098,7 +1098,7 @@ function FestivalCommentsManager({ festId }: { festId: number }) {
   );
 }
 
-function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; foodCategoryOrder?: string[] | null }) {
+function FestivalFoodManager({ festId, slug, foodCategoryOrder }: { festId: number; slug: string; foodCategoryOrder?: string[] | null }) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -1150,6 +1150,11 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
   const reorderCategoryMutation = useMutation({
     mutationFn: (cats: string[]) =>
       apiRequest(`/api/admin/festivals/${festId}/food/categories/reorder`, { method: "POST" }, { categories: cats }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals"] });
+      if (slug) queryClient.invalidateQueries({ queryKey: ["/api/festivals", slug] });
+    },
     onError: () => toast({ title: "Errore nel riordinamento categorie", variant: "destructive" }),
   });
 
@@ -1195,6 +1200,10 @@ function FestivalFoodManager({ festId, foodCategoryOrder }: { festId: number; fo
   const reorderFoodMutation = useMutation({
     mutationFn: (order: { id: number; orderIndex: number }[]) =>
       apiRequest(`/api/admin/festivals/${festId}/food/reorder`, { method: "POST" }, { order }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "food"] });
+      if (slug) queryClient.invalidateQueries({ queryKey: ["/api/festivals", slug] });
+    },
     onError: () => toast({ title: "Errore nel riordinamento", variant: "destructive" }),
   });
 
@@ -1715,6 +1724,10 @@ export default function FestivalDashboard() {
   const reorderTapsMutation = useMutation({
     mutationFn: (order: { id: number; orderIndex: number }[]) =>
       apiRequest(`/api/admin/festivals/${festId}/taps/reorder`, { method: "POST" }, { order }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/festivals", festId, "taps"] });
+      if (selectedFest?.slug) queryClient.invalidateQueries({ queryKey: ["/api/festivals", selectedFest.slug] });
+    },
     onError: () => {
       toast({ title: "Errore nel riordinamento", variant: "destructive" });
       setLocalTaps([...taps].sort((a, b) => ((a as any).orderIndex ?? 0) - ((b as any).orderIndex ?? 0)));
@@ -2186,7 +2199,7 @@ export default function FestivalDashboard() {
                         </CardContent>
                       </Card>
                     ) : (
-                      <FestivalFoodManager festId={festId!} foodCategoryOrder={selectedFest?.foodCategoryOrder as string[] | null} />
+                      <FestivalFoodManager festId={festId!} slug={selectedFest?.slug ?? ""} foodCategoryOrder={selectedFest?.foodCategoryOrder as string[] | null} />
                     )}
                   </TabsContent>
 

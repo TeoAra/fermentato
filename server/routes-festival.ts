@@ -127,7 +127,7 @@ export function registerFestivalRoutes(app: Express) {
       .leftJoin(festivalRatings, eq(festivalTaps.id, festivalRatings.tapId))
       .where(eq(festivalTaps.festivalId, festival.id))
       .groupBy(festivalTaps.id, beers.name, beers.style, beers.abv, beers.imageUrl, beers.description, breweries.id, breweries.name, breweries.logoUrl)
-      .orderBy(festivalTaps.tapNumber);
+      .orderBy(festivalTaps.orderIndex, festivalTaps.tapNumber);
 
       // Fetch prices separately via raw query (column added via migration)
       const pricesResult = await pool.query(
@@ -557,7 +557,7 @@ export function registerFestivalRoutes(app: Express) {
       .leftJoin(beers, eq(festivalTaps.beerId, beers.id))
       .leftJoin(breweries, eq(beers.breweryId, breweries.id))
       .where(eq(festivalTaps.festivalId, festId))
-      .orderBy(festivalTaps.tapNumber);
+      .orderBy(festivalTaps.orderIndex, festivalTaps.tapNumber);
 
       // Fetch prices via raw SQL (jsonb column added via migration)
       const tapsWithPrices = await Promise.all(rows.map(async (tap) => {
@@ -673,7 +673,7 @@ export function registerFestivalRoutes(app: Express) {
         await db.insert(festivalTaps).values({ festivalId: festId, tapNumber: i })
           .onConflictDoNothing();
       }
-      const taps = await db.select().from(festivalTaps).where(eq(festivalTaps.festivalId, festId)).orderBy(festivalTaps.tapNumber);
+      const taps = await db.select().from(festivalTaps).where(eq(festivalTaps.festivalId, festId)).orderBy(festivalTaps.orderIndex, festivalTaps.tapNumber);
       res.json(taps);
     } catch (err) {
       res.status(500).json({ message: "Errore" });
@@ -684,7 +684,9 @@ export function registerFestivalRoutes(app: Express) {
   app.get("/api/admin/festivals/:id/food", isAuthenticated as any, async (req: any, res) => {
     try {
       const festId = parseInt(req.params.id);
-      const items = await db.select().from(festivalFoodItems).where(eq(festivalFoodItems.festivalId, festId));
+      const items = await db.select().from(festivalFoodItems)
+        .where(eq(festivalFoodItems.festivalId, festId))
+        .orderBy(festivalFoodItems.orderIndex);
       res.json(items);
     } catch (err) { res.status(500).json({ message: "Errore" }); }
   });
