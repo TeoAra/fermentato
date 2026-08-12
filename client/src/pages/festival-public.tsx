@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useAnyModalOpen, DockPortal } from "@/components/bottom-navigation";
+import { useAnyModalOpen, DockPortal, useHideGlobalBottomNav } from "@/components/bottom-navigation";
 import {
   Droplets, Search, Star, UtensilsCrossed, Beer, ChevronDown, ChevronUp,
   MapPin, CheckCircle2, XCircle, Loader2, Clock, Calendar, Trophy, Info,
@@ -663,6 +663,8 @@ export default function FestivalPublic() {
     return () => mq.removeEventListener?.("change", handler);
   }, []);
   const isFestivalModalOpen = useAnyModalOpen();
+  // Nasconde la global BottomNavigation: questa pagina ha il proprio dock
+  useHideGlobalBottomNav();
 
   const handleFestivalShare = async () => {
     const url = typeof window !== "undefined" ? window.location.href : "";
@@ -849,15 +851,28 @@ export default function FestivalPublic() {
               <h1 className="text-3xl md:text-4xl font-extrabold text-white leading-tight drop-shadow-sm">{festival.name}</h1>
               <div className="flex flex-wrap items-center gap-2 mt-3">
                 {festival.location && (
-                  <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(festival.location)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const loc = encodeURIComponent(festival.location);
+                      const cap = (window as any).Capacitor;
+                      if (cap?.isNativePlatform?.()) {
+                        const isIos = cap.getPlatform() === 'ios';
+                        window.open(
+                          isIos
+                            ? `maps://maps.apple.com/?q=${loc}`
+                            : `geo:0,0?q=${loc}`,
+                          '_system'
+                        );
+                      } else {
+                        window.open(`https://www.google.com/maps/search/?api=1&query=${loc}`, '_blank');
+                      }
+                    }}
                     className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 text-white/90 font-semibold text-xs flex items-center gap-1.5 hover:bg-white/30 transition-colors"
                   >
                     <MapPin className="h-3.5 w-3.5" />
                     <span className="truncate max-w-[150px]">{festival.location}</span>
-                  </a>
+                  </button>
                 )}
                 {(festival.startDate || festival.endDate) && (
                   <div className="bg-white/20 backdrop-blur-sm rounded-full px-3 py-1.5 text-white/90 font-semibold text-xs flex items-center gap-1.5">
@@ -1214,57 +1229,53 @@ export default function FestivalPublic() {
         </DockPortal>
       )}
 
-      {/* ── FLOATING BOTTOM DOCK (mobile only) ── */}
+      {/* ── BOTTOM TAB BAR (mobile only) — attaccata al fondo, sostituisce la global nav ── */}
       <nav
-        className={`lg:hidden fixed left-0 right-0 z-40 transition-opacity duration-200 ${
+        className={`ios-fixed-chrome bottom-nav-fixed lg:hidden fixed left-0 right-0 bottom-0 z-[55] bg-white dark:bg-[#0B0D10] border-t border-x border-stone-100 dark:border-white/[0.06] rounded-t-[32px] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
           isFestivalModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         }`}
-        style={{ bottom: 'calc(var(--frozen-sab) + 12px)' }}
+        style={{ paddingBottom: 'max(calc(var(--frozen-sab) - 16px), 0px)' }}
         aria-label="Navigazione del festival"
         role="tablist"
       >
-        <div className="mx-auto max-w-md px-4">
-          <div className="bg-white/75 dark:bg-[#121315]/80 backdrop-blur-2xl rounded-[28px] border border-white/60 dark:border-white/[0.08] shadow-[0_12px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_12px_40px_-8px_rgba(0,0,0,0.6)]">
-            <div className="flex items-stretch justify-between p-1.5 gap-1">
-              {[
-                { id: 'overview', label: 'Overview', Icon: HomeIcon },
-                { id: 'taps', label: 'Taplist', Icon: Beer },
-                ...(festival.showFood && data.food.length > 0
-                  ? [{ id: 'food', label: 'Food', Icon: UtensilsCrossed }]
-                  : []),
-                { id: 'rankings', label: 'Classifica', Icon: Trophy },
-              ].map(({ id, label, Icon }) => {
-                const active = activeTab === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    aria-current={active ? 'page' : undefined}
-                    aria-label={label}
-                    onClick={() => setActiveTab(id)}
-                    data-testid={`festival-dock-${id}`}
-                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
-                      active
-                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
-                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
-                    }`}
-                  >
-                    <Icon
-                      className="h-[20px] w-[20px]"
-                      strokeWidth={active ? 2.6 : 1.8}
-                      fill={active ? 'currentColor' : 'none'}
-                      style={active ? { fillOpacity: 0.18 } : {}}
-                    />
-                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
-                      {label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+        <div className="relative flex items-stretch h-[64px] px-2 gap-1 max-w-2xl mx-auto">
+          {[
+            { id: 'overview', label: 'Overview', Icon: HomeIcon },
+            { id: 'taps', label: 'Taplist', Icon: Beer },
+            ...(festival.showFood && data.food.length > 0
+              ? [{ id: 'food', label: 'Food', Icon: UtensilsCrossed }]
+              : []),
+            { id: 'rankings', label: 'Classifica', Icon: Trophy },
+          ].map(({ id, label, Icon }) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                aria-current={active ? 'page' : undefined}
+                aria-label={label}
+                onClick={() => setActiveTab(id)}
+                data-testid={`festival-dock-${id}`}
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                  active
+                    ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                    : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
+                }`}
+              >
+                <Icon
+                  className="h-[22px] w-[22px]"
+                  strokeWidth={active ? 2.5 : 1.8}
+                  fill={active ? 'currentColor' : 'none'}
+                  style={active ? { fillOpacity: 0.12 } : {}}
+                />
+                <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-medium'}`}>
+                  {label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </nav>
     </div>

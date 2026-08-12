@@ -1,5 +1,18 @@
 # Fermenta.to - Italian Beer Discovery Platform
 
+## Authentication
+
+**Provider: Clerk** (migrated from custom Passport email/password + Google OAuth — 2026-08).
+
+- Web: `ClerkProvider` in `client/src/App.tsx` wraps the entire app; `useAuth` shim in `client/src/hooks/useAuth.ts` returns `{ user, isLoading, isAuthenticated }` using Clerk + `/api/auth/user`.
+- Sign-in: `/sign-in` → `client/src/pages/sign-in.tsx` (Clerk `<SignIn>` component). Legacy `/login` and `/auth` redirect here.
+- Sign-up: `/sign-up` → `client/src/pages/sign-up.tsx` (Clerk `<SignUp>` component).
+- Server middleware: `@clerk/express`'s `clerkMiddleware()` + `getAuth(req)` in `server/auth.ts`. `isAuthenticated`, `isAdmin`, `isAdminOrBreweryOwner`, `isPubOwner` all use Clerk session with passport session fallback (for Capacitor native app during mobile migration).
+- Clerk proxy: `server/middlewares/clerkProxyMiddleware.ts` proxies `/api/__clerk` to Clerk FAPI (production only).
+- Bridge column: `users.id` (nanoid). Migrated users have their original ID stored as Clerk's `externalId`; `sessionClaims.userId` returns it.
+- Auth config (login providers, branding, email templates): use the **Auth pane** in the Replit workspace toolbar — NOT an external Clerk dashboard.
+- Native mobile (Capacitor): still using passport sessions via `server/native-auth.ts` — pending mobile app update to use Clerk mobile SDK.
+
 ## Overview
 
 Fermenta.to is a full-stack web application designed to connect craft beer enthusiasts with Italian pubs and breweries. The platform facilitates beer discovery, pub and brewery management, and community interaction, aiming to be the go-to resource for Italy's craft beer scene. Key capabilities include comprehensive search, event management, user reviews, social features, and administrative tools for businesses. The project envisions a thriving community built around Italian craft beer, offering market potential by bridging consumers and businesses through an engaging and user-friendly platform.

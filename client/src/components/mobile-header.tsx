@@ -1,4 +1,4 @@
-import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Bell, Activity, QrCode, Building2, Zap, Star, MapPin, ChevronRight, Home, PlusCircle, MessageSquare, ArrowLeft, Download, Sparkles } from "lucide-react";
+import { Menu, X, LogOut, LogIn, User, Store, Beer, Shield, Bell, Activity, QrCode, Building2, Zap, Star, MapPin, ChevronRight, Home, PlusCircle, MessageSquare, ArrowLeft, Download, Sparkles, Users, Compass, Newspaper } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -326,6 +326,9 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
             <MenuItem href="/explore/breweries" icon={Building2Icon} label="Birrifici" desc="Artigianali italiani e internazionali" />
             <MenuItem href="/explore/pubs" icon={MapPin} label="Pub & Locali" desc="Dove bere artigianale in Italia" />
             <MenuItem href="/festival" icon={QrCode} label="Festival" desc="Festival di birra artigianale" />
+            <MenuItem href="/nearby" icon={Compass} label="Vicino a te" desc="Pub e birrifici nei dintorni" />
+            <MenuItem href="/community" icon={Users} label="Community" desc="Post, check-in e bevute" />
+            <MenuItem href="/news" icon={Newspaper} label="Notizie" desc="News dal mondo della birra" />
 
             {isAuthenticated && (
               <>
