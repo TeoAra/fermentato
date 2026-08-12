@@ -708,14 +708,17 @@ export default function FestivalPublic() {
   }, [data?.taps, search, showUnavailable]);
 
   const foodByCategory = useMemo(() => {
-    if (!data?.food) return {};
-    const acc: Record<string, typeof data.food> = {};
+    if (!data?.food) return [];
+    // Preserve the server-sorted category order by building an ordered array
+    // (the server already sorts items by food_category_order, so the first
+    // occurrence of each category in the array defines the category order).
+    const seen = new Map<string, typeof data.food>();
     data.food.forEach(item => {
       const cat = item.category || "Altro";
-      if (!acc[cat]) acc[cat] = [];
-      acc[cat].push(item);
+      if (!seen.has(cat)) seen.set(cat, []);
+      seen.get(cat)!.push(item);
     });
-    return acc;
+    return Array.from(seen.entries()).map(([category, items]) => ({ category, items }));
   }, [data?.food]);
 
   if (isLoading) return (
@@ -1159,14 +1162,14 @@ export default function FestivalPublic() {
 
             {festival.showFood && (
               <TabsContent value="food" className="space-y-4">
-                {Object.keys(foodByCategory).length === 0 ? (
+                {foodByCategory.length === 0 ? (
                   <div className="text-center py-16 bg-stone-50/20 dark:bg-white/5 rounded-3xl border border-dashed border-stone-300">
                     <UtensilsCrossed className="h-10 w-10 mx-auto mb-3 opacity-20 text-primary" />
                     <p className="font-bold text-foreground">Nessuna voce nel menu</p>
                   </div>
                 ) : (
                   <div className="grid gap-3">
-                    {Object.entries(foodByCategory).map(([category, items]) => (
+                    {foodByCategory.map(({ category, items }) => (
                       <FoodCategoryBlock key={category} category={category} items={items} />
                     ))}
                   </div>
