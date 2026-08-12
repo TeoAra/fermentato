@@ -374,10 +374,10 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
   const descriptionMissing = tap.beerId && !hasDescription && isManager;
 
   return (
-    <div className={`bg-white dark:bg-card rounded-2xl border transition-all ${
+    <div className={`bg-white dark:bg-[#1A1D24] rounded-2xl border transition-all ${
       tap.isAvailable
-        ? "border-stone-100 dark:border-border shadow-sm"
-        : "border-gray-100 dark:border-[#23262E] opacity-60"
+        ? "border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)]"
+        : "border-[#E8DED1]/50 dark:border-white/[0.03] opacity-60"
     }`}>
       {/* Collapsed row */}
       <button
@@ -388,8 +388,8 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
           {/* Tap number badge */}
           <div className={`w-12 h-12 flex-shrink-0 rounded-2xl flex items-center justify-center font-bold text-sm ${
             tap.isAvailable
-              ? "bg-stone-50 text-primary"
-              : "bg-[hsl(38,14%,93%)] dark:bg-[hsl(25,14%,14%)] text-muted-foreground"
+              ? "bg-[#FFF7EA] dark:bg-primary/10 text-primary"
+              : "bg-[#F0EAE0] dark:bg-white/[0.04] text-muted-foreground"
           }`}>
             {tap.tapNumber}
           </div>
@@ -516,9 +516,9 @@ function TapCard({ tap, slug, isAuth, isManager, useTokens, tokenName }: {
                   <span className="text-muted-foreground">({tap.ratingCount} vot{tap.ratingCount === 1 ? "o" : "i"})</span>
                 </div>
               )}
-              <a href="/api/login" className="ml-auto text-xs text-primary font-bold hover:underline">
+              <Link href="/login" className="ml-auto text-xs text-primary font-bold hover:underline">
                 Accedi per votare →
-              </a>
+              </Link>
             </div>
           )}
 
@@ -536,7 +536,7 @@ function FoodCategoryBlock({ category, items }: { category: string; items: Festi
   const available = items.filter(i => i.isAvailable).length;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-stone-100 dark:border-border bg-white dark:bg-card shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] bg-white dark:bg-[#1A1D24] shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
       <button
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-stone-50/50 dark:hover:bg-white/5 transition-colors text-left"
         onClick={() => setExpanded(e => !e)}
@@ -602,7 +602,7 @@ function RankingsTab({ rankings }: { rankings: FestivalData["rankings"] }) {
   return (
     <div className="space-y-2">
       {rankings.map((t, i) => (
-        <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-card rounded-2xl border border-stone-100 dark:border-border p-3 shadow-sm">
+        <div key={t.tapNumber} className="flex items-center gap-3 bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] p-3 shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
           <div className={`w-8 h-8 flex items-center justify-center rounded-xl text-sm font-bold flex-shrink-0 ${
             i === 0 ? "bg-primary text-white" :
             i === 1 ? "bg-stone-200 text-muted-foreground" :
@@ -826,17 +826,30 @@ export default function FestivalPublic() {
           }
         ])}</script>
       </Helmet>
-      {/* Hero section with gradient and decorative circles */}
-      <div className={`relative overflow-hidden bg-gradient-to-br from-[hsl(24,93%,49%)] via-[hsl(22,92%,46%)] to-[hsl(20,95%,42%)] dark:from-[hsl(24,80%,28%)] dark:to-[hsl(20,75%,20%)] pt-12 pb-20 px-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
+      {/* Hero section — cover image (when set) or brand gradient fallback */}
+      <div className={`relative overflow-hidden ${festival.coverImageUrl ? '' : 'bg-gradient-to-br from-primary via-amber-500 to-orange-600 dark:from-amber-900 dark:via-orange-900 dark:to-orange-950'} pt-12 pb-20 px-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
+        {/* Cover image background */}
+        {festival.coverImageUrl && (
+          <>
+            <img
+              src={festival.coverImageUrl}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-br from-black/55 via-black/40 to-black/60 pointer-events-none" />
+          </>
+        )}
+        {/* Back button — frosted glass, matches app style */}
         <button
           onClick={() => window.history.back()}
-          className="absolute top-3 left-4 lg:hidden w-10 h-10 rounded-full bg-black/30 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/50 transition tap-scale z-20"
+          className="absolute top-3 left-4 lg:hidden w-10 h-10 rounded-full bg-white/90 dark:bg-[#1A1D24]/90 backdrop-blur-sm flex items-center justify-center text-[#151515] dark:text-[#F5F5F5] shadow-[0_4px_20px_rgba(0,0,0,0.12)] active:scale-95 transition-transform z-20"
           aria-label="Torna indietro"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
-        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10 blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-white/5 blur-2xl" />
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full bg-white/5 blur-2xl pointer-events-none" />
 
         <div className="max-w-2xl mx-auto relative z-10">
           <div className="flex items-start gap-5">
@@ -892,7 +905,7 @@ export default function FestivalPublic() {
 
       {/* Main content with rounded corners overlap */}
       <div
-        className={`max-w-2xl mx-auto bg-white dark:bg-card rounded-t-3xl relative z-10 px-4 min-h-[calc(100dvh-200px)] ${activeTab !== 'overview' ? 'mt-0 pt-0 lg:-mt-8 lg:pt-6' : '-mt-8 pt-6'}`}
+        className={`max-w-2xl lg:max-w-4xl mx-auto bg-[#FAF7F1] dark:bg-[#0B0D10] rounded-t-3xl relative z-10 px-4 min-h-[calc(100dvh-200px)] ${activeTab !== 'overview' ? 'mt-0 pt-0 lg:-mt-8 lg:pt-6' : '-mt-8 pt-6'}`}
         style={{
           paddingBottom: 'calc(96px + var(--frozen-sab))',
           paddingTop: activeTab !== 'overview' ? '64px' : undefined,
@@ -902,7 +915,7 @@ export default function FestivalPublic() {
         <div className={`space-y-4 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
           {/* Schedule */}
           {festival.schedule && festival.schedule.length > 0 && (
-            <div className="bg-stone-50 dark:bg-[#0B0D10]/20 rounded-2xl border border-primary/10 px-4 py-4 shadow-sm">
+            <div className="bg-[#FFF7EA] dark:bg-primary/10 rounded-2xl border border-primary/15 dark:border-primary/20 px-4 py-4 shadow-sm">
               <div className="flex items-center gap-2 text-primary dark:text-orange-400 text-sm font-bold uppercase tracking-wider mb-3">
                 <Clock className="h-4 w-4" />Orari del festival
               </div>
@@ -932,11 +945,11 @@ export default function FestivalPublic() {
               className="flex-1 min-w-[140px]"
             />
             {!isAuthenticated && (
-              <a href="/api/login" className="w-full sm:flex-1">
-                <Button variant="outline" className="w-full text-xs font-bold text-primary border-primary/20 hover:bg-stone-50 rounded-xl py-5">
+              <Link href="/login" className="w-full sm:flex-1">
+                <Button variant="outline" className="w-full text-xs font-bold text-primary border-primary/20 hover:bg-[#FFF7EA] rounded-xl py-5">
                   Accedi per votare →
                 </Button>
-              </a>
+              </Link>
             )}
           </div>
 
@@ -974,18 +987,18 @@ export default function FestivalPublic() {
         {/* Content tabs */}
         <div className={activeTab !== 'overview' ? 'mt-0 lg:mt-8' : 'mt-8'}>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="hidden lg:flex w-full mb-6 bg-stone-50/50 dark:bg-[#0B0D10]/10 p-1 rounded-xl h-12">
-              <TabsTrigger value="taps" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-bold h-10">
+            <TabsList className="hidden lg:flex w-full mb-6 bg-[#F0EAE0] dark:bg-white/[0.04] p-1 rounded-2xl h-12 border border-[#E8DED1] dark:border-white/[0.06]">
+              <TabsTrigger value="taps" className="flex-1 gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm font-bold h-10 text-[#6B6357] dark:text-[#B7BDC7] data-[state=active]:text-white">
                 <Beer className="h-4 w-4" />
                 Birre ({availableCount}/{taps.length})
               </TabsTrigger>
               {festival.showFood && data.food.length > 0 && (
-                <TabsTrigger value="food" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-bold h-10">
+                <TabsTrigger value="food" className="flex-1 gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm font-bold h-10 text-[#6B6357] dark:text-[#B7BDC7]">
                   <UtensilsCrossed className="h-4 w-4" />
                   Menu
                 </TabsTrigger>
               )}
-              <TabsTrigger value="rankings" className="flex-1 gap-2 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white font-bold h-10">
+              <TabsTrigger value="rankings" className="flex-1 gap-2 rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-sm font-bold h-10 text-[#6B6357] dark:text-[#B7BDC7]">
                 <Trophy className="h-4 w-4" />
                 Classifica
               </TabsTrigger>
