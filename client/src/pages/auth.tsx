@@ -101,6 +101,16 @@ export default function AuthPage() {
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const [browserFallbackActive, setBrowserFallbackActive] = useState(false);
 
+  // Reset spinner su unmount: se l'utente naviga via mentre Google/Apple
+  // è in corso, il flag si resetta così al ritorno il pulsante è cliccabile.
+  useEffect(() => {
+    return () => {
+      setIsGoogleLoading(false);
+      setIsAppleLoading(false);
+      setBrowserFallbackActive(false);
+    };
+  }, []);
+
   const verifiedParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("verified") : null;
   const verifiedEmailParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("email") : null;
   const tabParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;

@@ -108,10 +108,35 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(resolveUrl(queryKey.join("/")), {
-      credentials: "include",
-    });
+  async ({ queryKey, signal }) => {
+    // Timeout: se il server non risponde entro 12s, tratta come non autenticato
+    // (evita skeleton infinito quando il VPS è lento o la sessione è stale).
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort('timeout'), 12000);
+
+    // Usa il signal di React Query (cancellazione query) OPPURE il nostro timeout
+    const combinedSignal = signal ?? controller.signal;
+    // Se arriva signal esterno, propagalo al nostro controller
+    if (signal) {
+      signal.addEventListener('abort', () => controller.abort(signal.reason));
+    }
+
+    let res: Response;
+    try {
+      res = await fetch(resolveUrl(queryKey.join("/")), {
+        credentials: "include",
+        signal: combinedSignal,
+      });
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      // Timeout o cancellazione: non crashare, ritorna null silenziosamente
+      if (err?.name === 'AbortError' || String(err).includes('timeout')) {
+        return null as any;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timeoutId);
+    }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       // If any authenticated API call returns 401, the session may have expired.

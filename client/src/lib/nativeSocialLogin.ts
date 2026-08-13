@@ -117,7 +117,15 @@ export async function loginGoogleNative(): Promise<NativeAuthResult> {
   // ── Helper: esegue il login e invia il token al backend ──────────────────
   async function doLogin(opts: Record<string, unknown>): Promise<NativeAuthResult> {
     const { SocialLogin } = await import("@capgo/capacitor-social-login");
-    const res = await SocialLogin.login({ provider: "google", options: opts });
+    // Timeout 20s sul plugin nativo: se l'UI Google non risponde (crash plugin,
+    // nessuna interazione utente entro 20s), reject invece di restare bloccato.
+    const loginTimeout = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("google_plugin_timeout")), 20000)
+    );
+    const res = await Promise.race([
+      SocialLogin.login({ provider: "google", options: opts }),
+      loginTimeout,
+    ]);
     // @ts-ignore — il tipo result varia per provider
     const idToken: string | undefined = res?.result?.idToken;
     if (!idToken) return { ok: false, error: "no_id_token" };
