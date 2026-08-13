@@ -1509,10 +1509,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           b.is_gluten_free AS "isGlutenFree", b.is_alcohol_free AS "isAlcoholFree",
           b.brewery_id AS "breweryId", br.name AS "breweryName", br.logo_url AS "breweryLogo",
           (${scoreExpr}) AS _score
-        FROM candidate_ids ci
-        JOIN beers b ON b.id = ci.id
+        FROM beers b
         LEFT JOIN breweries br ON b.brewery_id = br.id
-        WHERE COALESCE(b.is_discontinued, false) = false
+        WHERE b.id = ANY(ARRAY(SELECT ci.id FROM candidate_ids ci))
+          AND COALESCE(b.is_discontinued, false) = false
           AND COALESCE(br.is_closed, false) = false
           ${matchFilter}
         ORDER BY (${scoreExpr}) DESC, length(b.name) ASC, b.name ASC

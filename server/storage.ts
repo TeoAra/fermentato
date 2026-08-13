@@ -743,10 +743,9 @@ export class DatabaseStorage implements IStorage {
         br.name           AS "breweryName",
         br.logo_url       AS "breweryLogoUrl",
         (${scoreExpr})    AS _score
-      FROM candidate_ids ci
-      JOIN beers b ON b.id = ci.id
+      FROM beers b
       LEFT JOIN breweries br ON b.brewery_id = br.id
-      WHERE 1=1
+      WHERE b.id = ANY(ARRAY(SELECT ci.id FROM candidate_ids ci))
         AND COALESCE(b.is_discontinued, false) = false
         AND COALESCE(br.is_closed, false) = false
         ${matchFilter}

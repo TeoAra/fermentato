@@ -141,12 +141,22 @@ export function buildBeerSearchFragments(
   const brNameUnacc = `unaccent_immutable(lower(COALESCE(br.name, '')::text))`;
   const brNameComp = `regexp_replace(lower(COALESCE(br.name, '')::text), '\\s+', '', 'g')`;
 
+  // Brewery-side candidates: drive from breweries (small table, trigram
+  // indexed) and fetch beers via brewery_id (btree indexed). The old
+  // `beers JOIN breweries WHERE br.name LIKE …` form made the planner
+  // seq-scan all beers (1.2M rows, ~3.5s each — production incidents).
+  // `= ANY(ARRAY(...))` (not `IN (SELECT …)`) is deliberate: the InitPlan
+  // array forces a Bitmap Index Scan on idx_beers_brewery_id (~36ms verified),
+  // while `IN (subquery)` still let the planner hash-join over a beers seq scan.
+  const beersOfMatchingBreweries = (brExpr: string, ph: string): string =>
+    `(SELECT b.id FROM beers b WHERE b.brewery_id = ANY(ARRAY(SELECT br.id FROM breweries br WHERE ${brExpr} LIKE ${ph} LIMIT 500)) LIMIT ${cap})`;
+
   const tokenSubqueries = (ph: string): string[] => [
     `(SELECT b.id FROM beers b WHERE ${beerNameUnacc} LIKE ${ph} LIMIT ${cap})`,
     `(SELECT b.id FROM beers b WHERE ${beerStyle} LIKE ${ph} LIMIT ${cap})`,
-    `(SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id WHERE ${brNameUnaccIdx} LIKE ${ph} LIMIT ${cap})`,
+    beersOfMatchingBreweries(brNameUnaccIdx, ph),
     `(SELECT b.id FROM beers b WHERE ${beerNameComp} LIKE ${ph} LIMIT ${cap})`,
-    `(SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id WHERE ${brNameCompIdx} LIKE ${ph} LIMIT ${cap})`,
+    beersOfMatchingBreweries(brNameCompIdx, ph),
   ];
 
   // Candidate set: UNION of exact-phrase matches + the most selective tokens.
@@ -156,9 +166,9 @@ export function buildBeerSearchFragments(
   // cap, so the truncation bug cannot drop it.
   const members: string[] = [
     `(SELECT b.id FROM beers b WHERE ${beerNameUnacc} LIKE ${pPhrase} LIMIT ${cap})`,
-    `(SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id WHERE ${brNameUnaccIdx} LIKE ${pPhrase} LIMIT ${cap})`,
+    beersOfMatchingBreweries(brNameUnaccIdx, pPhrase),
     `(SELECT b.id FROM beers b WHERE ${beerNameComp} LIKE ${pPhraseCompact} LIMIT ${cap})`,
-    `(SELECT b.id FROM beers b JOIN breweries br ON b.brewery_id = br.id WHERE ${brNameCompIdx} LIKE ${pPhraseCompact} LIMIT ${cap})`,
+    beersOfMatchingBreweries(brNameCompIdx, pPhraseCompact),
   ];
   for (const d of n.drivers) members.push(...tokenSubqueries(pTok.get(d)!));
 
