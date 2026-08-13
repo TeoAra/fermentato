@@ -114,6 +114,16 @@ export const getQueryFn: <T>(options: {
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+      // If any authenticated API call returns 401, the session may have expired.
+      // Invalidate the auth query so the app re-checks and, if unauthenticated,
+      // clears cached user state and shows the login page immediately.
+      const key = queryKey.join("/");
+      if (!key.includes("/api/auth/user")) {
+        // Use setTimeout to avoid invalidating during an active query cycle
+        setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+        }, 0);
+      }
       return null;
     }
 

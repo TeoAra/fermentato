@@ -22,7 +22,8 @@ export function useAuth() {
 
   const { data: user, isLoading } = useQuery<AuthUser | null>({
     queryKey: ["/api/auth/user"],
-    staleTime: 2 * 60 * 1000,
+    staleTime: 30 * 1000,         // 30s — refresca velocemente dopo app resume
+    refetchOnWindowFocus: true,   // ricontrolla ogni volta che l'utente torna sull'app
     retry: false,
   });
 
