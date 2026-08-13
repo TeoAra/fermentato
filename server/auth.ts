@@ -6,7 +6,7 @@ import bcrypt from "bcrypt";
 import { nanoid } from "nanoid";
 import type { Express, RequestHandler } from "express";
 import connectPg from "connect-pg-simple";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { users, oauthAccounts, publicanRequests, breweries, breweryRequests, pubs } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import type { User } from "@shared/schema";
@@ -42,12 +42,15 @@ async function verifyRecaptcha(token: string | undefined): Promise<boolean> {
 }
 
 export function getSession() {
-  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week
+  const sessionTtl = 7 * 24 * 60 * 60 * 1000; // 1 week (ms, per il cookie)
   const pgStore = connectPg(session);
   const sessionStore = new pgStore({
-    conString: process.env.DATABASE_URL,
+    // Riusa il pool condiviso di db.ts (keepalive + timeout + error handler)
+    // invece di crearne uno separato senza protezioni contro connessioni morte.
+    pool: pool,
     createTableIfMissing: false,
-    ttl: sessionTtl,
+    // connect-pg-simple vuole il TTL in SECONDI (prima passavamo ms).
+    ttl: sessionTtl / 1000,
     tableName: "sessions",
   });
   
