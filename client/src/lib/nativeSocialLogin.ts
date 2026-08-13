@@ -108,6 +108,19 @@ export interface NativeAuthResult {
 }
 
 /**
+ * Avvolge una chiamata al plugin nativo con un timeout di 20s: se l'UI
+ * nativa non risponde (crash plugin, nessuna interazione), reject invece
+ * di lasciare lo spinner bloccato. Il timer viene sempre pulito.
+ */
+function withPluginTimeout<T>(promise: Promise<T>, errorTag: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(errorTag)), 20000);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer!));
+}
+
+/**
  * Esegue login Google nativo, invia l'idToken al backend per verifica e
  * creazione sessione. Ritorna ok=true se il backend conferma il login.
  */
@@ -119,13 +132,10 @@ export async function loginGoogleNative(): Promise<NativeAuthResult> {
     const { SocialLogin } = await import("@capgo/capacitor-social-login");
     // Timeout 20s sul plugin nativo: se l'UI Google non risponde (crash plugin,
     // nessuna interazione utente entro 20s), reject invece di restare bloccato.
-    const loginTimeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("google_plugin_timeout")), 20000)
-    );
-    const res = await Promise.race([
+    const res = await withPluginTimeout(
       SocialLogin.login({ provider: "google", options: opts }),
-      loginTimeout,
-    ]);
+      "google_plugin_timeout",
+    );
     // @ts-ignore — il tipo result varia per provider
     const idToken: string | undefined = res?.result?.idToken;
     if (!idToken) return { ok: false, error: "no_id_token" };
@@ -295,10 +305,13 @@ export async function loginAppleNative(): Promise<NativeAuthResult> {
   try {
     await ensureInit();
     const { SocialLogin } = await import("@capgo/capacitor-social-login");
-    const res = await SocialLogin.login({
-      provider: "apple",
-      options: { scopes: ["email", "name"] },
-    });
+    const res = await withPluginTimeout(
+      SocialLogin.login({
+        provider: "apple",
+        options: { scopes: ["email", "name"] },
+      }),
+      "apple_plugin_timeout",
+    );
     // @capgo/capacitor-social-login v8.x: il campo è `idToken` (JWT firmato
     // da Apple), NON `identityToken` come nei vecchi plugin. Manteniamo il
     // fallback per retro-compatibilità nel caso il plugin venga downgradato.

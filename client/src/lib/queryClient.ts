@@ -109,17 +109,28 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey, signal }) => {
-    // Timeout: se il server non risponde entro 12s, tratta come non autenticato
-    // (evita skeleton infinito quando il VPS è lento o la sessione è stale).
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort('timeout'), 12000);
+    // Timeout 12s: se il server non risponde, la query fallisce con un errore
+    // esplicito invece di restare appesa (skeleton infinito).
+    const timeoutController = new AbortController();
+    const timeoutId = setTimeout(
+      () => timeoutController.abort(new DOMException('timeout', 'TimeoutError')),
+      12000,
+    );
 
-    // Usa il signal di React Query (cancellazione query) OPPURE il nostro timeout
-    const combinedSignal = signal ?? controller.signal;
-    // Se arriva signal esterno, propagalo al nostro controller
-    if (signal) {
-      signal.addEventListener('abort', () => controller.abort(signal.reason));
+    // Combina il signal di React Query (cancellazione) con il nostro timeout.
+    let combinedSignal: AbortSignal;
+    const onExternalAbort = () => timeoutController.abort(signal?.reason);
+    if (signal && typeof (AbortSignal as any).any === 'function') {
+      combinedSignal = (AbortSignal as any).any([signal, timeoutController.signal]);
+    } else if (signal) {
+      // Fallback: propaga l'abort esterno al controller del timeout.
+      signal.addEventListener('abort', onExternalAbort);
+      combinedSignal = timeoutController.signal;
+    } else {
+      combinedSignal = timeoutController.signal;
     }
+
+    const isAuthProbe = queryKey.join("/").includes("/api/auth/user");
 
     let res: Response;
     try {
@@ -128,14 +139,15 @@ export const getQueryFn: <T>(options: {
         signal: combinedSignal,
       });
     } catch (err: any) {
-      clearTimeout(timeoutId);
-      // Timeout o cancellazione: non crashare, ritorna null silenziosamente
-      if (err?.name === 'AbortError' || String(err).includes('timeout')) {
-        return null as any;
-      }
+      const isAbort = err?.name === 'AbortError' || err?.name === 'TimeoutError';
+      // Solo il probe di autenticazione degrada a null (= non autenticato):
+      // meglio mostrare il login che uno schermo congelato. Tutte le altre
+      // query propagano l'errore così le pagine mostrano lo stato di errore.
+      if (isAbort && isAuthProbe) return null as any;
       throw err;
     } finally {
       clearTimeout(timeoutId);
+      if (signal) signal.removeEventListener('abort', onExternalAbort);
     }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

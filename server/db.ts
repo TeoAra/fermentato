@@ -20,7 +20,9 @@ const isNeon = databaseUrl.includes('neon.tech') || databaseUrl.includes('neon.'
 // timeout non ha questo problema.
 const pool = new pg.Pool({
   connectionString: databaseUrl,
-  ssl: isNeon ? { rejectUnauthorized: false } : undefined,
+  // TLS verificato: Neon usa certificati pubblici validi, nessun motivo di
+  // disabilitare la verifica (rejectUnauthorized=false esporrebbe a MITM).
+  ssl: isNeon ? { rejectUnauthorized: true } : undefined,
   max: 10,
   // Ricicla le connessioni rimaste idle prima che il server/proxy le chiuda
   // dal suo lato lasciandole "mezze morte" nel pool.
