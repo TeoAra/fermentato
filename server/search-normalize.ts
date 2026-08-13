@@ -148,8 +148,10 @@ export function buildBeerSearchFragments(
   // `= ANY(ARRAY(...))` (not `IN (SELECT …)`) is deliberate: the InitPlan
   // array forces a Bitmap Index Scan on idx_beers_brewery_id (~36ms verified),
   // while `IN (subquery)` still let the planner hash-join over a beers seq scan.
+  // No LIMIT on the brewery subselect: capping breweries (unordered) could
+  // nondeterministically drop valid beers; the beer-level cap bounds the work.
   const beersOfMatchingBreweries = (brExpr: string, ph: string): string =>
-    `(SELECT b.id FROM beers b WHERE b.brewery_id = ANY(ARRAY(SELECT br.id FROM breweries br WHERE ${brExpr} LIKE ${ph} LIMIT 500)) LIMIT ${cap})`;
+    `(SELECT b.id FROM beers b WHERE b.brewery_id = ANY(ARRAY(SELECT br.id FROM breweries br WHERE ${brExpr} LIKE ${ph})) LIMIT ${cap})`;
 
   const tokenSubqueries = (ph: string): string[] => [
     `(SELECT b.id FROM beers b WHERE ${beerNameUnacc} LIKE ${ph} LIMIT ${cap})`,
