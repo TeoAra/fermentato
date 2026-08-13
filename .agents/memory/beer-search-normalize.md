@@ -42,3 +42,11 @@ truncated in the INTERSECT removed the row.
   extra-filter params (gluten/alcohol/style/abv/ibu) AFTER calling it.
 - Prod DB is self-hosted on a VPS (not Neon, not reachable via executeSql
   production) — verify on dev by inserting a temp row, querying, then deleting.
+
+## Planner footgun: never let big-table joins drive the plan (Aug 2026 prod incident)
+Common terms ("ipa") took 20–34s in prod, saturating the 10-conn pool and blocking login.
+Two seq-scan traps in the search SQL over 1.19M beers:
+1. `beers b JOIN breweries br … WHERE br.name LIKE …` → planner seq-scans beers (~3.5s each).
+2. Final `candidate_ids ci JOIN beers b ON b.id=ci.id` → hash join over a beers seq scan (~15s).
+**Fix:** force InitPlan-array index scans: `b.brewery_id = ANY(ARRAY(SELECT br.id FROM breweries WHERE … LIMIT 500))` and `b.id = ANY(ARRAY(SELECT id FROM candidate_ids))`. `IN (subquery)` is NOT enough — planner still hash-joins; must be `= ANY(ARRAY(...))`. Verified 36ms vs 3054ms via EXPLAIN on the VPS.
+**How to apply:** any new query touching beers by brewery/candidate set must use the ANY(ARRAY) shape; EXPLAIN on the VPS (not dev) before shipping search changes.
