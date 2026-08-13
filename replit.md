@@ -2,16 +2,14 @@
 
 ## Authentication
 
-**Provider: Clerk** (migrated from custom Passport email/password + Google OAuth — 2026-08).
+**Provider: Passport.js + express-session** (migrazione Clerk tentata ad agosto 2026 e annullata).
 
-- Web: `ClerkProvider` in `client/src/App.tsx` wraps the entire app; `useAuth` shim in `client/src/hooks/useAuth.ts` returns `{ user, isLoading, isAuthenticated }` using Clerk + `/api/auth/user`.
-- Sign-in: `/sign-in` → `client/src/pages/sign-in.tsx` (Clerk `<SignIn>` component). Legacy `/login` and `/auth` redirect here.
-- Sign-up: `/sign-up` → `client/src/pages/sign-up.tsx` (Clerk `<SignUp>` component).
-- Server middleware: `@clerk/express`'s `clerkMiddleware()` + `getAuth(req)` in `server/auth.ts`. `isAuthenticated`, `isAdmin`, `isAdminOrBreweryOwner`, `isPubOwner` all use Clerk session with passport session fallback (for Capacitor native app during mobile migration).
-- Clerk proxy: `server/middlewares/clerkProxyMiddleware.ts` proxies `/api/__clerk` to Clerk FAPI (production only).
-- Bridge column: `users.id` (nanoid). Migrated users have their original ID stored as Clerk's `externalId`; `sessionClaims.userId` returns it.
-- Auth config (login providers, branding, email templates): use the **Auth pane** in the Replit workspace toolbar — NOT an external Clerk dashboard.
-- Native mobile (Capacitor): still using passport sessions via `server/native-auth.ts` — pending mobile app update to use Clerk mobile SDK.
+- Web: `useAuth` in `client/src/hooks/useAuth.ts` chiama `/api/auth/user` (Passport session) e restituisce `{ user, isLoading, isAuthenticated }`.
+- Sign-in/Sign-up: `client/src/pages/auth.tsx` — form email/password + Google OAuth (web redirect) + Apple nativo (iOS).
+- Server: `server/auth.ts` — Passport LocalStrategy + GoogleStrategy + connect-pg-simple session store su PostgreSQL.
+- Native mobile (Capacitor): `server/native-auth.ts` verifica i token Google/Apple nativi e chiama `req.login()` per creare una sessione Passport standard.
+- `users.id` è `varchar` (stringa) — gli utenti vecchi hanno ID interi come stringa ("45321347"), i nuovi hanno nanoid brevi. Entrambi funzionano con Passport.
+- Sessioni: tabella `sessions` PostgreSQL gestita da connect-pg-simple. **Nota storica**: la tabella è stata svuotata durante il tentativo di migrazione Clerk (agosto 2026); tutti gli utenti hanno dovuto ri-loggarsi.
 
 ## Overview
 
