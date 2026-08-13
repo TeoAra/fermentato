@@ -934,15 +934,21 @@ export function registerFestivalRoutes(app: Express) {
       const [fest] = await db.select().from(festivals).where(eq(festivals.id, festId));
       if (!fest) return res.status(404).json({ message: "Non trovato" });
       if (!canManageFestival(req, fest)) return res.status(403).json({ message: "Non autorizzato" });
-      const { order } = req.body; // [{id, orderIndex}]
+      const { order } = req.body; // [{id, orderIndex, tapNumber}]
       if (!Array.isArray(order)) return res.status(400).json({ message: "order deve essere un array" });
-      await Promise.all(
-        order.map(({ id, orderIndex }: { id: number; orderIndex: number }) =>
-          db.update(festivalTaps)
-            .set({ orderIndex })
-            .where(and(eq(festivalTaps.id, id), eq(festivalTaps.festivalId, festId)))
-        )
-      );
+      // Pass 1: shift tapNumbers to a high-offset range so no two rows share
+      // the same tapNumber during the transition (unique constraint on festival_id+tap_number).
+      for (const { id } of order) {
+        await db.update(festivalTaps)
+          .set({ tapNumber: id + 10000 })
+          .where(and(eq(festivalTaps.id, id), eq(festivalTaps.festivalId, festId)));
+      }
+      // Pass 2: write the final orderIndex and tapNumber values.
+      for (const { id, orderIndex, tapNumber } of order as { id: number; orderIndex: number; tapNumber: number }[]) {
+        await db.update(festivalTaps)
+          .set({ orderIndex, tapNumber })
+          .where(and(eq(festivalTaps.id, id), eq(festivalTaps.festivalId, festId)));
+      }
       res.json({ ok: true });
     } catch (err) {
       console.error("Error reordering festival taps:", err);

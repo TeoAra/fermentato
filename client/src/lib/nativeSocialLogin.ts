@@ -122,12 +122,15 @@ export async function loginGoogleNative(): Promise<NativeAuthResult> {
     const idToken: string | undefined = res?.result?.idToken;
     if (!idToken) return { ok: false, error: "no_id_token" };
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 25000);
     const r = await fetch("/api/auth/google-native", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
       body: JSON.stringify({ idToken }),
-    });
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timer));
     if (!r.ok) {
       const t = await r.text().catch(() => "");
       return { ok: false, error: `backend_${r.status}: ${t.slice(0, 120)}` };
