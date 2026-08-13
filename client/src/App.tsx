@@ -271,6 +271,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
       || error.message?.includes('Loading chunk')
       || error.message?.includes('is not a valid JavaScript MIME type')
       || error.message?.includes('Failed to load module script')
+      || error.message?.includes('Importing a module script failed') // Safari/iOS wording
       || error.name === 'ChunkLoadError';
     if (isChunkError) {
       // NIENTE auto-reload aggressivo: mostriamo subito la schermata
@@ -292,6 +293,7 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
         || errMsg.includes('Loading chunk')
         || errMsg.includes('is not a valid JavaScript MIME type')
         || errMsg.includes('Failed to load module script')
+        || errMsg.includes('Importing a module script failed') // Safari/iOS wording
         || this.state.error?.name === 'ChunkLoadError';
       const handleForceReload = async () => {
         sessionStorage.removeItem('_chunk_reload_attempts');
