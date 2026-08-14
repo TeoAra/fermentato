@@ -132,20 +132,35 @@ export function buildBeerSearchFragments(
   // 500'd auth). Fall back to a prefix-anchored plan served by the btree
   // text_pattern_ops index (idx_beers_name_unaccent_prefix); breweries/styles
   // are small enough to scan.
+  // Product decision: 1-2 char tokens behave as PREFIX autocomplete ("ip" →
+  // names/styles/breweries starting with "ip"), not substring search — that is
+  // the only indexable plan at this length. Multi-token short queries ("a b")
+  // keep AND semantics: every token must prefix-match some field.
   const shortQuery = n.meaningful.every((t) => t.length < 3);
   if (shortQuery) {
-    const pPref = P(`${n.phrase}%`);
-    const prefixMembers = [
-      `(SELECT b.id FROM beers b WHERE unaccent_immutable(lower(b.name::text)) LIKE ${pPref} LIMIT ${cap})`,
-      `(SELECT b.id FROM beers b WHERE b.style IS NOT NULL AND lower(b.style::text) LIKE ${pPref} LIMIT ${cap})`,
-      `(SELECT b.id FROM beers b WHERE b.brewery_id = ANY(ARRAY(SELECT br.id FROM breweries br WHERE unaccent_immutable(lower(br.name::text)) LIKE ${pPref})) LIMIT ${cap})`,
-    ];
-    return {
-      candidateCTE: `candidate_ids AS (\n${prefixMembers.join("\n          UNION\n")}\n        )`,
-      matchFilter: "",
-      scoreExpr: `(CASE WHEN unaccent_immutable(lower(b.name::text)) LIKE ${pPref} THEN 4 ELSE 0 END
+    const prefixMembers: string[] = [];
+    const tokenPrefixParams: string[] = [];
+    for (const t of [...new Set(n.meaningful)]) {
+      const pPref = P(`${t}%`);
+      tokenPrefixParams.push(pPref);
+      prefixMembers.push(
+        `(SELECT b.id FROM beers b WHERE unaccent_immutable(lower(b.name::text)) LIKE ${pPref} LIMIT ${cap})`,
+        `(SELECT b.id FROM beers b WHERE b.style IS NOT NULL AND lower(b.style::text) LIKE ${pPref} LIMIT ${cap})`,
+        `(SELECT b.id FROM beers b WHERE b.brewery_id = ANY(ARRAY(SELECT br.id FROM breweries br WHERE unaccent_immutable(lower(br.name::text)) LIKE ${pPref})) LIMIT ${cap})`,
+      );
+    }
+    const perTokenPrefix = tokenPrefixParams.map((pPref) =>
+      `(unaccent_immutable(lower(b.name::text)) LIKE ${pPref} OR lower(COALESCE(b.style, '')::text) LIKE ${pPref} OR unaccent_immutable(lower(COALESCE(br.name, '')::text)) LIKE ${pPref})`,
+    );
+    const scoreParts = tokenPrefixParams.map((pPref) =>
+      `(CASE WHEN unaccent_immutable(lower(b.name::text)) LIKE ${pPref} THEN 4 ELSE 0 END
         + CASE WHEN unaccent_immutable(lower(COALESCE(br.name, '')::text)) LIKE ${pPref} THEN 3 ELSE 0 END
         + CASE WHEN lower(COALESCE(b.style, '')::text) LIKE ${pPref} THEN 1 ELSE 0 END)`,
+    );
+    return {
+      candidateCTE: `candidate_ids AS (\n${prefixMembers.join("\n          UNION\n")}\n        )`,
+      matchFilter: perTokenPrefix.length > 1 ? `AND ${perTokenPrefix.join("\n        AND ")}` : "",
+      scoreExpr: `(${scoreParts.join("\n        + ")})`,
     };
   }
 
