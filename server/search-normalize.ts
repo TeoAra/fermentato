@@ -126,6 +126,29 @@ export function buildBeerSearchFragments(
     };
   }
 
+  // Short queries (every token < 3 chars, e.g. "ip"): trigram GIN indexes are
+  // useless (trigrams need 3 chars) and `LIKE '%xx%'` seq-scans 1.2M rows for
+  // ~30s (production incident: the warmer + typeahead saturated the pool and
+  // 500'd auth). Fall back to a prefix-anchored plan served by the btree
+  // text_pattern_ops index (idx_beers_name_unaccent_prefix); breweries/styles
+  // are small enough to scan.
+  const shortQuery = n.meaningful.every((t) => t.length < 3);
+  if (shortQuery) {
+    const pPref = P(`${n.phrase}%`);
+    const prefixMembers = [
+      `(SELECT b.id FROM beers b WHERE unaccent_immutable(lower(b.name::text)) LIKE ${pPref} LIMIT ${cap})`,
+      `(SELECT b.id FROM beers b WHERE b.style IS NOT NULL AND lower(b.style::text) LIKE ${pPref} LIMIT ${cap})`,
+      `(SELECT b.id FROM beers b WHERE b.brewery_id = ANY(ARRAY(SELECT br.id FROM breweries br WHERE unaccent_immutable(lower(br.name::text)) LIKE ${pPref})) LIMIT ${cap})`,
+    ];
+    return {
+      candidateCTE: `candidate_ids AS (\n${prefixMembers.join("\n          UNION\n")}\n        )`,
+      matchFilter: "",
+      scoreExpr: `(CASE WHEN unaccent_immutable(lower(b.name::text)) LIKE ${pPref} THEN 4 ELSE 0 END
+        + CASE WHEN unaccent_immutable(lower(COALESCE(br.name, '')::text)) LIKE ${pPref} THEN 3 ELSE 0 END
+        + CASE WHEN lower(COALESCE(b.style, '')::text) LIKE ${pPref} THEN 1 ELSE 0 END)`,
+    };
+  }
+
   const pPhrase = P(`%${n.phrase}%`);
   const pPhraseCompact = P(`%${n.phraseCompact}%`);
   const pTok = new Map<string, string>();

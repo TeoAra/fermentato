@@ -213,7 +213,9 @@ async function warmStaticSearchTerms() {
     // This ensures typing "i" → "ip" → "ipa" all hit the cache.
     const allPrefixes = new Set<string>();
     for (const term of fullTerms) {
-      for (let len = 1; len <= term.length; len++) {
+      // Start at 3: 1-2 char LIKE patterns can't use trigram indexes → 30s seq
+      // scans that saturate the pool (short queries use the cheap prefix plan).
+      for (let len = 3; len <= term.length; len++) {
         allPrefixes.add(term.slice(0, len));
       }
     }
@@ -294,7 +296,7 @@ async function warmFilteredSearchTerms() {
     {
       const prefixSet = new Set<string>();
       for (const term of fullTerms) {
-        for (let len = 1; len <= term.length; len++) prefixSet.add(term.slice(0, len));
+        for (let len = 3; len <= term.length; len++) prefixSet.add(term.slice(0, len));
       }
       allPrefixes.push(...[...prefixSet].sort((a, b) => a.length - b.length || a.localeCompare(b)));
     }
@@ -320,7 +322,7 @@ async function warmFilteredSearchTerms() {
       const style = row.style.trim(); // original casing for the actual DB query
       const normalized = normalizeSearchTerm(style);
       if (!normalized) continue;
-      const stylePrefixes = Array.from({ length: normalized.length }, (_, i) => normalized.slice(0, i + 1));
+      const stylePrefixes = Array.from({ length: normalized.length }, (_, i) => normalized.slice(0, i + 1)).filter(p => p.length >= 3);
 
       await warmList(stylePrefixes.map(prefix => ({ prefix, filters: { style } })));
       await warmList(stylePrefixes.map(prefix => ({ prefix, filters: { style, glutenFree: true } as const })));
@@ -331,7 +333,7 @@ async function warmFilteredSearchTerms() {
       const city = row.city.trim(); // original casing for the actual DB query
       const normalized = normalizeSearchTerm(city);
       if (!normalized) continue;
-      const cityPrefixes = Array.from({ length: normalized.length }, (_, i) => normalized.slice(0, i + 1));
+      const cityPrefixes = Array.from({ length: normalized.length }, (_, i) => normalized.slice(0, i + 1)).filter(p => p.length >= 3);
 
       await warmList(cityPrefixes.map(prefix => ({ prefix, filters: { city } })));
     }
@@ -832,6 +834,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // ── BIRRE ──
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_name_unaccent_trgm
         ON beers USING GIN (unaccent_immutable(lower(name)) gin_trgm_ops)`).catch(() => {});
+      // Btree prefix index for SHORT (1-2 char) queries where trigram GIN can't help
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_name_unaccent_prefix
+        ON beers (unaccent_immutable(lower(name)) text_pattern_ops)`).catch(() => {});
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_name_compact_trgm
         ON beers USING GIN (regexp_replace(lower(name), '\\s+', '', 'g') gin_trgm_ops)`).catch(() => {});
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_style_trgm
