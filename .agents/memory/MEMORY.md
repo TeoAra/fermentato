@@ -13,4 +13,5 @@
 - [Drag-to-reorder pattern (managers)](drag-reorder-managers.md) — Bevande/Cantina/MenuCibo all use same pattern: localState+useEffect sync from prop, useRef for dragFrom, reorder mutation on drop. bottle_list.order_index needs VPS ALTER TABLE.
 - [Frontend array-shape crashes](frontend-array-guards.md) — custom queryFns without r.ok checks turn API error objects into "data", crashing .map/.forEach; DB drift (missing columns) is the usual trigger.
 - [Neon idle connection hang](neon-idle-hang.md) — never use Neon WebSocket driver on long-running server; TCP pg.Pool + keepalive/timeouts; session store must reuse the pool; ttl in seconds.
+- [Short search terms bypass trgm](short-term-search-seq-scan.md) — 1-2 char LIKE '%x%' can't use pg_trgm → 30s seq scans; warmer of keystroke prefixes saturates pool and 500s auth. Prod DB is local PG, not Neon.
 - [Security hardening baseline](security-hardening.md) — helmet (CSP off, COEP off), body 1mb global (10mb only /api/scan), generalApiRateLimit 300/5min in rate-limit.ts, query maxLen 200. Actual SQL injection risk was low (parameterized queries throughout); main gaps were DoS vectors.
