@@ -212,7 +212,11 @@ async function networkFirstWithFallback(request) {
   } catch {
     const cached = await caches.match(request);
     if (cached) return cached;
-    return caches.match('/') || new Response('Offline', { status: 503 });
+    // NB: caches.match restituisce una Promise (sempre truthy) — va awaitata,
+    // altrimenti il fallback `|| new Response` non scatta mai e un cache miss
+    // fa fallire respondWith con undefined.
+    const shell = await caches.match('/');
+    return shell || new Response('Offline', { status: 503 });
   }
 }
 
