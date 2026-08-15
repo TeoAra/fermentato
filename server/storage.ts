@@ -1821,6 +1821,7 @@ export class DatabaseStorage implements IStorage {
       tap_change: 'tapChanges',
       new_beer: 'tapChanges',
       beer_removed: 'tapChanges',
+      wishlist_beer_nearby: 'wishlistNearby',
       // Eventi e festival
       event: 'events',
       festival: 'events',

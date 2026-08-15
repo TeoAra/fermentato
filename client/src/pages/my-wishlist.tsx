@@ -1,10 +1,10 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Link } from "wouter";
-import { Heart, Trash2, Package, Search, Wine, Beer, AlertTriangle, ScanLine } from "lucide-react";
+import { Heart, Trash2, Package, Search, Wine, Beer, AlertTriangle, ScanLine, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +29,7 @@ export default function MyWishlist() {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
   const [checkinItem, setCheckinItem] = useState<any>(null);
+  const [geoCoords, setGeoCoords] = useState<{ lat: number; lng: number } | null>(null);
 
   const {
     data: wishlist = [],
@@ -39,6 +40,51 @@ export default function MyWishlist() {
     queryKey: ["/api/user/wishlist"],
     enabled: isAuthenticated,
   });
+
+  // Request geolocation once on mount (best-effort, no block on failure)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setGeoCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => { /* geolocation denied or unavailable — badge simply won't appear */ },
+      { timeout: 8000, maximumAge: 5 * 60 * 1000 }
+    );
+  }, [isAuthenticated]);
+
+  // Query which wishlist beers are available at nearby pubs.
+  // Only fires once we have confirmed geolocation — without it we cannot
+  // determine "nearby" and the badge should not appear.
+  const { data: nearbyData } = useQuery<{ available: Array<{ beer_id: number; pub_id: number; pub_name: string; city: string; pub_slug: string; source: string; distance_km: number | null }> }>({
+    queryKey: ["/api/user/wishlist/available-nearby", geoCoords?.lat, geoCoords?.lng],
+    queryFn: async () => {
+      // geoCoords is guaranteed non-null here because `enabled` checks it
+      const params = new URLSearchParams({
+        lat: String(geoCoords!.lat),
+        lng: String(geoCoords!.lng),
+        radius: "20",
+      });
+      const r = await fetch(`/api/user/wishlist/available-nearby?${params}`, { credentials: "include" });
+      if (!r.ok) return { available: [] };
+      return r.json();
+    },
+    // Only run once we have real geolocation AND a non-empty wishlist
+    enabled: isAuthenticated && wishlist.length > 0 && geoCoords !== null,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  type NearbyItem = { beer_id: number; pub_id: number; pub_name: string; city: string; pub_slug: string; source: string; distance_km: number | null };
+
+  // Map beer_id → list of nearby pubs where it's available
+  const nearbyByBeer = useMemo(() => {
+    const map = new Map<number, NearbyItem[]>();
+    for (const item of (nearbyData?.available ?? []) as NearbyItem[]) {
+      const existing = map.get(item.beer_id) ?? [];
+      existing.push(item);
+      map.set(item.beer_id, existing);
+    }
+    return map;
+  }, [nearbyData]);
 
   const removeMutation = useMutation({
     mutationFn: (beerId: number) => apiRequest("DELETE", `/api/user/wishlist/${beerId}`),
@@ -222,9 +268,27 @@ export default function MyWishlist() {
                 <Link href={`/beer/${item.beer_id}`} className="flex-1 min-w-0">
                   <p className="font-semibold text-stone-900 dark:text-stone-50 truncate text-sm font-poppins">{item.beer_name}</p>
                   <p className="text-xs text-stone-400 mt-0.5">{item.brewery_name}</p>
-                  {item.beer_style && (
-                    <span className="inline-block text-xs bg-stone-100 dark:bg-[#12151A] text-stone-500 rounded-full px-2 py-0.5 mt-1">{item.beer_style}</span>
-                  )}
+                  <div className="flex flex-wrap gap-1 mt-1">
+                    {item.beer_style && (
+                      <span className="inline-block text-xs bg-stone-100 dark:bg-[#12151A] text-stone-500 rounded-full px-2 py-0.5">{item.beer_style}</span>
+                    )}
+                    {nearbyByBeer.has(item.beer_id) && (() => {
+                      const nearby = nearbyByBeer.get(item.beer_id)!;
+                      const first = nearby[0];
+                      return (
+                        <Link
+                          href={`/pub/${first.pub_slug || first.pub_id}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1 text-xs bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-700/40 rounded-full px-2 py-0.5 font-medium"
+                        >
+                          <MapPin className="w-2.5 h-2.5" />
+                          {nearby.length === 1
+                            ? `Disponibile: ${first.pub_name}`
+                            : `Disponibile in ${nearby.length} locali`}
+                        </Link>
+                      );
+                    })()}
+                  </div>
                 </Link>
                 {item.beer_abv && (
                   <span className="text-xs font-bold text-primary shrink-0">{item.beer_abv}%</span>

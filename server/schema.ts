@@ -630,6 +630,9 @@ export const notificationPreferences = pgTable("notification_preferences", {
   tapChanges: boolean("tap_changes").default(true),
   events: boolean("events").default(true),
   newPubs: boolean("new_pubs").default(false),
+  wishlistNearby: boolean("wishlist_nearby").default(true),
+  wishlistNearbyPush: boolean("wishlist_nearby_push").default(true),
+  wishlistNearbyEmail: boolean("wishlist_nearby_email").default(false),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 

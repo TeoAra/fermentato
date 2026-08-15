@@ -204,7 +204,8 @@ export type NotifCategory =
   | 'checkinLikes' | 'checkinComments'
   | 'newFollowers' | 'breweryReplies'
   | 'reportUpdates' | 'adminBroadcasts'
-  | 'mentions' | 'venueUpdates';
+  | 'mentions' | 'venueUpdates'
+  | 'wishlistNearby';
 
 export function initVapid() {
   if (VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY) {

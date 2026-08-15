@@ -220,6 +220,19 @@ async function runSocialMigrations() {
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates_push BOOLEAN DEFAULT TRUE;
       ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS venue_updates_email BOOLEAN DEFAULT FALSE;
 
+      -- Task #162: wishlist beer available nearby
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS wishlist_nearby BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS wishlist_nearby_push BOOLEAN DEFAULT TRUE;
+      ALTER TABLE notification_preferences ADD COLUMN IF NOT EXISTS wishlist_nearby_email BOOLEAN DEFAULT FALSE;
+      CREATE TABLE IF NOT EXISTS wishlist_beer_notifications (
+        id SERIAL PRIMARY KEY,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        beer_id INTEGER NOT NULL REFERENCES beers(id) ON DELETE CASCADE,
+        pub_id INTEGER NOT NULL REFERENCES pubs(id) ON DELETE CASCADE,
+        sent_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(user_id, beer_id, pub_id)
+      );
+
       -- Task #108: temporary account suspension
       ALTER TABLE users ADD COLUMN IF NOT EXISTS suspended_until TIMESTAMP;
 

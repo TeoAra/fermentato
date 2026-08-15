@@ -17,7 +17,7 @@ const NOTIF_PAGE_SIZE = 20;
 // — `inAppKey` (es. tapChanges) e `pushKey` (es. tapChangesPush)
 type CatInAppKey = 'tapChanges' | 'events' | 'newPubs' |
   'checkinLikes' | 'checkinComments' | 'newFollowers' |
-  'breweryReplies' | 'reportUpdates' | 'adminBroadcasts' | 'mentions' | 'venueUpdates';
+  'breweryReplies' | 'reportUpdates' | 'adminBroadcasts' | 'mentions' | 'venueUpdates' | 'wishlistNearby';
 type CatPushKey = `${CatInAppKey}Push`;
 type CatEmailKey = `${CatInAppKey}Email`;
 const CATEGORIES: Array<{
@@ -40,6 +40,7 @@ const CATEGORIES: Array<{
   { inAppKey: 'adminBroadcasts',pushKey: 'adminBroadcastsPush',emailKey: 'adminBroadcastsEmail',label: 'Annunci Fermenta.to',   description: 'Comunicazioni ufficiali della redazione',            icon: Megaphone,    iconColor: 'text-primary' },
   { inAppKey: 'mentions',       pushKey: 'mentionsPush',       emailKey: 'mentionsEmail',       label: 'Menzioni',              description: 'Quando qualcuno ti menziona in un post con @',       icon: AtSign,       iconColor: 'text-indigo-600' },
   { inAppKey: 'venueUpdates',   pushKey: 'venueUpdatesPush',   emailKey: 'venueUpdatesEmail',   label: 'Aggiornamenti locali',  description: 'Post e novità dai pub e birrifici che segui',         icon: Megaphone,    iconColor: 'text-blue-600' },
+  { inAppKey: 'wishlistNearby', pushKey: 'wishlistNearbyPush', emailKey: 'wishlistNearbyEmail', label: 'Wishlist disponibile',  description: 'Quando una birra dalla tua wishlist è disponibile in zona', icon: Heart,    iconColor: 'text-amber-500' },
 ];
 
 function getNotificationIcon(type: string) {
@@ -66,6 +67,8 @@ function getNotificationIcon(type: string) {
       return { icon: <AtSign className={`${base} text-indigo-600`} />, bg: 'bg-indigo-50 dark:bg-indigo-950/30' };
     case 'new_follower':
       return { icon: <UserPlus className={`${base} text-sky-600`} />, bg: 'bg-sky-50 dark:bg-sky-950/30' };
+    case 'wishlist_beer_nearby':
+      return { icon: <Heart className={`${base} text-amber-500`} />, bg: 'bg-amber-50 dark:bg-amber-950/30' };
     case 'moderation':
       return { icon: <Flag className={`${base} text-red-500`} />, bg: 'bg-red-50 dark:bg-red-950/30' };
     case 'festival':

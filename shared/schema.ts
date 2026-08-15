@@ -792,6 +792,10 @@ export const notificationPreferences = pgTable("notification_preferences", {
   venueUpdates: boolean("venue_updates").default(true),
   venueUpdatesPush: boolean("venue_updates_push").default(true),
   venueUpdatesEmail: boolean("venue_updates_email").default(false),
+  // Task #162: wishlist beer available nearby
+  wishlistNearby: boolean("wishlist_nearby").default(true),
+  wishlistNearbyPush: boolean("wishlist_nearby_push").default(true),
+  wishlistNearbyEmail: boolean("wishlist_nearby_email").default(false),
   // Canali master
   pushEnabled: boolean("push_enabled").default(true),
   inAppEnabled: boolean("in_app_enabled").default(true),

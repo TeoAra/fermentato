@@ -116,7 +116,8 @@ import { insertPubSchema, insertTapListSchema, insertBottleListSchema, insertMen
 import { z } from "zod";
 import webpush from "web-push";
 import { initVapid, sendPushToUser, sendPushToUserImmediate, sendPushToAdmins } from "./push-utils";
-import { testSmtpConnection } from "./email";
+import { testSmtpConnection, sendWishlistBeerAvailableEmail } from "./email";
+import { shouldSendEmailNotification } from "./push-utils";
 import { translateToItalian, looksItalian } from "./translate";
 import { generateEmbedding, pgVector, beerEmbedText } from "./embeddings";
 import { findAndUpdateBeerImage, isPlaceholderImage, findBestBeerImage, rehostImageOnCloudinary } from "./beer-image-finder";
@@ -3098,6 +3099,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const newBeer = await storage.getBeer(data.beerId);
         if (newBeer) {
           notifyTapListChange(parseInt(pubId), 'tap_change', newBeer.name, newBeer.id);
+          // Use POST-update active state: explicit data.isActive wins; otherwise carry forward existing
+          const tapPostActive = data.isActive !== undefined
+            ? data.isActive === true
+            : existingItem?.isActive !== false;
+          if (tapPostActive) {
+            storage.getPub(parseInt(pubId)).then((pub) => {
+              if (pub) notifyWishlistBeerAvailable(parseInt(pubId), data.beerId, newBeer.name, pub, new Set(), 'tap');
+            }).catch(() => {});
+          }
         }
         // Auto-log the beer change
         try {
@@ -3110,6 +3120,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           );
         } catch (logErr) {
           console.warn('[tap-change-log] auto-log failed:', logErr);
+        }
+      }
+
+      // Detect inactive → active transition: notify wishlist users for the beer that just became available
+      const wasInactive = existingItem?.isActive === false;
+      const nowActive = data.isActive === true;
+      if (wasInactive && nowActive && item) {
+        const activatedBeerId = (item as any).beerId ?? existingItem?.beerId;
+        if (activatedBeerId) {
+          const activatedBeer = await storage.getBeer(activatedBeerId);
+          const pub = await storage.getPub(parseInt(pubId));
+          if (activatedBeer && pub) {
+            notifyWishlistBeerAvailable(parseInt(pubId), activatedBeerId, activatedBeer.name, pub, new Set(), 'tap');
+          }
         }
       }
 
@@ -3210,7 +3234,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const beer = await storage.getBeer(tapData.beerId);
       if (beer) {
-        notifyTapListChange(pubId, 'new_beer', beer.name, beer.id);
+        // Only notify if the added item is actually active
+        if (tapItem.isActive !== false) {
+          notifyTapListChange(pubId, 'new_beer', beer.name, beer.id);
+          // Wishlist notifications dispatched separately (empty set — independent of tapChanges prefs)
+          storage.getPub(pubId).then((pub) => {
+            if (pub) notifyWishlistBeerAvailable(pubId, beer.id, beer.name, pub, new Set(), 'tap');
+          }).catch(() => {});
+        }
       }
 
       broadcastPubUpdate(pubId, "taplist");
@@ -3277,6 +3308,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const bottleItem = await storage.addBeerToBottles(bottleData);
       broadcastPubUpdate(pubId, "bottles");
+      // Notify wishlist users about new bottle availability (only if item is active)
+      if (bottleData.beerId && bottleItem.isActive !== false) {
+        const pub = await storage.getPub(pubId);
+        const beer = await storage.getBeer(bottleData.beerId);
+        if (pub && beer) {
+          notifyWishlistBeerAvailable(pubId, bottleData.beerId, beer.name, pub, new Set(), 'bottle');
+        }
+      }
       res.status(201).json(bottleItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -3322,7 +3361,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         updateData.description = vintage ? `${currentDescription}\nAnnata: ${vintage}`.trim() : currentDescription;
       }
       
+      // Fetch existing item before update to detect inactive → active transition
+      const existingBottleItem = await pool.query(
+        `SELECT is_active, beer_id FROM bottle_list WHERE id = $1`, [parseInt(id)]
+      ).then((r: any) => r.rows[0]).catch(() => null);
+
       const item = await storage.updateBottleItem(parseInt(id), updateData);
+
+      // Determine post-update active state (updateData.isActive if set, else carry forward existing)
+      const postUpdateIsActive = updateData.isActive !== undefined
+        ? updateData.isActive === true
+        : existingBottleItem?.is_active !== false;
+
+      // Detect inactive → active transition: notify wishlist users for current beer
+      const bottleWasInactive = existingBottleItem?.is_active === false;
+      if (bottleWasInactive && postUpdateIsActive && item) {
+        const activatedBeerId = (item as any).beerId ?? existingBottleItem?.beer_id;
+        if (activatedBeerId) {
+          const activatedBeer = await storage.getBeer(activatedBeerId);
+          const pub = await storage.getPub(parseInt(pubId));
+          if (activatedBeer && pub) {
+            notifyWishlistBeerAvailable(parseInt(pubId), activatedBeerId, activatedBeer.name, pub, new Set(), 'bottle');
+          }
+        }
+      }
+
+      // Detect beer replacement on an already-active slot: notify wishlist for the new beer
+      const oldBeerId = existingBottleItem?.beer_id;
+      const newBeerId = updateData.beerId;
+      const beerChanged = newBeerId && oldBeerId && newBeerId !== oldBeerId;
+      if (beerChanged && !bottleWasInactive && postUpdateIsActive) {
+        const newBeer = await storage.getBeer(newBeerId);
+        const pub = await storage.getPub(parseInt(pubId));
+        if (newBeer && pub) {
+          notifyWishlistBeerAvailable(parseInt(pubId), newBeerId, newBeer.name, pub, new Set(), 'bottle');
+        }
+      }
+
       broadcastPubUpdate(parseInt(pubId), "bottles");
       res.json(item);
     } catch (error) {
@@ -4560,11 +4635,158 @@ export async function registerRoutes(app: Express): Promise<Server> {
             });
           }
         }
+
       }
     } catch (error) {
       console.error("Error sending tap change notifications:", error);
     }
   };
+  // NOTE: wishlist-beer notifications are dispatched SEPARATELY at each
+  // call site (not inside notifyTapListChange) so that:
+  //  a) we can gate on the tap slot being active, and
+  //  b) wishlistNearby users are never suppressed by tapChanges opt-outs.
+
+  // ─── Wishlist notification helpers ────────────────────────────────────────
+  /**
+   * Returns all user_ids who have `beerId` in their wishlist.
+   * Uses raw pool since user_wishlist is a raw-SQL table.
+   */
+  async function getWishlistUsersForBeer(beerId: number): Promise<string[]> {
+    try {
+      const result = await pool.query(
+        'SELECT user_id FROM user_wishlist WHERE beer_id = $1',
+        [beerId]
+      );
+      return result.rows.map((r: any) => r.user_id as string);
+    } catch { return []; }
+  }
+
+  /**
+   * Inserts a dedup row (user, beer, pub). Returns true if this is the first
+   * time we're notifying this user about this beer at this pub.
+   */
+  async function tryMarkWishlistNotifSent(userId: string, beerId: number, pubId: number): Promise<boolean> {
+    try {
+      const result = await pool.query(
+        `INSERT INTO wishlist_beer_notifications (user_id, beer_id, pub_id)
+         VALUES ($1, $2, $3) ON CONFLICT (user_id, beer_id, pub_id) DO NOTHING`,
+        [userId, beerId, pubId]
+      );
+      return (result.rowCount ?? 0) > 0;
+    } catch { return false; }
+  }
+
+  /**
+   * Fire-and-forget: notifies wishlist users about a beer becoming available.
+   * `source`: 'tap' | 'bottle' — controls the notification message.
+   * `alreadyNotified`: set of userIds already sent a notification in this same
+   *   event (e.g. pub/beer favourites) — we skip them to avoid duplicates.
+   */
+  /**
+   * Returns the set of user IDs from `candidates` who have demonstrated
+   * geographic proximity to `pubCity` — defined as having at least one
+   * favourite pub or check-in (user_beer_tastings with a pub_id) in a pub
+   * whose city matches case-insensitively.
+   *
+   * This is the server-side proximity signal we use in lieu of stored GPS
+   * coordinates, which the platform does not persist.
+   */
+  async function filterUsersByCity(candidates: string[], pubCity: string): Promise<Set<string>> {
+    if (candidates.length === 0) return new Set();
+    try {
+      const { rows } = await pool.query(`
+        SELECT DISTINCT u.user_id FROM (
+          -- pub favourites in the same city
+          SELECT f.user_id
+          FROM favorites f
+          JOIN pubs p ON p.id = f.item_id
+          WHERE f.item_type = 'pub'
+            AND f.user_id = ANY($1)
+            AND LOWER(TRIM(p.city)) = LOWER(TRIM($2))
+          UNION
+          -- check-ins at pubs in the same city
+          SELECT ubt.user_id
+          FROM user_beer_tastings ubt
+          JOIN pubs p ON p.id = ubt.pub_id
+          WHERE ubt.user_id = ANY($1)
+            AND LOWER(TRIM(p.city)) = LOWER(TRIM($2))
+        ) u
+      `, [candidates, pubCity]);
+      return new Set<string>(rows.map((r: any) => r.user_id as string));
+    } catch (e) {
+      console.error("[wishlist-notif] filterUsersByCity error:", e);
+      return new Set();
+    }
+  }
+
+  async function notifyWishlistBeerAvailable(
+    pubId: number,
+    beerId: number,
+    beerName: string,
+    pub: { id: number; name: string; city: string; logoUrl?: string | null },
+    alreadyNotified = new Set<string>(),
+    source: 'tap' | 'bottle' = 'tap',
+  ): Promise<void> {
+    try {
+      const allWishlistUsers = await getWishlistUsersForBeer(beerId);
+
+      // Only notify users who can be placed in the pub's city via prior interactions
+      const candidates = allWishlistUsers.filter(id => !alreadyNotified.has(id));
+      if (candidates.length === 0) return;
+
+      const nearbyUsers = await filterUsersByCity(candidates, pub.city);
+      if (nearbyUsers.size === 0) return;
+
+      for (const userId of nearbyUsers) {
+        // Check notification preferences BEFORE claiming the dedup slot so that
+        // a user who opts back in after being opted out can still be notified.
+        const prefs = await storage.getNotificationPreferences(userId);
+        if (prefs && (prefs as any).wishlistNearby === false) continue;
+
+        // Anti-spam: max 1 notification per beer+pub per user.
+        // Dedup slot is claimed only for users who will actually receive the notification.
+        const isNew = await tryMarkWishlistNotifSent(userId, beerId, pubId);
+        if (!isNew) continue;
+
+        const sourceLabel = source === 'tap' ? 'alla spina' : 'in bottiglia';
+        const title = `Birra dalla tua wishlist disponibile!`;
+        const message = `"${beerName}" è ora disponibile ${sourceLabel} da ${pub.name} (${pub.city}).`;
+
+        await storage.createNotification({
+          userId,
+          type: 'wishlist_beer_nearby',
+          title,
+          message,
+          pubId,
+          beerId,
+          isRead: false,
+        });
+
+        sendPushToUser(userId, {
+          title,
+          body: message,
+          url: `/pub/${pubId}`,
+          type: 'wishlist_beer_nearby',
+          icon: pub.logoUrl || undefined,
+          category: 'wishlistNearby',
+        });
+
+        // Email channel — gated by wishlistNearbyEmail + master emailEnabled
+        shouldSendEmailNotification(userId, 'wishlistNearby').then(async (allowed) => {
+          if (!allowed) return;
+          const { rows: [recipient] } = await pool.query(
+            `SELECT email FROM users WHERE id = $1`, [userId]
+          );
+          if (recipient?.email) {
+            const pubSlug = (pub as any).slug || String(pubId);
+            sendWishlistBeerAvailableEmail(recipient.email, beerName, pub.name, pub.city, pubSlug, source).catch(() => {});
+          }
+        }).catch(() => {});
+      }
+    } catch (error) {
+      console.error("[wishlist-notif] error:", error);
+    }
+  }
 
   // Admin routes
   app.get('/api/admin/stats', isAuthenticated, isAdmin, async (req: any, res) => {
@@ -5963,6 +6185,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const newBeer = await storage.getBeer(newBeerId);
       if (newBeer) {
         notifyTapListChange(pubId, 'tap_change', newBeer.name, newBeer.id);
+        // Wishlist: gate on the POST-update active state so a simultaneous deactivation doesn't alert
+        const tapPostActive = (updatedItem as any)?.isActive !== false;
+        if (tapPostActive) {
+          storage.getPub(pubId).then((pub) => {
+            if (pub) notifyWishlistBeerAvailable(pubId, newBeerId, newBeer.name, pub, new Set(), 'tap');
+          }).catch(() => {});
+        }
       }
 
       broadcastPubUpdate(pubId, "taplist");
@@ -6016,8 +6245,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const itemId = parseInt(String(req.params.itemId));
       const { newBeerId } = req.body;
-      
+
+      // Check if the bottle slot is currently active before notifying
+      const existingBottleSlot = await pool.query(
+        `SELECT is_active FROM bottle_list WHERE id = $1`, [itemId]
+      ).then((r: any) => r.rows[0]).catch(() => null);
+
       const updatedItem = await storage.updateBottleItem(itemId, { beerId: newBeerId });
+
+      // Notify wishlist users for the new beer if the slot is active
+      if (existingBottleSlot?.is_active !== false && newBeerId) {
+        const newBeer = await storage.getBeer(newBeerId);
+        const pub = await storage.getPub(pubId);
+        if (newBeer && pub) {
+          notifyWishlistBeerAvailable(pubId, newBeerId, newBeer.name, pub, new Set(), 'bottle');
+        }
+      }
+
       res.json(updatedItem);
     } catch (error) {
       console.error("Error replacing bottle beer:", error);
@@ -10086,10 +10330,84 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
     res.json({ ok: true });
   });
 
-  // Check if single beer is in wishlist
+  // ─── Wishlist available nearby ────────────────────────────────────────────
+  // GET /api/user/wishlist/available-nearby?lat=X&lng=Y&radius=20
+  // Requires valid lat/lng — returns pubs within `radius` km that currently
+  // have wishlist beers on tap (is_active=true) or in bottles (is_active=true).
+  // MUST be registered BEFORE the parameterized /:beerId route below so Express
+  // does not treat the literal segment "available-nearby" as a beerId value.
+  app.get("/api/user/wishlist/available-nearby", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id as string;
+    const lat = parseFloat(req.query.lat as string);
+    const lng = parseFloat(req.query.lng as string);
+    const radius = parseFloat(req.query.radius as string) || 20;
+
+    // Geolocation is required — without it we cannot say anything is "nearby"
+    if (!isFinite(lat) || !isFinite(lng)) {
+      return res.json({ available: [] });
+    }
+
+    try {
+      // 1. Get user's wishlist beer IDs
+      const { rows: wishlistRows } = await pool.query(
+        'SELECT beer_id FROM user_wishlist WHERE user_id = $1',
+        [userId]
+      );
+      if (wishlistRows.length === 0) return res.json({ available: [] });
+
+      const beerIds = wishlistRows.map((r: any) => r.beer_id as number);
+
+      // 2. Haversine distance expression (parameterised lat/lng via literal values
+      //    already validated as finite floats above — safe to interpolate)
+      const distanceExpr = `(6371 * acos(
+        LEAST(1.0, cos(radians(${lat})) * cos(radians(p.latitude::float))
+          * cos(radians(p.longitude::float) - radians(${lng}))
+          + sin(radians(${lat})) * sin(radians(p.latitude::float))
+        )))`;
+
+      // 3. Query active taplist and bottle_list entries for the beer IDs,
+      //    joined to pubs with known coordinates within radius
+      const { rows } = await pool.query(`
+        SELECT
+          sub.beer_id,
+          sub.pub_id,
+          p.name       AS pub_name,
+          p.city,
+          p.slug       AS pub_slug,
+          p.logo_url   AS pub_logo,
+          ${distanceExpr} AS distance_km,
+          sub.source
+        FROM (
+          SELECT tl.beer_id, tl.pub_id, 'tap'::text AS source
+          FROM tap_list tl
+          WHERE tl.beer_id = ANY($1) AND tl.is_active = TRUE
+          UNION ALL
+          SELECT bl.beer_id, bl.pub_id, 'bottle'::text AS source
+          FROM bottle_list bl
+          WHERE bl.beer_id = ANY($1) AND bl.is_active = TRUE
+        ) sub
+        JOIN pubs p ON p.id = sub.pub_id
+        WHERE p.latitude  IS NOT NULL
+          AND p.longitude IS NOT NULL
+          AND ${distanceExpr} <= ${radius}
+        ORDER BY ${distanceExpr} ASC
+        LIMIT 50
+      `, [beerIds]);
+
+      res.json({ available: rows });
+    } catch (error) {
+      console.error("[wishlist/available-nearby]", error);
+      res.status(500).json({ message: "Failed to check nearby availability" });
+    }
+  });
+
+  // Check if a single beer is in the user's wishlist (parameterized — must stay AFTER available-nearby)
   app.get("/api/user/wishlist/:beerId", isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
-    const { rows } = await pool.query(`SELECT id FROM user_wishlist WHERE user_id = $1 AND beer_id = $2`, [userId, req.params.beerId]);
+    const { rows } = await pool.query(
+      `SELECT id FROM user_wishlist WHERE user_id = $1 AND beer_id = $2`,
+      [userId, req.params.beerId]
+    );
     res.json({ inWishlist: rows.length > 0 });
   });
 
