@@ -1,10 +1,23 @@
 import { Helmet } from "react-helmet-async";
-import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Beer, Search, X, Star, Bookmark, Dices, Flame, Sparkles, Trophy, ChevronRight, SlidersHorizontal } from "lucide-react";
+import { Beer, Search, X, Star, Bookmark, Dices, Flame, Sparkles, Trophy, ChevronRight, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
+import { LoadMoreSentinel } from "@/components/social/LoadMoreSentinel";
+
+const PAGE_SIZE = 30;
+
+// Custom fetcher that checks r.ok and always returns an array (see
+// .agents/memory/frontend-array-guards.md — a non-2xx JSON error body must not
+// slip through as "data" and crash .map).
+async function fetchArray(url: string): Promise<any[]> {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const j = await r.json();
+  return Array.isArray(j) ? j : [];
+}
 
 // ─── Style definitions ────────────────────────────────────────────────────────
 
@@ -126,6 +139,24 @@ function BeerCard({ beer }: { beer: any }) {
   );
 }
 
+function ErrorState({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+      <div className="w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-950/30 flex items-center justify-center mb-3">
+        <AlertTriangle className="w-7 h-7 text-red-400" />
+      </div>
+      <p className="text-sm font-bold text-foreground">Qualcosa è andato storto</p>
+      <p className="text-xs text-stone-500 dark:text-stone-400 mt-1">Impossibile caricare le birre. Riprova.</p>
+      <button
+        onClick={onRetry}
+        className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-primary text-white text-xs font-bold tap-scale shadow-sm hover:bg-primary/90 transition-colors"
+      >
+        Riprova
+      </button>
+    </div>
+  );
+}
+
 function BeerCardSkeleton() {
   return (
     <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] rounded-2xl p-2.5 border border-white/40 dark:border-white/[0.06]">
@@ -180,15 +211,22 @@ export default function ExploreBeers() {
   // Parse URL params on mount
   const initParams = () => {
     const p = new URLSearchParams(window.location.search);
-    return { style: p.get("style") || "", q: p.get("q") || "" };
+    const sortRaw = p.get("sort") || "";
+    const sort: SortMode = (["popular", "top", "newest"].includes(sortRaw) ? sortRaw : "popular") as SortMode;
+    return { style: p.get("style") || "", q: p.get("q") || "", sort };
   };
   const init = initParams();
 
   const [activeStyle, setActiveStyle] = useState(init.style);
   const [searchQ, setSearchQ] = useState(init.q);
   const [inputValue, setInputValue] = useState(init.style || init.q);
-  const [sortMode, setSortMode] = useState<SortMode>("popular");
+  const [sortMode, setSortMode] = useState<SortMode>(init.sort);
   const [showAllStyles, setShowAllStyles] = useState(false);
+
+  // While restoring state from a popstate (Back/Forward), suppress the
+  // debounced live-search effect's pushState — otherwise re-pushing during a
+  // history restore discards the forward history and breaks Back/Forward.
+  const restoringRef = useRef(false);
 
   // Sync URL ↔ state on browser back/forward
   useEffect(() => {
@@ -196,39 +234,60 @@ export default function ExploreBeers() {
       const p = new URLSearchParams(window.location.search);
       const s = p.get("style") || "";
       const q = p.get("q") || "";
+      const sortRaw = p.get("sort") || "";
+      const sort: SortMode = (["popular", "top", "newest"].includes(sortRaw) ? sortRaw : "popular") as SortMode;
+      restoringRef.current = true;
       setActiveStyle(s);
       setSearchQ(q);
+      setSortMode(sort);
       setInputValue(s || q);
     };
     window.addEventListener("popstate", sync);
     return () => window.removeEventListener("popstate", sync);
   }, []);
 
+  // Debounce the raw input into a search term (keeps the debounced UX).
+  const [debouncedInput, setDebouncedInput] = useState(init.q);
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedInput(inputValue.trim()), 300);
+    return () => clearTimeout(t);
+  }, [inputValue]);
+
   // ── Data queries ──
   const { data: popularStyles } = useQuery<{ style: string; count: number }[]>({
     queryKey: ["/api/beers/popular-styles", 80],
-    queryFn: () => fetch("/api/beers/popular-styles?limit=80").then(r => r.json()),
+    queryFn: () => fetchArray("/api/beers/popular-styles?limit=80") as Promise<any>,
     staleTime: 10 * 60 * 1000,
   });
 
-  const { data: trendingBeers, isLoading: trendingLoading } = useQuery<any[]>({
+  const { data: trendingBeers, isLoading: trendingLoading, isError: trendingError, refetch: refetchTrending } = useQuery<any[]>({
     queryKey: ["/api/beers/trending"],
-    queryFn: () => fetch("/api/beers/trending?limit=20").then(r => r.json()),
+    queryFn: () => fetchArray("/api/beers/trending?limit=20"),
     enabled: !activeStyle && !searchQ,
     staleTime: 5 * 60 * 1000,
   });
 
-  const { data: styleBeers, isLoading: styleLoading } = useQuery<any[]>({
-    queryKey: ["/api/beers/by-style", activeStyle],
-    queryFn: () => fetch(`/api/beers/by-style?style=${encodeURIComponent(activeStyle)}&limit=60`).then(r => r.json()),
+  // Style browse — paginated + server-side sorted.
+  const styleQuery = useInfiniteQuery<any[]>({
+    queryKey: ["/api/beers/by-style", activeStyle, sortMode],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchArray(`/api/beers/by-style?style=${encodeURIComponent(activeStyle)}&sort=${sortMode}&limit=${PAGE_SIZE}&offset=${pageParam}`),
     enabled: !!activeStyle,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      Array.isArray(lastPage) && lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined,
     staleTime: 2 * 60 * 1000,
   });
 
-  const { data: searchResults, isLoading: searchLoading } = useQuery<{ beers: any[] }>({
-    queryKey: ["/api/search", searchQ],
-    queryFn: () => fetch(`/api/search?q=${encodeURIComponent(searchQ)}`).then(r => r.json()),
+  // Full-text beer/brewery search — paginated (bare-array /api/beers/search).
+  const searchInfinite = useInfiniteQuery<any[]>({
+    queryKey: ["/api/beers/search", searchQ],
+    queryFn: ({ pageParam = 0 }) =>
+      fetchArray(`/api/beers/search?q=${encodeURIComponent(searchQ)}&limit=${PAGE_SIZE}&offset=${pageParam}`),
     enabled: !activeStyle && searchQ.length > 1,
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      Array.isArray(lastPage) && lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined,
     staleTime: 2 * 60 * 1000,
   });
 
@@ -248,20 +307,21 @@ export default function ExploreBeers() {
 
   const activeCount = activeStyle ? styleCount(activeStyle) : 0;
 
-  const beers: any[] = useMemo(() => {
-    if (activeStyle) return Array.isArray(styleBeers) ? styleBeers : [];
-    if (searchQ) return Array.isArray(searchResults?.beers) ? searchResults!.beers : [];
-    return [];
-  }, [activeStyle, styleBeers, searchQ, searchResults]);
+  // Flatten paginated pages into a single list (server does the sorting).
+  const styleBeersList = useMemo(
+    () => (styleQuery.data?.pages ?? []).flatMap(p => (Array.isArray(p) ? p : [])),
+    [styleQuery.data],
+  );
+  const searchBeersList = useMemo(
+    () => (searchInfinite.data?.pages ?? []).flatMap(p => (Array.isArray(p) ? p : [])),
+    [searchInfinite.data],
+  );
 
-  const sortedBeers = useMemo(() => {
-    const arr = [...beers];
-    if (sortMode === "top") return arr.sort((a, b) => (parseFloat(b.rating || b.avgRating || "0")) - (parseFloat(a.rating || a.avgRating || "0")));
-    if (sortMode === "newest") return arr.sort((a, b) => (b.id ?? 0) - (a.id ?? 0));
-    return arr; // popular = API default
-  }, [beers, sortMode]);
+  const beers: any[] = activeStyle ? styleBeersList : (searchQ ? searchBeersList : []);
+  const sortedBeers = beers; // sorting is server-side now
 
-  const isLoading = activeStyle ? styleLoading : (searchQ ? searchLoading : false);
+  const isLoading = activeStyle ? styleQuery.isLoading : (searchQ ? searchInfinite.isLoading : false);
+  const isError = activeStyle ? styleQuery.isError : (searchQ ? searchInfinite.isError : false);
   const isHome = !activeStyle && !searchQ;
 
   // Style suggestion while typing: if inputValue matches a known style, show it
@@ -279,55 +339,103 @@ export default function ExploreBeers() {
   }, [inputValue, activeStyle, searchQ, popularStyles]);
 
   // ── Actions ──
+  // Keep the URL in sync with style / q / sort so filtered views are shareable.
+  // Any direct user action pushes a real history entry, so clear the restore
+  // flag to guarantee the debounced effect isn't wrongly suppressed afterwards.
+  const pushUrl = useCallback((next: { style?: string; q?: string; sort?: SortMode }) => {
+    restoringRef.current = false;
+    const p = new URLSearchParams();
+    if (next.style) p.set("style", next.style);
+    if (next.q) p.set("q", next.q);
+    if (next.sort && next.sort !== "popular") p.set("sort", next.sort);
+    const qs = p.toString();
+    window.history.pushState(null, "", qs ? `/explore/beers?${qs}` : "/explore/beers");
+  }, []);
+
   function selectStyle(api: string) {
     setActiveStyle(api);
     setSearchQ("");
     setInputValue(api);
+    setDebouncedInput(api);
     setShowAllStyles(false);
-    window.history.pushState(null, "", `/explore/beers?style=${encodeURIComponent(api)}`);
+    pushUrl({ style: api, sort: sortMode });
     window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function changeSort(m: SortMode) {
+    setSortMode(m);
+    if (activeStyle) pushUrl({ style: activeStyle, sort: m });
+    else if (searchQ) pushUrl({ q: searchQ, sort: m });
+  }
+
+  function matchStyle(trimmed: string) {
+    const lowerQ = trimmed.toLowerCase();
+    const all = popularStyles ?? [];
+    return (
+      all.find(s => s.style.toLowerCase() === lowerQ) ??
+      all.find(s => s.style.toLowerCase().startsWith(lowerQ) && lowerQ.length >= 3) ??
+      (lowerQ.length >= 4 ? all.find(s => s.style.toLowerCase().includes(lowerQ)) : null) ??
+      null
+    );
   }
 
   function runSearch(q: string) {
     const trimmed = q.trim();
     if (!trimmed) return;
     // Match style name first (exact, starts-with, contains)
-    const lowerQ = trimmed.toLowerCase();
-    const all = popularStyles ?? [];
-    const styleMatch =
-      all.find(s => s.style.toLowerCase() === lowerQ) ??
-      all.find(s => s.style.toLowerCase().startsWith(lowerQ) && lowerQ.length >= 3) ??
-      (lowerQ.length >= 4 ? all.find(s => s.style.toLowerCase().includes(lowerQ)) : null);
+    const styleMatch = matchStyle(trimmed);
     if (styleMatch) { selectStyle(styleMatch.style); return; }
     // Fall back to full-text beer/brewery search
     setActiveStyle("");
     setSearchQ(trimmed);
     setInputValue(trimmed);
-    window.history.pushState(null, "", `/explore/beers?q=${encodeURIComponent(trimmed)}`);
+    setDebouncedInput(trimmed);
+    pushUrl({ q: trimmed, sort: sortMode });
   }
 
   function clearAll() {
     setActiveStyle("");
     setSearchQ("");
     setInputValue("");
+    setDebouncedInput("");
     setShowAllStyles(false);
-    window.history.pushState(null, "", `/explore/beers`);
+    pushUrl({});
     inputRef.current?.blur();
   }
+
+  // Debounced live search: as the user types free text (not a style match),
+  // run the beer search automatically without needing Enter.
+  useEffect(() => {
+    // A popstate restore just wrote this value — consume the flag and skip the
+    // pushState so we don't clobber the browser's forward history.
+    if (restoringRef.current) { restoringRef.current = false; return; }
+    const q = debouncedInput.trim();
+    if (q.length <= 1) return;
+    if (activeStyle) return;                     // a style is selected — no live search
+    if (matchStyle(q)) return;                   // input matches a style → suggestion handles it
+    if (q === searchQ) return;                   // already searching this
+    setSearchQ(q);
+    pushUrl({ q, sort: sortMode });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedInput]);
 
   async function surpriseMe() {
     try {
       const r = await fetch("/api/beers/trending?limit=20&days=14");
-      const data = await r.json();
-      const list = Array.isArray(data) ? data : (data.beers ?? []);
-      if (list.length > 0) {
-        const pick = list[Math.floor(Math.random() * list.length)];
-        if (pick?.id) { setLocation(`/beer/${pick.id}`); return; }
+      if (r.ok) {
+        const data = await r.json();
+        const list = Array.isArray(data) ? data : (Array.isArray(data?.beers) ? data.beers : []);
+        if (list.length > 0) {
+          const pick = list[Math.floor(Math.random() * list.length)];
+          if (pick?.id) { setLocation(`/beer/${pick.id}`); return; }
+        }
       }
       const r2 = await fetch("/api/beers?random=true&limit=1");
-      const d2 = await r2.json();
-      const b = (d2.beers ?? d2 ?? [])[0];
-      if (b?.id) setLocation(`/beer/${b.id}`);
+      if (r2.ok) {
+        const d2 = await r2.json();
+        const b = (Array.isArray(d2?.beers) ? d2.beers : (Array.isArray(d2) ? d2 : []))[0];
+        if (b?.id) setLocation(`/beer/${b.id}`);
+      }
     } catch {}
   }
 
@@ -491,7 +599,7 @@ export default function ExploreBeers() {
                 {(["popular", "top", "newest"] as SortMode[]).map(m => (
                   <button
                     key={m}
-                    onClick={() => setSortMode(m)}
+                    onClick={() => changeSort(m)}
                     className={`px-2.5 py-1 rounded-[10px] text-[11px] font-bold transition-all ${
                       sortMode === m ? "bg-white dark:bg-card text-foreground shadow-sm" : "text-stone-500 dark:text-stone-400"
                     }`}
@@ -507,10 +615,19 @@ export default function ExploreBeers() {
               <div className="space-y-2.5">
                 {[...Array(6)].map((_, i) => <BeerCardSkeleton key={i} />)}
               </div>
+            ) : isError ? (
+              <ErrorState onRetry={() => styleQuery.refetch()} />
             ) : sortedBeers.length > 0 ? (
-              <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-                {sortedBeers.map((beer: any) => <BeerCard key={beer.id} beer={beer} />)}
-              </div>
+              <>
+                <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+                  {sortedBeers.map((beer: any) => <BeerCard key={beer.id} beer={beer} />)}
+                </div>
+                <LoadMoreSentinel
+                  hasNextPage={!!styleQuery.hasNextPage}
+                  isFetchingNextPage={styleQuery.isFetchingNextPage}
+                  onLoadMore={() => styleQuery.fetchNextPage()}
+                />
+              </>
             ) : (
               <EmptyState
                 icon={<Beer className="w-8 h-8 text-stone-400" />}
@@ -534,10 +651,19 @@ export default function ExploreBeers() {
               <div className="space-y-2.5">
                 {[...Array(5)].map((_, i) => <BeerCardSkeleton key={i} />)}
               </div>
+            ) : isError ? (
+              <ErrorState onRetry={() => searchInfinite.refetch()} />
             ) : beers.length > 0 ? (
-              <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
-                {beers.map((b: any) => <BeerCard key={b.id} beer={b} />)}
-              </div>
+              <>
+                <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
+                  {beers.map((b: any) => <BeerCard key={b.id} beer={b} />)}
+                </div>
+                <LoadMoreSentinel
+                  hasNextPage={!!searchInfinite.hasNextPage}
+                  isFetchingNextPage={searchInfinite.isFetchingNextPage}
+                  onLoadMore={() => searchInfinite.fetchNextPage()}
+                />
+              </>
             ) : (
               <EmptyState
                 icon={<Beer className="w-8 h-8 text-stone-400" />}
@@ -569,6 +695,8 @@ export default function ExploreBeers() {
                 <div className="space-y-2.5">
                   {[...Array(4)].map((_, i) => <BeerCardSkeleton key={i} />)}
                 </div>
+              ) : trendingError ? (
+                <ErrorState onRetry={() => refetchTrending()} />
               ) : (Array.isArray(trendingBeers) ? trendingBeers.length : 0) > 0 ? (
                 <div className="space-y-2 lg:grid lg:grid-cols-2 lg:gap-3 lg:space-y-0">
                   {(Array.isArray(trendingBeers) ? trendingBeers : []).slice(0, 8).map((beer: any) => <BeerCard key={beer.id} beer={beer} />)}

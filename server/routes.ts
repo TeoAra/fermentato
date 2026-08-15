@@ -21,13 +21,57 @@ const _memCache = new Map<string, { data: any; expires: number }>();
 // of each running the (potentially heavy) query — prevents cache stampedes
 // under load (e.g. many users opening Esplora birrifici at once).
 const _memInflight = new Map<string, Promise<any>>();
-async function memCached<T>(key: string, ttlMs: number, fetcher: () => Promise<T>): Promise<T> {
+
+// Heavy-query concurrency limiter. Single-flight dedupes per key, but many
+// DISTINCT heavy keys (e.g. different brewery search terms / by-style
+// aggregations) can still fire at once and exhaust the 10-connection pool.
+// `heavy: true` routes the compute through a shared semaphore of 4 so at most
+// 4 heavy queries touch the DB concurrently; cheap caches are unaffected.
+const HEAVY_LIMIT = 4;
+let _heavyActive = 0;
+const _heavyQueue: Array<() => void> = [];
+function _acquireHeavy(): Promise<void> {
+  if (_heavyActive < HEAVY_LIMIT) {
+    _heavyActive++;
+    return Promise.resolve();
+  }
+  return new Promise<void>((resolve) => _heavyQueue.push(resolve));
+}
+function _releaseHeavy(): void {
+  const next = _heavyQueue.shift();
+  if (next) next();
+  else _heavyActive--;
+}
+
+interface MemCachedOptions {
+  /** Route the compute through the shared heavy-query semaphore (limit 4). */
+  heavy?: boolean;
+}
+
+async function memCached<T>(
+  key: string,
+  ttlMs: number,
+  fetcher: () => Promise<T>,
+  opts?: MemCachedOptions,
+): Promise<T> {
   const hit = _memCache.get(key);
   if (hit && hit.expires > Date.now()) return hit.data as T;
   const inflight = _memInflight.get(key);
   if (inflight) return inflight as Promise<T>;
+  const compute = opts?.heavy
+    ? async () => {
+        // Acquire AFTER the single-flight check so only the one deduped compute
+        // per key waits on the semaphore, and we never hold a slot while cached.
+        await _acquireHeavy();
+        try {
+          return await fetcher();
+        } finally {
+          _releaseHeavy();
+        }
+      }
+    : fetcher;
   const p = (async () => {
-    const data = await fetcher();
+    const data = await compute();
     // Bound growth: keys include user input (search terms, pagination), so
     // sweep expired entries and evict oldest if the cache gets large.
     if (_memCache.size > 500) {
@@ -1025,12 +1069,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ON beers USING GIN (regexp_replace(lower(name), '\\s+', '', 'g') gin_trgm_ops)`).catch(() => {});
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_style_trgm
         ON beers USING GIN (lower(COALESCE(style,'')) gin_trgm_ops) WHERE style IS NOT NULL`).catch(() => {});
+      // Functional index for exact case-insensitive style browse (/api/beers/by-style):
+      // `WHERE lower(style) = lower($1)` on 1.19M rows needs this btree or it seq-scans.
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_beers_style_lower
+        ON beers (lower(style))`).catch(() => {});
 
       // ── BIRRIFICI ──
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_breweries_name_unaccent_trgm
         ON breweries USING GIN (unaccent_immutable(lower(name)) gin_trgm_ops)`).catch(() => {});
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_breweries_name_compact_trgm
         ON breweries USING GIN (regexp_replace(lower(name), '\\s+', '', 'g') gin_trgm_ops)`).catch(() => {});
+      // Esplora birrifici search also matches città/nazione (see storage.exploreBreweries);
+      // these keep the location/country branches of the search UNION index-backed.
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_breweries_location_unaccent_trgm
+        ON breweries USING GIN (unaccent_immutable(lower(COALESCE(location,''))) gin_trgm_ops) WHERE location IS NOT NULL`).catch(() => {});
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_breweries_country_unaccent_trgm
+        ON breweries USING GIN (unaccent_immutable(lower(COALESCE(country,''))) gin_trgm_ops) WHERE country IS NOT NULL`).catch(() => {});
 
       // ── PUB ──
       await pool.query(`CREATE INDEX IF NOT EXISTS idx_pubs_name_trgm
@@ -1215,10 +1269,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Get all pubs for explore page
+  // Get all pubs for explore page — slim projection (only fields the Esplora
+  // Pub page/map consume) + short-TTL memCached + Cache-Control, mirroring
+  // /api/pubs. Keeps the browser payload small and cache-friendly.
   app.get("/api/pubs/all", async (req, res) => {
     try {
-      const pubs = await storage.getPubs();
+      const pubs = await memCached("pubs:explore:v1", 2 * 60 * 1000, () =>
+        storage.getPubsForExplore()
+      );
+      res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=30');
       res.json(pubs);
     } catch (error) {
       console.error("Error fetching all pubs:", error);
@@ -1604,31 +1663,146 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Browse beers by exact style (case-insensitive)
+  // Browse beers by exact style (case-insensitive), server-side sort + pagination.
+  //
+  // sort=popular  → tasting_count*2 + favorite_count DESC   (default)
+  // sort=top      → avg tasting rating DESC, min 3 votes (fewer votes rank last)
+  // sort=newest   → id DESC
+  //
+  // Index-friendly on 1.19M rows: the `lower(style) = lower($1)` predicate is
+  // served by idx_beers_style_lower (functional btree, created at startup), so
+  // we only ever aggregate/sort the small per-style subset — never a full-table
+  // aggregation. LIMIT+OFFSET paginates that subset. Aggregates (tasting count,
+  // favorite count, avg rating) join via idx_tastings_beer_id / favorites, then
+  // the ordered page is cached with memCached (key JSON-array serialized).
   app.get("/api/beers/by-style", async (req, res) => {
     try {
       const style = (req.query.style as string)?.trim();
       if (!style) return res.status(400).json({ message: "style param required" });
-      const limit = Math.min(100, parseInt(req.query.limit as string) || 60);
-      const offset = parseInt(req.query.offset as string) || 0;
-      const rows = await db
-        .select({
-          id: beers.id,
-          name: beers.name,
-          style: beers.style,
-          abv: beers.abv,
-          ibu: beers.ibu,
-          imageUrl: beers.imageUrl,
-          breweryId: beers.breweryId,
-          breweryName: breweries.name,
-          breweryLogoUrl: breweries.logoUrl,
-        })
-        .from(beers)
-        .leftJoin(breweries, eq(beers.breweryId, breweries.id))
-        .where(and(sql`lower(${beers.style}) = lower(${style})`, beerVisibleSql))
-        .orderBy(beers.name)
-        .limit(limit)
-        .offset(offset);
+      const limit = Math.min(50, Math.max(1, parseInt(req.query.limit as string) || 30));
+      // Clamp offset ≥ 0 and cap at 5000 so deep-paging can't force huge scans.
+      const offset = Math.min(5000, Math.max(0, parseInt(req.query.offset as string) || 0));
+      const sortRaw = ((req.query.sort as string) || "popular").trim();
+      const sort = (["popular", "top", "newest"].includes(sortRaw) ? sortRaw : "popular") as
+        "popular" | "top" | "newest";
+
+      const cacheKey = `beers:by-style:v2:${JSON.stringify([style.toLowerCase(), sort, limit, offset])}`;
+      // heavy: this aggregates/sorts a per-style subset of 1.19M beers; many
+      // distinct style/sort/offset keys firing at once could otherwise exhaust
+      // the pool. The shared semaphore (limit 4) caps concurrent DB work.
+      const rows = await memCached(cacheKey, 2 * 60 * 1000, async () => {
+        // Shared page-hydration tail: enrich a set of beer ids (the ordered
+        // page) with brewery + aggregate columns for display. Aggregates here
+        // run over the ~page-sized `page` set only, using idx_tastings_beer_id
+        // and idx_favorites_item.
+        const hydrate = `
+          SELECT
+            b.id, b.name, b.style, b.abv, b.ibu,
+            b.image_url  AS "imageUrl",
+            b.brewery_id AS "breweryId",
+            br.name      AS "breweryName",
+            br.logo_url  AS "breweryLogoUrl",
+            COALESCE(agg.tasting_count, 0)::int AS "tastingCount",
+            COALESCE(agg.rating_count, 0)::int  AS "ratingCount",
+            CASE WHEN COALESCE(agg.rating_count, 0) > 0
+                 THEN ROUND(agg.avg_rating::numeric, 2)::float ELSE NULL END AS "avgRating",
+            COALESCE(fav.favorite_count, 0)::int AS "favoriteCount"
+          FROM page p
+          JOIN beers b ON b.id = p.id
+          LEFT JOIN breweries br ON br.id = b.brewery_id
+          LEFT JOIN LATERAL (
+            SELECT COUNT(*)::int AS tasting_count,
+                   COUNT(t.rating)::int AS rating_count,
+                   AVG(t.rating::numeric) AS avg_rating
+            FROM user_beer_tastings t WHERE t.beer_id = p.id
+          ) agg ON true
+          LEFT JOIN LATERAL (
+            SELECT COUNT(*)::int AS favorite_count
+            FROM favorites f WHERE f.item_type = 'beer' AND f.item_id = p.id
+          ) fav ON true
+          ORDER BY p.rn ASC
+        `;
+
+        let sqlText: string;
+        if (sort === "newest") {
+          // Ordering is by id only → pick the page BEFORE any aggregation, so
+          // aggregates run on ~30 rows, not the whole style subset.
+          sqlText = `
+            WITH page AS (
+              SELECT b.id, ROW_NUMBER() OVER (ORDER BY b.id DESC) AS rn
+              FROM beers b
+              LEFT JOIN breweries br ON br.id = b.brewery_id
+              WHERE lower(b.style) = lower($1)
+                AND COALESCE(b.is_hidden, false) = false
+                AND COALESCE(b.is_discontinued, false) = false
+                AND COALESCE(br.is_closed, false) = false
+              ORDER BY b.id DESC
+              LIMIT $2 OFFSET $3
+            )
+            ${hydrate}
+          `;
+        } else {
+          // popular / top: ordering depends on aggregates, so aggregate the
+          // matched subset (bounded per style, driven by idx_beers_style_lower
+          // + beer_id indexes), rank, then hydrate the chosen page.
+          // `top` requires >=3 votes so a lone 5.0 can't outrank a well-reviewed
+          // beer; ties fall back to rating_count then id.
+          // Every variant ends with `a.id DESC` — a unique, stable tie-break so
+          // same-name/same-score beers keep a fixed order across offset pages
+          // (otherwise rows could duplicate or vanish between pages).
+          const orderBy =
+            sort === "top"
+              ? `(CASE WHEN a.rating_count >= 3 THEN 1 ELSE 0 END) DESC,
+                 a.avg_rating DESC NULLS LAST, a.rating_count DESC, a.id DESC`
+              : `(a.tasting_count * 2 + a.favorite_count) DESC, a.rating_count DESC, a.name ASC, a.id DESC`;
+          sqlText = `
+            WITH matched AS (
+              SELECT b.id, b.name
+              FROM beers b
+              LEFT JOIN breweries br ON br.id = b.brewery_id
+              WHERE lower(b.style) = lower($1)
+                AND COALESCE(b.is_hidden, false) = false
+                AND COALESCE(b.is_discontinued, false) = false
+                AND COALESCE(br.is_closed, false) = false
+            ),
+            aggregated AS (
+              SELECT m.id, m.name,
+                COALESCE(t.tasting_count, 0) AS tasting_count,
+                COALESCE(t.rating_count, 0) AS rating_count,
+                t.avg_rating AS avg_rating,
+                COALESCE(f.favorite_count, 0) AS favorite_count
+              FROM matched m
+              LEFT JOIN (
+                SELECT beer_id,
+                       COUNT(*)::int AS tasting_count,
+                       COUNT(rating)::int AS rating_count,
+                       AVG(rating::numeric) AS avg_rating
+                FROM user_beer_tastings
+                WHERE beer_id IN (SELECT id FROM matched)
+                GROUP BY beer_id
+              ) t ON t.beer_id = m.id
+              LEFT JOIN (
+                SELECT item_id, COUNT(*)::int AS favorite_count
+                FROM favorites
+                WHERE item_type = 'beer' AND item_id IN (SELECT id FROM matched)
+                GROUP BY item_id
+              ) f ON f.item_id = m.id
+            ),
+            page AS (
+              SELECT a.id, ROW_NUMBER() OVER (ORDER BY ${orderBy}) AS rn
+              FROM aggregated a
+              ORDER BY ${orderBy}
+              LIMIT $2 OFFSET $3
+            )
+            ${hydrate}
+          `;
+        }
+
+        const result = await pool.query(sqlText, [style, limit, offset]);
+        return result.rows as any[];
+      }, { heavy: true });
+
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json(rows);
     } catch (error) {
       console.error("Error fetching beers by style:", error);
@@ -1676,9 +1850,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Public beer search — server-side, used by owner beer-proposal dialog
   app.get("/api/beers/search", async (req, res) => {
     try {
-      const { q: query = '', limit = '20' } = req.query;
+      const { q: query = '', limit = '20', offset = '0' } = req.query;
       const queryStr = (query as string).trim();
       const limitNum = Math.min(parseInt(limit as string) || 20, 50);
+      const offsetNum = Math.max(0, parseInt(offset as string) || 0);
       if (queryStr.length < 2) return res.json([]);
       if (queryStr.length > 200) return res.status(400).json({ message: "Query troppo lunga" });
 
@@ -1705,7 +1880,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           AND COALESCE(br.is_closed, false) = false
           ${matchFilter}
         ORDER BY (${scoreExpr}) DESC, length(b.name) ASC, b.name ASC
-        LIMIT ${limitNum}
+        LIMIT ${limitNum} OFFSET ${offsetNum}
       `;
 
       const results = await pool.query(sqlText, qp);
@@ -1822,9 +1997,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // birrifici page saturate the pool (max 10) under load.
       // JSON.stringify of an array gives an unambiguous serialization — a
       // plain ':'-joined string would let q="x:y" collide with country="y:z".
-      const cacheKey = `breweries:explore:v2:${JSON.stringify([q.toLowerCase(), country.toLowerCase(), excludeCountry.toLowerCase(), page, limit])}`;
-      const result = await memCached(cacheKey, 5 * 60 * 1000, () =>
-        storage.exploreBreweries(q, country, page, limit, excludeCountry || undefined)
+      const cacheKey = `breweries:explore:v3:${JSON.stringify([q.toLowerCase(), country.toLowerCase(), excludeCountry.toLowerCase(), page, limit])}`;
+      // Per-brewery beer counts are computed once per 10min (a single
+      // HashAggregate over ~1.19M beers, ~0.5s) and shared across every
+      // filter/page combo, instead of a per-page LEFT JOIN + GROUP BY. Fetched
+      // OUTSIDE the explore compute so the explore query never holds a heavy
+      // semaphore slot while waiting on this one (which would risk starving the
+      // limiter). Both caches are heavy + single-flight, so a cold cache under
+      // load still only runs each query once and never exhausts the pool.
+      const beerCountMap = await memCached(
+        "breweries:beer-counts:v1",
+        10 * 60 * 1000,
+        () => storage.getBreweryBeerCounts(),
+        { heavy: true },
+      );
+      const result = await memCached(
+        cacheKey,
+        5 * 60 * 1000,
+        () => storage.exploreBreweries(q, country, page, limit, excludeCountry || undefined, beerCountMap),
+        { heavy: true },
       );
       res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json(result);

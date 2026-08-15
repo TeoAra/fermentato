@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useRef } from "react";
-import { Link, useSearch } from "wouter";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { Link } from "wouter";
 import { MapPin, Store, Map, Search, X, Star, ChevronRight, SlidersHorizontal, Navigation, Bookmark } from "lucide-react";
 import { lazy, Suspense } from "react";
 const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m.PubMap })));
@@ -45,17 +45,34 @@ function formatDist(km: number): string {
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
 }
 
-export default function ExplorePubs() {
-  const searchString = useSearch();
-  const params = new URLSearchParams(searchString);
-  const initialView: ViewMode = params.get("view") === "map" ? "map" : "list";
+const QUICK_FILTER_VALUES: QuickFilter[] = ["all", "nearby", "top", "open"];
 
-  const [viewMode, setViewMode] = useState<ViewMode>(initialView);
+export default function ExplorePubs() {
+  // ── URL state: view / q (search) / filter / radius are synced to the URL so
+  // filtered views are shareable (same pushState + popstate pattern as
+  // explore-beers.tsx / explore-breweries.tsx). Parse initial state on mount.
+  const initParams = () => {
+    const p = new URLSearchParams(window.location.search);
+    const view: ViewMode = p.get("view") === "map" ? "map" : "list";
+    const q = p.get("q") || "";
+    const f = p.get("filter") || "";
+    const filter: QuickFilter = (QUICK_FILTER_VALUES.includes(f as QuickFilter) ? f : "all") as QuickFilter;
+    const r = parseInt(p.get("radius") || "10");
+    const radius = [1, 5, 10, 15, 20, 30, 50].includes(r) ? r : 10;
+    return { view, q, filter, radius };
+  };
+  const init = initParams();
+
+  const [viewMode, setViewMode] = useState<ViewMode>(init.view);
   const [mapVisible, setMapVisible] = useState(true);
-  const [search, setSearch] = useState("");
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>("all");
-  const [distanceKm, setDistanceKm] = useState(10);
+  const [search, setSearch] = useState(init.q);
+  const [debouncedSearch, setDebouncedSearch] = useState(init.q);
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>(init.filter);
+  const [distanceKm, setDistanceKm] = useState(init.radius);
   const [showDistPicker, setShowDistPicker] = useState(false);
+  // Set when "vicino a te" is chosen but no position is available yet — drives
+  // the geolocation prompt / explanatory state.
+  const [awaitingLocation, setAwaitingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
     try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
   });
@@ -68,12 +85,64 @@ export default function ExplorePubs() {
 
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const { data: allPubs, isLoading } = useQuery({
+  const { data: allPubs, isLoading, isError, refetch } = useQuery({
     queryKey: ["/api/pubs/all"],
-    queryFn: () => fetch("/api/pubs/all").then(r => r.json()),
+    queryFn: async () => {
+      const r = await fetch("/api/pubs/all");
+      if (!r.ok) throw new Error(`Errore ${r.status}`);
+      return r.json();
+    },
   });
 
-  const pubsArr: any[] = Array.isArray(allPubs) ? allPubs : [];
+  // Memoize the raw array so downstream useMemo derivations keep a stable
+  // dependency and don't re-run just because the component re-rendered.
+  const pubsArr: any[] = useMemo(() => (Array.isArray(allPubs) ? allPubs : []), [allPubs]);
+
+  // Debounce the search input (300ms) so typing doesn't re-filter the whole
+  // array on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // Keep the URL in sync with view / q / filter / radius so filtered views are
+  // shareable (pushState + popstate, mirroring explore-breweries.tsx).
+  const pushUrl = useCallback((next: { view?: ViewMode; q?: string; filter?: QuickFilter; radius?: number }) => {
+    const p = new URLSearchParams();
+    if (next.view === "map") p.set("view", "map");
+    if (next.q) p.set("q", next.q);
+    if (next.filter && next.filter !== "all") p.set("filter", next.filter);
+    if (next.radius && next.radius !== 10) p.set("radius", String(next.radius));
+    const qs = p.toString();
+    window.history.pushState(null, "", qs ? `/explore/pubs?${qs}` : "/explore/pubs");
+  }, []);
+
+  // When a popstate restore is in flight we must NOT re-push the URL from the
+  // sync effect below — doing so would overwrite the entry the browser just
+  // navigated to and destroy forward history. The ref is set during restore
+  // and cleared after the resulting state update flushes through this effect.
+  const skipPushRef = useRef(false);
+
+  useEffect(() => {
+    if (skipPushRef.current) { skipPushRef.current = false; return; }
+    pushUrl({ view: viewMode, q: debouncedSearch, filter: quickFilter, radius: distanceKm });
+  }, [viewMode, debouncedSearch, quickFilter, distanceKm, pushUrl]);
+
+  // Restore state on browser back/forward.
+  useEffect(() => {
+    const sync = () => {
+      skipPushRef.current = true;
+      const s = initParams();
+      setViewMode(s.view);
+      setSearch(s.q);
+      setDebouncedSearch(s.q);
+      setQuickFilter(s.filter);
+      setDistanceKm(s.radius);
+    };
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const pubsWithDist = useMemo(() => pubsArr.map((p: any) => {
     if (userLocation && p.latitude && p.longitude) {
@@ -151,8 +220,8 @@ export default function ExplorePubs() {
 
   const filtered = useMemo(() => {
     let arr = pubsWithDist;
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       arr = arr.filter((p: any) => p.name?.toLowerCase().includes(q) || p.city?.toLowerCase().includes(q) || p.region?.toLowerCase().includes(q));
     }
     if (quickFilter === "nearby" && userLocation) {
@@ -168,7 +237,7 @@ export default function ExplorePubs() {
       arr = [...arr].sort((a, b) => (a._dist ?? 999) - (b._dist ?? 999));
     }
     return arr;
-  }, [pubsWithDist, search, quickFilter, userLocation, distanceKm]);
+  }, [pubsWithDist, debouncedSearch, quickFilter, userLocation, distanceKm]);
 
   const popular = useMemo(() => {
     return [...pubsWithDist]
@@ -177,18 +246,43 @@ export default function ExplorePubs() {
       .slice(0, 8);
   }, [pubsWithDist]);
 
+  const [locationError, setLocationError] = useState<string | null>(null);
+
   const handleLocate = () => {
-    if (!isGeolocationAvailable()) return;
+    if (!isGeolocationAvailable()) {
+      setLocationError("La geolocalizzazione non è disponibile su questo dispositivo.");
+      setAwaitingLocation(false);
+      return;
+    }
+    setLocationError(null);
+    setAwaitingLocation(true);
     getCurrentPosition().then(pos => {
       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       setUserLocation(loc);
       try { localStorage.setItem("fermenta:userLocation", JSON.stringify(loc)); } catch {}
       setQuickFilter("nearby");
-    }).catch(() => {});
+      setAwaitingLocation(false);
+    }).catch(() => {
+      setLocationError("Non riusciamo a rilevare la tua posizione. Controlla i permessi e riprova.");
+      setAwaitingLocation(false);
+    });
   };
 
+  // "Vicino a te" without a position must not silently show all pubs — clear
+  // the waiting/error states once a location becomes available.
+  useEffect(() => {
+    if (userLocation) { setAwaitingLocation(false); setLocationError(null); }
+  }, [userLocation]);
+
+  // "Vicino a te" selected but no position yet: gate list AND map so we never
+  // silently fall back to showing every pub/pin — show the location prompt.
+  const nearbyNeedsLocation = quickFilter === "nearby" && !userLocation;
+
   if (viewMode === "map") {
-    const mapFilteredPins = (filtered.length > 0 ? filtered : pubsArr).map((p: any) => ({
+    // Respect the nearby gate: no fallback to all pins when a location is
+    // required but missing.
+    const mapSource = nearbyNeedsLocation ? [] : (filtered.length > 0 ? filtered : pubsArr);
+    const mapFilteredPins = mapSource.map((p: any) => ({
       id: p.id, name: p.name, slug: p.slug,
       latitude: String(p.latitude || ""), longitude: String(p.longitude || ""),
       logoUrl: p.logoUrl, type: "pub" as const,
@@ -206,7 +300,9 @@ export default function ExplorePubs() {
           <div className="flex-1 pointer-events-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <Store className="h-4 w-4 text-primary flex-shrink-0" />
             <span className="text-sm font-bold text-foreground">
-              {quickFilter !== "all" || search ? `${filtered.length} filtrati` : `${pubsArr.length} locali`}
+              {nearbyNeedsLocation
+                ? "Posizione richiesta"
+                : quickFilter !== "all" || debouncedSearch ? `${filtered.length} filtrati` : `${pubsArr.length} locali`}
             </span>
           </div>
         </div>
@@ -261,6 +357,32 @@ export default function ExplorePubs() {
         <div className="absolute inset-0">
           {isLoading ? (
             <div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />
+          ) : nearbyNeedsLocation ? (
+            <div className="w-full h-full flex items-center justify-center bg-[#F7F4F0] dark:bg-background p-6">
+              <div className="max-w-xs text-center flex flex-col items-center gap-3">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <Navigation className="h-7 w-7 text-primary" />
+                </div>
+                <h2 className="text-lg font-extrabold text-foreground">
+                  {awaitingLocation ? "Rilevamento posizione…" : "Attiva la posizione"}
+                </h2>
+                <p className="text-sm text-stone-500 dark:text-stone-400">
+                  {locationError
+                    ? locationError
+                    : awaitingLocation
+                    ? "Stiamo cercando la tua posizione per mostrarti i pub più vicini."
+                    : "Per vedere i pub vicino a te sulla mappa dobbiamo conoscere la tua posizione."}
+                </p>
+                {!awaitingLocation && (
+                  <button
+                    onClick={handleLocate}
+                    className="mt-1 px-4 py-2 rounded-2xl text-sm font-bold bg-primary text-white tap-scale hover:bg-primary/90 transition-colors"
+                  >
+                    Usa la mia posizione
+                  </button>
+                )}
+              </div>
+            </div>
           ) : (
             <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
               <PubMap
@@ -323,7 +445,7 @@ export default function ExplorePubs() {
             <div className="rounded-2xl overflow-hidden border border-stone-100 dark:border-[#23262E]/60 shadow-sm h-[200px] lg:h-[220px] bg-stone-100 dark:bg-[#1A1D24] mb-3">
               <Suspense fallback={<div className="w-full h-full bg-stone-100 dark:bg-[#1A1D24] animate-pulse" />}>
                 <PubMap
-                  pins={(filtered.length > 0 ? filtered : pubsArr).map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude || ""), longitude: String(p.longitude || ""), logoUrl: p.logoUrl, type: "pub" as const }))}
+                  pins={(nearbyNeedsLocation ? [] : (filtered.length > 0 ? filtered : pubsArr)).map((p: any) => ({ id: p.id, name: p.name, slug: p.slug, latitude: String(p.latitude || ""), longitude: String(p.longitude || ""), logoUrl: p.logoUrl, type: "pub" as const }))}
                   height="100%"
                   onError={() => setMapVisible(false)}
                 />
@@ -387,7 +509,7 @@ export default function ExplorePubs() {
         {!isLoading && (
           <PageContainer variant="wide" className="pb-2">
             <p className="text-[11px] text-stone-400 dark:text-stone-500 font-medium">
-              {search || quickFilter !== "all"
+              {debouncedSearch || quickFilter !== "all"
                 ? `${filtered.length} risultati`
                 : `${pubsArr.length} ${pubsArr.length === 1 ? 'locale' : 'locali'} in Italia`
               }
@@ -398,25 +520,49 @@ export default function ExplorePubs() {
 
       {/* ── Content ── */}
       <PageContainer as="main" variant="wide" className="pt-3 pb-28 lg:pb-12">
-        {isLoading ? (
+        {isError ? (
+          <EmptyState
+            icon={<Store className="h-8 w-8 text-stone-400" />}
+            title="Impossibile caricare i locali"
+            subtitle="Si è verificato un errore di rete. Controlla la connessione e riprova."
+            ctaLabel="Riprova"
+            onCta={() => refetch()}
+            size="lg"
+          />
+        ) : isLoading ? (
           <div className="space-y-3">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="bg-white dark:bg-card rounded-2xl h-20 animate-pulse" style={{ animationDelay: `${i * 50}ms` }} />
             ))}
           </div>
+        ) : nearbyNeedsLocation ? (
+          <EmptyState
+            icon={<Navigation className="h-8 w-8 text-primary" />}
+            title={awaitingLocation ? "Rilevamento posizione…" : "Attiva la posizione"}
+            subtitle={
+              locationError
+                ? locationError
+                : awaitingLocation
+                ? "Stiamo cercando la tua posizione per mostrarti i pub più vicini."
+                : "Per vedere i pub vicino a te dobbiamo conoscere la tua posizione."
+            }
+            ctaLabel={awaitingLocation ? undefined : "Usa la mia posizione"}
+            onCta={awaitingLocation ? undefined : handleLocate}
+            size="lg"
+          />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={<Store className="h-8 w-8 text-stone-400" />}
             title="Nessun locale trovato"
             subtitle="Prova con un'altra ricerca o rimuovi i filtri attivi."
             ctaLabel="Rimuovi filtri"
-            onCta={() => { setSearch(""); setQuickFilter("all"); }}
+            onCta={() => { setSearch(""); setDebouncedSearch(""); setQuickFilter("all"); }}
             size="lg"
           />
         ) : (
           <>
             {/* Popular horizontal scroll (only when no active filter) */}
-            {!search && quickFilter === "all" && popular.length > 0 && (
+            {!debouncedSearch && quickFilter === "all" && popular.length > 0 && (
               <div className="mb-5">
                 <div className="flex items-center justify-between mb-2.5">
                   <h2 className="text-[15px] font-extrabold text-foreground">Popolari vicino a te</h2>
@@ -430,6 +576,8 @@ export default function ExplorePubs() {
                           <img
                             src={pub.coverImageUrl || pub.logoUrl}
                             alt={pub.name}
+                            loading="lazy"
+                            decoding="async"
                             className="w-full h-full object-cover"
                             onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
                           />
@@ -517,6 +665,8 @@ function PubListCard({ pub, showDist, userLocation }: { pub: any; showDist: bool
             <img
               src={pub.coverImageUrl || pub.logoUrl}
               alt={pub.name}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
               onError={() => setImgErr(true)}
             />

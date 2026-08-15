@@ -70,8 +70,16 @@ import {
 import { db, pool } from "./db";
 import { eq, and, desc, like, inArray, sql, or, asc, ilike, isNotNull, ne } from "drizzle-orm";
 import { breweryActiveSql, beerVisibleSql } from "./visibility";
-import { normalizeBeerSearch, buildBeerSearchFragments } from "./search-normalize";
+import { normalizeBeerSearch, buildBeerSearchFragments, unaccentText } from "./search-normalize";
 import { memoryStorageInstance } from "./memoryStorage";
+
+// Slim pub projection for the Esplora Pub page/map — only the fields the
+// client actually consumes (list card, map pins, open-now, distance, rating).
+// Trimming the payload avoids shipping the whole pubs row to the browser.
+export type PubExplore = Pick<
+  Pub,
+  "id" | "name" | "slug" | "city" | "region" | "latitude" | "longitude" | "logoUrl" | "coverImageUrl" | "rating" | "openingHours"
+>;
 
 // Mapping utilities for field conversion
 function safeParseDecimal(value: any): number | undefined {
@@ -203,6 +211,7 @@ export interface IStorage {
 
   // Pub operations
   getPubs(): Promise<Pub[]>;
+  getPubsForExplore(): Promise<PubExplore[]>;
   getPub(id: number): Promise<Pub | undefined>;
   getPubBySlug(slug: string): Promise<Pub | undefined>;
   createPub(pub: InsertPub): Promise<Pub>;
@@ -221,7 +230,8 @@ export interface IStorage {
   updateBrewery(id: number, updates: Partial<InsertBrewery>): Promise<Brewery>;
   deleteBrewery(id: number): Promise<void>;
   searchBreweries(query: string): Promise<Brewery[]>;
-  exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string): Promise<{ breweries: any[]; total: number }>;
+  exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string, beerCountMap?: Map<number, number>): Promise<{ breweries: any[]; total: number }>;
+  getBreweryBeerCounts(): Promise<Map<number, number>>;
   getBreweryCountries(): Promise<{ country: string; count: number }[]>;
 
   // Beer operations
@@ -436,6 +446,27 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(pubs).orderBy(asc(pubs.name));
   }
 
+  // Slim projection for the Esplora Pub page — selects only the columns the
+  // client uses so the payload stays small.
+  async getPubsForExplore(): Promise<PubExplore[]> {
+    return await db
+      .select({
+        id: pubs.id,
+        name: pubs.name,
+        slug: pubs.slug,
+        city: pubs.city,
+        region: pubs.region,
+        latitude: pubs.latitude,
+        longitude: pubs.longitude,
+        logoUrl: pubs.logoUrl,
+        coverImageUrl: pubs.coverImageUrl,
+        rating: pubs.rating,
+        openingHours: pubs.openingHours,
+      })
+      .from(pubs)
+      .orderBy(asc(pubs.name));
+  }
+
   async getPub(id: number): Promise<Pub | undefined> {
     const [pub] = await db.select().from(pubs).where(eq(pubs.id, id));
     return pub;
@@ -590,9 +621,64 @@ export class DatabaseStorage implements IStorage {
     return result;
   }
 
-  async exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string): Promise<{ breweries: any[]; total: number }> {
+  /**
+   * Per-brewery visible-beer counts as a Map<breweryId, count>.
+   * One HashAggregate over the beers table (~0.5s on 1.19M rows). Called from
+   * the route behind a memCached() TTL so the ~0.5s cost is amortized (paid
+   * once per TTL, not once per Esplora page). The old exploreBreweries LEFT
+   * JOIN + GROUP BY over beers ran ~400ms PER PAGE, per request.
+   */
+  async getBreweryBeerCounts(): Promise<Map<number, number>> {
+    const res = await pool.query(
+      `SELECT brewery_id AS id, COUNT(*)::int AS count
+         FROM beers
+        WHERE COALESCE(is_discontinued, false) = false AND brewery_id IS NOT NULL
+        GROUP BY brewery_id`,
+    );
+    const map = new Map<number, number>();
+    for (const r of res.rows) map.set(Number(r.id), Number(r.count));
+    return map;
+  }
+
+  /**
+   * Esplora birrifici listing. Index-backed search (unaccent/trgm on name +
+   * compact-name + location + country — matching the provisioned expression
+   * indexes) via a UNION of per-field indexed subqueries collapsed with
+   * `= ANY(ARRAY(...))` (same shape proven in server/search-normalize.ts).
+   *
+   * Beer counts come from the caller-supplied precomputed map (see
+   * getBreweryBeerCounts) instead of a per-request LEFT JOIN over 1.19M beers.
+   * Sorting-by-beer-count + pagination are done in JS on the (small, index-
+   * filtered, non-joined) matching rows.
+   *
+   * Response contract is unchanged: { breweries: [...with beerCount], total }.
+   */
+  async exploreBreweries(
+    q: string,
+    country: string,
+    page: number,
+    limit: number,
+    excludeCountry?: string,
+    beerCountMap?: Map<number, number>,
+  ): Promise<{ breweries: any[]; total: number }> {
     const conditions: any[] = [breweryActiveSql];
-    if (q && q.length >= 2) conditions.push(ilike(breweries.name, `%${q}%`));
+
+    // Index-backed accent-insensitive search across name / compact-name /
+    // location / country. Each branch is a separate indexed subquery UNIONed
+    // together and referenced via `= ANY(ARRAY(...))` so the planner uses the
+    // GIN trigram indexes instead of a seq scan (plain ILIKE '%q%' bypassed
+    // them). Both sides are unaccent_immutable(lower(...)) so accented queries
+    // match the same way the indexed expression stores them.
+    if (q && q.length >= 2) {
+      const like = `%${unaccentText(q.toLowerCase())}%`;
+      const likeCompact = `%${unaccentText(q.toLowerCase()).replace(/\s+/g, "")}%`;
+      conditions.push(sql`${breweries.id} = ANY(ARRAY(
+        SELECT br.id FROM breweries br WHERE unaccent_immutable(lower(br.name::text)) LIKE ${like}
+        UNION SELECT br.id FROM breweries br WHERE regexp_replace(lower(br.name::text), '\\s+', '', 'g') LIKE ${likeCompact}
+        UNION SELECT br.id FROM breweries br WHERE br.location IS NOT NULL AND unaccent_immutable(lower(COALESCE(br.location, '')::text)) LIKE ${like}
+        UNION SELECT br.id FROM breweries br WHERE br.country IS NOT NULL AND unaccent_immutable(lower(COALESCE(br.country, '')::text)) LIKE ${like}
+      ))`);
+    }
     if (country) {
       const cl = country.toLowerCase();
       if (cl === 'italy' || cl === 'italia') {
@@ -610,34 +696,35 @@ export class DatabaseStorage implements IStorage {
       }
     }
     const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
+
+    // Fetch the matching brewery rows WITHOUT the beers join (index-backed
+    // WHERE, ~15ms even unfiltered over 44k rows), then attach counts from the
+    // precomputed map, sort by beer count desc + name, and slice the page.
+    const allRows = await db
+      .select({
+        id: breweries.id,
+        name: breweries.name,
+        location: breweries.location,
+        region: breweries.region,
+        country: breweries.country,
+        logoUrl: breweries.logoUrl,
+        coverImageUrl: breweries.coverImageUrl,
+        description: breweries.description,
+        websiteUrl: breweries.websiteUrl,
+        latitude: breweries.latitude,
+        longitude: breweries.longitude,
+      })
+      .from(breweries)
+      .where(whereClause);
+
+    const counts = beerCountMap ?? (await this.getBreweryBeerCounts());
+    const withCounts = allRows.map((r) => ({ ...r, beerCount: counts.get(r.id) ?? 0 }));
+    withCounts.sort((a, b) => (b.beerCount - a.beerCount) || (a.name || "").localeCompare(b.name || ""));
+
     const offset = (page - 1) * limit;
+    const pageRows = withCounts.slice(offset, offset + limit);
 
-    const [countResult, rows] = await Promise.all([
-      db.select({ count: sql<number>`COUNT(*)::int` }).from(breweries).where(whereClause),
-      db
-        .select({
-          id: breweries.id,
-          name: breweries.name,
-          location: breweries.location,
-          region: breweries.region,
-          country: breweries.country,
-          logoUrl: breweries.logoUrl,
-          description: breweries.description,
-          websiteUrl: breweries.websiteUrl,
-          latitude: breweries.latitude,
-          longitude: breweries.longitude,
-          beerCount: sql<number>`COUNT(${beers.id})`,
-        })
-        .from(breweries)
-        .leftJoin(beers, and(eq(breweries.id, beers.breweryId), sql`COALESCE(${beers.isDiscontinued}, false) = false`))
-        .where(whereClause)
-        .groupBy(breweries.id)
-        .orderBy(desc(sql`COUNT(${beers.id})`), asc(breweries.name))
-        .limit(limit)
-        .offset(offset),
-    ]);
-
-    return { breweries: rows, total: Number(countResult[0]?.count || 0) };
+    return { breweries: pageRows, total: withCounts.length };
   }
 
   async getBreweryCountries(): Promise<{ country: string; count: number }[]> {
@@ -2193,6 +2280,29 @@ class StorageWrapper implements IStorage {
     );
   }
 
+  async getPubsForExplore(): Promise<PubExplore[]> {
+    return this.dbCall(
+      () => this.databaseStorage.getPubsForExplore(),
+      // Memory fallback: map the full rows down to the slim projection.
+      async () => {
+        const all = await memoryStorageInstance.getPubs();
+        return all.map((p) => ({
+          id: p.id,
+          name: p.name,
+          slug: p.slug,
+          city: p.city,
+          region: p.region,
+          latitude: p.latitude,
+          longitude: p.longitude,
+          logoUrl: p.logoUrl,
+          coverImageUrl: p.coverImageUrl,
+          rating: p.rating,
+          openingHours: p.openingHours,
+        }));
+      }
+    );
+  }
+
   async getPub(id: number): Promise<Pub | undefined> {
     return this.dbCall(
       () => this.databaseStorage.getPub(id),
@@ -2307,10 +2417,17 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string): Promise<{ breweries: any[]; total: number }> {
+  async exploreBreweries(q: string, country: string, page: number, limit: number, excludeCountry?: string, beerCountMap?: Map<number, number>): Promise<{ breweries: any[]; total: number }> {
     return this.dbCall(
-      () => this.databaseStorage.exploreBreweries(q, country, page, limit, excludeCountry),
+      () => this.databaseStorage.exploreBreweries(q, country, page, limit, excludeCountry, beerCountMap),
       async () => ({ breweries: [], total: 0 })
+    );
+  }
+
+  async getBreweryBeerCounts(): Promise<Map<number, number>> {
+    return this.dbCall(
+      () => this.databaseStorage.getBreweryBeerCounts(),
+      async () => new Map<number, number>()
     );
   }
 

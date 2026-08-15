@@ -89,12 +89,44 @@ type QuickFilter = "all" | "nearby" | "top" | "italian" | "international";
 type ViewMode = "list" | "map";
 const PAGE_SIZE = 30;
 
+const QUICK_FILTER_VALUES: QuickFilter[] = ["all", "nearby", "top", "italian", "international"];
+
+// Guarded fetch: custom queryFns without an r.ok check turn API error objects
+// into "data", crashing downstream .map/.filter (see frontend-array-guards memory).
+async function fetchJson<T>(url: string): Promise<T> {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.json();
+}
+
 export default function ExploreBreweries() {
-  const [searchInput, setSearchInput] = useState("");
-  const [debouncedQ, setDebouncedQ] = useState("");
-  const [quickFilter, setQuickFilter] = useState<QuickFilter>("italian");
-  const [page, setPage] = useState(1);
-  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  // ── URL state: q / country (filter) / page / view are synced to the URL so
+  // filtered results are shareable (same pushState + popstate pattern as
+  // explore-beers.tsx). Parse initial state from the query string on mount.
+  // "italian" is the only unserialized default; every other filter (including
+  // an explicit "all") is encoded so that sharing/reloading an explicit view is
+  // faithful — otherwise "all" would collapse to the root URL and silently
+  // reload as "italian".
+  const initParams = () => {
+    const p = new URLSearchParams(window.location.search);
+    const q = p.get("q") || "";
+    const f = p.get("filter") || "";
+    const filter: QuickFilter = (QUICK_FILTER_VALUES.includes(f as QuickFilter) ? f : "italian") as QuickFilter;
+    const pg = Math.max(1, parseInt(p.get("page") || "1") || 1);
+    const view: ViewMode = p.get("view") === "map" ? "map" : "list";
+    return { q, filter, page: pg, view };
+  };
+  const init = initParams();
+
+  const [searchInput, setSearchInput] = useState(init.q);
+  const [debouncedQ, setDebouncedQ] = useState(init.q);
+  const [quickFilter, setQuickFilter] = useState<QuickFilter>(init.filter);
+  const [page, setPage] = useState(init.page);
+  const [viewMode, setViewMode] = useState<ViewMode>(init.view);
+  // When a popstate restores state, the sync effect below would immediately
+  // pushState the same URL again and wipe the forward-history entry. This flag
+  // tells the effect to replaceState (not push) for that one restore.
+  const skipNextPushRef = useRef(false);
   const [mapVisible, setMapVisible] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
     try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
@@ -113,8 +145,51 @@ export default function ExploreBreweries() {
     return () => clearTimeout(t);
   }, [searchInput]);
 
+  // Build the shareable URL for the current state. "italian" is the default and
+  // stays unserialized; every other filter (incl. "all") is encoded.
+  const buildUrl = useCallback((next: { q?: string; filter?: QuickFilter; page?: number; view?: ViewMode }) => {
+    const p = new URLSearchParams();
+    if (next.q) p.set("q", next.q);
+    if (next.filter && next.filter !== "italian") p.set("filter", next.filter);
+    if (next.page && next.page > 1) p.set("page", String(next.page));
+    if (next.view === "map") p.set("view", "map");
+    const qs = p.toString();
+    return qs ? `/explore/breweries?${qs}` : "/explore/breweries";
+  }, []);
+
+  // Reflect the current state into the URL whenever the shareable inputs change.
+  // Normally this pushes a new history entry, but right after a popstate restore
+  // we replaceState instead so we don't clobber the forward-history stack.
+  useEffect(() => {
+    const url = buildUrl({ q: debouncedQ, filter: quickFilter, page, view: viewMode });
+    if (skipNextPushRef.current) {
+      skipNextPushRef.current = false;
+      window.history.replaceState(null, "", url);
+    } else {
+      window.history.pushState(null, "", url);
+    }
+  }, [debouncedQ, quickFilter, page, viewMode, buildUrl]);
+
+  // Restore state on browser back/forward. Setting the flag makes the sync
+  // effect above replace (not push) the resulting URL for this restore only.
+  useEffect(() => {
+    const sync = () => {
+      const s = initParams();
+      skipNextPushRef.current = true;
+      setSearchInput(s.q);
+      setDebouncedQ(s.q);
+      setQuickFilter(s.filter);
+      setPage(s.page);
+      setViewMode(s.view);
+    };
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const { data: countries = [] } = useQuery<{ country: string; count: number }[]>({
     queryKey: ["/api/breweries/countries"],
+    queryFn: () => fetchJson<{ country: string; count: number }[]>("/api/breweries/countries"),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -123,7 +198,7 @@ export default function ExploreBreweries() {
     return "";
   }, [quickFilter]);
 
-  const { data, isLoading } = useQuery<{ breweries: any[]; total: number }>({
+  const { data, isLoading, isError, refetch } = useQuery<{ breweries: any[]; total: number }>({
     queryKey: ["/api/breweries/explore", debouncedQ, apiCountry, quickFilter, page],
     queryFn: () => {
       const p = new URLSearchParams();
@@ -133,17 +208,21 @@ export default function ExploreBreweries() {
       if (quickFilter === "top") { p.set("sort", "beerCount"); }
       p.set("page", String(page));
       p.set("limit", String(PAGE_SIZE));
-      return fetch(`/api/breweries/explore?${p}`).then(r => r.json());
+      return fetchJson<{ breweries: any[]; total: number }>(`/api/breweries/explore?${p}`);
     },
+    enabled: quickFilter !== "nearby",
     staleTime: 30000,
   });
 
-  const { data: nearbyBreweries } = useQuery<any[]>({
+  const { data: nearbyBreweries, isError: nearbyError, refetch: refetchNearby } = useQuery<any[]>({
     queryKey: ["/api/breweries/nearby", userLocation?.lat, userLocation?.lng],
-    queryFn: () => fetch(`/api/breweries/nearby?lat=${userLocation!.lat}&lng=${userLocation!.lng}&limit=20`).then(r => r.json()),
+    queryFn: () => fetchJson<any[]>(`/api/breweries/nearby?lat=${userLocation!.lat}&lng=${userLocation!.lng}&limit=20`),
     enabled: quickFilter === "nearby" && !!userLocation,
     staleTime: 5 * 60 * 1000,
   });
+
+  const showError = quickFilter === "nearby" ? nearbyError : isError;
+  const retry = () => { if (quickFilter === "nearby") refetchNearby(); else refetch(); };
 
   const breweries = useMemo(() => {
     if (quickFilter === "nearby" && Array.isArray(nearbyBreweries)) {
@@ -463,7 +542,16 @@ export default function ExploreBreweries() {
 
       {/* ── Content ── */}
       <PageContainer as="main" variant="wide" className="pt-3 pb-28 lg:pb-12">
-        {isLoading ? (
+        {showError ? (
+          <EmptyState
+            icon={<Beer className="h-8 w-8 text-stone-400" />}
+            title="Qualcosa è andato storto"
+            subtitle="Non siamo riusciti a caricare i birrifici. Controlla la connessione e riprova."
+            ctaLabel="Riprova"
+            onCta={retry}
+            size="lg"
+          />
+        ) : isLoading ? (
           <div className="space-y-3">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white dark:bg-card rounded-2xl h-[88px] animate-pulse" style={{ animationDelay: `${i * 50}ms` }} />
@@ -558,6 +646,8 @@ function FeaturedCard({ brewery }: { brewery: any }) {
             <img
               src={brewery.coverImageUrl || brewery.logoUrl}
               alt={brewery.name}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
               onError={() => setImgErr(true)}
             />
@@ -641,6 +731,8 @@ function BreweryListCard({ brewery, showDist, userLocation }: { brewery: any; sh
             <img
               src={brewery.logoUrl}
               alt={brewery.name}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
               onError={() => setImgErr(true)}
             />
