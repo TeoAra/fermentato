@@ -6,7 +6,7 @@ import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } fro
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
-import { Beer, MapPin, Heart, Store, Navigation, Building2, ChevronRight, Users, Bell, Bookmark, ChevronDown, Star, TrendingUp, Zap, Flame } from "lucide-react";
+import { Beer, MapPin, Heart, Store, Navigation, Building2, ChevronRight, Users, Bell, Bookmark, ChevronDown, Star, TrendingUp, Zap, Flame, Search } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
@@ -30,6 +30,44 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
 function formatDist(km: number | null | undefined): string {
   if (km == null) return "";
   return km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Shared homepage building blocks — consistent section rhythm
+   ───────────────────────────────────────────────────────────── */
+
+/** Standard section header: accent bar or icon + title + optional "vedi tutti" link. */
+function SectionHeader({
+  title,
+  icon: Icon,
+  href,
+  linkLabel = "Vedi tutti",
+}: {
+  title: string;
+  icon?: React.ComponentType<{ className?: string }>;
+  href?: string;
+  linkLabel?: string;
+}) {
+  return (
+    <div className="flex items-center justify-between mb-3">
+      <h2 className="section-title flex items-center gap-2">
+        {Icon ? (
+          <Icon className="w-[18px] h-[18px] text-primary flex-shrink-0" />
+        ) : (
+          <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
+        )}
+        {title}
+      </h2>
+      {href && (
+        <Link href={href}>
+          <button className="tap-scale text-[13px] font-bold text-primary flex items-center gap-0.5 whitespace-nowrap">
+            {linkLabel}
+            <ChevronRight className="w-3.5 h-3.5" />
+          </button>
+        </Link>
+      )}
+    </div>
+  );
 }
 
 export default function Home() {
@@ -293,11 +331,55 @@ export default function Home() {
       )}
 
       {/* ═══════════════════════════════════════════════════════════════
-          HERO — Clean map (top) + filter chips + content card
+          HERO — Value proposition + prominent search, then live map
           Inside the main wide container so it expands on large screens
       ═══════════════════════════════════════════════════════════════ */}
-      <PageContainer as="main" variant="wide" className="pt-4 pb-28">
-        {/* Map card — taller on mobile, more compact on desktop */}
+      <PageContainer as="main" variant="wide" className="pt-5 pb-28">
+        {/* ── Value proposition ── */}
+        <div className="mb-4">
+          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary mb-2">
+            Fermenta.to
+          </p>
+          <h1 className="text-[28px] sm:text-[34px] font-extrabold text-foreground leading-[1.12] tracking-tight">
+            Scopri birre artigianali,
+            <br className="hidden sm:block" />{" "}
+            <span className="text-primary">pub e la community</span>
+          </h1>
+          <p className="text-[14px] sm:text-[15px] text-muted-foreground mt-2.5 leading-relaxed max-w-xl">
+            Trova cosa bere vicino a te — taplist live, birrifici da scoprire e appassionati come te, in un tap.
+          </p>
+        </div>
+
+        {/* ── Prominent search entry point ── */}
+        <Link href="/search" aria-label="Cerca birre, pub e birrifici">
+          <div className="tap-scale group flex items-center gap-3 w-full bg-card border-2 border-primary/20 rounded-2xl px-4 py-3.5 shadow-card mb-3 transition-colors hover:border-primary/40">
+            <Search className="w-5 h-5 text-primary flex-shrink-0" />
+            <span className="flex-1 text-[15px] text-muted-foreground font-medium truncate">
+              Cerca birre, pub o birrifici…
+            </span>
+            <span className="tap-scale flex-shrink-0 inline-flex items-center justify-center bg-primary text-white text-[13px] font-bold rounded-xl px-3.5 py-1.5">
+              Cerca
+            </span>
+          </div>
+        </Link>
+
+        {/* ── Quick actions ── */}
+        <div className="grid grid-cols-2 gap-2.5 mb-4">
+          <Link href="/explore/pubs">
+            <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-[13.5px] font-bold px-3 py-3 rounded-2xl border border-border shadow-card-sm">
+              <Store className="w-4 h-4 text-primary" />
+              Esplora pub
+            </button>
+          </Link>
+          <Link href="/explore/breweries">
+            <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-[13.5px] font-bold px-3 py-3 rounded-2xl border border-border shadow-card-sm">
+              <Building2 className="w-4 h-4 text-amber-500" />
+              Birrifici
+            </button>
+          </Link>
+        </div>
+
+        {/* Map card — live map of pub & birrifici near you */}
         <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-[#0B0D10] shadow-card h-[300px] lg:h-[240px]" style={{ maxHeight: 300 }}>
           <div className="absolute inset-0 overflow-hidden" style={{ maxHeight: '100%' }}>
             <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-[#1A1D24]" />}>
@@ -395,50 +477,20 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Content card BELOW the chips — headline + CTAs */}
-        <div className="mt-4">
-          <h1 className="text-[26px] sm:text-[30px] font-extrabold text-foreground leading-[1.15] tracking-tight">
-            Scopri cosa bere<br />
-            <span className="text-primary">vicino a te.</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            La app per chi ama la birra artigianale.<br className="hidden sm:block" />
-            Trova pub, birre e birrifici in un tap.
-          </p>
+        {/* GPS opt-in (only when not granted) — sits right under the map/chips */}
+        {locationStatus !== 'granted' && (
+          <button
+            onClick={handleRequestLocation}
+            className="tap-scale w-full mt-3 flex items-center justify-center gap-1.5 text-primary text-[13px] font-bold px-4 py-2.5 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-primary/15"
+          >
+            <Navigation className="w-3.5 h-3.5" />
+            Usa la mia posizione per risultati vicini
+          </button>
+        )}
 
-          {/* Two primary CTAs — Trova una birra opens the floating panel */}
-          <div className="flex gap-2.5 mt-4">
-            <Link href="/search" className="flex-1">
-              <button
-                className="tap-scale btn-orange-glow w-full flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card"
-              >
-                <Beer className="w-4 h-4" />
-                Trova una birra
-              </button>
-            </Link>
-            <Link href="/explore/pubs" className="flex-1">
-              <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-sm font-bold px-4 py-3 rounded-2xl border-2 border-primary/25 shadow-card-sm">
-                <Store className="w-4 h-4 text-primary" />
-                Esplora pub
-              </button>
-            </Link>
-          </div>
-
-          {/* GPS opt-in (only when not granted) */}
-          {locationStatus !== 'granted' && (
-            <button
-              onClick={handleRequestLocation}
-              className="tap-scale w-full mt-2.5 flex items-center justify-center gap-1.5 text-primary text-[13px] font-bold px-4 py-2 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-primary/15"
-            >
-              <Navigation className="w-3.5 h-3.5" />
-              Usa la mia posizione
-            </button>
-          )}
-
-          {/* News strip dentro l'Hero */}
-          <div className="mt-5">
-            <NewsStrip variant="hero" limit={6} />
-          </div>
+        {/* News strip dentro l'Hero */}
+        <div className="mt-6">
+          <NewsStrip variant="hero" limit={6} />
         </div>
 
         {/* GPS denied banner */}
@@ -459,7 +511,7 @@ export default function Home() {
             OWNER SECTIONS — Pub owner / Brewery owner
         ═══════════════════════════════════════════════════════════════ */}
         {(typedUser?.userType === 'pub_owner' || (typedUser?.userType === 'admin' && Array.isArray(myPubs) && (myPubs as any[]).length > 0)) ? (
-          <section className="mb-6">
+          <section className="mt-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="section-title flex items-center gap-2">
                 <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
@@ -499,7 +551,7 @@ export default function Home() {
         ) : null}
 
         {typedUser?.userType === 'brewery_owner' && myBreweryData?.brewery && (
-          <section className="mb-6">
+          <section className="mt-8">
             <div className="flex items-center justify-between mb-3">
               <h2 className="section-title flex items-center gap-2">
                 <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
@@ -534,7 +586,7 @@ export default function Home() {
             USER STATS ROW — bevute · recensioni · salvate
         ═══════════════════════════════════════════════════════════════ */}
         {isAuthenticated && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-3 mt-8">
             {/* Bevute */}
             <Link href="/dashboard?tab=tastings">
               <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-3.5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] text-center cursor-pointer transition-all duration-200">
@@ -579,16 +631,8 @@ export default function Home() {
             ORA VICINO A TE — taplist horizontal scroll
         ═══════════════════════════════════════════════════════════════ */}
         {(taplistActivity as any[]).length > 0 && (
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title flex items-center gap-1.5">
-                <Flame className="w-5 h-5 text-primary" />
-                Ora vicino a te
-              </h2>
-              <Link href="/explore/pubs">
-                <button className="text-sm font-semibold text-primary">Vedi tutto →</button>
-              </Link>
-            </div>
+          <section className="mt-8">
+            <SectionHeader title="Ora in spina" icon={Flame} href="/explore/pubs" linkLabel="Vedi tutto" />
             <div className="flex gap-3 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
               {(taplistActivity as any[]).map((item: any) => (
                 <Link key={item.id} href={`/pub/${item.pub_slug || item.pub_id}`}>
@@ -630,7 +674,8 @@ export default function Home() {
             BIRRIFICIO DEL GIORNO — full-width hero card
         ═══════════════════════════════════════════════════════════════ */}
         {breweryOfDay && typedUser?.userType !== 'pub_owner' && (
-          <section className="mb-6">
+          <section className="mt-8">
+            <SectionHeader title="Birrificio in evidenza" icon={Star} href="/explore/breweries" linkLabel="Vedi tutti" />
             <Link href={`/brewery/${breweryOfDay.id}`}>
               <div className="tap-scale relative rounded-3xl overflow-hidden cursor-pointer shadow-card" style={{ height: '168px' }}>
                 {(breweryOfDay.coverImageUrl || breweryOfDay.logoUrl) ? (
@@ -669,17 +714,28 @@ export default function Home() {
         {/* ═══════════════════════════════════════════════════════════════
             IN SPINA VICINO A TE — pub list with taplist
         ═══════════════════════════════════════════════════════════════ */}
-        {sortedPubs.length > 0 && (
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title flex items-center gap-1.5">
-                <Beer className="w-5 h-5 text-primary" />
-                In spina vicino a te
-              </h2>
-              <Link href="/explore/pubs">
-                <button className="text-sm font-semibold text-primary">Vedi tutto →</button>
-              </Link>
-            </div>
+        {(pubsLoading || sortedPubs.length > 0) && (
+          <section className="mt-8">
+            <SectionHeader
+              title={userLocation ? "Pub vicino a te" : "Pub consigliati"}
+              icon={MapPin}
+              href="/explore/pubs"
+              linkLabel="Vedi tutti"
+            />
+            {pubsLoading ? (
+              <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl overflow-hidden border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className={`flex items-center gap-3 px-4 py-3.5 ${i < 3 ? 'border-b border-border' : ''}`}>
+                    <div className="w-10 h-10 rounded-xl bg-muted animate-pulse flex-shrink-0" />
+                    <div className="flex-1 min-w-0 space-y-1.5">
+                      <div className="h-3 w-2/3 bg-muted rounded animate-pulse" />
+                      <div className="h-2.5 w-1/3 bg-muted rounded animate-pulse" />
+                    </div>
+                    <div className="w-9 h-9 rounded-xl bg-muted animate-pulse flex-shrink-0" />
+                  </div>
+                ))}
+              </div>
+            ) : (
             <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl overflow-hidden border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               {sortedPubs.slice(0, 4).map((pub: any, idx: number) => {
                 const tap = (taplistActivity as any[]).find((t: any) => t.pub_id === pub.id);
@@ -724,6 +780,7 @@ export default function Home() {
                 );
               })}
             </div>
+            )}
           </section>
         )}
 
@@ -731,7 +788,7 @@ export default function Home() {
             TREND DEL MOMENTO  +  IL TUO PROFILO  (2-col grid)
         ═══════════════════════════════════════════════════════════════ */}
         {Array.isArray(popularStyles) && popularStyles.length > 0 && (
-          <div className={`grid gap-3 mb-6 ${isAuthenticated ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={`grid gap-3 mt-8 ${isAuthenticated ? 'grid-cols-2' : 'grid-cols-1'}`}>
 
             {/* Trend del momento */}
             <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
@@ -831,16 +888,8 @@ export default function Home() {
             BIRRIFICI DA SCOPRIRE (only desktop or when no taplist)
         ═══════════════════════════════════════════════════════════════ */}
         {breweries.length > 0 && (taplistActivity as any[]).length === 0 && (
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title flex items-center gap-2">
-                <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
-                Birrifici da Scoprire
-              </h2>
-              <Link href="/explore/breweries">
-                <Button variant="ghost" size="sm" className="text-primary font-semibold text-sm">Vedi tutti →</Button>
-              </Link>
-            </div>
+          <section className="mt-8">
+            <SectionHeader title="Birrifici da scoprire" icon={Building2} href="/explore/breweries" linkLabel="Vedi tutti" />
             <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl overflow-hidden border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               {breweries.slice(0, 5).map((brewery: any, idx: number) => (
                 <BreweryCard key={brewery.id} brewery={brewery} isLast={idx === Math.min(4, breweries.length - 1)} />
@@ -853,16 +902,8 @@ export default function Home() {
             ATTIVITÀ DALLA COMMUNITY
         ═══════════════════════════════════════════════════════════════ */}
         {((taplistActivity as any[]).length > 0 || homeAnnouncements.length > 0) && (
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title flex items-center gap-1.5">
-                <Users className="w-5 h-5 text-primary" />
-                Attività dalla community
-              </h2>
-              <Link href="/activity">
-                <button className="text-sm font-semibold text-primary">Vedi tutto →</button>
-              </Link>
-            </div>
+          <section className="mt-8">
+            <SectionHeader title="Dalla community" icon={Users} href="/activity" linkLabel="Vedi tutto" />
             <div className="space-y-2">
               {(taplistActivity as any[]).slice(0, 4).map((item: any) => (
                 <Link key={item.id} href={`/pub/${item.pub_slug || item.pub_id}`}>
@@ -920,16 +961,8 @@ export default function Home() {
             I TUOI PREFERITI
         ═══════════════════════════════════════════════════════════════ */}
         {user && Array.isArray(favorites) && (favorites as any[]).length > 0 && (
-          <section className="mb-6">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="section-title flex items-center gap-2">
-                <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
-                I Tuoi Preferiti
-              </h2>
-              <Link href="/dashboard?tab=favorites">
-                <Button variant="ghost" size="sm" className="text-primary font-semibold text-sm">Vedi tutti →</Button>
-              </Link>
-            </div>
+          <section className="mt-8">
+            <SectionHeader title="I tuoi preferiti" icon={Bookmark} href="/dashboard?tab=favorites" linkLabel="Vedi tutti" />
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-3">
               {(favorites as any[]).filter((f: any) => ['pub', 'brewery', 'beer'].includes(f.itemType) && f.itemName).slice(0, 6).map((favorite: any) => {
                 const href = favorite.itemType === 'pub' ? `/pub/${favorite.itemId}`
@@ -959,7 +992,7 @@ export default function Home() {
             GUEST CTA — per utenti non autenticati
         ═══════════════════════════════════════════════════════════════ */}
         {!isAuthenticated && (
-          <section className="mb-6">
+          <section className="mt-8">
             <div className="relative overflow-hidden rounded-3xl p-6" style={{ background: 'linear-gradient(135deg, #FF7A00 0%, #f98a0e 55%, #f5a623 100%)' }}>
               <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-white/10 pointer-events-none" />
               <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/07 pointer-events-none" />
@@ -984,7 +1017,7 @@ export default function Home() {
         {/* ═══════════════════════════════════════════════════════════════
             COMMUNITY STATS
         ═══════════════════════════════════════════════════════════════ */}
-        <section className="mb-6">
+        <section className="mt-8">
           <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
             <p className="text-[11px] font-bold text-center text-muted-foreground mb-4 uppercase tracking-[0.14em]">
               La Community Fermenta.to

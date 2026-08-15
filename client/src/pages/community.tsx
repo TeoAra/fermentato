@@ -23,6 +23,8 @@ import { InlinePostComposer } from "@/components/social/InlinePostComposer";
 import { EntityChip } from "@/components/social/EntityChip";
 import { PostContent } from "@/components/social/PostContent";
 import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
+import { LoadMoreSentinel } from "@/components/social/LoadMoreSentinel";
+import { useCommunityTimeline } from "@/hooks/useCommunityTimeline";
 
 /* ── helpers ── */
 const FORMAT_LABELS: Record<string, string> = {
@@ -596,18 +598,13 @@ export default function CommunityPage() {
     return () => clearTimeout(t);
   }, [userSearch]);
 
-  const { data: feed = [], isLoading: feedLoading } = useQuery<any[]>({
-    queryKey: ["/api/user/feed"],
-    enabled: isAuthenticated,
-    staleTime: 2 * 60_000,
-    refetchInterval: 3 * 60_000,
-  });
-  const { data: microblogFeed = [], isLoading: microblogLoading } = useQuery<any[]>({
-    queryKey: ["/api/microblog/feed"],
-    enabled: isAuthenticated,
-    staleTime: 2 * 60_000,
-    refetchInterval: 3 * 60_000,
-  });
+  const {
+    timeline: rawTimeline,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useCommunityTimeline(isAuthenticated);
   const { data: news = [] } = useQuery<any[]>({
     queryKey: ["/api/news", "feed"],
     queryFn: async () => {
@@ -631,13 +628,6 @@ export default function CommunityPage() {
     },
     enabled: debouncedSearch.length >= 2,
   });
-
-  const isLoading = feedLoading || microblogLoading;
-
-  const rawTimeline = useMemo(() => [
-    ...feed.map((it: any) => ({ kind: "checkin" as const, sortAt: new Date(it.tasted_at).getTime(), data: it })),
-    ...(microblogFeed as any[]).map((p: any) => ({ kind: "post" as const, sortAt: new Date(p.created_at).getTime(), data: p })),
-  ].sort((a, b) => b.sortAt - a.sortAt), [feed, microblogFeed]);
 
   const timeline = useMemo(() => {
     if (filter === "post") return rawTimeline.filter(e => e.kind === "post");
@@ -822,6 +812,12 @@ export default function CommunityPage() {
                     <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
                   )
                 )}
+                <LoadMoreSentinel
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  onLoadMore={fetchNextPage}
+                  endLabel="Sei arrivato alla fine 🍺"
+                />
               </>
             )}
 

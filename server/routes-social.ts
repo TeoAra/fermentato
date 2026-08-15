@@ -6,6 +6,7 @@ import { sendPushToUser, sendPushToAdmins, shouldSendEmailNotification } from ".
 import { sendMentionEmail } from "./email";
 import { storage } from "./storage";
 import { likeRateLimit, commentRateLimit, microblogPostRateLimit } from "./middleware/rate-limit";
+import { makeFeedCursor, parseFeedCursor } from "./feed-cursor";
 import Parser from "rss-parser";
 
 const rssParser = new Parser({
@@ -66,6 +67,16 @@ async function runSocialMigrations() {
         content TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT NOW()
       );
+      ALTER TABLE microblog_comments ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP;
+
+      CREATE TABLE IF NOT EXISTS microblog_comment_likes (
+        id SERIAL PRIMARY KEY,
+        comment_id INTEGER NOT NULL REFERENCES microblog_comments(id) ON DELETE CASCADE,
+        user_id VARCHAR NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        created_at TIMESTAMP DEFAULT NOW(),
+        UNIQUE(comment_id, user_id)
+      );
+      CREATE INDEX IF NOT EXISTS idx_mcl_comment ON microblog_comment_likes(comment_id);
 
       CREATE TABLE IF NOT EXISTS admin_broadcasts (
         id SERIAL PRIMARY KEY,
@@ -954,6 +965,19 @@ export async function registerSocialRoutes(app: Express) {
   // Public feed: posts from people I follow + my own
   app.get("/api/microblog/feed", isAuthenticated, async (req: any, res) => {
     const userId = req.user.id;
+    const limit = Math.min(Math.max(parseInt((req.query.limit as string) || "20", 10), 1), 50);
+    // Keyset/cursor pagination: cursor = "<isoTs>_<id>" over (created_at, id) DESC.
+    // Avoids duplicates/skips when new posts are inserted between page fetches.
+    const cursor = parseFeedCursor(req.query.cursor as string | undefined);
+
+    const params: any[] = [userId];
+    let cursorClause = "";
+    if (cursor) {
+      params.push(cursor.ts, cursor.id);
+      cursorClause = `AND (p.created_at::timestamptz, p.id) < ($${params.length - 1}::timestamptz, $${params.length}::int)`;
+    }
+    params.push(limit + 1);
+
     const { rows } = await pool.query(`
       SELECT p.id, p.content, p.image_url, p.beer_id, p.pub_id, p.brewery_id,
              p.author_type, p.author_entity_id, p.created_at, p.updated_at,
@@ -982,14 +1006,19 @@ export async function registerSocialRoutes(app: Express) {
       LEFT JOIN breweries br ON br.id = p.brewery_id
       LEFT JOIN pubs ep ON ep.id = p.author_entity_id AND p.author_type = 'pub'
       LEFT JOIN breweries eb ON eb.id = p.author_entity_id AND p.author_type = 'brewery'
-      WHERE p.user_id = $1
+      WHERE (p.user_id = $1
          OR p.user_id IN (SELECT following_id FROM user_follows WHERE follower_id = $1)
          OR (p.author_type = 'pub'     AND p.author_entity_id IN (SELECT item_id FROM favorites WHERE user_id = $1 AND item_type = 'pub'))
-         OR (p.author_type = 'brewery' AND p.author_entity_id IN (SELECT item_id FROM favorites WHERE user_id = $1 AND item_type = 'brewery'))
-      ORDER BY p.created_at DESC
-      LIMIT 60
-    `, [userId]);
-    res.json(rows);
+         OR (p.author_type = 'brewery' AND p.author_entity_id IN (SELECT item_id FROM favorites WHERE user_id = $1 AND item_type = 'brewery')))
+      ${cursorClause}
+      ORDER BY p.created_at DESC, p.id DESC
+      LIMIT $${params.length}
+    `, params);
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+    const last = items[items.length - 1];
+    const nextCursor = hasMore && last ? makeFeedCursor(last.created_at, last.id) : null;
+    res.json({ items, hasMore, nextCursor });
   });
 
   // Posts filtered by tagged entity or hashtag (public)
@@ -1116,6 +1145,41 @@ export async function registerSocialRoutes(app: Express) {
     }
   });
 
+  // Hashtag autocomplete: search existing hashtags by prefix (last 30 days)
+  app.get("/api/microblog/hashtags/search", async (req, res) => {
+    const q = ((req.query.q as string) || "").trim().toLowerCase().replace(/^#/, "");
+    const limit = Math.min(Math.max(parseInt((req.query.limit as string) || "8", 10), 1), 20);
+    try {
+      if (!q) {
+        // No query → return trending as suggestions
+        const { rows } = await pool.query(`
+          SELECT unnest(hashtags) AS tag, COUNT(*)::int AS count
+          FROM microblog_posts
+          WHERE created_at >= NOW() - INTERVAL '30 days'
+            AND hashtags IS NOT NULL AND array_length(hashtags, 1) > 0
+          GROUP BY tag
+          ORDER BY count DESC, tag ASC
+          LIMIT $1
+        `, [limit]);
+        return res.json(rows);
+      }
+      const { rows } = await pool.query(`
+        SELECT tag, COUNT(*)::int AS count FROM (
+          SELECT unnest(hashtags) AS tag FROM microblog_posts
+          WHERE hashtags IS NOT NULL AND array_length(hashtags, 1) > 0
+        ) t
+        WHERE t.tag LIKE $1
+        GROUP BY tag
+        ORDER BY (tag = $2) DESC, count DESC, tag ASC
+        LIMIT $3
+      `, [`${q}%`, q, limit]);
+      res.json(rows);
+    } catch (e: any) {
+      console.error("[social] hashtags/search error:", e.message);
+      res.status(500).json({ message: "Errore nella ricerca degli hashtag" });
+    }
+  });
+
   app.get("/api/microblog/discover", async (_req, res) => {
     const { rows } = await pool.query(`
       SELECT p.id, p.content, p.image_url, p.created_at, p.updated_at,
@@ -1158,19 +1222,25 @@ export async function registerSocialRoutes(app: Express) {
     res.json({ liked: false });
   });
 
-  app.get("/api/microblog/posts/:id/comments", async (req, res) => {
+  app.get("/api/microblog/posts/:id/comments", async (req: any, res) => {
     const postId = parseInt(req.params.id, 10);
+    const me = req.user?.id ?? null;
     const { rows } = await pool.query(`
-      SELECT c.id, c.content, c.created_at,
+      SELECT c.id, c.content, c.created_at, c.updated_at,
              u.id AS user_id, u.nickname AS username,
              COALESCE(u.nickname, NULLIF(TRIM(COALESCE(u.first_name,'') || ' ' || COALESCE(u.last_name,'')), ''), 'utente') AS display_name,
-             u.profile_image_url
+             u.profile_image_url,
+             (SELECT COUNT(*)::int FROM microblog_comment_likes mcl WHERE mcl.comment_id = c.id) AS likes_count,
+             ($2::varchar IS NOT NULL AND EXISTS(
+                SELECT 1 FROM microblog_comment_likes mcl2
+                WHERE mcl2.comment_id = c.id AND mcl2.user_id = $2
+             )) AS liked
       FROM microblog_comments c
       JOIN users u ON u.id = c.user_id
       WHERE c.post_id = $1
       ORDER BY c.created_at ASC
       LIMIT 100
-    `, [postId]);
+    `, [postId, me]);
     res.json(rows);
   });
 
@@ -1179,10 +1249,79 @@ export async function registerSocialRoutes(app: Express) {
     const content = String(req.body?.content ?? "").trim().slice(0, 500);
     if (!content) return res.status(400).json({ message: "Commento vuoto" });
     const { rows } = await pool.query(
-      `INSERT INTO microblog_comments (post_id, user_id, content) VALUES ($1, $2, $3) RETURNING id, content, created_at`,
+      `INSERT INTO microblog_comments (post_id, user_id, content) VALUES ($1, $2, $3) RETURNING id, content, created_at, updated_at`,
       [postId, req.user.id, content],
     );
+    // Notify post owner
+    try {
+      const owner = await pool.query(`SELECT user_id FROM microblog_posts WHERE id = $1`, [postId]);
+      if (owner.rows[0] && owner.rows[0].user_id !== req.user.id) {
+        sendPushToUser(owner.rows[0].user_id, {
+          title: "💬 Nuovo commento",
+          body: content.slice(0, 80),
+          url: "/community",
+          tag: `microblog-comment-${postId}`,
+          category: 'checkinComments',
+          batchKey: `microblog-comment:${postId}`,
+          batchTemplate: (count) => ({
+            title: "💬 Nuovi commenti al tuo post",
+            body: `${count} persone hanno commentato il tuo post`,
+          }),
+        });
+      }
+    } catch {}
     res.json(rows[0]);
+  });
+
+  // Edit own comment
+  app.patch("/api/microblog/posts/:postId/comments/:commentId", isAuthenticated, async (req: any, res) => {
+    const userId = req.user.id;
+    const commentId = parseInt(req.params.commentId, 10);
+    if (Number.isNaN(commentId)) return res.status(400).json({ message: "ID non valido" });
+    const content = String(req.body?.content ?? "").trim().slice(0, 500);
+    if (!content) return res.status(400).json({ message: "Commento vuoto" });
+    const { rows } = await pool.query(
+      `UPDATE microblog_comments SET content = $1, updated_at = NOW() WHERE id = $2 AND user_id = $3
+       RETURNING id, content, created_at, updated_at`,
+      [content, commentId, userId],
+    );
+    if (!rows.length) return res.status(404).json({ message: "Commento non trovato" });
+    res.json(rows[0]);
+  });
+
+  // Like/unlike a post comment
+  app.post("/api/microblog/comments/:id/like", isAuthenticated, likeRateLimit, async (req: any, res) => {
+    const commentId = parseInt(req.params.id, 10);
+    if (Number.isNaN(commentId)) return res.status(400).json({ message: "ID non valido" });
+    await pool.query(
+      `INSERT INTO microblog_comment_likes (comment_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+      [commentId, req.user.id],
+    );
+    const owner = await pool.query(`SELECT user_id FROM microblog_comments WHERE id = $1`, [commentId]);
+    if (owner.rows[0] && owner.rows[0].user_id !== req.user.id) {
+      sendPushToUser(owner.rows[0].user_id, {
+        title: "💛 Like al tuo commento",
+        body: "A qualcuno è piaciuto il tuo commento",
+        url: "/community",
+        tag: `microblog-comment-like-${commentId}`,
+        category: 'checkinLikes',
+        batchKey: `microblog-comment-like:${commentId}`,
+        batchTemplate: (count) => ({
+          title: "💛 Nuovi like al tuo commento",
+          body: `${count} persone hanno messo like al tuo commento`,
+        }),
+      });
+    }
+    res.json({ liked: true });
+  });
+
+  app.delete("/api/microblog/comments/:id/like", isAuthenticated, async (req: any, res) => {
+    const commentId = parseInt(req.params.id, 10);
+    await pool.query(
+      `DELETE FROM microblog_comment_likes WHERE comment_id = $1 AND user_id = $2`,
+      [commentId, req.user.id],
+    );
+    res.json({ liked: false });
   });
 
   // ─── ADMIN BROADCAST ──────────────────────────────────────────────────────

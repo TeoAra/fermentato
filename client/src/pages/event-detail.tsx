@@ -17,10 +17,17 @@ import {
   Home as HomeIcon,
   Info as InfoIcon,
   Share2,
+  CalendarPlus,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   EventCategoryBadge,
   EventInterestButton,
@@ -28,6 +35,7 @@ import {
 } from "@/components/events-manager";
 import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 import { useAnyModalOpen, DockPortal } from "@/components/bottom-navigation";
+import { useToast } from "@/hooks/use-toast";
 
 type EventDetail = {
   sourceType: "pub" | "brewery";
@@ -51,8 +59,87 @@ type EventDetail = {
 const GLASS_CARD =
   "bg-white/70 backdrop-blur-xl border border-white/40 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:bg-white/[0.04] dark:border-white/[0.06] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)]";
 
+// ── Calendar helpers (pure, client-side) ────────────────────────────────────
+// Format a Date as an iCalendar UTC timestamp: YYYYMMDDTHHMMSSZ
+function toICSDate(d: Date): string {
+  return d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+}
+
+// Strip HTML tags from the rich description for plain-text calendar fields.
+function toPlainText(html: string | null): string {
+  if (!html) return "";
+  if (typeof document === "undefined") return html.replace(/<[^>]*>/g, " ");
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return (tmp.textContent || tmp.innerText || "").replace(/\s+/g, " ").trim();
+}
+
+function escapeICS(text: string): string {
+  return text
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\r?\n/g, "\\n");
+}
+
+type CalendarEvent = {
+  title: string;
+  start: Date;
+  end: Date;
+  description: string;
+  location: string;
+  url: string;
+};
+
+function buildICS(ev: CalendarEvent): string {
+  const now = new Date();
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Fermenta.to//Eventi//IT",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    `UID:${toICSDate(now)}-${Math.random().toString(36).slice(2)}@fermenta.to`,
+    `DTSTAMP:${toICSDate(now)}`,
+    `DTSTART:${toICSDate(ev.start)}`,
+    `DTEND:${toICSDate(ev.end)}`,
+    `SUMMARY:${escapeICS(ev.title)}`,
+    `DESCRIPTION:${escapeICS(ev.description)}`,
+    `LOCATION:${escapeICS(ev.location)}`,
+    `URL:${escapeICS(ev.url)}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
+}
+
+function buildGoogleCalendarUrl(ev: CalendarEvent): string {
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: ev.title,
+    dates: `${toICSDate(ev.start)}/${toICSDate(ev.end)}`,
+    details: `${ev.description}${ev.description ? "\n\n" : ""}${ev.url}`,
+    location: ev.location,
+  });
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
+}
+
+function downloadICS(ev: CalendarEvent) {
+  const blob = new Blob([buildICS(ev)], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const safeName = ev.title.replace(/[^a-z0-9]+/gi, "-").toLowerCase().slice(0, 60) || "evento";
+  a.download = `${safeName}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 export default function EventDetailPage() {
   const params = useParams<{ type: string; id: string }>();
+  const { toast } = useToast();
   const type = params.type as "pub" | "brewery";
   const id = parseInt(params.id);
 
@@ -135,6 +222,16 @@ export default function EventDetailPage() {
       ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.venueAddress + " " + (ev.venueCity || ""))}`
       : null;
 
+  // Default 2h duration when no end date is provided.
+  const calendarEvent: CalendarEvent = {
+    title: ev.title,
+    start,
+    end: end ?? new Date(start.getTime() + 2 * 60 * 60 * 1000),
+    description: toPlainText(ev.description),
+    location: [ev.venueName, ev.venueAddress, ev.venueCity].filter(Boolean).join(", "),
+    url: typeof window !== "undefined" ? window.location.href : `https://fermenta.to/eventi/${ev.sourceType}/${ev.id}`,
+  };
+
   const handleShare = async () => {
     const currentUrl = window.location.href;
     const shareData = {
@@ -149,6 +246,7 @@ export default function EventDetailPage() {
       }
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(currentUrl);
+        toast({ title: "Link copiato" });
       }
     } catch (e: any) {
       if (e?.name === "AbortError") return;
@@ -212,6 +310,37 @@ export default function EventDetailPage() {
         </span>
       </div>
     </div>
+  );
+
+  const AddToCalendarButton = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="default" className="gap-2" data-testid="btn-add-to-calendar">
+          <CalendarPlus className="h-4 w-4" />
+          Aggiungi al calendario
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start">
+        <DropdownMenuItem
+          onClick={() => downloadICS(calendarEvent)}
+          data-testid="btn-calendar-ics"
+        >
+          <CalendarPlus className="h-4 w-4 mr-2" />
+          Scarica .ics (Apple / Outlook)
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a
+            href={buildGoogleCalendarUrl(calendarEvent)}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-testid="btn-calendar-google"
+          >
+            <CalendarDays className="h-4 w-4 mr-2" />
+            Google Calendar
+          </a>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 
   const tabLabel: Record<typeof activeTab, string> = {
@@ -279,6 +408,7 @@ export default function EventDetailPage() {
 
               <div className="mt-5 flex flex-wrap items-center gap-2">
                 <EventInterestButton eventId={ev.id} type={ev.sourceType} />
+                {AddToCalendarButton}
                 <EventShareButtons event={{ ...ev, eventDate: ev.eventDate }} pubId={ev.venueId} size="default" />
               </div>
 
@@ -311,6 +441,7 @@ export default function EventDetailPage() {
             <div className="mt-3">{DateTimeBlock}</div>
             <div className="mt-5 flex flex-wrap items-center gap-2">
               <EventInterestButton eventId={ev.id} type={ev.sourceType} />
+              {AddToCalendarButton}
               <EventShareButtons event={{ ...ev, eventDate: ev.eventDate }} pubId={ev.venueId} size="default" />
             </div>
           </div>

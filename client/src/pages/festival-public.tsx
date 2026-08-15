@@ -868,7 +868,7 @@ export default function FestivalPublic() {
                   <button
                     type="button"
                     onClick={() => {
-                      const loc = encodeURIComponent(festival.location);
+                      const loc = encodeURIComponent(festival.location ?? "");
                       const cap = (window as any).Capacitor;
                       if (cap?.isNativePlatform?.()) {
                         const isIos = cap.getPlatform() === 'ios';

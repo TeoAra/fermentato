@@ -24,6 +24,8 @@ import { InlinePostComposer } from "@/components/social/InlinePostComposer";
 import { EntityPreviewCard, type EntityType } from "@/components/social/EntityPreviewCard";
 import { PostContent } from "@/components/social/PostContent";
 import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
+import { LoadMoreSentinel } from "@/components/social/LoadMoreSentinel";
+import { useCommunityTimeline } from "@/hooks/useCommunityTimeline";
 
 /* ── helpers ── */
 const FORMAT_LABELS: Record<string, string> = {
@@ -533,14 +535,13 @@ export default function SocialFeed() {
     return () => clearTimeout(t);
   }, [userSearch]);
 
-  const { data: feed = [], isLoading: feedLoading } = useQuery<any[]>({
-    queryKey: ["/api/user/feed"],
-    enabled: isAuthenticated,
-  });
-  const { data: microblogFeed = [] } = useQuery<any[]>({
-    queryKey: ["/api/microblog/feed"],
-    enabled: isAuthenticated,
-  });
+  const {
+    timeline,
+    isLoading: feedLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useCommunityTimeline(isAuthenticated);
   const { data: news = [] } = useQuery<any[]>({
     queryKey: ["/api/news", "feed"],
     queryFn: async () => {
@@ -572,19 +573,6 @@ export default function SocialFeed() {
     queryKey: ["/api/user/badges"],
     enabled: isAuthenticated,
   });
-
-  const timeline = [
-    ...feed.map((it: any) => ({
-      kind: "checkin" as const,
-      sortAt: new Date(it.tasted_at).getTime(),
-      data: it,
-    })),
-    ...microblogFeed.map((p: any) => ({
-      kind: "post" as const,
-      sortAt: new Date(p.created_at).getTime(),
-      data: p,
-    })),
-  ].sort((a, b) => b.sortAt - a.sortAt);
 
   const followingIds = new Set<string>((following as any[]).map((u: any) => u.id));
 
@@ -699,13 +687,21 @@ export default function SocialFeed() {
                     </Link>
                   </div>
                 ) : (
-                  timeline.map(entry =>
-                    entry.kind === "post" ? (
-                      <MicroblogCard key={`p-${entry.data.id}`} post={entry.data} />
-                    ) : (
-                      <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
-                    )
-                  )
+                  <>
+                    {timeline.map(entry =>
+                      entry.kind === "post" ? (
+                        <MicroblogCard key={`p-${entry.data.id}`} post={entry.data} />
+                      ) : (
+                        <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
+                      )
+                    )}
+                    <LoadMoreSentinel
+                      hasNextPage={hasNextPage}
+                      isFetchingNextPage={isFetchingNextPage}
+                      onLoadMore={fetchNextPage}
+                      endLabel="Sei arrivato alla fine 🍺"
+                    />
+                  </>
                 )}
               </div>
 

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { Link, useParams } from "wouter";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Hash, Users } from "lucide-react";
@@ -9,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { PostContent } from "@/components/social/PostContent";
 import TrendingHashtags from "@/components/social/TrendingHashtags";
 import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
+import { LoadMoreSentinel } from "@/components/social/LoadMoreSentinel";
+
+const HASHTAG_PAGE_SIZE = 20;
 
 function PostAvatar({ post }: { post: any }) {
   const name = post.display_name ?? post.username ?? "?";
@@ -25,12 +28,39 @@ export default function HashtagPage() {
   const params = useParams<{ tag: string }>();
   const tag = decodeURIComponent(params.tag || "").toLowerCase().replace(/^#/, "");
 
-  const { data: posts = [], isLoading } = useQuery<any[]>({
+  const {
+    data,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery<any[]>({
     queryKey: ["/api/microblog/posts", { hashtag: tag }],
-    queryFn: () => fetch(`/api/microblog/posts?hashtag=${encodeURIComponent(tag)}&limit=50`, { credentials: "include" })
-      .then(r => r.ok ? r.json() : []),
     enabled: !!tag,
+    initialPageParam: 0,
+    queryFn: async ({ pageParam }) => {
+      const r = await fetch(
+        `/api/microblog/posts?hashtag=${encodeURIComponent(tag)}&limit=${HASHTAG_PAGE_SIZE}&offset=${pageParam}`,
+        { credentials: "include" },
+      );
+      return r.ok ? r.json() : [];
+    },
+    getNextPageParam: (lastPage, allPages) =>
+      lastPage.length >= HASHTAG_PAGE_SIZE ? allPages.length * HASHTAG_PAGE_SIZE : undefined,
   });
+
+  // Flatten pages and defensively de-duplicate by post id (offset paging over a
+  // live list can otherwise repeat/skip rows when new posts are inserted).
+  const posts = (() => {
+    const seen = new Set<number>();
+    const out: any[] = [];
+    for (const p of (data?.pages ?? []).flat()) {
+      if (p?.id == null || seen.has(p.id)) continue;
+      seen.add(p.id);
+      out.push(p);
+    }
+    return out;
+  })();
 
   return (
     <div className="min-h-screen bg-[hsl(36,10%,95%)] dark:bg-[#0B0D10] pb-20">
@@ -124,6 +154,13 @@ export default function HashtagPage() {
               </div>
             </div>
           ))
+        )}
+        {!isLoading && posts.length > 0 && (
+          <LoadMoreSentinel
+            hasNextPage={!!hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={fetchNextPage}
+          />
         )}
       </div>
     </div>

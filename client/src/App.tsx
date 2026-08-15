@@ -130,6 +130,7 @@ const BeerDetail         = lazy(() => import("@/pages/beer-detail"));
 const SmartPubDashboard  = lazy(() => import("@/pages/smart-pub-dashboard"));
 const BreweryDashboard   = lazy(() => import("@/pages/brewery-dashboard"));
 const UserProfile        = lazy(() => import("@/pages/user-profile-new"));
+const SettingsPage       = lazy(() => import("@/pages/settings"));
 const AdminDashboard     = lazy(() => import("@/pages/admin-dashboard"));
 const AdminDashboardNew  = lazy(() => import("@/pages/admin-dashboard-new"));
 const AdminAnalytics     = lazy(() => import("@/pages/admin-analytics"));
@@ -465,6 +466,8 @@ function Router() {
           ) as any} />
           {/* /profile always shows the user profile regardless of active role */}
           <Route path="/profile" component={UserProfile} />
+          <Route path="/impostazioni" component={SettingsPage} />
+          <Route path="/settings" component={SettingsPage} />
           <Route path="/admin" component={AdminDashboardNew} />
           <Route path="/admin/analytics" component={AdminAnalytics} />
           <Route path="/admin/content" component={AdminContent} />

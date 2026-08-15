@@ -54,6 +54,8 @@ export interface BottleItem {
   isVisible?: boolean | null;
   isActive?: boolean | null;
   orderIndex?: number | null;
+  updatedAt?: string | null;
+  addedAt?: string | null;
 }
 
 export interface MenuItemAllergen {

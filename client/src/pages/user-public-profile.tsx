@@ -2,7 +2,8 @@ import { Helmet } from "react-helmet-async";
 import { useState, useEffect } from "react";
 import { useParams, Link } from "wouter";
 import { RichTextDisplay, richTextToPlain } from "@/components/rich-text-editor";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { LoadMoreSentinel } from "@/components/social/LoadMoreSentinel";
 import {
   Star,
   ArrowLeft,
@@ -204,13 +205,46 @@ export default function UserPublicProfile() {
     retry: false,
   });
 
-  const { data: userPosts = [], isLoading: postsLoading } = useQuery<any[]>({
+  const POSTS_PAGE_SIZE = 15;
+  const {
+    data: postsPages,
+    isLoading: postsLoading,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery<any[]>({
     queryKey: ["/api/microblog/posts", { username: nickname }],
-    queryFn: () =>
-      fetch(`/api/microblog/posts?username=${encodeURIComponent(nickname || "")}&limit=30`, { credentials: "include" })
-        .then(r => r.ok ? r.json() : []),
+    queryFn: async ({ pageParam = 0 }) => {
+      const r = await fetch(
+        `/api/microblog/posts?username=${encodeURIComponent(nickname || "")}&limit=${POSTS_PAGE_SIZE}&offset=${pageParam}`,
+        { credentials: "include" },
+      );
+      if (!r.ok) return [];
+      return r.json();
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, allPages) =>
+      Array.isArray(lastPage) && lastPage.length === POSTS_PAGE_SIZE
+        ? allPages.reduce((n, p) => n + (Array.isArray(p) ? p.length : 0), 0)
+        : undefined,
     enabled: !!nickname,
   });
+  // Flatten pages and defensively de-duplicate by post id: offset paging over a
+  // live list can repeat/skip rows when posts are inserted between page fetches.
+  const userPosts: any[] = (() => {
+    const seen = new Set<number>();
+    const out: any[] = [];
+    for (const p of (postsPages?.pages ?? []).flat()) {
+      if (p?.id == null || seen.has(p.id)) continue;
+      seen.add(p.id);
+      out.push(p);
+    }
+    return out;
+  })();
+
+  // Activity filter chips (Tutti / Post / Check-in). Check-in data comes from
+  // recentReviews (tastings); posts from the microblog endpoint.
+  const [activityFilter, setActivityFilter] = useState<"all" | "post" | "checkin">("all");
 
   const handleShare = async () => {
     const displayName = profile?.nickname || profile?.firstName || "Utente";
@@ -536,7 +570,107 @@ export default function UserPublicProfile() {
           <p className="text-sm text-muted-foreground">{displayName} non ha ancora pubblicato post.</p>
         </div>
       ) : (
-        userPosts.map((post: any) => <UserPostCard key={post.id} post={post} />)
+        <>
+          {userPosts.map((post: any) => <UserPostCard key={post.id} post={post} />)}
+          <LoadMoreSentinel
+            hasNextPage={!!hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={() => fetchNextPage()}
+          />
+        </>
+      )}
+    </div>
+  );
+
+  // Check-in cards (from recentReviews) for the activity feed.
+  const CheckinCard = (review: any) => (
+    <div key={`ci-${review.id}`} className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-stone-100 dark:border-[#23262E] shadow-sm p-4">
+      <p className="text-[11px] text-stone-400 mb-2">
+        {review.tastedAt ? formatDistanceToNow(new Date(review.tastedAt), { addSuffix: true, locale: itLocale }) : ""} · 🍺 check-in
+      </p>
+      <Link href={`/beer/${review.beerId}`}>
+        <div className="flex items-start gap-3">
+          <ImageWithFallback
+            src={review.beerImageUrl}
+            alt={review.beerName}
+            imageType="beer"
+            containerClassName="w-12 h-12 rounded-lg flex-shrink-0"
+            className="w-12 h-12 object-cover rounded-lg"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center justify-between gap-2">
+              <span className="font-semibold text-sm text-foreground dark:text-white truncate">{review.beerName}</span>
+              <StarDisplay rating={review.rating} />
+            </div>
+            {review.beerStyle && <span className="text-xs text-muted-foreground">{review.beerStyle}</span>}
+            {review.personalNotes && (
+              <p className="text-xs text-muted-foreground dark:text-stone-400 italic mt-1 line-clamp-2">"{richTextToPlain(review.personalNotes)}"</p>
+            )}
+            {(review.format || review.pubName) && (
+              <p className="text-xs text-stone-400 mt-1">
+                {review.format}{review.format && review.pubName ? " · " : ""}{review.pubName}
+              </p>
+            )}
+          </div>
+        </div>
+      </Link>
+    </div>
+  );
+
+  const ActivitySection = (
+    <div className="space-y-3">
+      {/* Filter chips */}
+      <div className="flex items-center gap-2">
+        {([
+          { id: "all", label: "Tutti" },
+          { id: "post", label: "Post" },
+          { id: "checkin", label: "Check-in" },
+        ] as { id: "all" | "post" | "checkin"; label: string }[]).map(({ id, label }) => {
+          const active = activityFilter === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setActivityFilter(id)}
+              data-testid={`activity-filter-${id}`}
+              className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${
+                active
+                  ? "bg-primary text-white"
+                  : "bg-stone-100 dark:bg-white/[0.06] text-stone-600 dark:text-stone-300 hover:bg-stone-200 dark:hover:bg-white/10"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Post */}
+      {(activityFilter === "all" || activityFilter === "post") && (
+        postsLoading ? (
+          <div className="space-y-3">{[0, 1].map(i => <div key={i} className={`${GLASS_CARD} h-32 animate-pulse`} />)}</div>
+        ) : (
+          <>
+            {userPosts.map((post: any) => <UserPostCard key={post.id} post={post} />)}
+            <LoadMoreSentinel
+              hasNextPage={!!hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              onLoadMore={() => fetchNextPage()}
+            />
+          </>
+        )
+      )}
+
+      {/* Check-in */}
+      {(activityFilter === "all" || activityFilter === "checkin") &&
+        recentReviews.map((review: any) => CheckinCard(review))}
+
+      {/* Empty state */}
+      {!postsLoading && userPosts.length === 0 && recentReviews.length === 0 && (
+        <div className={`${GLASS_CARD} p-8 text-center`}>
+          <ActivityIcon className="h-10 w-10 text-stone-300 dark:text-stone-600 mx-auto mb-3" />
+          <h3 className="font-bold text-foreground mb-1">Nessuna attività</h3>
+          <p className="text-sm text-muted-foreground">{displayName} non ha ancora attività pubbliche.</p>
+        </div>
       )}
     </div>
   );
@@ -772,9 +906,9 @@ export default function UserPublicProfile() {
               {BadgeProgressionSection}
             </TabsContent>
 
-            {/* Post */}
+            {/* Post / Attività */}
             <TabsContent value="post" className="mt-0 space-y-4">
-              {PostsSection}
+              {ActivitySection}
             </TabsContent>
           </Tabs>
         </div>

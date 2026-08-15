@@ -414,6 +414,7 @@ export class MemoryStorage {
       bottleSize: item.bottleSize || "0.33L",
       format: item.format ?? null,
       quantity: item.quantity || null,
+      orderIndex: item.orderIndex ?? null,
       addedAt: new Date(),
       updatedAt: new Date()
     };

@@ -62,6 +62,7 @@ import { registerFestivalRoutes, runFestivalMigrations } from "./routes-festival
 import { sql, eq, and, desc, asc, gte, count } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
+import { makeFeedCursor, parseFeedCursor } from "./feed-cursor";
 import { breweryActiveSql, beerVisibleSql, rawBreweryActive, rawBeerVisibleJoined, rawBeerVisibleExists } from "./visibility";
 import { normalizeBeerSearch, buildBeerSearchFragments } from "./search-normalize";
 import { registerCatalogCacheBuster, registerHomeCacheBuster, registerPubStatsBuster, registerBreweryStatsBuster, bustBreweryStats } from "./catalog-cache";
@@ -734,12 +735,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
   setTimeout(sendEventStartNotifications, 30_000);
   setInterval(sendEventStartNotifications, 10 * 60 * 1000);
 
+  // ── Event day-of reminders ──────────────────────────────────────────────────
+  // Once per event, on the day it starts, remind every "interested" user that
+  // the event is happening today. Sends both a push and an in-app notification
+  // (the latter respects the user's notification preferences via
+  // storage.createNotification). Guarded by the reminder_sent flag so each
+  // event is reminded exactly once. Fires for events starting later "today"
+  // (event_date is still in the future but on the current calendar day) so the
+  // reminder arrives the morning-of rather than at start time.
+  async function sendEventDayReminders() {
+    // Process a single event: atomically claim it (set reminder_sent=true),
+    // create the in-app notifications (AWAITED — this is the durable signal),
+    // then attempt pushes (best-effort, failures logged but non-blocking).
+    // If in-app notification creation fails, reset reminder_sent=false so the
+    // reminder is retried on a later run. Per-event try/catch isolates failures.
+    async function processEvent(opts: {
+      table: "pub_events" | "brewery_events";
+      interestTable: "pub_event_interests" | "brewery_event_interests";
+      row: any;
+      venueName: string;
+      urlPath: string;
+      tagPrefix: string;
+      notifKey: "pubId" | "breweryId";
+      venueId: number;
+    }): Promise<boolean> {
+      const { table, interestTable, row, venueName, urlPath, tagPrefix, notifKey, venueId } = opts;
+      // Atomic claim (RETURNING id) so concurrent runs / restarts don't double-send.
+      const upd = await pool.query(
+        `UPDATE ${table} SET reminder_sent = true
+           WHERE id = $1 AND reminder_sent = false RETURNING id`,
+        [row.id]
+      );
+      if (upd.rowCount === 0) return false; // Another run claimed it
+
+      try {
+        const interestedRes = await pool.query(
+          `SELECT user_id FROM ${interestTable} WHERE event_id = $1`,
+          [row.id]
+        );
+        const userIds: string[] = interestedRes.rows.map((r: any) => r.user_id);
+
+        // 1) In-app notifications — AWAITED. These are the durable signal that
+        //    gates the "sent" flag. respects notification preferences internally.
+        await Promise.all(userIds.map((uid) =>
+          storage.createNotification({
+            userId: uid,
+            type: 'event',
+            title: `Oggi: ${row.title}`,
+            message: `L'evento a cui sei interessato si tiene oggi presso ${venueName}`,
+            [notifKey]: venueId,
+          } as any)
+        ));
+
+        // 2) Push — best-effort. Failures are logged but do NOT block/reset the
+        //    sent flag (in-app notifications already delivered successfully).
+        for (const uid of userIds) {
+          try {
+            await sendPushToUser(uid, {
+              title: `📅 Oggi: ${row.title}`,
+              body: `L'evento a cui sei interessato si tiene oggi presso ${venueName}`,
+              url: urlPath,
+              tag: `${tagPrefix}-${row.id}`,
+              icon: row.image_url || undefined,
+              category: 'events',
+            });
+          } catch (pushErr) {
+            console.error(`[event-notifs] push failed for user ${uid}, event ${row.id}:`, pushErr);
+          }
+        }
+        return true;
+      } catch (err) {
+        // In-app notification creation failed — undo the claim so we retry later.
+        console.error(`[event-notifs] reminder failed for ${table} ${row.id}, resetting:`, err);
+        await pool.query(
+          `UPDATE ${table} SET reminder_sent = false WHERE id = $1`,
+          [row.id]
+        ).catch(() => {});
+        return false;
+      }
+    }
+
+    try {
+      // "Today" = Italy's calendar day. event_date is a timezone-less timestamp
+      // representing local Italian wall-clock time, so compare against the
+      // current date in Europe/Rome.
+      // ── Pub events starting later today ──
+      const pubRes = await pool.query(`
+        SELECT e.id, e.title, e.event_date, e.image_url, e.pub_id,
+               p.name AS pub_name
+        FROM pub_events e
+        INNER JOIN pubs p ON p.id = e.pub_id
+        WHERE e.is_published = true
+          AND e.reminder_sent = false
+          AND e.event_date >= NOW()
+          AND e.event_date::date = (NOW() AT TIME ZONE 'Europe/Rome')::date
+        LIMIT 50
+      `);
+      let sent = 0;
+      for (const row of pubRes.rows) {
+        const ok = await processEvent({
+          table: "pub_events",
+          interestTable: "pub_event_interests",
+          row,
+          venueName: row.pub_name,
+          urlPath: `/eventi/pub/${row.id}`,
+          tagPrefix: "event-reminder-pub",
+          notifKey: "pubId",
+          venueId: row.pub_id,
+        });
+        if (ok) sent++;
+      }
+
+      // ── Brewery events starting later today ──
+      const brewRes = await pool.query(`
+        SELECT e.id, e.title, e.event_date, e.image_url, e.brewery_id,
+               br.name AS brewery_name
+        FROM brewery_events e
+        INNER JOIN breweries br ON br.id = e.brewery_id
+        WHERE e.is_published = true
+          AND e.reminder_sent = false
+          AND e.event_date >= NOW()
+          AND e.event_date::date = (NOW() AT TIME ZONE 'Europe/Rome')::date
+        LIMIT 50
+      `);
+      for (const row of brewRes.rows) {
+        const ok = await processEvent({
+          table: "brewery_events",
+          interestTable: "brewery_event_interests",
+          row,
+          venueName: row.brewery_name,
+          urlPath: `/eventi/brewery/${row.id}`,
+          tagPrefix: "event-reminder-brewery",
+          notifKey: "breweryId",
+          venueId: row.brewery_id,
+        });
+        if (ok) sent++;
+      }
+
+      if (sent > 0) {
+        console.log(`[event-notifs] Sent day-of reminders for ${sent} events`);
+      }
+    } catch (err) {
+      console.error("[event-notifs] day-reminder error:", err);
+    }
+  }
+  // Run after startup, then every 30 minutes (lightweight: guarded by reminder_sent).
+  setTimeout(sendEventDayReminders, 45_000);
+  setInterval(sendEventDayReminders, 30 * 60 * 1000);
+
   // Startup: ensure festival_food_items has allergens column
   (async () => {
     try {
       await pool.query(`ALTER TABLE festival_food_items ADD COLUMN IF NOT EXISTS allergens jsonb`);
     } catch (e) {
       console.error("[festival_food_items] allergens migration error:", e);
+    }
+  })();
+
+  // Startup: ensure pub_events / brewery_events have reminder_sent column
+  // (day-of reminder for "interested" users — see sendEventDayReminders)
+  (async () => {
+    try {
+      await pool.query(`ALTER TABLE pub_events ADD COLUMN IF NOT EXISTS reminder_sent boolean DEFAULT false`);
+      await pool.query(`ALTER TABLE brewery_events ADD COLUMN IF NOT EXISTS reminder_sent boolean DEFAULT false`);
+    } catch (e: any) {
+      console.error("[events] reminder_sent migration error:", e.message);
     }
   })();
 
@@ -7181,6 +7341,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GET distinct cities that currently have published (upcoming/ongoing) events.
+  // Used for the city autocomplete on the /eventi page.
+  app.get("/api/events/cities", async (req, res) => {
+    try {
+      const q = ((req.query.q as string) || "").trim().toLowerCase();
+      const qLike = q ? `%${q}%` : null;
+      const rows = await db.execute(sql`
+        SELECT city FROM (
+          SELECT DISTINCT TRIM(p.city) AS city
+          FROM pub_events e
+          INNER JOIN pubs p ON p.id = e.pub_id
+          WHERE e.is_published = true
+            AND COALESCE(e.end_date, e.event_date + INTERVAL '12 hours') >= NOW()
+            AND p.city IS NOT NULL AND TRIM(p.city) <> ''
+          UNION
+          SELECT DISTINCT TRIM(br.location) AS city
+          FROM brewery_events e
+          INNER JOIN breweries br ON br.id = e.brewery_id
+          WHERE e.is_published = true
+            AND COALESCE(e.end_date, e.event_date + INTERVAL '12 hours') >= NOW()
+            AND br.location IS NOT NULL AND TRIM(br.location) <> ''
+        ) c
+        ${qLike ? sql`WHERE LOWER(c.city) LIKE ${qLike}` : sql``}
+        ORDER BY city ASC
+        LIMIT 50
+      `);
+      const all = ((rows as any).rows ?? rows) as any[];
+      res.json({ cities: all.map((r) => r.city).filter(Boolean) });
+    } catch (err: any) {
+      console.error("Error fetching event cities:", err.message);
+      res.status(500).json({ message: "Errore caricamento città" });
+    }
+  });
+
   // GET single event (pub or brewery), unified, public
   app.get("/api/events/:type/:id", async (req, res) => {
     try {
@@ -10020,6 +10214,19 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
   // Activity feed from people I follow
   app.get("/api/user/feed", isAuthenticated, async (req, res) => {
     const userId = (req.user as any).id;
+    const limit = Math.min(Math.max(parseInt((req.query.limit as string) || "20", 10), 1), 50);
+    // Keyset/cursor pagination: cursor = "<isoTs>_<id>" over (tasted_at, id) DESC.
+    // Avoids duplicates/skips when new check-ins land between page fetches.
+    const cursor = parseFeedCursor(req.query.cursor as string | undefined);
+
+    const params: any[] = [userId];
+    let cursorClause = "";
+    if (cursor) {
+      params.push(cursor.ts, cursor.id);
+      cursorClause = `AND (ubt.tasted_at::timestamptz, ubt.id) < ($${params.length - 1}::timestamptz, $${params.length}::int)`;
+    }
+    params.push(limit + 1);
+
     const { rows } = await pool.query(`
       SELECT ubt.id, ubt.rating, ubt.personal_notes as notes, ubt.photo_url, ubt.format, ubt.tasted_at,
              u.id as user_id,
@@ -10046,10 +10253,15 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
       WHERE ubt.user_id IN (
         SELECT following_id FROM user_follows WHERE follower_id = $1
       )
-      ORDER BY ubt.tasted_at DESC
-      LIMIT 50
-    `, [userId]);
-    res.json(rows);
+      ${cursorClause}
+      ORDER BY ubt.tasted_at DESC, ubt.id DESC
+      LIMIT $${params.length}
+    `, params);
+    const hasMore = rows.length > limit;
+    const items = hasMore ? rows.slice(0, limit) : rows;
+    const last = items[items.length - 1];
+    const nextCursor = hasMore && last ? makeFeedCursor(last.tasted_at, last.id) : null;
+    res.json({ items, hasMore, nextCursor });
   });
 
   // ─────────────────────────────────────────────────────────────────────────────

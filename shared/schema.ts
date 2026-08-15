@@ -856,6 +856,7 @@ export const pubEvents = pgTable("pub_events", {
   imageUrl: text("image_url"),
   isPublished: boolean("is_published").default(true),
   startNotificationSent: boolean("start_notification_sent").default(false),
+  reminderSent: boolean("reminder_sent").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -880,6 +881,7 @@ export const breweryEvents = pgTable("brewery_events", {
   imageUrl: text("image_url"),
   isPublished: boolean("is_published").default(true),
   startNotificationSent: boolean("start_notification_sent").default(false),
+  reminderSent: boolean("reminder_sent").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -1240,7 +1242,16 @@ export const microblogComments = pgTable("microblog_comments", {
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at"),
 });
+// Like sui commenti dei post microblog
+export const microblogCommentLikes = pgTable("microblog_comment_likes", {
+  id: serial("id").primaryKey(),
+  commentId: integer("comment_id").notNull().references(() => microblogComments.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (t) => [unique().on(t.commentId, t.userId)]);
+export type MicroblogCommentLike = typeof microblogCommentLikes.$inferSelect;
 
 // ─── ADMIN: Broadcast push notifications + News ──────────────────────────────
 export const adminBroadcasts = pgTable("admin_broadcasts", {

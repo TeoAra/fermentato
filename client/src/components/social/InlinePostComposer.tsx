@@ -104,6 +104,62 @@ function MentionPicker({
   );
 }
 
+/* ── hashtag picker (query controlled by parent) ── */
+function HashtagPicker({
+  query,
+  onSelect,
+}: {
+  query: string;
+  onSelect: (tag: string) => void;
+}) {
+  const [results, setResults] = useState<{ tag: string; count: number }[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(async () => {
+      setLoading(true);
+      try {
+        const r = await fetch(`/api/microblog/hashtags/search?q=${encodeURIComponent(query.trim())}`);
+        if (r.ok) {
+          const j = await r.json();
+          setResults(Array.isArray(j) ? j : []);
+        } else setResults([]);
+      } finally { setLoading(false); }
+    }, 200);
+    return () => clearTimeout(t);
+  }, [query]);
+
+  if (!loading && results.length === 0) return null;
+
+  return (
+    <div className="bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden">
+      {loading && results.length === 0 ? (
+        <div className="flex items-center gap-2 px-4 py-3 text-sm text-stone-400">
+          <Loader2 className="w-4 h-4 animate-spin" /> Cercando…
+        </div>
+      ) : (
+        <ul className="max-h-44 overflow-y-auto divide-y divide-stone-50 dark:divide-[#23262E]">
+          {results.map((r) => (
+            <li key={r.tag}>
+              <button
+                onMouseDown={e => { e.preventDefault(); onSelect(r.tag); }}
+                className="w-full flex items-center gap-2.5 px-3 py-2 hover:bg-stone-50 dark:hover:bg-[#23262E] text-left transition-colors">
+                <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/20 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400 text-base font-bold leading-none">#</div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold truncate">#{r.tag}</p>
+                  <p className="text-xs text-stone-400">
+                    {r.count} {r.count === 1 ? "post" : "post"}
+                  </p>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 /* ── tag chips (hashtags + mentions counted) ── */
 function TagChips({ text }: { text: string }) {
   const hashCounts: Record<string, number> = {};
@@ -160,6 +216,11 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
   const [mentionQuery, setMentionQuery]   = useState("");
   const [mentionStart, setMentionStart]   = useState(0); // index of "@" in text
 
+  /* hashtag state */
+  const [hashtagOpen, setHashtagOpen]     = useState(false);
+  const [hashtagQuery, setHashtagQuery]   = useState("");
+  const [hashtagStart, setHashtagStart]   = useState(0); // index of "#" in text
+
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef     = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
@@ -179,24 +240,34 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
 
   const reset = () => {
     setText(""); setImageUrl(null);
-    setMentionOpen(false); setMentionQuery(""); setExpanded(false);
+    setMentionOpen(false); setMentionQuery("");
+    setHashtagOpen(false); setHashtagQuery("");
+    setExpanded(false);
   };
 
-  /* detect @mention context on every keystroke */
+  /* detect @mention or #hashtag context on every keystroke */
   const handleTextChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setText(val);
 
     const cursor = e.target.selectionStart ?? val.length;
     const before = val.slice(0, cursor);
-    const match  = before.match(/@([\w\u00C0-\u024F]*)$/);
+    const mentionMatch = before.match(/@([\w\u00C0-\u024F]*)$/);
+    const hashtagMatch = before.match(/#([\w\u00C0-\u024F]*)$/);
 
-    if (match) {
-      setMentionStart(cursor - match[0].length);
-      setMentionQuery(match[1]);
+    if (mentionMatch) {
+      setMentionStart(cursor - mentionMatch[0].length);
+      setMentionQuery(mentionMatch[1]);
       setMentionOpen(true);
+      setHashtagOpen(false);
+    } else if (hashtagMatch) {
+      setHashtagStart(cursor - hashtagMatch[0].length);
+      setHashtagQuery(hashtagMatch[1]);
+      setHashtagOpen(true);
+      setMentionOpen(false);
     } else {
       setMentionOpen(false);
+      setHashtagOpen(false);
     }
   }, []);
 
@@ -221,10 +292,28 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
     }, 0);
   }, [text, mentionStart, mentionQuery]);
 
-  /* close mention picker on Escape */
+  /* pick a hashtag from the dropdown */
+  const completeHashtag = useCallback((tag: string) => {
+    const before  = text.slice(0, hashtagStart);
+    const after   = text.slice(hashtagStart + 1 + hashtagQuery.length);
+    const newText = before + "#" + tag + " " + after.replace(/^\s*/, "");
+    setText(newText);
+    setHashtagOpen(false);
+    setHashtagQuery("");
+    setTimeout(() => {
+      if (textareaRef.current) {
+        const pos = (before + "#" + tag + " ").length;
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(pos, pos);
+      }
+    }, 0);
+  }, [text, hashtagStart, hashtagQuery]);
+
+  /* close pickers on Escape */
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Escape" && mentionOpen) {
+    if (e.key === "Escape" && (mentionOpen || hashtagOpen)) {
       setMentionOpen(false);
+      setHashtagOpen(false);
       e.stopPropagation();
     }
   };
@@ -302,6 +391,14 @@ export function InlinePostComposer({ user, extraInvalidate }: InlinePostComposer
               query={mentionQuery}
               onSelect={completeMention}
               onClose={() => setMentionOpen(false)}
+            />
+          )}
+
+          {/* inline hashtag picker */}
+          {hashtagOpen && (
+            <HashtagPicker
+              query={hashtagQuery}
+              onSelect={completeHashtag}
             />
           )}
 

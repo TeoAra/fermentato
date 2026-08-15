@@ -761,6 +761,7 @@ export default function PubDetail() {
                 bottles={Array.isArray(bottles) ? bottles : []}
                 currentUserCanCheckin={isAuthenticated}
                 onCheckin={openBottleCheckin}
+                onNavigateTab={setActiveTab}
               />
             </div>
 

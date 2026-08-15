@@ -1,6 +1,6 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { richTextToPlain, isRichContentEmpty } from "@/components/rich-text-editor";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Helmet } from "react-helmet-async";
 import { format, isToday, isTomorrow, isThisWeek, addDays, startOfDay, endOfDay } from "date-fns";
@@ -63,7 +63,15 @@ export default function EventiPage() {
   const [range, setRange] = useState<Range>("all");
   const [showFilters, setShowFilters] = useState(false);
 
+  const PAGE_SIZE = 30;
+  const [limit, setLimit] = useState(PAGE_SIZE);
+
   const { from, to } = useMemo(() => rangeToDates(range), [range]);
+
+  // Reset pagination whenever filters change so we don't over-fetch on a new query.
+  useEffect(() => {
+    setLimit(PAGE_SIZE);
+  }, [q, city, category, source, range]);
 
   const params = new URLSearchParams();
   if (q.trim()) params.set("q", q.trim());
@@ -72,18 +80,35 @@ export default function EventiPage() {
   if (source !== "all") params.set("source", source);
   if (from) params.set("from", from.toISOString());
   if (to) params.set("to", to.toISOString());
-  params.set("limit", "60");
+  params.set("limit", String(limit));
+  params.set("offset", "0");
 
   const queryString = params.toString();
 
-  const { data, isLoading } = useQuery<{ events: PublicEvent[]; totalCount: number }>({
+  const { data, isLoading, isFetching } = useQuery<{ events: PublicEvent[]; totalCount: number }>({
     queryKey: ["/api/events/public", queryString],
-    queryFn: () => fetch(`/api/events/public?${queryString}`).then(r => r.json()),
+    queryFn: () => fetch(`/api/events/public?${queryString}`).then(r => {
+      if (!r.ok) throw new Error("Errore caricamento eventi");
+      return r.json();
+    }),
     staleTime: 60_000,
+    placeholderData: keepPreviousData,
   });
 
   const events = data?.events ?? [];
   const total = data?.totalCount ?? 0;
+  const hasMore = events.length < total;
+
+  // City autocomplete suggestions (distinct cities with upcoming events).
+  const { data: citiesData } = useQuery<{ cities: string[] }>({
+    queryKey: ["/api/events/cities"],
+    queryFn: () => fetch(`/api/events/cities`).then(r => {
+      if (!r.ok) throw new Error("Errore caricamento città");
+      return r.json();
+    }),
+    staleTime: 5 * 60_000,
+  });
+  const cities = citiesData?.cities ?? [];
 
   // Group by day for nice section headings
   const grouped = useMemo(() => {
@@ -194,8 +219,13 @@ export default function EventiPage() {
                     onChange={e => setCity(e.target.value)}
                     placeholder="Es. Milano"
                     className="pl-8 h-9"
+                    list="event-cities"
+                    autoComplete="off"
                     data-testid="input-event-city"
                   />
+                  <datalist id="event-cities">
+                    {cities.map(c => <option key={c} value={c} />)}
+                  </datalist>
                 </div>
               </div>
               <div>
@@ -276,6 +306,21 @@ export default function EventiPage() {
                 </section>
               );
             })}
+
+            {hasMore && (
+              <div className="flex justify-center pt-2">
+                <Button
+                  variant="outline"
+                  className="rounded-xl gap-2"
+                  onClick={() => setLimit(l => l + PAGE_SIZE)}
+                  disabled={isFetching}
+                  data-testid="btn-load-more-events"
+                >
+                  {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                  Carica altri eventi
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
