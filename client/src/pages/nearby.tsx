@@ -210,10 +210,14 @@ function DeniedScreen({
 function RequestingScreen() {
   return (
     <div className="flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4 animate-pulse">
-        <LocateFixed className="w-8 h-8 text-primary" />
+      <div className="relative w-20 h-20 mb-5 flex items-center justify-center">
+        <span aria-hidden="true" className="gps-radar absolute inset-2 rounded-full" />
+        <div className="relative w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center">
+          <LocateFixed className="w-8 h-8 text-primary" />
+        </div>
       </div>
-      <p className="text-sm text-muted-foreground">Individuazione posizione in corso…</p>
+      <p className="text-sm font-semibold text-foreground">Individuazione posizione in corso…</p>
+      <p className="text-xs text-muted-foreground mt-1">Il segnale GPS si sta agganciando</p>
     </div>
   );
 }
@@ -411,8 +415,16 @@ export default function NearbyPage() {
           {isLoading && geo.status === "granted" && (
             <div className="space-y-2.5">
               {[...Array(6)].map((_, i) => (
-                <div key={i} className="h-20 rounded-2xl bg-stone-100 dark:bg-stone-800 animate-pulse"
-                  style={{ animationDelay: `${i * 60}ms` }} />
+                <div key={i}
+                  className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.06] result-reveal"
+                  style={{ animationDelay: `${i * 55}ms` }}>
+                  <div className="w-12 h-12 rounded-xl skeleton-shimmer flex-shrink-0" />
+                  <div className="flex-1 space-y-2 min-w-0">
+                    <div className="h-3.5 w-1/2 rounded skeleton-shimmer" />
+                    <div className="h-2.5 w-1/3 rounded skeleton-shimmer" />
+                  </div>
+                  <div className="h-6 w-14 rounded-full skeleton-shimmer flex-shrink-0" />
+                </div>
               ))}
             </div>
           )}
@@ -448,8 +460,10 @@ export default function NearbyPage() {
                     </h2>
                   )}
                   <div className="space-y-2">
-                    {pubs.map((pub: any) => (
-                      <PubCard key={pub.id} pub={pub} onlyOpen={onlyOpen} />
+                    {pubs.map((pub: any, i: number) => (
+                      <div key={pub.id} className="result-reveal" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+                        <PubCard pub={pub} onlyOpen={onlyOpen} />
+                      </div>
                     ))}
                   </div>
                 </section>
@@ -466,8 +480,10 @@ export default function NearbyPage() {
                     </h2>
                   )}
                   <div className="space-y-2">
-                    {breweries.map((b: any) => (
-                      <BreweryCard key={b.id} brewery={b} onlyOpen={onlyOpen} />
+                    {breweries.map((b: any, i: number) => (
+                      <div key={b.id} className="result-reveal" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
+                        <BreweryCard brewery={b} onlyOpen={onlyOpen} />
+                      </div>
                     ))}
                   </div>
                 </section>
@@ -475,7 +491,8 @@ export default function NearbyPage() {
 
               {/* Position info footer */}
               <div className="pt-4 border-t border-stone-100 dark:border-border flex items-center justify-between text-xs text-muted-foreground">
-                <span className="flex items-center gap-1">
+                <span className="flex items-center gap-1.5 gps-fix-pop">
+                  <span className="gps-dot-pulse inline-block w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
                   <LocateFixed className="w-3.5 h-3.5 text-primary" />
                   Posizione acquisita
                 </span>

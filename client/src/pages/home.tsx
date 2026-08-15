@@ -250,7 +250,7 @@ export default function Home() {
 
   const queryClient = useQueryClient();
   const handleRefresh = useCallback(async () => { await queryClient.invalidateQueries(); }, [queryClient]);
-  const { isPulling, isRefreshing } = usePullToRefresh(handleRefresh);
+  const { isPulling, isRefreshing, pullProgress } = usePullToRefresh(handleRefresh);
 
   const { data: pubs, isLoading: pubsLoading } = useQuery({ queryKey: ["/api/pubs"], staleTime: 5 * 60 * 1000 });
   const { data: breweriesRaw } = useQuery({
@@ -318,14 +318,26 @@ export default function Home() {
 
       {/* Pull-to-refresh indicator */}
       {(isPulling || isRefreshing) && (
-        <div className="fixed top-[var(--mobile-top-offset)] lg:top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-background/95 border-b border-border backdrop-blur-sm">
+        <div className={`fixed top-[var(--mobile-top-offset)] lg:top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-background/95 border-b border-border backdrop-blur-sm ${!isRefreshing && pullProgress >= 1 ? "ptr-ready" : ""}`}>
           {isRefreshing ? (
-            <div className="flex items-center gap-2 text-primary text-xs font-medium">
-              <span className="inline-block h-3.5 w-3.5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            <div className="flex items-center gap-2.5 text-primary text-xs font-bold">
+              <span className="ptr-spinner inline-block h-5 w-5 rounded-full border-2 border-primary/25 border-t-primary" />
               Aggiornamento…
             </div>
           ) : (
-            <div className="text-primary/70 text-xs font-medium">↓ Rilascia per aggiornare</div>
+            <div className="flex items-center gap-2.5 text-xs font-bold" style={{ opacity: Math.min(pullProgress * 1.3, 1) }}>
+              <span className="relative inline-flex h-6 w-6 items-center justify-center flex-shrink-0">
+                <svg className="absolute inset-0 -rotate-90" viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="12" r="10" fill="none" stroke="var(--border)" strokeWidth="2.5" />
+                  <circle cx="12" cy="12" r="10" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round"
+                    strokeDasharray={62.8} strokeDashoffset={62.8 * (1 - Math.min(pullProgress, 1))} />
+                </svg>
+                <ChevronDown className="ptr-arrow w-3.5 h-3.5 text-primary" />
+              </span>
+              <span className={pullProgress >= 1 ? "text-primary" : "text-muted-foreground"}>
+                {pullProgress >= 1 ? "Rilascia per aggiornare" : "Trascina per aggiornare"}
+              </span>
+            </div>
           )}
         </div>
       )}
@@ -404,13 +416,25 @@ export default function Home() {
           {/* Floating location chip — top-left, doesn't obscure the map center */}
           <div className="absolute top-3 left-3 z-10 pointer-events-none">
             {locationStatus === 'granted' && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-white/95 dark:bg-card/95 backdrop-blur-md text-primary rounded-full px-2.5 py-1.5 shadow-card-sm border border-primary/15">
+              <span className="gps-fix-pop inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-white/95 dark:bg-card/95 backdrop-blur-md text-primary rounded-full px-2.5 py-1.5 shadow-card-sm border border-primary/15">
+                <span
+                  className={`gps-dot-pulse inline-block w-2 h-2 rounded-full flex-shrink-0 ${
+                    locationAccuracy != null && locationAccuracy <= 50
+                      ? "bg-green-500"
+                      : locationAccuracy != null && locationAccuracy <= 200
+                        ? "bg-amber-500"
+                        : "bg-stone-400 dark:bg-stone-500"
+                  }`}
+                />
                 <MapPin className="w-3 h-3" />
                 {locationAccuracy != null && locationAccuracy < 1000 ? `Vicino a te · ±${Math.round(locationAccuracy)}m` : 'Vicino a te'}
               </span>
             )}
             {locationStatus === 'requesting' && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-amber-500 text-white rounded-full px-2.5 py-1.5 animate-pulse shadow-card-sm">
+              <span className="inline-flex items-center gap-2 text-[11px] font-extrabold bg-white/95 dark:bg-card/95 backdrop-blur-md text-amber-600 dark:text-amber-400 rounded-full px-2.5 py-1.5 shadow-card-sm border border-amber-500/25">
+                <span className="gps-radar relative inline-flex w-3 h-3 items-center justify-center flex-shrink-0">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                </span>
                 <Navigation className="w-3 h-3" />
                 Ricerca GPS…
               </span>

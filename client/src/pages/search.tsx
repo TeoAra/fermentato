@@ -473,7 +473,7 @@ export default function SearchPage() {
                     activeTab === "pubs" ? "Cerca pub, città…" :
                     "Cerca birre, birrifici, pub…"
                   }
-                  className="pl-12 pr-10 h-11 rounded-2xl border-stone-200 dark:border-border bg-white dark:bg-[#1A1D24] focus-visible:ring-primary/20 text-base"
+                  className="search-input-glow pl-12 pr-10 h-11 rounded-2xl border-stone-200 dark:border-border bg-white dark:bg-[#1A1D24] focus-visible:ring-primary/20 text-base"
                 />
                 {inputValue && (
                   <button type="button" onClick={() => { setInputValue(""); setQuery(""); }}
@@ -583,14 +583,23 @@ export default function SearchPage() {
           {isLoading && (
             <div className="space-y-2.5 mt-2">
               {[...Array(5)].map((_, i) => (
-                <div key={i} className="h-16 rounded-xl bg-gray-100 dark:bg-neutral-800 animate-pulse" />
+                <div key={i}
+                  className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] border border-white/40 dark:border-white/[0.06] result-reveal"
+                  style={{ animationDelay: `${i * 50}ms` }}>
+                  <div className="w-11 h-11 rounded-lg skeleton-shimmer flex-shrink-0" />
+                  <div className="flex-1 space-y-2 min-w-0">
+                    <div className="h-3.5 w-2/3 rounded skeleton-shimmer" />
+                    <div className="h-2.5 w-2/5 rounded skeleton-shimmer" />
+                  </div>
+                  <div className="h-4 w-14 rounded-full skeleton-shimmer flex-shrink-0" />
+                </div>
               ))}
             </div>
           )}
 
           {/* Results */}
           {!isLoading && results && query.length > 1 && (
-            <div className="space-y-4">
+            <div className="space-y-4 tab-pane-enter">
               {/* Summary */}
               <div className="flex items-center justify-between">
                 <p className="text-xs text-muted-foreground">
@@ -624,8 +633,8 @@ export default function SearchPage() {
                     </h2>
                   )}
                   <div className="space-y-2">
-                    {filteredBeers.map((beer: any) => (
-                      <Link key={beer.id} href={`/beer/${beer.id}`}>
+                    {filteredBeers.map((beer: any, i: number) => (
+                      <Link key={beer.id} href={`/beer/${beer.id}`} className="block result-reveal" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                         <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] cursor-pointer group">
                           <ImageWithFallback
                             src={beer.imageUrl}
@@ -675,8 +684,8 @@ export default function SearchPage() {
                     </h2>
                   )}
                   <div className="space-y-2">
-                    {filteredBreweries.map((brewery: any) => (
-                      <Link key={brewery.id} href={`/brewery/${brewery.id}`}>
+                    {filteredBreweries.map((brewery: any, i: number) => (
+                      <Link key={brewery.id} href={`/brewery/${brewery.id}`} className="block result-reveal" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                         <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] cursor-pointer group">
                           <ImageWithFallback
                             src={brewery.logoUrl}
@@ -711,8 +720,8 @@ export default function SearchPage() {
                     </h2>
                   )}
                   <div className="space-y-2">
-                    {filteredPubs.map((pub: any) => (
-                      <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`}>
+                    {filteredPubs.map((pub: any, i: number) => (
+                      <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`} className="block result-reveal" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
                         <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] cursor-pointer group">
                           <ImageWithFallback
                             src={pub.logoUrl}

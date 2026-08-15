@@ -502,23 +502,23 @@ function GuestPeopleSidebar() {
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Cerca per nome o nickname…"
-          className="pl-9 rounded-xl h-9 text-xs bg-stone-50 dark:bg-[#12151A] border-stone-200 dark:border-white/[0.06]"
+          className="search-input-glow pl-9 rounded-xl h-9 text-xs bg-stone-50 dark:bg-[#12151A] border-stone-200 dark:border-white/[0.06]"
         />
       </div>
       {debouncedQuery.length >= 2 ? (
         isLoading ? (
           <div className="py-2 space-y-2">
-            {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 rounded-xl" />)}
+            {[...Array(3)].map((_, i) => <div key={i} className="h-10 rounded-xl skeleton-shimmer" />)}
           </div>
         ) : results.length === 0 ? (
-          <p className="py-3 text-xs text-stone-400 text-center">Nessun utente trovato</p>
+          <p className="py-3 text-xs text-stone-400 text-center result-reveal">Nessun utente trovato</p>
         ) : (
           <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
-            {results.slice(0, 5).map((u: any) => {
+            {results.slice(0, 5).map((u: any, i: number) => {
               const handle = u.username ?? u.nickname;
               const name = u.display_name ?? ([u.first_name, u.last_name].filter(Boolean).join(" ") || handle);
               return (
-                <div key={u.id} className="flex items-center gap-2.5 py-2.5">
+                <div key={u.id} className="flex items-center gap-2.5 py-2.5 result-reveal" style={{ animationDelay: `${i * 45}ms` }}>
                   <Link href={`/user/${handle}`} className="flex-shrink-0">
                     <UserAvatar user={{ ...u, display_name: name }} size={8} />
                   </Link>
@@ -600,6 +600,7 @@ export default function CommunityPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [filter, setFilter] = useState<FeedFilter>("all");
+  const [activeTab, setActiveTab] = useState<"feed" | "chi-segui">("feed");
   const [userSearch, setUserSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 
@@ -727,23 +728,28 @@ export default function CommunityPage() {
     <div className="min-h-screen bg-[hsl(36,10%,96%)] dark:bg-[#0B0D10] pb-28">
       <Helmet><title>Community | Fermenta.to</title></Helmet>
 
-      <Tabs defaultValue="feed" className="w-full">
+      <Tabs value={activeTab} onValueChange={v => setActiveTab(v as "feed" | "chi-segui")} className="w-full">
         {/* Sticky header with tabs */}
         <div className="bg-white/90 dark:bg-[#0B0D10]/90 backdrop-blur-xl border-b border-stone-100/80 dark:border-white/[0.05] sticky top-0 z-10">
-          <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4 pb-0">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4 pb-3">
             <h1 className="text-xl font-black text-stone-900 dark:text-stone-50 font-poppins mb-3">
               Community
             </h1>
-            <TabsList className="w-full bg-transparent p-0 h-auto border-b border-stone-100 dark:border-white/[0.05] rounded-none justify-start gap-0">
+            <TabsList className="seg-tabs w-full max-w-md h-auto rounded-full bg-transparent p-[3px] justify-start gap-0">
+              <span
+                aria-hidden="true"
+                className="seg-tab-glider"
+                style={{ transform: activeTab === "feed" ? "translateX(0%)" : "translateX(100%)" }}
+              />
               <TabsTrigger
                 value="feed"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent bg-transparent text-stone-500 px-4 py-2.5 text-sm font-bold"
+                className="relative z-10 flex-1 rounded-full bg-transparent px-4 py-2 text-sm font-bold text-stone-500 dark:text-stone-400 transition-colors duration-300 data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
               >
                 Feed
               </TabsTrigger>
               <TabsTrigger
                 value="chi-segui"
-                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent bg-transparent text-stone-500 px-4 py-2.5 text-sm font-bold"
+                className="relative z-10 flex-1 rounded-full bg-transparent px-4 py-2 text-sm font-bold text-stone-500 dark:text-stone-400 transition-colors duration-300 data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none"
               >
                 Chi segui{following.length > 0 ? ` (${following.length})` : ""}
               </TabsTrigger>
@@ -752,7 +758,7 @@ export default function CommunityPage() {
         </div>
 
         {/* ── FEED TAB ── */}
-        <TabsContent value="feed" className="mt-0">
+        <TabsContent value="feed" className="mt-0 tab-pane-enter">
           {/* Filter chips + stats bar */}
           <div className="bg-white/70 dark:bg-[#0B0D10]/70 backdrop-blur-sm border-b border-stone-100/60 dark:border-white/[0.03]">
             <div className="max-w-7xl mx-auto px-4 lg:px-8 py-2.5 flex items-center gap-2 flex-wrap">
@@ -852,21 +858,23 @@ export default function CommunityPage() {
                       value={userSearch}
                       onChange={e => setUserSearch(e.target.value)}
                       placeholder="Cerca per nome o nickname…"
-                      className="pl-9 rounded-xl h-9 text-xs bg-stone-50 dark:bg-[#12151A] border-stone-200 dark:border-white/[0.06]"
+                      className="search-input-glow pl-9 rounded-xl h-9 text-xs bg-stone-50 dark:bg-[#12151A] border-stone-200 dark:border-white/[0.06]"
                     />
                   </div>
                   {debouncedSearch.length >= 2 ? (
                     <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
                       {searchLoading ? (
                         <div className="py-2 space-y-2">
-                          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 rounded-xl" />)}
+                          {[...Array(3)].map((_, i) => <div key={i} className="h-10 rounded-xl skeleton-shimmer" />)}
                         </div>
                       ) : searchResults.length === 0 ? (
-                        <p className="py-3 text-xs text-stone-400 text-center">Nessun utente trovato</p>
+                        <p className="py-3 text-xs text-stone-400 text-center result-reveal">Nessun utente trovato</p>
                       ) : (
-                        searchResults.slice(0, 5).map((u: any) => (
-                          <UserRow key={u.id} user={u} followingIds={followingIds}
-                            onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })} />
+                        searchResults.slice(0, 5).map((u: any, i: number) => (
+                          <div key={u.id} className="result-reveal" style={{ animationDelay: `${i * 45}ms` }}>
+                            <UserRow user={u} followingIds={followingIds}
+                              onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })} />
+                          </div>
                         ))
                       )}
                     </div>
@@ -925,7 +933,7 @@ export default function CommunityPage() {
         </TabsContent>
 
         {/* ── CHI SEGUI TAB ── */}
-        <TabsContent value="chi-segui" className="mt-0">
+        <TabsContent value="chi-segui" className="mt-0 tab-pane-enter">
           <div className="max-w-2xl mx-auto px-4 lg:px-8 py-4 space-y-5">
             {/* Search */}
             <div className="relative">
@@ -934,7 +942,7 @@ export default function CommunityPage() {
                 value={userSearch}
                 onChange={e => setUserSearch(e.target.value)}
                 placeholder="Cerca per nome o nickname…"
-                className="pl-9 rounded-xl h-11 bg-white dark:bg-[#1A1D24] border-[#E8DED1] dark:border-white/[0.06]"
+                className="search-input-glow pl-9 rounded-xl h-11 bg-white dark:bg-[#1A1D24] border-[#E8DED1] dark:border-white/[0.06]"
               />
             </div>
 
@@ -944,16 +952,25 @@ export default function CommunityPage() {
                 {searchLoading ? (
                   <div className="py-4 space-y-3">
                     {[...Array(3)].map((_, i) => (
-                      <Skeleton key={i} className="h-12 rounded-xl" />
+                      <div key={i} className="flex items-center gap-3 py-1">
+                        <div className="w-10 h-10 rounded-full skeleton-shimmer flex-shrink-0" />
+                        <div className="flex-1 space-y-1.5">
+                          <div className="h-3 w-1/2 rounded skeleton-shimmer" />
+                          <div className="h-2.5 w-1/3 rounded skeleton-shimmer" />
+                        </div>
+                        <div className="h-7 w-16 rounded-full skeleton-shimmer" />
+                      </div>
                     ))}
                   </div>
                 ) : searchResults.length === 0 ? (
-                  <p className="py-5 text-sm text-stone-400 text-center">Nessun utente trovato</p>
+                  <p className="py-5 text-sm text-stone-400 text-center result-reveal">Nessun utente trovato</p>
                 ) : (
-                  searchResults.map((u: any) => (
-                    <UserRow key={u.id} user={u} followingIds={followingIds}
-                      onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })}
-                    />
+                  searchResults.map((u: any, i: number) => (
+                    <div key={u.id} className="result-reveal" style={{ animationDelay: `${Math.min(i, 8) * 45}ms` }}>
+                      <UserRow user={u} followingIds={followingIds}
+                        onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })}
+                      />
+                    </div>
                   ))
                 )}
               </div>
