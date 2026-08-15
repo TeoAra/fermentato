@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { richTextToPlain, isRichContentEmpty } from "@/components/rich-text-editor";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -6,7 +6,8 @@ import { Helmet } from "react-helmet-async";
 import { format, isToday, isTomorrow, isThisWeek, addDays, startOfDay, endOfDay } from "date-fns";
 import { it } from "date-fns/locale";
 import {
-  CalendarDays, Search, MapPin, Filter, Loader2, X, Beer, Building2, Users, ArrowRight, Clock,
+  CalendarDays, Search, MapPin, Filter, Loader2, X, Beer, Building2, ArrowRight, Clock,
+  List, Map as MapIcon, Navigation, Navigation2,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EVENT_CATEGORIES, EventCategoryBadge } from "@/components/events-manager";
+import { EventMap, type EventMapPin } from "@/components/event-map";
 
 type PublicEvent = {
   id: number;
@@ -29,9 +31,12 @@ type PublicEvent = {
   venueSlug: string | null;
   venueCity: string | null;
   venueLogoUrl: string | null;
+  venueLatitude: string | null;
+  venueLongitude: string | null;
 };
 
 type Range = "all" | "today" | "tomorrow" | "week" | "month" | "past";
+type ViewMode = "list" | "map";
 
 function rangeToDates(range: Range): { from?: Date; to?: Date } {
   const now = new Date();
@@ -55,6 +60,24 @@ function formatEventTime(date: Date) {
   return format(date, "d MMM 'alle' HH:mm", { locale: it });
 }
 
+/** Haversine distance in km */
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function formatDistance(km: number): string {
+  if (km < 1) return `${Math.round(km * 1000)} m`;
+  return `${km.toFixed(1)} km`;
+}
+
 export default function EventiPage() {
   const [q, setQ] = useState("");
   const [city, setCity] = useState("");
@@ -62,6 +85,10 @@ export default function EventiPage() {
   const [source, setSource] = useState<"all" | "pub" | "brewery">("all");
   const [range, setRange] = useState<Range>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locating, setLocating] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   const PAGE_SIZE = 30;
   const [limit, setLimit] = useState(PAGE_SIZE);
@@ -73,6 +100,10 @@ export default function EventiPage() {
     setLimit(PAGE_SIZE);
   }, [q, city, category, source, range]);
 
+  // In map mode or nearby mode, fetch a large set so the map/distance sort is complete.
+  // Server cap is 500; these modes need the full applicable result set.
+  const effectiveLimit = viewMode === "map" || userLocation ? 500 : limit;
+
   const params = new URLSearchParams();
   if (q.trim()) params.set("q", q.trim());
   if (city.trim()) params.set("city", city.trim());
@@ -80,7 +111,7 @@ export default function EventiPage() {
   if (source !== "all") params.set("source", source);
   if (from) params.set("from", from.toISOString());
   if (to) params.set("to", to.toISOString());
-  params.set("limit", String(limit));
+  params.set("limit", String(effectiveLimit));
   params.set("offset", "0");
 
   const queryString = params.toString();
@@ -95,9 +126,8 @@ export default function EventiPage() {
     placeholderData: keepPreviousData,
   });
 
-  const events = data?.events ?? [];
+  const rawEvents = data?.events ?? [];
   const total = data?.totalCount ?? 0;
-  const hasMore = events.length < total;
 
   // City autocomplete suggestions (distinct cities with upcoming events).
   const { data: citiesData } = useQuery<{ cities: string[] }>({
@@ -110,8 +140,28 @@ export default function EventiPage() {
   });
   const cities = citiesData?.cities ?? [];
 
-  // Group by day for nice section headings
+  // Sort by distance when user location is known
+  const events = useMemo(() => {
+    if (!userLocation) return rawEvents;
+    const withDist = rawEvents.map(ev => {
+      const lat = ev.venueLatitude ? parseFloat(ev.venueLatitude) : null;
+      const lng = ev.venueLongitude ? parseFloat(ev.venueLongitude) : null;
+      const dist = lat && lng && !isNaN(lat) && !isNaN(lng)
+        ? haversineKm(userLocation.lat, userLocation.lng, lat, lng)
+        : Infinity;
+      return { ...ev, _dist: dist };
+    });
+    return withDist.sort((a, b) => a._dist - b._dist);
+  }, [rawEvents, userLocation]);
+
+  const hasMore = rawEvents.length < total && viewMode === "list";
+
+  // Group by day for nice section headings (list view)
   const grouped = useMemo(() => {
+    if (userLocation) {
+      // When sorting by distance, don't group by date — show flat sorted list
+      return null;
+    }
     const map = new Map<string, PublicEvent[]>();
     for (const ev of events) {
       const d = new Date(ev.eventDate);
@@ -122,9 +172,50 @@ export default function EventiPage() {
     }
     const result = Array.from(map.entries()).map(([date, list]) => ({ date, list }));
     return range === "past" ? result.reverse() : result;
-  }, [events, range]);
+  }, [events, range, userLocation]);
 
   const hasActiveFilters = q || city || category !== "all" || source !== "all" || range !== "all";
+
+  // Map pins: events with valid coordinates
+  const mapPins = useMemo<EventMapPin[]>(() =>
+    events
+      .filter(ev => ev.venueLatitude && ev.venueLongitude)
+      .map(ev => ({
+        id: ev.id,
+        sourceType: ev.sourceType,
+        title: ev.title,
+        venueName: ev.venueName,
+        venueSlug: ev.venueSlug,
+        latitude: ev.venueLatitude,
+        longitude: ev.venueLongitude,
+      })),
+    [events]
+  );
+
+  const handleLocateMe = useCallback(() => {
+    if (!navigator.geolocation) {
+      setLocationError("Geolocalizzazione non supportata dal browser");
+      return;
+    }
+    setLocating(true);
+    setLocationError(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocating(false);
+      },
+      () => {
+        setLocationError("Posizione non disponibile. Verifica i permessi del browser.");
+        setLocating(false);
+      },
+      { timeout: 10_000, enableHighAccuracy: false }
+    );
+  }, []);
+
+  const handleClearLocation = useCallback(() => {
+    setUserLocation(null);
+    setLocationError(null);
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50/40 to-white dark:from-[#0B0D10] dark:to-[#0F1820]">
@@ -266,69 +357,192 @@ export default function EventiPage() {
           </Card>
         )}
 
-        {/* Header count */}
-        <div className="flex items-center justify-between mb-4">
+        {/* Toolbar: count + view toggle + nearby */}
+        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
           <p className="text-sm text-muted-foreground">
             {isLoading ? "Caricamento…" : `${total} ${total === 1 ? "evento trovato" : "eventi trovati"}`}
           </p>
+
+          <div className="flex items-center gap-2">
+            {/* Vicino a me */}
+            {userLocation ? (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl text-blue-600 border-blue-200 dark:border-blue-800 dark:text-blue-400 h-9"
+                onClick={handleClearLocation}
+                data-testid="btn-clear-location"
+              >
+                <Navigation2 className="h-3.5 w-3.5" />
+                Vicino a me ✓
+                <X className="h-3 w-3 ml-0.5" />
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 rounded-xl h-9"
+                onClick={handleLocateMe}
+                disabled={locating}
+                data-testid="btn-locate-me"
+              >
+                {locating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Navigation className="h-3.5 w-3.5" />}
+                Vicino a me
+              </Button>
+            )}
+
+            {/* List / Map toggle */}
+            <div className="flex rounded-xl border border-stone-200 dark:border-stone-700 overflow-hidden h-9">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`flex items-center gap-1.5 px-3 text-xs font-semibold transition ${
+                  viewMode === "list"
+                    ? "bg-purple-600 text-white"
+                    : "bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50"
+                }`}
+                data-testid="btn-view-list"
+              >
+                <List className="h-3.5 w-3.5" />
+                Lista
+              </button>
+              <button
+                onClick={() => setViewMode("map")}
+                className={`flex items-center gap-1.5 px-3 text-xs font-semibold transition border-l border-stone-200 dark:border-stone-700 ${
+                  viewMode === "map"
+                    ? "bg-purple-600 text-white"
+                    : "bg-white dark:bg-stone-900 text-stone-600 dark:text-stone-400 hover:bg-stone-50"
+                }`}
+                data-testid="btn-view-map"
+              >
+                <MapIcon className="h-3.5 w-3.5" />
+                Mappa
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* List */}
-        {isLoading ? (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 className="h-7 w-7 animate-spin text-purple-600" />
+        {/* Location error */}
+        {locationError && (
+          <div className="mb-4 px-4 py-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-sm text-red-700 dark:text-red-400 flex items-center gap-2">
+            <X className="h-4 w-4 flex-shrink-0" />
+            {locationError}
           </div>
-        ) : events.length === 0 ? (
-          <Card className="border-dashed bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
-            <CardContent className="py-16 text-center">
-              <CalendarDays className="h-10 w-10 text-stone-300 mx-auto mb-3" />
-              <h3 className="font-semibold text-foreground dark:text-white">Nessun evento trovato</h3>
-              <p className="text-sm text-muted-foreground mt-1">
-                Prova a cambiare filtri o periodo.
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-8">
-            {grouped.map(({ date, list }) => {
-              const d = new Date(date);
-              const heading = isToday(d) ? "Oggi"
-                : isTomorrow(d) ? "Domani"
-                : format(d, "EEEE d MMMM", { locale: it });
-              return (
-                <section key={date}>
-                  <h2 className="text-sm uppercase tracking-wider font-bold text-stone-500 dark:text-stone-400 mb-3">
-                    {heading}
-                  </h2>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    {list.map(ev => <EventCard key={`${ev.sourceType}-${ev.id}`} ev={ev} />)}
-                  </div>
-                </section>
-              );
-            })}
+        )}
 
-            {hasMore && (
-              <div className="flex justify-center pt-2">
-                <Button
-                  variant="outline"
-                  className="rounded-xl gap-2"
-                  onClick={() => setLimit(l => l + PAGE_SIZE)}
-                  disabled={isFetching}
-                  data-testid="btn-load-more-events"
-                >
-                  {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-                  Carica altri eventi
-                </Button>
+        {/* MAP VIEW */}
+        {viewMode === "map" && (
+          <div>
+            {isLoading ? (
+              <div className="flex items-center justify-center" style={{ height: 520 }}>
+                <Loader2 className="h-7 w-7 animate-spin text-purple-600" />
               </div>
+            ) : (
+              <>
+                <EventMap
+                  pins={mapPins}
+                  height="520px"
+                  userLocation={userLocation}
+                />
+                {mapPins.length === 0 && events.length > 0 && (
+                  <p className="text-center text-sm text-muted-foreground mt-3">
+                    Nessun evento con coordinate disponibili per la mappa.
+                    <button className="ml-1 underline text-purple-600" onClick={() => setViewMode("list")}>
+                      Torna alla lista
+                    </button>
+                  </p>
+                )}
+              </>
             )}
           </div>
+        )}
+
+        {/* LIST VIEW */}
+        {viewMode === "list" && (
+          <>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="h-7 w-7 animate-spin text-purple-600" />
+              </div>
+            ) : events.length === 0 ? (
+              <Card className="border-dashed bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
+                <CardContent className="py-16 text-center">
+                  <CalendarDays className="h-10 w-10 text-stone-300 mx-auto mb-3" />
+                  <h3 className="font-semibold text-foreground dark:text-white">Nessun evento trovato</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Prova a cambiare filtri o periodo.
+                  </p>
+                </CardContent>
+              </Card>
+            ) : userLocation ? (
+              /* Flat distance-sorted list */
+              <div className="space-y-3">
+                {(events as (PublicEvent & { _dist?: number })[]).map(ev => (
+                  <EventCard
+                    key={`${ev.sourceType}-${ev.id}`}
+                    ev={ev}
+                    distanceKm={ev._dist !== Infinity ? ev._dist : undefined}
+                  />
+                ))}
+                {hasMore && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="outline"
+                      className="rounded-xl gap-2"
+                      onClick={() => setLimit(l => l + PAGE_SIZE)}
+                      disabled={isFetching}
+                      data-testid="btn-load-more-events"
+                    >
+                      {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      Carica altri eventi
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              /* Grouped by day */
+              <div className="space-y-8">
+                {(grouped ?? []).map(({ date, list }) => {
+                  const d = new Date(date);
+                  const heading = isToday(d) ? "Oggi"
+                    : isTomorrow(d) ? "Domani"
+                    : format(d, "EEEE d MMMM", { locale: it });
+                  return (
+                    <section key={date}>
+                      <h2 className="text-sm uppercase tracking-wider font-bold text-stone-500 dark:text-stone-400 mb-3">
+                        {heading}
+                      </h2>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {list.map(ev => <EventCard key={`${ev.sourceType}-${ev.id}`} ev={ev} />)}
+                      </div>
+                    </section>
+                  );
+                })}
+
+                {hasMore && (
+                  <div className="flex justify-center pt-2">
+                    <Button
+                      variant="outline"
+                      className="rounded-xl gap-2"
+                      onClick={() => setLimit(l => l + PAGE_SIZE)}
+                      disabled={isFetching}
+                      data-testid="btn-load-more-events"
+                    >
+                      {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                      Carica altri eventi
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
   );
 }
 
-function EventCard({ ev }: { ev: PublicEvent }) {
+function EventCard({ ev, distanceKm }: { ev: PublicEvent; distanceKm?: number }) {
+
   const startDate = new Date(ev.eventDate);
   const SourceIcon = ev.sourceType === "brewery" ? Building2 : Beer;
   const venueLabel = ev.venueCity || (ev.sourceType === "brewery" ? "Birrificio" : "Pub");
@@ -348,6 +562,12 @@ function EventCard({ ev }: { ev: PublicEvent }) {
                   {ev.sourceType === "brewery" ? "Birrificio" : "Pub"}
                 </Badge>
                 {ev.category && <EventCategoryBadge category={ev.category} />}
+                {distanceKm !== undefined && (
+                  <Badge className="bg-blue-500/90 text-white hover:bg-blue-500 border-0 text-[10px] gap-1">
+                    <Navigation2 className="h-2.5 w-2.5" />
+                    {formatDistance(distanceKm)}
+                  </Badge>
+                )}
               </div>
               <div className="absolute bottom-2 left-2 right-2 text-white">
                 <p className="text-xs font-medium opacity-90 flex items-center gap-1">
@@ -365,6 +585,12 @@ function EventCard({ ev }: { ev: PublicEvent }) {
                   {ev.sourceType === "brewery" ? "Birrificio" : "Pub"}
                 </Badge>
                 {ev.category && <EventCategoryBadge category={ev.category} />}
+                {distanceKm !== undefined && (
+                  <Badge className="bg-blue-500/90 text-white hover:bg-blue-500 border-0 text-[10px] gap-1">
+                    <Navigation2 className="h-2.5 w-2.5" />
+                    {formatDistance(distanceKm)}
+                  </Badge>
+                )}
               </div>
               <div className="absolute bottom-2 left-2 right-2 text-white">
                 <p className="text-xs font-medium opacity-90 flex items-center gap-1">

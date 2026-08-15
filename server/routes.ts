@@ -7695,7 +7695,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const source   = ((req.query.source as string)   || "all").trim(); // all|pub|brewery
       const fromStr  = (req.query.from as string)      || "";
       const toStr    = (req.query.to as string)        || "";
-      const limit    = Math.min(parseInt(req.query.limit as string)  || 30, 100);
+      const limit    = Math.min(parseInt(req.query.limit as string)  || 30, 500);
       const offset   = Math.max(parseInt(req.query.offset as string) || 0, 0);
 
       // Default: from "now" forward (only upcoming/ongoing).
@@ -7744,8 +7744,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             NULL::text AS "venueSlug",
             br.location AS "venueCity",
             br.logo_url AS "venueLogoUrl",
-            NULL::numeric AS "venueLatitude",
-            NULL::numeric AS "venueLongitude"
+            br.latitude  AS "venueLatitude",
+            br.longitude AS "venueLongitude"
           FROM brewery_events e
           INNER JOIN breweries br ON br.id = e.brewery_id
           WHERE e.is_published = true
