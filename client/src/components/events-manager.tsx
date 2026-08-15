@@ -10,7 +10,6 @@ import RichTextEditor, { richTextToPlain, isRichContentEmpty } from "@/component
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { format, isPast, isFuture } from "date-fns";
@@ -42,6 +41,38 @@ export const EVENT_CATEGORIES: Record<string, { label: string; color: string; bg
   festa: { label: "Festa", color: "#F59E0B", bg: "bg-amber-100 text-amber-800", darkBg: "dark:bg-amber-900 dark:text-amber-200", icon: PartyPopper },
   altro: { label: "Altro", color: "#6B7280", bg: "bg-stone-100 text-foreground", darkBg: "dark:bg-[#0B0D10] dark:text-gray-200", icon: Sparkles },
 };
+
+/** Selettore categoria a chip — niente dropdown (Radix Select dentro Dialog
+ *  su iOS WKWebView non apre il menu e fa "saltare" la scheda). Con 5 categorie
+ *  i chip sono più diretti e non hanno layer flottanti che possano rompersi. */
+function CategoryPicker({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div role="group" aria-label="Categoria evento" className="flex flex-wrap gap-2 mt-1.5">
+      {Object.entries(EVENT_CATEGORIES).map(([key, cat]) => {
+        const Icon = cat.icon;
+        const active = value === key;
+        return (
+          <button
+            key={key}
+            type="button"
+            onClick={() => onChange(key)}
+            aria-pressed={active}
+            className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-full border-2 text-sm font-semibold transition-colors tap-scale ${
+              active
+                ? `${cat.bg} ${cat.darkBg} shadow-sm`
+                : "bg-background text-foreground border-input hover:bg-accent"
+            }`}
+            style={active ? { borderColor: cat.color } : undefined}
+            data-testid={`chip-category-${key}`}
+          >
+            <Icon className="h-4 w-4" />
+            {cat.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 interface EventsManagerProps {
   pubId: number;
@@ -319,25 +350,7 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
 
               <div>
                 <Label>Categoria</Label>
-                <Select value={form.category} onValueChange={(val) => setForm({ ...form, category: val })}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Scegli categoria" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(EVENT_CATEGORIES).map(([key, cat]) => {
-                      const Icon = cat.icon;
-                      return (
-                        <SelectItem key={key} value={key}>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                            <Icon className="h-4 w-4" />
-                            <span>{cat.label}</span>
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <CategoryPicker value={form.category} onChange={(val) => setForm({ ...form, category: val })} />
               </div>
 
               <div>
@@ -700,23 +713,7 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
               </div>
               <div>
                 <Label>Categoria</Label>
-                <Select value={form.category} onValueChange={(val) => setForm({ ...form, category: val })}>
-                  <SelectTrigger><SelectValue placeholder="Scegli categoria" /></SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(EVENT_CATEGORIES).map(([key, cat]) => {
-                      const Icon = cat.icon;
-                      return (
-                        <SelectItem key={key} value={key}>
-                          <div className="flex items-center gap-2">
-                            <div className="w-3 h-3 rounded-full" style={{ backgroundColor: cat.color }} />
-                            <Icon className="h-4 w-4" />
-                            <span>{cat.label}</span>
-                          </div>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <CategoryPicker value={form.category} onChange={(val) => setForm({ ...form, category: val })} />
               </div>
               <div>
                 <Label htmlFor="be-desc">Descrizione</Label>
