@@ -125,11 +125,15 @@ export default function BreweryDetail() {
     staleTime: 3 * 60_000,
   });
 
-  const { data: distribution = [] } = useQuery<any[]>({
+  // Endpoint riservato a titolare/admin: per gli altri risponde 401/403 → il
+  // query client restituisce null, quindi normalizziamo SEMPRE ad array.
+  const isBreweryOwner = !!id && (user as any)?.breweryId === parseInt(id);
+  const { data: distributionData } = useQuery<any[]>({
     queryKey: ["/api/breweries", id, "distribution"],
-    enabled: !!id,
+    enabled: !!id && (isAdmin || isBreweryOwner),
     staleTime: 5 * 60_000,
   });
+  const distribution = Array.isArray(distributionData) ? distributionData : [];
 
   const { data: breweryRating } = useQuery<{ avgRating: number | null; reviewCount: number }>({
     queryKey: ["/api/breweries", id, "rating"],
