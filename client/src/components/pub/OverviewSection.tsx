@@ -280,14 +280,25 @@ export default function OverviewSection({
                 href={`/eventi/pub/${e.id}`}
                 className="flex items-center gap-3 py-2 rounded-xl hover:bg-[#FAF7F1] dark:bg-[#12151A] transition-colors px-2 -mx-2"
               >
-                <div className="w-12 h-12 rounded-xl bg-[#FFF7EA] dark:bg-[#F59E0B]/15 border border-[#F59E0B]/30 flex flex-col items-center justify-center flex-shrink-0">
-                  <span className="text-[10px] font-bold text-[#F59E0B] uppercase leading-none">
-                    {e.eventDate ? new Date(e.eventDate).toLocaleDateString("it-IT", { month: "short" }).replace(".", "") : "—"}
-                  </span>
-                  <span className="text-base font-black text-[#151515] dark:text-[#F5F5F5] leading-tight">
-                    {e.eventDate ? new Date(e.eventDate).getDate() : "—"}
-                  </span>
-                </div>
+                {e.imageUrl ? (
+                  <div className="relative w-16 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-stone-200 dark:bg-white/5">
+                    <img loading="lazy" src={e.imageUrl} alt="" className="w-full h-full object-cover" />
+                    <div className="absolute bottom-0 inset-x-0 bg-black/55 backdrop-blur-[2px] px-1 py-0.5 text-center leading-none">
+                      <span className="text-[9px] font-bold text-white uppercase">
+                        {e.eventDate ? new Date(e.eventDate).toLocaleDateString("it-IT", { day: "numeric", month: "short" }).replace(".", "") : "—"}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="w-12 h-12 rounded-xl bg-[#FFF7EA] dark:bg-[#F59E0B]/15 border border-[#F59E0B]/30 flex flex-col items-center justify-center flex-shrink-0">
+                    <span className="text-[10px] font-bold text-[#F59E0B] uppercase leading-none">
+                      {e.eventDate ? new Date(e.eventDate).toLocaleDateString("it-IT", { month: "short" }).replace(".", "") : "—"}
+                    </span>
+                    <span className="text-base font-black text-[#151515] dark:text-[#F5F5F5] leading-tight">
+                      {e.eventDate ? new Date(e.eventDate).getDate() : "—"}
+                    </span>
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] truncate">{e.title || e.name}</p>
                   {e.description && (

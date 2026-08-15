@@ -370,7 +370,7 @@ export default function EventDetailPage() {
         )}
         <button
           onClick={() => window.history.back()}
-          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md flex items-center justify-center text-white hover:bg-black/70 transition tap-scale z-10"
+          className="absolute top-4 left-4 w-10 h-10 rounded-full bg-black/50 backdrop-blur-md hidden lg:flex items-center justify-center text-white hover:bg-black/70 transition tap-scale z-10"
           data-testid="link-back-eventi"
           aria-label="Torna indietro"
         >

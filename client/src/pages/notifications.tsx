@@ -271,6 +271,8 @@ export default function Notifications() {
   };
 
   const getLink = (n: Notification): string | null => {
+    // Deep link fornito dal server (es. /eventi/pub/123) — sempre preferito
+    if (n.urlPath) return n.urlPath;
     switch (n.type) {
       case 'new_brewery_request': return '/admin/publican-requests?section=brewery';
       case 'new_pub_request':     return '/admin/publican-requests?section=pub';

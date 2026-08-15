@@ -828,6 +828,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             type: 'event',
             title: `Oggi: ${row.title}`,
             message: `L'evento a cui sei interessato si tiene oggi presso ${venueName}`,
+            urlPath,
             [notifKey]: venueId,
           } as any)
         ));
@@ -943,6 +944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       await pool.query(`ALTER TABLE pub_events ADD COLUMN IF NOT EXISTS reminder_sent boolean DEFAULT false`);
       await pool.query(`ALTER TABLE brewery_events ADD COLUMN IF NOT EXISTS reminder_sent boolean DEFAULT false`);
+      await pool.query(`ALTER TABLE notifications ADD COLUMN IF NOT EXISTS url_path varchar`);
     } catch (e: any) {
       console.error("[events] reminder_sent migration error:", e.message);
     }
@@ -7909,11 +7911,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: favUserId, type: 'event', title: `Nuovo evento da ${pub.name}!`,
             message: `"${event.title}" - Non perderlo!`,
             pubId, beerId: null, isRead: false,
+            urlPath: `/eventi/pub/${event.id}`,
           });
           sendPushToUser(favUserId, {
             title: `Nuovo evento da ${pub.name}!`,
             body: `"${event.title}" - Non perderlo!`,
-            url: `/pub/${pubId}`, type: 'event',
+            url: `/eventi/pub/${event.id}`, type: 'event',
             icon: pub.logoUrl || undefined,
             category: 'events',
           });
@@ -8070,11 +8073,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: fav.userId, type: 'event', title: `Nuovo evento da ${brewery?.name || 'birrificio'}!`,
             message: `"${event.title}" - Non perderlo!`,
             pubId: null, beerId: null, breweryId, isRead: false,
+            urlPath: `/eventi/brewery/${event.id}`,
           });
           sendPushToUser(fav.userId, {
             title: `Nuovo evento da ${brewery?.name || 'birrificio'}!`,
             body: `"${event.title}" - Non perderlo!`,
-            url: `/brewery/${breweryId}`, type: 'event',
+            url: `/eventi/brewery/${event.id}`, type: 'event',
             icon: brewery?.logoUrl || undefined,
             category: 'events',
           });
@@ -8452,11 +8456,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: `L'evento "${event.title}" è iniziato!`,
             message: `${event.pubName} ti aspetta adesso!`,
             pubId: event.pubId, beerId: null, isRead: false,
+            urlPath: `/eventi/pub/${event.id}`,
           });
           sendPushToUser(favUserId, {
             title: `L'evento "${event.title}" è iniziato!`,
             body: `${event.pubName} ti aspetta adesso!`,
-            url: `/pub/${event.pubId}`, type: 'event',
+            url: `/eventi/pub/${event.id}`, type: 'event',
             icon: event.pubLogoUrl || undefined,
             category: 'events',
           });
@@ -8475,11 +8480,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             title: `L'evento "${event.title}" è iniziato!`,
             message: `${event.breweryName} ti aspetta adesso!`,
             pubId: null, beerId: null, breweryId: event.breweryId, isRead: false,
+            urlPath: `/eventi/brewery/${event.id}`,
           });
           sendPushToUser(fav.userId, {
             title: `L'evento "${event.title}" è iniziato!`,
             body: `${event.breweryName} ti aspetta adesso!`,
-            url: `/brewery/${event.breweryId}`, type: 'event',
+            url: `/eventi/brewery/${event.id}`, type: 'event',
             icon: event.breweryLogoUrl || undefined,
             category: 'events',
           });

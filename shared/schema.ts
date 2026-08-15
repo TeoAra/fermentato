@@ -748,6 +748,7 @@ export const notifications = pgTable("notifications", {
   pubId: integer("pub_id").references(() => pubs.id),
   beerId: integer("beer_id").references(() => beers.id),
   breweryId: integer("brewery_id").references(() => breweries.id),
+  urlPath: varchar("url_path"), // deep link (e.g. /eventi/pub/123); preferred over pubId/breweryId when set
   isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
