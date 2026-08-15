@@ -378,16 +378,14 @@ export default function PubDetail() {
     queryKey: ["/api/allergens"],
   });
 
-  // Auto-open event from shared link (?event=N)
+  // Link legacy condivisi (?event=N) → redirect alla pagina evento canonica
   useEffect(() => {
-    if (!Array.isArray(pubEvents) || pubEvents.length === 0) return;
     const params = new URLSearchParams(window.location.search);
     const eventId = params.get("event");
-    if (eventId) {
-      const found = pubEvents.find((e: any) => String(e.id) === eventId);
-      if (found) setSelectedEvent(found);
+    if (eventId && /^\d+$/.test(eventId)) {
+      window.location.replace(`/eventi/pub/${eventId}`);
     }
-  }, [pubEvents]);
+  }, []);
 
   const pubNumericId = (pub as any)?.id;
 

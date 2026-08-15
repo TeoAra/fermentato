@@ -89,6 +89,15 @@ export default function BreweryDetail() {
   const [isSuggestDialogOpen, setIsSuggestDialogOpen] = useState(false);
   const [checkinBeer, setCheckinBeer] = useState<any>(null);
 
+  // Link legacy condivisi (?event=N) → redirect alla pagina evento canonica
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const eventId = params.get("event");
+    if (eventId && /^\d+$/.test(eventId)) {
+      window.location.replace(`/eventi/brewery/${eventId}`);
+    }
+  }, []);
+
   const isAdmin =
     (user as any)?.activeRole === "admin" ||
     (!((user as any)?.activeRole) && (user as any)?.userType === "admin");

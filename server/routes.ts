@@ -10183,26 +10183,37 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
   // ─── Social + AI crawler OG tag injection ───────────────────────────────────
   const SOCIAL_BOTS = /whatsapp|telegram|twitterbot|facebookexternalhit|linkedinbot|slackbot|discordbot|pinterest|googlebot|bingbot|gptbot|perplexitybot|claudebot|anthropic|applebot|yandex|duckduckbot|bytespider/i;
 
-  const ogHtml = (meta: { title: string; description: string; image?: string; url: string; type?: string; jsonld?: object | object[] }) => `<!DOCTYPE html>
+  // Escape HTML per testo e attributi (i valori arrivano dal DB — contenuto utente)
+  const escHtml = (s: string) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  const ogHtml = (meta: { title: string; description: string; image?: string; url: string; type?: string; jsonld?: object | object[] }) => {
+    const title = escHtml(meta.title);
+    const description = escHtml(meta.description);
+    const url = escHtml(meta.url);
+    const image = meta.image ? escHtml(String(meta.image)) : undefined;
+    // JSON-LD: escape "<" per impedire chiusura anticipata dello <script>
+    const jsonld = meta.jsonld ? JSON.stringify(meta.jsonld).replace(/</g, "\\u003c") : undefined;
+    return `<!DOCTYPE html>
 <html lang="it"><head>
 <meta charset="UTF-8">
-<title>${meta.title}</title>
-<meta name="description" content="${meta.description.replace(/"/g, '&quot;')}">
-<link rel="canonical" href="${meta.url}">
-<meta property="og:title" content="${meta.title.replace(/"/g, '&quot;')}">
-<meta property="og:description" content="${meta.description.replace(/"/g, '&quot;')}">
-<meta property="og:url" content="${meta.url}">
+<title>${title}</title>
+<meta name="description" content="${description}">
+<link rel="canonical" href="${url}">
+<meta property="og:title" content="${title}">
+<meta property="og:description" content="${description}">
+<meta property="og:url" content="${url}">
 <meta property="og:type" content="${meta.type ?? "website"}">
 <meta property="og:site_name" content="Fermenta.to">
 <meta property="og:locale" content="it_IT">
-${meta.image ? `<meta property="og:image" content="${meta.image}">` : ""}
+${image ? `<meta property="og:image" content="${image}">` : ""}
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@fermentato">
-<meta name="twitter:title" content="${meta.title.replace(/"/g, '&quot;')}">
-<meta name="twitter:description" content="${meta.description.replace(/"/g, '&quot;')}">
-${meta.image ? `<meta name="twitter:image" content="${meta.image}">` : ""}
-${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld)}</script>` : ""}
+<meta name="twitter:title" content="${title}">
+<meta name="twitter:description" content="${description}">
+${image ? `<meta name="twitter:image" content="${image}">` : ""}
+${jsonld ? `<script type="application/ld+json">${jsonld}</script>` : ""}
 </head><body></body></html>`;
+  };
 
   app.get(["/pub/:id", "/brewery/:id", "/beer/:id"], async (req, res, next) => {
     const ua = req.headers["user-agent"] || "";
@@ -10258,6 +10269,70 @@ ${meta.jsonld ? `<script type="application/ld+json">${JSON.stringify(meta.jsonld
         }));
       }
     } catch { next(); }
+  });
+
+  // OG tags per link evento condivisi (/eventi/pub/:id, /eventi/brewery/:id)
+  app.get("/eventi/:type/:id", async (req, res, next) => {
+    const ua = req.headers["user-agent"] || "";
+    if (!SOCIAL_BOTS.test(ua)) return next();
+    try {
+      const base = "https://fermenta.to";
+      const type = req.params.type;
+      const id = parseInt(String(req.params.id));
+      if (Number.isNaN(id) || (type !== "pub" && type !== "brewery")) return next();
+      const rows = type === "pub"
+        ? await db.execute(sql`
+            SELECT e.title, e.description, e.event_date AS "eventDate", e.image_url AS "imageUrl", p.name AS "venueName", p.city AS "venueCity"
+            FROM pub_events e INNER JOIN pubs p ON p.id = e.pub_id
+            WHERE e.id = ${id} AND e.is_published = true LIMIT 1`)
+        : await db.execute(sql`
+            SELECT e.title, e.description, e.event_date AS "eventDate", e.image_url AS "imageUrl", br.name AS "venueName", br.location AS "venueCity"
+            FROM brewery_events e INNER JOIN breweries br ON br.id = e.brewery_id
+            WHERE e.id = ${id} AND e.is_published = true LIMIT 1`);
+      const ev = ((rows as any).rows ?? rows)[0];
+      if (!ev) return next();
+      const evUrl = `${base}/eventi/${type}/${id}`;
+      const plainDesc = String(ev.description || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+      const img = ev.imageUrl ? (String(ev.imageUrl).startsWith("http") ? ev.imageUrl : `${base}${ev.imageUrl}`) : undefined;
+      res.send(ogHtml({
+        title: `${ev.title} · ${ev.venueName} | Fermenta.to`,
+        description: plainDesc.slice(0, 155) || `Evento da ${ev.venueName}${ev.venueCity ? ` a ${ev.venueCity}` : ""} su Fermenta.to.`,
+        image: img,
+        url: evUrl,
+        type: "article",
+        jsonld: { "@context": "https://schema.org", "@type": "Event", "name": ev.title, "startDate": ev.eventDate, "url": evUrl, ...(img ? { "image": img } : {}), "location": { "@type": "Place", "name": ev.venueName, ...(ev.venueCity ? { "address": ev.venueCity } : {}) } },
+      }));
+    } catch { next(); }
+  });
+
+  // ─── Deep link: apri l'app se installata (Android App Links / iOS Universal Links)
+  const APP_BUNDLE_ID = "to.fermentato.app";
+  app.get("/.well-known/assetlinks.json", (_req, res) => {
+    const sha256 = (process.env.ANDROID_CERT_SHA256 || "").split(",").map((s) => s.trim()).filter(Boolean);
+    if (sha256.length === 0) return res.status(404).json({ message: "ANDROID_CERT_SHA256 non configurato" });
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.json([{
+      relation: ["delegate_permission/common.handle_all_urls"],
+      target: { namespace: "android_app", package_name: APP_BUNDLE_ID, sha256_cert_fingerprints: sha256 },
+    }]);
+  });
+  app.get(["/.well-known/apple-app-site-association", "/apple-app-site-association"], (_req, res) => {
+    const teamId = process.env.APPLE_TEAM_ID;
+    if (!teamId) return res.status(404).json({ message: "APPLE_TEAM_ID non configurato" });
+    res.setHeader("Content-Type", "application/json");
+    res.setHeader("Cache-Control", "public, max-age=3600");
+    res.json({
+      applinks: {
+        details: [{
+          appIDs: [`${teamId}.${APP_BUNDLE_ID}`],
+          components: [
+            { "/": "/eventi/*" }, { "/": "/pub/*" }, { "/": "/brewery/*" },
+            { "/": "/beer/*" }, { "/": "/festival/*" }, { "/": "/user/*" }, { "/": "/community*" },
+          ],
+        }],
+      },
+      webcredentials: { apps: [`${teamId}.${APP_BUNDLE_ID}`] },
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────────────────

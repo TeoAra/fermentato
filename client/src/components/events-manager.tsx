@@ -107,8 +107,9 @@ const emptyForm: EventForm = {
   isPublished: true,
 };
 
-function getShareUrl(pubId: number, eventId: number) {
-  return `${window.location.origin}/pub/${pubId}?event=${eventId}`;
+// Link canonico alla pagina evento (formato unico /eventi/:type/:id)
+function getShareUrl(type: "pub" | "brewery", eventId: number) {
+  return `${window.location.origin}/eventi/${type}/${eventId}`;
 }
 
 
@@ -129,7 +130,7 @@ export function EventShareButtons({ event, pubId, size = "sm" }: { event: any; p
   const btnSize = size === "sm" ? "h-7 w-7" : "h-8 w-8";
 
   const handleShare = async () => {
-    const url = getShareUrl(pubId, event.id);
+    const url = getShareUrl(event.sourceType === "brewery" ? "brewery" : "pub", event.id);
     const text = `${event.title} - ${format(new Date(event.eventDate), "d MMMM yyyy 'alle' HH:mm", { locale: it })}`;
 
     if (navigator.share && typeof navigator.share === 'function') {
@@ -530,7 +531,7 @@ function BreweryEventCard({ event, breweryId, onEdit, onDelete, isPast }: { even
   const { toast } = useToast();
 
   const handleShare = async () => {
-    const url = `${window.location.origin}/brewery/${breweryId}?event=${event.id}`;
+    const url = `${window.location.origin}/eventi/brewery/${event.id}`;
     const text = `${event.title} - ${format(new Date(event.eventDate), "d MMMM yyyy 'alle' HH:mm", { locale: it })}`;
     if (navigator.share) {
       try { await navigator.share({ title: event.title, text, url }); } catch {}
