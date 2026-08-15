@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Helmet } from "react-helmet-async";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -31,10 +32,10 @@ const FORMAT_LABELS: Record<string, string> = {
   spina: "Alla spina", bottiglia: "Bottiglia", lattina: "Lattina", growler: "Growler",
 };
 
-type FilterType = "all" | "post" | "checkin";
+type FeedFilter = "all" | "post" | "checkin";
 
 /* ── UserAvatar ── */
-function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
+export function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
   const name = user.display_name ?? user.nickname ?? "?";
   const sz = `w-${size} h-${size}`;
   return user.profile_image_url ? (
@@ -48,7 +49,7 @@ function UserAvatar({ user, size = 9 }: { user: any; size?: number }) {
 }
 
 /* ── RatingStars ── */
-function RatingStars({ rating }: { rating: number }) {
+export function RatingStars({ rating }: { rating: number }) {
   const r = Math.round(parseFloat(rating.toString()));
   return (
     <div className="flex items-center gap-0.5">
@@ -63,7 +64,7 @@ function RatingStars({ rating }: { rating: number }) {
 }
 
 /* ── CheckinCard ── */
-function CheckinCard({ data }: { data: any }) {
+export function CheckinCard({ data }: { data: any }) {
   return (
     <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
       {/* Header */}
@@ -149,7 +150,7 @@ function CheckinCard({ data }: { data: any }) {
 }
 
 /* ── MicroblogCard ── */
-function MicroblogCard({ post }: { post: any }) {
+export function MicroblogCard({ post }: { post: any }) {
   const isEntityPost = post.author_type && post.author_type !== "user";
   return (
     <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
@@ -227,7 +228,7 @@ function MicroblogCard({ post }: { post: any }) {
   );
 }
 
-/* ── TrendingBeersStrip ── */
+/* ── TrendingBeerDrinkers ── */
 function TrendingBeerDrinkers({
   beerId, beerName, onClose,
 }: { beerId: number; beerName: string; onClose: () => void }) {
@@ -247,7 +248,6 @@ function TrendingBeerDrinkers({
     refetchInterval: 3 * 60_000,
   });
 
-  // local optimistic follow state: Map<userId, isFollowing>
   const [localFollow, setLocalFollow] = useState<Record<string, boolean>>({});
 
   const followMut = useMutation({
@@ -261,7 +261,7 @@ function TrendingBeerDrinkers({
       queryClient.invalidateQueries({ queryKey: ["/api/user/feed"] });
     },
     onError: (_err, { id, isFollowing }) => {
-      setLocalFollow(prev => ({ ...prev, [id]: isFollowing })); // revert
+      setLocalFollow(prev => ({ ...prev, [id]: isFollowing }));
       toast({ title: "Errore", description: "Riprova tra poco", variant: "destructive" });
     },
   });
@@ -341,7 +341,8 @@ function TrendingBeerDrinkers({
   );
 }
 
-function TrendingBeersStrip() {
+/* ── TrendingBeersStrip ── */
+export function TrendingBeersStrip() {
   const [selectedBeer, setSelectedBeer] = useState<{ id: number; name: string } | null>(null);
 
   const { data: beers = [] } = useQuery<any[]>({
@@ -411,13 +412,13 @@ function CommunityStats() {
       {stats.checkins_today > 0 && (
         <div className="flex items-center gap-1.5 text-[10px] text-stone-500 dark:text-stone-400">
           <span className="text-base leading-none">🍺</span>
-          <span><span className="font-black text-stone-700 dark:text-stone-200">{stats.checkins_today}</span> {stats.checkins_today === 1 ? "check-in" : "check-in"} oggi</span>
+          <span><span className="font-black text-stone-700 dark:text-stone-200">{stats.checkins_today}</span> check-in oggi</span>
         </div>
       )}
       {stats.posts_today > 0 && (
         <div className="flex items-center gap-1.5 text-[10px] text-stone-500 dark:text-stone-400">
           <span className="text-base leading-none">📝</span>
-          <span><span className="font-black text-stone-700 dark:text-stone-200">{stats.posts_today}</span> {stats.posts_today === 1 ? "post" : "post"} oggi</span>
+          <span><span className="font-black text-stone-700 dark:text-stone-200">{stats.posts_today}</span> post oggi</span>
         </div>
       )}
       {stats.active_week > 0 && (
@@ -431,7 +432,15 @@ function CommunityStats() {
 }
 
 /* ── UserRow ── */
-function UserRow({ user, followingIds, onToggle }: { user: any; followingIds: Set<string>; onToggle: (id: string, following: boolean) => void }) {
+export function UserRow({
+  user,
+  followingIds,
+  onToggle,
+}: {
+  user: any;
+  followingIds: Set<string>;
+  onToggle: (id: string, following: boolean) => void;
+}) {
   const handle = user.username ?? user.nickname;
   const name = user.display_name ?? ([user.first_name, user.last_name].filter(Boolean).join(" ") || handle);
   const isFollowing = followingIds.has(user.id);
@@ -449,7 +458,9 @@ function UserRow({ user, followingIds, onToggle }: { user: any; followingIds: Se
       <button
         onClick={() => onToggle(user.id, isFollowing)}
         className={`flex items-center gap-1 text-xs font-bold px-3 py-1.5 rounded-full transition-all active:scale-95 ${
-          isFollowing ? "bg-stone-100 dark:bg-[#12151A] text-stone-500 dark:text-stone-400" : "bg-primary text-white shadow-sm shadow-primary/20"
+          isFollowing
+            ? "bg-stone-100 dark:bg-[#12151A] text-stone-500 dark:text-stone-400"
+            : "bg-primary text-white shadow-sm shadow-primary/20"
         }`}
       >
         {isFollowing ? <UserMinus className="w-3 h-3" /> : <UserPlus className="w-3 h-3" />}
@@ -539,7 +550,7 @@ function GuestPeopleSidebar() {
 }
 
 /* ── FeedSkeleton ── */
-function FeedSkeleton() {
+export function FeedSkeleton() {
   return (
     <div className="space-y-3">
       {[...Array(3)].map((_, i) => (
@@ -588,10 +599,9 @@ export default function CommunityPage() {
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [filter, setFilter] = useState<FilterType>("all");
+  const [filter, setFilter] = useState<FeedFilter>("all");
   const [userSearch, setUserSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [showPeople, setShowPeople] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(userSearch), 350);
@@ -605,6 +615,7 @@ export default function CommunityPage() {
     isFetchingNextPage,
     fetchNextPage,
   } = useCommunityTimeline(isAuthenticated);
+
   const { data: news = [] } = useQuery<any[]>({
     queryKey: ["/api/news", "feed"],
     queryFn: async () => {
@@ -614,10 +625,12 @@ export default function CommunityPage() {
       return Array.isArray(j) ? j : [];
     },
   });
+
   const { data: following = [], isLoading: followingLoading } = useQuery<any[]>({
     queryKey: ["/api/user/following"],
     enabled: isAuthenticated,
   });
+
   const { data: searchResults = [], isLoading: searchLoading } = useQuery<any[]>({
     queryKey: ["/api/users/search", debouncedSearch],
     queryFn: async () => {
@@ -647,7 +660,7 @@ export default function CommunityPage() {
     onError: () => toast({ title: "Errore", description: "Riprova tra poco", variant: "destructive" }),
   });
 
-  /* Unauthenticated gate */
+  /* ── Guest view ── */
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[hsl(36,10%,96%)] dark:bg-[#0B0D10] pb-28">
@@ -659,16 +672,9 @@ export default function CommunityPage() {
         </div>
         <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4">
           <div className="lg:grid lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] lg:gap-8 lg:items-start">
-
-            {/* ── Left column ── */}
             <div className="space-y-4">
-              {/* Trending beers — visible without auth */}
               <TrendingBeersStrip />
-
-              {/* Trending hashtags — visible on all screen sizes in left column */}
               <TrendingHashtags limit={10} compact />
-
-              {/* Auth CTA */}
               <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-8">
                 <div className="text-center space-y-4 max-w-xs mx-auto">
                   <div className="w-16 h-16 rounded-3xl bg-[hsl(36,10%,96%)] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center mx-auto">
@@ -689,13 +695,8 @@ export default function CommunityPage() {
               </div>
             </div>
 
-            {/* ── Desktop sidebar ── */}
             <aside className="hidden lg:flex flex-col gap-4 sticky top-[72px] self-start max-h-[calc(100vh-88px)] overflow-y-auto [scrollbar-width:thin]">
-
-              {/* People discovery — search with sign-in prompts */}
               <GuestPeopleSidebar />
-
-              {/* Unisciti CTA card */}
               <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -714,265 +715,281 @@ export default function CommunityPage() {
                   </Button>
                 </Link>
               </div>
-
             </aside>
-
           </div>
         </div>
       </div>
     );
   }
 
+  /* ── Authenticated view ── */
   return (
     <div className="min-h-screen bg-[hsl(36,10%,96%)] dark:bg-[#0B0D10] pb-28">
       <Helmet><title>Community | Fermenta.to</title></Helmet>
 
-      {/* Sticky header */}
-      <div className="bg-white/90 dark:bg-[#0B0D10]/90 backdrop-blur-xl border-b border-stone-100/80 dark:border-white/[0.05] sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4 pb-3">
-          <h1 className="text-xl font-black text-stone-900 dark:text-stone-50 font-poppins mb-3">
-            Community
-          </h1>
-          {/* Filter chips */}
-          <div className="flex items-center gap-2">
-            <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Tutti</FilterChip>
-            <FilterChip active={filter === "post"} onClick={() => setFilter("post")}>📝 Post</FilterChip>
-            <FilterChip active={filter === "checkin"} onClick={() => setFilter("checkin")}>🍺 Check-in</FilterChip>
-          </div>
-          <div className="mt-2">
-            <CommunityStats />
+      <Tabs defaultValue="feed" className="w-full">
+        {/* Sticky header with tabs */}
+        <div className="bg-white/90 dark:bg-[#0B0D10]/90 backdrop-blur-xl border-b border-stone-100/80 dark:border-white/[0.05] sticky top-0 z-10">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4 pb-0">
+            <h1 className="text-xl font-black text-stone-900 dark:text-stone-50 font-poppins mb-3">
+              Community
+            </h1>
+            <TabsList className="w-full bg-transparent p-0 h-auto border-b border-stone-100 dark:border-white/[0.05] rounded-none justify-start gap-0">
+              <TabsTrigger
+                value="feed"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent bg-transparent text-stone-500 px-4 py-2.5 text-sm font-bold"
+              >
+                Feed
+              </TabsTrigger>
+              <TabsTrigger
+                value="chi-segui"
+                className="rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:text-primary data-[state=active]:bg-transparent bg-transparent text-stone-500 px-4 py-2.5 text-sm font-bold"
+              >
+                Chi segui{following.length > 0 ? ` (${following.length})` : ""}
+              </TabsTrigger>
+            </TabsList>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4">
-        <div className="lg:grid lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] lg:gap-8 lg:items-start">
-
-          {/* ── Main feed column ── */}
-          <div className="space-y-3">
-            {/* Composer */}
-            <InlinePostComposer user={user as any} />
-
-            {/* Feed — mobile shows trending interstitial after 3rd item */}
-            {isLoading ? (
-              <FeedSkeleton />
-            ) : timeline.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
-                <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center shadow-sm">
-                  <Users className="w-9 h-9 text-stone-300" />
-                </div>
-                <div>
-                  <p className="font-bold text-stone-700 dark:text-stone-300 font-poppins">
-                    {following.length === 0 ? "Non stai seguendo nessuno" : "Nessuna attività recente"}
-                  </p>
-                  <p className="text-sm text-stone-400 mt-1 max-w-xs mx-auto">
-                    {following.length === 0
-                      ? "Cerca appassionati nella sezione Scopri persone per iniziare"
-                      : filter === "all"
-                        ? "I tuoi amici non hanno fatto check-in né scritto post di recente"
-                        : filter === "post"
-                          ? "Nessun post recente dai tuoi amici"
-                          : "Nessun check-in recente dai tuoi amici"}
-                  </p>
-                </div>
-                <div className="flex gap-2 flex-wrap justify-center">
-                  <Link href="/microblog/nuovo">
-                    <Button className="rounded-xl bg-primary text-white font-bold">
-                      <PenSquare className="w-4 h-4 mr-2" /> Scrivi un post
-                    </Button>
-                  </Link>
-                  <Button variant="outline" className="rounded-xl font-bold" onClick={() => setShowPeople(true)}>
-                    <Users className="w-4 h-4 mr-2" /> Scopri persone
-                  </Button>
-                </div>
-                {/* On mobile show trending even on empty feed */}
-                <div className="lg:hidden w-full space-y-3 mt-2">
-                  <TrendingBeersStrip />
-                  <TrendingHashtags limit={8} compact />
-                </div>
+        {/* ── FEED TAB ── */}
+        <TabsContent value="feed" className="mt-0">
+          {/* Filter chips + stats bar */}
+          <div className="bg-white/70 dark:bg-[#0B0D10]/70 backdrop-blur-sm border-b border-stone-100/60 dark:border-white/[0.03]">
+            <div className="max-w-7xl mx-auto px-4 lg:px-8 py-2.5 flex items-center gap-2 flex-wrap">
+              <FilterChip active={filter === "all"} onClick={() => setFilter("all")}>Tutti</FilterChip>
+              <FilterChip active={filter === "post"} onClick={() => setFilter("post")}>📝 Post</FilterChip>
+              <FilterChip active={filter === "checkin"} onClick={() => setFilter("checkin")}>🍺 Check-in</FilterChip>
+              <div className="ml-auto">
+                <CommunityStats />
               </div>
-            ) : (
-              <>
-                {timeline.slice(0, 3).map(entry =>
-                  entry.kind === "post" ? (
-                    <MicroblogCard key={`p-${entry.data.id}`} post={entry.data} />
-                  ) : (
-                    <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
-                  )
-                )}
-                {/* Mobile interstitial trending section (hidden on desktop — sidebar shows these) */}
-                <div className="lg:hidden space-y-3">
-                  <TrendingBeersStrip />
-                  <TrendingHashtags limit={8} compact />
-                </div>
-                {timeline.slice(3).map(entry =>
-                  entry.kind === "post" ? (
-                    <MicroblogCard key={`p-${entry.data.id}`} post={entry.data} />
-                  ) : (
-                    <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
-                  )
-                )}
-                <LoadMoreSentinel
-                  hasNextPage={hasNextPage}
-                  isFetchingNextPage={isFetchingNextPage}
-                  onLoadMore={fetchNextPage}
-                  endLabel="Sei arrivato alla fine 🍺"
-                />
-              </>
-            )}
+            </div>
+          </div>
 
-            {/* Scopri persone — mobile only (desktop has it permanently in sidebar) */}
-            <div className="lg:hidden bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] overflow-hidden">
-              <button
-                className="w-full flex items-center justify-between px-4 py-3.5 text-left"
-                onClick={() => setShowPeople(p => !p)}
-              >
-                <span className="text-[11px] font-black uppercase tracking-widest text-stone-400 flex items-center gap-1.5">
-                  <Users className="w-3 h-3" /> Scopri persone
-                </span>
-                <ChevronRight className={`w-4 h-4 text-stone-400 transition-transform ${showPeople ? "rotate-90" : ""}`} />
-              </button>
-              {showPeople && (
-                <div className="px-4 pb-4 space-y-3 border-t border-stone-100 dark:border-white/[0.04]">
-                  <div className="relative mt-3">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 pt-4">
+            <div className="lg:grid lg:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] lg:gap-8 lg:items-start">
+
+              {/* Main feed column */}
+              <div className="space-y-3">
+                <InlinePostComposer user={user as any} />
+
+                {isLoading ? (
+                  <FeedSkeleton />
+                ) : timeline.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-16 text-center gap-4">
+                    <div className="w-20 h-20 rounded-3xl bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center shadow-sm">
+                      <Users className="w-9 h-9 text-stone-300" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-stone-700 dark:text-stone-300 font-poppins">
+                        {following.length === 0 ? "Non stai seguendo nessuno" : "Nessuna attività recente"}
+                      </p>
+                      <p className="text-sm text-stone-400 mt-1 max-w-xs mx-auto">
+                        {following.length === 0
+                          ? "Vai alla tab «Chi segui» per trovare appassionati da seguire"
+                          : filter === "all"
+                            ? "I tuoi amici non hanno fatto check-in né scritto post di recente"
+                            : filter === "post"
+                              ? "Nessun post recente dai tuoi amici"
+                              : "Nessun check-in recente dai tuoi amici"}
+                      </p>
+                    </div>
+                    <div className="flex gap-2 flex-wrap justify-center">
+                      <Link href="/microblog/nuovo">
+                        <Button className="rounded-xl bg-primary text-white font-bold">
+                          <PenSquare className="w-4 h-4 mr-2" /> Scrivi un post
+                        </Button>
+                      </Link>
+                    </div>
+                    <div className="lg:hidden w-full space-y-3 mt-2">
+                      <TrendingBeersStrip />
+                      <TrendingHashtags limit={8} compact />
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {timeline.slice(0, 3).map(entry =>
+                      entry.kind === "post" ? (
+                        <MicroblogCard key={`p-${entry.data.id}`} post={entry.data} />
+                      ) : (
+                        <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
+                      )
+                    )}
+                    {/* Mobile interstitial */}
+                    <div className="lg:hidden space-y-3">
+                      <TrendingBeersStrip />
+                      <TrendingHashtags limit={8} compact />
+                    </div>
+                    {timeline.slice(3).map(entry =>
+                      entry.kind === "post" ? (
+                        <MicroblogCard key={`p-${entry.data.id}`} post={entry.data} />
+                      ) : (
+                        <CheckinCard key={`c-${entry.data.id}`} data={entry.data} />
+                      )
+                    )}
+                    <LoadMoreSentinel
+                      hasNextPage={hasNextPage}
+                      isFetchingNextPage={isFetchingNextPage}
+                      onLoadMore={fetchNextPage}
+                      endLabel="Sei arrivato alla fine 🍺"
+                    />
+                  </>
+                )}
+              </div>
+
+              {/* Desktop sidebar */}
+              <aside className="hidden lg:flex flex-col gap-4 sticky top-[116px] self-start max-h-[calc(100vh-132px)] overflow-y-auto [scrollbar-width:thin]">
+                <TrendingBeersStrip />
+                <TrendingHashtags limit={10} />
+
+                {/* Scopri persone */}
+                <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
+                  <p className="text-[11px] font-black uppercase tracking-widest text-stone-400 mb-3 flex items-center gap-1.5">
+                    <Users className="w-3 h-3" /> Scopri persone
+                  </p>
+                  <div className="relative mb-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
                     <Input
                       value={userSearch}
                       onChange={e => setUserSearch(e.target.value)}
                       placeholder="Cerca per nome o nickname…"
-                      className="pl-9 rounded-xl h-10 bg-stone-50 dark:bg-[#12151A] border-stone-200 dark:border-white/[0.06]"
+                      className="pl-9 rounded-xl h-9 text-xs bg-stone-50 dark:bg-[#12151A] border-stone-200 dark:border-white/[0.06]"
                     />
                   </div>
-                  {debouncedSearch.length >= 2 && (
+                  {debouncedSearch.length >= 2 ? (
                     <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
                       {searchLoading ? (
-                        <div className="py-3 space-y-2">
-                          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-12 rounded-xl" />)}
+                        <div className="py-2 space-y-2">
+                          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 rounded-xl" />)}
                         </div>
                       ) : searchResults.length === 0 ? (
-                        <p className="py-4 text-sm text-stone-400 text-center">Nessun utente trovato</p>
+                        <p className="py-3 text-xs text-stone-400 text-center">Nessun utente trovato</p>
                       ) : (
-                        searchResults.map((u: any) => (
+                        searchResults.slice(0, 5).map((u: any) => (
                           <UserRow key={u.id} user={u} followingIds={followingIds}
                             onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })} />
                         ))
                       )}
                     </div>
-                  )}
-                  {debouncedSearch.length < 2 && following.length > 0 && (
-                    <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 mb-1 px-1">
+                  ) : following.length > 0 ? (
+                    <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 pb-2">
                         Chi segui · {following.length}
                       </p>
-                      <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
-                        {(following as any[]).slice(0, 5).map((u: any) => (
-                          <UserRow key={u.id} user={u} followingIds={followingIds}
-                            onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })} />
-                        ))}
-                      </div>
+                      {(following as any[]).slice(0, 5).map((u: any) => (
+                        <UserRow key={u.id} user={u} followingIds={followingIds}
+                          onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })} />
+                      ))}
+                      {following.length > 5 && (
+                        <p className="text-xs text-stone-400 text-center pt-2">+{following.length - 5} altri</p>
+                      )}
                     </div>
-                  )}
-                  {debouncedSearch.length < 2 && following.length === 0 && (
-                    <p className="text-sm text-stone-400 text-center py-3">
+                  ) : (
+                    <p className="text-xs text-stone-500 dark:text-stone-400 text-center py-2">
                       Cerca un nome per trovare appassionati da seguire
                     </p>
                   )}
                 </div>
+
+                {/* News */}
+                {news.length > 0 && (
+                  <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[11px] font-black uppercase tracking-widest text-stone-400 flex items-center gap-1.5">
+                        <Newspaper className="w-3 h-3" /> News
+                      </p>
+                      <Link href="/news">
+                        <span className="text-[11px] text-primary font-bold hover:underline">Tutte</span>
+                      </Link>
+                    </div>
+                    <div className="space-y-3">
+                      {news.slice(0, 4).map((n: any) => (
+                        <a key={n.id} href={n.link} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2.5 group">
+                          {n.image_url && (
+                            <img src={n.image_url} alt="" loading="lazy" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 group-hover:opacity-90 transition" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[9px] font-black uppercase text-primary truncate">{n.source_name}</p>
+                            <p className="text-[11px] font-semibold text-stone-700 dark:text-stone-300 line-clamp-2 leading-snug mt-0.5 group-hover:text-primary transition-colors">
+                              {n.title}
+                            </p>
+                          </div>
+                          <ExternalLink className="w-3 h-3 text-stone-300 flex-shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </aside>
+            </div>
+          </div>
+        </TabsContent>
+
+        {/* ── CHI SEGUI TAB ── */}
+        <TabsContent value="chi-segui" className="mt-0">
+          <div className="max-w-2xl mx-auto px-4 lg:px-8 py-4 space-y-5">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+              <Input
+                value={userSearch}
+                onChange={e => setUserSearch(e.target.value)}
+                placeholder="Cerca per nome o nickname…"
+                className="pl-9 rounded-xl h-11 bg-white dark:bg-[#1A1D24] border-[#E8DED1] dark:border-white/[0.06]"
+              />
+            </div>
+
+            {/* Search results */}
+            {debouncedSearch.length >= 2 && (
+              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 divide-y divide-stone-100 dark:divide-white/[0.04]">
+                {searchLoading ? (
+                  <div className="py-4 space-y-3">
+                    {[...Array(3)].map((_, i) => (
+                      <Skeleton key={i} className="h-12 rounded-xl" />
+                    ))}
+                  </div>
+                ) : searchResults.length === 0 ? (
+                  <p className="py-5 text-sm text-stone-400 text-center">Nessun utente trovato</p>
+                ) : (
+                  searchResults.map((u: any) => (
+                    <UserRow key={u.id} user={u} followingIds={followingIds}
+                      onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })}
+                    />
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* Following list */}
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-stone-400 dark:text-stone-500 mb-3 px-1">
+                Chi segui {following.length > 0 ? `· ${following.length}` : ""}
+              </p>
+              {followingLoading ? (
+                <div className="space-y-2">
+                  {[...Array(4)].map((_, i) => (
+                    <Skeleton key={i} className="h-14 rounded-xl" />
+                  ))}
+                </div>
+              ) : following.length === 0 ? (
+                <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] p-8 text-center shadow-[0_2px_12px_rgba(0,0,0,0.04)]">
+                  <Users className="w-8 h-8 mx-auto text-stone-300 mb-2" />
+                  <p className="text-sm text-stone-400">
+                    Cerca in alto per trovare persone da seguire
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] px-4 divide-y divide-stone-100 dark:divide-white/[0.04]">
+                  {(following as any[]).map((u: any) => (
+                    <UserRow key={u.id} user={u} followingIds={followingIds}
+                      onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })}
+                    />
+                  ))}
+                </div>
               )}
             </div>
           </div>
-
-          {/* ── Desktop sidebar ── */}
-          <aside className="hidden lg:flex flex-col gap-4 sticky top-[72px] self-start max-h-[calc(100vh-88px)] overflow-y-auto [scrollbar-width:thin]">
-
-            {/* 1. Trending beers */}
-            <TrendingBeersStrip />
-
-            {/* 2. Trending hashtags */}
-            <TrendingHashtags limit={10} />
-
-            {/* 3. Scopri persone — always open on desktop */}
-            <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
-              <p className="text-[11px] font-black uppercase tracking-widest text-stone-400 mb-3 flex items-center gap-1.5">
-                <Users className="w-3 h-3" /> Scopri persone
-              </p>
-              <div className="relative mb-3">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" />
-                <Input
-                  value={userSearch}
-                  onChange={e => setUserSearch(e.target.value)}
-                  placeholder="Cerca per nome o nickname…"
-                  className="pl-9 rounded-xl h-9 text-xs bg-stone-50 dark:bg-[#12151A] border-stone-200 dark:border-white/[0.06]"
-                />
-              </div>
-              {debouncedSearch.length >= 2 ? (
-                <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
-                  {searchLoading ? (
-                    <div className="py-2 space-y-2">
-                      {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-10 rounded-xl" />)}
-                    </div>
-                  ) : searchResults.length === 0 ? (
-                    <p className="py-3 text-xs text-stone-400 text-center">Nessun utente trovato</p>
-                  ) : (
-                    searchResults.slice(0, 5).map((u: any) => (
-                      <UserRow key={u.id} user={u} followingIds={followingIds}
-                        onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })} />
-                    ))
-                  )}
-                </div>
-              ) : following.length > 0 ? (
-                <div className="divide-y divide-stone-100 dark:divide-white/[0.04]">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-stone-400 pb-2">
-                    Chi segui · {following.length}
-                  </p>
-                  {(following as any[]).slice(0, 5).map((u: any) => (
-                    <UserRow key={u.id} user={u} followingIds={followingIds}
-                      onToggle={(id, isFollowing) => followMutation.mutate({ id, following: isFollowing })} />
-                  ))}
-                  {following.length > 5 && (
-                    <p className="text-xs text-stone-400 text-center pt-2">+{following.length - 5} altri</p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-xs text-stone-500 dark:text-stone-400 text-center py-2">
-                  Cerca un nome per trovare appassionati da seguire
-                </p>
-              )}
-            </div>
-
-            {/* 4. News */}
-            {news.length > 0 && (
-              <div className="bg-white dark:bg-[#1A1D24] rounded-2xl border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_2px_12px_rgba(0,0,0,0.04)] p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[11px] font-black uppercase tracking-widest text-stone-400 flex items-center gap-1.5">
-                    <Newspaper className="w-3 h-3" /> News
-                  </p>
-                  <Link href="/news">
-                    <span className="text-[11px] text-primary font-bold hover:underline">Tutte</span>
-                  </Link>
-                </div>
-                <div className="space-y-3">
-                  {news.slice(0, 4).map((n: any) => (
-                    <a key={n.id} href={n.link} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2.5 group">
-                      {n.image_url && (
-                        <img src={n.image_url} alt="" loading="lazy" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 group-hover:opacity-90 transition" />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[9px] font-black uppercase text-primary truncate">{n.source_name}</p>
-                        <p className="text-[11px] font-semibold text-stone-700 dark:text-stone-300 line-clamp-2 leading-snug mt-0.5 group-hover:text-primary transition-colors">
-                          {n.title}
-                        </p>
-                      </div>
-                      <ExternalLink className="w-3 h-3 text-stone-300 flex-shrink-0 mt-0.5 group-hover:text-primary transition-colors" />
-                    </a>
-                  ))}
-                </div>
-              </div>
-            )}
-          </aside>
-
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
