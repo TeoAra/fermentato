@@ -17,12 +17,36 @@ import { addClient, removeClient, broadcastPubUpdate } from "./pubBroadcast";
 
 // ─── Simple in-memory TTL cache ──────────────────────────────────────────────
 const _memCache = new Map<string, { data: any; expires: number }>();
+// Single-flight: concurrent requests for the same key share one fetch instead
+// of each running the (potentially heavy) query — prevents cache stampedes
+// under load (e.g. many users opening Esplora birrifici at once).
+const _memInflight = new Map<string, Promise<any>>();
 async function memCached<T>(key: string, ttlMs: number, fetcher: () => Promise<T>): Promise<T> {
   const hit = _memCache.get(key);
   if (hit && hit.expires > Date.now()) return hit.data as T;
-  const data = await fetcher();
-  _memCache.set(key, { data, expires: Date.now() + ttlMs });
-  return data;
+  const inflight = _memInflight.get(key);
+  if (inflight) return inflight as Promise<T>;
+  const p = (async () => {
+    const data = await fetcher();
+    // Bound growth: keys include user input (search terms, pagination), so
+    // sweep expired entries and evict oldest if the cache gets large.
+    if (_memCache.size > 500) {
+      const now = Date.now();
+      for (const [k, v] of _memCache) if (v.expires <= now) _memCache.delete(k);
+      if (_memCache.size > 500) {
+        const oldest = [..._memCache.entries()].sort((a, b) => a[1].expires - b[1].expires).slice(0, 100);
+        for (const [k] of oldest) _memCache.delete(k);
+      }
+    }
+    _memCache.set(key, { data, expires: Date.now() + ttlMs });
+    return data;
+  })();
+  _memInflight.set(key, p);
+  try {
+    return await p;
+  } finally {
+    _memInflight.delete(key);
+  }
 }
 // ─────────────────────────────────────────────────────────────────────────────
 import { execFile } from "child_process";
@@ -1624,12 +1648,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Explore breweries (paginated, filterable by name + country)
   app.get("/api/breweries/explore", async (req, res) => {
     try {
-      const q = (req.query.q as string) || "";
-      const country = (req.query.country as string) || "";
-      const excludeCountry = (req.query.excludeCountry as string) || "";
+      // Canonicalize (trim) BEFORE both cache-key construction and the storage
+      // call, so equivalent requests share a cache entry and " foo " can never
+      // poison the entry for "foo". Case-normalizing only the key is safe: all
+      // underlying predicates are ILIKE/LOWER (case-insensitive).
+      const q = ((req.query.q as string) || "").trim();
+      const country = ((req.query.country as string) || "").trim();
+      const excludeCountry = ((req.query.excludeCountry as string) || "").trim();
       const page = Math.max(1, parseInt(req.query.page as string) || 1);
       const limit = Math.min(60, parseInt(req.query.limit as string) || 48);
-      const result = await storage.exploreBreweries(q, country, page, limit, excludeCountry || undefined);
+      // Cache: the underlying query does a LEFT JOIN + COUNT over ~1.2M beers
+      // (~1-2s) — without caching, concurrent visitors on the Esplora
+      // birrifici page saturate the pool (max 10) under load.
+      // JSON.stringify of an array gives an unambiguous serialization — a
+      // plain ':'-joined string would let q="x:y" collide with country="y:z".
+      const cacheKey = `breweries:explore:v2:${JSON.stringify([q.toLowerCase(), country.toLowerCase(), excludeCountry.toLowerCase(), page, limit])}`;
+      const result = await memCached(cacheKey, 5 * 60 * 1000, () =>
+        storage.exploreBreweries(q, country, page, limit, excludeCountry || undefined)
+      );
+      res.setHeader('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
       res.json(result);
     } catch (error) {
       console.error("Error exploring breweries:", error);
@@ -1640,7 +1677,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get all brewery countries with counts
   app.get("/api/breweries/countries", async (req, res) => {
     try {
-      const countries = await storage.getBreweryCountries();
+      const countries = await memCached("breweries:countries:v1", 10 * 60 * 1000, () =>
+        storage.getBreweryCountries()
+      );
+      res.setHeader('Cache-Control', 'public, max-age=120, stale-while-revalidate=600');
       res.json(countries);
     } catch (error) {
       console.error("Error fetching brewery countries:", error);
@@ -1651,9 +1691,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Search breweries (public, for registration)
   app.get("/api/breweries/search", async (req, res) => {
     try {
-      const query = req.query.q as string || req.query.query as string || '';
+      // Trim BEFORE both cache key and storage call so equivalent requests
+      // share one entry and whitespace variants can't poison the cache.
+      const query = ((req.query.q as string) || (req.query.query as string) || '').trim();
       if (query.length < 2) return res.json([]);
-      const results = await storage.searchBreweries(query);
+      // Cached: searchBreweries ranks by a COUNT join over ~1.2M beers.
+      const results = await memCached(
+        `breweries:search:v2:${JSON.stringify(query.toLowerCase())}`,
+        10 * 60 * 1000,
+        () => storage.searchBreweries(query)
+      );
       res.json(results.slice(0, 10));
     } catch (error) {
       console.error("Error searching breweries:", error);
