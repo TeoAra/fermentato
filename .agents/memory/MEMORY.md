@@ -17,4 +17,5 @@
 - [Cache key serialization](cache-key-serialization.md) — user-input cache keys must be JSON-array serialized (not ':'-joined) and inputs trimmed before BOTH key and DB call; memCached has single-flight.
 - [Radix Select in Dialog on iOS](radix-select-in-dialog-ios.md) — dropdown selects inside modals don't open on native iOS WKWebView; use direct tap chips instead.
 - [URL state vs popstate](url-state-popstate.md) — never pushState from a state-sync effect after popstate restore; use a skip-ref flag or forward history breaks.
+- [Deep links / apri app](deep-links-app-open.md) — well-known endpoints pronti ma servono env ANDROID_CERT_SHA256 + APPLE_TEAM_ID sul VPS e rebuild nativi (intent-filter/entitlement).
 - [Security hardening baseline](security-hardening.md) — helmet (CSP off, COEP off), body 1mb global (10mb only /api/scan), generalApiRateLimit 300/5min in rate-limit.ts, query maxLen 200. Actual SQL injection risk was low (parameterized queries throughout); main gaps were DoS vectors.
