@@ -259,7 +259,9 @@ export function BottomNavigation() {
 
   if (location.startsWith("/tv/") || location.startsWith("/festival-tv/")) return null;
   // Pagine di dettaglio: la bottom bar globale viene sostituita dal dock
-  // contestuale specifico della pagina (pub, birrificio, birra, festival, evento, utente).
+  // contestuale specifico della pagina (pub, birrificio, birra, festival, evento legacy, utente).
+  // I dettagli evento canonici sono /eventi/:type/:id e usano invece questa
+  // nav globale: non aggiungere mai /eventi/ a questa lista.
   if (
     location.startsWith("/pub/") ||
     location.startsWith("/pubs/") ||

@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { useAnyModalOpen, useHideGlobalBottomNav, DockPortal } from "@/components/bottom-navigation";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -149,14 +149,13 @@ function PendingApprovalOverlay({ breweryName, createdAt }: { breweryName: strin
               Richiesta inviata il {new Date(createdAt).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' })}
             </p>
           )}
-          <Link href="/">
-            <Button
-              variant="outline"
-              className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
-            >
-              Torna alla Home
-            </Button>
-          </Link>
+          <Button
+            asChild
+            variant="outline"
+            className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
+          >
+            <Link href="/">Torna alla Home</Link>
+          </Button>
         </CardContent>
       </Card>
     </div>
@@ -184,14 +183,13 @@ function RejectedOverlay({ breweryName, adminNotes }: { breweryName: string; adm
               <strong>Motivazione:</strong> {adminNotes}
             </div>
           )}
-          <Link href="/">
-            <Button
-              variant="outline"
-              className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
-            >
-              Torna alla Home
-            </Button>
-          </Link>
+          <Button
+            asChild
+            variant="outline"
+            className="w-full border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl"
+          >
+            <Link href="/">Torna alla Home</Link>
+          </Button>
         </CardContent>
       </Card>
     </div>
@@ -782,13 +780,12 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             <p className="text-muted-foreground text-sm">
               Non hai ancora un birrificio associato al tuo account.
             </p>
-            <Link href="/">
-              <Button
-                className="mt-6 w-full bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
-              >
-                Torna alla Home
-              </Button>
-            </Link>
+            <Button
+              asChild
+              className="mt-6 w-full bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold shadow-sm"
+            >
+              <Link href="/">Torna alla Home</Link>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -830,16 +827,17 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
           <div className="flex items-center gap-2">
             {!isAdminMode && (
-              <Link href={`/brewery/${brewery.slug || brewery.id}`}>
               <Button
+                asChild
                 variant="outline"
                 size="sm"
                 className="hidden sm:flex border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl h-9"
               >
-                <Eye className="w-4 h-4 mr-2" />
-                Vedi Pubblico
+                <Link href={`/brewery/${brewery.slug || brewery.id}`}>
+                  <Eye className="w-4 h-4 mr-2" />
+                  Vedi Pubblico
+                </Link>
               </Button>
-              </Link>
             )}
             <Button
               variant="outline"
@@ -1077,8 +1075,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { label: 'Birre', value: beers.length, icon: BeerIcon, tab: 'birre' },
-                  { label: 'Visite 7g', value: stats?.viewsWeek ?? '—', icon: Eye, tab: 'birre' },
-                  { label: 'Recensioni', value: stats?.totalReviews ?? '—', icon: Star, tab: 'birre' },
+                  { label: 'Visite 7g', value: stats?.viewsWeek ?? '—', icon: Eye, tab: 'analytics' },
+                  { label: 'Recensioni', value: stats?.totalReviews ?? '—', icon: Star, tab: 'analytics' },
                 ].map(({ label, value, icon: Icon, tab }) => (
                   <button
                     key={label}
@@ -1495,14 +1493,15 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         aria-label="Navigazione dashboard birrificio"
         role="tablist"
       >
-        <div className="px-2">
-          <div>
-            <div className="flex items-stretch justify-between p-1.5 gap-1">
+        <div className="overflow-x-auto scrollbar-hide px-2">
+          <div className="flex min-w-max items-stretch p-1.5 gap-1">
               {[
                 { id: 'overview',      label: 'Home',    Icon: HomeIcon },
                 { id: 'birre',         label: 'Birre',   Icon: BeerIcon },
+              { id: 'analytics',     label: 'Stats',   Icon: TrendingUp },
                 { id: 'eventi',        label: 'Eventi',  Icon: CalendarIcon },
                 { id: 'distribuzione', label: 'Distrib.',Icon: Store },
+              { id: 'annunci',       label: 'Novità',  Icon: Megaphone },
                 { id: 'info',          label: 'Info',    Icon: InfoIcon },
               ].map(({ id, label, Icon }) => {
                 const active = activeTab === id;
@@ -1515,7 +1514,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     aria-current={active ? 'page' : undefined}
                     aria-label={label}
                     data-testid={`brewerydash-dock-${id}`}
-                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                    className={`min-w-[64px] flex flex-col items-center justify-center gap-0.5 py-2 px-2 rounded-[20px] transition-all duration-200 active:scale-95 ${
                       active
                         ? 'bg-primary/10 dark:bg-primary/15 text-primary'
                         : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
@@ -1533,7 +1532,6 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                   </button>
                 );
               })}
-            </div>
           </div>
         </div>
       </nav>
@@ -1684,7 +1682,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 </div>
               </div>
             </div>
-            <div className="flex gap-3 pt-4 border-t border-stone-100">
+          </div>
+          <DialogFooter sticky className="gap-3 sm:space-x-0">
               <Button
                 onClick={handleSaveProfile}
                 className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
@@ -1701,8 +1700,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               >
                 Annulla
               </Button>
-            </div>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -1940,7 +1938,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 )}
               </div>
 
-              <div className="flex gap-3 pt-4 border-t border-stone-100">
+              <DialogFooter sticky className="gap-3 sm:space-x-0">
                 <Button
                   type="submit"
                   className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
@@ -1956,7 +1954,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 <Button variant="outline" type="button" onClick={() => setDialogOpen(false)} className="px-6 border-stone-200 rounded-xl h-12">
                   Annulla
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
           </Form>
         </DialogContent>

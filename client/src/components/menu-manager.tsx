@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { 
@@ -686,7 +686,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                     </div>
                   </div>
 
-                  <div className="flex justify-end space-x-2">
+                  <DialogFooter sticky className="sm:space-x-2">
                     <Button
                       variant="outline"
                       className="border-stone-200 text-muted-foreground hover:bg-stone-50 rounded-xl"
@@ -701,7 +701,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                     <Button onClick={handleItemSubmit} className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold">
                       {editingItem ? "Aggiorna" : "Aggiungi"}
                     </Button>
-                  </div>
+                  </DialogFooter>
                 </div>
               </DialogContent>
             </Dialog>

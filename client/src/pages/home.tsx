@@ -59,11 +59,9 @@ function SectionHeader({
         {title}
       </h2>
       {href && (
-        <Link href={href}>
-          <button className="tap-scale text-[13px] font-bold text-primary flex items-center gap-0.5 whitespace-nowrap">
-            {linkLabel}
-            <ChevronRight className="w-3.5 h-3.5" />
-          </button>
+        <Link href={href} className="tap-scale text-[13px] font-bold text-primary flex items-center gap-0.5 whitespace-nowrap">
+          {linkLabel}
+          <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       )}
     </div>
@@ -377,17 +375,13 @@ export default function Home() {
 
         {/* ── Quick actions ── */}
         <div className="grid grid-cols-2 gap-2.5 mb-4">
-          <Link href="/explore/pubs">
-            <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-[13.5px] font-bold px-3 py-3 rounded-2xl border border-border shadow-card-sm">
-              <Store className="w-4 h-4 text-primary" />
-              Esplora pub
-            </button>
+          <Link href="/explore/pubs" className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-[13.5px] font-bold px-3 py-3 rounded-2xl border border-border shadow-card-sm">
+            <Store className="w-4 h-4 text-primary" />
+            Esplora pub
           </Link>
-          <Link href="/explore/breweries">
-            <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-[13.5px] font-bold px-3 py-3 rounded-2xl border border-border shadow-card-sm">
-              <Building2 className="w-4 h-4 text-amber-500" />
-              Birrifici
-            </button>
+          <Link href="/explore/breweries" className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-[13.5px] font-bold px-3 py-3 rounded-2xl border border-border shadow-card-sm">
+            <Building2 className="w-4 h-4 text-amber-500" />
+            Birrifici
           </Link>
         </div>
 
@@ -493,10 +487,8 @@ export default function Home() {
               Birrifici
             </button>
 
-            <Link href="/dashboard?tab=favorites" className="flex-shrink-0">
-              <button className="tap-scale w-9 h-9 flex items-center justify-center bg-card border border-border rounded-full shadow-card-sm text-foreground" aria-label="Preferiti">
-                <Bookmark className="w-4 h-4" />
-              </button>
+            <Link href="/dashboard?tab=favorites" className="tap-scale w-9 h-9 flex-shrink-0 items-center justify-center bg-card border border-border rounded-full shadow-card-sm text-foreground" aria-label="Apri preferiti">
+              <Bookmark className="w-4 h-4" />
             </Link>
           </div>
         </div>
@@ -541,9 +533,9 @@ export default function Home() {
                 <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
                 Il Tuo Pub
               </h2>
-              <Link href="/dashboard">
-                <Button size="sm" variant="ghost" className="text-primary font-semibold text-sm">Dashboard →</Button>
-              </Link>
+              <Button asChild size="sm" variant="ghost" className="text-primary font-semibold text-sm">
+                <Link href="/dashboard">Dashboard →</Link>
+              </Button>
             </div>
             {pubsLoading ? (
               <div className="h-24 bg-muted rounded-2xl animate-pulse" />
@@ -559,8 +551,12 @@ export default function Home() {
                       <p className="text-xs text-muted-foreground truncate">{pub.address}</p>
                     </div>
                     <div className="flex flex-col gap-2 flex-shrink-0">
-                      <Link href="/dashboard"><Button size="sm" className="font-medium text-xs px-3">Gestisci</Button></Link>
-                      <Link href={`/pub/${pub.slug || pub.id}`}><Button size="sm" variant="outline" className="text-xs px-3 w-full border-border">Pagina</Button></Link>
+                      <Button asChild size="sm" className="font-medium text-xs px-3">
+                        <Link href="/dashboard">Gestisci</Link>
+                      </Button>
+                      <Button asChild size="sm" variant="outline" className="text-xs px-3 w-full border-border">
+                        <Link href={`/pub/${pub.slug || pub.id}`}>Pagina</Link>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -568,7 +564,9 @@ export default function Home() {
             ) : (
               <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl border border-white/40 dark:border-white/[0.06] p-6 text-center shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
                 <p className="text-muted-foreground text-sm mb-3">Non hai ancora registrato nessun pub</p>
-                <Link href="/registra-pub"><Button size="sm">Registra il tuo pub</Button></Link>
+                <Button asChild size="sm">
+                  <Link href="/registra-pub">Registra il tuo pub</Link>
+                </Button>
               </div>
             )}
           </section>
@@ -581,9 +579,9 @@ export default function Home() {
                 <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
                 Il Tuo Birrificio
               </h2>
-              <Link href="/brewery-dashboard">
-                <Button size="sm" variant="ghost" className="text-primary font-semibold text-sm">Gestisci →</Button>
-              </Link>
+              <Button asChild size="sm" variant="ghost" className="text-primary font-semibold text-sm">
+                <Link href="/brewery-dashboard">Gestisci →</Link>
+              </Button>
             </div>
             <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
               <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
@@ -599,8 +597,12 @@ export default function Home() {
                 <p className="text-xs text-primary mt-1">{myBreweryData.beers?.length ?? 0} birre nel catalogo</p>
               </div>
               <div className="flex flex-col gap-2 flex-shrink-0">
-                <Link href="/brewery-dashboard"><Button size="sm" className="font-medium text-xs px-3">Gestisci</Button></Link>
-                <Link href={`/brewery/${myBreweryData.brewery.id}`}><Button size="sm" variant="outline" className="text-xs px-3 w-full border-border">Pagina</Button></Link>
+                <Button asChild size="sm" className="font-medium text-xs px-3">
+                  <Link href="/brewery-dashboard">Gestisci</Link>
+                </Button>
+                <Button asChild size="sm" variant="outline" className="text-xs px-3 w-full border-border">
+                  <Link href={`/brewery/${myBreweryData.brewery.id}`}>Pagina</Link>
+                </Button>
               </div>
             </div>
           </section>
@@ -1028,10 +1030,11 @@ export default function Home() {
                 <p className="text-white/80 text-sm leading-snug mb-5">
                   Salva i tuoi preferiti, tieni il diario degli assaggi e scopri birre con persone come te.
                 </p>
-                <Link href="/api/login">
-                  <button className="tap-scale bg-white text-primary font-bold rounded-full h-11 px-6 text-sm shadow-lg">
-                    Registrati gratis →
-                  </button>
+                <Link
+                  href="/api/login"
+                  className="inline-flex tap-scale bg-white text-primary font-bold rounded-full h-11 px-6 text-sm shadow-lg items-center justify-center"
+                >
+                  Registrati gratis →
                 </Link>
               </div>
             </div>

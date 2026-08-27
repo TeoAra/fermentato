@@ -56,6 +56,15 @@
   --app-chrome-light: #FFFFFF;
   --app-chrome-dark: #15202B;
 }
+
+/* Native iOS WebKit can visibly jump fixed layers when transform-based Radix
+   enter/exit animations run while the keyboard changes the visual viewport. */
+[data-platform="ios"] .ui-dialog-motion,
+[data-platform="ios"] .ui-sheet-motion,
+[data-platform="ios"] .ui-floating-motion {
+  animation: none !important;
+  transition-property: opacity;
+}
 @media (min-width: 1024px) {
   :root {
     --mobile-top-offset: 4rem;

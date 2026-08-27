@@ -435,7 +435,7 @@ export default function ExplorePubs() {
               className="flex-1 bg-transparent text-sm text-foreground placeholder:text-stone-400 dark:placeholder:text-stone-500 outline-none min-w-0 font-medium"
             />
             {search
-              ? <button onClick={() => setSearch("")} className="tap-scale"><X className="h-4 w-4 text-stone-400" /></button>
+              ? <button onClick={() => setSearch("")} className="tap-scale" aria-label="Cancella ricerca"><X className="h-4 w-4 text-stone-400" /></button>
               : <SlidersHorizontal className="h-4 w-4 text-stone-400" />
             }
           </div>
@@ -657,8 +657,12 @@ function PubListCard({ pub, showDist, userLocation }: { pub: any; showDist: bool
   const fmtDur = (s: number) => s < 60 ? "<1 min" : s < 3600 ? `${Math.round(s / 60)} min` : `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`;
 
   return (
-    <Link href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}>
-      <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl p-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] hover:border-primary/30 active:scale-[0.99] transition-all duration-200 cursor-pointer">
+    <div className="flex items-center gap-2 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl p-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-white/40 dark:border-white/[0.06] hover:border-primary/30 transition-all duration-200">
+      <Link
+        href={pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`}
+        className="flex min-w-0 flex-1 items-center gap-3 rounded-xl -m-1 p-1 tap-scale active:scale-[0.99]"
+        aria-label={`Apri la pagina di ${pub.name}`}
+      >
         {/* Cover / Logo */}
         <div className="w-16 h-16 rounded-xl overflow-hidden bg-stone-100 dark:bg-[#1A1D24] flex-shrink-0">
           {!imgErr && (pub.coverImageUrl || pub.logoUrl) ? (
@@ -704,22 +708,23 @@ function PubListCard({ pub, showDist, userLocation }: { pub: any; showDist: bool
                   : `${formatDist(pub._distReal)} su strada`}
               </span>
             )}
-            {showDist && canRoute && !route && (
-              <button
-                onClick={calcRoute}
-                disabled={routeLoading}
-                className="text-[10px] font-bold text-primary border border-primary/40 rounded-full px-2 py-0.5 tap-scale hover:bg-primary/10"
-                data-testid={`btn-calc-route-pub-${pub.id}`}
-              >
-                {routeLoading ? "..." : "Calcola percorso"}
-              </button>
-            )}
           </div>
         </div>
 
         {/* Arrow */}
         <ChevronRight className="w-4 h-4 text-stone-300 dark:text-stone-600 flex-shrink-0" />
-      </div>
-    </Link>
+      </Link>
+      {showDist && canRoute && !route && (
+        <button
+          onClick={calcRoute}
+          disabled={routeLoading}
+          aria-label={`Calcola il percorso per ${pub.name}`}
+          className="min-h-11 min-w-11 flex-shrink-0 inline-flex items-center justify-center rounded-xl border border-primary/40 px-2 text-[10px] font-bold leading-tight text-primary tap-scale hover:bg-primary/10 disabled:cursor-wait disabled:opacity-60"
+          data-testid={`btn-calc-route-pub-${pub.id}`}
+        >
+          {routeLoading ? "..." : "Percorso"}
+        </button>
+      )}
+    </div>
   );
 }

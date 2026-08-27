@@ -47,6 +47,7 @@ const DialogContent = React.forwardRef<
       style={{
         top: 'calc(var(--frozen-sat) + 16px)',
         bottom: 'calc(var(--frozen-sab) + 80px)',
+        height: 'calc(100dvh - var(--frozen-sat) - var(--frozen-sab) - 96px)',
       }}
     >
       <DialogPrimitive.Content
@@ -64,15 +65,18 @@ const DialogContent = React.forwardRef<
           }
         }}
         className={cn(
-          "pointer-events-auto relative z-[60] grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-2xl duration-200 max-h-full overflow-y-auto data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          "ui-dialog-motion pointer-events-auto relative z-[60] grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-2xl duration-200 max-h-full overflow-y-auto overscroll-contain data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
           className
         )}
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
+        <DialogPrimitive.Close
+          className="absolute right-3 top-3 flex size-11 items-center justify-center rounded-md opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+          aria-label="Chiudi finestra di dialogo"
+        >
           <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
+          <span className="sr-only">Chiudi finestra di dialogo</span>
         </DialogPrimitive.Close>
       </DialogPrimitive.Content>
     </div>
@@ -94,13 +98,21 @@ const DialogHeader = ({
 )
 DialogHeader.displayName = "DialogHeader"
 
+interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+  /** Keep actions visible while long dialog content scrolls. */
+  sticky?: boolean
+}
+
 const DialogFooter = ({
   className,
+  sticky = false,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+}: DialogFooterProps) => (
   <div
     className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      "flex shrink-0 flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
+      sticky &&
+        "sticky bottom-0 z-10 -mx-6 -mb-6 mt-2 gap-2 border-t bg-background px-6 pb-[calc(1rem+var(--frozen-sab))] pt-4",
       className
     )}
     {...props}

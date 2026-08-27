@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
 import { useAuth, type AuthUser } from "@/hooks/useAuth";
-import { useState, useEffect, useMemo, Component, ReactNode, lazy, Suspense } from "react";
+import { useState, useEffect, useMemo, useRef, Component, ReactNode, lazy, Suspense } from "react";
 import { initGA } from "./lib/analytics";
 import { Capacitor } from "@capacitor/core";
 import { useAnalytics } from "./hooks/use-analytics";
@@ -374,6 +374,32 @@ function Router() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const typedUser = user as AuthUser | null;
   const [location, navigate] = useLocation();
+  const currentRouteRef = useRef(location);
+
+  // Mark entries created inside the SPA so detail-page Back can distinguish
+  // real in-app history from a direct/external deep link. document.referrer
+  // does not change during pushState navigation and cannot make that decision.
+  useEffect(() => {
+    const previousLocation =
+      currentRouteRef.current === location ? null : currentRouteRef.current;
+    const existingState = window.history.state;
+    const state =
+      existingState && typeof existingState === "object" ? existingState : {};
+
+    if (!state.__fermentaAppEntry) {
+      window.history.replaceState(
+        {
+          ...state,
+          __fermentaAppEntry: true,
+          __fermentaPreviousLocation: previousLocation,
+        },
+        "",
+        window.location.href,
+      );
+    }
+
+    currentRouteRef.current = location;
+  }, [location]);
   
   // Track page views when routes change
   useAnalytics();

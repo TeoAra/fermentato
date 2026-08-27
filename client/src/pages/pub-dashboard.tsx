@@ -714,14 +714,15 @@ export default function PubDashboard() {
         aria-label="Navigazione dashboard pub"
         role="tablist"
       >
-        <div className="px-2">
-          <div>
-            <div className="flex items-stretch justify-between p-1.5 gap-1">
+        <div className="overflow-x-auto scrollbar-hide px-2">
+          <div className="flex min-w-max items-stretch p-1.5 gap-1">
               {[
                 { id: 'overview', label: 'Home', Icon: HomeIcon },
+                { id: 'info',     label: 'Info', Icon: Building2 },
                 { id: 'taplist',  label: 'Spine', Icon: Beer },
                 { id: 'bottles',  label: 'Cantina', Icon: Wine },
                 { id: 'menu',     label: 'Menu', Icon: Utensils },
+                { id: 'orari',    label: 'Orari', Icon: Clock },
                 { id: 'analytics',label: 'Stats', Icon: TrendingUp },
               ].map(({ id, label, Icon }) => {
                 const active = activeTab === id;
@@ -734,7 +735,7 @@ export default function PubDashboard() {
                     aria-current={active ? 'page' : undefined}
                     aria-label={label}
                     data-testid={`pub-dock-${id}`}
-                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                    className={`min-w-[64px] flex flex-col items-center justify-center gap-0.5 py-2 px-2 rounded-[20px] transition-all duration-200 active:scale-95 ${
                       active
                         ? 'bg-primary/10 dark:bg-primary/15 text-primary'
                         : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
@@ -752,7 +753,6 @@ export default function PubDashboard() {
                   </button>
                 );
               })}
-            </div>
           </div>
         </div>
       </nav>

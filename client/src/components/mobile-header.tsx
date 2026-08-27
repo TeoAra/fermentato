@@ -30,11 +30,31 @@ interface MobileHeaderProps {
 function isDetailRoute(location: string): boolean {
   return (
     /^\/(beer|pub|brewery|birrificio)\//.test(location) ||
-    /^\/eventi\/.+\//.test(location) ||
+    /^\/eventi\/[^/]+\/[^/?#]+\/?$/.test(location) ||
     /^\/festival\/[\w-]+$/.test(location) ||
     /^\/user\//.test(location) ||
     /^\/(scan-history|become-publican|registra-pub|pub-registration|attiva-pub|privacy|tos|search)$/.test(location) ||
     /^\/static-page\//.test(location)
+  );
+}
+
+function detailBackFallback(location: string): string {
+  if (/^\/eventi\/[^/]+\/[^/?#]+\/?$/.test(location)) return "/eventi";
+  if (/^\/(pub|pubs)\//.test(location)) return "/explore/pubs";
+  if (/^\/(brewery|breweries|birrificio)\//.test(location)) return "/explore/breweries";
+  if (/^\/beer\//.test(location)) return "/explore/beers";
+  if (/^\/festival\//.test(location)) return "/festival";
+  if (/^\/user\//.test(location)) return "/community";
+  return "/";
+}
+
+function hasAppOwnedPreviousEntry(): boolean {
+  const state = window.history.state;
+  return Boolean(
+    state &&
+      typeof state === "object" &&
+      state.__fermentaAppEntry === true &&
+      typeof state.__fermentaPreviousLocation === "string",
   );
 }
 
@@ -116,6 +136,16 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
   });
 
   const activeRole = (typedUser as any)?.activeRole || typedUser?.userType || 'customer';
+  const handleDetailBack = () => {
+    // SPA navigation does not update document.referrer. App.tsx marks entries
+    // created inside Fermenta so Back preserves the exact prior route/state,
+    // while direct links still use the safe route-appropriate fallback.
+    if (window.history.length > 1 && hasAppOwnedPreviousEntry()) {
+      window.history.back();
+      return;
+    }
+    setLocation(detailBackFallback(location));
+  };
 
   function SectionLabel({ children }: { children: React.ReactNode }) {
     return (
@@ -178,7 +208,7 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
           {/* Left: Back button (detail pages) or Avatar + Bell (root pages) */}
           {isDetailRoute(location) ? (
             <button
-              onClick={() => window.history.back()}
+              onClick={handleDetailBack}
               className="p-2 -ml-1 tap-scale text-stone-600 dark:text-stone-300 hover:text-primary dark:hover:text-primary hover:bg-stone-100 dark:hover:bg-white/8 rounded-xl transition-colors"
               aria-label="Torna indietro"
             >
@@ -294,10 +324,12 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                 })()}
 
                 {/* Vai al profilo */}
-                <Link href="/dashboard" onClick={onMenuToggle}>
-                  <button className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-stone-200 dark:border-white/10 text-sm font-semibold text-foreground hover:bg-stone-50 dark:hover:bg-white/5 transition-colors tap-scale">
-                    Vai al profilo <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                  </button>
+                <Link
+                  href="/dashboard"
+                  onClick={onMenuToggle}
+                  className="mt-3 w-full flex items-center justify-center gap-1.5 py-2 rounded-xl border border-stone-200 dark:border-white/10 text-sm font-semibold text-foreground hover:bg-stone-50 dark:hover:bg-white/5 transition-colors tap-scale"
+                >
+                  Vai al profilo <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                 </Link>
               </>
             ) : (

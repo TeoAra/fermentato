@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { 
   Wine, 
   Building2, 
@@ -68,44 +68,44 @@ export default function ImageWithFallback({
   noSrcSet = false,
 }: ImageWithFallbackProps) {
   const [imageError, setImageError] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(Boolean(src));
+
+  // A component instance can be reused for a different record. Resetting here
+  // prevents a previous broken image from hiding the replacement source.
+  useEffect(() => {
+    setImageError(false);
+    setIsLoading(Boolean(src));
+  }, [src]);
 
   // If no src provided or it's empty, show fallback immediately
   const shouldShowFallback = !src || imageError;
 
-  if (shouldShowFallback) {
-    return (
-      <div className={`flex items-center justify-center bg-stone-100 dark:bg-[#1A1D24] ${containerClassName} ${iconClassName}`}>
-        {getFallbackIcon(imageType, iconSize)}
-      </div>
-    );
-  }
-
   // Ottimizza URL Cloudinary; per loghi piccoli (sm/md) niente srcset
-  const optimized = cloudinaryUrl(src, width);
-  const srcSet = noSrcSet ? "" : cloudinarySrcSet(src);
+  const optimized = src ? cloudinaryUrl(src, width) : "";
+  const srcSet = src && !noSrcSet ? cloudinarySrcSet(src) : "";
 
   return (
-    <div className={containerClassName}>
-      <img
-        src={optimized}
-        srcSet={srcSet || undefined}
-        sizes={srcSet ? "(max-width: 640px) 50vw, 320px" : undefined}
-        loading="lazy"
-        decoding="async"
-        alt={alt}
-        className={className}
-        onError={() => {
-          setImageError(true);
-          setIsLoading(false);
-        }}
-        onLoad={() => setIsLoading(false)}
-        style={{ display: imageError ? 'none' : 'block' }}
-      />
-      {isLoading && (
-        <div className={`flex items-center justify-center bg-stone-100 dark:bg-[#1A1D24] ${className}`}>
+    <div className={`relative overflow-hidden ${containerClassName} ${className}`}>
+      {!shouldShowFallback && (
+        <img
+          src={optimized}
+          srcSet={srcSet || undefined}
+          sizes={srcSet ? "(max-width: 640px) 50vw, 320px" : undefined}
+          loading="lazy"
+          decoding="async"
+          alt={alt}
+          className={`absolute inset-0 h-full w-full ${className}`}
+          onError={() => {
+            setImageError(true);
+            setIsLoading(false);
+          }}
+          onLoad={() => setIsLoading(false)}
+        />
+      )}
+      {(shouldShowFallback || isLoading) && (
+        <div className="absolute inset-0 flex items-center justify-center bg-stone-100 dark:bg-[#1A1D24]" aria-hidden={isLoading ? true : undefined}>
           <div className="animate-pulse">
-            {getFallbackIcon(imageType, iconSize)}
+            <span className={iconClassName}>{getFallbackIcon(imageType, iconSize)}</span>
           </div>
         </div>
       )}

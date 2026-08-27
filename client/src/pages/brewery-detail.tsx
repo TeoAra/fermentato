@@ -33,7 +33,7 @@ import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 import {
   BreweryHero,
@@ -801,7 +801,8 @@ export default function BreweryDetail() {
                 recommendedDimensions="1200x600px"
               />
             </div>
-            <div className="flex justify-end gap-3 pt-4">
+          </div>
+          <DialogFooter sticky className="gap-3 sm:space-x-0">
               <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 <X className="h-4 w-4 mr-2" /> Annulla
               </Button>
@@ -813,8 +814,7 @@ export default function BreweryDetail() {
                 <Save className="h-4 w-4 mr-2" />
                 {updateBreweryMutation.isPending ? "Salvataggio..." : "Salva"}
               </Button>
-            </div>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -1058,7 +1058,8 @@ export default function BreweryDetail() {
                 />
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2 border-t border-[#E8DED1] dark:border-white/[0.06]">
+          </div>
+          <DialogFooter sticky className="gap-2 sm:space-x-0">
               <Button
                 variant="outline"
                 className="rounded-xl"
@@ -1074,8 +1075,7 @@ export default function BreweryDetail() {
                 <Save className="h-4 w-4 mr-1.5" />
                 {isSavingBeer ? "Salvataggio..." : "Salva"}
               </Button>
-            </div>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

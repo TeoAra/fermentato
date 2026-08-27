@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { PriceFormatManager } from "@/components/price-format-manager";
@@ -306,7 +306,7 @@ export function BeerFullEditDialog({ beer, open, onOpenChange, onSaved }: {
               )}
             </div>
 
-            <div className="flex gap-3 pt-2 border-t border-stone-100 dark:border-white/[0.06]">
+            <DialogFooter sticky className="gap-3 sm:space-x-0">
               <Button
                 type="submit"
                 className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
@@ -318,7 +318,7 @@ export function BeerFullEditDialog({ beer, open, onOpenChange, onSaved }: {
               <Button variant="outline" type="button" onClick={() => onOpenChange(false)} className="px-6 border-stone-200 rounded-xl h-12">
                 Annulla
               </Button>
-            </div>
+            </DialogFooter>
           </form>
         </Form>
       </DialogContent>
@@ -2085,7 +2085,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                   />
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-6 border-t">
+                <DialogFooter sticky className="sm:space-x-3">
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -2104,7 +2104,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                   >
                     {editingItem ? "Salva" : "Aggiungi"}
                   </Button>
-                </div>
+                </DialogFooter>
               </div>
             </DialogContent>
           </Dialog>
