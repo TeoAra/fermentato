@@ -182,10 +182,9 @@
     <!-- ─── Fonts (non-blocking) ───────────────────────────────────────── -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <!-- Load fonts async so they never block FCP -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,600&family=Poppins:wght@400;500;600;700;800;900&display=swap" />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,600&family=Poppins:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'" />
-    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;0,9..144,800;0,9..144,900;1,9..144,400;1,9..144,600&family=Poppins:wght@400;500;600;700;800;900&display=swap" /></noscript>
+    <!-- One non-blocking request containing only variants used by the app. -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Fraunces:opsz,wght@9..144,700&family=Poppins:wght@400;500;600;700;800;900&display=swap" media="print" onload="this.media='all'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;700&family=Fraunces:opsz,wght@9..144,700&family=Poppins:wght@400;500;600;700;800;900&display=swap" /></noscript>
   </head>
   <body>
     <div id="root"></div>
@@ -233,37 +232,6 @@
     </script>
 
     <script type="module" src="/src/main.tsx"></script>
-    <script defer src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1"></script>
-    <script type="text/javascript">
-      window['__onGCastApiAvailable'] = function(isAvailable) {
-        if (!isAvailable || !window.cast || !window.cast.framework) return;
-        try {
-          fetch('/api/cast-config').then(function(r) { return r.json(); }).then(function(config) {
-            try {
-              var ctx = window.cast.framework.CastContext.getInstance();
-              ctx.setOptions({
-                receiverApplicationId: config.appId || window.chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-                autoJoinPolicy: window.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-              });
-              window.__castAvailable = true;
-              window.__castCustomReceiver = !!config.appId;
-              window.dispatchEvent(new Event('castAvailable'));
-            } catch(e) { window.__castAvailable = false; }
-          }).catch(function() {
-            try {
-              var ctx = window.cast.framework.CastContext.getInstance();
-              ctx.setOptions({
-                receiverApplicationId: window.chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
-                autoJoinPolicy: window.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED
-              });
-              window.__castAvailable = true;
-              window.__castCustomReceiver = false;
-              window.dispatchEvent(new Event('castAvailable'));
-            } catch(e) { window.__castAvailable = false; }
-          });
-        } catch(e) { window.__castAvailable = false; }
-      };
-    </script>
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
   </body>
 </html>

@@ -4,7 +4,7 @@
  * Su iOS/Android native (Capacitor) usa il plugin NativeCast che wrappa
  * il Google Cast SDK nativo (Swift su iOS, Kotlin su Android).
  *
- * Su browser/PWA usa il Google Cast JS SDK caricato in index.html.
+ * Su browser/PWA carica il Google Cast JS SDK solo quando il hook viene usato.
  *
  * castState:
  *  "unavailable"    → SDK non disponibile
@@ -61,6 +61,45 @@ interface UseChromecastReturn {
 // Entrambe le piattaforme native usano il plugin NativeCast
 const isNative = Capacitor.isNativePlatform();
 const isNativeIos = isNative && Capacitor.getPlatform() === "ios";
+
+const CAST_SDK_URL =
+  "https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1";
+let castSdkPromise: Promise<void> | null = null;
+
+function loadCastSdk(appId: string): Promise<void> {
+  const w = window as any;
+  if (w.cast?.framework) return Promise.resolve();
+  if (castSdkPromise) return castSdkPromise;
+
+  castSdkPromise = new Promise<void>((resolve, reject) => {
+    w.__onGCastApiAvailable = (isAvailable: boolean) => {
+      if (!isAvailable || !w.cast?.framework) {
+        castSdkPromise = null;
+        reject(new Error("Google Cast SDK unavailable"));
+        return;
+      }
+
+      const ctx = w.cast.framework.CastContext.getInstance();
+      ctx.setOptions({
+        receiverApplicationId:
+          appId || w.chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+        autoJoinPolicy: w.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+      });
+      resolve();
+    };
+
+    const script = document.createElement("script");
+    script.src = CAST_SDK_URL;
+    script.async = true;
+    script.onerror = () => {
+      castSdkPromise = null;
+      reject(new Error("Failed to load Google Cast SDK"));
+    };
+    document.head.appendChild(script);
+  });
+
+  return castSdkPromise;
+}
 
 // ── Hook principale ──────────────────────────────────────────────────────────
 export function useChromecast(): UseChromecastReturn {
@@ -132,15 +171,25 @@ export function useChromecast(): UseChromecastReturn {
   useEffect(() => {
     if (isNative) return;
 
+    let mounted = true;
+    let ctx: any;
+    let framework: any;
+    let updateState: (() => void) | undefined;
+
     const init = () => {
       const w = window as any;
-      if (!w.cast?.framework) return;
+      if (!mounted || !w.cast?.framework) return;
 
-      const framework = w.cast.framework;
+      framework = w.cast.framework;
       const CastStateEnum = framework.CastState;
-      const ctx = framework.CastContext.getInstance();
+      ctx = framework.CastContext.getInstance();
+      ctx.setOptions({
+        receiverApplicationId:
+          appId || w.chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,
+        autoJoinPolicy: w.chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED,
+      });
 
-      const updateState = () => {
+      updateState = () => {
         const cs = ctx.getCastState();
         if (cs === CastStateEnum.NO_DEVICES_AVAILABLE) {
           setCastState("no_devices");
@@ -164,13 +213,20 @@ export function useChromecast(): UseChromecastReturn {
       updateState();
     };
 
-    if ((window as any).__castAvailable) {
-      init();
-    } else {
-      window.addEventListener("castAvailable", init, { once: true });
-    }
-    return () => window.removeEventListener("castAvailable", init);
-  }, []);
+    loadCastSdk(appId).then(init).catch(() => {
+      if (mounted) setCastState("unavailable");
+    });
+
+    return () => {
+      mounted = false;
+      if (ctx && framework && updateState) {
+        ctx.removeEventListener(
+          framework.CastContextEventType.CAST_STATE_CHANGED,
+          updateState
+        );
+      }
+    };
+  }, [appId]);
 
   // ── castToTV ──────────────────────────────────────────────────────────────
   const castToTV = useCallback(
