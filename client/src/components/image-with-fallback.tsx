@@ -24,6 +24,12 @@ interface ImageWithFallbackProps {
   width?: number;
   /** Disabilita srcset (utile per loghi piccoli sempre uguali). */
   noSrcSet?: boolean;
+  /** Regole responsive per scegliere la variante più piccola adatta al layout. */
+  sizes?: string;
+  /** Larghezze candidate per il srcset Cloudinary. */
+  srcSetWidths?: number[];
+  loading?: "eager" | "lazy";
+  fetchPriority?: "high" | "low" | "auto";
 }
 
 const getFallbackIcon = (type: ImageType, iconSize: string) => {
@@ -66,6 +72,10 @@ export default function ImageWithFallback({
   iconClassName = "",
   width = 320,
   noSrcSet = false,
+  sizes = "(max-width: 640px) 50vw, 320px",
+  srcSetWidths,
+  loading = "lazy",
+  fetchPriority = "auto",
 }: ImageWithFallbackProps) {
   const [imageError, setImageError] = useState(false);
   const [isLoading, setIsLoading] = useState(Boolean(src));
@@ -82,7 +92,7 @@ export default function ImageWithFallback({
 
   // Ottimizza URL Cloudinary; per loghi piccoli (sm/md) niente srcset
   const optimized = src ? cloudinaryUrl(src, width) : "";
-  const srcSet = src && !noSrcSet ? cloudinarySrcSet(src) : "";
+  const srcSet = src && !noSrcSet ? cloudinarySrcSet(src, srcSetWidths) : "";
 
   return (
     <div className={`relative overflow-hidden ${containerClassName} ${className}`}>
@@ -90,8 +100,9 @@ export default function ImageWithFallback({
         <img
           src={optimized}
           srcSet={srcSet || undefined}
-          sizes={srcSet ? "(max-width: 640px) 50vw, 320px" : undefined}
-          loading="lazy"
+          sizes={srcSet ? sizes : undefined}
+          loading={loading}
+          fetchPriority={fetchPriority}
           decoding="async"
           alt={alt}
           className={`absolute inset-0 h-full w-full ${className}`}

@@ -6,6 +6,7 @@ import { Beer, Search, X, Star, Bookmark, Dices, Flame, Sparkles, Trophy, Chevro
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
 import { LoadMoreSentinel } from "@/components/social/LoadMoreSentinel";
+import ImageWithFallback from "@/components/image-with-fallback";
 
 const PAGE_SIZE = 30;
 
@@ -104,19 +105,21 @@ function styleDescription(style: string): string {
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
 function BeerCard({ beer }: { beer: any }) {
-  const [imgErr, setImgErr] = useState(false);
   const rating = parseFloat(beer.rating || beer.avgRating || "0");
   const abv = beer.abv != null ? `${beer.abv}%` : null;
   return (
     <Link href={`/beer/${beer.id}`}>
       <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl p-2.5 border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99] transition-all duration-200 cursor-pointer">
-        <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1A1D24] flex-shrink-0 overflow-hidden flex items-center justify-center">
-          {!imgErr && (beer.imageUrl || beer.breweryLogoUrl) ? (
-            <img src={beer.imageUrl || beer.breweryLogoUrl} alt={beer.name} className="w-full h-full object-cover" loading="lazy" decoding="async" onError={() => setImgErr(true)} />
-          ) : (
-            <Beer className="w-6 h-6 text-stone-400" />
-          )}
-        </div>
+        <ImageWithFallback
+          src={beer.imageUrl || beer.breweryLogoUrl}
+          alt={beer.name}
+          imageType="beer"
+          width={112}
+          srcSetWidths={[56, 112, 168]}
+          sizes="56px"
+          containerClassName="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1A1D24] flex-shrink-0"
+          className="object-cover"
+        />
         <div className="flex-1 min-w-0">
           <p className="font-bold text-[14px] text-foreground truncate">{beer.name}</p>
           <p className="text-[12px] text-stone-500 dark:text-stone-400 truncate">{beer.breweryName || beer.brewery?.name}</p>

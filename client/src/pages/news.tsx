@@ -4,6 +4,7 @@ import { Helmet } from "react-helmet-async";
 import { ExternalLink, Clock, Rss, ChevronLeft, ChevronRight } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
+import { cloudinaryUrl, cloudinarySrcSet } from "@/lib/cloudinary";
 
 const PAGE_SIZE = 12;
 
@@ -55,7 +56,8 @@ function FeaturedArticle({ item }: { item: NewsItem }) {
       className="group relative block rounded-3xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_40px_rgba(0,0,0,0.5)] hover:shadow-[0_14px_50px_rgba(0,0,0,0.18)] transition-all duration-300">
       {item.image_url ? (
         <div className="relative h-72 sm:h-[420px]">
-          <img src={item.image_url} alt={item.title} loading="lazy"
+          <img src={cloudinaryUrl(item.image_url, 960)} srcSet={cloudinarySrcSet(item.image_url, [480, 768, 960, 1280]) || undefined}
+            sizes="(max-width: 640px) calc(100vw - 2rem), 960px" alt={item.title} loading="eager" fetchPriority="high" decoding="async"
             onError={e => { (e.target as HTMLImageElement).parentElement!.classList.add("bg-gradient-to-br","from-amber-400","to-orange-600"); (e.target as HTMLImageElement).style.display="none"; }}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
@@ -96,7 +98,8 @@ function ArticleCard({ item }: { item: NewsItem }) {
       className="group flex flex-col bg-white dark:bg-[#1A1D24] rounded-2xl overflow-hidden border border-stone-100 dark:border-white/[0.06] shadow-[0_2px_16px_rgba(0,0,0,0.05)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.3)] hover:shadow-[0_6px_28px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_6px_28px_rgba(0,0,0,0.45)] hover:border-primary/20 transition-all duration-200 active:scale-[0.98]">
       {item.image_url && (
         <div className="relative overflow-hidden h-40 sm:h-44 flex-shrink-0 bg-stone-100 dark:bg-stone-800">
-          <img src={item.image_url} alt={item.title} loading="lazy"
+          <img src={cloudinaryUrl(item.image_url, 640)} srcSet={cloudinarySrcSet(item.image_url, [320, 480, 640, 960]) || undefined}
+            sizes="(max-width: 640px) calc(100vw - 2rem), (max-width: 1024px) 50vw, 320px" alt={item.title} loading="lazy" decoding="async"
             onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.05]" />
         </div>

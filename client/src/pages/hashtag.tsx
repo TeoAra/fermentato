@@ -10,13 +10,24 @@ import { PostContent } from "@/components/social/PostContent";
 import TrendingHashtags from "@/components/social/TrendingHashtags";
 import { MicroblogSocialBar } from "@/components/social/MicroblogSocialBar";
 import { LoadMoreSentinel } from "@/components/social/LoadMoreSentinel";
+import { cloudinaryUrl, cloudinarySrcSet } from "@/lib/cloudinary";
 
 const HASHTAG_PAGE_SIZE = 20;
 
 function PostAvatar({ post }: { post: any }) {
   const name = post.display_name ?? post.username ?? "?";
   return post.profile_image_url ? (
-    <img loading="lazy" src={post.profile_image_url} alt={name} className="w-9 h-9 rounded-full object-cover flex-shrink-0" />
+    <img
+      loading="lazy"
+      decoding="async"
+      src={cloudinaryUrl(post.profile_image_url, 72)}
+      srcSet={cloudinarySrcSet(post.profile_image_url, [36, 72, 108]) || undefined}
+      sizes="36px"
+      width={36}
+      height={36}
+      alt={name}
+      className="w-9 h-9 rounded-full object-cover flex-shrink-0"
+    />
   ) : (
     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
       <span className="text-primary text-sm font-bold">{(name[0] ?? "?").toUpperCase()}</span>
@@ -119,7 +130,17 @@ export default function HashtagPage() {
               </div>
               <PostContent content={post.content} />
               {post.image_url && (
-                <img src={post.image_url} alt="" className="mt-3 rounded-xl w-full max-h-96 object-cover" loading="lazy" />
+                <img
+                  src={cloudinaryUrl(post.image_url, 640)}
+                  srcSet={cloudinarySrcSet(post.image_url, [320, 480, 640, 960]) || undefined}
+                  sizes="(max-width: 640px) calc(100vw - 2rem), 576px"
+                  width={640}
+                  height={480}
+                  alt=""
+                  className="mt-3 rounded-xl w-full h-auto max-h-96 object-cover"
+                  loading="lazy"
+                  decoding="async"
+                />
               )}
               {(post.beer_name || post.pub_name || post.brewery_name) && (
                 <div className="mt-2 flex flex-wrap gap-1.5">
