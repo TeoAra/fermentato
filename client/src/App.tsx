@@ -31,6 +31,13 @@ import { isIosNative, isNativeApp } from "@/lib/platform";
 import { estimateIosInsets } from "@/lib/safe-area-estimate";
 import { NativeSplashOverlay } from "@/components/native-splash-overlay";
 import type { User } from "@shared/schema";
+import {
+  currentResumeUrl,
+  isSafeResumeUrl,
+  readAppResumeState,
+  saveAppResumeState,
+  type AppResumeState,
+} from "@/lib/app-resume-state";
 
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=to.fermenta.app";
 const APP_STORE_URL  = "https://apps.apple.com/it/app/fermenta-to/id6769051632";
@@ -359,14 +366,163 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, { hasError: 
   }
 }
 
-// Component to scroll to top on route change
-function ScrollToTop() {
-  const [location] = useLocation();
-  
+function RouteScrollMemory({
+  location,
+  navigate,
+  onStartupResolved,
+}: {
+  location: string;
+  navigate: (to: string, options?: { replace?: boolean }) => void;
+  onStartupResolved: () => void;
+}) {
+  const previousLocationRef = useRef(location);
+  const pendingRestoreRef = useRef<AppResumeState | null>(null);
+  const bootHandledRef = useRef(false);
+  const isNative = Capacitor.isNativePlatform();
+
+  // On a normal native cold start the WebView opens at root. Explicit URLs,
+  // deep links and notification destinations already have a non-root path and
+  // must always win over the remembered page.
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [location]);
-  
+    if (bootHandledRef.current) return;
+    if (!isNative || (location !== "/" && location !== "")) {
+      bootHandledRef.current = true;
+      onStartupResolved();
+      return;
+    }
+
+    let timer: number | undefined;
+    const resolveStartup = () => {
+      if (bootHandledRef.current) return;
+      // A deep link or notification may have changed the URL while native
+      // plugins were initializing. Never replace that explicit destination.
+      if (currentResumeUrl() !== "/") {
+        bootHandledRef.current = true;
+        onStartupResolved();
+        return;
+      }
+
+      bootHandledRef.current = true;
+      const saved = readAppResumeState();
+      if (!saved || saved.url === "/") {
+        if (saved?.scrollY) pendingRestoreRef.current = saved;
+        onStartupResolved();
+        return;
+      }
+
+      pendingRestoreRef.current = saved;
+      navigate(saved.url, { replace: true });
+      onStartupResolved();
+    };
+
+    if (document.documentElement.dataset.nativeLaunchReady === "true") {
+      resolveStartup();
+    } else {
+      window.addEventListener("native-launch-ready", resolveStartup, { once: true });
+      // Do not leave startup blocked if a native plugin fails to initialize.
+      timer = window.setTimeout(resolveStartup, 800);
+    }
+
+    return () => {
+      window.removeEventListener("native-launch-ready", resolveStartup);
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [isNative, location, navigate, onStartupResolved]);
+
+  useEffect(() => {
+    if (!isNative) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      previousLocationRef.current = location;
+      return;
+    }
+
+    const pending = pendingRestoreRef.current;
+    if (pending && pending.url === currentResumeUrl()) {
+      pendingRestoreRef.current = null;
+      const startedAt = Date.now();
+      let timer: number | undefined;
+      let firstFrame: number | undefined;
+      let secondFrame: number | undefined;
+      let cancelled = false;
+
+      const restore = () => {
+        if (cancelled || currentResumeUrl() !== pending.url) return;
+        const maxScroll = Math.max(
+          0,
+          document.documentElement.scrollHeight - window.innerHeight,
+        );
+        window.scrollTo({
+          top: Math.min(pending.scrollY, maxScroll),
+          left: 0,
+          behavior: "instant",
+        });
+
+        if (
+          Math.abs(window.scrollY - pending.scrollY) > 8 &&
+          Date.now() - startedAt < 4_000
+        ) {
+          timer = window.setTimeout(restore, 100);
+        }
+      };
+
+      firstFrame = requestAnimationFrame(() => {
+        if (cancelled) return;
+        secondFrame = requestAnimationFrame(restore);
+      });
+      previousLocationRef.current = location;
+      return () => {
+        cancelled = true;
+        if (firstFrame !== undefined) cancelAnimationFrame(firstFrame);
+        if (secondFrame !== undefined) cancelAnimationFrame(secondFrame);
+        if (timer !== undefined) window.clearTimeout(timer);
+      };
+    }
+
+    if (previousLocationRef.current !== location) {
+      window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      previousLocationRef.current = location;
+      if (isSafeResumeUrl(currentResumeUrl())) {
+        saveAppResumeState(currentResumeUrl(), 0);
+      }
+    }
+  }, [isNative, location]);
+
+  useEffect(() => {
+    if (!isNative) return;
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+
+    let saveTimer: number | undefined;
+    const save = () => {
+      const url = currentResumeUrl();
+      if (isSafeResumeUrl(url)) saveAppResumeState(url, window.scrollY);
+    };
+    const scheduleSave = () => {
+      if (saveTimer !== undefined) return;
+      saveTimer = window.setTimeout(() => {
+        saveTimer = undefined;
+        save();
+      }, 250);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") save();
+    };
+
+    window.addEventListener("scroll", scheduleSave, { passive: true });
+    window.addEventListener("pagehide", save);
+    window.addEventListener("native-app-pause", save);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      if (saveTimer !== undefined) window.clearTimeout(saveTimer);
+      save();
+      window.removeEventListener("scroll", scheduleSave);
+      window.removeEventListener("pagehide", save);
+      window.removeEventListener("native-app-pause", save);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [isNative]);
+
   return null;
 }
 function Router() {
@@ -375,6 +531,9 @@ function Router() {
   const typedUser = user as AuthUser | null;
   const [location, navigate] = useLocation();
   const currentRouteRef = useRef(location);
+  const [startupResumeResolved, setStartupResumeResolved] = useState(
+    !Capacitor.isNativePlatform(),
+  );
 
   // Mark entries created inside the SPA so detail-page Back can distinguish
   // real in-app history from a direct/external deep link. document.referrer
@@ -426,6 +585,7 @@ function Router() {
   // La pagina /tv/:id è più leggera della SmartPubDashboard e mostra subito
   // la taplist senza dover aprire il pannello Cast manualmente.
   useEffect(() => {
+    if (!startupResumeResolved) return;
     if (isLoading) return;
     if (!isAuthenticated) return;
     const isNativeAndroid = Capacitor.isNativePlatform() && Capacitor.getPlatform() === "android";
@@ -440,12 +600,15 @@ function Router() {
     if (location === "/" || location === "") {
       navigate(`/tv/${pubId}`);
     }
-  }, [isLoading, isAuthenticated, typedUser?.activeRole, typedUser?.managedPubId, location, navigate]);
+  }, [startupResumeResolved, isLoading, isAuthenticated, typedUser?.activeRole, typedUser?.managedPubId, location, navigate]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* Scroll to top on route change */}
-      <ScrollToTop />
+      <RouteScrollMemory
+        location={location}
+        navigate={navigate}
+        onStartupResolved={() => setStartupResumeResolved(true)}
+      />
       {/* Navigation progress bar */}
       <NavigationProgress />
 

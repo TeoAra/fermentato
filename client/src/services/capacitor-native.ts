@@ -121,16 +121,31 @@ async function setupAppLifecycle() {
   try {
     const { App } = await import("@capacitor/app");
 
+    const openExplicitUrl = (rawUrl: string) => {
+      console.log("[native] Deep link:", rawUrl);
+      try {
+        const url = new URL(rawUrl);
+        const path = url.pathname + url.search + url.hash;
+        const current = window.location.pathname + window.location.search + window.location.hash;
+        if (path !== current) {
+          history.pushState(null, "", path);
+          window.dispatchEvent(new PopStateEvent("popstate"));
+        }
+      } catch {}
+    };
+
     // Deep link handler
     App.addListener("appUrlOpen", (event) => {
-      console.log("[native] Deep link:", event.url);
-      try {
-        const url = new URL(event.url);
-        const path = url.pathname + url.search + url.hash;
-        history.pushState(null, "", path);
-        window.dispatchEvent(new PopStateEvent("popstate"));
-      } catch {}
+      openExplicitUrl(event.url);
     });
+
+    // Resolve a cold-start URL before the remembered route is applied. The
+    // dataset marker also covers the case where this finishes before React has
+    // attached its event listener.
+    const launch = await App.getLaunchUrl();
+    if (launch?.url) openExplicitUrl(launch.url);
+    document.documentElement.dataset.nativeLaunchReady = "true";
+    window.dispatchEvent(new CustomEvent("native-launch-ready"));
 
     // Back button su Android — naviga indietro o chiude l'app
     App.addListener("backButton", ({ canGoBack }) => {
