@@ -46,6 +46,7 @@ import {
   type BottleItem,
   type FoodMenu,
 } from "@/components/pub";
+import { PageContainer } from "@/components/layout/page-container";
 import DesktopAnchorNav from "@/components/DesktopAnchorNav";
 import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
 
@@ -55,47 +56,47 @@ const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
 function DrinkItemRow({ item, emoji }: { item: any; emoji: string }) {
   return (
-    <div className="flex items-center gap-3 p-3 rounded-2xl bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06]">
+    <div className="flex items-center gap-3 p-3 rounded-2xl bg-card border border-border">
       {item.imageUrl ? (
         <img src={item.imageUrl} alt={item.name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
       ) : (
-        <div className="w-10 h-10 rounded-xl bg-stone-100 dark:bg-[#252830] flex items-center justify-center text-lg flex-shrink-0">
+        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-lg flex-shrink-0">
           {emoji}
         </div>
       )}
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm text-[#151515] dark:text-[#F5F5F5] leading-snug">{item.name}</p>
+        <p className="font-semibold text-sm text-foreground leading-snug">{item.name}</p>
         {(item.vintage || item.distillery || item.producer) && (
-          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {[item.producer, item.vintage, item.distillery].filter(Boolean).join(" · ")}
           </p>
         )}
         {item.description && (
-          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5 line-clamp-2">{item.description}</p>
+          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
         )}
       </div>
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
         {item.priceByGlass && (
           <div className="flex flex-col items-end">
-            <span className="text-[10px] font-medium text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide leading-none">Calice</span>
-            <span className="text-base font-bold text-[#F59E0B] leading-tight">€{parseFloat(item.priceByGlass).toFixed(2)}</span>
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide leading-none">Calice</span>
+            <span className="text-base font-bold text-primary leading-tight">€{parseFloat(item.priceByGlass).toFixed(2)}</span>
           </div>
         )}
         {item.priceByBottle && (
           <div className="flex flex-col items-end">
-            <span className="text-[10px] font-medium text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide leading-none">Bottiglia</span>
-            <span className="text-base font-semibold text-[#151515] dark:text-[#F5F5F5] leading-tight">€{parseFloat(item.priceByBottle).toFixed(2)}</span>
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide leading-none">Bottiglia</span>
+            <span className="text-base font-semibold text-foreground leading-tight">€{parseFloat(item.priceByBottle).toFixed(2)}</span>
           </div>
         )}
         {item.price && !item.priceByGlass && !item.priceByBottle && (
-          <span className="text-base font-bold text-[#F59E0B]">€{parseFloat(item.price).toFixed(2)}</span>
+          <span className="text-base font-bold text-primary">€{parseFloat(item.price).toFixed(2)}</span>
         )}
         <div className="flex items-center gap-1.5">
           {item.volumeCl && (
-            <span className="text-xs text-[#6B6357] dark:text-[#B7BDC7]">{item.volumeCl}cl</span>
+            <span className="text-xs text-muted-foreground">{item.volumeCl}cl</span>
           )}
           {item.alcoholDegree && (
-            <span className="text-xs text-[#6B6357] dark:text-[#B7BDC7]">{item.alcoholDegree}%</span>
+            <span className="text-xs text-muted-foreground">{item.alcoholDegree}%</span>
           )}
         </div>
       </div>
@@ -126,7 +127,7 @@ function DrinksPublicSection({ categories, legacyItems }: { categories: any[]; l
         transition={{ duration: 0.3 }}
         className="space-y-3 pt-4"
       >
-        <h2 className="text-xl font-black text-[#151515] dark:text-[#F5F5F5]">Bevande</h2>
+        <h2 className="text-xl font-black text-foreground tracking-tight">Bevande</h2>
         <div className="space-y-3">
           {visibleCats.map((cat: any) => {
             const emoji = cat.type === "vino" ? "🍷" : cat.type === "birra" ? "🍺" : "🥤";
@@ -136,28 +137,28 @@ function DrinksPublicSection({ categories, legacyItems }: { categories: any[]; l
             return (
               <section
                 key={cat.id}
-                className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden"
+                className="bg-card rounded-2xl border border-border shadow-card-sm overflow-hidden"
               >
                 <button
                   type="button"
                   onClick={() => toggleCat(cat.id)}
                   aria-expanded={isOpen}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 text-left active:bg-[#FAF7F1] dark:active:bg-white/[0.03] transition-colors"
+                  className="w-full min-h-11 flex items-center gap-3 px-4 py-3.5 text-left active:bg-muted transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 >
                   <span className="text-xl flex-shrink-0">{emoji}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-2 flex-wrap">
-                      <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5]">{cat.name}</h3>
-                      <span className="text-[10px] font-bold text-[#F59E0B] tabular-nums">
+                      <h3 className="text-base font-black text-foreground">{cat.name}</h3>
+                      <span className="text-[11px] font-bold text-primary tabular-nums">
                         {visibleItems.length} {visibleItems.length === 1 ? "prodotto" : "prodotti"}
                       </span>
                     </div>
                     {cat.description && (
-                      <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed mt-1">{cat.description}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed mt-1">{cat.description}</p>
                     )}
                   </div>
                   <ChevronDown
-                    className={`w-5 h-5 text-[#6B6357] dark:text-[#B7BDC7] flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+                    className={`w-5 h-5 text-muted-foreground flex-shrink-0 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
                   />
                 </button>
                 <AnimatePresence initial={false}>
@@ -169,11 +170,11 @@ function DrinksPublicSection({ categories, legacyItems }: { categories: any[]; l
                       transition={{ duration: 0.25, ease: "easeOut" }}
                       className="overflow-hidden"
                     >
-                      <div className="border-t border-[#E8DED1] dark:border-white/[0.06]">
+                      <div className="border-t border-border">
                         {cat.infoBox && (
-                          <div className="px-4 py-3 bg-[#FFF7EA] dark:bg-[#F59E0B]/10 flex items-start gap-2">
+                          <div className="px-4 py-3 bg-accent flex items-start gap-2">
                             <span className="text-base flex-shrink-0 mt-0.5">📌</span>
-                            <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed">{cat.infoBox}</p>
+                            <p className="text-xs text-muted-foreground leading-relaxed">{cat.infoBox}</p>
                           </div>
                         )}
                         <div className="p-3 space-y-2">
@@ -213,13 +214,13 @@ function DrinksPublicSection({ categories, legacyItems }: { categories: any[]; l
 
   return (
     <section className="pt-6 space-y-6">
-      <h2 className="text-xl font-bold text-[#151515] dark:text-[#F5F5F5]">Bevande</h2>
+      <h2 className="text-xl font-black text-foreground tracking-tight">Bevande</h2>
       {ordered.map(cat => {
         const meta = LEGACY_META[cat] ?? { label: cat, emoji: "🏷️" };
         const catItems = visible.filter((i: any) => (i.category ?? "vino") === cat);
         return (
           <div key={cat}>
-            <h3 className="text-sm font-semibold text-[#6B6357] dark:text-[#B7BDC7] uppercase tracking-wide mb-3 flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3 flex items-center gap-1.5">
               <span>{meta.emoji}</span>
               <span>{meta.label}</span>
             </h3>
@@ -545,25 +546,25 @@ export default function PubDetail() {
   // Loading / 404
   if (pubLoading) {
     return (
-      <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#12151A] dark:bg-[#0B0D10]">
-        <div className="max-w-[720px] mx-auto px-4 py-8 space-y-4">
-          <div className="h-[260px] rounded-2xl bg-stone-200 animate-pulse" />
-          <div className="h-32 rounded-2xl bg-stone-200 animate-pulse" />
-          <div className="h-64 rounded-2xl bg-stone-200 animate-pulse" />
-        </div>
+      <div className="min-h-screen bg-background">
+        <PageContainer variant="hero" className="py-8 space-y-4">
+          <div className="h-[260px] rounded-2xl bg-muted animate-pulse" />
+          <div className="h-32 rounded-2xl bg-muted animate-pulse" />
+          <div className="h-64 rounded-2xl bg-muted animate-pulse" />
+        </PageContainer>
       </div>
     );
   }
 
   if (!pub) {
     return (
-      <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#12151A] dark:bg-[#0B0D10] flex items-center justify-center px-4">
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center space-y-4">
           <div className="w-16 h-16 rounded-2xl bg-red-500 mx-auto flex items-center justify-center">
-            <XCircle className="w-8 h-8 text-white" />
+            <XCircle className="w-8 h-8 text-destructive-foreground" />
           </div>
-          <h2 className="text-2xl font-bold text-[#151515] dark:text-[#F5F5F5]">Pub non trovato</h2>
-          <p className="text-[#6B6357] dark:text-[#B7BDC7]">Il pub che stai cercando non esiste o è stato rimosso.</p>
+          <h2 className="text-2xl font-bold text-foreground">Pub non trovato</h2>
+          <p className="text-muted-foreground">Il pub che stai cercando non esiste o è stato rimosso.</p>
           <Button asChild>
             <Link href="/">Torna alla Home</Link>
           </Button>
@@ -613,7 +614,7 @@ export default function PubDetail() {
   };
 
   return (
-    <div className="min-h-screen bg-[#FAF7F1] dark:bg-[#12151A] dark:bg-[#0B0D10]">
+    <div className="min-h-screen bg-background">
       <Helmet>
         <title>{seoTitle}</title>
         <meta name="description" content={seoDesc} />
@@ -713,15 +714,16 @@ export default function PubDetail() {
 
       <DesktopAnchorNav tabs={TABS} />
 
-      <main
-        className="max-w-[720px] lg:max-w-7xl mx-auto px-4 lg:px-8"
+      <PageContainer
+        as="main"
+        variant="hero"
         style={{ paddingBottom: "calc(80px + var(--frozen-sab))" }}
       >
           {canManage && (
               <div className="pt-3">
                 <Link
                   href={isAdmin ? `/admin/edit-pub/${id}` : "/dashboard"}
-                  className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] text-xs font-bold text-[#151515] dark:text-[#F5F5F5] hover:border-[#F59E0B] transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 min-h-11 rounded-full bg-card border border-border text-xs font-bold text-foreground hover:border-primary transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   data-testid="button-manage"
                 >
                   Gestisci pub
@@ -730,7 +732,7 @@ export default function PubDetail() {
             )}
 
             <div id="section-overview" className={`${activeTab === "overview" ? "" : "hidden"} lg:!block`}>
-              <h2 className="hidden lg:block text-xl font-black text-[#151515] dark:text-[#F5F5F5] pt-4 mb-0">Panoramica</h2>
+              <h2 className="hidden lg:block text-xl font-black text-foreground tracking-tight pt-5 mb-0">Panoramica</h2>
               <OverviewSection
                 pub={pubData}
                 events={Array.isArray(pubEvents) ? pubEvents : []}
@@ -781,7 +783,7 @@ export default function PubDetail() {
                 menuInfoBox={(pub as any)?.menuInfoBox ?? null}
               />
             </div>
-      </main>
+      </PageContainer>
 
       {/* Check-in modal */}
       {checkinTarget && (
@@ -823,7 +825,7 @@ export default function PubDetail() {
                     <DialogTitle className="text-xl">{selectedEvent.title}</DialogTitle>
                   </div>
                 </DialogHeader>
-                <div className="flex items-center text-sm text-[#F59E0B] gap-2">
+                <div className="flex items-center text-sm text-primary gap-2">
                   <Calendar className="h-4 w-4" />
                   <span>
                     {format(new Date(selectedEvent.eventDate), "EEEE d MMMM yyyy 'alle' HH:mm", {

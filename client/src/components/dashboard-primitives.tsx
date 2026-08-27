@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { ChevronRight, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { PageContainer, type PageContainerVariant } from "@/components/layout/page-container";
 import { cn } from "@/lib/utils";
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -15,13 +16,17 @@ interface DashboardContainerProps {
   className?: string;
 }
 export function DashboardContainer({ children, size = "default", className }: DashboardContainerProps) {
-  // Allineato a PageContainer: narrow=3xl, default=5xl, wide=7xl (con hero=6xl disponibile via PageContainer)
-  const max = { narrow: "max-w-3xl", default: "max-w-5xl", wide: "max-w-7xl" }[size];
+  const variants: Record<NonNullable<DashboardContainerProps["size"]>, PageContainerVariant> = {
+    narrow: "narrow",
+    default: "standard",
+    wide: "wide",
+  };
+  const variant = variants[size];
   return (
     <div className="min-h-screen bg-background pb-20 lg:pb-12">
-      <div className={cn("mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6", max, className)}>
+      <PageContainer variant={variant} className={cn("py-4 sm:py-6 space-y-5 sm:space-y-6", className)}>
         {children}
-      </div>
+      </PageContainer>
     </div>
   );
 }
@@ -46,15 +51,15 @@ export function DashboardHero({
   title, subtitle, avatar, icon: Icon, badges = [], actions, variant = "primary", cover, children,
 }: DashboardHeroProps) {
   const bg = {
-    primary: "bg-gradient-to-br from-primary via-primary to-orange-600 text-white",
-    dark:    "bg-gradient-to-br from-[hsl(25,18%,10%)] via-[hsl(20,15%,18%)] to-[hsl(30,12%,24%)] text-white",
-    neutral: "bg-white dark:bg-card border border-stone-100 dark:border-border text-foreground",
+    primary: "gradient-bg-primary text-primary-foreground",
+    dark:    "bg-secondary text-secondary-foreground",
+    neutral: "bg-card border border-border text-foreground",
   }[variant];
 
   return (
     <section
       className={cn(
-        "relative overflow-hidden rounded-2xl shadow-sm",
+        "relative overflow-hidden rounded-2xl shadow-card",
         bg,
       )}
     >
@@ -77,28 +82,28 @@ export function DashboardHero({
               disabled={!avatar.onClick || avatar.uploading}
               aria-label="Cambia avatar"
               className={cn(
-                "relative shrink-0 rounded-2xl overflow-hidden bg-white/10 ring-2 sm:ring-4 ring-white/30 shadow-lg flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 mx-auto sm:mx-0",
-                avatar.onClick && "cursor-pointer hover:ring-white/50 transition",
+                "relative shrink-0 rounded-2xl overflow-hidden bg-primary-foreground/10 ring-2 sm:ring-4 ring-primary-foreground/30 shadow-card flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 mx-auto sm:mx-0",
+                avatar.onClick && "cursor-pointer hover:ring-primary-foreground/50 transition",
               )}
             >
               {avatar.src ? (
                 <img loading="lazy" src={avatar.src} alt={title} className="w-full h-full object-cover" />
               ) : (
-                <span className="text-2xl sm:text-3xl font-black text-white select-none">
+                <span className="text-2xl sm:text-3xl font-black text-primary-foreground select-none">
                   {avatar.fallback.slice(0, 2).toUpperCase()}
                 </span>
               )}
               {avatar.uploading && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin" />
                 </div>
               )}
             </button>
           )}
 
           {!avatar && Icon && (
-            <div className="shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/15 border border-white/25 backdrop-blur-sm flex items-center justify-center mx-auto sm:mx-0">
-              <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+            <div className="shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-primary-foreground/15 border border-primary-foreground/25 backdrop-blur-sm flex items-center justify-center mx-auto sm:mx-0">
+              <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-primary-foreground" />
             </div>
           )}
 
@@ -107,7 +112,7 @@ export function DashboardHero({
               {title}
             </h1>
             {subtitle && (
-              <div className={cn("text-sm sm:text-base mt-1", variant === "neutral" ? "text-muted-foreground" : "text-white/85")}>
+              <div className={cn("text-sm sm:text-base mt-1", variant === "neutral" ? "text-muted-foreground" : "text-primary-foreground/85")}>
                 {subtitle}
               </div>
             )}
@@ -122,7 +127,7 @@ export function DashboardHero({
                         "text-[11px] font-bold rounded-full",
                         variant === "neutral"
                           ? "bg-primary/10 text-primary border-primary/20"
-                          : "bg-white/20 text-white border-white/30 backdrop-blur-sm hover:bg-white/30",
+                          : "bg-primary-foreground/20 text-primary-foreground border-primary-foreground/30 backdrop-blur-sm hover:bg-primary-foreground/30",
                       )}
                     >
                       {BadgeIcon && <BadgeIcon className="w-3 h-3 mr-1" />}
@@ -159,19 +164,22 @@ export interface StatCardItem {
   href?: string;
 }
 const STAT_ACCENTS = {
-  primary:  { bg: "bg-primary/10",  text: "text-primary" },
-  blue:     { bg: "bg-blue-50 dark:bg-blue-950/30",       text: "text-blue-600 dark:text-blue-400" },
-  emerald:  { bg: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-600 dark:text-emerald-400" },
-  purple:   { bg: "bg-purple-50 dark:bg-purple-950/30",   text: "text-purple-600 dark:text-purple-400" },
-  red:      { bg: "bg-red-50 dark:bg-red-950/30",         text: "text-red-500 dark:text-red-400" },
-  amber:    { bg: "bg-amber-50 dark:bg-amber-950/30",     text: "text-amber-600 dark:text-amber-400" },
-  stone:    { bg: "bg-stone-100 dark:bg-[#1A1D24]/50",    text: "text-stone-600 dark:text-stone-300" },
+  primary:  { bg: "bg-accent",         text: "text-accent-foreground" },
+  blue:     { bg: "bg-info-subtle",    text: "text-info" },
+  emerald:  { bg: "bg-success-subtle", text: "text-success" },
+  purple:   { bg: "bg-violet-subtle",  text: "text-violet" },
+  red:      { bg: "bg-destructive/10", text: "text-destructive" },
+  amber:    { bg: "bg-warning-subtle", text: "text-warning" },
+  stone:    { bg: "bg-muted",          text: "text-slate" },
 };
 
 export function StatCard({ icon: Icon, label, value, accent = "primary", onClick, href }: StatCardItem) {
   const a = STAT_ACCENTS[accent];
   const inner = (
-    <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md transition-all p-3 sm:p-4 flex items-center justify-between gap-2 h-full">
+    <div className={cn(
+      "bg-card border border-border rounded-2xl shadow-card-sm p-3 sm:p-4 flex items-center justify-between gap-2 h-full",
+      (href || onClick) && "interactive-card",
+    )}>
       <div className="min-w-0">
         <p className="text-[11px] sm:text-xs font-semibold text-muted-foreground uppercase tracking-wider truncate">{label}</p>
         <p className="text-lg sm:text-2xl font-black text-foreground mt-0.5">{value}</p>
@@ -214,12 +222,12 @@ interface DashboardNavCardProps {
 }
 const NAV_ACCENTS: Record<string, string> = {
   primary: "border-l-primary",
-  blue:    "border-l-blue-600",
-  emerald: "border-l-emerald-600",
-  purple:  "border-l-purple-600",
-  red:     "border-l-red-500",
-  amber:   "border-l-amber-500",
-  stone:   "border-l-stone-400",
+  blue:    "border-l-info",
+  emerald: "border-l-success",
+  purple:  "border-l-violet",
+  red:     "border-l-destructive",
+  amber:   "border-l-warning",
+  stone:   "border-l-slate",
 };
 export function DashboardNavCard({
   href, icon: Icon, title, description, accent = "primary", badge,
@@ -228,7 +236,7 @@ export function DashboardNavCard({
   return (
     <Link href={href}>
       <Card className={cn(
-        "bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border-l-4 group h-full",
+        "bg-card border border-border rounded-2xl shadow-card-sm hover:shadow-card hover:-translate-y-0.5 transition-all duration-200 cursor-pointer border-l-4 group h-full",
         NAV_ACCENTS[accent],
       )}>
         <CardContent className="p-4 sm:p-5">
@@ -240,7 +248,7 @@ export function DashboardNavCard({
                 </div>
                 <h3 className="text-[15px] font-bold text-foreground leading-tight truncate">{title}</h3>
                 {badge !== undefined && badge !== 0 && (
-                  <span className="ml-auto text-[10px] font-black bg-red-500 text-white px-2 py-0.5 rounded-full">
+                  <span className="ml-auto text-[10px] font-black bg-destructive text-destructive-foreground px-2 py-0.5 rounded-full">
                     {badge}
                   </span>
                 )}
@@ -263,7 +271,7 @@ export function DashboardSection({
   title, icon: Icon, action, children, className,
 }: { title?: string; icon?: LucideIcon; action?: ReactNode; children: ReactNode; className?: string }) {
   return (
-    <section className={cn("bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-4 sm:p-5 md:p-6", className)}>
+    <section className={cn("bg-card border border-border rounded-2xl shadow-card-sm p-4 sm:p-5 md:p-6", className)}>
       {(title || action) && (
         <div className="flex items-center justify-between gap-3 mb-3 sm:mb-4">
           {title && (

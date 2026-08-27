@@ -1,4 +1,4 @@
-import { MapPin, Beer, Navigation } from "lucide-react";
+import { MapPin, Beer } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import ImageWithFallback from "@/components/image-with-fallback";
@@ -57,7 +57,7 @@ export default function PubCard({ pub, distance, isLast }: PubCardProps) {
 
           {/* Logo */}
           <div className="relative flex-shrink-0">
-            <div className="w-[52px] h-[52px] rounded-2xl overflow-hidden bg-stone-100 dark:bg-[#1A1D24] ring-1 ring-black/[0.04] dark:ring-white/[0.06] shadow-sm group-hover:shadow-md transition-shadow">
+            <div className="w-[52px] h-[52px] rounded-2xl overflow-hidden bg-muted ring-1 ring-border shadow-card-sm group-hover:shadow-card transition-shadow">
               <ImageWithFallback
                 src={pub.logoUrl || pub.coverImageUrl}
                 alt={pub.name}
@@ -75,20 +75,19 @@ export default function PubCard({ pub, distance, isLast }: PubCardProps) {
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-[15px] leading-snug truncate text-stone-900 dark:text-stone-50 group-hover:text-primary transition-colors"
+            <p className="font-bold text-[15px] leading-snug truncate text-foreground group-hover:text-primary transition-colors"
                style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
               {pub.name}
             </p>
             <div className="flex items-center gap-1.5 mt-1 flex-wrap">
               {(pub.city || pub.address) && (
-                <span className="flex items-center gap-0.5 text-[11px] text-stone-400 dark:text-stone-500 truncate leading-none">
+                <span className="flex items-center gap-0.5 text-xs text-muted-foreground truncate leading-none">
                   <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
                   {pub.city || pub.address}
                 </span>
               )}
               {distance != null && (
-                <span className="flex-shrink-0 text-[11px] font-bold leading-none"
-                      style={{ color: "#0ea5e9" }}>
+                <span className="flex-shrink-0 text-xs font-bold leading-none text-primary">
                   · {formatDist(distance)}
                 </span>
               )}
@@ -102,7 +101,7 @@ export default function PubCard({ pub, distance, isLast }: PubCardProps) {
               <span className={`inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-[3px] rounded-full leading-none ${
                 open
                   ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-stone-100 dark:bg-[#1A1D24]/60 text-stone-400 dark:text-stone-500'
+                  : 'bg-muted text-muted-foreground'
               }`}>
                 <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${open ? 'bg-emerald-500' : 'bg-stone-300 dark:bg-stone-600'}`} />
                 {open ? 'Aperto' : 'Chiuso'}
@@ -110,16 +109,16 @@ export default function PubCard({ pub, distance, isLast }: PubCardProps) {
             )}
             {/* Beer count pill */}
             {beersOnTap > 0 && (
-              <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-[3px] rounded-full leading-none bg-orange-50 dark:bg-orange-900/15 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-800/30">
+              <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-[3px] rounded-full leading-none bg-accent text-accent-foreground border border-primary/15">
                 <Beer className="w-2.5 h-2.5" />
-                {beersOnTap} 🍺
+                {beersOnTap}
               </span>
             )}
           </div>
         </div>
       </Link>
       {!isLast && (
-        <div className="h-px mx-4" style={{ background: "linear-gradient(90deg, transparent, hsl(36,14%,90%) 15%, hsl(36,14%,90%) 85%, transparent)" }} />
+        <div className="h-px mx-4 bg-border" />
       )}
     </div>
   );

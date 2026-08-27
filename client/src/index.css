@@ -167,8 +167,15 @@ html.dark {
 
   /* Extra palette tokens (hop green per success) */
   --violet: hsl(258, 60%, 55%);
+  --violet-subtle: hsl(258, 60%, 96%);
   --teal: hsl(174, 58%, 38%);
   --slate: hsl(28, 9%, 56%);                  /* #9C9489 */
+  --info: hsl(199, 89%, 42%);
+  --info-subtle: hsl(199, 89%, 95%);
+  --success: hsl(142, 56%, 36%);
+  --success-subtle: hsl(142, 56%, 95%);
+  --warning: hsl(36, 92%, 43%);
+  --warning-subtle: hsl(38, 100%, 96%);
 
   /* Destructive */
   --destructive: hsl(0, 78%, 55%);
@@ -270,8 +277,15 @@ html.dark {
 
   /* Extra palette tokens dark */
   --violet: hsl(258, 65%, 65%);
+  --violet-subtle: hsl(258, 35%, 18%);
   --teal: hsl(174, 52%, 44%);
   --slate: hsl(213, 8%, 54%);                 /* #7E8795 */
+  --info: hsl(199, 80%, 62%);
+  --info-subtle: hsl(199, 45%, 16%);
+  --success: hsl(142, 55%, 55%);
+  --success-subtle: hsl(142, 35%, 15%);
+  --warning: hsl(38, 92%, 58%);
+  --warning-subtle: hsl(36, 50%, 18%);
 
   /* Destructive */
   --destructive: hsl(0, 58%, 42%);

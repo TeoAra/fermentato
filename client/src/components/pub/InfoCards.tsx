@@ -6,7 +6,9 @@ import {
   Gift,
   Accessibility,
   ChevronRight,
+  type LucideIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { PubLike } from "./types";
 
 interface InfoCardsProps {
@@ -17,7 +19,7 @@ interface InfoCardsProps {
 interface InfoCardDef {
   key: string;
   label: string;
-  icon: any;
+  icon: LucideIcon;
   available: boolean;
   onClick?: () => void;
 }
@@ -65,40 +67,55 @@ export default function InfoCards({ pub, onTabChange }: InfoCardsProps) {
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
-      className="space-y-3 pt-4"
+       className="space-y-3 pt-5 sm:pt-6"
       data-testid="info-cards-section"
     >
       <div>
-        <h2 className="text-xl font-black text-[#151515] dark:text-[#F5F5F5]">Info utili</h2>
-        <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5">Servizi e informazioni aggiuntive</p>
+        <h2 className="text-xl font-black text-foreground tracking-tight">Info utili</h2>
+        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">Servizi e informazioni aggiuntive</p>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         {cards.map((c) => {
           const Icon = c.icon;
-          return (
-            <button
-              key={c.key}
-              type="button"
-              onClick={c.onClick}
-              className="text-left bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3.5 flex items-center gap-2.5 active:scale-[0.98] transition-transform"
-              data-testid={`info-card-${c.key}`}
-            >
+          const content = (
+            <>
               <div
-                className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                  c.available ? "bg-[#FFF7EA] dark:bg-[#F59E0B]/15 text-[#F59E0B]" : "bg-[#FAF7F1] dark:bg-[#12151A] text-[#6B6357] dark:text-[#B7BDC7]"
-                }`}
+                className={cn(
+                  "w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0",
+                  c.available ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground",
+                )}
               >
                 <Icon className="w-4.5 h-4.5" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] leading-tight">{c.label}</p>
-                <p className={`text-[10px] mt-0.5 font-semibold ${c.available ? "text-[#F59E0B]" : "text-[#6B6357] dark:text-[#B7BDC7]"}`}>
+                <p className="font-bold text-sm text-foreground leading-tight">{c.label}</p>
+                <p className={cn("text-[11px] mt-0.5 font-semibold", c.available ? "text-accent-foreground" : "text-muted-foreground")}>
                   {c.available ? "Disponibile" : "Non disponibile"}
                 </p>
               </div>
-              <ChevronRight className="w-4 h-4 text-[#6B6357] dark:text-[#B7BDC7] flex-shrink-0" />
+              {c.onClick && <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />}
+            </>
+          );
+
+          return c.onClick ? (
+            <button
+              key={c.key}
+              type="button"
+              onClick={c.onClick}
+              className="text-left bg-card rounded-2xl border border-border shadow-card-sm p-3.5 min-h-16 flex items-center gap-2.5 interactive-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              data-testid={`info-card-${c.key}`}
+            >
+              {content}
             </button>
+          ) : (
+            <div
+              key={c.key}
+              className="bg-card rounded-2xl border border-border p-3.5 min-h-16 flex items-center gap-2.5"
+              data-testid={`info-card-${c.key}`}
+            >
+              {content}
+            </div>
           );
         })}
       </div>

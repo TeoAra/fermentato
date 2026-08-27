@@ -44,6 +44,23 @@ export default {
           DEFAULT: "var(--destructive)",
           foreground: "var(--destructive-foreground)",
         },
+        info: {
+          DEFAULT: "var(--info)",
+          subtle: "var(--info-subtle)",
+        },
+        success: {
+          DEFAULT: "var(--success)",
+          subtle: "var(--success-subtle)",
+        },
+        warning: {
+          DEFAULT: "var(--warning)",
+          subtle: "var(--warning-subtle)",
+        },
+        violet: {
+          DEFAULT: "var(--violet)",
+          subtle: "var(--violet-subtle)",
+        },
+        slate: "var(--slate)",
         border: "var(--border)",
         input: "var(--input)",
         ring: "var(--ring)",
