@@ -20,7 +20,7 @@ interface EventMapProps {
 }
 
 const ITALY_CENTER: [number, number] = [12.4964, 41.9028];
-const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 export function EventMap({ pins, height = "100%", userLocation, onError }: EventMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);

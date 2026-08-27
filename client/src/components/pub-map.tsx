@@ -24,7 +24,7 @@ interface PubMapProps {
 }
 
 const ITALY_CENTER: [number, number] = [12.4964, 41.9028];
-const MAP_STYLE = "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json";
+const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
 function makeCirclePolygon(lat: number, lng: number, radiusKm: number, steps = 64): GeoJSON.FeatureCollection {
   const coords: [number, number][] = [];

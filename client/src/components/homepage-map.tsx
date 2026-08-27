@@ -3,7 +3,7 @@ import { Map, Overlay } from "pigeon-maps";
 import { Capacitor } from "@capacitor/core";
 import { X, Plus, Minus } from "lucide-react";
 import Supercluster from "supercluster";
-import { cartoPositronProvider } from "@/lib/map-tiles";
+import { osmTileProvider } from "@/lib/map-tiles";
 
 const PUB_COLOR = "#F77104";
 const BREWERY_COLOR = "#9B4E10";
@@ -27,9 +27,7 @@ function radiusToZoom(km: number): number {
   return 8;
 }
 
-// CARTO Positron / Dark Matter – pulito, minimalista, coerente in tutta l'app
-// (vedi `@/lib/map-tiles`).
-const cartoVoyager = cartoPositronProvider;
+const mapTileProvider = osmTileProvider;
 
 interface MapPub {
   id: number;
@@ -231,7 +229,7 @@ export default function HomepageMap({
           zoom={displayZoom}
           height={mapHeight}
           onBoundsChanged={({ center: c, zoom: z, bounds: b }) => { setCenter(c); updateZoom(z); if (b) setBounds({ ne: b.ne as [number, number], sw: b.sw as [number, number] }); }}
-          provider={cartoVoyager}
+          provider={mapTileProvider}
           dprs={[1, 2]}
           attribution={false}
           metaWheelZoom={true}
@@ -362,9 +360,8 @@ export default function HomepageMap({
       )}
 
       <div className="absolute bottom-5 right-2 z-10 text-[9px] opacity-50 select-none" style={{ color: "#5C3D1A" }}>
-        © <a href="https://carto.com" target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>CARTO</a>
-        {" "}©{" "}
-        <a href="https://openstreetmap.org" target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>OSM</a>
+        ©{" "}
+        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>OpenStreetMap</a>
       </div>
 
       {!isLoading && (pubCount + breweryCount > 0) && (

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Map as PigeonMap, GeoJson, Marker } from "pigeon-maps";
-import { cartoPositronProvider } from "@/lib/map-tiles";
+import { osmTileProvider } from "@/lib/map-tiles";
 import { Navigation, Footprints, Bike, Car, Loader2, AlertTriangle, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -192,7 +192,7 @@ export default function RouteCard({ destination, destinationName, destinationAdd
                 <PigeonMap
                   defaultCenter={center}
                   defaultZoom={zoom}
-                  provider={cartoPositronProvider}
+                  provider={osmTileProvider}
                   attribution={false}
                   mouseEvents={false}
                   touchEvents={false}

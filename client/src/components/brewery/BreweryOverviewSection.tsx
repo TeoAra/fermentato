@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Globe, MapPin, Navigation as NavIcon, Building2, Factory, Megaphone } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
-import { cartoPositronProvider } from "@/lib/map-tiles";
+import { osmTileProvider } from "@/lib/map-tiles";
 import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
@@ -109,7 +109,7 @@ export default function BreweryOverviewSection({
             <PigeonMap
               defaultCenter={[lat as number, lng as number]}
               defaultZoom={13}
-              provider={cartoPositronProvider}
+              provider={osmTileProvider}
               attribution={false}
               mouseEvents={false}
               touchEvents={false}

@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { SiFacebook, SiInstagram } from "react-icons/si";
 import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
-import { cartoPositronProvider } from "@/lib/map-tiles";
+import { osmTileProvider } from "@/lib/map-tiles";
 import { RichTextDisplay, isRichContentEmpty, richTextToPlain } from "@/components/rich-text-editor";
 import type { PubLike } from "./types";
 import { useQuery } from "@tanstack/react-query";
@@ -132,7 +132,7 @@ export default function OverviewSection({
             <PigeonMap
               defaultCenter={[lat as number, lng as number]}
               defaultZoom={15}
-              provider={cartoPositronProvider}
+              provider={osmTileProvider}
               attribution={false}
               mouseEvents={false}
               touchEvents={false}
