@@ -1,0 +1,263 @@
+Ti lascio un prompt da incollare nell’agente che ha accesso al progetto. Copre il prodotto pubblico e soprattutto la gestione, chiedendo modifiche reali e verifiche senza stravolgere ciò che funziona.
+
+```text
+Lavora sul progetto Fermenta.to come senior product designer e full-stack engineer. Devi migliorare concretamente interfaccia, coerenza visiva e usabilità del prodotto, implementando le modifiche nel codice.
+
+Fermenta.to è una piattaforma dedicata alla birra artigianale, pubblicata su Replit e utilizzata come sito web, PWA e dentro container Android/iOS.
+
+OBIETTIVO
+
+Portare tutte le aree del prodotto a un livello grafico e funzionale coerente, curato e pronto per l’uso quotidiano, con particolare attenzione alla gestione di pub, locali e birrifici.
+
+Non fermarti a un audit o a una proposta. Analizza il progetto, individua i problemi, applica le modifiche e verifica i percorsi interessati.
+
+Non cambiare hosting, framework o architettura senza una necessità dimostrata. Non riscrivere ciò che funziona. Conserva funzionalità, dati, autorizzazioni, URL pubblici e integrazioni esistenti.
+
+1. ANALISI INIZIALE
+
+Prima di modificare:
+- Leggi le istruzioni del repository.
+- Identifica stack, routing, componenti condivisi, stili, autenticazione, ruoli e gestione dei dati.
+- Individua il funzionamento di PWA e container nativi.
+- Mappa tutte le pagine pubbliche e riservate, comprese quelle raggiungibili solo dopo il login.
+- Identifica i percorsi principali per visitatore, utente registrato, gestore locale, gestore birrificio e amministratore, se presenti.
+- Individua componenti duplicati, incoerenze visive e problemi di usabilità.
+
+Prepara un piano sintetico ordinato per priorità e poi procedi con l’implementazione.
+
+Distingui problemi verificati da ipotesi. Se un’area non è accessibile, analizzane il codice e dichiara il limite senza inventare risultati di test.
+
+2. DIREZIONE VISIVA
+
+Mantieni l’identità Fermenta.to:
+- Arancione come colore principale.
+- Fondi caldi e neutri.
+- Stile contemporaneo, leggibile e accogliente.
+- Richiami al mondo craft senza decorazioni invadenti.
+
+Il risultato deve essere curato, non una dashboard generica.
+
+Riduci:
+- Ombre e sfumature eccessive.
+- Troppi pulsanti a pillola.
+- Riquadri annidati senza necessità.
+- Elementi che competono tutti per l’attenzione.
+- Spazi vuoti sproporzionati e sezioni troppo dense.
+
+Definisci e applica token condivisi per:
+- Colori e stati semantici.
+- Tipografia e gerarchie.
+- Spaziature e larghezze dei contenuti.
+- Raggi, bordi e ombre.
+- Pulsanti, input, badge, schede, tabelle e finestre di dialogo.
+
+Prevedi un’azione primaria chiara per schermata. Le azioni secondarie devono avere un peso visivo inferiore.
+
+Se esiste la modalità scura, aggiorna anche quella.
+
+3. NAVIGAZIONE E STRUTTURA GENERALE
+
+- Rendi il logo leggibile nell’intestazione mobile.
+- Uniforma intestazioni, titoli, ritorno indietro e menu.
+- Evita duplicazioni inutili fra navigazione superiore e inferiore.
+- Distingui chiaramente navigazione pubblica e strumenti di gestione.
+- Mostra sempre quale locale o birrificio si sta gestendo.
+- Se esiste la gestione di più attività, rendi evidente il cambio attività.
+- Mantieni coerente la terminologia italiana.
+- Evita che barre fisse coprano contenuti, pulsanti o messaggi.
+
+4. HOMEPAGE E RICERCA
+
+Orienta l’esperienza verso:
+“Trova un pub o una birra nella zona che ti interessa”.
+
+- Dai priorità alla ricerca per città, locale o birra.
+- Affianca la geolocalizzazione alla scelta manuale della città.
+- Gestisci chiaramente attesa, permesso negato e posizione non disponibile.
+- Non dichiarare “vicino a te” senza una zona confermata.
+- Rendi la mappa proporzionata, soprattutto su mobile.
+- Mostra il valore del prodotto prima di proporre la registrazione.
+- Riduci il peso delle news rispetto alla scoperta di locali e taplist.
+- Distingui catalogo globale, attività aderenti e risultati locali.
+- Uniforma numeri, date, prezzi e unità secondo il formato italiano.
+- Non presentare suggerimenti generici come personalizzati.
+
+5. PAGINA PUBBLICA PUB / LOCALE
+
+Organizza con chiarezza:
+- Nome, immagine, tipologia e posizione.
+- Stato di apertura e prossimo orario utile.
+- Indicazioni, contatti, condivisione e preferiti.
+- Spine, cantina, bevande e menù, se disponibili.
+- Descrizione e informazioni secondarie.
+
+La taplist deve essere facile da raggiungere.
+Chi arriva da una birra indicata come disponibile deve trovare subito la sezione e, quando possibile, l’elemento pertinente.
+
+Le birre devono mostrare in modo coerente:
+- Nome e birrificio.
+- Stile e gradazione.
+- Formati e prezzi.
+- Disponibilità effettivamente registrata.
+
+Mostra la data di aggiornamento solo se esiste un dato affidabile. Non inventare disponibilità, aggiornamenti recenti o verifiche del gestore.
+
+Gestisci bene immagini mancanti, testi lunghi, sezioni vuote e locali senza menù.
+
+6. PAGINA PUBBLICA BIRRIFICIO
+
+Dai una gerarchia chiara a:
+- Identità, logo e copertina.
+- Descrizione e localizzazione.
+- Catalogo birre.
+- Contatti e collegamenti.
+- Visite, taproom, eventi e punti di disponibilità, se supportati.
+
+Distingui le informazioni del catalogo da quelle gestite o confermate dal produttore.
+Non mostrare badge di verifica senza un fondamento nei dati.
+
+Uniforma schede, filtri e ordinamenti del catalogo.
+Evita grandi aree vuote quando mancano contenuti opzionali.
+
+7. SCHEDA BIRRA
+
+Metti in evidenza:
+- Nome, immagine e birrificio.
+- Stile e gradazione.
+- Descrizione leggibile.
+- Altri parametri disponibili, senza riempitivi.
+- Dove trovarla, quando esistono disponibilità reali.
+- Azioni personali e social già supportate.
+
+Distingui dati assenti da valori pari a zero.
+Non inventare IBU, ingredienti, allergeni, recensioni o caratteristiche.
+Mantieni una gerarchia chiara anche con nomi lunghi e immagini mancanti.
+
+8. GESTIONE LOCALE: PRIORITÀ MASSIMA
+
+L’area di gestione deve permettere al personale di lavorare velocemente anche da telefono durante il servizio.
+
+Dashboard:
+- Mostra solo riepiloghi utili e supportati dai dati.
+- Dai accesso diretto alle operazioni frequenti.
+- Evidenzia problemi concreti e configurazioni incomplete.
+- Separa attività operative da impostazioni e abbonamento.
+
+Taplist:
+- Ricerca e selezione delle birre semplici.
+- Distinzione chiara fra spine, pompa, cantina e altre categorie esistenti.
+- Modifica rapida di birra, formato, prezzo e disponibilità.
+- Riordino intuitivo, con alternativa accessibile al trascinamento.
+- Stato del salvataggio visibile.
+- Protezione da doppi invii e perdita involontaria di modifiche.
+- Conferma proporzionata al rischio per rimozioni e sostituzioni.
+
+Menù e bevande:
+- Categorie riconoscibili.
+- Inserimento e modifica coerenti.
+- Prezzi, descrizioni e disponibilità leggibili.
+- Gestione ordinata di categorie vuote e prodotti non disponibili.
+
+Profilo:
+- Raggruppa dati generali, immagini, indirizzo, contatti e orari.
+- Rendi chiari giorni di chiusura e fasce oltre mezzanotte.
+- Mostra errori vicino ai campi.
+- Offri un collegamento evidente all’anteprima pubblica.
+
+QR, modalità TV, eventi, statistiche e abbonamento:
+- Se presenti, applica lo stesso livello di cura.
+- Distingui configurazione, anteprima e stato attivo.
+- Non mostrare controlli che sembrano funzionanti ma non lo sono.
+
+9. GESTIONE BIRRIFICIO
+
+Organizza chiaramente:
+- Profilo e immagini.
+- Catalogo birre.
+- Creazione e modifica delle schede.
+- Collegamenti e informazioni commerciali già supportati.
+- Verifica del profilo, se prevista.
+
+Riduci duplicazioni fra inserimento e modifica.
+Distingui campi obbligatori e opzionali.
+Gestisci bene cataloghi lunghi, ricerca, paginazione e stati vuoti.
+
+Rispetta proprietà dei dati e permessi: un gestore non deve poter modificare attività o prodotti non autorizzati.
+
+10. COMPONENTI E STATI
+
+Uniforma tutte le aree interessate, incluse autenticazione, preferiti, community, eventi e impostazioni esistenti.
+
+Ogni interazione deve avere stati comprensibili:
+- Caricamento.
+- Successo.
+- Errore con possibilità di recupero.
+- Nessun risultato.
+- Dati mancanti.
+- Accesso non consentito.
+- Connessione assente, dove gestita.
+
+Evita caricamenti infiniti, messaggi generici e pulsanti senza feedback.
+Non introdurre dati dimostrativi nel prodotto reale.
+
+11. MOBILE, ACCESSIBILITÀ E CONTAINER
+
+Verifica almeno layout da 360, 390, 768 e 1440 px.
+
+Controlla:
+- Assenza di scorrimento orizzontale involontario.
+- Contrasto WCAG AA, focus visibile ed etichette accessibili.
+- Aree di tocco adeguate, preferibilmente almeno 44×44 px.
+- Navigazione da tastiera.
+- Modali utilizzabili con tastiera mobile aperta.
+- Spazi sicuri iOS e barre di sistema.
+- Comportamento del tasto indietro.
+- Tabelle gestionali utilizzabili su piccoli schermi.
+- Testi lunghi e ingrandimento del testo.
+
+Non confondere il test nel browser con quello del container: dichiara quali ambienti sono stati effettivamente verificati.
+
+12. VINCOLI TECNICI E SICUREZZA
+
+- Riusa componenti condivisi.
+- Evita CSS duplicato e correzioni isolate incoerenti.
+- Non introdurre dipendenze pesanti senza necessità.
+- Preserva autorizzazioni server e validazioni.
+- Non cambiare schema dati senza necessità; eventuali migrazioni devono essere compatibili e documentate.
+- Non modificare dati di produzione per fare prove.
+- Non eseguire pagamenti, inviare notifiche o messaggi reali.
+- Non distribuire in produzione e non pubblicare sugli store senza autorizzazione.
+- Non modificare le regole di cache della PWA senza verificarne le conseguenze.
+
+13. VERIFICA E CONSEGNA
+
+Procedi per gruppi coerenti di modifiche:
+1. Fondamenta visive e componenti condivisi.
+2. Gestione locale e birrificio.
+3. Pagine pubbliche e ricerca.
+4. Altre aree e verifica finale.
+
+Esegui build, controlli statici e test esistenti pertinenti.
+Aggiungi test mirati solo dove cambia comportamento significativo.
+
+Verifica, con dati di test in ambiente sicuro quando disponibile:
+- Ricerca → locale → taplist → scheda birra.
+- Birrificio → catalogo → scheda birra.
+- Gestore locale → modifica → salvataggio → risultato pubblico.
+- Gestore birrificio → modifica catalogo → risultato pubblico.
+- Errori, annullamenti e permessi.
+
+Confronta visivamente prima e dopo le schermate principali.
+Non dichiarare completati controlli non eseguiti.
+
+Alla fine fornisci:
+- Modifiche implementate per area.
+- Componenti condivisi introdotti o sistemati.
+- Verifiche eseguite e relativo esito.
+- Limiti, problemi rimasti e motivazioni.
+- Eventuali passaggi necessari prima della pubblicazione.
+
+Usa il tuo giudizio per le scelte grafiche ordinarie senza chiedere approvazione per ogni dettaglio. Se emerge un blocco, completa prima tutto il lavoro indipendente dal blocco.
+
+Il risultato richiesto è un prodotto coerente e realmente più facile da usare, soprattutto per chi gestisce ogni giorno locali e birrifici.
+```
