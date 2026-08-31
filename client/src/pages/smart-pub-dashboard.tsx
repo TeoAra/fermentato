@@ -97,7 +97,7 @@ import PubQuickStats from "@/components/pub-quick-stats";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
-import { StatsGrid } from "@/components/dashboard-primitives";
+import { DashboardSaveBar, DashboardSectionHeader, StatsGrid } from "@/components/dashboard-primitives";
 import { PageContainer } from "@/components/layout/page-container";
 
 const MenuPdfDownload = lazy(() =>
@@ -408,6 +408,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Settings form state
   const [settingsData, setSettingsData] = useState<any>({});
   const [settingsChanged, setSettingsChanged] = useState(false);
+  const [profileData, setProfileData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+  });
+  const [profileChanged, setProfileChanged] = useState(false);
 
   // Subscription cancel dialog
   const [showCancelDialog, setShowCancelDialog] = useState(false);
@@ -446,6 +452,16 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
   // In admin mode, userPubs is a single pub object; in owner mode it's an array
   const currentPub = isAdminMode ? userPubs : (Array.isArray(userPubs) ? userPubs[0] : null);
+
+  useEffect(() => {
+    if (!user || profileChanged) return;
+    setProfileData({
+      firstName: (user as any).firstName || '',
+      lastName: (user as any).lastName || '',
+      email: (user as any).email || '',
+    });
+    setProfileChanged(false);
+  }, [user, profileChanged]);
 
   // Initialize settings data when currentPub changes
   useEffect(() => {
@@ -640,6 +656,23 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         variant: "destructive" 
       });
     }
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: (data: typeof profileData) =>
+      apiRequest('/api/user/profile', { method: 'PATCH' }, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+      setProfileChanged(false);
+      toast({ title: 'Profilo aggiornato', description: 'Le informazioni del tuo account sono state salvate.' });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Errore',
+        description: error?.message || 'Impossibile aggiornare il profilo.',
+        variant: 'destructive',
+      });
+    },
   });
 
   // Helper functions for settings management
@@ -1084,10 +1117,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Taplist Section
   const renderTaplist = () => (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground dark:text-white">Taplist Management</h2>
-        <p className="text-muted-foreground dark:text-muted-foreground">Gestisci le birre alla spina, il magazzino fusti e i lavaggi linee</p>
-      </div>
+      <DashboardSectionHeader
+        title="Taplist"
+        description="Gestisci birre alla spina, magazzino fusti e lavaggi linee."
+        icon={Beer}
+        eyebrow={currentPub?.name}
+      />
 
       {/* Taplist manager */}
       <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border">
@@ -1114,36 +1149,17 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Menu Section - Enhanced with better layout integration
   const renderMenu = () => (
     <motion.div 
-      className="space-y-8"
+      className="space-y-6"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6 }}
     >
-      {/* Section Header with improved styling */}
-      <motion.div 
-        className="text-center lg:text-left"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-      >
-        <div className="inline-flex items-center justify-center lg:justify-start w-full">
-          <motion.div
-            className="p-3 bg-primary rounded-2xl shadow-lg mr-4"
-            whileHover={{ scale: 1.1, rotate: 5 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Utensils className="h-8 w-8 text-white" />
-          </motion.div>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground dark:text-white mb-2">
-              Gestione Menu
-            </h1>
-            <p className="text-lg text-muted-foreground dark:text-muted-foreground">
-              Organizza categorie e prodotti del tuo menu con facilità
-            </p>
-          </div>
-        </div>
-      </motion.div>
+      <DashboardSectionHeader
+        title="Menu"
+        description="Organizza categorie, prodotti, prezzi e disponibilità del menu pubblico."
+        icon={Utensils}
+        eyebrow={currentPub?.name}
+      />
 
       {/* Pub-level Menu Info Box */}
       <motion.div
@@ -1212,32 +1228,18 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Hours Section - Dedicated Opening Hours Management
   const renderHours = () => (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground dark:text-white">Gestione Orari</h2>
-          <p className="text-muted-foreground dark:text-muted-foreground">Configura gli orari di apertura del tuo pub</p>
-        </div>
-        {settingsChanged && (
-          <Button 
-            onClick={handleSaveSettings}
-            disabled={updatePubMutation.isPending}
-            className=""
-            data-testid="button-save-hours"
-          >
-            {updatePubMutation.isPending ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
-                Salvando...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Salva Orari
-              </>
-            )}
-          </Button>
-        )}
-      </div>
+      <DashboardSectionHeader
+        title="Orari di apertura"
+        description="Imposta gli orari della settimana e le chiusure straordinarie."
+        icon={Clock}
+        eyebrow={currentPub?.name}
+      />
+      <DashboardSaveBar
+        dirty={settingsChanged}
+        saving={updatePubMutation.isPending}
+        onSave={handleSaveSettings}
+        saveLabel="Salva orari"
+      />
 
       {/* Opening Hours Card */}
       <Card className="p-6">
@@ -1348,32 +1350,18 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   const renderSettings = () => {
     return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground dark:text-white">Impostazioni Pub</h2>
-          <p className="text-muted-foreground dark:text-muted-foreground">Gestisci tutti gli aspetti del tuo locale</p>
-        </div>
-        {settingsChanged && (
-          <Button 
-            onClick={handleSaveSettings}
-            disabled={updatePubMutation.isPending}
-            className=""
-            data-testid="button-save-all-settings"
-          >
-            {updatePubMutation.isPending ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Salvando...
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Salva Tutte le Modifiche
-              </>
-            )}
-          </Button>
-        )}
-      </div>
+      <DashboardSectionHeader
+        title="Impostazioni pub"
+        description="Aggiorna identità, contatti, immagini, orari e visibilità del locale."
+        icon={Settings}
+        eyebrow={currentPub?.name}
+      />
+      <DashboardSaveBar
+        dirty={settingsChanged}
+        saving={updatePubMutation.isPending}
+        onSave={handleSaveSettings}
+        saveLabel="Salva tutte le modifiche"
+      />
 
       <div className="grid grid-cols-1 gap-6">
         {/* Images */}
@@ -1810,12 +1798,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Bottles Section
   const renderBottles = () => (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground dark:text-white">Cantina Management</h2>
-          <p className="text-muted-foreground dark:text-muted-foreground">Gestisci le birre in bottiglia della cantina</p>
-        </div>
-      </div>
+      <DashboardSectionHeader
+        title="Cantina"
+        description="Gestisci le birre in bottiglia, quantità e disponibilità."
+        icon={Wine}
+        eyebrow={currentPub?.name}
+      />
       
       <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border">
         <BottleListManager
@@ -1831,6 +1819,12 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Drinks (Bevande) Section
   const renderDrinks = () => (
     <div className="space-y-6">
+      <DashboardSectionHeader
+        title="Bevande"
+        description="Organizza vini, cocktail, spirits e altre bevande."
+        icon={GlassWater}
+        eyebrow={currentPub?.name}
+      />
       <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border p-4 md:p-6">
         <DrinkManager pubId={currentPub?.id || 0} />
       </div>
@@ -1868,13 +1862,14 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   // Profile Section
   const renderProfile = () => (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-foreground dark:text-white">Profilo</h2>
-        <p className="text-muted-foreground dark:text-muted-foreground">Gestisci il tuo account</p>
-      </div>
+      <DashboardSectionHeader
+        title="Profilo"
+        description="Aggiorna i dati personali usati per gestire il tuo locale."
+        icon={Users}
+      />
       
       <Card className="p-6">
-        <div className="flex items-center space-x-6 mb-6">
+        <div className="flex items-center gap-4 mb-6">
           <div className="w-20 h-20 bg-gradient-to-br from-primary to-orange-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
             {(user as any)?.firstName?.[0] || 'U'}{(user as any)?.lastName?.[0] || 'S'}
           </div>
@@ -1888,23 +1883,58 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <div className="grid grid-cols-1 gap-4">
           <div>
             <Label>Nome</Label>
-            <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.firstName || ''} data-testid="input-first-name" />
+            <Input
+              className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
+              value={profileData.firstName}
+              onChange={(e) => {
+                setProfileData((prev) => ({ ...prev, firstName: e.target.value }));
+                setProfileChanged(true);
+              }}
+              data-testid="input-first-name"
+            />
           </div>
           <div>
             <Label>Cognome</Label>
-            <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.lastName || ''} data-testid="input-last-name" />
+            <Input
+              className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
+              value={profileData.lastName}
+              onChange={(e) => {
+                setProfileData((prev) => ({ ...prev, lastName: e.target.value }));
+                setProfileChanged(true);
+              }}
+              data-testid="input-last-name"
+            />
           </div>
           <div>
             <Label>Email</Label>
-            <Input className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20" defaultValue={(user as any)?.email || ''} type="email" data-testid="input-email" />
+            <Input
+              className="border-stone-200 dark:border-border rounded-xl focus-visible:ring-primary/20"
+              value={profileData.email}
+              onChange={(e) => {
+                setProfileData((prev) => ({ ...prev, email: e.target.value }));
+                setProfileChanged(true);
+              }}
+              type="email"
+              data-testid="input-email"
+            />
           </div>
         </div>
         
-        <div className="flex justify-end mt-6">
-          <Button data-testid="button-save-profile">
-            <Save className="h-4 w-4 mr-2" />
-            Aggiorna Profilo
-          </Button>
+        <div className="mt-6">
+          <DashboardSaveBar
+            dirty={profileChanged}
+            saving={updateProfileMutation.isPending}
+            onSave={() => updateProfileMutation.mutate(profileData)}
+            onReset={() => {
+              setProfileData({
+                firstName: (user as any)?.firstName || '',
+                lastName: (user as any)?.lastName || '',
+                email: (user as any)?.email || '',
+              });
+              setProfileChanged(false);
+            }}
+            saveLabel="Aggiorna profilo"
+          />
         </div>
       </Card>
     </div>

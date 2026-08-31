@@ -1177,7 +1177,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
             }
           }}>
             <DialogTrigger asChild>
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold gap-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
+              <Button size="sm" className="min-h-11 bg-primary hover:bg-primary/90 text-white rounded-xl font-semibold gap-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98]">
                 <Plus className="w-4 h-4" />
                 Aggiungi Birra
               </Button>
@@ -2101,8 +2101,12 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                   <Button
                     onClick={handleSubmit}
                     disabled={addTapMutation.isPending || updateTapMutation.isPending}
+                    className="min-h-11"
                   >
-                    {editingItem ? "Salva" : "Aggiungi"}
+                    {(addTapMutation.isPending || updateTapMutation.isPending) && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {editingItem ? "Salva modifiche" : "Aggiungi alla taplist"}
                   </Button>
                 </DialogFooter>
               </div>

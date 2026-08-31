@@ -351,7 +351,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
           <h2 className="text-xl font-bold text-foreground">Bevande</h2>
           <p className="text-sm text-muted-foreground">Sezioni e prodotti — trascina per riordinare</p>
         </div>
-        <Button onClick={openCreateCat} className="gap-1.5">
+        <Button onClick={openCreateCat} className="min-h-11 gap-1.5">
           <Plus className="w-4 h-4" /> Nuova sezione
         </Button>
       </div>
@@ -423,14 +423,16 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                   <div className="flex items-center gap-0.5 flex-shrink-0">
                     <button
                       onClick={() => toggleCatMutation.mutate(cat.id)}
-                      className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                      className="min-h-10 min-w-10 p-2 rounded-xl hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
                       title={cat.isVisible ? "Nascondi sezione" : "Mostra sezione"}
+                      aria-label={cat.isVisible ? `Nascondi ${cat.name}` : `Mostra ${cat.name}`}
                     >
                       {cat.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                     </button>
                     <button
                       onClick={() => openEditCat(cat)}
-                      className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                      className="min-h-10 min-w-10 p-2 rounded-xl hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                      aria-label={`Modifica ${cat.name}`}
                     >
                       <Edit3 className="w-4 h-4" />
                     </button>
@@ -439,7 +441,8 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                         if (!confirm(`Eliminare la sezione "${cat.name}" e tutti i suoi prodotti?`)) return;
                         deleteCatMutation.mutate(cat.id);
                       }}
-                      className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-red-400"
+                      className="min-h-10 min-w-10 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-red-500"
+                      aria-label={`Elimina ${cat.name}`}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -518,13 +521,15 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                             <div className="flex items-center gap-0.5 flex-shrink-0">
                               <button
                                 onClick={() => toggleItemMutation.mutate(item.id)}
-                                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                                className="min-h-10 min-w-10 p-2 rounded-xl hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                                aria-label={item.isVisible ? `Nascondi ${item.name}` : `Mostra ${item.name}`}
                               >
                                 {item.isVisible ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
                               </button>
                               <button
                                 onClick={() => openEditItem(cat, item)}
-                                className="p-1.5 rounded-lg hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                                className="min-h-10 min-w-10 p-2 rounded-xl hover:bg-stone-100 dark:hover:bg-white/[0.06] transition-colors text-muted-foreground"
+                                aria-label={`Modifica ${item.name}`}
                               >
                                 <Edit3 className="w-4 h-4" />
                               </button>
@@ -533,7 +538,8 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                                   if (!confirm(`Eliminare "${item.name}"?`)) return;
                                   deleteItemMutation.mutate(item.id);
                                 }}
-                                className="p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-red-400"
+                                className="min-h-10 min-w-10 p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors text-red-500"
+                                aria-label={`Elimina ${item.name}`}
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -777,9 +783,8 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             <div className="flex justify-end gap-2 pt-2 border-t">
               <Button variant="outline" onClick={() => setItemDialogOpen(false)}>Annulla</Button>
               <Button onClick={handleItemSubmit} disabled={saveItemMutation.isPending}>
-                {saveItemMutation.isPending
-                  ? <Loader2 className="w-4 h-4 animate-spin" />
-                  : editingItem ? "Salva" : "Aggiungi"}
+                {saveItemMutation.isPending && <Loader2 className="mr-2 w-4 h-4 animate-spin" />}
+                {editingItem ? "Salva modifiche" : "Aggiungi prodotto"}
               </Button>
             </div>
           </div>

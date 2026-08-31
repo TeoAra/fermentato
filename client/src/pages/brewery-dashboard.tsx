@@ -1070,6 +1070,25 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
           {/* Overview Tab (solo mobile) — quick stats + shortcut */}
           <TabsContent value="overview" className="lg:hidden space-y-6">
+            <section className="grid grid-cols-2 gap-2">
+              {!isAdminMode && (
+                <Link href={`/brewery/${brewery.slug || brewery.id}`}>
+                  <div className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-bold text-foreground shadow-sm active:scale-[0.98]">
+                    <Eye className="h-4 w-4 text-primary" aria-hidden="true" />
+                    Vedi pagina
+                  </div>
+                </Link>
+              )}
+              <Button
+                type="button"
+                variant="outline"
+                onClick={openProfileEdit}
+                className="min-h-12 rounded-xl font-bold"
+              >
+                <Pencil className="mr-2 h-4 w-4 text-primary" aria-hidden="true" />
+                Modifica profilo
+              </Button>
+            </section>
             <section>
               <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-3">Panoramica</h2>
               <div className="grid grid-cols-3 gap-2">

@@ -559,6 +559,26 @@ export default function PubDashboard() {
 
             {/* Overview Tab (solo mobile) — preview quick stats + shortcut alle sezioni */}
             <TabsContent value="overview" className="lg:hidden space-y-6">
+              <section className="grid grid-cols-2 gap-2">
+                <a
+                  href={`/pub/${selectedPub.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-bold text-foreground shadow-sm active:scale-[0.98]"
+                >
+                  <Eye className="h-4 w-4 text-primary" aria-hidden="true" />
+                  Vedi pagina
+                </a>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setActiveTab('info')}
+                  className="min-h-12 rounded-xl font-bold"
+                >
+                  <Building2 className="mr-2 h-4 w-4 text-primary" aria-hidden="true" />
+                  Modifica info
+                </Button>
+              </section>
               {/* Quick stats */}
               <section>
                 <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-3">Panoramica</h2>

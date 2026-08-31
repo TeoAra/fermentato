@@ -1,8 +1,9 @@
 import { ReactNode } from "react";
 import { Link } from "wouter";
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { Check, ChevronRight, Loader2, Save, X, type LucideIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { PageContainer, type PageContainerVariant } from "@/components/layout/page-container";
 import { cn } from "@/lib/utils";
 
@@ -148,6 +149,122 @@ export function DashboardHero({
         {children && <div className="mt-4 sm:mt-5">{children}</div>}
       </div>
     </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DashboardSectionHeader
+   Header compatto e coerente per le sezioni operative. Su mobile l'azione
+   scende sotto al titolo invece di comprimere il contenuto.
+   ─────────────────────────────────────────────────────────────────────────── */
+export function DashboardSectionHeader({
+  title,
+  description,
+  icon: Icon,
+  action,
+  eyebrow,
+}: {
+  title: string;
+  description?: ReactNode;
+  icon?: LucideIcon;
+  action?: ReactNode;
+  eyebrow?: string;
+}) {
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="min-w-0">
+        {eyebrow && (
+          <p className="mb-1 text-[11px] font-bold uppercase tracking-[0.14em] text-primary">
+            {eyebrow}
+          </p>
+        )}
+        <h2 className="flex items-center gap-2 text-xl font-black tracking-tight text-foreground sm:text-2xl">
+          {Icon && (
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <Icon className="h-5 w-5" aria-hidden="true" />
+            </span>
+          )}
+          <span className="truncate">{title}</span>
+        </h2>
+        {description && (
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+            {description}
+          </p>
+        )}
+      </div>
+      {action && <div className="flex w-full shrink-0 sm:w-auto">{action}</div>}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   DashboardSaveBar
+   Stato persistente e leggibile per editor con modifiche locali.
+   ─────────────────────────────────────────────────────────────────────────── */
+export function DashboardSaveBar({
+  dirty,
+  saving,
+  onSave,
+  onReset,
+  saveLabel = "Salva modifiche",
+  savedLabel = "Tutto salvato",
+}: {
+  dirty: boolean;
+  saving?: boolean;
+  onSave: () => void;
+  onReset?: () => void;
+  saveLabel?: string;
+  savedLabel?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-col gap-3 rounded-2xl border px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between",
+        dirty
+          ? "border-primary/25 bg-primary/[0.06]"
+          : "border-border bg-muted/40",
+      )}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="flex items-center gap-2 text-sm">
+        {dirty ? (
+          <span className="h-2 w-2 shrink-0 rounded-full bg-primary" aria-hidden="true" />
+        ) : (
+          <Check className="h-4 w-4 shrink-0 text-success" aria-hidden="true" />
+        )}
+        <span className={dirty ? "font-semibold text-foreground" : "text-muted-foreground"}>
+          {saving ? "Salvataggio in corso…" : dirty ? "Hai modifiche non salvate" : savedLabel}
+        </span>
+      </div>
+      <div className="flex gap-2 sm:justify-end">
+        {dirty && onReset && (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onReset}
+            disabled={saving}
+            className="min-h-11 flex-1 rounded-xl sm:flex-none"
+          >
+            <X className="mr-2 h-4 w-4" aria-hidden="true" />
+            Annulla
+          </Button>
+        )}
+        <Button
+          type="button"
+          onClick={onSave}
+          disabled={!dirty || saving}
+          className="min-h-11 flex-1 rounded-xl sm:flex-none"
+        >
+          {saving ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />
+          ) : (
+            <Save className="mr-2 h-4 w-4" aria-hidden="true" />
+          )}
+          {saving ? "Salvataggio…" : saveLabel}
+        </Button>
+      </div>
+    </div>
   );
 }
 

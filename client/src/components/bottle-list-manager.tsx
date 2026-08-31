@@ -242,58 +242,36 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
     setSearchTerm("");
   };
 
-  // Cross-list helpers: sync with taplist when same beer exists there
   const findTapItem = (beerId: number | null | undefined) => {
     if (!beerId) return null;
-    return tapList.find((t: any) => t.beer?.id === beerId);
+    return tapList.find((tapItem: any) => tapItem.beer?.id === beerId);
   };
 
   const handleDeleteBottleItem = async (item: BottleItem) => {
     if (!confirm('Sei sicuro di voler rimuovere questa birra dalla cantina?')) return;
-    const tapItem = findTapItem(item.beer?.id);
     await apiRequest(`/api/pubs/${pubId}/bottles/${item.id}`, { method: "DELETE" });
     queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
-    if (tapItem) {
-      await apiRequest(`/api/pubs/${pubId}/taplist/${tapItem.id}`, { method: "DELETE" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
-      toast({ title: "Birra rimossa", description: "Rimossa anche dalla taplist" });
-    } else {
-      toast({ title: "Birra rimossa dalla cantina!" });
-    }
+    toast({ title: "Birra rimossa dalla cantina" });
   };
 
   const handleToggleBottleVisibility = async (item: BottleItem) => {
     const newVisible = !item.isVisible;
-    const tapItem = findTapItem(item.beer?.id);
 
     const applyBottle = (v: boolean) =>
       queryClient.setQueryData(["/api/pubs", String(pubId), "bottles"], (old: any) =>
         Array.isArray(old) ? old.map((b: any) => b.id === item.id ? { ...b, isVisible: v } : b) : old
       );
-    const applyTap = (id: number, v: boolean) =>
-      queryClient.setQueryData(["/api/pubs", String(pubId), "taplist"], (old: any) =>
-        Array.isArray(old) ? old.map((t: any) => t.id === id ? { ...t, isVisible: v } : t) : old
-      );
 
     applyBottle(newVisible);
-    if (tapItem) applyTap(tapItem.id, newVisible);
 
     try {
       const updatedBottle = await apiRequest(`/api/pubs/${pubId}/bottles/${item.id}`, { method: "PATCH" }, { isVisible: newVisible });
       if (updatedBottle?.isVisible !== undefined) applyBottle(updatedBottle.isVisible);
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
-
-      if (tapItem) {
-        const updatedTap = await apiRequest(`/api/pubs/${pubId}/taplist/${tapItem.id}`, { method: "PATCH" }, { isVisible: newVisible });
-        if (updatedTap?.isVisible !== undefined) applyTap(tapItem.id, updatedTap.isVisible);
-        queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
-        toast({ title: newVisible ? "Birra visibile" : "Birra nascosta", description: "Applicato anche alla taplist" });
-      } else {
-        toast({ title: newVisible ? "Birra visibile" : "Birra nascosta" });
-      }
+      toast({ title: newVisible ? "Birra visibile in cantina" : "Birra nascosta dalla cantina" });
     } catch {
       applyBottle(item.isVisible ?? true);
-      if (tapItem) applyTap(tapItem.id, item.isVisible ?? true);
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
       toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     }
   };
@@ -380,7 +358,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
             }
           }}>
             <DialogTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5 text-sm font-medium">
+              <Button variant="outline" size="sm" className="min-h-11 gap-1.5 text-sm font-medium">
                 <Plus className="w-3.5 h-3.5" />
                 Aggiungi
               </Button>
@@ -631,8 +609,12 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                   <Button
                     onClick={handleSubmit}
                     disabled={addBottleMutation.isPending || updateBottleMutation.isPending}
+                    className="min-h-11"
                   >
-                    {editingItem ? "Salva" : "Aggiungi"}
+                    {(addBottleMutation.isPending || updateBottleMutation.isPending) && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {editingItem ? "Salva modifiche" : "Aggiungi alla cantina"}
                   </Button>
                 </div>
               </div>
@@ -763,7 +745,8 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                         variant="ghost"
                         size="sm"
                         onClick={() => handleToggleBottleVisibility(item)}
-                        className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        className="h-11 w-11 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        aria-label={safeItem.isVisible ? `Nascondi ${safeBeer.name} dalla cantina` : `Mostra ${safeBeer.name} in cantina`}
                       >
                         {safeItem.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </Button>
@@ -774,7 +757,8 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                           startEdit(item);
                           setIsAddDialogOpen(true);
                         }}
-                        className="h-8 w-8 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        className="h-11 w-11 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                        aria-label={`Modifica ${safeBeer.name}`}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -782,7 +766,8 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteBottleItem(item)}
-                        className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                        className="h-11 w-11 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                        aria-label={`Rimuovi ${safeBeer.name} dalla cantina`}
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
