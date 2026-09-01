@@ -105,7 +105,7 @@ workflows:
           python3 ios-native/inject_cast_appdelegate.py \
             ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
-      - name: Abilita Push Notifications entitlement (APNs)
+      - name: Abilita Push Notifications e Universal Links
         script: |
           python3 ios-native/add_push_entitlement.py \
             ios/App/App.xcodeproj/project.pbxproj
@@ -118,6 +118,15 @@ workflows:
         script: |
           python3 ios-native/add_apple_signin_entitlement.py \
             ios/App/App/App.entitlements
+          python3 ios-native/add_url_scheme.py \
+            ios/App/App/Info.plist \
+            fermentato \
+            "$BUNDLE_ID"
+          python3 ios-native/verify_ios_entitlements.py \
+            ios/App/App.xcodeproj/project.pbxproj \
+            ios/App/App/App.entitlements \
+            ios/App/App/Info.plist \
+            "$BUNDLE_ID"
 
       - name: Genera icone app iOS
         script: |
@@ -344,7 +353,7 @@ workflows:
           python3 ios-native/inject_cast_appdelegate.py \
             ios/App/App/AppDelegate.swift "${CAST_APP_ID:-6666EC62}"
 
-      - name: Abilita Push Notifications entitlement (APNs)
+      - name: Abilita Push Notifications e Universal Links
         script: |
           python3 ios-native/add_push_entitlement.py \
             ios/App/App.xcodeproj/project.pbxproj
@@ -357,6 +366,15 @@ workflows:
         script: |
           python3 ios-native/add_apple_signin_entitlement.py \
             ios/App/App/App.entitlements
+          python3 ios-native/add_url_scheme.py \
+            ios/App/App/Info.plist \
+            fermentato \
+            "$BUNDLE_ID"
+          python3 ios-native/verify_ios_entitlements.py \
+            ios/App/App.xcodeproj/project.pbxproj \
+            ios/App/App/App.entitlements \
+            ios/App/App/Info.plist \
+            "$BUNDLE_ID"
 
       - name: Genera icone app iOS
         script: |
@@ -540,6 +558,11 @@ workflows:
           # cap sync (non solo copy) per fondere AndroidManifest dei plugin
           # — necessario per @capacitor/geolocation che dichiara ACCESS_FINE_LOCATION
           npx cap sync android
+          sed -i "s/applicationId \"[^\"]*\"/applicationId \"$PACKAGE_NAME\"/" android/app/build.gradle
+          grep -q "applicationId \"$PACKAGE_NAME\"" android/app/build.gradle || {
+            echo "ERRORE: applicationId Android non allineato a $PACKAGE_NAME"
+            exit 1
+          }
 
       - name: Inietta plugin NativeCast Android (Chromecast nativo)
         script: |
@@ -687,6 +710,10 @@ workflows:
           echo "AndroidManifest aggiornato:"
           grep "uses-permission" "$MANIFEST"
 
+      - name: Configura e verifica Android App Links
+        script: |
+          bash scripts/patch-android-app-links.sh android/app/src/main/AndroidManifest.xml fermenta.to
+
       - name: Imposta versione e build number
         script: |
           VERSION=$(node -p "require('./version.json').version")
@@ -765,6 +792,11 @@ workflows:
             exit 1
           fi
           npx cap sync android
+          sed -i "s/applicationId \"[^\"]*\"/applicationId \"$PACKAGE_NAME\"/" android/app/build.gradle
+          grep -q "applicationId \"$PACKAGE_NAME\"" android/app/build.gradle || {
+            echo "ERRORE: applicationId Android non allineato a $PACKAGE_NAME"
+            exit 1
+          }
 
       - name: Genera splash screen e icone Android (resources/ → native)
         script: |
@@ -876,6 +908,10 @@ workflows:
           grep -q "ACCESS_FINE_LOCATION" "$MANIFEST" || \
             sed -i 's|<uses-permission android:name="android.permission.INTERNET"/>|<uses-permission android:name="android.permission.INTERNET"/>\n    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>\n    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>|' "$MANIFEST"
           echo "AndroidManifest permessi OK"
+
+      - name: Configura e verifica Android App Links
+        script: |
+          bash scripts/patch-android-app-links.sh android/app/src/main/AndroidManifest.xml fermenta.to
 
       - name: Imposta versione e build number
         script: |

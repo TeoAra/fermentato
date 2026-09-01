@@ -22,6 +22,7 @@ import { OwnerReportsSection } from "@/components/owner-reports";
 import { ImageUpload } from "@/components/image-upload";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
+import { openExternalUrl } from "@/lib/open-external-url";
 import { 
   Beer, Wine, Utensils, Building2, Plus, AlertCircle, LogIn,
   X as Twitter, Music, Clock, MapPin, Phone, Globe, Camera,
@@ -479,7 +480,7 @@ export default function PubDashboard() {
                         className="text-primary hover:text-primary/80 text-sm font-medium mt-1 hover:underline"
                         onClick={() => {
                           const address = encodeURIComponent(`${selectedPub.address}, ${selectedPub.city}, Italia`);
-                          window.open(`https://maps.google.com/maps?q=${address}`, '_blank');
+                          void openExternalUrl(`https://maps.google.com/maps?q=${address}`);
                         }}
                       >
                         Vedi su Google Maps

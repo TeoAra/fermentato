@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -34,7 +34,7 @@ import {
   CreditCard,
   Megaphone
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { DashboardContainer, DashboardHero, DashboardNavCard, StatsGrid } from "@/components/dashboard-primitives";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -58,6 +58,7 @@ interface GlobalStats {
 
 
 export default function AdminDashboardNew() {
+  const [, setLocation] = useLocation();
   const { user, isAuthenticated, isLoading } = useAuth();
   const [activityFilter, setActivityFilter] = useState<string>('all');
   const [translateResult, setTranslateResult] = useState<{ translated: number; skipped: number; processed: number; nextOffset: number } | null>(null);
@@ -129,6 +130,11 @@ export default function AdminDashboardNew() {
     ? allActivity.slice(0, 15)
     : allActivity.filter((item: any) => item.type === activityFilter);
 
+  useEffect(() => {
+    if (isLoading || (isAuthenticated && isAdminUser)) return;
+    setLocation(isAuthenticated ? "/" : "/login?returnTo=%2Fadmin", { replace: true });
+  }, [isLoading, isAuthenticated, isAdminUser, setLocation]);
+
 
   if (isLoading) {
     return (
@@ -144,7 +150,11 @@ export default function AdminDashboardNew() {
   }
 
   if (!isAuthenticated || !isAdminUser) {
-    return null;
+    return (
+      <div className="flex min-h-[50dvh] items-center justify-center">
+        <p className="text-sm text-muted-foreground">Reindirizzamento in corso…</p>
+      </div>
+    );
   }
 
 

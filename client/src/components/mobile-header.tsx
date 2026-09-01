@@ -33,7 +33,8 @@ function isDetailRoute(location: string): boolean {
     /^\/eventi\/[^/]+\/[^/?#]+\/?$/.test(location) ||
     /^\/festival\/[\w-]+$/.test(location) ||
     /^\/user\//.test(location) ||
-    /^\/(scan-history|become-publican|registra-pub|pub-registration|attiva-pub|privacy|tos|search)$/.test(location) ||
+    /^\/scan\/history$/.test(location) ||
+    /^\/(become-publican|registra-pub|pub-registration|attiva-pub|privacy|tos|search)$/.test(location) ||
     /^\/static-page\//.test(location)
   );
 }
@@ -45,6 +46,8 @@ function detailBackFallback(location: string): string {
   if (/^\/beer\//.test(location)) return "/explore/beers";
   if (/^\/festival\//.test(location)) return "/festival";
   if (/^\/user\//.test(location)) return "/community";
+  if (location === "/scan/history") return "/scan";
+  if (location === "/search") return "/";
   return "/";
 }
 

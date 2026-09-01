@@ -29,3 +29,11 @@ Once the agreement 403 is cleared, the next failure is at PUBLISH (upload to App
 - `@capacitor/assets` defaults to `assets/`, not `resources/`; a wrong/absent asset folder combined with `|| true` hides the failure and silently ships the Capacitor default.
 - Native-asset generators must tolerate a missing platform dir (iOS-only vs Android-only CI builds), never hard-exit on one platform's absence.
 - Source of truth for the iOS launch image is `ios/App/App/Assets.xcassets/Splash.imageset` (referenced by name "Splash" in LaunchScreen.storyboard); one universal 2732x2732 PNG is sufficient.
+
+## iOS deep-link identity
+
+iOS uses bundle ID `to.fermentato.app`, custom scheme `fermentato`, and the signed Associated Domains entitlement `applinks:fermenta.to`.
+
+**Why:** A mismatched scheme prevents custom links from reaching the app, while a correct AASA response alone cannot enable Universal Links without the matching entitlement in the signed provisioning profile.
+
+**How to apply:** Generate and verify scheme plus entitlements after `cap add/sync` in every iOS build path. Keep `APPLE_TEAM_ID` configured on the server and enable Associated Domains for the Apple App ID.

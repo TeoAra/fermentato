@@ -35,12 +35,16 @@ Esegui questi controlli dopo ogni build prima di promuovere la versione minima r
 - [ ] Activity feed: pull-to-refresh funziona uguale alla home.
 
 ## 6. Deep link
-- [ ] Da Chrome/Messaggi tap su `https://fermenta.to/pubs/<slug>` → si apre dialog
-      "Apri con Fermenta.to / Chrome". Scegli Fermenta.to.
-- [ ] L'app apre direttamente la pagina del pub (non la home).
-- [ ] (Opzionale) `fermentato://pubs/<slug>` apre l'app dal custom scheme.
-- [ ] Per autoVerify completo serve pubblicare `assetlinks.json` su
-      `https://fermenta.to/.well-known/assetlinks.json` (non bloccante per smoke test).
+- [ ] Con l'APK debug: `adb shell am start -a android.intent.action.VIEW
+      -d "fermentato://pub/<slug>"` apre la pagina pub nell'app (non la home).
+- [ ] Con una build installata dal Play Internal Track: da Chrome/Messaggi, tap su
+      `https://fermenta.to/pub/<slug>` apre direttamente Fermenta.to senza chooser.
+- [ ] `https://fermenta.to/.well-known/assetlinks.json` risponde 200, usa package
+      `to.fermenta.app` e contiene lo SHA-256 della firma Play configurato in
+      `ANDROID_CERT_SHA256`.
+- [ ] Solo sulla build Play: `adb shell pm get-app-links to.fermenta.app` mostra
+      `fermenta.to: verified`. L'APK debug usa un certificato diverso e non deve
+      essere aggiunto all'associazione di produzione.
 
 ## 7. Tastiera e form
 - [ ] Apri ricerca: la tastiera non copre l'input attivo.

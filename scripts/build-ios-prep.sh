@@ -91,6 +91,17 @@ if [ -f "$PLIST_TPL" ] && [ -d "ios/App/App" ]; then
   sed -i "s|<string>1.0.0</string>|<string>$NEW_VERSION</string>|" "$PLIST_DST" || true
   sed -i "s|<string>1</string>|<string>$BUILD_NUM</string>|" "$PLIST_DST" || true
   echo "    ✅ Info.plist aggiornato da template (versione=$NEW_VERSION build=$BUILD_NUM)"
+  python3 ios-native/add_url_scheme.py \
+    "$PLIST_DST" \
+    fermentato \
+    "to.fermentato.app"
+  python3 ios-native/add_push_entitlement.py ios/App/App.xcodeproj/project.pbxproj
+  python3 ios-native/add_apple_signin_entitlement.py ios/App/App/App.entitlements
+  python3 ios-native/verify_ios_entitlements.py \
+    ios/App/App.xcodeproj/project.pbxproj \
+    ios/App/App/App.entitlements \
+    "$PLIST_DST" \
+    "to.fermentato.app"
 else
   echo "    ⚠️  Template Info.plist o cartella ios/App/App non trovata — salto"
 fi

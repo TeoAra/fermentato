@@ -20,3 +20,4 @@
 - [Deep links / apri app](deep-links-app-open.md) — well-known endpoints pronti ma servono env ANDROID_CERT_SHA256 + APPLE_TEAM_ID sul VPS e rebuild nativi (intent-filter/entitlement).
 - [Security hardening baseline](security-hardening.md) — helmet (CSP off, COEP off), body 1mb global (10mb only /api/scan), generalApiRateLimit 300/5min in rate-limit.ts, query maxLen 200. Actual SQL injection risk was low (parameterized queries throughout); main gaps were DoS vectors.
 - [Cantina and taplist independence](inventory-list-independence.md) — visibility and deletion in one inventory list must never silently mutate the other, even when both rows reference the same beer.
+- [Android package identity](android-package-identity.md) — Android/Play uses to.fermenta.app while shared Capacitor/iOS uses to.fermentato.app; Firebase and CI must target the Android ID.

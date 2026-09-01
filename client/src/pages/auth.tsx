@@ -22,6 +22,20 @@ import type { Brewery } from "@shared/schema";
 const RECAPTCHA_SITE_KEY = (import.meta.env.VITE_RECAPTCHA_SITE_KEY as string | undefined) ||
   (import.meta.env.PROD ? "6LcDuIEsAAAAAAPwdAQ2rAKZvA_ae_FmyRlft11z" : undefined);
 
+function safeInternalReturnTo(rawTarget: string | null): string {
+  if (!rawTarget) return "/";
+  try {
+    const url = new URL(rawTarget, window.location.origin);
+    if (url.origin !== window.location.origin) return "/";
+    const target = `${url.pathname}${url.search}${url.hash}`;
+    if (!target.startsWith("/") || target.startsWith("//")) return "/";
+    if (url.pathname === "/login" || url.pathname === "/auth") return "/";
+    return target;
+  } catch {
+    return "/";
+  }
+}
+
 const loginSchema = z.object({
   emailOrUsername: z.string().min(1, "Email o username richiesti"),
   password: z.string().min(1, "Password richiesta"),
@@ -114,7 +128,9 @@ export default function AuthPage() {
   const verifiedParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("verified") : null;
   const verifiedEmailParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("email") : null;
   const tabParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("tab") : null;
-  const returnToParam = typeof window !== "undefined" ? new URLSearchParams(window.location.search).get("returnTo") : null;
+  const returnToParam = typeof window !== "undefined"
+    ? safeInternalReturnTo(new URLSearchParams(window.location.search).get("returnTo"))
+    : "/";
 
   // Auto-select tab from URL
   useEffect(() => {
@@ -184,7 +200,7 @@ export default function AuthPage() {
       if (!Capacitor.isNativePlatform()) {
         toast({ title: "Benvenuto!", description: "Login effettuato con successo" });
       }
-      setLocation(returnToParam || "/");
+      setLocation(returnToParam);
     },
     onError: (error: any) => {
       if (error.emailNotVerified) {
@@ -210,7 +226,7 @@ export default function AuthPage() {
       if (!Capacitor.isNativePlatform()) {
         toast({ title: "Registrazione completata!", description: "Benvenuto su Fermenta.to" });
       }
-      setLocation(returnToParam || "/");
+      setLocation(returnToParam);
     },
     onError: (error: any) => {
       registerRecaptchaRef.current?.reset();
@@ -241,10 +257,10 @@ export default function AuthPage() {
       if (userData?.needsOnboarding) {
         setLocation("/onboarding");
       } else {
-        setLocation("/dashboard");
+        setLocation(returnToParam);
       }
     } catch {
-      setLocation("/dashboard");
+      setLocation(returnToParam);
     }
   };
 

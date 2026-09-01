@@ -11,6 +11,29 @@ import { Capacitor } from "@capacitor/core";
 export const isNative = Capacitor.isNativePlatform();
 export const nativePlatform = Capacitor.getPlatform(); // 'android' | 'ios' | 'web'
 
+function internalAppPath(rawTarget: unknown): string | null {
+  if (typeof rawTarget !== "string" || !rawTarget.trim()) return null;
+  try {
+    const url = new URL(rawTarget, window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    const path = `${url.pathname}${url.search}${url.hash}`;
+    return path.startsWith("/") && !path.startsWith("//") ? path : null;
+  } catch {
+    return null;
+  }
+}
+
+function navigateInsideApp(rawTarget: unknown): boolean {
+  const path = internalAppPath(rawTarget);
+  if (!path) return false;
+  const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+  if (path !== current) {
+    history.pushState(null, "", path);
+    window.dispatchEvent(new PopStateEvent("popstate"));
+  }
+  return true;
+}
+
 // ─── Push Notifications ────────────────────────────────────────────────────
 
 // Diagnostica visibile in-app: traccia ogni fase della registrazione push
@@ -94,12 +117,9 @@ async function setupPushNotifications() {
     await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
       console.log("[native] Push action:", action);
       const data = action.notification?.data;
-      if (data?.url) {
-        window.location.href = data.url;
-      } else if (data?.path) {
-        window.location.hash = "";
-        history.pushState(null, "", data.path);
-        window.dispatchEvent(new PopStateEvent("popstate"));
+      const target = data?.path ?? data?.url;
+      if (target && !navigateInsideApp(target)) {
+        console.warn("[native] Ignored unsafe push destination");
       }
       window.dispatchEvent(new CustomEvent("native-push-action", { detail: action }));
     });
@@ -125,13 +145,27 @@ async function setupAppLifecycle() {
       console.log("[native] Deep link:", rawUrl);
       try {
         const url = new URL(rawUrl);
-        const path = url.pathname + url.search + url.hash;
+        let path: string;
+        if (url.protocol === "fermentato:") {
+          const customRoute = [url.hostname, url.pathname].filter(Boolean).join("/");
+          path = `/${customRoute.replace(/^\/+/, "")}${url.search}${url.hash}`;
+        } else if (
+          url.protocol === "https:" &&
+          (url.hostname === "fermenta.to" || url.hostname === "www.fermenta.to")
+        ) {
+          path = url.pathname + url.search + url.hash;
+        } else {
+          console.warn("[native] Ignored unsupported deep link origin");
+          return;
+        }
         const current = window.location.pathname + window.location.search + window.location.hash;
         if (path !== current) {
           history.pushState(null, "", path);
           window.dispatchEvent(new PopStateEvent("popstate"));
         }
-      } catch {}
+      } catch {
+        console.warn("[native] Ignored malformed deep link");
+      }
     };
 
     // Deep link handler

@@ -271,7 +271,7 @@ function FilterSheet({
         {/* Backdrop */}
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={onClose} />
         {/* Sheet */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1A1D24] rounded-t-3xl shadow-2xl px-5 pt-4 pb-8 max-h-[85vh] overflow-y-auto">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1A1D24] rounded-t-3xl shadow-2xl px-5 pt-4 pb-[calc(2rem+var(--frozen-sab))] max-h-[85dvh] overflow-y-auto">
           <div className="w-10 h-1 bg-stone-200 dark:bg-stone-700 rounded-full mx-auto mb-4" />
           {panelContent}
           <Button onClick={onClose} className="w-full mt-5 rounded-xl bg-primary text-white font-bold">

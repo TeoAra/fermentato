@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Aggiunge il Push Notifications entitlement al progetto iOS.
+Aggiunge gli entitlement Push Notifications e Universal Links al progetto iOS.
 
-Crea ios/App/App/App.entitlements con aps-environment=production
+Crea ios/App/App/App.entitlements con aps-environment=production e
+com.apple.developer.associated-domains per fermenta.to,
 e imposta CODE_SIGN_ENTITLEMENTS nel pbxproj.
 
 Necessario per ricevere notifiche push APNs native su iOS.
@@ -27,6 +28,10 @@ entitlements_content = """<?xml version="1.0" encoding="UTF-8"?>
 <dict>
 \t<key>aps-environment</key>
 \t<string>production</string>
+\t<key>com.apple.developer.associated-domains</key>
+\t<array>
+\t\t<string>applinks:fermenta.to</string>
+\t</array>
 </dict>
 </plist>
 """

@@ -10306,14 +10306,16 @@ ${jsonld ? `<script type="application/ld+json">${jsonld}</script>` : ""}
   });
 
   // ─── Deep link: apri l'app se installata (Android App Links / iOS Universal Links)
-  const APP_BUNDLE_ID = "to.fermentato.app";
+  const IOS_APP_BUNDLE_ID = "to.fermentato.app";
+  const ANDROID_APP_PACKAGE = "to.fermenta.app";
   app.get("/.well-known/assetlinks.json", (_req, res) => {
     const sha256 = (process.env.ANDROID_CERT_SHA256 || "").split(",").map((s) => s.trim()).filter(Boolean);
     if (sha256.length === 0) return res.status(404).json({ message: "ANDROID_CERT_SHA256 non configurato" });
+    res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "public, max-age=3600");
     res.json([{
       relation: ["delegate_permission/common.handle_all_urls"],
-      target: { namespace: "android_app", package_name: APP_BUNDLE_ID, sha256_cert_fingerprints: sha256 },
+      target: { namespace: "android_app", package_name: ANDROID_APP_PACKAGE, sha256_cert_fingerprints: sha256 },
     }]);
   });
   app.get(["/.well-known/apple-app-site-association", "/apple-app-site-association"], (_req, res) => {
@@ -10324,14 +10326,14 @@ ${jsonld ? `<script type="application/ld+json">${jsonld}</script>` : ""}
     res.json({
       applinks: {
         details: [{
-          appIDs: [`${teamId}.${APP_BUNDLE_ID}`],
+          appIDs: [`${teamId}.${IOS_APP_BUNDLE_ID}`],
           components: [
             { "/": "/eventi/*" }, { "/": "/pub/*" }, { "/": "/brewery/*" },
             { "/": "/beer/*" }, { "/": "/festival/*" }, { "/": "/user/*" }, { "/": "/community*" },
           ],
         }],
       },
-      webcredentials: { apps: [`${teamId}.${APP_BUNDLE_ID}`] },
+      webcredentials: { apps: [`${teamId}.${IOS_APP_BUNDLE_ID}`] },
     });
   });
 

@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { isIosNative } from "@/lib/platform";
+import { openExternalUrl } from "@/lib/open-external-url";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -946,7 +947,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                                   duration: 8000,
                                 });
                               } else {
-                                window.open(tvUrl, "_blank");
+                                void openExternalUrl(tvUrl);
                                 toast({ title: "Pagina TV aperta", description: "Seleziona dal menu Cast di Chrome (⋮ → Trasmetti)" });
                               }
                             }}
@@ -974,7 +975,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                               (video as any).webkitShowPlaybackTargetPicker();
                             } else {
                               // Fallback: istruzioni Control Center
-                              window.open(tvUrl, "_blank");
+                              void openExternalUrl(tvUrl);
                             }
                           }}
                         >
@@ -998,7 +999,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                           variant="outline"
                           size="sm"
                           className="shrink-0 rounded-xl"
-                          onClick={() => window.open(tvUrl, "_blank")}
+                          onClick={() => void openExternalUrl(tvUrl)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
@@ -1062,7 +1063,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
           {/* Pagina Pub */}
           <div
             className="bg-white dark:bg-[#1A1D24] border border-border rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-colors duration-200 p-4 flex items-center gap-3 cursor-pointer hover:border-primary/30"
-            onClick={() => window.open(`/pub/${(currentPub as any)?.slug || currentPub?.id}`, '_blank')}
+            onClick={() => setLocation(`/pub/${(currentPub as any)?.slug || currentPub?.id}`)}
           >
             <div className="p-2.5 bg-stone-100 dark:bg-[#1A1D24]/60 rounded-xl shrink-0">
               <Eye className="h-5 w-5 text-foreground" />

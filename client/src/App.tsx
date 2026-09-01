@@ -525,6 +525,15 @@ function RouteScrollMemory({
 
   return null;
 }
+
+function SpaRedirect({ to }: { to: string }) {
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    navigate(to, { replace: true });
+  }, [navigate, to]);
+  return null;
+}
+
 function Router() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -663,7 +672,7 @@ function Router() {
           <Route path="/activity" component={Activity} />
           <Route path="/nearby" component={NearbyPage} />
           <Route path="/eventi" component={Eventi} />
-          <Route path="/events">{() => { window.location.replace("/eventi"); return null; }}</Route>
+          <Route path="/events">{() => <SpaRedirect to="/eventi" />}</Route>
           <Route path="/eventi/:type/:id" component={EventDetail} />
           <Route path="/my-cellar" component={MyCellar} />
           <Route path="/my-wishlist" component={MyWishlist} />
@@ -681,7 +690,7 @@ function Router() {
           <Route path="/scan/history" component={ScanHistory} />
           <Route path="/scan" component={Scan} />
           <Route path="/community" component={CommunityPage} />
-          <Route path="/feed">{() => { window.location.replace("/community"); return null; }}</Route>
+          <Route path="/feed">{() => <SpaRedirect to="/community" />}</Route>
           <Route path="/microblog/nuovo" component={MicroblogNew} />
           <Route path="/hashtag/:tag" component={HashtagPage} />
           <Route path="/news" component={NewsPage} />
