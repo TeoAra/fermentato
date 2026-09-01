@@ -35,16 +35,25 @@ Esegui questi controlli dopo ogni build prima di promuovere la versione minima r
 - [ ] Activity feed: pull-to-refresh funziona uguale alla home.
 
 ## 6. Deep link
-- [ ] Con l'APK debug: `adb shell am start -a android.intent.action.VIEW
-      -d "fermentato://pub/<slug>"` apre la pagina pub nell'app (non la home).
-- [ ] Con una build installata dal Play Internal Track: da Chrome/Messaggi, tap su
-      `https://fermenta.to/pub/<slug>` apre direttamente Fermenta.to senza chooser.
-- [ ] `https://fermenta.to/.well-known/assetlinks.json` risponde 200, usa package
-      `to.fermenta.app` e contiene lo SHA-256 della firma Play configurato in
-      `ANDROID_CERT_SHA256`.
-- [ ] Solo sulla build Play: `adb shell pm get-app-links to.fermenta.app` mostra
-      `fermenta.to: verified`. L'APK debug usa un certificato diverso e non deve
-      essere aggiunto all'associazione di produzione.
+- [ ] Verifica dal browser che `https://fermenta.to/.well-known/assetlinks.json`
+      risponda `200`, con `package_name: to.fermenta.app` e il fingerprint
+      SHA-256 del certificato **Play App Signing** (non solo quello upload).
+- [ ] Dopo l'installazione Play firmata, `adb shell pm get-app-links
+      to.fermenta.app` mostra il dominio `fermenta.to` verificato.
+- [ ] Da Chrome/Messaggi tap su ciascun link HTTPS e verifica che l'app apra la
+      pagina giusta (non la home):
+      - `https://fermenta.to/pub/<slug>` → pub
+      - `https://fermenta.to/beer/<id>` → birra
+      - `https://fermenta.to/brewery/<id>` → birrificio
+      - `https://fermenta.to/notifications` → notifiche
+- [ ] Ripeti i quattro casi con una nuova APK/AAB installata (APK debug per il
+      controllo della route; AAB firmato dal track interno Play per il controllo
+      `assetlinks`).
+- [ ] (Fallback) `adb shell am start -W -a android.intent.action.VIEW -d
+      "fermentato://pubs/<slug>"` apre il pub direttamente nell'app.
+- [ ] Se l'app è già aperta e arriva un secondo link, la route cambia senza
+      riaprire la home; lo stesso vale per un tap su una notifica push con
+      `data.path` o `data.url`.
 
 ## 7. Tastiera e form
 - [ ] Apri ricerca: la tastiera non copre l'input attivo.

@@ -7186,7 +7186,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ==================== NOTIFICATIONS ====================
+  // -------------------- NOTIFICATIONS --------------------
 
   app.get("/api/notifications", isAuthenticated, async (req: any, res) => {
     try {
@@ -7674,7 +7674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ==================== Pub Events Routes ====================
+  // -------------------- Pub Events Routes --------------------
 
   // GET upcoming events across all pubs (public)
   app.get("/api/events/upcoming", async (req, res) => {
@@ -7998,9 +7998,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============================================================
+  // ------------------------------------------------------------
   // BREWERY EVENTS ROUTES
-  // ============================================================
+  // ------------------------------------------------------------
 
   // GET all published events for a brewery (public)
   app.get("/api/breweries/:breweryId/events", async (req, res) => {
@@ -8149,9 +8149,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============================================================
+  // ------------------------------------------------------------
   // EVENT INTERESTS (pub + brewery events — chi è interessato)
-  // ============================================================
+  // ------------------------------------------------------------
 
   // GET interest count + user state for a pub event
   app.get("/api/pub-events/:eventId/interest", async (req: any, res) => {
@@ -8209,9 +8209,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ============================================================
+  // ------------------------------------------------------------
   // BEER REVIEWS (public tastings with user info)
-  // ============================================================
+  // ------------------------------------------------------------
 
   // GET public reviews for a beer (all tastings with a rating) — includes per-user review count for badges
   app.get("/api/beers/:beerId/reviews", async (req, res) => {
@@ -10306,16 +10306,24 @@ ${jsonld ? `<script type="application/ld+json">${jsonld}</script>` : ""}
   });
 
   // ─── Deep link: apri l'app se installata (Android App Links / iOS Universal Links)
-  const IOS_APP_BUNDLE_ID = "to.fermentato.app";
-  const ANDROID_APP_PACKAGE = "to.fermenta.app";
+  // Android and iOS intentionally use different application identifiers.
+  // Android builds are normalized to to.fermenta.app by the CI/VPS build
+  // scripts; iOS keeps the App Store bundle id.
+  const ANDROID_PACKAGE_NAME = "to.fermenta.app";
+  const IOS_BUNDLE_ID = "to.fermentato.app";
   app.get("/.well-known/assetlinks.json", (_req, res) => {
-    const sha256 = (process.env.ANDROID_CERT_SHA256 || "").split(",").map((s) => s.trim()).filter(Boolean);
+    const sha256 = [...new Set((process.env.ANDROID_CERT_SHA256 || "")
+      .split(",")
+      .map((fingerprint) => fingerprint.trim())
+      .filter((fingerprint) => /^[0-9a-f:\s]+$/i.test(fingerprint))
+      .map((fingerprint) => fingerprint.replace(/[^0-9a-f]/gi, "").toUpperCase())
+      .filter((fingerprint) => fingerprint.length === 64)
+      .map((fingerprint) => fingerprint.match(/.{2}/g)!.join(":")))];
     if (sha256.length === 0) return res.status(404).json({ message: "ANDROID_CERT_SHA256 non configurato" });
-    res.setHeader("Content-Type", "application/json");
     res.setHeader("Cache-Control", "public, max-age=3600");
     res.json([{
       relation: ["delegate_permission/common.handle_all_urls"],
-      target: { namespace: "android_app", package_name: ANDROID_APP_PACKAGE, sha256_cert_fingerprints: sha256 },
+      target: { namespace: "android_app", package_name: ANDROID_PACKAGE_NAME, sha256_cert_fingerprints: sha256 },
     }]);
   });
   app.get(["/.well-known/apple-app-site-association", "/apple-app-site-association"], (_req, res) => {
@@ -10326,14 +10334,14 @@ ${jsonld ? `<script type="application/ld+json">${jsonld}</script>` : ""}
     res.json({
       applinks: {
         details: [{
-          appIDs: [`${teamId}.${IOS_APP_BUNDLE_ID}`],
+          appIDs: [`${teamId}.${IOS_BUNDLE_ID}`],
           components: [
             { "/": "/eventi/*" }, { "/": "/pub/*" }, { "/": "/brewery/*" },
             { "/": "/beer/*" }, { "/": "/festival/*" }, { "/": "/user/*" }, { "/": "/community*" },
           ],
         }],
       },
-      webcredentials: { apps: [`${teamId}.${IOS_APP_BUNDLE_ID}`] },
+      webcredentials: { apps: [`${teamId}.${IOS_BUNDLE_ID}`] },
     });
   });
 

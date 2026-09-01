@@ -11,16 +11,63 @@ import { Capacitor } from "@capacitor/core";
 export const isNative = Capacitor.isNativePlatform();
 export const nativePlatform = Capacitor.getPlatform(); // 'android' | 'ios' | 'web'
 
-function internalAppPath(rawTarget: unknown): string | null {
+const DEEP_LINK_HOST = "fermenta.to";
+const CUSTOM_SCHEME = "fermentato:";
+const ROUTE_ALIASES: Record<string, string> = {
+  pubs: "pub",
+  beers: "beer",
+  breweries: "brewery",
+  notification: "notifications",
+};
+
+function normalizeAppPath(pathname: string): string | null {
+  if (!pathname.startsWith("/") || pathname.startsWith("//")) return null;
+  const segments = pathname.split("/");
+  const firstSegment = segments[1]?.toLowerCase();
+  if (firstSegment && ROUTE_ALIASES[firstSegment]) {
+    segments[1] = ROUTE_ALIASES[firstSegment];
+  }
+  return segments.join("/");
+}
+
+/**
+ * Convert an App Link or custom-scheme URL into a safe in-app route.
+ *
+ * Custom URLs are accepted in both forms used by Android tooling:
+ *   fermentato:///pub/123
+ *   fermentato://pubs/123
+ * The latter stores the first route segment in URL.host, so it needs to be
+ * put back into the path before Wouter can match it.
+ */
+function nativeAppPath(rawTarget: unknown): string | null {
   if (typeof rawTarget !== "string" || !rawTarget.trim()) return null;
+  const raw = rawTarget.trim();
   try {
-    const url = new URL(rawTarget, window.location.origin);
-    if (url.origin !== window.location.origin) return null;
-    const path = `${url.pathname}${url.search}${url.hash}`;
-    return path.startsWith("/") && !path.startsWith("//") ? path : null;
+    const url = new URL(raw, window.location.origin);
+    const isRelative = raw.startsWith("/");
+    const isCurrentOrigin = url.origin === window.location.origin;
+    const isFermentaHttps =
+      url.protocol === "https:" && url.hostname.toLowerCase() === DEEP_LINK_HOST;
+    const isCustomScheme = url.protocol === CUSTOM_SCHEME;
+
+    if (!isRelative && !isCurrentOrigin && !isFermentaHttps && !isCustomScheme) {
+      return null;
+    }
+
+    let pathname = url.pathname || "/";
+    if (isCustomScheme && url.hostname) {
+      const customRoute = url.hostname.toLowerCase();
+      pathname = `/${customRoute}${pathname === "/" ? "" : pathname}`;
+    }
+    const path = normalizeAppPath(`${pathname}${url.search}${url.hash}`);
+    return path && path !== "//" ? path : null;
   } catch {
     return null;
   }
+}
+
+function internalAppPath(rawTarget: unknown): string | null {
+  return nativeAppPath(rawTarget);
 }
 
 function navigateInsideApp(rawTarget: unknown): boolean {
@@ -143,28 +190,8 @@ async function setupAppLifecycle() {
 
     const openExplicitUrl = (rawUrl: string) => {
       console.log("[native] Deep link:", rawUrl);
-      try {
-        const url = new URL(rawUrl);
-        let path: string;
-        if (url.protocol === "fermentato:") {
-          const customRoute = [url.hostname, url.pathname].filter(Boolean).join("/");
-          path = `/${customRoute.replace(/^\/+/, "")}${url.search}${url.hash}`;
-        } else if (
-          url.protocol === "https:" &&
-          (url.hostname === "fermenta.to" || url.hostname === "www.fermenta.to")
-        ) {
-          path = url.pathname + url.search + url.hash;
-        } else {
-          console.warn("[native] Ignored unsupported deep link origin");
-          return;
-        }
-        const current = window.location.pathname + window.location.search + window.location.hash;
-        if (path !== current) {
-          history.pushState(null, "", path);
-          window.dispatchEvent(new PopStateEvent("popstate"));
-        }
-      } catch {
-        console.warn("[native] Ignored malformed deep link");
+      if (!navigateInsideApp(rawUrl)) {
+        console.warn("[native] Ignored unsafe deep-link destination");
       }
     };
 
@@ -176,10 +203,13 @@ async function setupAppLifecycle() {
     // Resolve a cold-start URL before the remembered route is applied. The
     // dataset marker also covers the case where this finishes before React has
     // attached its event listener.
-    const launch = await App.getLaunchUrl();
-    if (launch?.url) openExplicitUrl(launch.url);
-    document.documentElement.dataset.nativeLaunchReady = "true";
-    window.dispatchEvent(new CustomEvent("native-launch-ready"));
+    try {
+      const launch = await App.getLaunchUrl();
+      if (launch?.url) openExplicitUrl(launch.url);
+    } finally {
+      document.documentElement.dataset.nativeLaunchReady = "true";
+      window.dispatchEvent(new CustomEvent("native-launch-ready"));
+    }
 
     // Back button su Android — naviga indietro o chiude l'app
     App.addListener("backButton", ({ canGoBack }) => {

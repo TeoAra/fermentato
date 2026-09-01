@@ -11,6 +11,10 @@
 #
 # Variabili d'ambiente da impostare in Codemagic (Environment variables):
 #   CAST_APP_ID      → ID receiver Chromecast (default: 6666EC62 = Fermenta custom receiver)
+#   ANDROID_CERT_SHA256 → fingerprint SHA-256 del certificato Android release
+#                         (pubblicalo anche sul server per Android App Links;
+#                          usa più fingerprint separati da virgola se necessario)
+#   PACKAGE_NAME      → package Android App Links (default: to.fermenta.app)
 #   APNS_KEY_ID      → Apple Push key ID (10 caratteri)
 #   APNS_TEAM_ID     → Apple Team ID (10 caratteri)
 #   APNS_P8_KEY      → Contenuto file .p8 con \n letterali
@@ -564,6 +568,12 @@ workflows:
             exit 1
           }
 
+      - name: Applica e verifica Android App Links
+        script: |
+          set -euo pipefail
+          bash scripts/prepare-android-deep-links.sh \
+            android "${PACKAGE_NAME:-to.fermenta.app}"
+
       - name: Inietta plugin NativeCast Android (Chromecast nativo)
         script: |
           # ── 1. Rileva package reale dell'app (può differire da to.fermentato.app) ──
@@ -798,6 +808,12 @@ workflows:
             exit 1
           }
 
+      - name: Applica e verifica Android App Links
+        script: |
+          set -euo pipefail
+          bash scripts/prepare-android-deep-links.sh \
+            android "${PACKAGE_NAME:-to.fermenta.app}"
+
       - name: Genera splash screen e icone Android (resources/ → native)
         script: |
           # Sostituisce il default Capacitor (X blu) con il logo Fermenta.to
@@ -815,7 +831,7 @@ workflows:
           if [ -z "$PKG" ]; then
             PKG=$(grep -oP "applicationId\s+[\"']\K[^\"']+" android/app/build.gradle 2>/dev/null | head -1)
           fi
-          if [ -z "$PKG" ]; then PKG="to.fermentato.app"; fi
+          if [ -z "$PKG" ]; then PKG="${PACKAGE_NAME:-to.fermenta.app}"; fi
           PKG_PATH=${PKG//./\/}
           PKG_DIR="android/app/src/main/java/$PKG_PATH"
           mkdir -p "$PKG_DIR"
