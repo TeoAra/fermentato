@@ -81,6 +81,9 @@ STRIPE_SECRET_KEY = "sk_test_51TAbX8E4oDDrSwtekhOftF5mJcphfJ9MU9B6Z9S91x17gkJWGu
 VITE_GA_MEASUREMENT_ID = "G-2TXH64X0Y8"
 TELEGRAM_BOT_USERNAME = "fermentato_bot"
 
+[userenv.production]
+ANDROID_CERT_SHA256 = "37:9F:75:C8:63:93:18:88:26:48:D0:16:DE:B3:2E:3C:82:2D:57:A7:5D:1D:22:61:4D:ED:C8:DA:1F:DC:FD:37"
+
 [postMerge]
 path = "scripts/post-merge.sh"
 timeoutMs = 120000
