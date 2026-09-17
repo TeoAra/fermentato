@@ -991,7 +991,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 Aggiungi Birra
               </Button>
             </DialogTrigger>
-            <DialogContent className={`manager-dialog max-w-lg w-full overflow-x-hidden overflow-y-auto rounded-3xl border-stone-200 ${creatingBeer ? "manager-dialog-creating" : ""}`}>
+            <DialogContent data-testid="taplist-beer-dialog" className={`manager-dialog max-w-lg w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto rounded-3xl border-stone-200 ${creatingBeer ? "manager-dialog-creating" : ""}`}>
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold text-foreground">
                   {editingItem ? "Modifica Birra" : "Aggiungi Birra alla Tap List"}
@@ -1154,6 +1154,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
 
                 {/* Form creazione birra - condiviso tra aggiunta e modifica */}
                 {creatingBeer && (
+                  <div data-testid="beer-creation-step">
                   <BeerCreationForm
                     initialName={initialBeerName || debouncedSearchTerm}
                     onCancel={() => setCreatingBeer(false)}
@@ -1175,6 +1176,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                       if (editingItem && isChangingBeer) setIsChangingBeer(false);
                     }}
                   />
+                  </div>
                 )}
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && !isChangingBeer && (
@@ -1364,7 +1366,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 )}
 
                 {/* Gestione Prezzi Inline */}
-                <div className={creatingBeer ? "hidden" : "space-y-3"}>
+                <div data-testid="taplist-details-step" className={creatingBeer ? "hidden" : "space-y-3"}>
                   <div className="flex items-center justify-between">
                     <Label className="text-sm font-medium">Prezzi e Formati</Label>
                     <Button

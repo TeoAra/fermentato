@@ -889,7 +889,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                   Nuova Categoria
                 </Button>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogContent data-testid="menu-category-dialog" className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
                 <div className="p-2 bg-primary rounded-lg mr-3">
@@ -953,7 +953,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                   Crea Prima Categoria
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+              <DialogContent data-testid="menu-first-category-dialog" className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                   <DialogTitle className="flex items-center text-xl">
                     <div className="p-2 bg-primary rounded-lg mr-3">
@@ -1038,7 +1038,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                             size="sm"
                             variant="outline"
                             onClick={() => toggleCategory(category.id)}
-                            className="border-stone-200 text-foreground hover:bg-stone-50 text-xs rounded-lg h-7 px-2"
+                            className="border-stone-200 text-foreground hover:bg-stone-50 text-xs rounded-lg min-h-11 px-2"
                           >
                             {(category.items || []).filter((i: any) => !i.isInfoBox).length} prodotti
                             <motion.span
@@ -1051,7 +1051,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                           </Button>
                         </div>
 
-                        <div className="flex items-center space-x-1">
+                        <div data-testid={`category-actions-${category.id}`} className="flex items-center space-x-1">
                           <Button
                             size="sm"
                             variant="ghost"
@@ -1228,7 +1228,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                         })()}
                                       </div>
                                       </div>
-                                      <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
+                                      <div data-testid={`product-actions-${product.id}`} className="flex items-center space-x-1 ml-2 flex-shrink-0">
                                         <Button
                                           size="sm"
                                           variant="ghost"

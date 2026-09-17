@@ -335,7 +335,7 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
               Nuovo Evento
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent data-testid="event-create-dialog" className="w-[calc(100%-1rem)] sm:max-w-lg max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? "Modifica Evento" : "Crea Nuovo Evento"}</DialogTitle>
             </DialogHeader>
@@ -445,7 +445,7 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
           )}
           {pastEvents.length > 0 && (
             <div>
-              <button type="button" onClick={() => setShowPastEvents((open) => !open)} className="min-h-11 w-full sm:w-auto text-left text-lg font-semibold text-muted-foreground dark:text-stone-400 mb-3 flex items-center gap-2">
+              <button data-testid="past-events-toggle" type="button" aria-expanded={showPastEvents} onClick={() => setShowPastEvents((open) => !open)} className="min-h-11 w-full sm:w-auto text-left text-lg font-semibold text-muted-foreground dark:text-stone-400 mb-3 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 Passati ({pastEvents.length})
                 <span className="text-sm font-medium ml-1">{showPastEvents ? "Nascondi" : "Mostra"}</span>
@@ -705,7 +705,7 @@ export function BreweryEventsManager({ breweryId, breweryName }: BreweryEventsMa
               Nuovo Evento
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[calc(100%-2rem)] sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent data-testid="event-edit-dialog" className="w-[calc(100%-1rem)] sm:max-w-lg max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? "Modifica Evento" : "Crea Nuovo Evento"}</DialogTitle>
             </DialogHeader>

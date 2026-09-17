@@ -368,7 +368,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                 Aggiungi
               </Button>
             </DialogTrigger>
-            <DialogContent className={`manager-dialog max-w-2xl w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-3xl p-4 sm:p-6 pb-[calc(1rem+var(--frozen-sab))] ${creatingBeer ? "manager-dialog-creating" : ""}`}>
+            <DialogContent data-testid="bottle-beer-dialog" className={`manager-dialog max-w-2xl w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto rounded-3xl p-4 sm:p-6 pb-[calc(1rem+var(--frozen-sab))] ${creatingBeer ? "manager-dialog-creating" : ""}`}>
               <DialogHeader>
                 <DialogTitle>
                   {editingItem ? "Modifica Birra" : "Aggiungi Birra alla Cantina"}
@@ -611,7 +611,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                   />
                 </div>
 
-                <div className={`manager-dialog-footer flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t ${creatingBeer ? "hidden" : ""}`}>
+                  <div data-testid="bottle-dialog-actions" className={`manager-dialog-footer flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t ${creatingBeer ? "hidden" : ""}`}>
                   <Button
                     variant="outline"
                     onClick={() => {

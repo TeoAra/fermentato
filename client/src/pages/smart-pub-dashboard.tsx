@@ -1143,13 +1143,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         />
       </div>
 
-      <details className="group rounded-2xl border border-border bg-white dark:bg-[#1A1D24]">
+      <details data-testid="keg-warehouse-collapsible" className="group rounded-2xl border border-border bg-white dark:bg-[#1A1D24]">
         <summary className="min-h-12 cursor-pointer list-none px-5 py-4 text-sm font-semibold text-foreground flex items-center justify-between">
           Magazzino fusti <ChevronRight className="h-5 w-5 transition-transform group-open:rotate-90" />
         </summary>
         <div className="border-t border-border p-5">{currentPub && <KegWarehouse pubId={currentPub.id} />}</div>
       </details>
-      <details className="group rounded-2xl border border-border bg-white dark:bg-[#1A1D24]">
+      <details data-testid="line-cleaning-collapsible" className="group rounded-2xl border border-border bg-white dark:bg-[#1A1D24]">
         <summary className="min-h-12 cursor-pointer list-none px-5 py-4 text-sm font-semibold text-foreground flex items-center justify-between">
           Lavaggio linee <ChevronRight className="h-5 w-5 transition-transform group-open:rotate-90" />
         </summary>
