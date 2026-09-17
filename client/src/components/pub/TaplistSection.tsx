@@ -77,7 +77,6 @@ export default function TaplistSection({
                 key={tap.id}
                 beer={tap.beer}
                 item={tap}
-                description={tap.description || tap.beer.description}
                 variant="taplist"
                 testId={`taplist-tap-${tap.id}`}
                 isFavorite={isFav}
