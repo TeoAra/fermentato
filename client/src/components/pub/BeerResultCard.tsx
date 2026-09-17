@@ -38,11 +38,11 @@ export default function BeerResultCard<T>({
 
   return (
     <article
-      className="group grid min-w-0 grid-cols-[52px_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 rounded-[20px] border border-[#E8DED1] bg-white p-3 shadow-[0_4px_20px_rgba(45,30,10,0.045)] transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-[#DCC9B2] hover:shadow-[0_10px_28px_rgba(45,30,10,0.09)] dark:border-white/[0.06] dark:bg-[#1A1D24] dark:hover:border-white/[0.12]"
+      className="group grid min-w-0 grid-cols-[44px_minmax(0,1fr)_auto_auto] items-center gap-1 rounded-[18px] border border-[#E8DED1] bg-white px-2 py-2 shadow-[0_4px_20px_rgba(45,30,10,0.045)] transition-[box-shadow,transform,border-color] duration-200 hover:-translate-y-0.5 hover:border-[#DCC9B2] hover:shadow-[0_10px_28px_rgba(45,30,10,0.09)] dark:border-white/[0.06] dark:bg-[#1A1D24] dark:hover:border-white/[0.12] min-[341px]:gap-2 min-[341px]:px-2.5 sm:grid-cols-[52px_minmax(0,1fr)_auto_auto] sm:gap-3 sm:px-3 sm:py-2.5"
       data-testid={testId}
     >
-      <Link href={`/beer/${beer.id}`} className="row-span-2 flex min-h-[52px] min-w-0 items-center justify-center self-center">
-        <div className="h-[52px] w-[52px] overflow-hidden rounded-full border border-[#E8DED1] bg-[#FCFAF6] shadow-sm dark:border-white/[0.08] dark:bg-[#12151A]">
+      <Link href={`/beer/${beer.id}`} className="flex min-h-11 min-w-0 items-center justify-center self-center sm:min-h-[52px]">
+        <div className="h-10 w-10 overflow-hidden rounded-full border border-[#E8DED1] bg-[#FCFAF6] shadow-sm dark:border-white/[0.08] dark:bg-[#12151A] min-[341px]:h-11 min-[341px]:w-11 sm:h-[52px] sm:w-[52px]">
           <ImageWithFallback
             src={imageSrc || beer.imageUrl || beer.logoUrl || beer.brewery?.logoUrl}
             alt={beer.name}
@@ -56,18 +56,18 @@ export default function BeerResultCard<T>({
 
       <div className="min-w-0 self-center">
         <Link href={`/beer/${beer.id}`} className="block min-w-0">
-          <p className="break-words text-[15px] font-extrabold leading-[1.12] tracking-[-0.01em] text-[#151515] transition-colors group-hover:text-[#C77800] dark:text-[#F5F5F5] dark:group-hover:text-[#FFB74D]">
+          <p className="line-clamp-2 break-words text-[15px] font-extrabold leading-[1.12] tracking-[-0.01em] text-[#151515] transition-colors group-hover:text-[#C77800] dark:text-[#F5F5F5] dark:group-hover:text-[#FFB74D]">
             {beer.name}
           </p>
         </Link>
         {brewery && (
-          <p className="mt-1 break-words text-[11px] font-bold leading-[1.15] text-[#D08409] dark:text-[#FFB74D]">
+          <p className="mt-0.5 line-clamp-1 break-words text-[11px] font-bold leading-[1.15] text-[#D08409] dark:text-[#FFB74D]">
             {brewery}
           </p>
         )}
-        <div className="mt-1.5 flex min-w-0 flex-wrap items-center gap-1.5">
+        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1">
           {beer.style && (
-            <span className="max-w-full break-words rounded-md bg-[#FFF7EA] px-1.5 py-1 text-[10px] font-bold leading-[1.05] text-[#A86600] dark:bg-[#F59E0B]/15 dark:text-[#FFB74D]">
+            <span className="line-clamp-1 max-w-[18ch] truncate rounded-md bg-[#FFF7EA] px-1.5 py-1 text-[10px] font-bold leading-[1.05] text-[#A86600] dark:bg-[#F59E0B]/15 dark:text-[#FFB74D] sm:max-w-[22ch]">
               {beer.style}
             </span>
           )}
@@ -88,10 +88,12 @@ export default function BeerResultCard<T>({
         </div>
       </div>
 
-      <div className="flex min-w-[58px] flex-col items-end justify-center gap-1 self-center text-right">{priceContent}</div>
+      <div className="flex min-w-[52px] flex-col items-end justify-center gap-0.5 text-right sm:min-w-[62px]">
+        {priceContent}
+      </div>
 
       {hasActions && (
-        <div className="col-start-3 row-start-2 flex items-center justify-end gap-1.5 self-end">
+        <div className="flex flex-col items-center justify-end gap-1 sm:flex-row">
           {onToggleFavorite && (
             <button
               type="button"
