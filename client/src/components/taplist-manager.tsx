@@ -1347,7 +1347,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 {creatingBeer && !creatingBrewery && (
                   <div className="border rounded-lg p-4 bg-amber-50/50 dark:bg-amber-900/10 space-y-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBeer(false)}>
+                      <Button type="button" variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => setCreatingBeer(false)}>
                         <ArrowLeft className="h-4 w-4" />
                       </Button>
                       <h4 className="font-semibold text-sm">Crea nuova birra</h4>

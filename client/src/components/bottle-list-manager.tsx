@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { BeerFullEditDialog } from "./taplist-manager";
+import { useLocation } from "wouter";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -64,6 +65,7 @@ interface BottleListManagerProps {
 }
 
 export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }: BottleListManagerProps) {
+  const [, navigate] = useLocation();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BottleItem | null>(null);
   const [fullEditOpen, setFullEditOpen] = useState(false);
@@ -447,9 +449,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={() => {
-                                window.open('/admin/dashboard?tab=beers&action=create', '_blank');
-                              }}
+                              onClick={() => navigate('/admin/dashboard?tab=beers&action=create')}
                             >
                               <Plus className="w-4 h-4 mr-1" />
                               Crea nuova birra
