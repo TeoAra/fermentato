@@ -851,10 +851,10 @@ html.dark {
   .stagger-item:nth-child(8)  { animation-delay: 260ms; }
   .stagger-item:nth-child(n+9) { animation-delay: 280ms; }
 
-  /* ── Main content bottom padding — clears the 64px nav + safe area (mobile only) ── */
+  /* ── Main content bottom padding — clears the compact 52px nav + safe area (mobile only) ── */
   @media (max-width: 1023px) {
     .main-content-pb {
-      padding-bottom: max(calc(64px + var(--frozen-sab) + 8px), 80px) !important;
+      padding-bottom: max(calc(52px + var(--frozen-sab) + 8px), 68px) !important;
     }
   }
 

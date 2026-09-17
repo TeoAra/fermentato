@@ -1252,7 +1252,7 @@ export default function FestivalPublic() {
         aria-label="Navigazione del festival"
         role="tablist"
       >
-        <div className="relative flex items-stretch h-[64px] px-2 gap-1 max-w-2xl mx-auto">
+        <div className="relative flex min-h-[52px] items-center px-2 gap-1 max-w-2xl mx-auto">
           {[
             { id: 'overview', label: 'Overview', Icon: HomeIcon },
             { id: 'taps', label: 'Taplist', Icon: Beer },
@@ -1272,7 +1272,7 @@ export default function FestivalPublic() {
                 aria-label={label}
                 onClick={() => setActiveTab(id)}
                 data-testid={`festival-dock-${id}`}
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                className={`min-h-12 flex-1 flex flex-col items-center justify-center gap-0.5 px-1 rounded-[18px] transition-all duration-200 active:scale-95 ${
                   active
                     ? 'bg-primary/10 dark:bg-primary/15 text-primary'
                     : 'text-stone-500 dark:text-stone-400 hover:text-foreground'

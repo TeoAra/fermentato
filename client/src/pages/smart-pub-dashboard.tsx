@@ -2256,7 +2256,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       >
         <div className="px-2">
           <div>
-            <div className="flex items-stretch justify-between p-1.5 gap-1">
+            <div className="flex min-h-[52px] items-center justify-between px-1 gap-1">
               {mobilePrimarySections.map((section) => {
                 const Icon = section.icon;
                 const active = currentSection === section.id;
@@ -2269,7 +2269,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                     aria-current={active ? 'page' : undefined}
                     aria-label={section.name}
                     data-testid={`smartpub-dock-${section.id}`}
-                    className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                    className={`min-h-12 flex-1 flex flex-col items-center justify-center gap-0.5 px-1 rounded-[18px] transition-all duration-200 active:scale-95 ${
                       active
                         ? 'bg-primary/10 dark:bg-primary/15 text-primary'
                         : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
@@ -2292,7 +2292,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                 onClick={() => setMobileMenuOpen(true)}
                 role="tab"
                 aria-label="Altre sezioni"
-                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                className={`min-h-12 flex-1 flex flex-col items-center justify-center gap-0.5 px-1 rounded-[18px] transition-all duration-200 active:scale-95 ${
                   mobileMoreSections.some((section) => section.id === currentSection)
                     ? 'bg-primary/10 dark:bg-primary/15 text-primary'
                     : 'text-stone-500 dark:text-stone-400'

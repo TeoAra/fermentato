@@ -304,7 +304,7 @@ export function BottomNavigation() {
     label: string;
     badge?: ReactNode;
   }) => (
-    <div className="flex-1 flex flex-col items-center justify-start gap-0.5 pt-2.5 cursor-pointer select-none">
+    <div className="flex-1 min-h-12 flex flex-col items-center justify-center gap-0.5 cursor-pointer select-none">
       <span
         className={`relative inline-flex items-center justify-center transition-colors ${
           active ? "text-primary" : "text-stone-400 dark:text-stone-500"
@@ -329,7 +329,7 @@ export function BottomNavigation() {
         className="bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)]"
         style={{ paddingBottom: "max(calc(var(--frozen-sab) - 16px), 0px)" }}
       >
-        <div className="relative flex items-stretch h-[64px] px-2">
+        <div className="relative flex items-center min-h-[52px] px-2">
 
           {/* Home */}
           <Link href="/" className="flex-1 flex">

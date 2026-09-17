@@ -736,7 +736,7 @@ export default function PubDashboard() {
         role="tablist"
       >
         <div className="overflow-x-auto scrollbar-hide px-2">
-          <div className="flex min-w-max items-stretch p-1.5 gap-1">
+          <div className="flex min-h-[52px] min-w-max items-center px-1 gap-1">
               {[
                 { id: 'overview', label: 'Home', Icon: HomeIcon },
                 { id: 'info',     label: 'Info', Icon: Building2 },
@@ -756,7 +756,7 @@ export default function PubDashboard() {
                     aria-current={active ? 'page' : undefined}
                     aria-label={label}
                     data-testid={`pub-dock-${id}`}
-                    className={`min-w-[64px] flex flex-col items-center justify-center gap-0.5 py-2 px-2 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                    className={`min-h-12 min-w-[64px] flex flex-col items-center justify-center gap-0.5 px-2 rounded-[18px] transition-all duration-200 active:scale-95 ${
                       active
                         ? 'bg-primary/10 dark:bg-primary/15 text-primary'
                         : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
