@@ -74,7 +74,8 @@ import {
   CheckCircle,
   CreditCard,
   CalendarDays,
-  BadgeCheck
+  BadgeCheck,
+  MoreHorizontal
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useChromecast } from "@/hooks/useChromecast";
@@ -368,7 +369,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     const params = new URLSearchParams(window.location.search);
     if (params.get('trial') === 'started') {
       setTimeout(() => {
-        toast({ title: "Email verificata! Prova gratuita attivata 🎉", description: "Hai 15 giorni per esplorare tutte le funzionalità di Fermenta.to." });
+        toast({ title: "Email verificata! Prova gratuita attivata", description: "Hai 15 giorni per esplorare tutte le funzionalità di Fermenta.to." });
       }, 800);
       window.history.replaceState({}, '', '/dashboard');
     } else if (params.get('pub-pending') === 'true') {
@@ -696,6 +697,13 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
     { id: 'drinks', name: 'Bevande', icon: GlassWater, gradient: 'from-violet-500 to-purple-600' },
     { id: 'menu', name: 'Menu', icon: Utensils, gradient: 'from-emerald-500 to-teal-600' },
     { id: 'events', name: 'Eventi', icon: Calendar, gradient: 'from-pink-500 to-rose-600' },
+  ];
+  const mobilePrimarySections = sections.filter((section) => ['overview', 'taplist', 'bottles', 'menu'].includes(section.id));
+  const mobileMoreSections = sections.filter((section) => !['overview', 'taplist', 'bottles', 'menu'].includes(section.id));
+  const utilitySections = [
+    { id: 'settings' as DashboardSection, name: 'Impostazioni', icon: Settings },
+    { id: 'profile' as DashboardSection, name: 'Profilo', icon: Users },
+    { id: 'bot' as DashboardSection, name: 'Bot Manager', icon: Bot },
   ];
 
   // ── Subscription banner (shown on every section) ──────────────────────────
@@ -1135,15 +1143,18 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         />
       </div>
 
-      {/* Magazzino fusti */}
-      <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border p-5">
-        {currentPub && <KegWarehouse pubId={currentPub.id} />}
-      </div>
-
-      {/* Lavaggi linee */}
-      <div className="bg-white dark:bg-[#1A1D24] rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] border border-border p-5">
-        {currentPub && <PubLineCleaning pubId={currentPub.id} tapList={typedTapList} />}
-      </div>
+      <details className="group rounded-2xl border border-border bg-white dark:bg-[#1A1D24]">
+        <summary className="min-h-12 cursor-pointer list-none px-5 py-4 text-sm font-semibold text-foreground flex items-center justify-between">
+          Magazzino fusti <ChevronRight className="h-5 w-5 transition-transform group-open:rotate-90" />
+        </summary>
+        <div className="border-t border-border p-5">{currentPub && <KegWarehouse pubId={currentPub.id} />}</div>
+      </details>
+      <details className="group rounded-2xl border border-border bg-white dark:bg-[#1A1D24]">
+        <summary className="min-h-12 cursor-pointer list-none px-5 py-4 text-sm font-semibold text-foreground flex items-center justify-between">
+          Lavaggio linee <ChevronRight className="h-5 w-5 transition-transform group-open:rotate-90" />
+        </summary>
+        <div className="border-t border-border p-5">{currentPub && <PubLineCleaning pubId={currentPub.id} tapList={typedTapList} />}</div>
+      </details>
     </div>
   );
 
@@ -2086,7 +2097,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
+    <div className="pub-owner-workspace min-h-[100dvh] bg-background">
       <div className={currentSection !== 'overview' ? 'hidden lg:block' : ''}>
         <PubOwnerTopBar 
           currentSection={currentSection as any}
@@ -2246,7 +2257,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
         <div className="px-2">
           <div>
             <div className="flex items-stretch justify-between p-1.5 gap-1">
-              {sections.map((section) => {
+              {mobilePrimarySections.map((section) => {
                 const Icon = section.icon;
                 const active = currentSection === section.id;
                 return (
@@ -2276,11 +2287,68 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
                   </button>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => setMobileMenuOpen(true)}
+                role="tab"
+                aria-label="Altre sezioni"
+                className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 rounded-[20px] transition-all duration-200 active:scale-95 ${
+                  mobileMoreSections.some((section) => section.id === currentSection)
+                    ? 'bg-primary/10 dark:bg-primary/15 text-primary'
+                    : 'text-stone-500 dark:text-stone-400'
+                }`}
+              >
+                <MoreHorizontal className="h-[20px] w-[20px]" strokeWidth={2} />
+                <span className="text-[10px] leading-none tracking-tight font-semibold">Altro</span>
+              </button>
             </div>
           </div>
         </div>
       </nav>
       </DockPortal>
+
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="bottom" className="lg:hidden rounded-t-3xl px-5 pb-[calc(1.25rem+var(--frozen-sab))]">
+          <SheetHeader className="text-left pb-3">
+            <SheetTitle>Altre sezioni</SheetTitle>
+          </SheetHeader>
+          <div className="grid grid-cols-2 gap-2">
+            {mobileMoreSections.map((section) => {
+              const Icon = section.icon;
+              return (
+                <button
+                  key={section.id}
+                  type="button"
+                  onClick={() => { setCurrentSection(section.id as DashboardSection); setMobileMenuOpen(false); }}
+                  className={`min-h-12 flex items-center gap-3 rounded-2xl border px-4 text-left text-sm font-semibold transition-colors ${
+                    currentSection === section.id
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-card text-foreground'
+                  }`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  {section.name}
+                </button>
+              );
+            })}
+            {utilitySections.map((section) => {
+              const Icon = section.icon;
+              return (
+                <button
+                  key={section.id}
+                  type="button"
+                  onClick={() => { setCurrentSection(section.id); setMobileMenuOpen(false); }}
+                  className={`min-h-12 flex items-center gap-3 rounded-2xl border px-4 text-left text-sm font-semibold ${
+                    currentSection === section.id ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card text-foreground'
+                  }`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />{section.name}
+                </button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Cancel subscription confirmation dialog */}
       <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>

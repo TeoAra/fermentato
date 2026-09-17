@@ -1059,7 +1059,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                               id: category.id,
                               isVisible: !category.isVisible
                             })}
-                            className="text-muted-foreground hover:text-foreground hover:bg-stone-50"
+                            className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-foreground hover:bg-stone-50"
                             data-testid={`button-toggle-visibility-${category.id}`}
                           >
                             {effectiveCategoryIsVisible(category) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -1068,7 +1068,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                             size="sm"
                             variant="ghost"
                             onClick={() => handleEditCategory(category)}
-                            className="text-muted-foreground hover:text-primary hover:bg-stone-50"
+                            className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-primary hover:bg-stone-50"
                             data-testid={`button-edit-category-${category.id}`}
                           >
                             <Edit3 className="h-4 w-4" />
@@ -1077,7 +1077,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                             size="sm"
                             variant="ghost"
                             onClick={() => handleDeleteCategory(category)}
-                            className="text-muted-foreground hover:text-destructive hover:bg-red-50"
+                            className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-destructive hover:bg-red-50"
                             data-testid={`button-delete-category-${category.id}`}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -1124,7 +1124,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => toggleProductVisibilityMutation.mutate({ id: product.id, isVisible: !product.isVisible })}
-                                            className="text-muted-foreground hover:text-foreground hover:bg-stone-50"
+                                             className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-foreground hover:bg-stone-50"
                                           >
                                             {effectiveProductIsVisible(product) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                           </Button>
@@ -1142,7 +1142,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                               setEditCategoryIds(allCatIds);
                                               setIsEditProductOpen(true);
                                             }}
-                                            className="text-muted-foreground hover:text-primary hover:bg-stone-50"
+                                             className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-primary hover:bg-stone-50"
                                           >
                                             <Edit3 className="h-4 w-4" />
                                           </Button>
@@ -1150,7 +1150,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                             size="sm"
                                             variant="ghost"
                                             onClick={() => handleDeleteProduct(product)}
-                                            className="text-muted-foreground hover:text-destructive hover:bg-red-50"
+                                             className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-destructive hover:bg-red-50"
                                           >
                                             <Trash2 className="h-4 w-4" />
                                           </Button>
@@ -1233,7 +1233,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                           size="sm"
                                           variant="ghost"
                                           onClick={() => handleToggleProductVisibility(product)}
-                                          className="text-muted-foreground hover:text-foreground hover:bg-stone-50"
+                                          className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-foreground hover:bg-stone-50"
                                           data-testid={`button-toggle-product-visibility-${product.id}`}
                                         >
                                           {effectiveProductIsVisible(product) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -1252,7 +1252,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                             setEditCategoryIds(allCatIds);
                                             setIsEditProductOpen(true);
                                           }}
-                                          className="text-muted-foreground hover:text-primary hover:bg-stone-50"
+                                          className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-primary hover:bg-stone-50"
                                           data-testid={`button-edit-product-${product.id}`}
                                         >
                                           <Edit3 className="h-4 w-4" />
@@ -1261,7 +1261,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                           size="sm"
                                           variant="ghost"
                                           onClick={() => handleDeleteProduct(product)}
-                                          className="text-muted-foreground hover:text-destructive hover:bg-red-50"
+                                          className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-destructive hover:bg-red-50"
                                           data-testid={`button-delete-product-${product.id}`}
                                         >
                                           <Trash2 className="h-4 w-4" />

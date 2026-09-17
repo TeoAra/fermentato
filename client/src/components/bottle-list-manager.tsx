@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { BeerFullEditDialog } from "./taplist-manager";
-import { useLocation } from "wouter";
+import { BeerCreationForm, type CreatedBeer } from "./beer-creation-form";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -65,7 +65,6 @@ interface BottleListManagerProps {
 }
 
 export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }: BottleListManagerProps) {
-  const [, navigate] = useLocation();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<BottleItem | null>(null);
   const [fullEditOpen, setFullEditOpen] = useState(false);
@@ -80,6 +79,8 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
     description: "",
     isVisible: true,
   });
+  const [creatingBeer, setCreatingBeer] = useState(false);
+  const [selectedNewBeer, setSelectedNewBeer] = useState<CreatedBeer | null>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -242,6 +243,8 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
       isVisible: true,
     });
     setSearchTerm("");
+    setCreatingBeer(false);
+    setSelectedNewBeer(null);
   };
 
   const findTapItem = (beerId: number | null | undefined) => {
@@ -365,7 +368,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                 Aggiungi
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className={`manager-dialog max-w-2xl w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-y-auto rounded-3xl p-4 sm:p-6 pb-[calc(1rem+var(--frozen-sab))] ${creatingBeer ? "manager-dialog-creating" : ""}`}>
               <DialogHeader>
                 <DialogTitle>
                   {editingItem ? "Modifica Birra" : "Aggiungi Birra alla Cantina"}
@@ -377,21 +380,32 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
 
               <div className="space-y-6">
                 {/* Ricerca Birra o Birra Selezionata */}
-                {!editingItem && (
+                {!editingItem && creatingBeer ? (
+                  <BeerCreationForm
+                    initialName={debouncedSearchTerm}
+                    onCancel={() => setCreatingBeer(false)}
+                    onCreated={(beer) => {
+                      setSelectedNewBeer(beer);
+                      setFormData((current) => ({ ...current, beerId: String(beer.id) }));
+                      setCreatingBeer(false);
+                      setSearchTerm("");
+                    }}
+                  />
+                ) : !editingItem && (
                   <div className="space-y-3">
                     <Label className="text-sm font-medium">Seleziona Birra</Label>
                     
                     {/* Mostra birra selezionata */}
-                    {formData.beerId && searchResults?.beers?.find((b: any) => b?.id?.toString() === formData.beerId) ? (
+                    {formData.beerId && (selectedNewBeer || searchResults?.beers?.find((b: any) => b?.id?.toString() === formData.beerId)) ? (
                       <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
                         {(() => {
-                          const selectedBeer = searchResults.beers.find((b: any) => b?.id?.toString() === formData.beerId);
+                           const selectedBeer = selectedNewBeer || searchResults?.beers?.find((b: any) => b?.id?.toString() === formData.beerId);
                           return (
                             <div className="flex items-center justify-between">
                               <div>
                                 <div className="font-semibold text-gray-900">{selectedBeer?.name}</div>
                                 <div className="text-sm text-gray-600 mt-1">
-                                  {selectedBeer?.brewery?.name || 'Birrificio sconosciuto'} • {selectedBeer?.style} • {selectedBeer?.abv}% ABV
+                                   {selectedBeer?.brewery?.name || selectedBeer?.breweryName || 'Birrificio sconosciuto'} • {selectedBeer?.style} • {selectedBeer?.abv || "0"}% ABV
                                 </div>
                               </div>
                               <Button
@@ -400,6 +414,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                                 size="sm"
                                 onClick={() => {
                                   setFormData({ ...formData, beerId: '' });
+                                  setSelectedNewBeer(null);
                                   setSearchTerm('');
                                 }}
                               >
@@ -431,6 +446,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                                 key={beer?.id ?? `result-${idx}`}
                                 className="p-3 hover:bg-gray-50 dark:hover:bg-[#1A1D24] cursor-pointer border-b last:border-b-0 transition-colors"
                                 onClick={() => {
+                                  setSelectedNewBeer(null);
                                   setFormData({ ...formData, beerId: beer?.id?.toString() || "" });
                                 }}
                               >
@@ -449,7 +465,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                               type="button"
                               variant="outline"
                               size="sm"
-                              onClick={() => navigate('/admin/dashboard?tab=beers&action=create')}
+                              onClick={() => setCreatingBeer(true)}
                             >
                               <Plus className="w-4 h-4 mr-1" />
                               Crea nuova birra
@@ -492,7 +508,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                 })()}
 
                 {/* Prezzo e Formato Inline */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className={creatingBeer ? "hidden" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                   <div>
                     <Label className="text-sm font-medium">Prezzo (€) *</Label>
                     <Input
@@ -530,7 +546,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                 </div>
 
                 {/* Tipo contenitore: bottiglia / lattina */}
-                <div>
+                <div className={creatingBeer ? "hidden" : ""}>
                   <Label className="text-sm font-medium mb-1 block">Tipo contenitore</Label>
                   <div className="flex gap-2">
                     {(["bottiglia", "lattina"] as const).map((f) => (
@@ -538,20 +554,20 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                         key={f}
                         type="button"
                         onClick={() => setFormData({ ...formData, format: f })}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-sm font-medium transition-colors ${
+                        className={`min-h-11 flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl border text-sm font-medium transition-colors ${
                           formData.format === f
                             ? "bg-primary text-white border-primary"
                             : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
                         }`}
                       >
-                        <span>{f === "bottiglia" ? "🍺" : "🥫"}</span>
+                        <span aria-hidden="true" className="text-xs font-bold">{f === "bottiglia" ? "B" : "L"}</span>
                         <span className="capitalize">{f}</span>
                       </button>
                     ))}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className={creatingBeer ? "hidden" : "grid grid-cols-1 sm:grid-cols-2 gap-4"}>
                   <div>
                     <Label className="text-sm font-medium">Quantità</Label>
                     <Input
@@ -575,7 +591,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                 </div>
 
                 {/* Visibilità e Descrizione */}
-                <div className="flex items-center space-x-3">
+                <div className={creatingBeer ? "hidden" : "flex items-center space-x-3"}>
                   <Switch
                     id="visible"
                     checked={formData.isVisible}
@@ -585,7 +601,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                   <Label htmlFor="visible" className="text-sm font-medium">Visibile al pubblico</Label>
                 </div>
 
-                <div>
+                <div className={creatingBeer ? "hidden" : ""}>
                   <Label className="text-sm font-medium">Note aggiuntive</Label>
                   <RichTextEditor
                     content={formData.description}
@@ -595,7 +611,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                   />
                 </div>
 
-                <div className="flex justify-end space-x-3 pt-6 border-t">
+                <div className={`manager-dialog-footer flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t ${creatingBeer ? "hidden" : ""}`}>
                   <Button
                     variant="outline"
                     onClick={() => {

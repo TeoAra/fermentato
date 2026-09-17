@@ -503,6 +503,94 @@ html.dark {
    COMPONENTS
    ============================ */
 @layer components {
+  /* Pub-owner controls: one-handed use on iOS and Android. Keep the
+     scroll on the page, while sheets/dialogs own one predictable viewport. */
+  .manager-dialog {
+    max-height: min(82dvh, 760px);
+    padding-bottom: calc(1rem + var(--frozen-sab));
+    overscroll-behavior: contain;
+  }
+  .manager-dialog-footer {
+    position: sticky;
+    bottom: calc(-1 * (1rem + var(--frozen-sab)));
+    z-index: 2;
+    margin-inline: -1.5rem;
+    padding: 0.75rem 1.5rem calc(0.75rem + var(--frozen-sab));
+    background: color-mix(in srgb, hsl(var(--card)) 94%, transparent);
+    border-top: 1px solid hsl(var(--border) / 0.8);
+    backdrop-filter: blur(14px);
+  }
+  @media (max-width: 639px) {
+    .manager-dialog {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 1.5rem 1.5rem 0 0;
+      margin-top: auto;
+      padding-inline: 1rem;
+    }
+    .manager-dialog-footer {
+      margin-inline: -1rem;
+      padding-inline: 1rem;
+    }
+    /* Radix portals mount under body, outside page-level mobile selectors.
+       Keep this scope on owner dialogs so regular desktop controls stay dense. */
+    .manager-dialog button,
+    .manager-dialog [role="button"],
+    .manager-dialog input,
+    .manager-dialog textarea,
+    .manager-dialog select {
+      min-height: 44px;
+    }
+    .manager-dialog button,
+    .manager-dialog [role="button"] {
+      min-width: 44px;
+    }
+    .manager-dialog .manager-result-row {
+      min-height: 44px;
+      padding-block: 0.625rem;
+    }
+    .manager-dialog .manager-icon-action {
+      width: 44px;
+      height: 44px;
+      min-width: 44px;
+      padding: 0.625rem;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .manager-dialog, .manager-dialog * { scroll-behavior: auto !important; }
+  }
+
+  /* Pub owner workspace: the shift workflow is thumb-first and single-column. */
+  .pub-owner-workspace {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: clip;
+    padding-bottom: calc(5.5rem + var(--frozen-sab));
+  }
+  .pub-owner-workspace button,
+  .pub-owner-workspace [role="button"] {
+    min-height: 44px;
+  }
+  .pub-owner-workspace input,
+  .pub-owner-workspace textarea,
+  .pub-owner-workspace select {
+    min-height: 44px;
+  }
+  @media (min-width: 1024px) {
+    .pub-owner-workspace {
+      padding-bottom: 2rem;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pub-owner-workspace *,
+    .pub-owner-workspace *::before,
+    .pub-owner-workspace *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(20px);

@@ -127,7 +127,7 @@ export function EventCategoryBadge({ category }: { category?: string | null }) {
 export function EventShareButtons({ event, pubId, size = "sm" }: { event: any; pubId: number; size?: "sm" | "default" }) {
   const { toast } = useToast();
   const iconSize = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
-  const btnSize = size === "sm" ? "h-7 w-7" : "h-8 w-8";
+  const btnSize = "min-h-11 min-w-11";
 
   const handleShare = async () => {
     const url = getShareUrl(event.sourceType === "brewery" ? "brewery" : "pub", event.id);
@@ -223,6 +223,7 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [showPastEvents, setShowPastEvents] = useState(false);
   const [form, setForm] = useState<EventForm>(emptyForm);
 
   const { data: events = [], isLoading } = useQuery({
@@ -444,15 +445,16 @@ export function EventsManager({ pubId, pubName }: EventsManagerProps) {
           )}
           {pastEvents.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold text-muted-foreground dark:text-stone-400 mb-3 flex items-center gap-2">
+              <button type="button" onClick={() => setShowPastEvents((open) => !open)} className="min-h-11 w-full sm:w-auto text-left text-lg font-semibold text-muted-foreground dark:text-stone-400 mb-3 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
                 Passati ({pastEvents.length})
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-70">
+                <span className="text-sm font-medium ml-1">{showPastEvents ? "Nascondi" : "Mostra"}</span>
+              </button>
+              {showPastEvents && <div className="grid grid-cols-1 md:grid-cols-2 gap-4 opacity-70">
                 {pastEvents.slice(0, 4).map((event: any) => (
                   <EventCard key={event.id} event={event} pubId={pubId} onEdit={openEdit} onDelete={(id) => deleteMutation.mutate(id)} isPast />
                 ))}
-              </div>
+              </div>}
             </div>
           )}
         </div>
@@ -505,10 +507,10 @@ function EventCard({ event, pubId, onEdit, onDelete, isPast }: { event: any; pub
             </div>
           </div>
           <div className="flex flex-col gap-1 shrink-0">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(event)}>
+            <Button variant="ghost" size="icon" className="min-h-11 min-w-11" onClick={() => onEdit(event)} aria-label="Modifica evento">
               <Edit3 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700" onClick={() => onDelete(event.id)}>
+            <Button variant="ghost" size="icon" className="min-h-11 min-w-11 text-red-500 hover:text-red-700" onClick={() => onDelete(event.id)} aria-label="Elimina evento">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -570,17 +572,17 @@ function BreweryEventCard({ event, breweryId, onEdit, onDelete, isPast }: { even
             )}
             {!isRichContentEmpty(event.description) && <p className="text-sm text-muted-foreground dark:text-stone-400 line-clamp-2 mb-2">{richTextToPlain(event.description)}</p>}
             <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground dark:text-stone-400" onClick={handleShare} title="Condividi">
+              <Button variant="ghost" size="icon" className="min-h-11 min-w-11 text-muted-foreground dark:text-stone-400" onClick={handleShare} title="Condividi" aria-label="Condividi evento">
                 <Share2 className="h-3.5 w-3.5" />
               </Button>
               <EventInterestButton eventId={event.id} type="brewery" readOnly />
             </div>
           </div>
           <div className="flex flex-col gap-1 shrink-0">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(event)}>
+            <Button variant="ghost" size="icon" className="min-h-11 min-w-11" onClick={() => onEdit(event)} aria-label="Modifica evento">
               <Edit3 className="h-4 w-4" />
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700" onClick={() => onDelete(event.id)}>
+            <Button variant="ghost" size="icon" className="min-h-11 min-w-11 text-red-500 hover:text-red-700" onClick={() => onDelete(event.id)} aria-label="Elimina evento">
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
