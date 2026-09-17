@@ -15,6 +15,7 @@ export interface PubBeer {
   isGlutenFree?: boolean;
   isAlcoholFree?: boolean;
   breweryName?: string | null;
+  description?: string | null;
   brewery?: PubBrewery | null;
   country?: string | null;
   countryEmoji?: string | null;

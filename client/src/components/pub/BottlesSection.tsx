@@ -349,6 +349,8 @@ export default function BottlesSection({
                 beer={b.beer}
                 imageSrc={b.imageUrl}
                 imageType="bottle"
+                description={b.beer.description}
+                variant="cantina"
                 item={b}
                 testId={`bottle-${b.id}`}
                 isFavorite={isFav}
