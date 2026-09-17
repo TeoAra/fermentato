@@ -1488,7 +1488,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 onDrop={e => handleDrop(e, idx)}
                 onDragEnd={handleDragEnd}
                 onDragLeave={() => setDragOverIdx(null)}
-                className={`border rounded-2xl p-4 transition-colors ${
+                className={`border rounded-2xl p-3 sm:p-4 transition-colors ${
                   dragOverIdx === idx
                     ? 'border-primary border-dashed bg-primary/5'
                     : !item.isVisible
@@ -1496,7 +1496,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     : 'border-stone-100 dark:border-border bg-white dark:bg-card'
                 }`}
               >
-                {/* Row 1: drag handle + full name + action buttons */}
+                {/* One identity row keeps the card short without narrowing the beer copy. */}
                 <div className="flex items-start gap-2">
                   <div
                     draggable
@@ -1508,37 +1508,28 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                   >
                     <GripVertical className="w-4 h-4" />
                   </div>
-                  <h3 className="flex-1 font-bold text-base text-foreground leading-snug">{item.beer.name}</h3>
-                  <div className="flex items-center gap-0.5 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleToggleTapVisibility(item)}
-                      className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 rounded-lg"
-                    >
-                      {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => { startEdit(item); setIsAddDialogOpen(true); }}
-                      className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-primary hover:bg-stone-50 dark:hover:bg-stone-900/20 rounded-lg"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteTapItem(item)}
-                      className="min-h-11 min-w-11 p-2 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                  <ImageWithFallback
+                    src={(item.beer as any).imageUrl || item.beer.logoUrl}
+                    alt={item.beer.name}
+                    imageType="beer"
+                    containerClassName="w-11 h-11 rounded-lg flex-shrink-0"
+                    className="w-11 h-11 rounded-lg object-cover"
+                    iconSize="sm"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <h3 className="font-bold text-[17px] text-foreground leading-tight break-words">{item.beer.name}</h3>
+                    <p className="mt-0.5 text-sm font-medium text-muted-foreground break-words">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
+                    <div className="mt-0.5 flex items-center gap-1.5 flex-wrap">
+                      {item.beer.style && <span className="text-xs text-muted-foreground break-words">{item.beer.style}</span>}
+                      {item.beer.abv && <span className="text-xs text-muted-foreground">• {item.beer.abv}% ABV</span>}
+                      {(item.beer as any).isGlutenFree && <GlutenFreeSmallBadge size={11} />}
+                      {(item.beer as any).isAlcoholFree && <AlcoholFreeBadge size={10} />}
+                    </div>
                   </div>
                 </div>
 
                 {/* Row 2: badges (spina, tipo, visibilità, cantina) */}
-                <div className="flex flex-wrap gap-1.5 mt-2 pl-6">
+                <div className="flex flex-wrap gap-1.5 mt-1.5 ml-14">
                   {item.tapNumber && (
                     <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 dark:text-amber-400">
                       Spina {item.tapNumber}
@@ -1567,30 +1558,9 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                   )}
                 </div>
 
-                {/* Row 3: immagine + birrificio/stile/ABV */}
-                <div className="flex items-center gap-3 mt-2.5 pl-6">
-                  <ImageWithFallback
-                    src={(item.beer as any).imageUrl || item.beer.logoUrl}
-                    alt={item.beer.name}
-                    imageType="beer"
-                    containerClassName="w-11 h-11 rounded-lg flex-shrink-0"
-                    className="w-11 h-11 rounded-lg object-cover"
-                    iconSize="sm"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground/80 leading-tight">{item.beer.brewery?.name || 'Birrificio sconosciuto'}</p>
-                    <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                      {item.beer.style && <span className="text-xs text-muted-foreground">{item.beer.style}</span>}
-                      {item.beer.abv && <span className="text-xs text-muted-foreground">• {item.beer.abv}% ABV</span>}
-                      {(item.beer as any).isGlutenFree && <GlutenFreeSmallBadge size={11} />}
-                      {(item.beer as any).isAlcoholFree && <AlcoholFreeBadge size={10} />}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Row 4: prezzi */}
+                {/* Prices stay in the same compact content flow. */}
                 {(item.prices && item.prices.length > 0) ? (
-                  <div className="flex flex-wrap gap-2 mt-2.5 pl-6">
+                  <div className="flex flex-wrap gap-2 mt-1.5 ml-14">
                     {item.prices.map((price, idx) => (
                       <Badge key={idx} variant="outline" className="text-xs font-medium bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
                         {price.size}: €{price.price}
@@ -1598,7 +1568,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     ))}
                   </div>
                 ) : (item.priceSmall || item.priceMedium || item.priceLarge) ? (
-                  <div className="flex flex-wrap gap-2 mt-2.5 pl-6">
+                  <div className="flex flex-wrap gap-2 mt-1.5 ml-14">
                     {item.priceSmall && (
                       <Badge variant="outline" className="text-xs font-medium bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300">
                         Piccola: €{item.priceSmall}
@@ -1617,12 +1587,41 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                   </div>
                 ) : null}
 
-                {/* Row 5: descrizione */}
                 {item.description && (
-                  <div className="mt-2 pl-6">
+                  <div className="mt-2">
                     <RichTextDisplay html={item.description} className="text-sm italic text-muted-foreground dark:text-stone-400" />
                   </div>
                 )}
+
+                <div className="mt-3 flex items-center justify-end gap-1 border-t border-stone-100 pt-2 dark:border-white/[0.06]">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleToggleTapVisibility(item)}
+                    aria-label={item.isVisible ? `Nascondi ${item.beer.name} dalla tap list` : `Mostra ${item.beer.name} nella tap list`}
+                    className="h-11 w-11 min-w-11 p-0 text-muted-foreground hover:text-primary rounded-lg"
+                  >
+                    {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { startEdit(item); setIsAddDialogOpen(true); }}
+                    aria-label={`Modifica ${item.beer.name}`}
+                    className="h-11 w-11 min-w-11 p-0 text-muted-foreground hover:text-primary rounded-lg"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteTapItem(item)}
+                    aria-label={`Rimuovi ${item.beer.name} dalla tap list`}
+                    className="h-11 w-11 min-w-11 p-0 text-red-500 hover:bg-red-50 dark:hover:bg-red-950 rounded-lg"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>

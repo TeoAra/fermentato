@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useTouchReorder } from "@/hooks/useTouchReorder";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -129,6 +130,16 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
     reorderBottlesMutation.mutate(next.map((b, i) => ({ id: b.id, orderIndex: i })));
   };
   const handleBottleDragEnd = () => { setBottleDragOver(null); bottleDragFrom.current = null; };
+  const { startTouchDrag: startBottleTouchDrag } = useTouchReorder({
+    onReorder: (from, to) => {
+      const next = [...localBottles];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      setLocalBottles(next);
+      reorderBottlesMutation.mutate(next.map((b, i) => ({ id: b.id, orderIndex: i })));
+    },
+    setDragOver: setBottleDragOver,
+  });
   // ───────────────────────────────────────────────────────────────────────────
 
   // Debounce search term for better performance
@@ -700,19 +711,28 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
               return (
                 <div
                   key={item.id}
-                  draggable
-                  onDragStart={(e) => handleBottleDragStart(e, itemIdx)}
                   onDragOver={(e) => handleBottleDragOver(e, itemIdx)}
                   onDrop={(e) => handleBottleDrop(e, itemIdx)}
                   onDragEnd={handleBottleDragEnd}
                   onDragLeave={() => setBottleDragOver(null)}
-                  className={`border rounded-lg p-4 transition-colors cursor-grab active:cursor-grabbing ${
+                  data-touch-sort-idx={itemIdx}
+                  className={`border rounded-lg p-3 sm:p-4 transition-colors ${
                     bottleDragOver === itemIdx ? 'border-primary ring-2 ring-primary/20' : ''
                   } ${!safeItem.isVisible ? 'opacity-60 bg-gray-50 dark:bg-[#1A1D24]/50' : 'bg-white dark:bg-[#0B0D10]'}`}
                 >
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <GripVertical className="w-4 h-4 text-gray-400 flex-shrink-0 cursor-grab" />
+                      <div
+                        draggable
+                        data-touch-sort-handle
+                        aria-label={`Riordina ${safeBeer.name}`}
+                        onDragStart={(e) => handleBottleDragStart(e, itemIdx)}
+                        onTouchStart={(e) => startBottleTouchDrag(e, itemIdx)}
+                        className="flex h-11 w-11 min-w-11 items-center justify-center rounded-lg text-gray-400 cursor-grab"
+                        style={{ touchAction: "none" }}
+                      >
+                        <GripVertical className="w-4 h-4" />
+                      </div>
                       <ImageWithFallback
                         src={safeBeer.logoUrl}
                         alt={safeBeer.name}
@@ -741,7 +761,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">{safeBeer.brewery.name}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 break-words">{safeBeer.brewery.name}</p>
                         <div className="flex items-center gap-1.5 flex-wrap">
                           <span className="text-xs text-gray-500 dark:text-gray-400">
                             {safeBeer.style} • {safeBeer.abv}% ABV • {safeItem.size || "33cl"}
@@ -756,38 +776,6 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleToggleBottleVisibility(item)}
-                        className="h-11 w-11 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        aria-label={safeItem.isVisible ? `Nascondi ${safeBeer.name} dalla cantina` : `Mostra ${safeBeer.name} in cantina`}
-                      >
-                        {safeItem.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          startEdit(item);
-                          setIsAddDialogOpen(true);
-                        }}
-                        className="h-11 w-11 p-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        aria-label={`Modifica ${safeBeer.name}`}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteBottleItem(item)}
-                        className="h-11 w-11 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                        aria-label={`Rimuovi ${safeBeer.name} dalla cantina`}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 mt-3 ml-[60px]">
@@ -802,10 +790,40 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                   </div>
 
                   {safeItem.description && (
-                    <div className="mt-3 ml-[60px]">
+                    <div className="mt-2">
                       <RichTextDisplay html={safeItem.description} className="text-sm italic text-gray-600 dark:text-gray-400" />
                     </div>
                   )}
+
+                  <div className="mt-3 flex items-center justify-end gap-1 border-t border-stone-100 pt-2 dark:border-white/[0.06]">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleBottleVisibility(item)}
+                      className="h-11 w-11 min-w-11 p-0 text-gray-500 hover:text-primary"
+                      aria-label={safeItem.isVisible ? `Nascondi ${safeBeer.name} dalla cantina` : `Mostra ${safeBeer.name} in cantina`}
+                    >
+                      {safeItem.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => { startEdit(item); setIsAddDialogOpen(true); }}
+                      className="h-11 w-11 min-w-11 p-0 text-gray-500 hover:text-primary"
+                      aria-label={`Modifica ${safeBeer.name}`}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteBottleItem(item)}
+                      className="h-11 w-11 min-w-11 p-0 text-red-500 hover:bg-red-50 dark:hover:bg-red-950"
+                      aria-label={`Rimuovi ${safeBeer.name} dalla cantina`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               );
             }).filter(Boolean)}
