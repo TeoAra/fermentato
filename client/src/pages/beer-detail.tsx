@@ -840,7 +840,7 @@ export default function BeerDetail() {
             <div className="mt-3 space-y-2">
               {/* Riga 1: Wishlist + Cantina + Suggerisci — sempre sulla stessa riga */}
               {isAuthenticated && (
-                <div className="flex items-center gap-1.5">
+                <div className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5">
                   {id && <WishlistButton beerId={parseInt(id)} variant="pill" />}
                   <button
                     onClick={() => cellarMutation.mutate()}
@@ -867,17 +867,19 @@ export default function BeerDetail() {
                       <span>Suggerisci</span>
                     </button>
                   )}
-                  {/* Cerca img solo per titolari pub (admin ce l'ha già nella riga sotto) */}
-                  {isPubOwner && (
-                    <button
-                      onClick={handleFindWebImage}
-                      disabled={isSearchingImage}
-                      className="ml-auto text-[11px] text-primary font-bold disabled:opacity-50 px-2 h-9 tap-scale whitespace-nowrap"
-                    >
-                      {isSearchingImage ? 'Cerco…' : (beer?.logoUrl || beer?.imageUrl) ? 'Re-cerca img' : 'Cerca img'}
-                    </button>
-                  )}
                 </div>
+              )}
+
+              {/* La ricerca immagine resta separata: quattro azioni sulla stessa
+                  riga causavano overflow sui telefoni più stretti. */}
+              {isPubOwner && !isAdmin && (
+                <button
+                  onClick={handleFindWebImage}
+                  disabled={isSearchingImage}
+                  className="inline-flex h-9 w-full max-w-full items-center justify-center rounded-full border border-[#E8DED1] bg-card px-3 text-[11px] font-bold text-primary tap-scale transition-all disabled:opacity-50 dark:border-white/[0.06]"
+                >
+                  {isSearchingImage ? 'Cerco immagine…' : (beer?.logoUrl || beer?.imageUrl) ? 'Cerca una nuova immagine' : 'Cerca immagine'}
+                </button>
               )}
 
               {/* Riga 2: bottoni admin modifica/elimina */}

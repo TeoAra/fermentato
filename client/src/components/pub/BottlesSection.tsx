@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { format as formatDate } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
 import ImageWithFallback from "@/components/image-with-fallback";
+import { AlcoholFreeBadge, GlutenFreeSmallBadge } from "@/components/beer-badges";
 import type { BottleItem } from "./types";
 
 interface BottlesSectionProps {
@@ -383,6 +384,13 @@ export default function BottlesSection({
                     {formatLabel && (
                       <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] font-medium">{formatLabel}</span>
                     )}
+                    {(b.beer.isAlcoholFree || (b.beer.abv != null && String(b.beer.abv).trim() !== "")) && (
+                      <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] font-medium">
+                        {b.beer.isAlcoholFree ? "0,0%" : `${b.beer.abv}%`}
+                      </span>
+                    )}
+                    {b.beer.isGlutenFree && <GlutenFreeSmallBadge size={10} />}
+                    {b.beer.isAlcoholFree && <AlcoholFreeBadge size={9} />}
                   </div>
                 </div>
 

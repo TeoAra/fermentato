@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,36 @@ interface Allergen {
   name: string;
   emoji: string;
   orderIndex: number;
+}
+
+interface AllergenGroup extends Allergen {
+  equivalentIds: string[];
+}
+
+function normalizeAllergenName(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLocaleLowerCase("it");
+}
+
+function groupAllergens(allergens: Allergen[], selectedIds: string[] = []): AllergenGroup[] {
+  const groups = new Map<string, Allergen[]>();
+
+  allergens.forEach((allergen) => {
+    const key = normalizeAllergenName(allergen.name);
+    groups.set(key, [...(groups.get(key) ?? []), allergen]);
+  });
+
+  return Array.from(groups.values()).map((matches) => {
+    const sorted = [...matches].sort((a, b) => a.orderIndex - b.orderIndex || a.id - b.id);
+    const representative = sorted.find((item) => selectedIds.includes(item.id.toString())) ?? sorted[0];
+    return {
+      ...representative,
+      equivalentIds: sorted.map((item) => item.id.toString()),
+    };
+  });
 }
 
 interface AllergenSelectorProps {
@@ -31,19 +61,24 @@ export function AllergenSelector({ selectedAllergens, onAllergensChange, classNa
     }),
   });
 
-  const handleAllergenToggle = (allergenId: string) => {
-    const isSelected = selectedAllergens.includes(allergenId);
+  const uniqueAllergens = useMemo(
+    () => groupAllergens(allergens, selectedAllergens),
+    [allergens, selectedAllergens],
+  );
+
+  const selectedGroups = uniqueAllergens.filter((allergen) =>
+    allergen.equivalentIds.some((id) => selectedAllergens.includes(id)),
+  );
+
+  const handleAllergenToggle = (allergen: AllergenGroup) => {
+    const isSelected = allergen.equivalentIds.some((id) => selectedAllergens.includes(id));
+    const withoutEquivalentIds = selectedAllergens.filter((id) => !allergen.equivalentIds.includes(id));
     if (isSelected) {
-      onAllergensChange(selectedAllergens.filter(id => id !== allergenId));
+      onAllergensChange(withoutEquivalentIds);
     } else {
-      onAllergensChange([...selectedAllergens, allergenId]);
+      onAllergensChange([...withoutEquivalentIds, allergen.id.toString()]);
     }
   };
-
-  const selectedAllergenNames = allergens
-    .filter((allergen: Allergen) => selectedAllergens.includes(allergen.id.toString()))
-    .map((allergen: Allergen) => `${allergen.emoji} ${allergen.name}`)
-    .join(", ");
 
   if (isLoading) {
     return <div className={className}>Caricamento allergeni...</div>;
@@ -76,9 +111,13 @@ export function AllergenSelector({ selectedAllergens, onAllergensChange, classNa
       <Label>Allergeni</Label>
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
-          <Button variant="outline" className="w-full justify-start text-left" data-testid="button-select-allergens">
-            <Plus className="w-4 h-4 mr-2" />
-            {selectedAllergens.length > 0 ? selectedAllergenNames : "Seleziona allergeni..."}
+          <Button variant="outline" className="w-full min-w-0 justify-start overflow-hidden text-left" data-testid="button-select-allergens">
+            <Plus className="mr-2 h-4 w-4 shrink-0" />
+            <span className="min-w-0 truncate">
+              {selectedGroups.length > 0
+                ? `${selectedGroups.length} ${selectedGroups.length === 1 ? "allergene selezionato" : "allergeni selezionati"}`
+                : "Seleziona allergeni..."}
+            </span>
           </Button>
         </DialogTrigger>
         <DialogContent className="max-w-md max-h-[80dvh] flex flex-col">
@@ -86,14 +125,14 @@ export function AllergenSelector({ selectedAllergens, onAllergensChange, classNa
             <DialogTitle>Seleziona Allergeni</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-2 overflow-y-auto flex-1 min-h-0">
-            {[...new Map(allergens.map((a: Allergen) => [a.id, a] as const)).values()].map((allergen: Allergen) => {
-              const isSelected = selectedAllergens.includes(allergen.id.toString());
+            {uniqueAllergens.map((allergen) => {
+              const isSelected = allergen.equivalentIds.some((id) => selectedAllergens.includes(id));
               return (
                 <Button
                   key={allergen.id}
                   variant={isSelected ? "default" : "outline"}
                   className="h-auto p-3 flex flex-col items-center justify-center"
-                  onClick={() => handleAllergenToggle(allergen.id.toString())}
+                  onClick={() => handleAllergenToggle(allergen)}
                   data-testid={`button-allergen-${allergen.id}`}
                 >
                   <div className="text-2xl mb-1">{allergen.emoji}</div>
@@ -109,9 +148,7 @@ export function AllergenSelector({ selectedAllergens, onAllergensChange, classNa
       {selectedAllergens.length > 0 && (
         <div className="mt-2">
           <div className="flex flex-wrap gap-1">
-            {allergens
-              .filter((allergen: Allergen) => selectedAllergens.includes(allergen.id.toString()))
-              .map((allergen: Allergen) => (
+            {selectedGroups.map((allergen) => (
                 <Badge
                   key={allergen.id}
                   variant="secondary"
@@ -121,7 +158,7 @@ export function AllergenSelector({ selectedAllergens, onAllergensChange, classNa
                   {allergen.emoji} {allergen.name}
                   <X 
                     className="w-3 h-3 cursor-pointer ml-1" 
-                    onClick={() => handleAllergenToggle(allergen.id.toString())}
+                    onClick={() => handleAllergenToggle(allergen)}
                   />
                 </Badge>
               ))}
@@ -143,8 +180,8 @@ export function AllergenDisplay({ allergens, className }: AllergenDisplayProps) 
     queryFn: () => fetch('/api/allergens').then(res => res.json()),
   });
 
-  const selectedAllergenData = allAllergens.filter((allergen: Allergen) => 
-    allergens.includes(allergen.id.toString())
+  const selectedAllergenData = groupAllergens(allAllergens as Allergen[], allergens).filter((allergen) =>
+    allergen.equivalentIds.some((id) => allergens.includes(id)),
   );
 
   if (selectedAllergenData.length === 0) {

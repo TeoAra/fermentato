@@ -262,7 +262,19 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
   const formatAllergens = (allergenIds: string[] | null) => {
     if (!allergenIds || allergenIds.length === 0 || !Array.isArray(allergensList)) return [];
     const map = allergensList.reduce((acc: any, a: any) => { acc[a.id.toString()] = a; return acc; }, {});
-    return allergenIds.map(id => map[id]).filter(Boolean).map((a: any) => ({ emoji: a.emoji || '⚠️', label: a.name }));
+    const uniqueByName = new Map<string, any>();
+    allergenIds
+      .map(id => map[id])
+      .filter(Boolean)
+      .forEach((allergen: any) => {
+        const normalizedName = allergen.name
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .trim()
+          .toLocaleLowerCase('it');
+        if (!uniqueByName.has(normalizedName)) uniqueByName.set(normalizedName, allergen);
+      });
+    return Array.from(uniqueByName.values()).map((a: any) => ({ emoji: a.emoji || '⚠️', label: a.name }));
   };
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);

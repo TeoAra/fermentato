@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useTouchReorder } from "@/hooks/useTouchReorder";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
@@ -13,16 +13,13 @@ import RichTextEditor, { RichTextDisplay } from "@/components/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { PriceFormatManager } from "@/components/price-format-manager";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import ImageWithFallback from "@/components/image-with-fallback";
-import { ImageUpload } from "@/components/image-upload";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
-import { WebImageSearchButton } from "@/components/web-image-search-button";
 import { 
   Beer, 
   Plus, 
@@ -38,13 +35,13 @@ import {
   ChevronRight,
   ImagePlus,
   Save,
-  Building,
   X,
   GripVertical,
   Wrench,
   PackageOpen,
 } from "lucide-react";
 import { BeerCreationForm } from "@/components/beer-creation-form";
+import { BeerDetailsFields } from "@/components/beer-details-fields";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -53,66 +50,6 @@ function useDebounce<T>(value: T, delay: number): T {
     return () => clearTimeout(handler);
   }, [value, delay]);
   return debouncedValue;
-}
-
-function CollabBrewerySelector({ selected, onChange }: { selected: { id: number; name: string }[]; onChange: (breweries: { id: number; name: string }[]) => void }) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const search = useCallback((q: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (q.length < 2) { setResults([]); return; }
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json();
-        setResults(Array.isArray(data) ? data.filter((b: any) => !selected.some((s: any) => s.id === b.id)) : []);
-        setShowResults(true);
-      } catch { setResults([]); }
-    }, 250);
-  }, [selected]);
-
-  return (
-    <div className="space-y-2">
-      <Label className="text-sm font-bold text-foreground">Birrifici in Collaborazione</Label>
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selected.map((b: any) => (
-            <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200">
-              <Building className="w-3 h-3" />
-              {b.name}
-              <button type="button" onClick={() => onChange(selected.filter(s => s.id !== b.id))} className="ml-0.5 text-purple-500 hover:text-purple-800">×</button>
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="relative">
-        <Input
-          value={query}
-          onChange={e => { setQuery(e.target.value); search(e.target.value); }}
-          onBlur={() => setTimeout(() => setShowResults(false), 200)}
-          placeholder="Cerca birrificio partner..."
-          className="border-stone-200 rounded-xl h-11"
-          autoComplete="off"
-        />
-        {showResults && results.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1A1D24] border border-stone-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
-            {results.map((b: any) => (
-              <button key={b.id} type="button" onMouseDown={e => { e.preventDefault(); onChange([...selected, { id: b.id, name: b.name }]); setQuery(""); setResults([]); setShowResults(false); }}
-                className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
-                {b.logoUrl ? <img loading="lazy" src={b.logoUrl} alt="" className="w-6 h-6 rounded-full object-cover" /> : <Building className="w-4 h-4 text-purple-400" />}
-                <span>{b.name}</span>
-                <span className="text-xs text-stone-400 ml-auto">{b.location}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 }
 
 const beerFullEditSchema = z.object({
@@ -197,128 +134,35 @@ export function BeerFullEditDialog({ beer, open, onOpenChange, onSaved }: {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((v) => updateMutation.mutate(v))} className="space-y-5 pt-2 text-left">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">Nome Birra *</FormLabel>
-                  <FormControl><Input placeholder="Es. Luppolina" {...field} className="border-stone-200 rounded-xl h-11" /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="style" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">Stile *</FormLabel>
-                  <FormControl><Input placeholder="Es. American IPA" {...field} className="border-stone-200 rounded-xl h-11" /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
+            <BeerDetailsFields
+              values={{
+                name: form.watch("name"),
+                style: form.watch("style"),
+                abv: form.watch("abv") ?? null,
+                ibu: form.watch("ibu") ?? null,
+                color: form.watch("color") ?? "",
+                description: form.watch("description") ?? "",
+                imageUrl: form.watch("imageUrl") ?? "",
+                isGlutenFree: form.watch("isGlutenFree"),
+                isAlcoholFree: form.watch("isAlcoholFree"),
+                isCollaboration: form.watch("isCollaboration"),
+              }}
+              onChange={(field, value) => form.setValue(field as any, value, { shouldValidate: true, shouldDirty: true })}
+              collaborators={collabBreweries}
+              onCollaboratorsChange={setCollabBreweries}
+              imageSearchEndpoint={`/api/beers/${beer.id}/find-image-preview`}
+            />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField control={form.control} name="abv" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">ABV %</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.1" placeholder="5.2" {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))} className="border-stone-200 rounded-xl h-11" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-              <FormField control={form.control} name="ibu" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">IBU</FormLabel>
-                  <FormControl>
-                    <Input type="number" placeholder="45" {...field} value={field.value ?? ""} onChange={e => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))} className="border-stone-200 rounded-xl h-11" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )} />
-            </div>
-
-            <FormField control={form.control} name="color" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-bold">Colore</FormLabel>
-                <FormControl><Input placeholder="Es. Giallo Paglierino, Mogano..." {...field} value={field.value ?? ""} className="border-stone-200 rounded-xl h-11" /></FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-            <FormField control={form.control} name="description" render={({ field }) => (
-              <FormItem>
-                <FormLabel className="font-bold">Descrizione Organolettica</FormLabel>
-                <FormControl>
-                  <RichTextEditor
-                    content={field.value ?? ""}
-                    onChange={field.onChange}
-                    placeholder="Note di degustazione, malti e luppoli utilizzati..."
-                    maxChars={2000}
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )} />
-
-            <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <label className="text-sm font-bold text-foreground">Immagine Prodotto</label>
-                <WebImageSearchButton
-                  endpoint={`/api/beers/${beer.id}/find-image-preview`}
-                  responseKey="imageUrl"
-                  onFound={(url) => form.setValue("imageUrl", url)}
-                />
-              </div>
-              <ImageUpload
-                label="Immagine Birra"
-                description="Foto della bottiglia o del bicchiere"
-                currentImageUrl={form.watch("imageUrl") || undefined}
-                onImageChange={(url) => form.setValue("imageUrl", url || "")}
-                folder="beer-images"
-                aspectRatio="square"
-                maxSize={5}
-                recommendedDimensions="400x400px"
-              />
-            </div>
-
-            <div className="space-y-3 p-4 bg-stone-50 dark:bg-white/[0.03] rounded-xl border border-stone-100 dark:border-white/[0.06]">
-              <p className="text-xs font-bold text-stone-500 uppercase tracking-wider">Caratteristiche Speciali</p>
-              <FormField control={form.control} name="isGlutenFree" render={({ field }) => (
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} className="rounded-md" />
-                  <span className="text-sm font-medium">Senza Glutine</span>
-                </label>
-              )} />
-              <FormField control={form.control} name="isAlcoholFree" render={({ field }) => (
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} className="rounded-md" />
-                  <span className="text-sm font-medium">Analcolica (0,0%)</span>
-                </label>
-              )} />
-              <FormField control={form.control} name="isCollaboration" render={({ field }) => (
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <Checkbox checked={field.value} onCheckedChange={field.onChange} className="rounded-md" />
-                  <span className="text-sm font-medium text-purple-700 dark:text-purple-400">Birra in Collaborazione</span>
-                </label>
-              )} />
-              {form.watch("isCollaboration") && (
-                <div className="pt-1">
-                  <CollabBrewerySelector selected={collabBreweries} onChange={setCollabBreweries} />
-                  {collabBreweries.length === 0 && (
-                    <p className="text-xs text-red-500 mt-1">Aggiungi almeno un birrificio partner</p>
-                  )}
-                </div>
-              )}
-            </div>
-
-            <DialogFooter sticky className="gap-3 sm:space-x-0">
+            <DialogFooter className="grid grid-cols-1 gap-3 border-t border-stone-100 pt-4 pb-[var(--frozen-sab)] min-[380px]:grid-cols-2 sm:space-x-0">
               <Button
                 type="submit"
-                className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
+                className="order-2 h-12 min-h-11 rounded-xl bg-primary font-bold text-white shadow-md hover:bg-primary/90"
                 disabled={updateMutation.isPending || (form.watch("isCollaboration") && collabBreweries.length === 0)}
               >
                 {updateMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
                 Salva modifiche
               </Button>
-              <Button variant="outline" type="button" onClick={() => onOpenChange(false)} className="px-6 border-stone-200 rounded-xl h-12">
+              <Button variant="outline" type="button" onClick={() => onOpenChange(false)} className="order-1 h-12 min-h-11 rounded-xl border-stone-200">
                 Annulla
               </Button>
             </DialogFooter>
