@@ -1,9 +1,7 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { Link } from "wouter";
-import { Beer as BeerIcon, Heart } from "lucide-react";
-import ImageWithFallback from "@/components/image-with-fallback";
-import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
+import { Beer as BeerIcon } from "lucide-react";
+import BeerResultCard from "./BeerResultCard";
 import type { TapItem } from "./types";
 
 interface TaplistSectionProps {
@@ -75,108 +73,28 @@ export default function TaplistSection({
             const prices = getAllPrices(tap);
             const isFav = favoriteBeerIds?.has(tap.beer.id) ?? false;
             return (
-              <div
+              <BeerResultCard
                 key={tap.id}
-                className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex items-center gap-3"
-                data-testid={`taplist-tap-${tap.id}`}
-              >
-                {/* Logo */}
-                <Link href={`/beer/${tap.beer.id}`} className="flex-shrink-0">
-                  <div className="w-14 h-14 rounded-full overflow-hidden bg-white dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] shadow-sm flex items-center justify-center">
-                    <ImageWithFallback
-                      src={tap.beer.imageUrl || tap.beer.logoUrl || tap.beer.brewery?.logoUrl}
-                      alt={tap.beer.name}
-                      imageType="beer"
-                      containerClassName="w-full h-full"
-                      className="w-full h-full object-contain p-1"
-                      iconSize="sm"
-                    />
-                  </div>
-                </Link>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <Link href={`/beer/${tap.beer.id}`}>
-                    <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] leading-tight break-words hover:text-[#F59E0B] transition-colors">
-                      {tap.beer.name}
-                    </p>
-                  </Link>
-                  {tap.beer.brewery?.name && (
-                    <p className="text-[11px] font-semibold text-[#F59E0B] leading-tight break-words mt-0.5">
-                      {tap.beer.brewery.name}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                    {tap.beer.style && (
-                      <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF7EA] dark:bg-[#F59E0B]/15 text-[#C77800] dark:text-[#FFB74D] whitespace-nowrap">
-                        {tap.beer.style}
-                      </span>
-                    )}
-                    {tap.beer.abv && parseFloat(String(tap.beer.abv)) > 0 && (
-                      <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] font-medium">
-                        {tap.beer.isAlcoholFree ? "0,0%" : `${tap.beer.abv}%`}
-                      </span>
-                    )}
-                    {tap.beer.countryEmoji && (
-                      <span className="text-[11px]">{tap.beer.countryEmoji}</span>
-                    )}
-                    {tap.beer.isGlutenFree && <GlutenFreeSmallBadge size={10} />}
-                    {tap.beer.isAlcoholFree && <AlcoholFreeBadge size={9} />}
-                  </div>
-                </div>
-
-                {/* Prices */}
-                {prices.length > 0 && (
-                  <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                    {prices.map((p, i) => (
-                      <div key={i} className="flex items-center gap-1.5">
-                        <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] tabular-nums">{p.size}</span>
-                        <span className="text-xs font-black text-[#151515] dark:text-[#F5F5F5] tabular-nums">
-                          € {p.price.replace(".", ",")}
-                        </span>
+                beer={tap.beer}
+                item={tap}
+                testId={`taplist-tap-${tap.id}`}
+                isFavorite={isFav}
+                onToggleFavorite={onToggleFavorite}
+                onCheckin={onCheckin}
+                currentUserCanCheckin={currentUserCanCheckin}
+                priceContent={
+                  prices.length > 0 ? (
+                    prices.map((p, i) => (
+                      <div key={i} className="flex items-baseline gap-1.5 whitespace-nowrap">
+                        <span className="text-[11px] font-medium tabular-nums text-[#6B6357] dark:text-[#B7BDC7]">{p.size}</span>
+                        <span className="text-[15px] font-extrabold tabular-nums text-[#151515] dark:text-[#F5F5F5]">€ {p.price.replace(".", ",")}</span>
                       </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Azioni — colonna inline a destra (no overlap sui prezzi) */}
-                {(onToggleFavorite || (currentUserCanCheckin && onCheckin)) && (
-                  <div className="flex flex-col items-center justify-center gap-1.5 flex-shrink-0 pl-1">
-                    {onToggleFavorite && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onToggleFavorite(tap.beer.id);
-                        }}
-                        className="w-8 h-8 rounded-full bg-[#FAF7F1] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center hover:bg-[#FFF7EA] dark:hover:bg-[#F59E0B]/15 active:scale-95 transition-all"
-                        aria-label={isFav ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
-                      >
-                        <Heart
-                          className={`w-3.5 h-3.5 ${isFav ? "text-[#F59E0B]" : "text-[#6B6357] dark:text-[#B7BDC7]"}`}
-                          fill={isFav ? "currentColor" : "none"}
-                        />
-                      </button>
-                    )}
-                    {currentUserCanCheckin && onCheckin && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onCheckin(tap);
-                        }}
-                        className="w-8 h-8 rounded-full bg-[#F59E0B] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(245,158,11,0.35)] active:scale-95 transition-all"
-                        aria-label="Check-in"
-                        title="Sto bevendo questa"
-                      >
-                        <BeerIcon className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+                    ))
+                  ) : (
+                    <span className="text-sm font-bold text-[#9B9384]">—</span>
+                  )
+                }
+              />
             );
           })}
         </div>

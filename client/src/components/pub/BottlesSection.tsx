@@ -1,11 +1,9 @@
 import { motion } from "framer-motion";
-import { Link } from "wouter";
-import { Heart, Beer as BeerIcon, Wine, Search, X } from "lucide-react";
+import { Beer as BeerIcon, Wine, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { format as formatDate } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
-import ImageWithFallback from "@/components/image-with-fallback";
-import { AlcoholFreeBadge, GlutenFreeSmallBadge } from "@/components/beer-badges";
+import BeerResultCard from "./BeerResultCard";
 import type { BottleItem } from "./types";
 
 interface BottlesSectionProps {
@@ -346,97 +344,24 @@ export default function BottlesSection({
             const isFav = favoriteBeerIds?.has(b.beer.id) ?? false;
             const formatLabel = b.size || b.format || (b.beer as any)?.format;
             return (
-              <div
+              <BeerResultCard
                 key={b.id}
-                className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-3 flex items-center gap-3"
-                data-testid={`bottle-${b.id}`}
-              >
-                <Link href={`/beer/${b.beer.id}`} className="flex-shrink-0">
-                  <div className="w-14 h-14 rounded-full overflow-hidden bg-white dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] shadow-sm flex items-center justify-center">
-                    <ImageWithFallback
-                      src={b.imageUrl || b.beer.imageUrl || b.beer.logoUrl}
-                      alt={b.beer.name}
-                      imageType="bottle"
-                      containerClassName="w-full h-full"
-                      className="w-full h-full object-contain p-1"
-                      iconSize="sm"
-                    />
-                  </div>
-                </Link>
-
-                <div className="flex-1 min-w-0">
-                  <Link href={`/beer/${b.beer.id}`}>
-                    <p className="font-bold text-sm text-[#151515] dark:text-[#F5F5F5] leading-tight break-words hover:text-[#F59E0B] transition-colors">
-                      {b.beer.name}
-                    </p>
-                  </Link>
-                  {(b.beer.brewery?.name || b.beer.breweryName) && (
-                    <p className="text-[11px] font-semibold text-[#F59E0B] leading-tight break-words mt-0.5">
-                      {b.beer.brewery?.name || b.beer.breweryName}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                    {b.beer.style && (
-                      <span className="inline-block text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#FFF7EA] dark:bg-[#F59E0B]/15 text-[#C77800] dark:text-[#FFB74D] whitespace-nowrap">
-                        {b.beer.style}
-                      </span>
-                    )}
-                    {formatLabel && (
-                      <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] font-medium">{formatLabel}</span>
-                    )}
-                    {(b.beer.isAlcoholFree || (b.beer.abv != null && String(b.beer.abv).trim() !== "")) && (
-                      <span className="text-[10px] text-[#6B6357] dark:text-[#B7BDC7] font-medium">
-                        {b.beer.isAlcoholFree ? "0,0%" : `${b.beer.abv}%`}
-                      </span>
-                    )}
-                    {b.beer.isGlutenFree && <GlutenFreeSmallBadge size={10} />}
-                    {b.beer.isAlcoholFree && <AlcoholFreeBadge size={9} />}
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-end gap-0.5 flex-shrink-0">
-                  <span className="text-base font-black text-[#151515] dark:text-[#F5F5F5] tabular-nums">
+                beer={b.beer}
+                imageSrc={b.imageUrl}
+                imageType="bottle"
+                item={b}
+                testId={`bottle-${b.id}`}
+                isFavorite={isFav}
+                detailLabel={formatLabel}
+                onToggleFavorite={onToggleFavorite}
+                onCheckin={onCheckin}
+                currentUserCanCheckin={currentUserCanCheckin}
+                priceContent={
+                  <span className="whitespace-nowrap text-[17px] font-extrabold tabular-nums text-[#151515] dark:text-[#F5F5F5]">
                     {b.price ? `€ ${parseFloat(b.price).toFixed(2).replace(".", ",")}` : "—"}
                   </span>
-                </div>
-
-                {(onToggleFavorite || (currentUserCanCheckin && onCheckin)) && (
-                  <div className="flex flex-col items-center justify-center gap-1.5 flex-shrink-0 pl-1">
-                    {onToggleFavorite && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onToggleFavorite(b.beer.id);
-                        }}
-                        className="w-8 h-8 rounded-full bg-[#FAF7F1] dark:bg-[#12151A] border border-[#E8DED1] dark:border-white/[0.06] flex items-center justify-center hover:bg-[#FFF7EA] dark:hover:bg-[#F59E0B]/15 active:scale-95 transition-all"
-                        aria-label={isFav ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti"}
-                      >
-                        <Heart
-                          className={`w-3.5 h-3.5 ${isFav ? "text-[#F59E0B]" : "text-[#6B6357] dark:text-[#B7BDC7]"}`}
-                          fill={isFav ? "currentColor" : "none"}
-                        />
-                      </button>
-                    )}
-                    {currentUserCanCheckin && onCheckin && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          onCheckin(b);
-                        }}
-                        className="w-8 h-8 rounded-full bg-[#F59E0B] text-white flex items-center justify-center shadow-[0_4px_12px_rgba(245,158,11,0.35)] active:scale-95 transition-all"
-                        aria-label="Check-in"
-                        title="Sto bevendo questa"
-                      >
-                        <BeerIcon className="w-3.5 h-3.5" />
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
+                }
+              />
             );
           })}
         </div>
