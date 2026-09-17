@@ -60,7 +60,7 @@ export default function BeerResultCard<T>({
         </div>
       </Link>
 
-      <div className="min-w-0 self-center">
+      <div className="min-w-0 self-center" data-testid="beer-card-content">
         <Link href={`/beer/${beer.id}`} className="block min-w-0">
           <p className="line-clamp-2 break-words text-[15px] font-extrabold leading-[1.12] tracking-[-0.01em] text-[#151515] transition-colors group-hover:text-[#C77800] dark:text-[#F5F5F5]">{beer.name}</p>
         </Link>
@@ -87,13 +87,18 @@ export default function BeerResultCard<T>({
       {isCantina ? (
         <div className="flex min-w-[55px] flex-col items-end justify-center gap-1 self-stretch text-right">
           {abv && <span className="text-[13px] font-medium tabular-nums text-[#5D554C] dark:text-[#B7BDC7]">{abv}</span>}
-          <div>{priceContent}</div>
-          {hasActions && <div className="flex flex-col items-end gap-1">{favoriteButton}{checkinButton}</div>}
+          <div data-testid="beer-card-prices">{priceContent}</div>
+          {hasActions && <div className="flex flex-col items-end gap-1" data-testid="beer-card-actions">{favoriteButton}{checkinButton}</div>}
         </div>
       ) : (
         <>
-          <div className="flex min-w-[52px] flex-col items-end justify-center border-l border-[#E8DED1] pl-2 text-right dark:border-white/[0.1] sm:min-w-[62px] sm:pl-3">{priceContent}</div>
-          {hasActions && <div className="flex flex-col items-center justify-end gap-1 sm:flex-row">{favoriteButton}{checkinButton}</div>}
+          <div
+            className="flex min-w-[52px] flex-col items-end justify-center border-l border-[#E8DED1] pl-2 text-right dark:border-white/[0.1] sm:min-w-[62px] sm:pl-3"
+            data-testid="beer-card-prices"
+          >
+            {priceContent}
+          </div>
+          {hasActions && <div className="flex flex-col items-center justify-end gap-1 sm:flex-row" data-testid="beer-card-actions">{favoriteButton}{checkinButton}</div>}
         </>
       )}
     </article>
