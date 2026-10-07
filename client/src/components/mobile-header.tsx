@@ -197,32 +197,32 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
     <>
       {/* ── TOP HEADER ──────────────────────────────────────────────────── */}
       <header
-        className={`ios-fixed-chrome lg:hidden fixed top-0 left-0 right-0 z-50 transition-[box-shadow,border-color] duration-200 bg-white dark:bg-[#0B0D10] ${
+        className={`ios-fixed-chrome lg:hidden fixed top-0 left-0 right-0 z-50 transition-[box-shadow,border-color] duration-200 bg-background/95 dark:bg-[#11151B] ${
           scrolled
-            ? "border-b border-stone-200/70 dark:border-white/[0.08] shadow-[0_1px_0_0_rgba(0,0,0,0.04)]"
+            ? "border-b border-border/70 dark:border-white/[0.08] shadow-[0_2px_12px_hsla(28,24%,12%,0.045)]"
             : "border-b border-transparent"
         }`}
         style={{
           paddingTop: 'var(--frozen-sat)',
         }}
       >
-        <div className="flex items-center justify-between px-4 h-14">
+        <div className="grid h-14 grid-cols-[1fr_auto_1fr] items-center px-4">
 
           {/* Left: Back button (detail pages) or Avatar + Bell (root pages) */}
           {isDetailRoute(location) ? (
             <button
               onClick={handleDetailBack}
-              className="p-2 -ml-1 tap-scale text-stone-600 dark:text-stone-300 hover:text-primary dark:hover:text-primary hover:bg-stone-100 dark:hover:bg-white/8 rounded-xl transition-colors"
+              className="p-2 -ml-1 tap-scale justify-self-start rounded-xl text-stone-600 transition-colors hover:bg-stone-100 hover:text-primary dark:text-stone-300 dark:hover:bg-white/8 dark:hover:text-primary"
               aria-label="Torna indietro"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
           ) : (
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5 justify-self-start">
               {/* Avatar */}
               {isAuthenticated && typedUser ? (
-                <Link href="/dashboard" className="p-1 tap-scale">
-                  <Avatar className="h-7 w-7 ring-2 ring-stone-200 dark:ring-stone-700">
+                <Link href="/dashboard" className="flex h-11 w-11 items-center justify-center tap-scale">
+                  <Avatar className="h-8 w-8 ring-2 ring-border dark:ring-stone-700">
                     {typedUser.profileImageUrl && <AvatarImage src={typedUser.profileImageUrl} alt={typedUser.nickname || 'Profilo'} />}
                     <AvatarFallback className="bg-orange-50 dark:bg-orange-900/30 text-primary text-xs font-bold">
                       {typedUser.nickname?.[0]?.toUpperCase() || typedUser.firstName?.[0] || 'U'}
@@ -230,13 +230,13 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
                   </Avatar>
                 </Link>
               ) : (
-                <Link href="/login" className="p-2.5 tap-scale">
+                <Link href="/login" className="flex h-11 w-11 items-center justify-center tap-scale">
                   <User className="h-5 w-5 text-stone-500 dark:text-stone-400" />
                 </Link>
               )}
               {/* Bell */}
               {isAuthenticated && (
-                <Link href="/notifications" className="relative p-2.5 tap-scale">
+                <Link href="/notifications" className="relative flex h-11 w-11 items-center justify-center tap-scale">
                   <Bell className="h-5 w-5 text-stone-500 dark:text-stone-400" />
                   {(unreadData?.count ?? 0) > 0 && (
                     <span className="absolute top-1.5 right-1.5 h-[14px] w-[14px] bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
@@ -249,17 +249,17 @@ export function MobileHeader({ onMenuToggle, isMenuOpen }: MobileHeaderProps) {
           )}
 
           {/* Logo — center */}
-          <Link href="/" className="absolute left-1/2 -translate-x-1/2">
-            <img src="/logo-full.png" alt="Fermenta.to" className="w-auto h-7 block dark:hidden"
+          <Link href="/" className="justify-self-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <img src="/logo-full.png" alt="Fermenta.to" className="block h-7 w-auto dark:hidden"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
-            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="w-auto h-7 hidden dark:block"
+            <img src="/logo-dark-mode.png" alt="Fermenta.to" className="hidden h-7 w-auto dark:block"
               onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }} />
           </Link>
 
           {/* Right: Hamburger */}
           <button
             onClick={onMenuToggle}
-            className="p-2 -mr-1 text-stone-500 dark:text-stone-400 hover:text-primary dark:hover:text-primary hover:bg-stone-100 dark:hover:bg-white/8 rounded-xl transition-colors tap-scale"
+            className="flex h-11 w-11 items-center justify-center justify-self-end rounded-xl text-stone-500 transition-colors hover:bg-stone-100 hover:text-primary dark:text-stone-400 dark:hover:bg-white/8 dark:hover:text-primary tap-scale"
             aria-label={isMenuOpen ? "Chiudi menu" : "Apri menu"}
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}

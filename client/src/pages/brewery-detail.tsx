@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useParams } from "wouter";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   Beer as BeerIcon,
   Building,
-  Building2,
   Calendar,
   Globe,
   Home as HomeIcon,
@@ -17,7 +16,6 @@ import {
   Star,
   Store,
   Trash2,
-  Users,
   X,
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiTiktok } from "react-icons/si";
@@ -29,6 +27,7 @@ import { getMapNavigationUrl } from "@/lib/utils";
 import RichTextEditor from "@/components/rich-text-editor";
 import AddressAutocomplete from "@/components/address-autocomplete";
 import { ImageUpload } from "@/components/image-upload";
+import { BeerDetailsFields } from "@/components/beer-details-fields";
 import SuggestChangeDialog from "@/components/SuggestChangeDialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -329,36 +328,6 @@ export default function BreweryDetail() {
   const [beerEditCollabBreweries, setBeerEditCollabBreweries] = useState<
     { id: number; name: string }[]
   >([]);
-  const [beerCollabQuery, setBeerCollabQuery] = useState("");
-  const [beerCollabResults, setBeerCollabResults] = useState<any[]>([]);
-  const [showBeerCollabResults, setShowBeerCollabResults] = useState(false);
-  const beerCollabDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const searchBeerCollabBreweries = useCallback(
-    (q: string, excludeId: number | undefined, selected: { id: number; name: string }[]) => {
-      if (beerCollabDebounceRef.current) clearTimeout(beerCollabDebounceRef.current);
-      if (!q.trim()) {
-        setBeerCollabResults([]);
-        setShowBeerCollabResults(false);
-        return;
-      }
-      beerCollabDebounceRef.current = setTimeout(async () => {
-        try {
-          const res = await fetch(`/api/breweries/search?q=${encodeURIComponent(q)}&limit=8`);
-          const data = await res.json();
-          const filtered = (Array.isArray(data) ? data : []).filter(
-            (b: any) => b.id !== excludeId && !selected.some((s) => s.id === b.id),
-          );
-          setBeerCollabResults(filtered);
-          setShowBeerCollabResults(filtered.length > 0);
-        } catch {
-          setBeerCollabResults([]);
-        }
-      }, 250);
-    },
-    [],
-  );
-
   const openBeerEditDialog = useCallback(async (beer: any) => {
     setEditingBeerId(beer.id);
     setBeerEditForm({
@@ -383,8 +352,6 @@ export default function BreweryDetail() {
     } catch {
       setBeerEditCollabBreweries([]);
     }
-    setBeerCollabQuery("");
-    setBeerCollabResults([]);
     setIsBeerEditOpen(true);
   }, []);
 
@@ -664,7 +631,8 @@ export default function BreweryDetail() {
       {/* ── Admin Edit Dialog (modal={false} per Google Maps autocomplete) ── */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen} modal={false}>
         <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto"
+          formLayout
+          className="max-w-2xl"
           onPointerDownOutside={(e) => {
             const t = e.target as HTMLElement;
             if (t.closest(".pac-container")) e.preventDefault();
@@ -839,7 +807,7 @@ export default function BreweryDetail() {
 
       {/* ── Beer Edit Dialog ── */}
       <Dialog open={isBeerEditOpen} onOpenChange={setIsBeerEditOpen}>
-        <DialogContent className="w-[calc(100%-24px)] sm:w-full sm:max-w-2xl max-h-[85dvh] overflow-y-auto rounded-2xl">
+        <DialogContent formLayout className="sm:max-w-2xl rounded-2xl">
           <DialogHeader>
             <div className="flex items-center justify-between">
               <DialogTitle className="flex items-center gap-2">
@@ -856,199 +824,21 @@ export default function BreweryDetail() {
             </div>
           </DialogHeader>
           <div className="space-y-4 py-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="bedit-name">Nome</Label>
-                <Input
-                  id="bedit-name"
-                  value={beerEditForm.name}
-                  onChange={(e) => setBeerEditForm({ ...beerEditForm, name: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bedit-style">Stile</Label>
-                <Input
-                  id="bedit-style"
-                  value={beerEditForm.style}
-                  onChange={(e) => setBeerEditForm({ ...beerEditForm, style: e.target.value })}
-                  placeholder="Es. IPA, Lager…"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="space-y-2">
-                <Label htmlFor="bedit-abv">ABV (%)</Label>
-                <Input
-                  id="bedit-abv"
-                  value={beerEditForm.abv}
-                  onChange={(e) => setBeerEditForm({ ...beerEditForm, abv: e.target.value })}
-                  placeholder="5.5"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bedit-ibu">IBU</Label>
-                <Input
-                  id="bedit-ibu"
-                  type="number"
-                  value={beerEditForm.ibu}
-                  onChange={(e) => setBeerEditForm({ ...beerEditForm, ibu: e.target.value })}
-                  placeholder="40"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bedit-color">Colore</Label>
-                <Input
-                  id="bedit-color"
-                  value={beerEditForm.color}
-                  onChange={(e) => setBeerEditForm({ ...beerEditForm, color: e.target.value })}
-                  placeholder="Ambrato…"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bedit-desc">Descrizione</Label>
-              <RichTextEditor
-                content={beerEditForm.description}
-                onChange={(html) => setBeerEditForm({ ...beerEditForm, description: html })}
-                placeholder="Descrizione della birra..."
-                maxChars={2000}
-              />
-            </div>
-            <div className="flex items-center gap-6 flex-wrap">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={beerEditForm.isGlutenFree}
-                  onChange={(e) =>
-                    setBeerEditForm({ ...beerEditForm, isGlutenFree: e.target.checked })
-                  }
-                  className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
-                />
-                <span className="text-sm font-medium text-green-700 dark:text-green-400">
-                  Gluten Free
-                </span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={beerEditForm.isAlcoholFree}
-                  onChange={(e) =>
-                    setBeerEditForm({ ...beerEditForm, isAlcoholFree: e.target.checked })
-                  }
-                  className="w-4 h-4 rounded border-stone-100 text-primary focus:ring-primary"
-                />
-                <span className="text-sm font-bold text-primary">0.0% Analcolica</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={beerEditForm.isCollaboration}
-                  onChange={(e) => {
-                    setBeerEditForm({ ...beerEditForm, isCollaboration: e.target.checked });
-                    if (!e.target.checked) setBeerEditCollabBreweries([]);
-                  }}
-                  className="w-4 h-4 rounded border-stone-100 text-primary focus:ring-primary"
-                />
-                <span className="text-sm font-bold text-primary flex items-center gap-1">
-                  <Users className="w-3.5 h-3.5" /> Collaborazione
-                </span>
-              </label>
-            </div>
-            {beerEditForm.isCollaboration && (
-              <div className="space-y-2 p-3 rounded-lg border border-stone-200 dark:border-white/[0.06] bg-stone-50 dark:bg-[#12151A]">
-                <Label className="text-primary font-bold flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4" /> Birrifici Partner
-                </Label>
-                {beerEditCollabBreweries.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                    {beerEditCollabBreweries.map((b) => (
-                      <span
-                        key={b.id}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-bold bg-white dark:bg-card border border-[#E8DED1] dark:border-white/[0.06] text-primary"
-                      >
-                        <Building2 className="w-3 h-3" /> {b.name}
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setBeerEditCollabBreweries(
-                              beerEditCollabBreweries.filter((x) => x.id !== b.id),
-                            )
-                          }
-                          className="ml-0.5 hover:text-primary/80"
-                        >
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-                <div className="relative">
-                  <Input
-                    value={beerCollabQuery}
-                    onChange={(e) => {
-                      setBeerCollabQuery(e.target.value);
-                      searchBeerCollabBreweries(
-                        e.target.value,
-                        brewery?.id,
-                        beerEditCollabBreweries,
-                      );
-                    }}
-                    onBlur={() => setTimeout(() => setShowBeerCollabResults(false), 200)}
-                    placeholder="Cerca birrificio partner…"
-                    autoComplete="off"
-                  />
-                  {showBeerCollabResults && beerCollabResults.length > 0 && (
-                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-card border border-stone-100 dark:border-white/[0.06] rounded-md shadow-xl max-h-40 overflow-y-auto">
-                      {beerCollabResults.map((b: any) => (
-                        <button
-                          key={b.id}
-                          type="button"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setBeerEditCollabBreweries([
-                              ...beerEditCollabBreweries,
-                              { id: b.id, name: b.name },
-                            ]);
-                            setBeerCollabQuery("");
-                            setBeerCollabResults([]);
-                            setShowBeerCollabResults(false);
-                          }}
-                          className="w-full px-3 py-2 text-left hover:bg-stone-50 dark:hover:bg-stone-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm text-foreground"
-                        >
-                          {b.logoUrl ? (
-                            <img
-                              src={b.logoUrl}
-                              alt=""
-                              className="w-5 h-5 rounded-full object-cover"
-                              loading="lazy"
-                            />
-                          ) : (
-                            <Building2 className="w-4 h-4 text-primary" />
-                          )}
-                          <span>{b.name}</span>
-                          <span className="text-xs text-muted-foreground ml-auto">
-                            {b.location}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+            <BeerDetailsFields
+              values={beerEditForm}
+              onChange={(field, value) => {
+                const normalizedValue = field === "abv" || field === "ibu"
+                  ? value == null || value === "" ? "" : String(value)
+                  : value;
+                setBeerEditForm((current) => ({ ...current, [field]: normalizedValue }));
+                if (field === "isCollaboration" && !value) setBeerEditCollabBreweries([]);
+              }}
+              collaborators={beerEditCollabBreweries}
+              onCollaboratorsChange={setBeerEditCollabBreweries}
+              excludeBreweryId={brewery?.id}
+              imageSearchEndpoint={editingBeerId ? `/api/beers/${editingBeerId}/find-image-preview` : undefined}
+            />
             <div className="space-y-3 border-t border-[#E8DED1] dark:border-white/[0.06] pt-4">
-              <ImageUpload
-                label="Immagine Birra"
-                description="Immagine principale (etichetta)"
-                currentImageUrl={beerEditForm.imageUrl || undefined}
-                onImageChange={(url) =>
-                  setBeerEditForm((f) => ({ ...f, imageUrl: url ?? "" }))
-                }
-                folder="beer-images"
-                aspectRatio="square"
-                maxSize={5}
-                recommendedDimensions="400x400px"
-              />
               <div className="space-y-1.5">
                 <Label className="text-xs text-muted-foreground">URL Logo birra (opzionale)</Label>
                 <Input

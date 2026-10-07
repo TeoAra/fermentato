@@ -64,6 +64,7 @@ import { getBadgeForCount, getNextBadge, getProgressToNextBadge } from "@/lib/ba
 import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
 import { StatsGrid } from "@/components/dashboard-primitives";
 import ProfileStats from "@/components/profile/ProfileStats";
+import { FloatingBottomBar } from "@/components/floating-bottom-bar";
 import { Star as StarIcon, Heart as HeartIcon, Award as AwardIcon } from "lucide-react";
 
 function StylesPickerOverview({ current, onChange, onSave, isSaving }: {
@@ -922,55 +923,18 @@ export default function UserProfile() {
 
         {/* ── BOTTOM DOCK PROFILO (mobile only) — stesso pattern di BottomNavigation ── */}
         <DockPortal>
-        <nav
-          className={`bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
-            isProfileModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
-          style={{ paddingBottom: 'max(var(--frozen-sab) - 16px, 0px)' }}
-          aria-label="Navigazione profilo"
+        <FloatingBottomBar
+          label="Navigazione profilo"
           role="tablist"
-        >
-          <div className="px-2">
-            <div>
-              <div className="flex min-h-[52px] items-center justify-between px-1 gap-1">
-                {([
-                  { id: 'overview',  label: 'Home',       Icon: HomeIcon },
-                  { id: 'favorites', label: 'Preferiti',  Icon: Heart },
-                  { id: 'reviews',   label: 'Recensioni', Icon: StarIcon },
-                  { id: 'settings',  label: 'Impostazioni', Icon: Settings, href: '/impostazioni' },
-                ] as { id: ProfileTab | 'settings'; label: string; Icon: any; href?: string }[]).map(({ id, label, Icon, href }) => {
-                  const active = !href && activeProfileTab === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => { if (href) { setLocation(href); } else { changeProfileTab(id as ProfileTab); } }}
-                      role="tab"
-                      aria-selected={active}
-                      aria-current={active ? 'page' : undefined}
-                      aria-label={label}
-                      data-testid={`profile-dock-${id}`}
-                      className={`min-h-12 flex-1 flex flex-col items-center justify-center gap-0.5 px-1 rounded-[18px] transition-all duration-200 active:scale-95 ${
-                        active
-                          ? 'bg-primary/10 dark:bg-primary/15 text-primary'
-                          : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
-                      }`}
-                    >
-                      <Icon
-                        className="h-[20px] w-[20px]"
-                        strokeWidth={active ? 2.6 : 1.8}
-                        fill={active ? 'currentColor' : 'none'}
-                        style={active ? { fillOpacity: 0.18 } : {}}
-                      />
-                      <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
-                        {label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </nav>
+          hidden={isProfileModalOpen}
+          testId="profile-bottom-dock"
+          items={[
+            { id: "overview", label: "Home", icon: <HomeIcon />, active: activeProfileTab === "overview", role: "tab", onClick: () => changeProfileTab("overview"), testId: "profile-dock-overview" },
+            { id: "favorites", label: "Preferiti", icon: <Heart />, active: activeProfileTab === "favorites", role: "tab", onClick: () => changeProfileTab("favorites"), testId: "profile-dock-favorites" },
+            { id: "reviews", label: "Recensioni", icon: <StarIcon />, active: activeProfileTab === "reviews", role: "tab", onClick: () => changeProfileTab("reviews"), testId: "profile-dock-reviews" },
+            { id: "settings", label: "Impostazioni", icon: <Settings />, href: "/impostazioni", role: "tab", testId: "profile-dock-settings" },
+          ]}
+        />
         </DockPortal>
       </div>
     </div>

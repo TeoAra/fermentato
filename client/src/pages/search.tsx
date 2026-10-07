@@ -4,7 +4,7 @@ import { useSearch } from "wouter";
 import { Link } from "wouter";
 import {
   Beer, Building2, MapPin, Search, ArrowLeft, SlidersHorizontal,
-  X, PlusCircle, Clock, ChevronDown,
+  X, PlusCircle, Clock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,8 +46,8 @@ type FilterBadgeProps = {
 
 function ActiveFilterBadges(p: FilterBadgeProps) {
   const chips: { label: string; onRemove: () => void }[] = [];
-  if (p.filterGlutenFree) chips.push({ label: "🌾 Senza glutine", onRemove: () => p.setFilterGlutenFree(false) });
-  if (p.filterAlcoholFree) chips.push({ label: "💧 Analcolica", onRemove: () => p.setFilterAlcoholFree(false) });
+  if (p.filterGlutenFree) chips.push({ label: "Senza glutine", onRemove: () => p.setFilterGlutenFree(false) });
+  if (p.filterAlcoholFree) chips.push({ label: "Analcolica", onRemove: () => p.setFilterAlcoholFree(false) });
   if (p.filterStyle) chips.push({ label: `Stile: ${p.filterStyle}`, onRemove: () => p.setFilterStyle("") });
   if (p.filterCity) chips.push({ label: `Città: ${p.filterCity}`, onRemove: () => p.setFilterCity("") });
   if (p.filterCountry) chips.push({ label: `Paese: ${p.filterCountry}`, onRemove: () => p.setFilterCountry("") });
@@ -106,14 +106,14 @@ function FilterSheet({
   if (!open) return null;
 
   const abvPresets: [string, string, string][] = [
-    ["🍺 Light <5%", "", "4.9"],
-    ["⚡ Strong >7%", "7", ""],
-    ["💥 Imperial >9%", "9", ""],
+    ["Leggera <5%", "", "4.9"],
+    ["Forte >7%", "7", ""],
+    ["Imperial >9%", "9", ""],
   ];
   const ibuPresets: [string, string, string][] = [
-    ["😌 Dolce", "", "19"],
-    ["⚖️ Bilanciata", "20", "50"],
-    ["🌿 Amara", "60", ""],
+    ["Dolce", "", "19"],
+    ["Bilanciata", "20", "50"],
+    ["Amara", "60", ""],
   ];
 
   const panelContent = (
@@ -129,7 +129,7 @@ function FilterSheet({
               <X className="w-3 h-3" /> Cancella ({activeFilterCount})
             </button>
           )}
-          <button onClick={onClose} className="lg:hidden text-muted-foreground hover:text-foreground">
+            <button onClick={onClose} className="lg:hidden flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground" aria-label="Chiudi filtri">
             <X className="w-4 h-4" />
           </button>
         </div>
@@ -138,12 +138,12 @@ function FilterSheet({
       {/* Quick toggles */}
       <div className="flex flex-wrap gap-1.5">
         <button onClick={() => setFilterGlutenFree(!filterGlutenFree)}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterGlutenFree ? "bg-green-500 text-white border-green-500" : "border-stone-200 dark:border-border text-muted-foreground hover:border-green-400"}`}>
-          🌾 Senza glutine
+          className={`min-h-11 px-3 rounded-full text-xs font-medium border transition-all ${filterGlutenFree ? "bg-green-700 text-white border-green-700" : "border-stone-200 dark:border-border text-muted-foreground hover:border-green-400"}`}>
+          Senza glutine
         </button>
         <button onClick={() => setFilterAlcoholFree(!filterAlcoholFree)}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterAlcoholFree ? "bg-blue-500 text-white border-blue-500" : "border-stone-200 dark:border-border text-muted-foreground hover:border-blue-400"}`}>
-          💧 Analcolica
+          className={`min-h-11 px-3 rounded-full text-xs font-medium border transition-all ${filterAlcoholFree ? "bg-sky-700 text-white border-sky-700" : "border-stone-200 dark:border-border text-muted-foreground hover:border-sky-400"}`}>
+          Analcolica
         </button>
       </div>
 
@@ -159,7 +159,7 @@ function FilterSheet({
                   setFilterMinAbv(active ? "" : min);
                   setFilterMaxAbv(active ? "" : max);
                 }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterMinAbv === min && filterMaxAbv === max ? "bg-primary text-white border-primary" : "border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40"}`}>
+                className={`min-h-11 px-3 rounded-full text-xs font-medium border transition-all ${filterMinAbv === min && filterMaxAbv === max ? "bg-primary text-white border-primary" : "border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40"}`}>
                 {label}
               </button>
             ))}
@@ -196,7 +196,7 @@ function FilterSheet({
                   setFilterMinIbu(active ? "" : min);
                   setFilterMaxIbu(active ? "" : max);
                 }}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${filterMinIbu === min && filterMaxIbu === max ? "bg-green-600 text-white border-green-600" : "border-stone-200 dark:border-border text-muted-foreground hover:border-green-400"}`}>
+                className={`min-h-11 px-3 rounded-full text-xs font-medium border transition-all ${filterMinIbu === min && filterMaxIbu === max ? "bg-green-700 text-white border-green-700" : "border-stone-200 dark:border-border text-muted-foreground hover:border-green-400"}`}>
                 {label}
               </button>
             ))}
@@ -211,13 +211,13 @@ function FilterSheet({
           <div className="flex flex-wrap gap-1.5">
             {filterStyle && (
               <button onClick={() => setFilterStyle("")}
-                className="px-2.5 py-1 rounded-full text-xs font-medium bg-primary text-white border border-primary flex items-center gap-1">
+              className="min-h-11 px-2.5 rounded-full text-xs font-medium bg-primary text-white border border-primary flex items-center gap-1">
                 {filterStyle} <X className="w-3 h-3" />
               </button>
             )}
             {popularStyles.slice(0, 14).filter(({ style }) => style !== filterStyle).map(({ style }) => (
               <button key={style} onClick={() => setFilterStyle(style)}
-                className="px-2.5 py-1 rounded-full text-xs font-medium border border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-all bg-white dark:bg-[#1A1D24]">
+                className="min-h-11 px-2.5 rounded-full text-xs font-medium border border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40 hover:text-primary transition-all bg-card">
                 {style}
               </button>
             ))}
@@ -254,7 +254,7 @@ function FilterSheet({
           <div className="flex flex-wrap gap-1.5">
             {["Italia", "Germany", "Belgium", "USA", "UK", "France"].map(c => (
               <button key={c} onClick={() => setFilterCountry(filterCountry === c ? "" : c)}
-                className={`px-2.5 py-1 rounded-full text-xs font-medium border transition-all ${filterCountry === c ? "bg-primary text-white border-primary" : "border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40"}`}>
+                className={`min-h-11 px-2.5 rounded-full text-xs font-medium border transition-all ${filterCountry === c ? "bg-primary text-white border-primary" : "border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40"}`}>
                 {c}
               </button>
             ))}
@@ -271,7 +271,7 @@ function FilterSheet({
         {/* Backdrop */}
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40" onClick={onClose} />
         {/* Sheet */}
-        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-[#1A1D24] rounded-t-3xl shadow-2xl px-5 pt-4 pb-[calc(2rem+var(--frozen-sab))] max-h-[85dvh] overflow-y-auto">
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-card rounded-t-3xl shadow-2xl px-5 pt-4 pb-[calc(2rem+var(--frozen-sab))] max-h-[85dvh] overflow-y-auto">
           <div className="w-10 h-1 bg-stone-200 dark:bg-stone-700 rounded-full mx-auto mb-4" />
           {panelContent}
           <Button onClick={onClose} className="w-full mt-5 rounded-xl bg-primary text-white font-bold">
@@ -280,7 +280,7 @@ function FilterSheet({
         </div>
       </div>
       {/* Desktop: inline panel */}
-      <div className="hidden lg:block mb-4 p-4 rounded-2xl bg-white dark:bg-[#1A1D24] border border-stone-200 dark:border-border shadow-sm">
+      <div className="hidden lg:block mb-4 p-4 rounded-2xl bg-card border border-border/70">
         {panelContent}
       </div>
     </>
@@ -446,13 +446,11 @@ export default function SearchPage() {
       <div className="min-h-screen bg-background">
 
         {/* ── Sticky header ── */}
-        <div className="bg-white dark:bg-card border-b border-stone-100 dark:border-border sticky top-[var(--mobile-top-offset)] lg:top-16 z-40">
+        <div className="bg-background/95 dark:bg-card/95 border-b border-border/70 sticky top-[var(--mobile-top-offset)] lg:top-16 z-40">
           <div className="max-w-3xl mx-auto px-4 pt-4 pb-3">
             <div className="flex items-center gap-3 mb-3">
-              <Link href="/">
-                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-primary hover:bg-stone-50/60 rounded-full -ml-1">
-                  <ArrowLeft className="h-4 w-4 mr-1" /> Indietro
-                </Button>
+              <Link href="/" className="inline-flex min-h-11 items-center rounded-full px-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-primary">
+                <ArrowLeft className="h-4 w-4 mr-1" /> Indietro
               </Link>
               <div className="flex-1">
                 <h1 className="text-foreground font-bold text-lg leading-tight">Ricerca</h1>
@@ -473,18 +471,18 @@ export default function SearchPage() {
                     activeTab === "pubs" ? "Cerca pub, città…" :
                     "Cerca birre, birrifici, pub…"
                   }
-                  className="search-input-glow pl-12 pr-10 h-11 rounded-2xl border-stone-200 dark:border-border bg-white dark:bg-[#1A1D24] focus-visible:ring-primary/20 text-base"
+                  className="pl-12 pr-10 h-11 rounded-xl border-border/70 bg-card focus-visible:ring-primary/20 text-base"
                 />
                 {inputValue && (
                   <button type="button" onClick={() => { setInputValue(""); setQuery(""); }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary">
+                    className="absolute right-1 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center text-muted-foreground hover:text-primary" aria-label="Cancella ricerca">
                     <X className="h-4 w-4" />
                   </button>
                 )}
               </div>
-              <Button type="submit" className="bg-primary hover:bg-primary/90 text-white h-11 rounded-xl px-4">Cerca</Button>
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground h-11 rounded-xl px-4">Cerca</Button>
               <Button type="button" variant="outline" size="icon"
-                className={`relative h-11 w-11 rounded-xl flex-shrink-0 border-stone-200 dark:border-border text-primary hover:bg-stone-50 ${hasActiveFilters ? "bg-primary/10 border-primary/30" : ""}`}
+                className={`relative h-11 w-11 rounded-xl flex-shrink-0 border-border/70 text-primary hover:bg-muted ${hasActiveFilters ? "bg-primary/10 border-primary/30" : ""}`}
                 onClick={() => setShowFilters(f => !f)} title="Filtri avanzati">
                 <SlidersHorizontal className="h-4 w-4" />
                 {activeFilterCount > 0 && (
@@ -506,7 +504,7 @@ export default function SearchPage() {
                 return (
                   <button key={tab.id} type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border transition-all ${
+                    className={`flex min-h-11 flex-shrink-0 items-center gap-1.5 px-3 rounded-full text-xs font-semibold border transition-all ${
                       isActive
                         ? "bg-primary text-white border-primary shadow-sm"
                         : "bg-stone-50 dark:bg-[#1A1D24] text-stone-600 dark:text-stone-300 border-stone-200 dark:border-border hover:border-primary/40 hover:text-primary"
@@ -635,38 +633,37 @@ export default function SearchPage() {
                   <div className="space-y-2">
                     {filteredBeers.map((beer: any, i: number) => (
                       <Link key={beer.id} href={`/beer/${beer.id}`} className="block result-reveal" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
-                        <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] cursor-pointer group">
+                <div className="flex min-h-[84px] items-center gap-3 rounded-2xl border border-border/70 bg-card px-3 py-2.5 transition-colors hover:border-primary/40 active:bg-muted/40 group">
                           <ImageWithFallback
                             src={beer.imageUrl}
                             alt={beer.name}
                             imageType="beer"
-                            containerClassName="w-11 h-11 flex-shrink-0 rounded-lg"
-                            className="w-11 h-11 object-cover rounded-lg"
+                            containerClassName="h-[64px] w-[58px] flex-shrink-0 rounded-xl bg-muted/70"
+                            className="h-full w-full object-contain p-1"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                            <div className="font-bold text-[15px] text-foreground truncate group-hover:text-primary transition-colors">
                               {beer.name}
                             </div>
                             <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                               {(beer.brewery?.name || beer.breweryName) && (
-                                <span className="text-xs text-primary dark:text-orange-400 font-semibold truncate max-w-32">
+                              <span className="text-xs text-muted-foreground font-medium truncate max-w-32">
                                   {beer.brewery?.name || beer.breweryName}
                                 </span>
                               )}
                               {beer.style && (
-                                <Badge variant="outline" className="text-[10px] py-0 px-1.5 h-4 border-stone-200 dark:border-border text-muted-foreground">{beer.style}</Badge>
+                                <span className="max-w-[130px] truncate text-[11px] text-muted-foreground">{beer.style}</span>
                               )}
                               {beer.abv != null && (
-                                <span className="text-[10px] text-muted-foreground font-medium">{beer.abv}%</span>
+                                <span className="text-[11px] font-medium text-foreground">{beer.abv}% ABV</span>
                               )}
                               {beer.ibu != null && (
-                                <span className="text-[10px] text-muted-foreground font-medium">{beer.ibu} IBU</span>
+                                <span className="text-[11px] text-muted-foreground">{beer.ibu} IBU</span>
                               )}
                               {beer.isGlutenFree && <GlutenFreeSmallBadge size={10} />}
                               {beer.isAlcoholFree && <AlcoholFreeBadge size={10} />}
                             </div>
                           </div>
-                          <Badge className="flex-shrink-0 text-[10px] bg-stone-50 dark:bg-[#0B0D10]/20 text-primary dark:text-orange-400 border-0 font-bold uppercase tracking-wider">Birra</Badge>
                         </div>
                       </Link>
                     ))}
@@ -686,23 +683,23 @@ export default function SearchPage() {
                   <div className="space-y-2">
                     {filteredBreweries.map((brewery: any, i: number) => (
                       <Link key={brewery.id} href={`/brewery/${brewery.id}`} className="block result-reveal" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
-                        <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] cursor-pointer group">
+                        <div className="flex min-h-[84px] items-center gap-3 rounded-2xl border border-border/70 bg-card px-3 py-2.5 transition-colors hover:border-primary/40 active:bg-muted/40 group">
                           <ImageWithFallback
-                            src={brewery.logoUrl}
+                            src={brewery.logoUrl || brewery.coverImageUrl}
                             alt={brewery.name}
                             imageType="brewery"
-                            containerClassName="w-11 h-11 flex-shrink-0 rounded-full"
-                            className="w-11 h-11 object-cover rounded-full"
+                            containerClassName="h-[64px] w-[68px] flex-shrink-0 rounded-xl bg-muted/70"
+                            className="h-full w-full object-contain p-1"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                            <div className="font-bold text-[15px] text-foreground truncate group-hover:text-primary transition-colors">
                               {brewery.name}
                             </div>
                             <div className="text-xs text-muted-foreground truncate">
-                              {brewery.location}{brewery.country ? `, ${brewery.country}` : ""}
+                              {[brewery.location, brewery.country].filter(Boolean).join(", ")}
                             </div>
                           </div>
-                          <Badge className="flex-shrink-0 text-[10px] bg-stone-50 dark:bg-[#0B0D10]/20 text-primary dark:text-orange-400 border-0 font-bold uppercase tracking-wider">Birrificio</Badge>
+                          <Badge variant="outline" className="flex-shrink-0 border-border/70 bg-transparent text-[10px] font-medium text-muted-foreground">Birrificio</Badge>
                         </div>
                       </Link>
                     ))}
@@ -722,24 +719,24 @@ export default function SearchPage() {
                   <div className="space-y-2">
                     {filteredPubs.map((pub: any, i: number) => (
                       <Link key={pub.id} href={`/pub/${pub.slug || pub.id}`} className="block result-reveal" style={{ animationDelay: `${Math.min(i, 8) * 40}ms` }}>
-                        <div className="flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:border-primary/30 active:scale-[0.99] cursor-pointer group">
+                        <div className="flex min-h-[84px] items-center gap-3 rounded-2xl border border-border/70 bg-card px-3 py-2.5 transition-colors hover:border-primary/40 active:bg-muted/40 group">
                           <ImageWithFallback
-                            src={pub.logoUrl}
+                            src={pub.logoUrl || pub.coverImageUrl}
                             alt={pub.name}
                             imageType="pub"
-                            containerClassName="w-11 h-11 flex-shrink-0 rounded-lg"
-                            className="w-11 h-11 object-cover rounded-lg"
+                            containerClassName="h-[64px] w-[68px] flex-shrink-0 rounded-xl bg-muted/70"
+                            className="h-full w-full object-contain p-1"
                           />
                           <div className="flex-1 min-w-0">
-                            <div className="font-bold text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                            <div className="font-bold text-[15px] text-foreground truncate group-hover:text-primary transition-colors">
                               {pub.name}
                             </div>
                             <div className="text-xs text-muted-foreground truncate flex items-center gap-1">
                               {pub.city && <><MapPin className="w-2.5 h-2.5 flex-shrink-0" />{pub.city}</>}
-                              {pub.address ? ` · ${pub.address}` : ""}
+                              {pub.address && pub.address !== pub.city ? ` · ${pub.address}` : ""}
                             </div>
                           </div>
-                          <Badge className="flex-shrink-0 text-[10px] bg-blue-50 dark:bg-blue-950/20 text-blue-600 dark:text-blue-400 border-0 font-bold uppercase tracking-wider">Pub</Badge>
+                          <Badge variant="outline" className="flex-shrink-0 border-border/70 bg-transparent text-[10px] font-medium text-muted-foreground">Pub</Badge>
                         </div>
                       </Link>
                     ))}

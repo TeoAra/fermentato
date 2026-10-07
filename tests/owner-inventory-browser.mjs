@@ -18,8 +18,19 @@ const bundled = await build({
       import Menu from "./client/src/components/menu-category-manager";
       import { TapListManager } from "./client/src/components/taplist-manager";
       import { BottleListManager } from "./client/src/components/bottle-list-manager";
+      import RichTextEditor, { RichTextDisplay } from "./client/src/components/rich-text-editor";
+      import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./client/src/components/ui/dialog";
+      function DescriptionFixture(){
+        const [text,setText]=React.useState("&lt;p&gt;Prima riga&lt;/p&gt;&lt;p&gt;Seconda&lt;/p&gt;");
+        window.descriptionValue=text;
+        return <Dialog defaultOpen><DialogContent formLayout data-testid="description-dialog"><DialogHeader><DialogTitle>Descrizione</DialogTitle></DialogHeader>
+          <div data-testid="description-display"><RichTextDisplay html={text}/></div>
+          <RichTextEditor data-testid="plain-description-input" content={text} onChange={setText}/>
+          <button type="button" data-testid="description-save" onClick={()=>window.savedDescription=text}>Salva</button>
+        </DialogContent></Dialog>;
+      }
       const beer = id => ({ id, name: "Birra artigianale " + id, style: "India Pale Ale", abv: "6.5", brewery: {id: 1, name: "Birrificio dal nome molto lungo"} });
-      const products = [1,2,3].map(id => ({id, name: "Prodotto artigianale " + id, description: "Descrizione del prodotto con dettagli e ingredienti.", price: "8.00", isVisible: true, orderIndex: id - 1}));
+      const products = [1,2,3].map(id => ({id, name: "Prodotto artigianale " + id, description: "<p>Prima riga</p><p>Seconda</p>", price: "8.00", isVisible: true, orderIndex: id - 1}));
       const categories = [10,20].map(id => ({id, name: "Categoria " + id, isVisible: true, orderIndex: id/10 - 1, items: id === 10 ? products : []}));
       const taps = [1,2,3].map(id => ({id, beer: beer(id), tapNumber: id, isVisible: true, prices: [{size:"33cl",price:"5.00"}]}));
       const bottles = [1,2,3].map(id => ({id, beer: beer(id), orderIndex: id - 1, isVisible: true, price: "7.00", size: "33cl", quantity: 3}));
@@ -38,7 +49,7 @@ const bundled = await build({
       function App() {
         const mode = new URLSearchParams(location.search).get("mode") || "menu";
         return <QueryClientProvider client={client}><main className="p-3">
-          {mode === "menu" ? <Menu pubId={999} categories={categories} /> : mode === "tap" ? <TapListManager pubId={999} tapList={taps} /> : <BottleListManager pubId={999} bottleList={bottles} />}
+          {mode === "plain" ? <DescriptionFixture/> : mode === "menu" ? <Menu pubId={999} categories={categories} /> : mode === "tap" ? <TapListManager pubId={999} tapList={taps} /> : <BottleListManager pubId={999} bottleList={bottles} />}
         </main></QueryClientProvider>;
       }
       createRoot(document.getElementById("root")).render(<App />);
@@ -73,7 +84,7 @@ try {
     await page.goto(`http://inventory.test/?mode=${mode}`);
     await page.addStyleTag({content:styles.join("\n")});
     await page.addScriptTag({content:bundled.outputFiles[0].text});
-    await page.waitForSelector("[data-touch-sort-idx]");
+    await page.waitForSelector(mode==="plain" ? '[data-testid="description-dialog"]' : "[data-touch-sort-idx]");
     await new Promise(resolve => setTimeout(resolve, 450));
   };
   const touchMove = async (source, target) => {
@@ -147,6 +158,65 @@ try {
   assert.equal(await page.evaluate(() => window.requests.filter(request => request.url.endsWith("/menu-categories/reorder")).length), 0);
   console.log("PASS desktop: product drag does not reorder its category");
   await page.screenshot({path:"/tmp/owner-menu-mobile.png"});
+  for(const width of [320,390]){
+    await load("menu",width);
+    await page.evaluate(()=>[...document.querySelectorAll("button")].find(button=>button.textContent.includes("3 prodotti"))?.click());
+    await page.waitForSelector('[data-testid="button-edit-product-1"]');
+    await page.click('[data-testid="button-edit-product-1"]');
+    await page.waitForSelector('[data-form-scroll-owner="true"]');
+    assert.ok(await page.$$eval('[data-description-editor="plain"]',nodes=>nodes.some(node=>node.value.trim()==="Prima riga\nSeconda")),"Product edit must decode its legacy description");
+    const innerScrollers=await page.$eval('[data-form-scroll-owner="true"]',dialog=>[...dialog.querySelectorAll("*")].filter(node=>/auto|scroll/.test(getComputedStyle(node).overflowY)&&node.clientHeight>0&&node.scrollHeight>node.clientHeight+2).length);
+    assert.equal(innerScrollers,0,"Product edit must not scroll inside another scroll area");
+    await page.keyboard.press("Escape");
+    await page.waitForFunction(()=>!document.querySelector('[data-form-scroll-owner="true"]'));
+    await new Promise(resolve=>setTimeout(resolve,300));
+    await page.click('[data-testid="button-edit-category-10"]');
+    await page.waitForSelector('[data-form-scroll-owner="true"]');
+    assert.ok(await page.$('[data-description-editor="plain"]'),"Category edit must use multiline plain text");
+    await page.keyboard.press("Escape");
+    console.log(`PASS real product/category edit ${width}px: legacy description, shared layout and no nested scrollers`);
+  }
+  for(const mode of ["tap","bottle"]){
+    await load(mode,320);
+    await page.click('[aria-label="Modifica Birra artigianale 1"]');
+    await page.waitForSelector('[data-form-scroll-owner="true"]');
+    const innerScrollers=await page.$eval('[data-form-scroll-owner="true"]',dialog=>[...dialog.querySelectorAll("*")].filter(node=>/auto|scroll/.test(getComputedStyle(node).overflowY)&&node.clientHeight>0&&node.scrollHeight>node.clientHeight+2).map(node=>node.className));
+    assert.deepEqual(innerScrollers,[],`${mode} edit must not have nested scrolling`);
+    assert.ok(await page.$('[data-description-editor="plain"]'));
+    await page.keyboard.press("Escape");
+    console.log(`PASS real ${mode} edit 320px: multiline description and sole dialog scroll owner`);
+  }
+  for(const width of [320,390,412,1280]){
+    await load("plain",width);
+    assert.equal(await page.$eval('[data-testid="description-display"]',node=>node.textContent),"Prima riga\nSeconda");
+    assert.equal(await page.$eval('[data-testid="description-display"]',node=>node.querySelectorAll("p,strong,b,i,h1,h2").length),0);
+    assert.equal(await page.$(".tiptap"),null,"Descriptions must not have rich-text formatting");
+    const selector='[data-testid="plain-description-input"]';
+    await page.$eval(selector,element=>{
+      const setter=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,"value").set;
+      setter.call(element,"Riga semplice\n".repeat(60));
+      element.dispatchEvent(new Event("input",{bubbles:true}));
+    });
+    await page.waitForFunction(()=>window.descriptionValue==="Riga semplice\n".repeat(60));
+    const scrollState=await page.$eval('[data-testid="description-dialog"]',dialog=>{
+      const editor=dialog.querySelector("textarea");
+      const owners=[dialog,...dialog.querySelectorAll("*")].filter(node=>{
+        const style=getComputedStyle(node);
+        return /auto|scroll/.test(style.overflowY)&&node.clientHeight>0&&node.scrollHeight>node.clientHeight+2;
+      });
+      return {
+        owners:owners.length, soleOwner:owners[0]===dialog,
+        editorFits:editor.scrollHeight<=editor.clientHeight+2,
+        editorOverflow:getComputedStyle(editor).overflowY,
+        fits:dialog.getBoundingClientRect().left>=0&&dialog.getBoundingClientRect().right<=innerWidth,
+      };
+    });
+    assert.deepEqual(scrollState,{owners:1,soleOwner:true,editorFits:true,editorOverflow:"hidden",fits:true});
+    await page.$eval('[data-testid="description-save"]',button=>button.scrollIntoView({block:"center"}));
+    await page.click('[data-testid="description-save"]');
+    assert.equal(await page.evaluate(()=>window.savedDescription),"Riga semplice\n".repeat(60));
+    console.log(`PASS descriptions ${width}px: plain legacy text, preserved newlines, auto-height and one scroll owner`);
+  }
   assert.deepEqual(errors, [], "Browser runtime errors");
 } finally {
   await browser.close();

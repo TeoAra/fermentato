@@ -29,10 +29,16 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+type DialogContentProps = React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+  /** Makes the dialog itself the sole scroll owner for long forms. */
+  formLayout?: boolean
+  "data-testid"?: string
+}
+
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+  DialogContentProps
+>(({ className, children, formLayout = false, ...props }, ref) => (
   <DialogPortal>
     {/* Overlay separata, dietro il wrapper flex */}
     <DialogPrimitive.Overlay className="fixed inset-0 z-[60] bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
@@ -65,9 +71,14 @@ const DialogContent = React.forwardRef<
           }
         }}
         className={cn(
-          "ui-dialog-motion pointer-events-auto relative z-[60] grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-2xl duration-200 max-h-full overflow-y-auto overscroll-contain data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+          cn(
+            "ui-dialog-motion pointer-events-auto relative z-[60] grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-2xl duration-200 max-h-full overflow-y-auto overscroll-contain data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+            formLayout && "form-dialog-scroll-owner w-[calc(100%-1rem)] max-h-full overflow-x-hidden overflow-y-auto overscroll-contain !pb-[calc(1.5rem+var(--frozen-sab))]"
+          ),
           className
         )}
+        data-testid={props["data-testid"] ?? (formLayout ? "form-scroll-owner" : undefined)}
+        data-form-scroll-owner={formLayout ? "true" : undefined}
         {...props}
       >
         {children}

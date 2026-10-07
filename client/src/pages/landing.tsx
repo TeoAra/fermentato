@@ -2,7 +2,6 @@ import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { Button } from "@/components/ui/button";
 import {
   Beer, MapPin, Store, Users,
   ChevronRight, Building2, Search, CheckCircle2,
@@ -10,8 +9,6 @@ import {
   TrendingUp, Flame, Star
 } from "lucide-react";
 import Footer from "@/components/footer";
-import PubCard from "@/components/pub-card";
-import BreweryCard from "@/components/brewery-card";
 import HomeMapPanel from "@/components/home-map-panel";
 import PullToRefreshIndicator from "@/components/pull-to-refresh-indicator";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
@@ -170,7 +167,28 @@ export default function Landing() {
       {/* ═══════════════════════════════════════════════════════════════
           HERO — mappa + chip + heading + CTA (stile homepage loggata)
       ═══════════════════════════════════════════════════════════════ */}
-      <PageContainer as="main" variant="wide" className="pt-4 pb-8">
+      <PageContainer as="main" variant="wide" className="pt-3 pb-8">
+        <header className="mb-2">
+          <h1 className="text-[24px] sm:text-[30px] font-bold text-foreground leading-tight tracking-tight">Birre, pub e persone</h1>
+          <p className="mt-1 text-[13px] leading-snug text-muted-foreground">Scopri cosa bere, dove trovarlo e chi lo produce.</p>
+        </header>
+
+        <Link href="/search" aria-label="Cerca birre, pub e birrifici" className="mb-2 block rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <div className="flex min-h-11 items-center gap-3 rounded-xl border border-border/70 bg-card px-4 text-sm text-muted-foreground">
+            <Search className="h-4 w-4 shrink-0" />
+            <span className="flex-1 truncate">Cerca birre, pub o birrifici</span>
+            <ChevronRight className="h-4 w-4 shrink-0" />
+          </div>
+        </Link>
+
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <Link href="/explore/pubs" className="tap-scale flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-border/70 bg-card px-2 text-[13px] font-semibold text-foreground">
+            <Store className="h-4 w-4 text-primary" /> Esplora pub
+          </Link>
+          <Link href="/explore/breweries" className="tap-scale flex min-h-11 items-center justify-center gap-1.5 rounded-xl border border-border/70 bg-card px-2 text-[13px] font-semibold text-foreground">
+            <Building2 className="h-4 w-4 text-primary" /> Birrifici
+          </Link>
+        </div>
 
         <HomeMapPanel
           pubs={Array.isArray(pubs) ? pubs as any[] : []}
@@ -190,46 +208,11 @@ export default function Landing() {
           showBreweries={showBreweries}
           onShowBreweriesChange={setShowBreweries}
         />
-        <Link href="/search" className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 text-sm font-semibold text-primary">
-          <Search className="h-4 w-4" /> Cerca birre, pub e birrifici
+        <Link href="/login" className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground">
+          <Users className="h-4 w-4" /> Inizia gratis
         </Link>
-
-        {/* Content block — heading + CTAs */}
         <div className="mt-4">
-          <h1 className="text-[26px] sm:text-[30px] font-extrabold text-foreground leading-[1.15] tracking-tight">
-            Trova la birra perfetta.<br />
-            <span className="text-primary">Sempre vicina a te.</span>
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
-            Pub, birrifici e{" "}
-            {totalBeers > 0 ? (
-              <strong className="text-foreground">{(totalBeers / 1000).toFixed(0)}k birre</strong>
-            ) : (
-              <strong className="text-foreground">migliaia di birre</strong>
-            )}{" "}
-            — tutto in un'unica app gratuita.
-          </p>
-
-          {/* CTAs */}
-          <div className="flex gap-2.5 mt-4">
-            <Link href="/login" className="flex-1">
-              <button className="tap-scale btn-orange-glow w-full flex items-center justify-center gap-1.5 bg-primary text-white text-sm font-bold px-4 py-3 rounded-2xl shadow-card">
-                <Users className="w-4 h-4" />
-                Inizia gratis
-              </button>
-            </Link>
-            <Link href="/explore/pubs" className="flex-1">
-              <button className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-sm font-bold px-4 py-3 rounded-2xl border-2 border-primary/25 shadow-card-sm">
-                <Store className="w-4 h-4 text-primary" />
-                Esplora pub
-              </button>
-            </Link>
-          </div>
-
-          {/* NewsStrip */}
-          <div className="mt-5">
-            <NewsStrip variant="hero" limit={6} />
-          </div>
+          <NewsStrip variant="hero" limit={6} />
         </div>
 
         {/* ─── STATS ROW ────────────────────────────────────────── */}
@@ -264,32 +247,25 @@ export default function Landing() {
                 <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
                 Consigliato per te
               </h2>
-              <Link href="/explore/breweries">
-                <button className="text-sm font-semibold text-primary">Vedi tutti →</button>
+              <Link href="/explore/breweries" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">
+                Vedi tutti <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </div>
             <Link href={`/brewery/${breweryOfDay.id}`}>
-              <div className="tap-scale relative rounded-3xl overflow-hidden cursor-pointer shadow-card" style={{ height: '168px' }}>
-                {(breweryOfDay.coverImageUrl || breweryOfDay.logoUrl) ? (
-                  <img src={breweryOfDay.coverImageUrl || breweryOfDay.logoUrl} alt={breweryOfDay.name} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #1a0800 0%, #3d1200 50%, #7a2800 100%)' }} />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/20" />
-                <div className="absolute inset-0 flex flex-col justify-end p-5">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-300 mb-1.5 uppercase tracking-wide">
-                    <Star className="w-3 h-3" fill="currentColor" /> In evidenza
-                  </span>
-                  <p className="text-white/65 text-[11px] font-medium mb-0.5">Birrificio del giorno</p>
-                  <p className="text-white text-[18px] font-extrabold leading-tight">{breweryOfDay.name}</p>
-                  {breweryOfDay.location && (
-                    <p className="text-white/60 text-[11px] mt-0.5 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />{breweryOfDay.location}
-                    </p>
+              <div className="tap-scale flex min-h-[112px] items-center gap-4 rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:border-primary/40">
+                <div className="h-[88px] w-[104px] flex-shrink-0 overflow-hidden rounded-xl bg-muted/70">
+                  {breweryOfDay.coverImageUrl || breweryOfDay.logoUrl
+                    ? <img src={breweryOfDay.coverImageUrl || breweryOfDay.logoUrl} alt={breweryOfDay.name} className="h-full w-full object-contain" />
+                    : <Building2 className="m-auto h-8 w-8 text-muted-foreground/60" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="mb-1 inline-flex items-center gap-1 text-[11px] font-semibold text-primary"><Star className="h-3 w-3 fill-current" /> In evidenza</span>
+                  <p className="truncate text-base font-bold text-foreground">{breweryOfDay.name}</p>
+                  {breweryOfDay.location && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{breweryOfDay.location}</p>}
+                  {breweryOfDay.coverImageUrl && breweryOfDay.logoUrl && breweryOfDay.coverImageUrl !== breweryOfDay.logoUrl && (
+                    <img src={breweryOfDay.logoUrl} alt={`Logo ${breweryOfDay.name}`} className="mt-2 h-8 w-8 rounded-lg border border-border/70 bg-card p-0.5 object-contain" />
                   )}
-                  <button className="mt-3 self-start text-[12px] font-bold bg-white text-stone-900 rounded-full px-4 py-1.5 shadow-md">
-                    Scopri il birrificio →
-                  </button>
+                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary">Scopri il birrificio <ChevronRight className="h-3.5 w-3.5" /></span>
                 </div>
               </div>
             </Link>
@@ -304,37 +280,31 @@ export default function Landing() {
                 <Flame className="w-5 h-5 text-primary" />
                 Ora in spina vicino a te
               </h2>
-              <Link href="/explore/pubs">
-                <button className="text-sm font-semibold text-primary">Vedi tutto →</button>
+              <Link href="/explore/pubs" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">
+                Vedi tutto <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </div>
             <div className="flex gap-3 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
               {(taplistActivity as any[]).map((item: any) => (
                 <Link key={item.id} href={`/pub/${item.pub_slug || item.pub_id}`}>
                   <div className="tap-scale flex-shrink-0 w-[148px] cursor-pointer">
-                    <div className="relative h-[112px] rounded-2xl overflow-hidden mb-2 bg-muted shadow-card-sm">
+                    <div className="relative h-[96px] rounded-2xl overflow-hidden mb-2 bg-muted/70">
                       {item.beer_image ? (
-                        <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-cover" />
+                        <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-contain p-1" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary to-[#c95000] flex items-center justify-center">
-                          <Beer className="w-8 h-8 text-white/70" />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Beer className="w-8 h-8 text-primary/45" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-                      {item.beer_abv && (
-                        <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/45 backdrop-blur-sm rounded-full px-2 py-0.5">
-                          {item.beer_abv}%
-                        </span>
-                      )}
-                      <span className={`absolute top-2 left-2 text-[9px] font-extrabold text-white rounded-full px-1.5 py-0.5 uppercase ${item.tap_type === 'pompa' ? 'bg-violet-600' : 'bg-primary'}`}>
-                        {item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
-                      </span>
                     </div>
                     <p className="text-[13px] font-semibold text-foreground line-clamp-1 leading-tight">{item.beer_name}</p>
-                    {item.beer_style && <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{item.beer_style}</p>}
+                    <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                      {item.beer_style ? `${item.beer_style} · ` : ''}{item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
+                      {item.beer_abv ? ` · ${item.beer_abv}%` : ''}
+                    </p>
                     <div className="flex items-center gap-1 mt-1.5">
                       {item.pub_logo
-                        ? <img src={item.pub_logo} alt={item.pub_name} className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0" />
+                        ? <img src={item.pub_logo} alt={item.pub_name} className="w-3.5 h-3.5 rounded-full object-contain bg-muted/70 p-0.5 flex-shrink-0" />
                         : <Store className="w-3 h-3 text-muted-foreground flex-shrink-0" />}
                       <p className="text-[10px] text-muted-foreground truncate">{item.pub_name}</p>
                     </div>
@@ -353,8 +323,8 @@ export default function Landing() {
                 <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
                 {userLocation ? 'Pub vicini a te' : 'Pub consigliati'}
               </h2>
-              <Link href="/explore/pubs">
-                <button className="text-sm font-semibold text-primary">Vedi tutti →</button>
+              <Link href="/explore/pubs" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">
+                Vedi tutti <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </div>
             {pubsLoading ? (
@@ -371,7 +341,7 @@ export default function Landing() {
                       <div className={`tap-scale flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/30 ${!isLast ? 'border-b border-border' : ''}`}>
                         <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
                           {pub.logoUrl
-                            ? <img src={pub.logoUrl} alt={pub.name} className="w-10 h-10 object-cover" />
+                            ? <img src={pub.logoUrl} alt={pub.name} className="w-10 h-10 object-contain p-0.5" />
                             : <Store className="w-4 h-4 text-muted-foreground" />}
                         </div>
                         <div className="flex-1 min-w-0">
@@ -388,7 +358,7 @@ export default function Landing() {
                               <p className="text-[10px] text-muted-foreground">{tap.beer_style}</p>
                             </div>
                             {tap.beer_image
-                              ? <img src={tap.beer_image} alt={tap.beer_name} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
+                              ? <img src={tap.beer_image} alt={tap.beer_name} className="w-10 h-10 rounded-xl object-contain bg-muted/70 p-0.5 flex-shrink-0" />
                               : <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0"><Beer className="w-4 h-4 text-primary" /></div>
                             }
                           </div>
@@ -451,8 +421,8 @@ export default function Landing() {
                 <span className="w-1.5 h-5 rounded-full bg-amber-500 flex-shrink-0" />
                 {nearbyHasResults ? 'Birrifici vicini' : 'Birrifici in evidenza'}
               </h2>
-              <Link href="/explore/breweries">
-                <button className="text-sm font-semibold text-primary">Vedi tutti →</button>
+              <Link href="/explore/breweries" className="inline-flex min-h-11 items-center text-sm font-semibold text-primary">
+                Vedi tutti <ChevronRight className="ml-1 h-4 w-4" />
               </Link>
             </div>
             <div className="flex gap-3 -mx-4 px-4 overflow-x-auto scrollbar-hide pb-2">
@@ -461,13 +431,12 @@ export default function Landing() {
                   <div className="tap-scale flex-shrink-0 w-[140px] cursor-pointer">
                     <div className="relative h-[100px] rounded-2xl overflow-hidden mb-2 bg-muted shadow-card-sm">
                       {brewery.coverImageUrl || brewery.logoUrl ? (
-                        <img src={brewery.coverImageUrl || brewery.logoUrl} alt={brewery.name} className="w-full h-full object-cover" />
+                      <img src={brewery.coverImageUrl || brewery.logoUrl} alt={brewery.name} className="w-full h-full object-contain p-1" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-amber-800 to-orange-900 flex items-center justify-center">
-                          <Building2 className="w-8 h-8 text-white/70" />
+                        <div className="w-full h-full bg-muted flex items-center justify-center">
+                          <Building2 className="w-8 h-8 text-muted-foreground/55" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                     </div>
                     <p className="text-[13px] font-semibold text-foreground line-clamp-1 leading-tight">{brewery.name}</p>
                     {brewery.location && <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" />{brewery.location}</p>}
@@ -493,14 +462,14 @@ export default function Landing() {
           </div>
           <div className="space-y-3">
             {[
-              { icon: MapPin, emoji: "🗺️", title: "Trova il pub giusto", desc: "Taplist live, orari e geolocalizzazione in tempo reale.", cta: "Cerca pub", href: "/explore/pubs", accent: "bg-orange-100 dark:bg-orange-900/25 text-primary" },
-              { icon: Beer, emoji: "🍺", title: "Catalogo vastissimo", desc: "Stile, ABV, IBU e disponibilità locale. Migliaia di etichette.", cta: "Esplora birre", href: "/search", accent: "bg-amber-100 dark:bg-amber-900/25 text-amber-500" },
-              { icon: Building2, emoji: "🏭", title: "Birrifici dal mondo", desc: "Oltre 50.000 birrifici mappati — vicini e lontani.", cta: "Esplora birrifici", href: "/explore/breweries", accent: "bg-stone-100 dark:bg-stone-800 text-stone-500" },
-            ].map((card) => (
+              { icon: MapPin, title: "Trova il pub giusto", desc: "Taplist live, orari e geolocalizzazione in tempo reale.", cta: "Cerca pub", href: "/explore/pubs", accent: "bg-orange-100 dark:bg-orange-900/25 text-primary" },
+              { icon: Beer, title: "Catalogo vastissimo", desc: "Stile, ABV, IBU e disponibilità locale. Migliaia di etichette.", cta: "Esplora birre", href: "/search", accent: "bg-amber-100 dark:bg-amber-900/25 text-amber-600 dark:text-amber-400" },
+              { icon: Building2, title: "Birrifici dal mondo", desc: "Oltre 50.000 birrifici mappati — vicini e lontani.", cta: "Esplora birrifici", href: "/explore/breweries", accent: "bg-stone-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300" },
+            ].map(({ icon: Icon, ...card }) => (
               <Link key={card.title} href={card.href}>
                 <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200 hover:bg-white/80 dark:hover:bg-white/[0.06]">
-                  <div className={`w-12 h-12 rounded-2xl ${card.accent} flex items-center justify-center flex-shrink-0 text-2xl`}>
-                    {card.emoji}
+                  <div className={`w-12 h-12 rounded-2xl ${card.accent} flex items-center justify-center flex-shrink-0`}>
+                    <Icon className="h-5 w-5" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[14px] font-bold text-foreground">{card.title}</p>
@@ -541,30 +510,27 @@ export default function Landing() {
           <div className="space-y-3">
             {/* Pub Pro — nascosto su iOS */}
             {!isIosNative && (
-              <div className="rounded-2xl p-5 text-white shadow-card overflow-hidden"
-                style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 60%, #f5a623 100%)" }}>
+              <div className="rounded-2xl border border-border/70 bg-card p-5 text-foreground">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-10 h-10 bg-primary/10 text-primary rounded-xl flex items-center justify-center flex-shrink-0">
                     <Crown className="w-5 h-5" />
                   </div>
                   <div>
-                    <p className="font-black text-[16px]">Piano Pub Pro</p>
-                    <p className="text-white/70 text-[12px]">Per pub e birrerie · €65/anno</p>
+                    <p className="font-bold text-[16px]">Piano Pub Pro</p>
+                    <p className="text-muted-foreground text-[12px]">Per pub e birrerie · €65/anno</p>
                   </div>
                 </div>
                 <div className="space-y-1.5 mb-4">
                   {["Taplist digitale illimitata in tempo reale", "Analytics clienti e notifiche push", "QR Code + modalità TV · 15 giorni gratis"].map(f => (
                     <div key={f} className="flex items-center gap-2 text-[12px]">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-white/80 flex-shrink-0" />
-                      <span className="text-white/90">{f}</span>
+                      <CheckCircle2 className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                      <span className="text-foreground/80">{f}</span>
                     </div>
                   ))}
                 </div>
-                <Link href="/registra-pub">
-                  <button className="tap-scale w-full bg-white text-primary font-bold text-sm py-2.5 rounded-xl shadow-sm">
-                    <Zap className="w-4 h-4 inline mr-1.5" />
-                    Registra il tuo pub — 15 giorni gratis
-                  </button>
+                <Link href="/registra-pub" className="tap-scale flex min-h-11 w-full items-center justify-center rounded-xl bg-primary text-sm font-semibold text-primary-foreground">
+                  <Zap className="w-4 h-4 mr-1.5" />
+                  Registra il tuo pub — 15 giorni gratis
                 </Link>
               </div>
             )}
@@ -592,11 +558,9 @@ export default function Landing() {
                 ))}
               </div>
               {!isIosNative && (
-                <Link href="/prezzi">
-                  <button className="tap-scale w-full bg-primary/10 dark:bg-primary/15 text-primary font-bold text-sm py-2.5 rounded-xl border border-primary/20">
-                    <Building2 className="w-4 h-4 inline mr-1.5" />
-                    Registra il tuo birrificio gratis
-                  </button>
+                <Link href="/prezzi" className="tap-scale flex min-h-11 w-full items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-sm font-semibold text-primary dark:bg-primary/15">
+                  <Building2 className="w-4 h-4 mr-1.5" />
+                  Registra il tuo birrificio gratis
                 </Link>
               )}
             </div>
@@ -604,15 +568,13 @@ export default function Landing() {
             {/* Festival Mode — nascosto su iOS */}
             {!isIosNative && (
               <div className="bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center gap-4">
-                <div className="text-3xl flex-shrink-0">🎪</div>
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><Crown className="h-5 w-5" /></div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-bold text-foreground">Festival Mode</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5">Taplist live per fiere ed eventi · €50 una tantum</p>
                 </div>
-                <Link href="/festival" className="flex-shrink-0">
-                  <button className="tap-scale flex items-center gap-1 text-[12px] font-bold text-primary">
-                    Scopri <ArrowRight className="w-3.5 h-3.5" />
-                  </button>
+                <Link href="/festival" className="tap-scale flex min-h-11 flex-shrink-0 items-center gap-1 text-[12px] font-semibold text-primary">
+                  Scopri <ArrowRight className="w-3.5 h-3.5" />
                 </Link>
               </div>
             )}
@@ -666,23 +628,17 @@ export default function Landing() {
       {/* ─── FINAL CTA ───────────────────────────────────────────────────── */}
       <div className="border-t border-border">
         <PageContainer variant="wide" className="py-8">
-          <div className="rounded-3xl p-8 relative overflow-hidden text-center"
-            style={{ background: "linear-gradient(135deg, #F77104 0%, #f98a0e 50%, #f5a623 100%)" }}>
-            <div className="absolute inset-0 opacity-10"
-              style={{ backgroundImage: "radial-gradient(circle, white 1px, transparent 1px)", backgroundSize: "24px 24px" }} />
+          <div className="relative overflow-hidden rounded-2xl bg-primary p-6 text-center">
             <div className="relative">
-              <div className="text-4xl mb-4">🍺</div>
-              <h2 className="text-[22px] font-extrabold text-white mb-2 leading-tight">
+              <h2 className="mb-2 text-[22px] font-bold leading-tight text-primary-foreground">
                 Inizia a esplorare il craft beer
               </h2>
-              <p className="text-white/80 mb-5 text-sm">Gratuito per sempre. Registrati in 30 secondi con Google.</p>
-              <Link href="/login">
-                <button className="tap-scale inline-flex items-center gap-2 bg-white text-primary font-black text-sm px-8 py-3 rounded-2xl shadow-xl shadow-black/20">
-                  <Users className="w-4 h-4" />
-                  Registrati — è gratis
-                </button>
+              <p className="mb-5 text-sm text-primary-foreground/80">Gratuito per sempre. Registrati in 30 secondi con Google.</p>
+              <Link href="/login" className="tap-scale inline-flex min-h-11 items-center gap-2 rounded-xl bg-card px-8 text-sm font-semibold text-primary">
+                <Users className="w-4 h-4" />
+                Registrati — è gratis
               </Link>
-              <p className="text-white/60 text-xs mt-3">Nessuna carta di credito · Nessuna email di spam</p>
+              <p className="mt-3 text-xs text-primary-foreground/75">Nessuna carta di credito · Nessuna email di spam</p>
             </div>
           </div>
         </PageContainer>

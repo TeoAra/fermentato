@@ -55,6 +55,12 @@
   --mobile-top-offset: calc(3.5rem + var(--frozen-sat));
   --app-chrome-light: #FFFFFF;
   --app-chrome-dark: #15202B;
+  --floating-nav-height: 48px;
+  --floating-nav-active: #B45309;
+  --floating-nav-gap: 12px;
+  --floating-nav-surface: hsl(0 0% 100% / 0.97);
+  --floating-nav-border: hsl(35 28% 86% / 0.82);
+  --floating-nav-shadow: 0 8px 28px hsl(28 30% 12% / 0.14), 0 2px 6px hsl(28 30% 12% / 0.06);
 }
 
 /* Native iOS WebKit can visibly jump fixed layers when transform-based Radix
@@ -318,6 +324,121 @@ html.dark {
   --gradient-success: linear-gradient(135deg, hsl(142, 52%, 38%) 0%, hsl(158, 56%, 40%) 100%);
   --gradient-warning: linear-gradient(135deg, hsl(29, 100%, 52%) 0%, hsl(44, 88%, 54%) 100%);
   --gradient-hero: linear-gradient(135deg, hsl(213, 38%, 10%) 0%, hsl(213, 32%, 16%) 100%);
+}
+
+/* Shared, icon-only floating navigation. Keep the fixed shell paint-only:
+   its position is anchored by the frozen inset, never by compositing or motion. */
+.floating-bottom-bar {
+  position: fixed;
+  z-index: 55;
+  right: 0;
+  bottom: calc(var(--frozen-sab) + var(--floating-nav-gap));
+  left: 0;
+  width: min(560px, calc(100% - 28px));
+  margin-inline: auto;
+  padding: 3px;
+  border: 1px solid var(--floating-nav-border);
+  border-radius: 23px;
+  background: var(--floating-nav-surface);
+  box-shadow: var(--floating-nav-shadow);
+  color: var(--muted-foreground);
+  -webkit-transform: none !important;
+  transform: none !important;
+  -webkit-backface-visibility: visible !important;
+  backface-visibility: visible !important;
+  will-change: auto !important;
+}
+
+.dark .floating-bottom-bar {
+  --floating-nav-active: #FBBF24;
+  --floating-nav-surface: hsl(220 16% 12% / 0.98);
+  --floating-nav-border: hsl(220 12% 25% / 0.8);
+  --floating-nav-shadow: 0 10px 30px hsl(220 30% 2% / 0.42), 0 2px 8px hsl(220 30% 2% / 0.24);
+}
+
+.floating-bottom-bar.is-hidden {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.floating-bottom-bar__items {
+  display: flex;
+  min-height: var(--floating-nav-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.floating-bottom-bar__item {
+  position: relative;
+  display: flex;
+  min-width: 44px;
+  min-height: 48px;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+  outline: none;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.floating-bottom-bar__item:hover {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.floating-bottom-bar__item.is-active {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--floating-nav-active);
+}
+
+.floating-bottom-bar__item:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--floating-nav-active);
+}
+
+.floating-bottom-bar__icon {
+  position: relative;
+  display: inline-flex;
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+}
+
+.floating-bottom-bar__icon > svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 1.9;
+}
+
+.floating-bottom-bar__item.is-active .floating-bottom-bar__icon > svg {
+  stroke-width: 2.35;
+}
+
+.floating-bottom-bar__icon img {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.floating-bottom-bar__item.is-active .floating-bottom-bar__icon img {
+  border-color: var(--floating-nav-active);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .floating-bottom-bar *,
+  .floating-bottom-bar *::before,
+  .floating-bottom-bar *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @layer base {
@@ -851,10 +972,13 @@ html.dark {
   .stagger-item:nth-child(8)  { animation-delay: 260ms; }
   .stagger-item:nth-child(n+9) { animation-delay: 280ms; }
 
-  /* ── Main content bottom padding — clears the compact 52px nav + safe area (mobile only) ── */
+  /* ── Main content bottom padding — clears floating navigation and safe area ── */
   @media (max-width: 1023px) {
     .main-content-pb {
-      padding-bottom: max(calc(52px + var(--frozen-sab) + 8px), 68px) !important;
+      padding-bottom: max(
+        calc(var(--floating-nav-height) + var(--floating-nav-gap) + var(--frozen-sab) + 18px),
+        94px
+      ) !important;
     }
   }
 
@@ -873,6 +997,13 @@ html.dark {
       /* Isola il layer dalla GPU: le animazioni di altri fixed (toast, dialog)
          non forzano il re-compositing di questa barra */
       contain: layout style;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .bottom-nav-fixed.floating-bottom-bar {
+      contain: none !important;
+      -webkit-overflow-scrolling: auto !important;
     }
   }
 

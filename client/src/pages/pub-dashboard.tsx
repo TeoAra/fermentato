@@ -8,6 +8,7 @@ import { isIosNative } from "@/lib/platform";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -24,13 +25,14 @@ import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { openExternalUrl } from "@/lib/open-external-url";
 import { 
-  Beer, Wine, Utensils, Building2, Plus, AlertCircle, LogIn,
+  Beer, Wine, Utensils, Building2, Plus, AlertCircle, LogIn, MoreHorizontal,
   X as Twitter, Music, Clock, MapPin, Phone, Globe, Camera,
   TrendingUp, Eye, CalendarDays,
   Home as HomeIcon, Info as InfoIcon, ArrowLeft, Share2, ChevronRight
 } from "lucide-react";
 import { SiFacebook, SiInstagram, SiX, SiTiktok } from "react-icons/si";
 import { useAnyModalOpen, useHideGlobalBottomNav, DockPortal } from "@/components/bottom-navigation";
+import { FloatingBottomBar } from "@/components/floating-bottom-bar";
 
 interface Pub {
   id: number;
@@ -145,6 +147,22 @@ export default function PubDashboard() {
   }, []);
   const isAnyModalOpen = useAnyModalOpen();
   useHideGlobalBottomNav();
+  const [showDockMore, setShowDockMore] = useState(false);
+  const pubDockSections = [
+    { id: "overview", label: "Home", Icon: HomeIcon },
+    { id: "info", label: "Info", Icon: Building2 },
+    { id: "taplist", label: "Spine", Icon: Beer },
+    { id: "bottles", label: "Cantina", Icon: Wine },
+    { id: "menu", label: "Menu", Icon: Utensils },
+    { id: "orari", label: "Orari", Icon: Clock },
+    { id: "analytics", label: "Statistiche", Icon: TrendingUp },
+  ];
+  const primaryPubDockSections = pubDockSections.filter(({ id }) =>
+    ["overview", "taplist", "bottles", "menu"].includes(id),
+  );
+  const extraPubDockSections = pubDockSections.filter(({ id }) =>
+    !["overview", "taplist", "bottles", "menu"].includes(id),
+  );
 
   // Show welcome message if redirected from email verification
   useEffect(() => {
@@ -727,57 +745,61 @@ export default function PubDashboard() {
 
       {/* ── BOTTOM DOCK DASHBOARD PUB — stesso pattern di BottomNavigation ── */}
       <DockPortal>
-      <nav
-        className={`bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
-          isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        style={{ paddingBottom: 'max(var(--frozen-sab) - 16px, 0px)' }}
-        aria-label="Navigazione dashboard pub"
+      <FloatingBottomBar
+        label="Navigazione dashboard pub"
         role="tablist"
-      >
-        <div className="overflow-x-auto scrollbar-hide px-2">
-          <div className="flex min-h-[52px] min-w-max items-center px-1 gap-1">
-              {[
-                { id: 'overview', label: 'Home', Icon: HomeIcon },
-                { id: 'info',     label: 'Info', Icon: Building2 },
-                { id: 'taplist',  label: 'Spine', Icon: Beer },
-                { id: 'bottles',  label: 'Cantina', Icon: Wine },
-                { id: 'menu',     label: 'Menu', Icon: Utensils },
-                { id: 'orari',    label: 'Orari', Icon: Clock },
-                { id: 'analytics',label: 'Stats', Icon: TrendingUp },
-              ].map(({ id, label, Icon }) => {
-                const active = activeTab === id;
-                return (
-                  <button
-                    key={id}
-                    onClick={() => setActiveTab(id)}
-                    role="tab"
-                    aria-selected={active}
-                    aria-current={active ? 'page' : undefined}
-                    aria-label={label}
-                    data-testid={`pub-dock-${id}`}
-                    className={`min-h-12 min-w-[64px] flex flex-col items-center justify-center gap-0.5 px-2 rounded-[18px] transition-all duration-200 active:scale-95 ${
-                      active
-                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
-                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
-                    }`}
-                  >
-                    <Icon
-                      className="h-[20px] w-[20px]"
-                      strokeWidth={active ? 2.6 : 1.8}
-                      fill={active ? 'currentColor' : 'none'}
-                      style={active ? { fillOpacity: 0.18 } : {}}
-                    />
-                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
-                      {label}
-                    </span>
-                  </button>
-                );
-              })}
-          </div>
-        </div>
-      </nav>
+        hidden={isAnyModalOpen}
+        testId="pub-dashboard-legacy-dock"
+        items={[
+          ...primaryPubDockSections.map(({ id, label, Icon }) => ({
+            id,
+            label,
+            icon: <Icon />,
+            active: activeTab === id,
+            role: "tab" as const,
+            onClick: () => setActiveTab(id),
+            testId: `pub-dock-${id}`,
+          })),
+          {
+            id: "more",
+            label: "Altre sezioni",
+            icon: <MoreHorizontal />,
+            active: extraPubDockSections.some(({ id }) => activeTab === id),
+            role: "tab" as const,
+            onClick: () => setShowDockMore(true),
+            testId: "pub-dock-more",
+          },
+        ]}
+      />
       </DockPortal>
+      <Sheet open={showDockMore} onOpenChange={setShowDockMore}>
+        <SheetContent side="bottom" className="lg:hidden rounded-t-3xl px-5 pb-[calc(1.25rem+var(--frozen-sab))]">
+          <SheetHeader className="pb-3 text-left">
+            <SheetTitle>Altre sezioni</SheetTitle>
+          </SheetHeader>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {extraPubDockSections.map(({ id, label, Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => {
+                  setActiveTab(id);
+                  setShowDockMore(false);
+                }}
+                aria-current={activeTab === id ? "page" : undefined}
+                className={`flex min-h-12 items-center gap-3 rounded-2xl border px-4 text-left text-sm font-semibold ${
+                  activeTab === id
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border bg-card text-foreground"
+                }`}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                {label}
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

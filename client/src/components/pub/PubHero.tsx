@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
@@ -55,6 +55,7 @@ export default function PubHero({
   onShare,
 }: PubHeroProps) {
   const [, setLocation] = useLocation();
+  const prefersReducedMotion = useReducedMotion();
   const cover = pub?.coverImageUrl || pub?.imageUrl || pub?.logoUrl || "";
   const colors = statusColors(openStatus);
   const hasPhone = !!pub?.phone;
@@ -63,25 +64,31 @@ export default function PubHero({
 
   return (
     <motion.section
-      initial={{ opacity: 0, y: 8 }}
+      initial={prefersReducedMotion ? false : { opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, ease: "easeOut" }}
+      transition={{ duration: prefersReducedMotion ? 0 : 0.4, ease: "easeOut" }}
       className="relative"
       data-testid="pub-hero"
     >
       <PageContainer variant="hero" noPadding>
       <PageContainerInset bleedOnMobile>
-      <div className="relative h-[260px] sm:h-[300px] overflow-hidden rounded-b-[28px] sm:rounded-[28px] bg-muted">
+      <div
+        className="relative mx-auto aspect-[1.85/1] sm:aspect-[2.7/1] max-h-[260px] w-full overflow-hidden rounded-b-[20px] sm:rounded-[20px] bg-muted"
+        data-testid="pub-hero-cover"
+      >
         <ImageWithFallback
           src={cover}
           alt={pub?.name || "Pub"}
           imageType="pub"
           containerClassName="absolute inset-0"
-          className="w-full h-full object-cover"
+          className="h-full w-full object-contain"
           iconSize="xl"
+          width={1600}
+          sizes="(max-width: 640px) 100vw, (max-width: 1280px) 92vw, 1200px"
+          srcSetWidths={[480, 768, 1200, 1600, 2000]}
+          loading="eager"
+          fetchPriority="high"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/30 pointer-events-none" />
-
         {/* Top bar */}
         <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
           <button
@@ -91,7 +98,7 @@ export default function PubHero({
               else setLocation("/");
             }}
             aria-label="Indietro"
-            className="w-11 h-11 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center shadow-card-sm active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-card/95 text-foreground active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             data-testid="pub-hero-back"
           >
             <ArrowLeft className="w-5 h-5 text-foreground" />
@@ -102,7 +109,7 @@ export default function PubHero({
                 type="button"
                 onClick={onShare}
                 aria-label="Condividi"
-                className="w-11 h-11 rounded-full bg-card/90 backdrop-blur-sm flex items-center justify-center shadow-card-sm active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-border/70 bg-card/95 text-foreground active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 data-testid="pub-hero-share"
               >
                 <Share2 className="w-4.5 h-4.5 text-foreground" />
@@ -115,7 +122,7 @@ export default function PubHero({
         {openStatus && (
           <div className="absolute top-16 left-3 z-10">
             <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold shadow-card-sm ${colors.bg} ${colors.text}`}
+              className={`inline-flex min-h-8 items-center gap-1.5 rounded-full px-3 text-xs font-semibold ${colors.bg} ${colors.text}`}
               data-testid="pub-hero-status"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-current opacity-90" />
@@ -126,36 +133,24 @@ export default function PubHero({
       </div>
       </PageContainerInset>
 
-      {/* Overlapping card */}
-      <PageContainerInset className="relative -mt-10 pb-2">
+        <PageContainerInset className="relative pb-2 pt-3 sm:pt-4">
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={prefersReducedMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1, ease: "easeOut" }}
-          className="relative bg-card text-card-foreground rounded-3xl border border-border shadow-card px-5 sm:px-6 pt-10 pb-5"
+          transition={{ duration: prefersReducedMotion ? 0 : 0.4, delay: prefersReducedMotion ? 0 : 0.1, ease: "easeOut" }}
+          className="relative rounded-2xl border border-border/70 bg-card px-4 py-4 text-card-foreground"
         >
-          {/* Logo */}
-          <div className="absolute -top-8 left-5">
-            <div className="w-16 h-16 rounded-full bg-card border-2 border-card shadow-card-sm overflow-hidden">
-              <ImageWithFallback
-                src={pub?.logoUrl || cover}
-                alt={pub?.name || "Logo"}
-                imageType="pub"
-                containerClassName="w-full h-full"
-                className="w-full h-full object-cover"
-                iconSize="md"
-              />
-            </div>
-          </div>
-
           <div className="space-y-2">
-            <h1 className="text-2xl sm:text-3xl font-black text-foreground leading-tight tracking-tight" data-testid="pub-hero-name">
+            <div className="flex items-center gap-3">
+              {pub?.logoUrl && <ImageWithFallback src={pub.logoUrl} alt={`Logo ${pub.name}`} imageType="pub" containerClassName="h-11 w-11 shrink-0 rounded-xl bg-muted" className="object-contain" width={144} noSrcSet />}
+            <h1 className="min-w-0 break-words text-[22px] sm:text-2xl font-bold text-foreground leading-tight tracking-tight" data-testid="pub-hero-name">
               {pub?.name || "Pub"}
             </h1>
+            </div>
 
             <div className="flex items-start gap-1.5 text-muted-foreground text-sm leading-snug">
               <MapPin className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
-              <span className="truncate">
+              <span className="min-w-0">
                 {[pub?.address, pub?.city].filter(Boolean).join(", ") || pub?.city || "Località non disponibile"}
               </span>
             </div>
@@ -189,36 +184,36 @@ export default function PubHero({
               type="button"
               onClick={onCall}
               disabled={!hasPhone}
-               className="flex items-center justify-center gap-1.5 px-3 min-h-11 rounded-full border border-primary bg-card text-primary font-semibold text-sm active:scale-95 transition-all disabled:opacity-40 disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex min-w-0 items-center justify-center gap-1.5 px-2 sm:px-3 min-h-11 rounded-xl border border-border bg-card text-foreground font-semibold text-sm active:scale-95 transition-all disabled:opacity-40 disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
               data-testid="pub-hero-call"
               aria-label="Chiama"
             >
               <Phone className="w-4 h-4" />
-              <span>Chiama</span>
+              <span className="truncate">Chiama</span>
             </button>
             <button
               type="button"
               onClick={onDirections}
-              className="flex items-center justify-center gap-1.5 px-3 min-h-11 rounded-full border border-primary bg-card text-primary font-semibold text-sm active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex min-w-0 items-center justify-center gap-1.5 px-2 sm:px-3 min-h-11 rounded-xl border border-border bg-card text-foreground font-semibold text-sm active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none"
               data-testid="pub-hero-directions"
               aria-label="Indicazioni"
             >
               <Navigation className="w-4 h-4" />
-              <span>Indicazioni</span>
+              <span className="truncate">Mappa</span>
             </button>
             <button
               type="button"
               onClick={onToggleFavorite}
-              className={`flex items-center justify-center gap-1.5 px-3 min-h-11 rounded-full border font-semibold text-sm active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+              className={`flex min-w-0 items-center justify-center gap-1.5 px-2 sm:px-3 min-h-11 rounded-xl border font-semibold text-sm active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none ${
                 isFavorite
                   ? "bg-primary border-primary text-primary-foreground"
-                  : "border-primary bg-card text-primary"
+                  : "border-border bg-card text-foreground"
               }`}
               data-testid="pub-hero-favorite"
               aria-label={isFavorite ? "Rimuovi dai preferiti" : "Salva nei preferiti"}
             >
               <Heart className="w-4 h-4" fill={isFavorite ? "currentColor" : "none"} />
-              <span>{isFavorite ? "Salvato" : "Salva"}</span>
+              <span className="truncate">{isFavorite ? "Salvato" : "Salva"}</span>
             </button>
           </div>
         </motion.div>

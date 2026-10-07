@@ -1,4 +1,4 @@
-import { MapPin, Beer, ChevronRight } from "lucide-react";
+import { MapPin, Beer, ChevronRight, Star } from "lucide-react";
 import { Link } from "wouter";
 import ImageWithFallback from "@/components/image-with-fallback";
 
@@ -31,55 +31,42 @@ export default function BreweryCard({ brewery, beerCount = 0, distance, isLast }
   return (
     <div>
       <Link href={`/brewery/${brewery.slug || brewery.id}`}>
-        <div className="flex items-center gap-4 px-4 py-4 active:bg-stone-50/80 dark:active:bg-stone-800/20 cursor-pointer group transition-colors">
-
-          {/* Logo */}
-          <div className="w-[52px] h-[52px] rounded-2xl overflow-hidden flex-shrink-0 bg-amber-50 dark:bg-[#1A1D24] ring-1 ring-black/[0.04] dark:ring-white/[0.06] shadow-sm group-hover:shadow-md transition-shadow">
+        <div className="group flex min-h-[104px] items-center gap-3 px-3 py-3 transition-colors hover:bg-muted/35 active:bg-muted/50">
+          <div className="h-[72px] w-[76px] shrink-0 overflow-hidden rounded-xl bg-muted/70">
             <ImageWithFallback
-              src={brewery.logoUrl || brewery.coverImageUrl}
-              alt={String(brewery.name)}
+              src={brewery.coverImageUrl || brewery.logoUrl}
+              alt={`Immagine di ${brewery.name}`}
               imageType="brewery"
-              containerClassName="w-full h-full"
-              className="w-full h-full object-cover"
+              containerClassName="h-full w-full"
+              className="h-full w-full object-contain"
               iconSize="sm"
             />
           </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-[15px] leading-snug truncate text-stone-900 dark:text-stone-50 group-hover:text-primary transition-colors"
-               style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
-              {brewery.name}
-            </p>
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {subtitle && (
-                <span className="flex items-center gap-0.5 text-[11px] text-stone-400 dark:text-stone-500 truncate leading-none">
-                  <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
-                  {subtitle}
-                </span>
+          {brewery.coverImageUrl && brewery.logoUrl && (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-card p-1">
+              <ImageWithFallback src={brewery.logoUrl} alt={`Logo ${brewery.name}`} imageType="brewery" containerClassName="h-full w-full" className="h-full w-full object-contain" iconSize="sm" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-bold leading-snug text-foreground transition-colors group-hover:text-primary">{brewery.name}</p>
+            {subtitle && (
+              <p className="mt-1 flex items-center gap-1 text-xs leading-snug text-muted-foreground">
+                <MapPin className="h-3 w-3 shrink-0" /><span className="truncate">{subtitle}</span>
+              </p>
+            )}
+            <div className="mt-2 flex min-h-5 flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
+              {beerCount > 0 && <span className="inline-flex items-center gap-1 text-muted-foreground"><Beer className="h-3 w-3" />{beerCount} birre</span>}
+              {brewery.rating != null && Number(brewery.rating) > 0 && (
+                <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Star className="h-3 w-3 fill-current text-primary" />{Number(brewery.rating).toFixed(1)}</span>
               )}
-              {distance != null && (
-                <span className="flex-shrink-0 text-[11px] font-bold leading-none" style={{ color: "#0ea5e9" }}>
-                  · {formatDist(distance)}
-                </span>
-              )}
+              {distance != null && <span className="text-muted-foreground">{formatDist(distance)}</span>}
             </div>
           </div>
-
-          {/* Right: beer count or chevron */}
-          <div className="flex-shrink-0 flex items-center gap-2">
-            {beerCount > 0 && (
-              <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-[3px] rounded-full bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400 border border-amber-100 dark:border-amber-800/30 leading-none">
-                <Beer className="w-2.5 h-2.5" />
-                {beerCount}
-              </span>
-            )}
-            <ChevronRight className="w-3.5 h-3.5 text-stone-300 dark:text-stone-600" />
-          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/70" />
         </div>
       </Link>
       {!isLast && (
-        <div className="h-px mx-4" style={{ background: "linear-gradient(90deg, transparent, hsl(36,14%,90%) 15%, hsl(36,14%,90%) 85%, transparent)" }} />
+        <div className="mx-3 h-px bg-border/70" />
       )}
     </div>
   );

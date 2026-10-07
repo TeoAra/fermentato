@@ -1,4 +1,7 @@
 import { useEditor, EditorContent } from "@tiptap/react";
+import { forwardRef } from "react";
+import { PlainDescription, PlainDescriptionEditor, type PlainDescriptionEditorProps } from "@/components/plain-description";
+import { descriptionToText } from "@shared/description-text";
 import DOMPurify from "isomorphic-dompurify";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
@@ -143,7 +146,7 @@ async function fetchMentionItems(query: string): Promise<MentionItem[]> {
   }
 }
 
-interface RichTextEditorProps {
+interface RichTextEditorProps extends Omit<PlainDescriptionEditorProps, "onChange"> {
   content: string;
   onChange: (html: string) => void;
   placeholder?: string;
@@ -151,6 +154,8 @@ interface RichTextEditorProps {
   className?: string;
   /** When true, enables inline @mention autocomplete (for post composers) */
   enableMentions?: boolean;
+  /** Explicitly retain formatting for editorial pages, not descriptions. */
+  formatted?: boolean;
 }
 
 const ToolbarButton = ({
@@ -186,7 +191,7 @@ const Divider = () => (
   <div className="w-px h-5 bg-gray-200 dark:bg-[#12151A] mx-0.5 flex-shrink-0" />
 );
 
-export default function RichTextEditor({
+function FormattedRichTextEditor({
   content,
   onChange,
   placeholder = "Scrivi qui la descrizione del birrificio…",
@@ -510,40 +515,18 @@ export function normalizeRichContent(input: string | null | undefined): string {
  * line-clamp). Collapses whitespace and adds a single space between blocks.
  */
 export function richTextToPlain(input: string | null | undefined): string {
-  if (!input) return "";
-  return String(input)
-    .replace(/<\s*(br|p|div|li|h[1-6]|blockquote|hr)[^>]*>/gi, " ")
-    .replace(/<\/(p|div|li|h[1-6]|blockquote)>/gi, " ")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/&amp;/gi, "&")
-    .replace(/&lt;/gi, "<")
-    .replace(/&gt;/gi, ">")
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
-    .replace(/\s+/g, " ")
-    .trim();
+  return descriptionToText(input).replace(/\s+/g, " ").trim();
 }
 
 /** True if a value coming from the editor / DB is effectively empty. */
 export function isRichContentEmpty(input: string | null | undefined): boolean {
   if (!input) return true;
-  const s = String(input).trim();
-  if (!s) return true;
-  // Strip tags & nbsp to see if there's any real text or media
-  const stripped = s
-    .replace(/<br\s*\/?>(\s|&nbsp;)*/gi, "")
-    .replace(/<p>(\s|&nbsp;)*<\/p>/gi, "")
-    .replace(/<[^>]+>/g, "")
-    .replace(/&nbsp;/gi, "")
-    .trim();
-  if (stripped) return false;
-  // No text, but maybe contains an image
-  return !/<img\b/i.test(s);
+  return !descriptionToText(input) && !/<img\b/i.test(input);
 }
 
 /** Renders sanitized HTML from the rich text editor safely. Accepts legacy plain text. */
-export function RichTextDisplay({ html, className = "" }: { html: string; className?: string }) {
+export function RichTextDisplay({ html, className = "", formatted = false }: { html: string; className?: string; formatted?: boolean }) {
+  if (!formatted) return <PlainDescription text={html} className={className} />;
   if (isRichContentEmpty(html)) return null;
   const normalized = normalizeRichContent(html);
   return (
@@ -562,3 +545,11 @@ export function RichTextDisplay({ html, className = "" }: { html: string; classN
     />
   );
 }
+
+const RichTextEditor = forwardRef<HTMLTextAreaElement, RichTextEditorProps>((props, ref) => {
+  const { formatted = false, enableMentions = false, ...plainProps } = props;
+  if (formatted || enableMentions) return <FormattedRichTextEditor {...props} />;
+  return <PlainDescriptionEditor {...plainProps} ref={ref} />;
+});
+RichTextEditor.displayName = "DescriptionEditor";
+export default RichTextEditor;

@@ -35,6 +35,7 @@ import { format } from "date-fns";
 import { it } from "date-fns/locale";
 import { useLocation } from "wouter";
 import { PageContainer } from "@/components/layout/page-container";
+import { FloatingBottomBar } from "@/components/floating-bottom-bar";
 
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
@@ -2380,51 +2381,19 @@ export default function FestivalDashboard() {
 
       {/* ── BOTTOM DOCK (mobile only) — fixed to bottom like main nav ── */}
       {selectedFest && (
-        <nav
-          className={`ios-fixed-chrome bottom-nav-fixed lg:hidden fixed left-0 right-0 bottom-0 z-[55] bg-white dark:bg-[#0B0D10] border-t border-stone-100 dark:border-white/[0.06] rounded-t-[32px] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.12)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
-            isFestModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-          }`}
-          style={{ paddingBottom: 'max(calc(var(--frozen-sab) - 16px), 0px)' }}
-          aria-label="Navigazione del festival"
-        >
-          <div className="flex min-h-[52px] items-center justify-between px-2">
-                {[
-                  { id: 'overview', label: 'Overview', Icon: HomeIcon },
-                  { id: 'taps',     label: 'Spine',    Icon: Beer },
-                  { id: 'food',     label: 'Cibo',     Icon: UtensilsCrossed },
-                  { id: 'stats',    label: 'Classifiche', Icon: BarChart3 },
-                  { id: 'settings', label: 'Info',     Icon: InfoIcon },
-                ].map(({ id, label, Icon }) => {
-                  const active = activeTab === id;
-                  return (
-                    <button
-                      key={id}
-                      onClick={() => setActiveTab(id)}
-                      role="tab"
-                      aria-selected={active}
-                      aria-current={active ? 'page' : undefined}
-                      aria-label={label}
-                      data-testid={`festdash-dock-${id}`}
-                      className={`min-h-12 flex-1 flex flex-col items-center justify-center gap-0.5 px-1 rounded-[18px] transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 ${
-                        active
-                          ? 'bg-primary/10 dark:bg-primary/15 text-primary'
-                          : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
-                      }`}
-                    >
-                      <Icon
-                        className="h-[20px] w-[20px]"
-                        strokeWidth={active ? 2.6 : 1.8}
-                        fill={active ? 'currentColor' : 'none'}
-                        style={active ? { fillOpacity: 0.18 } : {}}
-                      />
-                      <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
-                        {label}
-                      </span>
-                    </button>
-                  );
-                })}
-          </div>
-        </nav>
+        <FloatingBottomBar
+          label="Navigazione del festival"
+          role="tablist"
+          hidden={isFestModalOpen}
+          testId="festival-dashboard-dock"
+          items={[
+            { id: 'overview', label: 'Panoramica', icon: <HomeIcon />, active: activeTab === 'overview', role: 'tab', onClick: () => setActiveTab('overview'), testId: 'festdash-dock-overview' },
+            { id: 'taps', label: 'Spine', icon: <Beer />, active: activeTab === 'taps', role: 'tab', onClick: () => setActiveTab('taps'), testId: 'festdash-dock-taps' },
+            { id: 'food', label: 'Cibo', icon: <UtensilsCrossed />, active: activeTab === 'food', role: 'tab', onClick: () => setActiveTab('food'), testId: 'festdash-dock-food' },
+            { id: 'stats', label: 'Classifiche', icon: <BarChart3 />, active: activeTab === 'stats', role: 'tab', onClick: () => setActiveTab('stats'), testId: 'festdash-dock-stats' },
+            { id: 'settings', label: 'Info', icon: <InfoIcon />, active: activeTab === 'settings', role: 'tab', onClick: () => setActiveTab('settings'), testId: 'festdash-dock-settings' },
+          ]}
+        />
       )}
     </div>
   );

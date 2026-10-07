@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { descriptionToText } from "@shared/description-text";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShieldCheck, Plus, Utensils, ChevronDown } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
@@ -146,8 +147,8 @@ export default function FoodMenuSection({
                     </span>
                   </div>
                   {cat.description && (
-                    <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed mt-1">
-                      {cat.description}
+                    <p className="whitespace-pre-wrap text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed mt-1">
+                      {descriptionToText(cat.description)}
                     </p>
                   )}
                 </div>
@@ -171,7 +172,7 @@ export default function FoodMenuSection({
                 {cat.infoBox && (
                   <div className="px-4 py-3 bg-[#FFF7EA] dark:bg-[#F59E0B]/10 flex items-start gap-2">
                     <span className="text-base flex-shrink-0 mt-0.5">📌</span>
-                    <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed">{cat.infoBox}</p>
+                    <p className="whitespace-pre-wrap text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed">{descriptionToText(cat.infoBox)}</p>
                   </div>
                 )}
                 {cat.items.map((item) => {
@@ -202,8 +203,8 @@ export default function FoodMenuSection({
                           </span>
                         </div>
                         {item.description && (
-                          <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-snug mt-1">
-                            {item.description}
+                          <p className="whitespace-pre-wrap text-xs text-[#6B6357] dark:text-[#B7BDC7] leading-snug mt-1">
+                            {descriptionToText(item.description)}
                           </p>
                         )}
                         <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">

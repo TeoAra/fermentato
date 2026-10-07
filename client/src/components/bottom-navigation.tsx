@@ -1,10 +1,11 @@
 import { User, Home, Users, Activity, Search } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect, useCallback, createContext, useContext, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { isIosEdgeToEdge } from "@/lib/safe-area-estimate";
 import { isNativeApp } from "@/lib/platform";
+import { FloatingBottomBar } from "@/components/floating-bottom-bar";
 
 /**
  * Renderizza i dock interni dei dashboard tramite portal direttamente in
@@ -250,7 +251,7 @@ export function useReanchorIosFixedChrome(): void {
 }
 
 export function BottomNavigation() {
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   const { isAuthenticated, user } = useAuth();
   const { isHidden } = useContext(BottomNavHideCtx);
 
@@ -293,133 +294,23 @@ export function BottomNavigation() {
   const activityActive  = isActive("/activity");
   const accountActive   = isActive("/profile") || isActive("/login") || isActive("/auth") || isActive("/dashboard");
 
-  const Tab = ({
-    active,
-    icon,
-    label,
-    badge,
-  }: {
-    active: boolean;
-    icon: ReactNode;
-    label: string;
-    badge?: ReactNode;
-  }) => (
-    <div className="flex-1 min-h-12 flex flex-col items-center justify-center gap-0.5 cursor-pointer select-none">
-      <span
-        className={`relative inline-flex items-center justify-center transition-colors ${
-          active ? "text-primary" : "text-stone-400 dark:text-stone-500"
-        }`}
-      >
-        {icon}
-        {badge}
-      </span>
-      <span
-        className={`text-[10px] tracking-tight transition-colors ${
-          active ? "font-semibold text-primary" : "font-medium text-stone-500 dark:text-stone-400"
-        }`}
-      >
-        {label}
-      </span>
-    </div>
-  );
-
   return (
-    <>
-      <nav
-        className="bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-[55] bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)]"
-        style={{ paddingBottom: "max(calc(var(--frozen-sab) - 16px), 0px)" }}
-      >
-        <div className="relative flex items-center min-h-[52px] px-2">
-
-          {/* Home */}
-          <Link href="/" className="flex-1 flex">
-            <Tab
-              active={homeActive}
-              label="Home"
-              icon={
-                <Home
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={homeActive ? 2.5 : 1.8}
-                  fill={homeActive ? "currentColor" : "none"}
-                  style={homeActive ? { fillOpacity: 0.12 } : {}}
-                />
-              }
-            />
-          </Link>
-
-          {/* Community */}
-          <Link href="/community" className="flex-1 flex">
-            <Tab
-              active={communityActive}
-              label="Community"
-              icon={
-                <Users
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={communityActive ? 2.5 : 1.8}
-                  fill={communityActive ? "currentColor" : "none"}
-                  style={communityActive ? { fillOpacity: 0.12 } : {}}
-                />
-              }
-            />
-          </Link>
-
-          {/* Spacer for FAB Cerca */}
-          <div className="w-16 flex-shrink-0" aria-hidden="true" />
-
-          {/* Attività */}
-          <Link href="/activity" className="flex-1 flex">
-            <Tab
-              active={activityActive}
-              label="Attività"
-              icon={
-                <Activity
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={activityActive ? 2.5 : 1.8}
-                />
-              }
-            />
-          </Link>
-
-          {/* Account */}
-          <Link href={isAuthenticated ? "/dashboard" : "/login"} className="flex-1 flex">
-            <Tab
-              active={accountActive}
-              label="Account"
-              icon={
-                avatarUrl ? (
-                  <img
-                    src={avatarUrl}
-                    alt="profilo"
-                    className={`h-[22px] w-[22px] rounded-full object-cover border-2 transition-all ${
-                      accountActive
-                        ? "border-primary ring-1 ring-primary/30"
-                        : "border-stone-200 dark:border-[#23262E]"
-                    }`}
-                  />
-                ) : (
-                  <User
-                    className="h-[22px] w-[22px]"
-                    strokeWidth={accountActive ? 2.5 : 1.8}
-                    fill={accountActive ? "currentColor" : "none"}
-                    style={accountActive ? { fillOpacity: 0.12 } : {}}
-                  />
-                )
-              }
-            />
-          </Link>
-
-          {/* FAB Cerca — centrale, sporge sopra la barra */}
-          <button
-            type="button"
-            onClick={() => setLocation("/search")}
-            aria-label="Cerca"
-            className="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 rounded-full bg-primary text-white flex items-center justify-center shadow-[0_8px_20px_rgba(232,119,34,0.45)] border-4 border-white dark:border-[#0B0D10] active:opacity-80 transition-opacity z-[1]"
-          >
-            <Search className="w-6 h-6" strokeWidth={2.5} />
-          </button>
-
-        </div>
-      </nav>
-    </>
+    <FloatingBottomBar
+      label="Navigazione principale"
+      testId="global-bottom-navigation"
+      items={[
+        { id: "home", label: "Home", href: "/", active: homeActive, icon: <Home /> },
+        { id: "community", label: "Community", href: "/community", active: communityActive, icon: <Users /> },
+        { id: "search", label: "Cerca", href: "/search", active: isActive("/search"), icon: <Search /> },
+        { id: "activity", label: "Attività", href: "/activity", active: activityActive, icon: <Activity /> },
+        {
+          id: "account",
+          label: isAuthenticated ? "Account" : "Accedi",
+          href: isAuthenticated ? "/dashboard" : "/login",
+          active: accountActive,
+          icon: avatarUrl ? <img src={avatarUrl} alt="" /> : <User />,
+        },
+      ]}
+    />
   );
 }

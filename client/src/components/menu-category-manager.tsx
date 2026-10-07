@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -34,6 +33,8 @@ import {
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
+import { PlainDescription, PlainDescriptionEditor } from "@/components/plain-description";
+import { descriptionToText } from "@shared/description-text";
 
 interface MenuCategoryManagerProps {
   pubId: number;
@@ -691,8 +692,9 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
     // Store initial values in formData (used only as defaultValues for refs below)
     setFormData({
       name: category.name,
-      description: category.description || '',
-      infoBox: category.infoBox || '',
+      description: descriptionToText(category.description ?? '', { trim: false }),
+      // InfoBox is a plain-text menu note, not rich content or deliberate HTML.
+      infoBox: descriptionToText(category.infoBox ?? '', { trim: false }),
       isVisible: category.isVisible
     });
     // Initialise edit visibility ref with current value
@@ -865,12 +867,13 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
           <Label htmlFor="category-description" className="text-sm font-bold text-foreground">
             Descrizione (opzionale)
           </Label>
-          <Textarea
+          <PlainDescriptionEditor
             ref={isEdit ? editDescriptionRef : descriptionRef}
             id="category-description"
             placeholder="Breve descrizione della categoria..."
-            defaultValue={isEdit ? formData.description : ''}
-            rows={3}
+            content={formData.description}
+            onChange={(description) => setFormData((current: any) => ({ ...current, description }))}
+            maxChars={5000}
             className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
             data-testid={isEdit ? "textarea-edit-category-description" : "textarea-create-category-description"}
           />
@@ -883,12 +886,13 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
           <p className="text-xs text-muted-foreground">
             Nota evidenziata nel PDF del menu (es. "Piatti preparati con ingredienti freschi")
           </p>
-          <Textarea
+          <PlainDescriptionEditor
             ref={isEdit ? editInfoBoxRef : infoBoxRef}
             id="category-infobox"
             placeholder="Es. Tutti i nostri piatti sono preparati con ingredienti locali e di stagione..."
-            defaultValue={isEdit ? formData.infoBox : ''}
-            rows={2}
+            content={formData.infoBox}
+            onChange={(infoBox) => setFormData((current: any) => ({ ...current, infoBox }))}
+            maxChars={5000}
             className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
           />
         </div>
@@ -982,7 +986,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                   Nuova Categoria
                 </Button>
             </DialogTrigger>
-          <DialogContent data-testid="menu-category-dialog" className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+          <DialogContent formLayout data-testid="menu-category-dialog" className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl">
                 <div className="p-2 bg-primary rounded-lg mr-3">
@@ -1046,7 +1050,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                   Crea Prima Categoria
                 </Button>
               </DialogTrigger>
-              <DialogContent data-testid="menu-first-category-dialog" className="w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+              <DialogContent formLayout data-testid="menu-first-category-dialog" className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
                 <DialogHeader>
                   <DialogTitle className="flex items-center text-xl">
                     <div className="p-2 bg-primary rounded-lg mr-3">
@@ -1107,13 +1111,11 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                               {category.name}
                             </h3>
                             {category.description && (
-                              <p className="text-sm text-muted-foreground line-clamp-2">
-                                {category.description}
-                              </p>
+                              <PlainDescription text={category.description} className="text-sm text-muted-foreground line-clamp-2" />
                             )}
                             {category.infoBox && (
                               <div className="mt-1 px-2 py-1 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded text-xs text-amber-800 dark:text-amber-200 line-clamp-1">
-                                {category.infoBox}
+                                <PlainDescription text={category.infoBox} className="text-xs text-amber-800 dark:text-amber-200 line-clamp-1" />
                               </div>
                             )}
                           </div>
@@ -1219,7 +1221,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                                 </Badge>
                                               )}
                                             </div>
-                                            <p className="text-sm text-amber-900 dark:text-amber-100 mt-1 italic">{product.description || product.name}</p>
+                                            <PlainDescription text={product.description || product.name} className="text-sm text-amber-900 dark:text-amber-100 mt-1 italic" />
                                           </div>
                                         </div>
                                         <div className="flex w-full justify-end items-center gap-1 border-t border-amber-200/60 pt-2 dark:border-amber-700/40">
@@ -1240,7 +1242,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                                 ...(product.categoryId ? [product.categoryId] : []),
                                                 ...siblings.map((s: any) => s.categoryId).filter(Boolean)
                                               ]));
-                                              setEditingProduct(product);
+                                              setEditingProduct({ ...product, description: descriptionToText(product.description ?? '', { trim: false }) });
                                               setEditSiblingItems(siblings);
                                               setEditCategoryIds(allCatIds);
                                               setIsEditProductOpen(true);
@@ -1296,7 +1298,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                           )}
                                         </div>
                                         {product.description && (
-                                          <p className="text-sm text-muted-foreground mt-1">{product.description}</p>
+                                          <PlainDescription text={product.description} className="text-sm text-muted-foreground mt-1" />
                                         )}
                                         {product.price && (
                                           <p className="text-sm font-semibold text-primary mt-1">€{product.price}</p>
@@ -1353,7 +1355,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                               ...(product.categoryId ? [product.categoryId] : []),
                                               ...siblings.map((s: any) => s.categoryId).filter(Boolean)
                                             ]));
-                                            setEditingProduct(product);
+                                            setEditingProduct({ ...product, description: descriptionToText(product.description ?? '', { trim: false }) });
                                             setEditSiblingItems(siblings);
                                             setEditCategoryIds(allCatIds);
                                             setIsEditProductOpen(true);
@@ -1431,7 +1433,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
           resetForm();
         }
       }}>
-        <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent formLayout className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center text-xl">
               <div className="p-2 bg-primary rounded-lg mr-3">
@@ -1453,16 +1455,16 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
           setEditSiblingItems([]);
         }
       }}>
-        <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent formLayout className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Modifica Prodotto</DialogTitle>
           </DialogHeader>
           {editingProduct && (
-            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+            <div className="space-y-4 pr-1">
               {/* Category selector (same as create) */}
               <div className="space-y-1.5">
                 <Label className="text-sm font-bold text-foreground">Categorie <span className="text-muted-foreground font-normal text-xs">(seleziona una o più)</span></Label>
-                <div className="border border-stone-200 rounded-xl divide-y divide-stone-100 max-h-36 overflow-y-auto">
+                <div className="border border-stone-200 rounded-xl divide-y divide-stone-100">
                   {categories.map((cat) => {
                     const checked = editCategoryIds.includes(cat.id);
                     return (
@@ -1508,11 +1510,11 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
               </div>
               <div className="space-y-1.5">
                 <Label className="text-sm font-bold text-foreground">Descrizione</Label>
-                <Textarea
+                <PlainDescriptionEditor
                   placeholder="Descrizione del piatto..."
-                  value={editingProduct.description || ''}
-                  onChange={(e) => setEditingProduct((prev: any) => ({ ...prev, description: e.target.value }))}
-                  rows={3}
+                  content={editingProduct.description || ''}
+                  onChange={(description) => setEditingProduct((prev: any) => ({ ...prev, description }))}
+                  maxChars={5000}
                   className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                 />
               </div>
@@ -1527,7 +1529,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                       : 'border-stone-200 text-muted-foreground hover:border-primary/30 hover:text-foreground'
                   }`}
                 >
-                  🌿 Vegetariano
+                  Vegetariano
                 </button>
                 <button
                   type="button"
@@ -1538,7 +1540,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                       : 'border-stone-200 text-muted-foreground hover:border-primary/30 hover:text-foreground'
                   }`}
                 >
-                  🌶️ Piccante
+                  Piccante
                 </button>
               </div>
               <AllergenSelector
@@ -1632,15 +1634,15 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
           setItemForm({ name: '', description: '', price: '', isVisible: true, allergens: [], isVegetarian: false, isSpicy: false, imageUrl: '', pairingBeerName: '' });
         }
       }}>
-        <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent formLayout className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle>Aggiungi Prodotto</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-1">
+          <div className="space-y-4 pr-1">
             {/* Multi-category selector */}
             <div className="space-y-1.5">
               <Label className="text-sm font-bold text-foreground">Categorie <span className="text-muted-foreground font-normal text-xs">(seleziona una o più)</span></Label>
-              <div className="border border-stone-200 rounded-xl divide-y divide-stone-100 max-h-36 overflow-y-auto">
+              <div className="border border-stone-200 rounded-xl divide-y divide-stone-100">
                 {categories.map((cat) => {
                   const checked = selectedCategoryIds.includes(cat.id);
                   return (
@@ -1686,11 +1688,11 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-bold text-foreground">Descrizione</Label>
-              <Textarea
+              <PlainDescriptionEditor
                 placeholder="Descrizione del piatto..."
-                value={itemForm.description}
-                onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
-                rows={3}
+                content={itemForm.description}
+                onChange={(description) => setItemForm((current: any) => ({ ...current, description }))}
+                maxChars={5000}
                 className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
               />
             </div>
@@ -1705,7 +1707,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                     : 'border-stone-200 text-muted-foreground hover:border-primary/30 hover:text-foreground'
                 }`}
               >
-                🌿 Vegetariano
+                Vegetariano
               </button>
               <button
                 type="button"
@@ -1716,7 +1718,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                     : 'border-stone-200 text-muted-foreground hover:border-primary/30 hover:text-foreground'
                 }`}
               >
-                🌶️ Piccante
+                Piccante
               </button>
             </div>
             <AllergenSelector
@@ -1799,7 +1801,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
           setInfoBoxText('');
         }
       }}>
-        <DialogContent className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
+        <DialogContent formLayout className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
             <DialogTitle className="flex items-center text-xl">
               <div className="p-2 bg-primary rounded-lg mr-3">
@@ -1814,11 +1816,11 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
             </p>
             <div>
               <Label>Testo Info Box</Label>
-              <Textarea
+              <PlainDescriptionEditor
                 placeholder="Es. Tutti i nostri piatti sono preparati con ingredienti freschi e locali..."
-                value={infoBoxText}
-                onChange={(e) => setInfoBoxText(e.target.value)}
-                rows={4}
+                content={infoBoxText}
+                onChange={setInfoBoxText}
+                maxChars={5000}
               />
             </div>
             <div className="flex justify-end space-x-2">

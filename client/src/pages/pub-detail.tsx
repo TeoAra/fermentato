@@ -27,6 +27,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { usePubLiveUpdates } from "@/hooks/usePubLiveUpdates";
 import { getMapNavigationUrl } from "@/lib/utils";
 import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
+import { descriptionToText } from "@shared/description-text";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import OpeningHoursDialog from "@/components/OpeningHoursDialog";
@@ -72,7 +73,7 @@ function DrinkItemRow({ item, emoji }: { item: any; emoji: string }) {
           </p>
         )}
         {item.description && (
-          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
+          <p className="whitespace-pre-wrap text-xs text-muted-foreground mt-0.5 line-clamp-2">{descriptionToText(item.description)}</p>
         )}
       </div>
       <div className="flex flex-col items-end gap-1 flex-shrink-0">
@@ -154,7 +155,7 @@ function DrinksPublicSection({ categories, legacyItems }: { categories: any[]; l
                       </span>
                     </div>
                     {cat.description && (
-                      <p className="text-xs text-muted-foreground leading-relaxed mt-1">{cat.description}</p>
+                      <p className="whitespace-pre-wrap text-xs text-muted-foreground leading-relaxed mt-1">{descriptionToText(cat.description)}</p>
                     )}
                   </div>
                   <ChevronDown
@@ -174,7 +175,7 @@ function DrinksPublicSection({ categories, legacyItems }: { categories: any[]; l
                         {cat.infoBox && (
                           <div className="px-4 py-3 bg-accent flex items-start gap-2">
                             <span className="text-base flex-shrink-0 mt-0.5">📌</span>
-                            <p className="text-xs text-muted-foreground leading-relaxed">{cat.infoBox}</p>
+                            <p className="whitespace-pre-wrap text-xs text-muted-foreground leading-relaxed">{descriptionToText(cat.infoBox)}</p>
                           </div>
                         )}
                         <div className="p-3 space-y-2">

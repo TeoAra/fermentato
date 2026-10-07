@@ -2,7 +2,6 @@ import { useCallback, useRef, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import RichTextEditor from "@/components/rich-text-editor";
 import { ImageUpload } from "@/components/image-upload";
 import { WebImageSearchButton } from "@/components/web-image-search-button";
@@ -33,11 +32,13 @@ interface BeerDetailsFieldsProps {
   onCollaboratorsChange: (value: Collaborator[]) => void;
   imageSearchEndpoint?: string;
   imageSearchBody?: Record<string, unknown>;
+  excludeBreweryId?: number | null;
+  errors?: Partial<Record<keyof BeerDetailsValues, string>>;
 }
 
 const STYLES = ["IPA", "APA", "NEIPA", "Double IPA", "Lager", "Pilsner", "Helles", "Märzen", "Bock", "Weiss", "Hefeweizen", "Stout", "Porter", "Saison", "Belgian Ale", "Blanche", "Pale Ale", "Amber Ale", "Red Ale", "Blonde Ale", "Sour", "Gose", "Kölsch", "Brown Ale", "Fruit Beer", "Italian Pilsner"];
 
-function CollaboratorSelector({ selected, onChange }: { selected: Collaborator[]; onChange: (value: Collaborator[]) => void }) {
+function CollaboratorSelector({ selected, onChange, excludeBreweryId }: { selected: Collaborator[]; onChange: (value: Collaborator[]) => void; excludeBreweryId?: number | null }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,12 +52,12 @@ function CollaboratorSelector({ selected, onChange }: { selected: Collaborator[]
       try {
         const response = await fetch(`/api/breweries/search?q=${encodeURIComponent(value)}&limit=10`, { credentials: "include" });
         const data = response.ok ? await response.json() : [];
-        setResults(Array.isArray(data) ? data.filter((item: any) => !selected.some((entry) => entry.id === item.id)) : []);
+        setResults(Array.isArray(data) ? data.filter((item: any) => item.id !== excludeBreweryId && !selected.some((entry) => entry.id === item.id)) : []);
       } finally {
         setLoading(false);
       }
     }, 250);
-  }, [selected]);
+  }, [selected, excludeBreweryId]);
 
   return (
     <div className="space-y-2">
@@ -78,19 +79,20 @@ function CollaboratorSelector({ selected, onChange }: { selected: Collaborator[]
   );
 }
 
-export function BeerDetailsFields({ values, onChange, collaborators, onCollaboratorsChange, imageSearchEndpoint, imageSearchBody }: BeerDetailsFieldsProps) {
+export function BeerDetailsFields({ values, onChange, collaborators, onCollaboratorsChange, imageSearchEndpoint, imageSearchBody, excludeBreweryId, errors = {} }: BeerDetailsFieldsProps) {
+  const errorMessage = (field: keyof BeerDetailsValues) => errors[field] ? <p role="alert" className="text-sm font-medium text-destructive">{errors[field]}</p> : null;
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-2"><Label className="font-bold">Nome Birra *</Label><Input className="h-11 rounded-xl" value={values.name} onChange={(e) => onChange("name", e.target.value)} placeholder="Es. Luppolina" /></div>
-        <div className="space-y-2"><Label className="font-bold">Stile *</Label><Input className="h-11 rounded-xl" list="shared-beer-styles" value={values.style} onChange={(e) => onChange("style", e.target.value)} placeholder="Es. American IPA" /><datalist id="shared-beer-styles">{STYLES.map((style) => <option value={style} key={style} />)}</datalist></div>
+        <div className="space-y-2"><Label className="font-bold">Nome Birra *</Label><Input aria-invalid={!!errors.name} className="h-11 rounded-xl" value={values.name} onChange={(e) => onChange("name", e.target.value)} placeholder="Es. Luppolina" />{errorMessage("name")}</div>
+        <div className="space-y-2"><Label className="font-bold">Stile *</Label><Input aria-invalid={!!errors.style} className="h-11 rounded-xl" list="shared-beer-styles" value={values.style} onChange={(e) => onChange("style", e.target.value)} placeholder="Es. American IPA" /><datalist id="shared-beer-styles">{STYLES.map((style) => <option value={style} key={style} />)}</datalist>{errorMessage("style")}</div>
       </div>
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2"><Label className="font-bold">ABV %</Label><Input className="h-11 rounded-xl" type="number" step="0.1" value={values.abv ?? ""} onChange={(e) => onChange("abv", e.target.value === "" ? null : Number(e.target.value))} placeholder="5.2" /></div>
-        <div className="space-y-2"><Label className="font-bold">IBU</Label><Input className="h-11 rounded-xl" type="number" value={values.ibu ?? ""} onChange={(e) => onChange("ibu", e.target.value === "" ? null : Number(e.target.value))} placeholder="45" /></div>
+        <div className="space-y-2"><Label className="font-bold">ABV %</Label><Input aria-invalid={!!errors.abv} className="h-11 rounded-xl" type="number" min={0} max={100} step="0.1" value={values.abv ?? ""} onChange={(e) => onChange("abv", e.target.value === "" ? null : Number(e.target.value))} placeholder="5.2" />{errorMessage("abv")}</div>
+        <div className="space-y-2"><Label className="font-bold">IBU</Label><Input aria-invalid={!!errors.ibu} className="h-11 rounded-xl" type="number" min={0} step="1" value={values.ibu ?? ""} onChange={(e) => onChange("ibu", e.target.value === "" ? null : Number(e.target.value))} placeholder="45" />{errorMessage("ibu")}</div>
       </div>
-      <div className="space-y-2"><Label className="font-bold">Colore</Label><Input className="h-11 rounded-xl" value={values.color} onChange={(e) => onChange("color", e.target.value)} placeholder="Es. Giallo Paglierino, Mogano..." /></div>
-      <div className="space-y-2"><Label className="font-bold">Descrizione Organolettica</Label><RichTextEditor content={values.description} onChange={(value) => onChange("description", value)} placeholder="Note di degustazione, malti e luppoli utilizzati..." maxChars={2000} /></div>
+      <div className="space-y-2"><Label className="font-bold">Colore</Label><Input aria-invalid={!!errors.color} className="h-11 rounded-xl" value={values.color} onChange={(e) => onChange("color", e.target.value)} placeholder="Es. Giallo Paglierino, Mogano..." />{errorMessage("color")}</div>
+      <div className="space-y-2"><Label className="font-bold">Descrizione Organolettica</Label><RichTextEditor content={values.description} onChange={(value) => onChange("description", value)} placeholder="Note di degustazione, malti e luppoli utilizzati..." maxChars={2000} />{errorMessage("description")}</div>
       <div className="space-y-2">
         <div className="flex items-center justify-between gap-2"><Label className="font-bold">Immagine Birra</Label>{imageSearchEndpoint && <WebImageSearchButton endpoint={imageSearchEndpoint} responseKey="imageUrl" body={imageSearchBody} onFound={(url) => onChange("imageUrl", url)} />}</div>
         <ImageUpload label="Immagine Birra" description="Foto della bottiglia o del bicchiere" currentImageUrl={values.imageUrl || undefined} onImageChange={(url) => onChange("imageUrl", url || "")} folder="beer-images" aspectRatio="square" maxSize={5} recommendedDimensions="400x400px" />
@@ -100,7 +102,7 @@ export function BeerDetailsFields({ values, onChange, collaborators, onCollabora
         <label className="flex min-h-11 items-center gap-3"><Checkbox checked={values.isGlutenFree} onCheckedChange={(value) => onChange("isGlutenFree", value === true)} /><span className="text-sm font-medium">Senza Glutine</span></label>
         <label className="flex min-h-11 items-center gap-3"><Checkbox checked={values.isAlcoholFree} onCheckedChange={(value) => onChange("isAlcoholFree", value === true)} /><span className="text-sm font-medium">Analcolica (0,0%)</span></label>
         <label className="flex min-h-11 items-center gap-3"><Checkbox checked={values.isCollaboration} onCheckedChange={(value) => onChange("isCollaboration", value === true)} /><span className="text-sm font-medium text-purple-700 dark:text-purple-400">Birra in Collaborazione</span></label>
-        {values.isCollaboration && <div className="pt-1"><CollaboratorSelector selected={collaborators} onChange={onCollaboratorsChange} />{collaborators.length === 0 && <p className="mt-1 text-xs text-red-500">Aggiungi almeno un birrificio partner</p>}</div>}
+        {values.isCollaboration && <div className="pt-1"><CollaboratorSelector selected={collaborators} onChange={onCollaboratorsChange} excludeBreweryId={excludeBreweryId} />{collaborators.length === 0 && <p className="mt-1 text-xs text-red-500">Aggiungi almeno un birrificio partner</p>}</div>}
       </div>
     </div>
   );

@@ -91,6 +91,10 @@ try {
   }
   for(const width of [320,390,412]){
     await load(width);
+    const height=await page.$eval('[data-testid="home-map-panel"]',node=>node.getBoundingClientRect().height);
+    assert.ok(height>=220&&height<=300,`Compact map: ${height}`);
+    assert.equal(await page.evaluate(()=>document.body.innerText.includes("Esplora sulla mappa")),false);
+    assert.equal(await page.$('[data-testid="home-map-selected-venue"]'),null);
     await page.click('[aria-label="Apri filtri mappa"]');
     const geometry=await page.$eval('[aria-label="Filtri mappa"]',node=>{const r=node.getBoundingClientRect();return {left:r.left,right:r.right}});
     assert.ok(geometry.left>=0&&geometry.right<=width);
@@ -125,7 +129,33 @@ try {
   await page.click('[aria-label="Pub: Pub prova"]');
   const detail=await page.$eval('a[href="/pub/prova"]',node=>{const rect=node.getBoundingClientRect();return {left:rect.left,right:rect.right,height:rect.height}});
   assert.ok(detail.left>=0&&detail.right<=412&&detail.height>=44);
+  const popupGeometry=await page.$eval('[data-testid="home-map-selected-venue"]',node=>{
+    const panel=node.closest('[data-testid="home-map-panel"]').getBoundingClientRect();
+    const popup=node.getBoundingClientRect();
+    return {top:popup.top-panel.top,left:popup.left-panel.left,bottom:popup.bottom-panel.bottom};
+  });
+  assert.ok(popupGeometry.top>=10&&popupGeometry.top<=14);
+  assert.ok(popupGeometry.left>=10&&popupGeometry.left<=14);
+  assert.ok(popupGeometry.bottom<=0);
+  assert.equal(await page.$eval('[data-testid="home-map-selected-venue"]',node=>node.dataset.venueType),"pub");
   await page.click('[aria-label="Chiudi dettagli locale"]');
+  await page.waitForFunction(()=>!document.querySelector('[data-testid="home-map-selected-venue"]'));
+  await page.waitForSelector('[aria-label="Riduci mappa"]');
+  await page.click('[aria-label="Riduci mappa"]');
+  await page.click('[aria-label="Riduci mappa"]');
+  await page.waitForFunction(()=>{
+    const marker=document.querySelector('[aria-label="Birrificio: Birrificio prova"]')?.getBoundingClientRect();
+    const panel=document.querySelector('[data-testid="home-map-panel"]').getBoundingClientRect();
+    return marker&&marker.top>=panel.top&&marker.bottom<=panel.bottom;
+  });
+  await page.click('[aria-label="Birrificio: Birrificio prova"]');
+  assert.equal(await page.$eval('[data-testid="home-map-selected-venue"]',node=>node.dataset.venueType),"brewery");
+  assert.equal(await page.$eval('[data-testid="home-map-selected-venue"] a',node=>node.getAttribute("href")),"/brewery/2");
+  await page.click('[aria-label="Apri filtri mappa"]');
+  await page.click('[aria-label="Filtri mappa"] label:nth-of-type(2) input');
+  await page.waitForFunction(()=>!document.querySelector('[data-testid="home-map-selected-venue"]'));
+  await page.click('[aria-label="Chiudi filtri"]');
+  console.log("PASS compact map: no static information panel, pub/brewery details top-left, working links/close/filter clearing");
 
   await touch("#pull-surface",70,10);
   await touch("#pull-surface",0,90,true);

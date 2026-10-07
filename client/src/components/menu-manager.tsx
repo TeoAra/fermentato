@@ -5,7 +5,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -13,6 +12,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
+import { PlainDescription, PlainDescriptionEditor } from "@/components/plain-description";
+import { descriptionToText } from "@shared/description-text";
 import { 
   Utensils, 
   Plus, 
@@ -384,7 +385,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     setEditingCategory(category);
     setCategoryForm({
       name: category.name,
-      description: category.description || "",
+      description: descriptionToText(category.description ?? "", { trim: false }),
       isVisible: category.isVisible,
     });
   };
@@ -393,7 +394,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
     setEditingItem(item);
     setItemForm({
       name: item.name,
-      description: item.description || "",
+      description: descriptionToText(item.description ?? "", { trim: false }),
       price: item.price,
       allergens: item.allergens || [],
       isVisible: item.isVisible,
@@ -475,7 +476,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   Categoria
                 </Button>
               </DialogTrigger>
-              <DialogContent className="rounded-2xl border-stone-100 dark:border-border">
+              <DialogContent formLayout className="rounded-2xl border-stone-100 dark:border-border">
                 <DialogHeader>
                   <DialogTitle className="font-bold text-foreground">
                     {editingCategory ? "Modifica Categoria" : "Aggiungi Categoria"}
@@ -493,11 +494,11 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   </div>
                   <div>
                     <Label className="font-semibold text-foreground">Descrizione (opzionale)</Label>
-                    <Textarea
+                    <PlainDescriptionEditor
                       placeholder="Descrizione della categoria..."
-                      value={categoryForm.description}
-                      onChange={(e) => setCategoryForm({ ...categoryForm, description: e.target.value })}
-                      rows={2}
+                      content={categoryForm.description}
+                      onChange={(description) => setCategoryForm((current) => ({ ...current, description }))}
+                      maxChars={5000}
                       className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
@@ -536,7 +537,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                   Prodotto
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto rounded-2xl border-stone-100 dark:border-border">
+              <DialogContent formLayout className="max-w-2xl rounded-2xl border-stone-100 dark:border-border">
                 <DialogHeader>
                   <DialogTitle className="font-bold text-foreground">
                     {editingItem ? "Modifica Prodotto" : "Aggiungi Prodotto"}
@@ -586,11 +587,11 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
 
                   <div>
                     <Label className="font-semibold text-foreground">Descrizione</Label>
-                    <Textarea
+                    <PlainDescriptionEditor
                       placeholder="Descrizione del piatto, ingredienti..."
-                      value={itemForm.description}
-                      onChange={(e) => setItemForm({ ...itemForm, description: e.target.value })}
-                      rows={3}
+                      content={itemForm.description}
+                      onChange={(description) => setItemForm((current) => ({ ...current, description }))}
+                      maxChars={5000}
                       className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
                     />
                   </div>
@@ -651,7 +652,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         className="border-emerald-500 data-[state=checked]:bg-emerald-600 data-[state=checked]:border-emerald-600"
                       />
                       <Label htmlFor="item-vegetarian" className="flex items-center gap-1.5 cursor-pointer text-emerald-800 dark:text-emerald-300 font-semibold">
-                        <span>🌿</span> Vegetariano
+                        Vegetariano
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2 rounded-xl border border-red-100 bg-red-50/30 dark:bg-red-950/20 px-3 py-2">
@@ -662,7 +663,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         className="border-red-500 data-[state=checked]:bg-red-600 data-[state=checked]:border-red-600"
                       />
                       <Label htmlFor="item-spicy" className="flex items-center gap-1.5 cursor-pointer text-red-800 dark:text-red-300 font-semibold">
-                        <span>🌶️</span> Piccante
+                        Piccante
                       </Label>
                     </div>
                   </div>
@@ -757,7 +758,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                         )}
                       </h3>
                       {category.description && (
-                        <p className="text-sm text-muted-foreground">{category.description}</p>
+                        <PlainDescription text={category.description} className="text-sm text-muted-foreground" />
                       )}
                     </div>
                   </div>
@@ -864,7 +865,7 @@ export function MenuManager({ pubId, menu }: MenuManagerProps) {
                               </div>
                               
                               {item.description && (
-                                <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{item.description}</p>
+                                <PlainDescription text={item.description} className="text-sm text-muted-foreground line-clamp-2 mt-1" />
                               )}
 
                               <div className="flex items-center gap-2 mt-2 flex-wrap">

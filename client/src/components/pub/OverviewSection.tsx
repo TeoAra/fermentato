@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import { Link } from "wouter";
 import {
   Phone,
@@ -9,6 +10,7 @@ import {
   MapPin,
   Calendar,
   Megaphone,
+  ChevronDown,
 } from "lucide-react";
 import { SiFacebook, SiInstagram } from "react-icons/si";
 import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
@@ -43,15 +45,6 @@ function todayKey() {
   return ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][new Date().getDay()];
 }
 
-const stagger = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.06 } },
-};
-const item = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.3 } },
-};
-
 export default function OverviewSection({
   pub,
   events,
@@ -59,7 +52,24 @@ export default function OverviewSection({
   onCall,
   onDirections,
 }: OverviewSectionProps) {
+  const prefersReducedMotion = useReducedMotion();
+  const [descriptionExpanded, setDescriptionExpanded] = useState(false);
+  const [amenitiesExpanded, setAmenitiesExpanded] = useState(false);
+  const stagger = {
+    hidden: { opacity: prefersReducedMotion ? 1 : 0 },
+    show: { opacity: 1, transition: { staggerChildren: prefersReducedMotion ? 0 : 0.06 } },
+  };
+  const item = {
+    hidden: { opacity: prefersReducedMotion ? 1 : 0, y: prefersReducedMotion ? 0 : 8 },
+    show: { opacity: 1, y: 0, transition: { duration: prefersReducedMotion ? 0 : 0.3 } },
+  };
   const amenities = Array.isArray(pub?.amenities) ? pub!.amenities! : [];
+  const descriptionPlainText = richTextToPlain(
+    !isRichContentEmpty(pub?.richContent)
+      ? typeof pub?.richContent === "string" ? pub.richContent : ""
+      : pub?.description || ""
+  );
+  const hasLongDescription = descriptionPlainText.length > 320;
   const lat = pub?.latitude ? Number(pub.latitude) : null;
   const lng = pub?.longitude ? Number(pub.longitude) : null;
   const hasMap = lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng);
@@ -95,13 +105,34 @@ export default function OverviewSection({
           className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5"
         >
           <h3 className="text-base font-black text-[#151515] dark:text-[#F5F5F5] mb-2">Chi siamo</h3>
-          {!isRichContentEmpty(pub?.richContent) ? (
-            <RichTextDisplay
-              html={typeof pub?.richContent === "string" ? pub.richContent : ""}
-              className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed"
-            />
-          ) : (
-            <p className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed whitespace-pre-line">{pub?.description}</p>
+          <div
+            id={`pub-description-${pub?.id ?? "detail"}`}
+            data-testid="overview-description-content"
+            className={`text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed ${
+              hasLongDescription && !descriptionExpanded ? "line-clamp-5" : ""
+            }`}
+          >
+            {!isRichContentEmpty(pub?.richContent) ? (
+              <RichTextDisplay
+                html={typeof pub?.richContent === "string" ? pub.richContent : ""}
+                className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed"
+              />
+            ) : (
+              <RichTextDisplay html={pub?.description || ""} />
+            )}
+          </div>
+          {hasLongDescription && (
+            <button
+              type="button"
+              onClick={() => setDescriptionExpanded((expanded) => !expanded)}
+              aria-expanded={descriptionExpanded}
+              aria-controls={`pub-description-${pub?.id ?? "detail"}`}
+              data-testid="overview-description-disclosure"
+              className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-bold text-[#B76B00] hover:bg-[#FFF7EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] dark:text-[#F6B34F] dark:hover:bg-[#F59E0B]/10 motion-reduce:transition-none"
+            >
+              {descriptionExpanded ? "Mostra meno" : "Leggi tutto"}
+              <ChevronDown className={`h-4 w-4 transition-transform motion-reduce:transition-none ${descriptionExpanded ? "rotate-180" : ""}`} aria-hidden="true" />
+            </button>
           )}
         </motion.div>
       )}
@@ -109,8 +140,8 @@ export default function OverviewSection({
       {/* Amenities chips — solo se il pub ha caratteristiche reali */}
       {amenities.length > 0 && (
         <motion.div variants={item}>
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
-            {amenities.map((a) => (
+          <div id={`pub-amenities-${pub?.id ?? "detail"}`} className="flex flex-wrap gap-2 pb-1">
+            {amenities.slice(0, amenitiesExpanded ? amenities.length : 4).map((a) => (
               <span
                 key={a}
                 className="flex-shrink-0 inline-flex items-center px-3 py-1.5 rounded-full bg-white dark:bg-[#1A1D24] border border-[#E8DED1] dark:border-white/[0.06] text-xs font-semibold text-[#151515] dark:text-[#F5F5F5] shadow-[0_2px_8px_rgba(0,0,0,0.03)]"
@@ -119,6 +150,19 @@ export default function OverviewSection({
               </span>
             ))}
           </div>
+          {amenities.length > 4 && (
+            <button
+              type="button"
+              onClick={() => setAmenitiesExpanded((expanded) => !expanded)}
+              aria-expanded={amenitiesExpanded}
+              aria-controls={`pub-amenities-${pub?.id ?? "detail"}`}
+              data-testid="overview-amenities-disclosure"
+              className="mt-2 inline-flex min-h-11 items-center gap-1.5 rounded-lg px-2 text-sm font-bold text-[#B76B00] hover:bg-[#FFF7EA] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F59E0B] dark:text-[#F6B34F] dark:hover:bg-[#F59E0B]/10 motion-reduce:transition-none"
+            >
+              {amenitiesExpanded ? "Mostra meno" : `Mostra tutti i servizi (${amenities.length})`}
+              <ChevronDown className={`h-4 w-4 transition-transform motion-reduce:transition-none ${amenitiesExpanded ? "rotate-180" : ""}`} aria-hidden="true" />
+            </button>
+          )}
         </motion.div>
       )}
 

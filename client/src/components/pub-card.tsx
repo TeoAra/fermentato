@@ -1,4 +1,4 @@
-import { MapPin, Beer } from "lucide-react";
+import { MapPin, Beer, ChevronRight, Star } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import ImageWithFallback from "@/components/image-with-fallback";
@@ -27,7 +27,7 @@ interface PubCardProps {
     name: string;
     address?: string;
     city?: string;
-    rating?: string | null;
+    rating?: string | number | null;
     coverImageUrl?: string | null;
     logoUrl?: string | null;
     isActive?: boolean;
@@ -53,72 +53,47 @@ export default function PubCard({ pub, distance, isLast }: PubCardProps) {
   return (
     <div>
       <Link href={`/pub/${pub.slug || pub.id}`}>
-        <div className="flex items-center gap-4 px-4 py-4 active:bg-stone-50/80 dark:active:bg-stone-800/20 cursor-pointer group transition-colors">
-
-          {/* Logo */}
-          <div className="relative flex-shrink-0">
-            <div className="w-[52px] h-[52px] rounded-2xl overflow-hidden bg-muted ring-1 ring-border shadow-card-sm group-hover:shadow-card transition-shadow">
-              <ImageWithFallback
-                src={pub.logoUrl || pub.coverImageUrl}
-                alt={pub.name}
-                imageType="pub"
-                containerClassName="w-full h-full"
-                className="w-full h-full object-cover"
-                iconSize="sm"
-              />
-            </div>
-            {/* Live dot */}
-            {open === true && (
-              <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 border-2 border-white dark:border-stone-900 shadow-sm" />
-            )}
+        <div className="group flex min-h-[104px] items-center gap-3 px-3 py-3 transition-colors hover:bg-muted/35 active:bg-muted/50">
+          <div className="h-[72px] w-[76px] shrink-0 overflow-hidden rounded-xl bg-muted/70">
+            <ImageWithFallback
+              src={pub.coverImageUrl || pub.logoUrl}
+              alt={`Immagine di ${pub.name}`}
+              imageType="pub"
+              containerClassName="h-full w-full"
+              className="h-full w-full object-contain"
+              iconSize="sm"
+            />
           </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-[15px] leading-snug truncate text-foreground group-hover:text-primary transition-colors"
-               style={{ fontFamily: "'Fraunces', Georgia, serif" }}>
-              {pub.name}
+          {pub.coverImageUrl && pub.logoUrl && (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-card p-1">
+              <ImageWithFallback src={pub.logoUrl} alt={`Logo ${pub.name}`} imageType="pub" containerClassName="h-full w-full" className="h-full w-full object-contain" iconSize="sm" />
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[15px] font-bold leading-snug text-foreground transition-colors group-hover:text-primary">{pub.name}</p>
+            <p className="mt-1 flex items-start gap-1 text-xs leading-snug text-muted-foreground">
+              <MapPin className="mt-0.5 h-3 w-3 shrink-0" />
+              <span className="line-clamp-1">{pub.address || pub.city || "Indirizzo non disponibile"}</span>
             </p>
-            <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-              {(pub.city || pub.address) && (
-                <span className="flex items-center gap-0.5 text-xs text-muted-foreground truncate leading-none">
-                  <MapPin className="w-2.5 h-2.5 flex-shrink-0" />
-                  {pub.city || pub.address}
+            <div className="mt-2 flex min-h-5 flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px]">
+              {open !== null && (
+                <span className={`inline-flex items-center gap-1 font-semibold ${open ? "text-emerald-700 dark:text-emerald-400" : "text-muted-foreground"}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${open ? "bg-emerald-500" : "bg-muted-foreground/60"}`} />
+                  {open ? "Aperto" : "Chiuso"}
                 </span>
               )}
-              {distance != null && (
-                <span className="flex-shrink-0 text-xs font-bold leading-none text-primary">
-                  · {formatDist(distance)}
-                </span>
+              {beersOnTap > 0 && <span className="inline-flex items-center gap-1 text-muted-foreground"><Beer className="h-3 w-3" />{beersOnTap} alla spina</span>}
+              {pub.rating != null && Number(pub.rating) > 0 && (
+                <span className="inline-flex items-center gap-1 font-semibold text-foreground"><Star className="h-3 w-3 fill-current text-primary" />{Number(pub.rating).toFixed(1)}</span>
               )}
+              {distance != null && <span className="text-muted-foreground">{formatDist(distance)}</span>}
             </div>
           </div>
-
-          {/* Right side */}
-          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            {/* Open/Closed */}
-            {open !== null && (
-              <span className={`inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-[3px] rounded-full leading-none ${
-                open
-                  ? 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
-                  : 'bg-muted text-muted-foreground'
-              }`}>
-                <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${open ? 'bg-emerald-500' : 'bg-stone-300 dark:bg-stone-600'}`} />
-                {open ? 'Aperto' : 'Chiuso'}
-              </span>
-            )}
-            {/* Beer count pill */}
-            {beersOnTap > 0 && (
-              <span className="inline-flex items-center gap-1 text-[10.5px] font-bold px-2 py-[3px] rounded-full leading-none bg-accent text-accent-foreground border border-primary/15">
-                <Beer className="w-2.5 h-2.5" />
-                {beersOnTap}
-              </span>
-            )}
-          </div>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/70" />
         </div>
       </Link>
       {!isLast && (
-        <div className="h-px mx-4 bg-border" />
+        <div className="mx-3 h-px bg-border/70" />
       )}
     </div>
   );

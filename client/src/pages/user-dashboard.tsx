@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { 
   User, 
   Heart, 
@@ -38,6 +39,7 @@ import {
   Sparkles,
   MessageCircle,
   ThumbsUp,
+  MoreHorizontal,
   Home as HomeIcon,
   Info as InfoIcon,
   Share2,
@@ -46,6 +48,7 @@ import { Link } from "wouter";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { PageContainer } from "@/components/layout/page-container";
+import { FloatingBottomBar } from "@/components/floating-bottom-bar";
 
 type DashboardSection = 'overview' | 'favorites' | 'activity' | 'profile' | 'settings' | 'discoveries';
 
@@ -54,6 +57,7 @@ export default function UserDashboard() {
   // SSR-safe: parte da "favorites" (valida su desktop e mobile). In effect
   // client switchiamo a "overview" se siamo su mobile.
   const [activeTab, setActiveTab] = useState<DashboardSection>('favorites');
+  const [showDockMore, setShowDockMore] = useState(false);
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const mq = window.matchMedia('(min-width: 1024px)');
@@ -691,8 +695,10 @@ export default function UserDashboard() {
     { id: 'discoveries', label: 'Scoperte', Icon: Compass },
     { id: 'favorites', label: 'Preferiti', Icon: Heart },
     { id: 'activity', label: 'Attività', Icon: Activity },
-    { id: 'profile', label: 'Profilo', Icon: User },
   ];
+  const moreDockTabs = sections.filter(
+    (section) => !dockTabs.some((dockTab) => dockTab.id === section.id),
+  );
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-50 dark:from-gray-950 dark:via-blue-950 dark:to-indigo-950">
@@ -780,51 +786,64 @@ export default function UserDashboard() {
 
       {/* ── BOTTOM DOCK DASHBOARD UTENTE — stesso pattern di BottomNavigation ── */}
       <DockPortal>
-      <nav
-        className={`bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
-          isUserModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        style={{ paddingBottom: 'max(var(--frozen-sab) - 16px, 0px)' }}
-        aria-label="Navigazione dashboard utente"
+      <FloatingBottomBar
+        label="Navigazione dashboard utente"
         role="tablist"
-      >
-        <div className="px-2">
-          <div>
-            <div className="flex min-h-[52px] items-center justify-between px-1 gap-1">
-              {dockTabs.map(({ id, label, Icon }) => {
-                const active = activeTab === id;
-                return (
-                  <button
-                    key={id}
-                    role="tab"
-                    aria-selected={active}
-                    aria-current={active ? 'page' : undefined}
-                    aria-label={label}
-                    onClick={() => setActiveTab(id)}
-                    data-testid={`userdash-dock-${id}`}
-                    className={`min-h-12 flex-1 flex flex-col items-center justify-center gap-0.5 px-1 rounded-[18px] transition-all duration-200 active:scale-95 ${
-                      active
-                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
-                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
-                    }`}
-                  >
-                    <Icon
-                      className="h-[20px] w-[20px]"
-                      strokeWidth={active ? 2.6 : 1.8}
-                      fill={active ? 'currentColor' : 'none'}
-                      style={active ? { fillOpacity: 0.18 } : {}}
-                    />
-                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
-                      {label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      </nav>
+        hidden={isUserModalOpen}
+        testId="user-dashboard-dock"
+        items={[
+          ...dockTabs.map(({ id, label, Icon }) => ({
+            id,
+            label,
+            icon: <Icon />,
+            active: activeTab === id,
+            role: "tab" as const,
+            onClick: () => setActiveTab(id),
+            testId: `userdash-dock-${id}`,
+          })),
+          {
+            id: "more",
+            label: "Altre sezioni",
+            icon: <MoreHorizontal />,
+            active: moreDockTabs.some((section) => activeTab === section.id),
+            role: "tab" as const,
+            onClick: () => setShowDockMore(true),
+            testId: "userdash-dock-more",
+          },
+        ]}
+      />
       </DockPortal>
+      <Sheet open={showDockMore} onOpenChange={setShowDockMore}>
+        <SheetContent side="bottom" className="lg:hidden rounded-t-3xl px-5 pb-[calc(1.25rem+var(--frozen-sab))]">
+          <SheetHeader className="pb-3 text-left">
+            <SheetTitle>Altre sezioni</SheetTitle>
+          </SheetHeader>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {moreDockTabs.map((section) => {
+              const Icon = section.icon;
+              return (
+                <button
+                  key={section.id}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(section.id as DashboardSection);
+                    setShowDockMore(false);
+                  }}
+                  aria-current={activeTab === section.id ? "page" : undefined}
+                  className={`flex min-h-12 items-center gap-3 rounded-2xl border px-4 text-left text-sm font-semibold ${
+                    activeTab === section.id
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border bg-card text-foreground"
+                  }`}
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  {section.name}
+                </button>
+              );
+            })}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

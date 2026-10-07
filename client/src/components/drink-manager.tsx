@@ -5,7 +5,6 @@ import { apiRequest } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
@@ -13,6 +12,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/image-upload";
 import { AllergenSelector } from "@/components/allergen-selector";
+import { PlainDescription, PlainDescriptionEditor } from "@/components/plain-description";
+import { descriptionToText } from "@shared/description-text";
 import {
   Plus, Edit3, Trash2, Eye, EyeOff, GlassWater, Loader2,
   GripVertical, ChevronDown, ChevronRight, Info,
@@ -201,7 +202,14 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
   };
   const openEditCat = (cat: any) => {
     setEditingCat(cat);
-    setCatForm({ name: cat.name, type: cat.type ?? "custom", description: cat.description ?? "", infoBox: cat.infoBox ?? "", isVisible: cat.isVisible ?? true });
+    setCatForm({
+      name: cat.name,
+      type: cat.type ?? "custom",
+      description: descriptionToText(cat.description ?? "", { trim: false }),
+      // InfoBox is a plain-text highlighted note, not a rich HTML description.
+      infoBox: descriptionToText(cat.infoBox ?? "", { trim: false }),
+      isVisible: cat.isVisible ?? true,
+    });
     catVisRef.current = cat.isVisible ?? true;
     setCatDialogOpen(true);
   };
@@ -266,7 +274,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
     setItemCatType(cat.type ?? "custom");
     setItemForm({
       name: item.name ?? "",
-      description: item.description ?? "",
+      description: descriptionToText(item.description ?? "", { trim: false }),
       price: item.price ?? "",
       priceByGlass: item.priceByGlass ?? "",
       priceByBottle: item.priceByBottle ?? "",
@@ -409,7 +417,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                     <span className="text-base leading-none flex-shrink-0">{catEmoji(cat.type)}</span>
                     <span className="font-semibold text-sm text-foreground truncate">{cat.name}</span>
                     {cat.description && (
-                      <span className="text-xs text-muted-foreground truncate hidden sm:inline">{cat.description}</span>
+                      <span className="text-xs text-muted-foreground truncate hidden sm:inline">{descriptionToText(cat.description)}</span>
                     )}
                     <Badge variant="secondary" className="text-xs ml-auto flex-shrink-0">
                       {(cat.items || []).length}
@@ -453,7 +461,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                 {isExpanded && cat.infoBox && (
                   <div className="mx-3 mb-3 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/30 rounded-xl px-3 py-2">
                     <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                    <span>{cat.infoBox}</span>
+                    <PlainDescription text={cat.infoBox} className="text-xs" />
                   </div>
                 )}
 
@@ -515,7 +523,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                                 {item.alcoholDegree && <span className="text-xs text-muted-foreground">{item.alcoholDegree}%</span>}
                               </div>
                               {item.description && (
-                                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.description}</p>
+                                <PlainDescription text={item.description} className="text-xs text-muted-foreground mt-0.5 line-clamp-2" />
                               )}
                             </div>
                             <div className="flex items-center gap-0.5 flex-shrink-0">
@@ -566,7 +574,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
 
       {/* ── Category create/edit dialog ── */}
       <Dialog open={catDialogOpen} onOpenChange={o => { if (!o) setCatDialogOpen(false); }}>
-        <DialogContent className="max-w-md" aria-describedby={undefined}>
+        <DialogContent formLayout className="max-w-md" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{editingCat ? "Modifica sezione" : "Nuova sezione"}</DialogTitle>
           </DialogHeader>
@@ -576,8 +584,8 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
               <Label className="text-sm font-bold mb-1.5 block">Tipo</Label>
               <div className="flex gap-2">
                 {[
-                  { value: "vino", label: "Vini", emoji: "🍷" },
-                  { value: "custom", label: "Personalizzata", emoji: "🏷️" },
+                  { value: "vino", label: "Vini" },
+                  { value: "custom", label: "Personalizzata" },
                 ].map(opt => (
                   <button
                     key={opt.value}
@@ -589,7 +597,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
                         : "bg-white dark:bg-card border-stone-200 dark:border-border text-foreground hover:border-primary/40"
                     }`}
                   >
-                    <span>{opt.emoji}</span><span>{opt.label}</span>
+                    <span>{opt.label}</span>
                   </button>
                 ))}
               </div>
@@ -610,12 +618,13 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             {/* Descrizione */}
             <div>
               <Label htmlFor="cat-desc" className="text-sm font-bold">Descrizione (opzionale)</Label>
-              <Textarea
+              <PlainDescriptionEditor
                 ref={catDescRef}
                 id="cat-desc"
-                defaultValue={catForm.description}
+                content={catForm.description}
+                onChange={(description) => setCatForm((current) => ({ ...current, description }))}
                 placeholder="Breve descrizione della sezione…"
-                rows={2}
+                maxChars={5000}
                 className="mt-1"
               />
             </div>
@@ -624,12 +633,13 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             <div>
               <Label htmlFor="cat-info" className="text-sm font-bold">Info box (opzionale)</Label>
               <p className="text-xs text-muted-foreground mb-1">Nota evidenziata nel menu pubblico</p>
-              <Textarea
+              <PlainDescriptionEditor
                 ref={catInfoRef}
                 id="cat-info"
-                defaultValue={catForm.infoBox}
+                content={catForm.infoBox}
+                onChange={(infoBox) => setCatForm((current) => ({ ...current, infoBox }))}
                 placeholder="es. Tutti i vini sono italiani a km 0…"
-                rows={2}
+                maxChars={5000}
                 className="mt-1"
               />
             </div>
@@ -663,7 +673,7 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
 
       {/* ── Item add/edit dialog ── */}
       <Dialog open={itemDialogOpen} onOpenChange={o => { if (!o) setItemDialogOpen(false); }}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto" aria-describedby={undefined}>
+        <DialogContent formLayout className="max-w-lg" aria-describedby={undefined}>
           <DialogHeader>
             <DialogTitle>{editingItem ? "Modifica prodotto" : "Aggiungi prodotto"}</DialogTitle>
           </DialogHeader>
@@ -755,9 +765,13 @@ export function DrinkManager({ pubId }: DrinkManagerProps) {
             {/* Descrizione */}
             <div>
               <Label className="text-sm font-medium">Descrizione</Label>
-              <Input value={itemForm.description}
-                onChange={e => setItemForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="Note di degustazione, abbinamenti…" className="mt-1" />
+              <PlainDescriptionEditor
+                content={itemForm.description}
+                onChange={(description) => setItemForm((current) => ({ ...current, description }))}
+                placeholder="Note di degustazione, abbinamenti…"
+                maxChars={5000}
+                className="mt-1"
+              />
             </div>
 
             <ImageUpload

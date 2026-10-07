@@ -22,6 +22,7 @@ import { it } from "date-fns/locale";
 import { FestivalLikeButton } from "@/components/festival-like-button";
 import { ShareButton } from "@/components/share-button";
 import { Helmet } from "react-helmet-async";
+import { FloatingBottomBar } from "@/components/floating-bottom-bar";
 
 const ALLERGEN_LABELS: Record<string, string> = {
   glutine: "Glutine", crostacei: "Crostacei", uova: "Uova", pesce: "Pesce",
@@ -1244,54 +1245,20 @@ export default function FestivalPublic() {
       )}
 
       {/* ── BOTTOM TAB BAR (mobile only) — attaccata al fondo, sostituisce la global nav ── */}
-      <nav
-        className={`ios-fixed-chrome bottom-nav-fixed lg:hidden fixed left-0 right-0 bottom-0 z-[55] bg-white dark:bg-[#0B0D10] border-t border-x border-stone-100 dark:border-white/[0.06] rounded-t-[32px] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
-          isFestivalModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        style={{ paddingBottom: 'max(calc(var(--frozen-sab) - 16px), 0px)' }}
-        aria-label="Navigazione del festival"
+      <FloatingBottomBar
+        label="Navigazione del festival"
         role="tablist"
-      >
-        <div className="relative flex min-h-[52px] items-center px-2 gap-1 max-w-2xl mx-auto">
-          {[
-            { id: 'overview', label: 'Overview', Icon: HomeIcon },
-            { id: 'taps', label: 'Taplist', Icon: Beer },
-            ...(festival.showFood && data.food.length > 0
-              ? [{ id: 'food', label: 'Food', Icon: UtensilsCrossed }]
-              : []),
-            { id: 'rankings', label: 'Classifica', Icon: Trophy },
-          ].map(({ id, label, Icon }) => {
-            const active = activeTab === id;
-            return (
-              <button
-                key={id}
-                type="button"
-                role="tab"
-                aria-selected={active}
-                aria-current={active ? 'page' : undefined}
-                aria-label={label}
-                onClick={() => setActiveTab(id)}
-                data-testid={`festival-dock-${id}`}
-                className={`min-h-12 flex-1 flex flex-col items-center justify-center gap-0.5 px-1 rounded-[18px] transition-all duration-200 active:scale-95 ${
-                  active
-                    ? 'bg-primary/10 dark:bg-primary/15 text-primary'
-                    : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
-                }`}
-              >
-                <Icon
-                  className="h-[22px] w-[22px]"
-                  strokeWidth={active ? 2.5 : 1.8}
-                  fill={active ? 'currentColor' : 'none'}
-                  style={active ? { fillOpacity: 0.12 } : {}}
-                />
-                <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-medium'}`}>
-                  {label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
+        hidden={isFestivalModalOpen}
+        testId="festival-public-dock"
+        items={[
+          { id: 'overview', label: 'Panoramica', icon: <HomeIcon />, active: activeTab === 'overview', role: 'tab', onClick: () => setActiveTab('overview'), testId: 'festival-dock-overview' },
+          { id: 'taps', label: 'Taplist', icon: <Beer />, active: activeTab === 'taps', role: 'tab', onClick: () => setActiveTab('taps'), testId: 'festival-dock-taps' },
+          ...(festival.showFood && data.food.length > 0
+            ? [{ id: 'food', label: 'Food', icon: <UtensilsCrossed />, active: activeTab === 'food', role: 'tab' as const, onClick: () => setActiveTab('food'), testId: 'festival-dock-food' }]
+            : []),
+          { id: 'rankings', label: 'Classifica', icon: <Trophy />, active: activeTab === 'rankings', role: 'tab', onClick: () => setActiveTab('rankings'), testId: 'festival-dock-rankings' },
+        ]}
+      />
     </div>
   );
 }

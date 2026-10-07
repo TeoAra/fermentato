@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Map, Overlay } from "pigeon-maps";
 import { Capacitor } from "@capacitor/core";
-import { X, Plus, Minus } from "lucide-react";
+import { X, Plus, Minus, ChevronRight } from "lucide-react";
+import { Link } from "wouter";
 import Supercluster from "supercluster";
 import { osmTileProvider } from "@/lib/map-tiles";
 
@@ -63,9 +64,12 @@ interface HomepageMapProps {
   externalZoom?: number;
   onZoomChange?: (z: number) => void;
   fixedHeight?: number;
+  popupPlacement?: "bottom" | "top-left";
+  showSummary?: boolean;
+  onSelectionChange?: (venue: SelectedMapVenue | null) => void;
 }
 
-interface Selected {
+export interface SelectedMapVenue {
   type: "pub" | "brewery";
   id: number;
   name: string;
@@ -88,6 +92,9 @@ export default function HomepageMap({
   externalZoom,
   onZoomChange,
   fixedHeight,
+  popupPlacement = "bottom",
+  showSummary = true,
+  onSelectionChange,
 }: HomepageMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapHeight, setMapHeight] = useState(fixedHeight ?? 300);
@@ -100,7 +107,8 @@ export default function HomepageMap({
   };
 
   const displayZoom = externalZoom !== undefined ? externalZoom : zoom;
-  const [selected, setSelected] = useState<Selected | null>(null);
+  const [selected, setSelected] = useState<SelectedMapVenue | null>(null);
+  useEffect(() => { onSelectionChange?.(selected); }, [selected, onSelectionChange]);
   const hasFlewRef = useRef(false);
   const userPannedRef = useRef(false);
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
@@ -198,6 +206,12 @@ export default function HomepageMap({
     );
   }, [breweries, showBreweries, userLocation, distanceKm]);
 
+  useEffect(() => {
+    if (!selected) return;
+    const visible = selected.type === "pub" ? geoFilteredPubs : geoFilteredBreweries;
+    if (!visible.some(venue => venue.id === selected.id)) setSelected(null);
+  }, [selected, geoFilteredPubs, geoFilteredBreweries]);
+
   const pubCount = geoFilteredPubs.length;
   const breweryCount = geoFilteredBreweries.length;
   const isNative = Capacitor.isNativePlatform();
@@ -259,6 +273,7 @@ export default function HomepageMap({
       )}
 
       {mapHeight > 0 && (
+        <div style={{ position: "relative", zIndex: 0 }}>
         <Map
           center={center}
           zoom={displayZoom}
@@ -381,8 +396,9 @@ export default function HomepageMap({
             );
           })}
         </Map>
+        </div>
       )}
-      {selected && <MapPopup selected={selected} onClose={() => setSelected(null)} />}
+      {selected && <MapPopup selected={selected} placement={popupPlacement} onClose={() => setSelected(null)} />}
 
       {showControls && (
         <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
@@ -412,7 +428,7 @@ export default function HomepageMap({
         <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>OpenStreetMap</a>
       </div>
 
-      {!isLoading && (pubCount + breweryCount > 0) && (
+      {showSummary && !isLoading && (pubCount + breweryCount > 0) && (
         <div className="absolute bottom-5 left-3 z-20">
           <div
             className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm shadow-sm"
@@ -485,71 +501,64 @@ function MarkerPin({
   );
 }
 
-function MapPopup({ selected, onClose }: { selected: Selected; onClose: () => void }) {
-  const color = selected.type === "pub" ? PUB_COLOR : BREWERY_COLOR;
-  const gradEnd = selected.type === "pub" ? "#f5a623" : "#c46520";
-  const label = selected.type === "pub" ? "PUB" : "BIRRIFICIO";
+function MapPopup({ selected, placement, onClose }: { selected: SelectedMapVenue; placement: "bottom" | "top-left"; onClose: () => void }) {
+  const label = selected.type === "pub" ? "Pub" : "Birrificio";
 
   return (
     <div
       style={{
         position: "absolute",
-        bottom: 56,
+        top: placement === "top-left" ? 12 : undefined,
+        bottom: placement === "bottom" ? 56 : undefined,
         left: 12,
         right: 68,
         maxWidth: 340,
-        background: "white",
-        borderRadius: 14,
-        boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-        border: "1px solid rgba(247,113,4,0.12)",
+        borderRadius: 16,
         overflow: "visible",
-        zIndex: 200,
+        zIndex: 30,
       }}
+      className="border border-border bg-card text-card-foreground shadow-md"
+      data-testid="home-map-selected-venue"
+      data-venue-type={selected.type}
+      aria-label={`${label} selezionato`}
+      aria-live="polite"
       onClick={e => e.stopPropagation()}
+      onPointerDown={e => e.stopPropagation()}
     >
-      <div style={{ padding: "12px 14px 12px" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8 }}>
+      <div className="p-2.5">
+        <div className="flex min-h-11 items-start gap-2">
           {selected.logoUrl && (
             <img
               src={selected.logoUrl}
               alt=""
-              style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover", flexShrink: 0 }}
+              className="mt-1 h-8 w-8 shrink-0 rounded-lg object-contain"
               onError={e => { (e.target as HTMLImageElement).style.display = "none"; }}
             />
           )}
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <div style={{ fontWeight: 700, fontSize: 13, color: "#1a1107", lineHeight: 1.25, marginBottom: 4, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {selected.name}
-            </div>
-            <div style={{ display: "inline-block", fontSize: "9.5px", fontWeight: 800, letterSpacing: "0.06em", color, background: `${color}18`, padding: "1px 7px", borderRadius: 20 }}>
-              {label}
-            </div>
+          <div className="min-w-0 flex-1">
+            <span className="text-[11px] text-muted-foreground">{label}</span>
+            <p className="line-clamp-2 text-sm font-semibold leading-tight" title={selected.name}>{selected.name}</p>
           </div>
           <button
             type="button"
             aria-label="Chiudi dettagli locale"
             onClick={onClose}
-            style={{ flexShrink: 0, background: "rgba(0,0,0,0.06)", border: "none", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}
+            className="-mr-1 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
           >
-            <X size={11} style={{ color: "#9B7B5A" }} />
+            <X size={16} />
           </button>
         </div>
         {selected.sub && (
-          <div style={{ fontSize: 11, color: "#9B7B5A", marginBottom: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          <p className="mt-1 truncate text-xs text-muted-foreground" title={selected.sub}>
             {selected.sub}
-          </div>
+          </p>
         )}
-        <a
+        <Link
           href={selected.href}
-          style={{
-            display: "flex", alignItems: "center", justifyContent: "center", minHeight: 44, textAlign: "center", padding: "7px 12px",
-            background: `linear-gradient(135deg,${color},${gradEnd})`,
-            color: "white", borderRadius: 10, textDecoration: "none",
-            fontSize: 12, fontWeight: 700,
-          }}
+          className="mt-1 flex min-h-11 items-center justify-between rounded-lg px-1 text-xs font-semibold text-amber-700 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary dark:text-amber-400"
         >
-          Scopri →
-        </a>
+          Apri scheda <ChevronRight className="h-4 w-4" aria-hidden="true" />
+        </Link>
       </div>
     </div>
   );

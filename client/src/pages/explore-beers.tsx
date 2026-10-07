@@ -2,7 +2,7 @@ import { Helmet } from "react-helmet-async";
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Link, useLocation } from "wouter";
-import { Beer, Search, X, Star, Bookmark, Dices, Flame, Sparkles, Trophy, ChevronRight, SlidersHorizontal, AlertTriangle } from "lucide-react";
+import { Beer, Search, X, Star, Dices, Flame, Sparkles, Trophy, ChevronRight, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
 import { LoadMoreSentinel } from "@/components/social/LoadMoreSentinel";
@@ -25,21 +25,20 @@ async function fetchArray(url: string): Promise<any[]> {
 interface StyleMeta {
   label: string;
   api: string;
-  emoji: string;
   color: string; // tailwind bg for chip active state
 }
 
 const CHIP_STYLES: StyleMeta[] = [
-  { label: "IPA",     api: "IPA",                                emoji: "🌿", color: "bg-emerald-500" },
-  { label: "Stout",   api: "Stout - Imperial",                   emoji: "🖤", color: "bg-stone-700" },
-  { label: "Sour",    api: "Sour / Wild Beer",                   emoji: "🍒", color: "bg-rose-500" },
-  { label: "Hazy",    api: "IPA - Hazy (NEIPA)",                 emoji: "☁️", color: "bg-amber-400" },
-  { label: "Pilsner", api: "Pilsener / Pils / Pilsner",          emoji: "🍺", color: "bg-yellow-500" },
-  { label: "Saison",  api: "Saison / Farmhouse / Grisette",      emoji: "🌾", color: "bg-lime-600" },
-  { label: "Porter",  api: "Porter",                             emoji: "☕", color: "bg-amber-900" },
-  { label: "Weizen",  api: "Weissbier - Hefeweizen",             emoji: "🌻", color: "bg-yellow-600" },
-  { label: "Amber",   api: "Red Ale / International Amber Ale",  emoji: "🟧", color: "bg-orange-500" },
-  { label: "DIPA",    api: "IIPA DIPA - Imperial / Double IPA",  emoji: "💪", color: "bg-lime-500" },
+  { label: "IPA",     api: "IPA",                                color: "bg-emerald-600" },
+  { label: "Stout",   api: "Stout - Imperial",                   color: "bg-stone-700" },
+  { label: "Sour",    api: "Sour / Wild Beer",                   color: "bg-rose-600" },
+  { label: "Hazy",    api: "IPA - Hazy (NEIPA)",                 color: "bg-amber-500" },
+  { label: "Pilsner", api: "Pilsener / Pils / Pilsner",          color: "bg-yellow-600" },
+  { label: "Saison",  api: "Saison / Farmhouse / Grisette",      color: "bg-lime-700" },
+  { label: "Porter",  api: "Porter",                             color: "bg-amber-900" },
+  { label: "Weizen",  api: "Weissbier - Hefeweizen",             color: "bg-yellow-700" },
+  { label: "Amber",   api: "Red Ale / International Amber Ale",  color: "bg-orange-600" },
+  { label: "DIPA",    api: "IIPA DIPA - Imperial / Double IPA",  color: "bg-lime-700" },
 ];
 
 const STYLE_GROUPS = [
@@ -47,33 +46,33 @@ const STYLE_GROUPS = [
     title: "Ora popolari",
     icon: <Flame className="w-4 h-4 text-orange-500" />,
     items: [
-      { label: "IPA",       api: "IPA",                                emoji: "🌿", bg: "bg-emerald-50 dark:bg-emerald-950/30", ring: "ring-emerald-100 dark:ring-emerald-900/40" },
-      { label: "Hazy IPA",  api: "IPA - Hazy (NEIPA)",                 emoji: "☁️", bg: "bg-amber-50 dark:bg-amber-950/30",     ring: "ring-amber-100 dark:ring-amber-900/40" },
-      { label: "Stout",     api: "Stout - Imperial",                   emoji: "🖤", bg: "bg-stone-100 dark:bg-[#1A1D24]/60",    ring: "ring-stone-200 dark:ring-stone-700/40" },
-      { label: "Sour",      api: "Sour / Wild Beer",                   emoji: "🍒", bg: "bg-rose-50 dark:bg-rose-950/30",       ring: "ring-rose-100 dark:ring-rose-900/40" },
-      { label: "DIPA",      api: "IIPA DIPA - Imperial / Double IPA",  emoji: "💪", bg: "bg-lime-50 dark:bg-lime-950/30",       ring: "ring-lime-100 dark:ring-lime-900/40" },
+      { label: "IPA",       api: "IPA",                                bg: "bg-emerald-50 dark:bg-emerald-950/30", ring: "ring-emerald-100 dark:ring-emerald-900/40" },
+      { label: "Hazy IPA",  api: "IPA - Hazy (NEIPA)",                 bg: "bg-amber-50 dark:bg-amber-950/30",     ring: "ring-amber-100 dark:ring-amber-900/40" },
+      { label: "Stout",     api: "Stout - Imperial",                   bg: "bg-stone-100 dark:bg-[#1A1D24]/60",    ring: "ring-stone-200 dark:ring-stone-700/40" },
+      { label: "Sour",      api: "Sour / Wild Beer",                   bg: "bg-rose-50 dark:bg-rose-950/30",       ring: "ring-rose-100 dark:ring-rose-900/40" },
+      { label: "DIPA",      api: "IIPA DIPA - Imperial / Double IPA",  bg: "bg-lime-50 dark:bg-lime-950/30",       ring: "ring-lime-100 dark:ring-lime-900/40" },
     ],
   },
   {
     title: "Da scoprire",
     icon: <Sparkles className="w-4 h-4 text-amber-500" />,
     items: [
-      { label: "Saison",    api: "Saison / Farmhouse / Grisette",      emoji: "🌾", bg: "bg-yellow-50 dark:bg-yellow-950/30",  ring: "ring-yellow-100 dark:ring-yellow-900/40" },
-      { label: "Porter",    api: "Porter",                             emoji: "☕", bg: "bg-stone-100 dark:bg-[#1A1D24]/60",   ring: "ring-stone-200 dark:ring-stone-700/40" },
-      { label: "Fruit Ale", api: "Flavored - Fruit",                   emoji: "🍑", bg: "bg-orange-50 dark:bg-orange-950/30",  ring: "ring-orange-100 dark:ring-orange-900/40" },
-      { label: "Witbier",   api: "Witbier / Belgian White Ale",        emoji: "🌼", bg: "bg-amber-50 dark:bg-amber-950/30",    ring: "ring-amber-100 dark:ring-amber-900/40" },
-      { label: "Cider",     api: "Apple Cider",                        emoji: "🍎", bg: "bg-red-50 dark:bg-red-950/30",        ring: "ring-red-100 dark:ring-red-900/40" },
+      { label: "Saison",    api: "Saison / Farmhouse / Grisette",      bg: "bg-yellow-50 dark:bg-yellow-950/30",  ring: "ring-yellow-100 dark:ring-yellow-900/40" },
+      { label: "Porter",    api: "Porter",                             bg: "bg-stone-100 dark:bg-[#1A1D24]/60",   ring: "ring-stone-200 dark:ring-stone-700/40" },
+      { label: "Fruit Ale", api: "Flavored - Fruit",                   bg: "bg-orange-50 dark:bg-orange-950/30",  ring: "ring-orange-100 dark:ring-orange-900/40" },
+      { label: "Witbier",   api: "Witbier / Belgian White Ale",        bg: "bg-amber-50 dark:bg-amber-950/30",    ring: "ring-amber-100 dark:ring-amber-900/40" },
+      { label: "Cider",     api: "Apple Cider",                        bg: "bg-red-50 dark:bg-red-950/30",       ring: "ring-red-100 dark:ring-red-900/40" },
     ],
   },
   {
     title: "Classici",
     icon: <Trophy className="w-4 h-4 text-amber-600" />,
     items: [
-      { label: "Pilsner",    api: "Pilsener / Pils / Pilsner",         emoji: "🍺", bg: "bg-amber-50 dark:bg-amber-950/30",    ring: "ring-amber-100 dark:ring-amber-900/40" },
-      { label: "Blonde Ale", api: "Blonde Ale / Golden Ale",           emoji: "🍻", bg: "bg-yellow-50 dark:bg-yellow-950/30",  ring: "ring-yellow-100 dark:ring-yellow-900/40" },
-      { label: "Amber Ale",  api: "Red Ale / International Amber Ale", emoji: "🟧", bg: "bg-orange-50 dark:bg-orange-950/30",  ring: "ring-orange-100 dark:ring-orange-900/40" },
-      { label: "Brown Ale",  api: "Brown Ale",                         emoji: "🟫", bg: "bg-amber-50 dark:bg-amber-950/30",    ring: "ring-amber-100 dark:ring-amber-900/40" },
-      { label: "Weizen",     api: "Weissbier - Hefeweizen",            emoji: "🌾", bg: "bg-yellow-50 dark:bg-yellow-950/30",  ring: "ring-yellow-100 dark:ring-yellow-900/40" },
+      { label: "Pilsner",    api: "Pilsener / Pils / Pilsner",         bg: "bg-amber-50 dark:bg-amber-950/30",   ring: "ring-amber-100 dark:ring-amber-900/40" },
+      { label: "Blonde Ale", api: "Blonde Ale / Golden Ale",           bg: "bg-yellow-50 dark:bg-yellow-950/30", ring: "ring-yellow-100 dark:ring-yellow-900/40" },
+      { label: "Amber Ale",  api: "Red Ale / International Amber Ale", bg: "bg-orange-50 dark:bg-orange-950/30", ring: "ring-orange-100 dark:ring-orange-900/40" },
+      { label: "Brown Ale",  api: "Brown Ale",                         bg: "bg-amber-50 dark:bg-amber-950/30",   ring: "ring-amber-100 dark:ring-amber-900/40" },
+      { label: "Weizen",     api: "Weissbier - Hefeweizen",            bg: "bg-yellow-50 dark:bg-yellow-950/30", ring: "ring-yellow-100 dark:ring-yellow-900/40" },
     ],
   },
 ];
@@ -108,34 +107,35 @@ function BeerCard({ beer }: { beer: any }) {
   const rating = parseFloat(beer.rating || beer.avgRating || "0");
   const abv = beer.abv != null ? `${beer.abv}%` : null;
   return (
-    <Link href={`/beer/${beer.id}`}>
-      <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl rounded-2xl p-2.5 border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] hover:border-primary/30 active:scale-[0.99] transition-all duration-200 cursor-pointer">
+    <Link href={`/beer/${beer.id}`} className="group block min-h-[88px] rounded-2xl border border-border/70 bg-card transition-colors hover:border-primary/40 active:bg-muted/40">
+      <div className="flex min-h-[88px] items-center gap-3 px-3 py-2.5">
         <ImageWithFallback
           src={beer.imageUrl || beer.breweryLogoUrl}
           alt={beer.name}
           imageType="beer"
           width={112}
           srcSetWidths={[56, 112, 168]}
-          sizes="56px"
-          containerClassName="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1A1D24] flex-shrink-0"
-          className="object-cover"
+          sizes="58px"
+          containerClassName="h-[68px] w-[58px] rounded-xl bg-muted/70 flex-shrink-0"
+          className="h-full w-full object-contain p-1"
         />
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-[14px] text-foreground truncate">{beer.name}</p>
-          <p className="text-[12px] text-stone-500 dark:text-stone-400 truncate">{beer.breweryName || beer.brewery?.name}</p>
-          <div className="flex items-center gap-2 text-[11px] text-stone-400 mt-0.5">
+          <p className="truncate text-[15px] font-bold text-foreground transition-colors group-hover:text-primary">{beer.name}</p>
+          <p className="truncate text-[12px] text-muted-foreground">{beer.breweryName || beer.brewery?.name}</p>
+          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground">
             {beer.style && <span className="truncate max-w-[160px]">{beer.style}</span>}
-            {abv && <span>· {abv}</span>}
+            {abv && <span className="font-semibold text-foreground">{abv}</span>}
+            {beer.ibu != null && <span>{beer.ibu} IBU</span>}
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1 flex-shrink-0">
+        <div className="flex min-w-[36px] flex-col items-end gap-1 flex-shrink-0">
           {rating > 0 && (
             <div className="flex items-center gap-0.5">
-              <span className="text-[13px] font-bold text-foreground">{rating.toFixed(2)}</span>
-              <Star className="w-3 h-3 text-amber-400 fill-amber-400" />
+              <span className="text-[12px] font-semibold tabular-nums text-foreground">{rating.toFixed(1)}</span>
+              <Star className="w-3 h-3 fill-primary text-primary" />
             </div>
           )}
-          <Bookmark className="w-4 h-4 text-stone-300 dark:text-stone-600" />
+          <ChevronRight className="h-4 w-4 text-muted-foreground/70" />
         </div>
       </div>
     </Link>
@@ -162,8 +162,8 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 
 function BeerCardSkeleton() {
   return (
-    <div className="flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] rounded-2xl p-2.5 border border-white/40 dark:border-white/[0.06]">
-      <div className="w-14 h-14 rounded-xl bg-stone-100 dark:bg-[#1A1D24] animate-pulse flex-shrink-0" />
+    <div className="flex items-center gap-3 rounded-2xl border border-border/70 bg-card p-2.5">
+      <div className="h-[68px] w-[58px] rounded-xl bg-muted animate-pulse flex-shrink-0" />
       <div className="flex-1 space-y-2">
         <div className="h-3.5 rounded-lg bg-stone-100 dark:bg-[#1A1D24] animate-pulse w-3/4" />
         <div className="h-3 rounded-lg bg-stone-100 dark:bg-[#1A1D24] animate-pulse w-1/2" />
@@ -189,10 +189,10 @@ function StyleGroupRow({ group, styleCount, onSelect }: {
           <button
             key={s.api}
             onClick={() => onSelect(s.api)}
-            className="flex-shrink-0 w-[78px] lg:w-auto flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale hover:border-primary/30 active:scale-[0.99] transition-all duration-200"
+            className="flex min-h-11 flex-shrink-0 w-[78px] lg:w-auto flex-col items-center gap-1.5 rounded-2xl border border-border/70 bg-card p-3 tap-scale hover:border-primary/40 active:bg-muted/40 transition-colors"
           >
-            <div className={`w-11 h-11 rounded-xl ${s.bg} ring-1 ${s.ring} flex items-center justify-center text-xl`}>
-              {s.emoji}
+            <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${s.bg} ring-1 ${s.ring}`}>
+              <Beer className="h-5 w-5 text-primary" aria-hidden="true" />
             </div>
             <span className="text-[12px] font-bold text-foreground text-center leading-tight line-clamp-1">{s.label}</span>
             {styleCount(s.api) > 0 && (
@@ -304,7 +304,7 @@ export default function ExploreBeers() {
   }, [popularStyles]);
 
   const activeStyleMeta = useMemo(
-    () => CHIP_STYLES.find(s => s.api === activeStyle) ?? (activeStyle ? { label: activeStyle, api: activeStyle, emoji: "🍺", color: "bg-primary" } : null),
+    () => CHIP_STYLES.find(s => s.api === activeStyle) ?? (activeStyle ? { label: activeStyle, api: activeStyle, color: "bg-primary" } : null),
     [activeStyle]
   );
 
@@ -470,8 +470,8 @@ export default function ExploreBeers() {
                   onClick={() => { setShowAllStyles(false); selectStyle(s.style); }}
                   className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-sm tap-scale hover:border-primary/30 transition-all"
                 >
-                  <div className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl ${known?.bg ?? "bg-stone-100 dark:bg-[#1A1D24]/60"}`}>
-                    {known?.emoji ?? "🍺"}
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${known?.bg ?? "bg-muted"}`}>
+                    <Beer className="h-5 w-5 text-primary" aria-hidden="true" />
                   </div>
                   <span className="text-[11px] font-bold text-foreground text-center leading-tight line-clamp-2">{s.style}</span>
                   <span className="text-[10px] text-stone-400">{s.count.toLocaleString("it-IT")}</span>
@@ -526,7 +526,7 @@ export default function ExploreBeers() {
                 onClick={() => selectStyle(styleSuggestion.style)}
                 className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-[11px] font-bold border border-primary/20 tap-scale hover:bg-primary/20 transition-all"
               >
-                🍺 {styleSuggestion.style}
+                {styleSuggestion.style}
                 {styleSuggestion.count > 0 && <span className="opacity-60">· {styleSuggestion.count.toLocaleString("it-IT")}</span>}
               </button>
             </div>
@@ -546,7 +546,6 @@ export default function ExploreBeers() {
                       : "bg-white dark:bg-card border-stone-200 dark:border-[#23262E] text-stone-700 dark:text-stone-200 hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary shadow-sm"
                   }`}
                 >
-                  <span className="text-sm leading-none">{s.emoji}</span>
                   {s.label}
                   {active && <X className="w-3 h-3 ml-0.5" />}
                 </button>
@@ -588,9 +587,6 @@ export default function ExploreBeers() {
                   {styleDescription(activeStyle)}
                 </p>
               </div>
-              <div className="absolute right-0 bottom-0 text-[88px] leading-none opacity-20 select-none pointer-events-none translate-x-3 translate-y-3">
-                {activeStyleMeta?.emoji ?? "🍺"}
-              </div>
             </div>
 
             {/* Sort controls */}
@@ -607,7 +603,7 @@ export default function ExploreBeers() {
                       sortMode === m ? "bg-white dark:bg-card text-foreground shadow-sm" : "text-stone-500 dark:text-stone-400"
                     }`}
                   >
-                    {m === "popular" ? "Popolari" : m === "top" ? "Top ⭐" : "Recenti"}
+                    {m === "popular" ? "Popolari" : m === "top" ? "Più votate" : "Recenti"}
                   </button>
                 ))}
               </div>
@@ -734,16 +730,16 @@ export default function ExploreBeers() {
 
             {/* Surprise me */}
             <section className="mt-4">
-              <div className="bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-950/20 dark:via-amber-950/20 dark:to-yellow-950/20 rounded-3xl p-5 border border-orange-100 dark:border-orange-900/30 flex items-center gap-4">
-                <div className="w-14 h-14 rounded-2xl bg-white dark:bg-[#0B0D10]/40 flex items-center justify-center flex-shrink-0 shadow-sm">
-                  <Dices className="w-7 h-7 text-orange-500" />
+              <div className="flex items-center gap-4 rounded-2xl border border-border/70 bg-card p-4">
+                <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <Dices className="h-6 w-6 text-primary" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-[15px] font-extrabold text-foreground">Non sai cosa scegliere?</h3>
-                  <p className="text-xs text-stone-500 dark:text-stone-400 mt-0.5">Facci sorprendere dal destino</p>
+                  <h3 className="text-[15px] font-bold text-foreground">Non sai cosa scegliere?</h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">Facci sorprendere dal destino</p>
                   <button
                     onClick={surpriseMe}
-                    className="mt-3 inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl bg-primary text-white text-xs font-bold tap-scale shadow-sm hover:bg-primary/90 transition-colors"
+                    className="mt-3 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-4 text-xs font-semibold text-primary-foreground tap-scale hover:bg-primary/90 transition-colors"
                   >
                     Fammi scoprire qualcosa
                   </button>
@@ -753,19 +749,19 @@ export default function ExploreBeers() {
 
             {/* FindBeer card */}
             <section className="mt-4">
-              <div className="relative bg-white dark:bg-card rounded-3xl overflow-hidden border border-stone-100 dark:border-[#23262E]/60 shadow-sm">
+              <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card">
                 <div className="flex items-stretch">
                   <div className="flex-1 min-w-0 p-5">
-                    <h2 className="text-lg font-extrabold text-foreground leading-tight">Cosa si beve<br />vicino a te?</h2>
-                    <p className="text-xs text-stone-500 dark:text-stone-400 mt-1.5 leading-relaxed">Scopri le birre più popolari nei pub della tua zona</p>
+                    <h2 className="text-lg font-bold text-foreground leading-tight">Cosa si beve<br />vicino a te?</h2>
+                    <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">Scopri le birre più popolari nei pub della tua zona</p>
                     <button
                       onClick={() => setLocation("/search")}
-                      className="mt-4 inline-flex items-center gap-1.5 px-4 py-2.5 rounded-2xl bg-primary text-white text-sm font-bold tap-scale shadow-sm hover:bg-primary/90 transition-colors"
+                      className="mt-4 inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground tap-scale hover:bg-primary/90 transition-colors"
                     >
                       Trova una birra
                     </button>
                   </div>
-                  <div className="relative w-[130px] sm:w-[160px] flex-shrink-0 bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 dark:from-orange-950/30 dark:via-amber-950/30 dark:to-yellow-950/30 flex items-center justify-center overflow-hidden">
+                  <div className="relative w-[130px] sm:w-[160px] flex-shrink-0 bg-muted/50 flex items-center justify-center overflow-hidden">
                     <MapHeroSvg />
                   </div>
                 </div>
@@ -781,25 +777,19 @@ export default function ExploreBeers() {
 function MapHeroSvg() {
   return (
     <svg viewBox="0 0 160 160" className="w-full h-full">
-      <defs>
-        <radialGradient id="bgGrad2" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#fef3c7" />
-          <stop offset="100%" stopColor="#fed7aa" />
-        </radialGradient>
-      </defs>
-      <rect width="160" height="160" fill="url(#bgGrad2)" />
-      <circle cx="80" cy="80" r="45" fill="none" stroke="#f59e0b" strokeWidth="1" strokeDasharray="2 4" opacity="0.4" />
-      <circle cx="80" cy="80" r="65" fill="none" stroke="#f59e0b" strokeWidth="1" strokeDasharray="2 4" opacity="0.2" />
+      <rect width="160" height="160" fill="hsl(var(--muted))" />
+      <circle cx="80" cy="80" r="45" fill="none" stroke="hsl(var(--primary))" strokeWidth="1" strokeDasharray="2 4" opacity="0.4" />
+      <circle cx="80" cy="80" r="65" fill="none" stroke="hsl(var(--primary))" strokeWidth="1" strokeDasharray="2 4" opacity="0.2" />
       {[
         { x: 80, y: 28 }, { x: 128, y: 55 }, { x: 132, y: 100 },
         { x: 88, y: 134 }, { x: 42, y: 118 }, { x: 28, y: 72 }, { x: 50, y: 35 },
       ].map((p, i) => (
         <g key={i} transform={`translate(${p.x - 8}, ${p.y - 20})`}>
-          <path d="M8 0 C3.5 0 0 3.5 0 8 C0 14 8 20 8 20 C8 20 16 14 16 8 C16 3.5 12.5 0 8 0 Z" fill="#f97316" />
-          <circle cx="8" cy="8" r="3" fill="#fff" />
+          <path d="M8 0 C3.5 0 0 3.5 0 8 C0 14 8 20 8 20 C8 20 16 14 16 8 C16 3.5 12.5 0 8 0 Z" fill="hsl(var(--primary))" />
+          <circle cx="8" cy="8" r="3" fill="hsl(var(--primary-foreground))" />
         </g>
       ))}
-      <circle cx="80" cy="80" r="7" fill="#3b82f6" stroke="#fff" strokeWidth="2.5" />
+      <circle cx="80" cy="80" r="7" fill="hsl(var(--foreground))" stroke="hsl(var(--card))" strokeWidth="2.5" />
     </svg>
   );
 }

@@ -15,7 +15,7 @@ import { useAnyModalOpen, useHideGlobalBottomNav, DockPortal } from "@/component
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ImageUpload } from "@/components/image-upload";
@@ -33,7 +33,6 @@ import {
 } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { BreweryEventsManager } from "@/components/events-manager";
 import { OwnerReportsSection } from "@/components/owner-reports";
@@ -41,73 +40,8 @@ import { RoleSwitcherBanner } from "@/components/role-switcher-banner";
 import { StatsGrid } from "@/components/dashboard-primitives";
 import BreweryQuickStats from "@/components/brewery-quick-stats";
 import BreweryAnalyticsTab from "@/components/brewery-analytics-tab";
-
-function CollabBrewerySelector({ selected, onChange, excludeBreweryId }: { selected: { id: number; name: string }[]; onChange: (breweries: { id: number; name: string }[]) => void; excludeBreweryId?: number | null }) {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<any[]>([]);
-  const [showResults, setShowResults] = useState(false);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const search = useCallback((q: string) => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    if (q.length < 2) { setResults([]); return; }
-    debounceRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/breweries/search?q=${encodeURIComponent(q)}&limit=10`, { credentials: 'include' });
-        if (!res.ok) return;
-        const data = await res.json();
-        setResults(Array.isArray(data) ? data.filter((b: any) => b.id !== excludeBreweryId && !selected.some((s: any) => s.id === b.id)) : []);
-        setShowResults(true);
-      } catch { setResults([]); }
-    }, 250);
-  }, [excludeBreweryId, selected]);
-
-  const add = (b: { id: number; name: string }) => {
-    onChange([...selected, { id: b.id, name: b.name }]);
-    setQuery(""); setResults([]); setShowResults(false);
-  };
-  const remove = (id: number) => onChange(selected.filter((s: any) => s.id !== id));
-
-  return (
-    <div className="space-y-2">
-      <Label className="text-sm font-bold text-foreground">Birrifici in Collaborazione</Label>
-      {selected.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {selected.map((b: any) => (
-            <span key={b.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-sm font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-200">
-              <Building className="w-3 h-3" />
-              {b.name}
-              <button type="button" onClick={() => remove(b.id)} className="ml-0.5 text-purple-500 hover:text-purple-800">×</button>
-            </span>
-          ))}
-        </div>
-      )}
-      <div className="relative">
-        <Input
-          value={query}
-          onChange={e => { setQuery(e.target.value); search(e.target.value); }}
-          onBlur={() => setTimeout(() => setShowResults(false), 200)}
-          placeholder="Cerca birrificio partner..."
-          className="border-stone-200 rounded-xl h-11"
-          autoComplete="off"
-        />
-        {showResults && results.length > 0 && (
-          <div className="absolute z-50 w-full mt-1 bg-white dark:bg-[#1A1D24] border border-stone-200 rounded-xl shadow-xl max-h-48 overflow-y-auto">
-            {results.map((b: any) => (
-              <button key={b.id} type="button" onMouseDown={e => { e.preventDefault(); add(b); }}
-                className="w-full px-3 py-2 text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 border-b last:border-b-0 flex items-center gap-2 text-sm">
-                {b.logoUrl ? <img src={b.logoUrl} alt="" className="w-6 h-6 rounded-full object-cover" /> : <Building className="w-4 h-4 text-purple-400" />}
-                <span>{b.name}</span>
-                <span className="text-xs text-stone-400 ml-auto">{b.location}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      <p className="text-xs text-stone-500">La birra apparirà automaticamente anche nelle pagine dei birrifici partner.</p>
-    </div>
-  );
-}
+import { BeerDetailsFields, type BeerDetailsValues } from "@/components/beer-details-fields";
+import { FloatingBottomBar } from "@/components/floating-bottom-bar";
 
 const beerFormSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio"),
@@ -295,7 +229,7 @@ function AnnouncementsManager({ breweryId }: { breweryId: number }) {
 
       {/* Create dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md rounded-2xl border-stone-100 dark:border-border overflow-y-auto max-h-[90dvh]">
+        <DialogContent formLayout className="max-w-md rounded-2xl border-stone-100 dark:border-border">
           <DialogHeader>
             <DialogTitle>Nuovo Annuncio</DialogTitle>
           </DialogHeader>
@@ -1527,62 +1461,26 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
       {/* ── BOTTOM DOCK DASHBOARD BIRRIFICIO (mobile only) ── */}
       <DockPortal>
-      <nav
-        className={`bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
-          isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        style={{ paddingBottom: 'max(var(--frozen-sab) - 16px, 0px)' }}
-        aria-label="Navigazione dashboard birrificio"
+      <FloatingBottomBar
+        label="Navigazione dashboard birrificio"
         role="tablist"
-      >
-        <div className="w-full px-1">
-          <div className="flex min-h-[52px] w-full items-center">
-              {[
-                { id: 'overview',      label: 'Home',    Icon: HomeIcon },
-                { id: 'birre',         label: 'Birre',   Icon: BeerIcon },
-                { id: 'analytics',     label: 'Stats',   Icon: TrendingUp },
-                { id: 'eventi',        label: 'Eventi',  Icon: CalendarIcon },
-                { id: 'distribuzione', label: 'Distribuzione', Icon: Store },
-              ].map(({ id, label, Icon }) => {
-                const active = id === 'overview'
-                  ? activeTab === 'overview' || activeTab === 'info' || activeTab === 'annunci'
-                  : activeTab === id;
-                return (
-                  <button
-                    key={id}
-                    onClick={() => setActiveTab(id)}
-                    role="tab"
-                    aria-selected={active}
-                    aria-current={active ? 'page' : undefined}
-                    aria-label={label}
-                    data-testid={`brewerydash-dock-${id}`}
-                    className={`min-h-12 min-w-0 flex-1 flex flex-col items-center justify-center gap-0.5 px-0.5 rounded-[18px] transition-all duration-200 active:scale-95 ${
-                      active
-                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
-                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
-                    }`}
-                  >
-                    <Icon
-                      className="h-[20px] w-[20px]"
-                      strokeWidth={active ? 2.6 : 1.8}
-                      fill={active ? 'currentColor' : 'none'}
-                      style={active ? { fillOpacity: 0.18 } : {}}
-                    />
-                    <span className={`max-w-full truncate text-[9px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
-                      {label}
-                    </span>
-                  </button>
-                );
-              })}
-          </div>
-        </div>
-      </nav>
+        hidden={isAnyModalOpen}
+        testId="brewery-dashboard-dock"
+        items={[
+          { id: 'overview', label: 'Home', icon: <HomeIcon />, active: activeTab === 'overview' || activeTab === 'info' || activeTab === 'annunci', role: 'tab', onClick: () => setActiveTab('overview'), testId: 'brewerydash-dock-overview' },
+          { id: 'birre', label: 'Birre', icon: <BeerIcon />, active: activeTab === 'birre', role: 'tab', onClick: () => setActiveTab('birre'), testId: 'brewerydash-dock-birre' },
+          { id: 'analytics', label: 'Statistiche', icon: <TrendingUp />, active: activeTab === 'analytics', role: 'tab', onClick: () => setActiveTab('analytics'), testId: 'brewerydash-dock-analytics' },
+          { id: 'eventi', label: 'Eventi', icon: <CalendarIcon />, active: activeTab === 'eventi', role: 'tab', onClick: () => setActiveTab('eventi'), testId: 'brewerydash-dock-eventi' },
+          { id: 'distribuzione', label: 'Distribuzione', icon: <Store />, active: activeTab === 'distribuzione', role: 'tab', onClick: () => setActiveTab('distribuzione'), testId: 'brewerydash-dock-distribuzione' },
+        ]}
+      />
       </DockPortal>
 
       {/* Profile Edit Dialog */}
       <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile} modal={false}>
         <DialogContent
-          className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border-stone-200 shadow-2xl"
+          formLayout
+          className="max-w-2xl rounded-3xl border-stone-200 shadow-2xl"
           onPointerDownOutside={(e) => {
             const target = e.target as HTMLElement;
             if (target.closest('.pac-container')) e.preventDefault();
@@ -1748,7 +1646,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
       {/* Image Edit Dialog */}
       <Dialog open={isEditingImages} onOpenChange={setIsEditingImages}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl border-stone-200 shadow-2xl">
+        <DialogContent formLayout className="max-w-2xl rounded-3xl border-stone-200 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <div className="p-2 bg-primary rounded-xl">
@@ -1799,7 +1697,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
 
       {/* Beer Create/Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border-stone-200 shadow-2xl">
+        <DialogContent formLayout className="max-w-lg rounded-3xl border-stone-200 shadow-2xl">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <div className="p-2 bg-primary rounded-xl">
@@ -1810,175 +1708,22 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onBeerSubmit)} className="space-y-6 pt-4 text-left">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-bold">Nome Birra *</FormLabel>
-                      <FormControl><Input placeholder="Es. Luppolina" {...field} className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="style"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-bold">Stile *</FormLabel>
-                      <FormControl><Input placeholder="Es. American IPA" {...field} className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="abv"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-bold">Grado Alc. (ABV %)</FormLabel>
-                      <FormControl>
-                        <Input type="number" step="0.1" placeholder="5.2"
-                          {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseFloat(e.target.value))} 
-                          className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="ibu"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="font-bold">IBU (Amaro)</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="45"
-                          {...field} value={field.value ?? ""} onChange={(e) => field.onChange(e.target.value === "" ? null : parseInt(e.target.value))} 
-                          className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              <FormField
-                control={form.control}
-                name="color"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-bold">Colore</FormLabel>
-                    <FormControl><Input placeholder="Es. Giallo Paglierino, Mogano..." {...field} value={field.value ?? ""} className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11" /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+              <BeerDetailsFields
+                values={form.watch() as BeerDetailsValues}
+                onChange={(field, value) => form.setValue(field as keyof BeerFormValues, value as any, { shouldDirty: true, shouldValidate: true } as any)}
+                collaborators={collabBreweries}
+                onCollaboratorsChange={setCollabBreweries}
+                excludeBreweryId={isAdminMode ? adminBreweryId : (brewery as any)?.id}
+                imageSearchEndpoint={editingBeer?.id ? `/api/beers/${editingBeer.id}/find-image-preview` : undefined}
+                errors={{
+                  name: form.formState.errors.name?.message,
+                  style: form.formState.errors.style?.message,
+                  abv: form.formState.errors.abv?.message,
+                  ibu: form.formState.errors.ibu?.message,
+                  color: form.formState.errors.color?.message,
+                  description: form.formState.errors.description?.message,
+                }}
               />
-              
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="font-bold">Descrizione Organolettica</FormLabel>
-                    <FormControl>
-                      <RichTextEditor
-                        content={field.value ?? ""}
-                        onChange={field.onChange}
-                        placeholder="Note di degustazione, malti e luppoli utilizzati..."
-                        maxChars={2000}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <label className="text-sm font-bold text-foreground">Immagine Prodotto</label>
-                  {editingBeer?.id && (
-                    <WebImageSearchButton
-                      endpoint={`/api/beers/${editingBeer.id}/find-image-preview`}
-                      responseKey="imageUrl"
-                      onFound={(url) => form.setValue("imageUrl", url)}
-                    />
-                  )}
-                </div>
-                <ImageUpload
-                  label="Immagine Birra"
-                  description="Carica una foto della bottiglia o del bicchiere"
-                  currentImageUrl={form.watch("imageUrl") || undefined}
-                  onImageChange={(url) => form.setValue("imageUrl", url || "")}
-                  folder="beer-images"
-                  aspectRatio="square"
-                  maxSize={5}
-                  recommendedDimensions="400x400px"
-                />
-              </div>
-
-              <div className="space-y-3 p-4 bg-stone-50 rounded-xl border border-stone-100">
-                <p className="text-xs font-bold text-stone-500 uppercase tracking-wider">Caratteristiche Speciali</p>
-                <FormField
-                  control={form.control}
-                  name="isGlutenFree"
-                  render={({ field }) => (
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="rounded-md"
-                      />
-                      <span className="text-sm font-medium">Senza Glutine</span>
-                    </label>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="isAlcoholFree"
-                  render={({ field }) => (
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="rounded-md"
-                      />
-                      <span className="text-sm font-medium">Analcolica (0,0%)</span>
-                    </label>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="isCollaboration"
-                  render={({ field }) => (
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <Checkbox
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                        className="rounded-md"
-                      />
-                      <span className="text-sm font-medium text-purple-700">Birra in Collaborazione</span>
-                    </label>
-                  )}
-                />
-                {form.watch("isCollaboration") && (
-                  <div className="pt-1">
-                    <CollabBrewerySelector
-                      selected={collabBreweries}
-                      onChange={setCollabBreweries}
-                      excludeBreweryId={isAdminMode ? adminBreweryId : (brewery as any)?.id}
-                    />
-                    {form.watch("isCollaboration") && collabBreweries.length === 0 && (
-                      <p className="text-xs text-red-500 mt-1">Aggiungi almeno un birrificio partner</p>
-                    )}
-                  </div>
-                )}
-              </div>
 
               <DialogFooter sticky className="gap-3 sm:space-x-0">
                 <Button

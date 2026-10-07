@@ -9,7 +9,6 @@ import HomeMapPanel from "@/components/home-map-panel";
 import PullToRefreshIndicator from "@/components/pull-to-refresh-indicator";
 import { Beer, MapPin, Heart, Store, Building2, ChevronRight, Users, Bell, Bookmark, Star, TrendingUp, Zap, Flame, Search } from "lucide-react";
 import Footer from "@/components/footer";
-import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
 import { Button } from "@/components/ui/button";
 import NewsStrip from "@/components/news-strip";
@@ -49,17 +48,17 @@ function SectionHeader({
   linkLabel?: string;
 }) {
   return (
-    <div className="flex items-center justify-between mb-3">
-      <h2 className="section-title flex items-center gap-2">
+    <div className="flex items-center justify-between gap-3 mb-3">
+      <h2 className="min-w-0 flex items-center gap-2 text-base sm:text-lg font-bold tracking-tight">
         {Icon ? (
-          <Icon className="w-[18px] h-[18px] text-primary flex-shrink-0" />
+          <Icon className="w-4 h-4 text-muted-foreground flex-shrink-0" />
         ) : (
           <span className="w-1.5 h-5 rounded-full bg-primary flex-shrink-0" />
         )}
         {title}
       </h2>
       {href && (
-        <Link href={href} className="tap-scale text-[13px] font-bold text-primary flex items-center gap-0.5 whitespace-nowrap">
+        <Link href={href} className="min-h-11 rounded-lg px-1 text-[13px] font-semibold text-foreground flex items-center gap-0.5 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
           {linkLabel}
           <ChevronRight className="w-3.5 h-3.5" />
         </Link>
@@ -152,42 +151,37 @@ export default function Home() {
           HERO — Value proposition + prominent search, then live map
           Inside the main wide container so it expands on large screens
       ═══════════════════════════════════════════════════════════════ */}
-      <PageContainer as="main" variant="wide" className="pt-5 pb-28">
+      <PageContainer as="main" variant="wide" className="pt-3 pb-28">
         {/* ── Value proposition ── */}
         <div className="mb-4">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary mb-2">
-            Fermenta.to
-          </p>
-          <h1 className="text-[28px] sm:text-[34px] font-extrabold text-foreground leading-[1.12] tracking-tight">
-            Scopri birre artigianali,
-            <br className="hidden sm:block" />{" "}
-            <span className="text-primary">pub e la community</span>
+          <h1 className="text-[24px] sm:text-[30px] font-bold text-foreground leading-tight tracking-tight">
+            {isAuthenticated ? "Per te" : <>
+            Birre, pub e persone
+            </>}
           </h1>
-          <p className="text-[14px] sm:text-[15px] text-muted-foreground mt-2.5 leading-relaxed max-w-xl">
-            Trova cosa bere vicino a te — taplist live, birrifici da scoprire e appassionati come te, in un tap.
+          <p className="text-[13px] sm:text-[14px] text-muted-foreground mt-1 leading-snug max-w-xl">
+            {isAuthenticated ? "Scopri cosa bere, dove trovarlo e chi lo produce." : "Il meglio della birra artigianale, vicino a te."}
           </p>
         </div>
 
         {/* ── Prominent search entry point ── */}
-        <Link href="/search" aria-label="Cerca birre, pub e birrifici">
-          <div className="tap-scale group flex items-center gap-3 w-full bg-card border-2 border-primary/20 rounded-2xl px-4 py-3.5 shadow-card mb-3 transition-colors hover:border-primary/40">
-            <Search className="w-5 h-5 text-primary flex-shrink-0" />
-            <span className="flex-1 text-[15px] text-muted-foreground font-medium truncate">
+        <Link href="/search" aria-label="Cerca birre, pub e birrifici" className="mb-2 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary">
+          <div className="group flex min-h-11 w-full items-center gap-3 rounded-2xl border border-border/70 bg-card px-4 transition-colors hover:border-primary/40">
+            <Search className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+            <span className="flex-1 truncate text-[14px] font-medium text-muted-foreground">
               Cerca birre, pub o birrifici…
             </span>
-            <span className="tap-scale flex-shrink-0 inline-flex items-center justify-center bg-primary text-white text-[13px] font-bold rounded-xl px-3.5 py-1.5">
-              Cerca
-            </span>
+            <ChevronRight className="w-4 h-4 text-muted-foreground flex-shrink-0" aria-hidden="true" />
           </div>
         </Link>
 
         {/* ── Quick actions ── */}
-        <div className="grid grid-cols-2 gap-2.5 mb-4">
-          <Link href="/explore/pubs" className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-[13.5px] font-bold px-3 py-3 rounded-2xl border border-border shadow-card-sm">
+        <div className="mb-3 grid grid-cols-2 gap-2">
+          <Link href="/explore/pubs" className="tap-scale flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-border/70 bg-card px-3 text-[13px] font-semibold text-foreground">
             <Store className="w-4 h-4 text-primary" />
             Esplora pub
           </Link>
-          <Link href="/explore/breweries" className="tap-scale w-full flex items-center justify-center gap-1.5 bg-card text-foreground text-[13.5px] font-bold px-3 py-3 rounded-2xl border border-border shadow-card-sm">
+          <Link href="/explore/breweries" className="tap-scale flex min-h-11 w-full items-center justify-center gap-1.5 rounded-xl border border-border/70 bg-card px-3 text-[13px] font-semibold text-foreground">
             <Building2 className="w-4 h-4 text-amber-500" />
             Birrifici
           </Link>
@@ -237,8 +231,8 @@ export default function Home() {
               <div className="space-y-3">
                 {(myPubs as any[]).map((pub: any) => (
                   <div key={pub.id} className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-4 flex items-center gap-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
-                    <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
-                      {pub.logoUrl ? <img src={pub.logoUrl} alt={pub.name} className="w-14 h-14 object-cover" /> : <Store className="w-6 h-6 text-primary/40" />}
+          <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
+            {pub.logoUrl ? <img src={pub.logoUrl} alt={pub.name} className="w-14 h-14 object-contain p-1" /> : <Store className="w-6 h-6 text-primary/40" />}
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="font-bold text-foreground truncate">{pub.name}</p>
@@ -357,29 +351,23 @@ export default function Home() {
               {(taplistActivity as any[]).map((item: any) => (
                 <Link key={item.id} href={`/pub/${item.pub_slug || item.pub_id}`}>
                   <div className="tap-scale flex-shrink-0 w-[148px] cursor-pointer">
-                    <div className="relative h-[112px] rounded-2xl overflow-hidden mb-2 bg-muted shadow-card-sm">
+                    <div className="relative h-[96px] rounded-2xl overflow-hidden mb-2 bg-muted/70">
                       {item.beer_image ? (
-                        <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-cover" />
+                        <img src={item.beer_image} alt={item.beer_name} className="w-full h-full object-contain p-1" />
                       ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary to-[#c95000] flex items-center justify-center">
-                          <Beer className="w-8 h-8 text-white/70" />
+                        <div className="w-full h-full flex items-center justify-center">
+                          <Beer className="w-8 h-8 text-primary/45" />
                         </div>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-                      {item.beer_abv && (
-                        <span className="absolute bottom-2 left-2 text-[10px] font-bold text-white bg-black/45 backdrop-blur-sm rounded-full px-2 py-0.5">
-                          {item.beer_abv}%
-                        </span>
-                      )}
-                      <span className={`absolute top-2 left-2 text-[9px] font-extrabold text-white rounded-full px-1.5 py-0.5 uppercase ${item.tap_type === 'pompa' ? 'bg-violet-600' : 'bg-primary'}`}>
-                        {item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
-                      </span>
                     </div>
                     <p className="text-[13px] font-semibold text-foreground line-clamp-1 leading-tight">{item.beer_name}</p>
-                    {item.beer_style && <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">{item.beer_style}</p>}
+                    <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5">
+                      {item.beer_style ? `${item.beer_style} · ` : ''}{item.tap_type === 'pompa' ? 'Pompa' : 'Spina'}
+                      {item.beer_abv ? ` · ${item.beer_abv}%` : ''}
+                    </p>
                     <div className="flex items-center gap-1 mt-1.5">
                       {item.pub_logo
-                        ? <img src={item.pub_logo} alt={item.pub_name} className="w-3.5 h-3.5 rounded-full object-cover flex-shrink-0" />
+                        ? <img src={item.pub_logo} alt={item.pub_name} className="w-3.5 h-3.5 rounded-full object-contain bg-muted/70 p-0.5 flex-shrink-0" />
                         : <Store className="w-3 h-3 text-muted-foreground flex-shrink-0" />}
                       <p className="text-[10px] text-muted-foreground truncate">{item.pub_name}</p>
                     </div>
@@ -397,34 +385,20 @@ export default function Home() {
           <section className="mt-8">
             <SectionHeader title="Birrificio in evidenza" icon={Star} href="/explore/breweries" linkLabel="Vedi tutti" />
             <Link href={`/brewery/${breweryOfDay.id}`}>
-              <div className="tap-scale relative rounded-3xl overflow-hidden cursor-pointer shadow-card" style={{ height: '168px' }}>
-                {(breweryOfDay.coverImageUrl || breweryOfDay.logoUrl) ? (
-                  <img
-                    src={breweryOfDay.coverImageUrl || breweryOfDay.logoUrl}
-                    alt={breweryOfDay.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full" style={{ background: 'linear-gradient(135deg, #1a0800 0%, #3d1200 50%, #7a2800 100%)' }} />
-                )}
-                {/* Gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/60 to-black/20" />
-                {/* Content */}
-                <div className="absolute inset-0 flex flex-col justify-end p-5">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold text-amber-300 mb-1.5 uppercase tracking-wide">
-                    <Star className="w-3 h-3" fill="currentColor" />
-                    Consigliato per te
-                  </span>
-                  <p className="text-white/65 text-[11px] font-medium mb-0.5">Birrificio del giorno</p>
-                  <p className="text-white text-[18px] font-extrabold leading-tight">{breweryOfDay.name}</p>
-                  {breweryOfDay.location && (
-                    <p className="text-white/60 text-[11px] mt-0.5 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />{breweryOfDay.location}
-                    </p>
+              <div className="tap-scale flex min-h-[112px] items-center gap-4 rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:border-primary/40">
+                <div className="h-[88px] w-[104px] flex-shrink-0 overflow-hidden rounded-xl bg-muted/70">
+                  {breweryOfDay.coverImageUrl || breweryOfDay.logoUrl
+                    ? <img src={breweryOfDay.coverImageUrl || breweryOfDay.logoUrl} alt={breweryOfDay.name} className="h-full w-full object-contain" />
+                    : <Building2 className="m-auto h-8 w-8 text-muted-foreground/60" />}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <span className="mb-1 inline-flex items-center gap-1 text-[11px] font-semibold text-primary"><Star className="h-3 w-3 fill-current" /> In evidenza</span>
+                  <p className="truncate text-base font-bold text-foreground">{breweryOfDay.name}</p>
+                  {breweryOfDay.location && <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{breweryOfDay.location}</p>}
+                  {breweryOfDay.coverImageUrl && breweryOfDay.logoUrl && breweryOfDay.coverImageUrl !== breweryOfDay.logoUrl && (
+                    <img src={breweryOfDay.logoUrl} alt={`Logo ${breweryOfDay.name}`} className="mt-2 h-8 w-8 rounded-lg border border-border/70 bg-card p-0.5 object-contain" />
                   )}
-                  <button className="mt-3 self-start text-[12px] font-bold bg-white text-stone-900 rounded-full px-4 py-1.5 shadow-md">
-                    Scopri il birrificio →
-                  </button>
+                  <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary">Scopri il birrificio <ChevronRight className="h-3.5 w-3.5" /></span>
                 </div>
               </div>
             </Link>
@@ -465,7 +439,7 @@ export default function Home() {
                     <div className={`tap-scale flex items-center gap-3 px-4 py-3.5 ${!isLast ? 'border-b border-border' : ''}`}>
                       <div className="w-10 h-10 rounded-xl overflow-hidden flex-shrink-0 bg-muted flex items-center justify-center">
                         {pub.logoUrl
-                          ? <img src={pub.logoUrl} alt={pub.name} className="w-10 h-10 object-cover" />
+                          ? <img src={pub.logoUrl} alt={pub.name} className="w-10 h-10 object-contain p-0.5" />
                           : <Store className="w-4 h-4 text-muted-foreground" />}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -485,7 +459,7 @@ export default function Home() {
                             </p>
                           </div>
                           {tap.beer_image
-                            ? <img src={tap.beer_image} alt={tap.beer_name} className="w-9 h-9 rounded-xl object-cover flex-shrink-0" />
+                            ? <img src={tap.beer_image} alt={tap.beer_name} className="w-10 h-10 rounded-xl object-contain bg-muted/70 p-0.5 flex-shrink-0" />
                             : (
                               <div className="w-9 h-9 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
                                 <Beer className="w-4 h-4 text-primary" />
@@ -594,7 +568,7 @@ export default function Home() {
                   </div>
                   <div className="h-1.5 bg-muted rounded-full overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary to-amber-400 transition-all duration-700"
+                      className="h-full rounded-full bg-primary transition-all duration-700"
                       style={{ width: `${Math.min(100, Math.round(((userStats?.totalCheckins ?? userStats?.total ?? 0) * 20 / 600) * 100))}%` }}
                     />
                   </div>
@@ -627,9 +601,9 @@ export default function Home() {
             <div className="space-y-2">
               {(taplistActivity as any[]).slice(0, 4).map((item: any) => (
                 <Link key={item.id} href={`/pub/${item.pub_slug || item.pub_id}`}>
-                  <div className="tap-scale flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
+                  <div className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3 transition-colors hover:bg-muted/50">
                     {item.beer_image ? (
-                      <img src={item.beer_image} alt={item.beer_name} className="w-10 h-10 rounded-xl object-cover flex-shrink-0" />
+                      <img src={item.beer_image} alt={item.beer_name} className="w-10 h-10 rounded-xl object-contain bg-muted/60 p-0.5 flex-shrink-0" />
                     ) : (
                       <div className="w-10 h-10 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
                         <Beer className="w-5 h-5 text-primary" />
@@ -645,7 +619,7 @@ export default function Home() {
                       </p>
                     </div>
                     {item.pub_logo ? (
-                      <img src={item.pub_logo} alt={item.pub_name} className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
+                      <img src={item.pub_logo} alt={item.pub_name} className="w-7 h-7 rounded-full object-contain bg-muted/70 p-0.5 flex-shrink-0" />
                     ) : (
                       <Store className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                     )}
@@ -654,12 +628,12 @@ export default function Home() {
               ))}
               {homeAnnouncements.slice(0, 2).map((ann: any) => (
                 <Link key={ann.id} href={`/brewery/${ann.breweryId}`}>
-                  <div className="tap-scale flex items-center gap-3 bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl px-4 py-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
+                  <div className="flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3 transition-colors hover:bg-muted/50">
                     {ann.breweryLogo ? (
                       <img src={ann.breweryLogo} alt={ann.breweryName} className="w-10 h-10 rounded-full object-contain bg-muted flex-shrink-0 p-1" />
                     ) : (
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-[#c95000] flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-white">{ann.breweryName?.[0]}</span>
+                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
@@ -667,7 +641,7 @@ export default function Home() {
                         <span className="font-bold">{ann.breweryName}</span>: {ann.title}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
-                        {ann.type === 'release' ? '🍺 Nuova birra' : ann.type === 'collab' ? '🤝 Collab' : '📰 Novità'}
+                        {ann.type === 'release' ? 'Nuova birra' : ann.type === 'collab' ? 'Collaborazione' : 'Novità'}
                       </p>
                     </div>
                   </div>
@@ -693,7 +667,7 @@ export default function Home() {
                   <Link key={favorite.id} href={href}>
                     <div className="tap-scale bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] rounded-2xl p-3 shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] cursor-pointer text-center transition-all duration-200">
                       {favorite.itemImageUrl ? (
-                        <img src={favorite.itemImageUrl} alt={favorite.itemName} className="w-10 h-10 rounded-full object-cover mx-auto mb-2 ring-2 ring-orange-100 dark:ring-orange-900/30" />
+                        <img src={favorite.itemImageUrl} alt={favorite.itemName} className={`w-10 h-10 rounded-xl ${favorite.itemType === 'beer' ? 'object-contain bg-muted/70 p-0.5' : 'object-contain'} mx-auto mb-2`} />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-2">
                           <TypeIcon className="w-5 h-5 text-primary" />
@@ -713,20 +687,18 @@ export default function Home() {
         ═══════════════════════════════════════════════════════════════ */}
         {!isAuthenticated && (
           <section className="mt-8">
-            <div className="relative overflow-hidden rounded-3xl p-6" style={{ background: 'linear-gradient(135deg, #FF7A00 0%, #f98a0e 55%, #f5a623 100%)' }}>
-              <div className="absolute -top-12 -right-12 w-44 h-44 rounded-full bg-white/10 pointer-events-none" />
-              <div className="absolute -bottom-8 -left-8 w-36 h-36 rounded-full bg-white/07 pointer-events-none" />
-              <div className="relative">
-                <p className="text-white/80 text-[11px] font-extrabold uppercase tracking-widest mb-1.5">Sei nuovo?</p>
-                <h3 className="text-[20px] font-extrabold text-white leading-tight mb-2">
+            <div className="rounded-2xl border border-border/70 bg-card p-5">
+              <div>
+                <p className="mb-1.5 text-[11px] font-bold uppercase tracking-widest text-primary">Sei nuovo?</p>
+                <h3 className="mb-2 text-[20px] font-bold leading-tight text-foreground">
                   Unisciti alla community
                 </h3>
-                <p className="text-white/80 text-sm leading-snug mb-5">
+                <p className="mb-4 text-sm leading-snug text-muted-foreground">
                   Salva i tuoi preferiti, tieni il diario degli assaggi e scopri birre con persone come te.
                 </p>
                 <Link
                   href="/api/login"
-                  className="inline-flex tap-scale bg-white text-primary font-bold rounded-full h-11 px-6 text-sm shadow-lg items-center justify-center"
+                  className="inline-flex min-h-11 tap-scale items-center justify-center rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground"
                 >
                   Registrati gratis →
                 </Link>

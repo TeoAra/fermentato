@@ -9,7 +9,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { PlainDescriptionEditor } from "@/components/plain-description";
 import RichTextEditor, { RichTextDisplay } from "@/components/rich-text-editor";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
@@ -124,7 +124,7 @@ export function BeerFullEditDialog({ beer, open, onOpenChange, onSaved }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="manager-dialog max-w-lg w-full overflow-x-hidden overflow-y-auto rounded-3xl border-stone-200 shadow-2xl">
+      <DialogContent formLayout className="manager-dialog max-w-lg rounded-3xl border-stone-200 shadow-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <div className="p-2 bg-primary rounded-xl">
@@ -154,7 +154,7 @@ export function BeerFullEditDialog({ beer, open, onOpenChange, onSaved }: {
               imageSearchEndpoint={`/api/beers/${beer.id}/find-image-preview`}
             />
 
-            <DialogFooter className="grid grid-cols-1 gap-3 border-t border-stone-100 pt-4 pb-[var(--frozen-sab)] min-[380px]:grid-cols-2 sm:space-x-0">
+            <DialogFooter sticky className="grid grid-cols-1 gap-3 border-t border-stone-100 pt-4 min-[380px]:grid-cols-2 sm:space-x-0">
               <Button
                 type="submit"
                 className="order-2 h-12 min-h-11 rounded-xl bg-primary font-bold text-white shadow-md hover:bg-primary/90"
@@ -290,12 +290,12 @@ function BeerProfilePanel({ beer, beerFull, descEdit, onDescChange, onSaveDesc, 
           <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{descEdit}</p>
         ) : (
           <div className="space-y-2">
-            <Textarea
-              value={descEdit}
-              onChange={(e) => onDescChange(e.target.value)}
+            <PlainDescriptionEditor
+              content={descEdit}
+              onChange={onDescChange}
               placeholder="Descrivi questa birra: aromi, carattere, abbinamenti gastronomici..."
               className="resize-none text-sm min-h-[72px] border-stone-200 rounded-xl"
-              maxLength={2000}
+              maxChars={2000}
               autoFocus={isDescEditing && !!descEdit}
             />
             <div className="flex items-center justify-between gap-2">
@@ -759,7 +759,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
           {(nextTapProposals as any[]).length > 0 && (
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Prossime birre in coda</p>
-              <div className="space-y-1.5 max-h-48 overflow-y-auto">
+              <div className="space-y-1.5">
                 {(nextTapProposals as any[]).map((p: any) => (
                   <button
                     key={p.id}
@@ -834,7 +834,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 Aggiungi Birra
               </Button>
             </DialogTrigger>
-            <DialogContent data-testid="taplist-beer-dialog" className={`manager-dialog max-w-lg w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto rounded-3xl border-stone-200 ${creatingBeer ? "manager-dialog-creating" : ""}`}>
+            <DialogContent formLayout data-testid="taplist-beer-dialog" className={`manager-dialog max-w-lg rounded-3xl border-stone-200 ${creatingBeer ? "manager-dialog-creating" : ""}`}>
               <DialogHeader>
                 <DialogTitle className="text-xl font-bold text-foreground">
                   {editingItem ? "Modifica Birra" : "Aggiungi Birra alla Tap List"}
@@ -844,7 +844,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="space-y-6 pt-4 w-full overflow-x-hidden">
+              <div className="space-y-6 pt-4 w-full min-w-0">
                 {/* Ricerca Birra o Birra Selezionata */}
                 {!editingItem && !creatingBeer && (
                   <div className="space-y-3">
@@ -928,7 +928,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                         {debouncedSearchTerm.length >= 2 && !isSearching && !formData.beerId && !creatingBeer && (
                           <>
                             {searchResults?.beers && searchResults.beers.length > 0 && (
-                              <div className="max-h-60 overflow-y-auto border border-stone-200 rounded-2xl bg-white dark:bg-[#0B0D10]/20 shadow-sm mt-2 divide-y divide-orange-50">
+                              <div className="border border-stone-200 rounded-2xl bg-white dark:bg-[#0B0D10]/20 shadow-sm mt-2 divide-y divide-orange-50">
                                 {searchResults.beers.map((beer: any) => (
                                   <div
                                     key={beer.id}
@@ -1138,7 +1138,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     {debouncedSearchTerm.length >= 2 && !isSearching && (
                       <>
                         {searchResults?.beers && searchResults.beers.length > 0 && (
-                          <div className="max-h-56 overflow-y-auto border border-stone-200 rounded-2xl bg-white dark:bg-[#0B0D10]/20 shadow-sm divide-y divide-stone-100 dark:divide-white/[0.04]">
+                          <div className="border border-stone-200 rounded-2xl bg-white dark:bg-[#0B0D10]/20 shadow-sm divide-y divide-stone-100 dark:divide-white/[0.04]">
                             {searchResults.beers.map((beer: any) => (
                               <div
                                 key={beer.id}

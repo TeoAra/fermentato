@@ -21,6 +21,9 @@
 - [Security hardening baseline](security-hardening.md) — helmet (CSP off, COEP off), body 1mb global (10mb only /api/scan), generalApiRateLimit 300/5min in rate-limit.ts, query maxLen 200. Actual SQL injection risk was low (parameterized queries throughout); main gaps were DoS vectors.
 - [Cantina and taplist independence](inventory-list-independence.md) — visibility and deletion in one inventory list must never silently mutate the other, even when both rows reference the same beer.
 - [Owner mobile UX](owner-mobile-ux.md) — brewery dock has at most five fixed tabs; Info/Novità belong under Home; pub beer reorder must renumber positions from 1 to X.
+- [Stile social e navigazione](navigation-visual-style.md) — tutte le barre fluttuanti e icon-only, stile Instagram; stessa compattezza e nomi accessibili.
+- [Descrizioni e moduli](descriptions-and-form-ux.md) — descrizioni come testo normale con a capo; moduli birra/prodotto/categoria coerenti, con un solo scroll.
 - [Development watcher limits](dev-watchers.md) — Vite plugins may watch the workspace despite a client root; exclude tool caches to prevent ENOSPC preview crashes.
 - [Android package identity](android-package-identity.md) — Android/Play uses to.fermenta.app while shared Capacitor/iOS uses to.fermentato.app; Firebase and CI must target the Android ID.
 - [Map and location UX](map-location-ux.md) — keep the current free map; refine coarse GPS fixes, display actual uncertainty and distinguish fresh from cached coordinates.
+- [Venue covers and simplicity](venue-cover-presentation.md) — full, proportionate covers without zoom/crop; reduce clutter without removing actions or information.

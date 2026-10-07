@@ -82,6 +82,7 @@ import { useChromecast } from "@/hooks/useChromecast";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
 import { useMemo } from "react";
+import { FloatingBottomBar } from "@/components/floating-bottom-bar";
 import FlexiblePriceManager from "@/components/flexible-price-manager";
 import MenuCategoryManager from "@/components/menu-category-manager";
 import { TapListManager } from "@/components/taplist-manager";
@@ -2246,65 +2247,35 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
 
       {/* ── BOTTOM DOCK DASHBOARD PUB — stesso pattern di BottomNavigation ── */}
       <DockPortal>
-      <nav
-        className={`bottom-nav-fixed lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-[#0B0D10] rounded-t-[32px] border-t border-x border-stone-100 dark:border-white/[0.06] shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.18)] dark:shadow-[0_-10px_40px_-8px_rgba(0,0,0,0.55)] transition-opacity duration-200 ${
-          isAnyModalOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
-        }`}
-        style={{ paddingBottom: 'max(var(--frozen-sab) - 16px, 0px)' }}
-        aria-label="Navigazione dashboard pub"
+      <FloatingBottomBar
+        label="Navigazione dashboard pub"
         role="tablist"
-      >
-        <div className="px-2">
-          <div>
-            <div className="flex min-h-[52px] items-center justify-between px-1 gap-1">
-              {mobilePrimarySections.map((section) => {
-                const Icon = section.icon;
-                const active = currentSection === section.id;
-                return (
-                  <button
-                    key={section.id}
-                    onClick={() => setCurrentSection(section.id as DashboardSection)}
-                    role="tab"
-                    aria-selected={active}
-                    aria-current={active ? 'page' : undefined}
-                    aria-label={section.name}
-                    data-testid={`smartpub-dock-${section.id}`}
-                    className={`min-h-12 flex-1 flex flex-col items-center justify-center gap-0.5 px-1 rounded-[18px] transition-all duration-200 active:scale-95 ${
-                      active
-                        ? 'bg-primary/10 dark:bg-primary/15 text-primary'
-                        : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
-                    }`}
-                  >
-                    <Icon
-                      className="h-[20px] w-[20px]"
-                      strokeWidth={active ? 2.6 : 1.8}
-                      fill={active ? 'currentColor' : 'none'}
-                      style={active ? { fillOpacity: 0.18 } : {}}
-                    />
-                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
-                      {section.name}
-                    </span>
-                  </button>
-                );
-              })}
-              <button
-                type="button"
-                onClick={() => setMobileMenuOpen(true)}
-                role="tab"
-                aria-label="Altre sezioni"
-                className={`min-h-12 flex-1 flex flex-col items-center justify-center gap-0.5 px-1 rounded-[18px] transition-all duration-200 active:scale-95 ${
-                  mobileMoreSections.some((section) => section.id === currentSection)
-                    ? 'bg-primary/10 dark:bg-primary/15 text-primary'
-                    : 'text-stone-500 dark:text-stone-400'
-                }`}
-              >
-                <MoreHorizontal className="h-[20px] w-[20px]" strokeWidth={2} />
-                <span className="text-[10px] leading-none tracking-tight font-semibold">Altro</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </nav>
+        hidden={isAnyModalOpen}
+        testId="smartpub-dashboard-dock"
+        items={[
+          ...mobilePrimarySections.map((section) => {
+            const Icon = section.icon;
+            return {
+              id: section.id,
+              label: section.name,
+              icon: <Icon />,
+              active: currentSection === section.id,
+              role: "tab" as const,
+              onClick: () => setCurrentSection(section.id as DashboardSection),
+              testId: `smartpub-dock-${section.id}`,
+            };
+          }),
+          {
+            id: "altro",
+            label: "Altre sezioni",
+            icon: <MoreHorizontal />,
+            active: mobileMoreSections.some((section) => section.id === currentSection),
+            role: "tab" as const,
+            onClick: () => setMobileMenuOpen(true),
+            testId: "smartpub-dock-more",
+          },
+        ]}
+      />
       </DockPortal>
 
       <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

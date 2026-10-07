@@ -376,7 +376,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                 Aggiungi
               </Button>
             </DialogTrigger>
-            <DialogContent data-testid="bottle-beer-dialog" className={`manager-dialog max-w-2xl w-[calc(100%-1rem)] max-h-[calc(100dvh-1rem)] overflow-x-hidden overflow-y-auto rounded-3xl p-4 sm:p-6 pb-[calc(1rem+var(--frozen-sab))] ${creatingBeer ? "manager-dialog-creating" : ""}`}>
+            <DialogContent formLayout data-testid="bottle-beer-dialog" className={`manager-dialog max-w-2xl rounded-3xl p-4 sm:p-6 ${creatingBeer ? "manager-dialog-creating" : ""}`}>
               <DialogHeader>
                 <DialogTitle>
                   {editingItem ? "Modifica Birra" : "Aggiungi Birra alla Cantina"}
@@ -448,7 +448,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                           />
                         </div>
                         {searchResults?.beers && searchResults.beers.length > 0 && !formData.beerId && (
-                          <div className="max-h-48 overflow-y-auto border rounded-lg bg-white dark:bg-[#0B0D10]">
+                          <div className="border rounded-lg bg-white dark:bg-[#0B0D10]">
                             {searchResults.beers.map((beer: any, idx: number) => (
                               <div
                                 key={beer?.id ?? `result-${idx}`}
@@ -619,7 +619,7 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                   />
                 </div>
 
-                  <div data-testid="bottle-dialog-actions" className={`manager-dialog-footer flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t ${creatingBeer ? "hidden" : ""}`}>
+                  <div data-testid="bottle-dialog-actions" className={`manager-dialog-footer flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-6 border-t pb-[var(--frozen-sab)] ${creatingBeer ? "hidden" : ""}`}>
                   <Button
                     variant="outline"
                     onClick={() => {
