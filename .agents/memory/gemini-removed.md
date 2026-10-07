@@ -10,7 +10,7 @@ description: Beer-card image/logo search is intentionally free (no Gemini/paid A
 **Why:** unexpected billing (a ~€260 spike) came from an earlier version of the *image finder* that used Gemini grounding + image-picking. That was removed. If prod is still charged, it's the manual-deploy VPS running old code — the fix is deploying current code, not editing code again.
 
 ## Free image-search stack (the "pacchetto gratis")
-- `findBestBeerImage`: Untappd → brewery site og:image → Open Food Facts → (SearXNG + DuckDuckGo pool). First three are trusted/high; SearXNG/DDG are low-confidence and only used on forced re-search.
+- Free sources can supply candidates, but their ranking or source name alone is not proof of identity. Low-confidence web candidates must not be automatically applied, including forced re-search.
 - `findBestBreweryLogo`: Untappd → website → SearXNG.
 - SearXNG is optional/self-hosted: `server/searxng.ts` reads `SEARXNG_URL`; returns `[]` when unset so everything degrades cleanly.
 
@@ -20,3 +20,10 @@ description: Beer-card image/logo search is intentionally free (no Gemini/paid A
 - SearXNG needs `formats: [html, json]` enabled in its `settings.yml` or JSON output 404s. Its JSON `img_src` is usually a direct URL; if it's an instance-proxied path and `SEARXNG_URL` is localhost/private, that URL is unreachable by Cloudinary/browser — skip it.
 
 **How to apply:** before touching image search, confirm the change stays free; never reintroduce a paid/AI image picker here.
+
+## Faithfulness and consistency
+Creation, editing, preview and forced search must use the same identity checks and confidence threshold. Prefer no image to an unrelated label, a different beer variant, or a brewery cover photo used as a logo. Include the brewery in hosted-image identity; beer names are not unique across breweries.
+
+**Why:** the user explicitly requested precise, faithful image searches consistent across every case.
+
+**How to apply:** never relax identity validation just because a search is forced or a source is popular. Offer manual selection/upload when automatic verification fails.

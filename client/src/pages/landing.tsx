@@ -1,20 +1,22 @@
 import { Helmet } from "react-helmet-async";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect, useMemo, useRef, lazy, Suspense } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  Beer, MapPin, Store, Users, Navigation,
+  Beer, MapPin, Store, Users,
   ChevronRight, Building2, Search, CheckCircle2,
   Crown, Shield, ArrowRight, Zap, Sparkles,
-  TrendingUp, Flame, Star, Bookmark, ChevronDown
+  TrendingUp, Flame, Star
 } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
-const HomepageMap = lazy(() => import("@/components/homepage-map"));
+import HomeMapPanel from "@/components/home-map-panel";
+import PullToRefreshIndicator from "@/components/pull-to-refresh-indicator";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useGeolocation } from "@/hooks/useGeolocation";
 import { PageContainer } from "@/components/layout/page-container";
-import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
 import { isIosNative, isNativeApp } from "@/lib/platform";
 import NewsStrip from "@/components/news-strip";
 
@@ -68,24 +70,14 @@ function formatDist(km: number): string {
 }
 
 export default function Landing() {
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
+  const geo = useGeolocation({ auto: true });
+  const userLocation = useMemo(() => geo.lat !== null && geo.lng !== null ? { lat: geo.lat, lng: geo.lng } : null, [geo.lat, geo.lng]);
+  const queryClient = useQueryClient();
+  const handleRefresh = useCallback(async () => { await queryClient.invalidateQueries(); }, [queryClient]);
+  const refresh = usePullToRefresh(handleRefresh);
   const [showPubs, setShowPubs] = useState(true);
   const [showBreweries, setShowBreweries] = useState(true);
   const [distanceKm, setDistanceKm] = useState(10);
-  const [showDistancePicker, setShowDistancePicker] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.()) {
-      setLocationStatus('idle');
-      return;
-    }
-    if (!isGeolocationAvailable()) { setLocationStatus('denied'); return; }
-    setLocationStatus('requesting');
-    getCurrentPosition({ enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 })
-      .then((pos) => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocationStatus('granted'); })
-      .catch(() => setLocationStatus('denied'));
-  }, []);
 
   const { data: pubs, isLoading: pubsLoading } = useQuery({ queryKey: ["/api/pubs"] });
 
@@ -103,10 +95,8 @@ export default function Landing() {
   });
 
   const { data: breweriesForMap } = useQuery({
-    queryKey: ["/api/breweries/nearby", userLocation?.lat, userLocation?.lng, "map"],
-    queryFn: () => fetch(`/api/breweries/nearby?lat=${userLocation!.lat}&lng=${userLocation!.lng}&limit=80`).then(r => r.json()),
-    enabled: !!userLocation,
-    staleTime: 5 * 60 * 1000,
+    queryKey: ["/api/breweries/map"],
+    staleTime: 10 * 60 * 1000,
   });
 
   const { data: globalStats } = useQuery<any>({ queryKey: ["/api/stats"] });
@@ -139,14 +129,6 @@ export default function Landing() {
     if (userLocation && nearbyHasResults) return breweriesNearby as any[];
     return Array.isArray(breweriesFallback) ? breweriesFallback : [];
   }, [userLocation, nearbyHasResults, breweriesNearby, breweriesFallback]);
-
-  const handleRequestLocation = () => {
-    if (!isGeolocationAvailable()) return;
-    setLocationStatus('requesting');
-    getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 })
-      .then((pos) => { setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }); setLocationStatus('granted'); })
-      .catch(() => setLocationStatus('denied'));
-  };
 
   const totalBreweries = globalStats?.totalBreweries ?? 0;
   const totalBeers = globalStats?.totalBeers ?? 0;
@@ -183,103 +165,34 @@ export default function Landing() {
           ]
         }])}</script>
       </Helmet>
+      <PullToRefreshIndicator {...refresh} />
 
       {/* ═══════════════════════════════════════════════════════════════
           HERO — mappa + chip + heading + CTA (stile homepage loggata)
       ═══════════════════════════════════════════════════════════════ */}
       <PageContainer as="main" variant="wide" className="pt-4 pb-8">
 
-        {/* Map card */}
-        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-[#0B0D10] shadow-card h-[300px] lg:h-[260px]" style={{ maxHeight: 300 }}>
-          <div className="absolute inset-0 overflow-hidden" style={{ maxHeight: '100%' }}>
-            <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-[#1A1D24]" />}>
-              <HomepageMap
-                pubs={Array.isArray(pubs) ? pubs as any[] : []}
-                breweries={(() => {
-                  const src = Array.isArray(breweriesForMap) && breweriesForMap.length > 0
-                    ? breweriesForMap
-                    : (Array.isArray(breweriesFallback) ? breweriesFallback : []);
-                  return (src as any[]).filter((b: any) => b.latitude && b.longitude);
-                })()}
-                userLocation={userLocation}
-                isLoading={pubsLoading}
-                showPubs={showPubs}
-                showBreweries={showBreweries}
-                distanceKm={userLocation ? distanceKm : undefined}
-                onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
-                showControls={false}
-                fixedHeight={300}
-              />
-            </Suspense>
-          </div>
-
-          {/* Location chip */}
-          <div className="absolute top-3 left-3 z-10 pointer-events-none">
-            {locationStatus === 'granted' && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-white/95 dark:bg-card/95 backdrop-blur-md text-primary rounded-full px-2.5 py-1.5 shadow-card-sm border border-primary/15">
-                <MapPin className="w-3 h-3" /> Vicino a te
-              </span>
-            )}
-            {locationStatus === 'requesting' && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-amber-500 text-white rounded-full px-2.5 py-1.5 animate-pulse shadow-card-sm">
-                <Navigation className="w-3 h-3" /> Ricerca GPS…
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Filter chips below map */}
-        <div className="flex items-center gap-2 mt-3 pb-0.5">
-          {/* Distance picker */}
-          <div className="relative flex-shrink-0">
-            <button
-              onClick={() => setShowDistancePicker(v => !v)}
-              className="tap-scale flex items-center gap-1.5 bg-card border border-border rounded-full px-3.5 py-2 text-[13px] font-bold text-foreground shadow-card-sm whitespace-nowrap"
-            >
-              {distanceKm} km <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
-            {showDistancePicker && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowDistancePicker(false)} />
-                <div className="absolute top-11 left-0 z-50 bg-card border border-border rounded-2xl shadow-card overflow-hidden min-w-[110px]">
-                  {[1, 5, 10, 15, 20, 30, 50, 100].map(d => (
-                    <button
-                      key={d}
-                      onClick={() => { setDistanceKm(d); setShowDistancePicker(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-muted'}`}
-                    >
-                      {d} km
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
-            <button
-              onClick={() => setShowPubs(v => !v)}
-              className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
-                showPubs ? 'bg-primary border-primary text-white' : 'bg-card border-border text-foreground'
-              }`}
-            >
-              <Store className="w-3.5 h-3.5" /> Pub
-            </button>
-            <button
-              onClick={() => setShowBreweries(v => !v)}
-              className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
-                showBreweries ? 'bg-amber-500 border-amber-500 text-white' : 'bg-card border-border text-foreground'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" /> Birrifici
-            </button>
-            <Link href="/search" className="flex-shrink-0">
-              <button className="tap-scale w-9 h-9 flex items-center justify-center bg-card border border-border rounded-full shadow-card-sm text-foreground" aria-label="Cerca birre">
-                <Search className="w-4 h-4" />
-              </button>
-            </Link>
-          </div>
-        </div>
+        <HomeMapPanel
+          pubs={Array.isArray(pubs) ? pubs as any[] : []}
+          breweries={Array.isArray(breweriesForMap) && breweriesForMap.length > 0 ? breweriesForMap : (Array.isArray(breweriesFallback) ? breweriesFallback : [])}
+          userLocation={userLocation}
+          accuracy={geo.accuracy}
+          isCached={geo.isCached}
+          locationStatus={geo.status}
+          locationError={geo.error}
+          recenterToken={geo.requestId}
+          onRequestLocation={geo.request}
+          isLoading={pubsLoading}
+          distanceKm={distanceKm}
+          onDistanceChange={setDistanceKm}
+          showPubs={showPubs}
+          onShowPubsChange={setShowPubs}
+          showBreweries={showBreweries}
+          onShowBreweriesChange={setShowBreweries}
+        />
+        <Link href="/search" className="mt-3 flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-border bg-card px-4 text-sm font-semibold text-primary">
+          <Search className="h-4 w-4" /> Cerca birre, pub e birrifici
+        </Link>
 
         {/* Content block — heading + CTAs */}
         <div className="mt-4">
@@ -312,17 +225,6 @@ export default function Landing() {
               </button>
             </Link>
           </div>
-
-          {/* GPS opt-in */}
-          {locationStatus !== 'granted' && locationStatus !== 'requesting' && (
-            <button
-              onClick={handleRequestLocation}
-              className="tap-scale w-full mt-2.5 flex items-center justify-center gap-1.5 text-primary text-[13px] font-bold px-4 py-2 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-primary/15"
-            >
-              <Navigation className="w-3.5 h-3.5" />
-              Usa la mia posizione
-            </button>
-          )}
 
           {/* NewsStrip */}
           <div className="mt-5">

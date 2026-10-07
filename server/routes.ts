@@ -98,6 +98,7 @@ import { promisify } from "util";
 import { tmpdir } from "os";
 import { writeFile, unlink } from "fs/promises";
 import { randomBytes } from "crypto";
+import { imageIdentityKey } from "./image-identity";
 const execFileAsync = promisify(execFile);
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated, isAdmin } from "./auth";
@@ -9174,9 +9175,8 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
       }
 
       const result = await findBestBeerImage(info.name, info.brewery_name ?? "", info.website_url);
-      // Return also low-confidence results: the user sees a preview and confirms before applying,
-      // so showing something is better than returning null.
-      if (!result.url) {
+      // Same identity requirement in creation, editing and background searches.
+      if (!result.url || result.confidence !== "high") {
         return res.json({ imageUrl: null, confidence: result.confidence, source: result.source });
       }
 
@@ -9224,7 +9224,9 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
         )).rows[0];
         if (br) {
           websiteUrl = br.website_url ?? null;
-          if (!resolvedBreweryName) resolvedBreweryName = br.name;
+          resolvedBreweryName = br.name;
+        } else {
+          return res.status(400).json({ message: "Birrificio non trovato" });
         }
       }
 
@@ -9234,7 +9236,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
       }
 
       const safeSlug = beerName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 40) || "beer";
-      const cloudUrl = await rehostImageOnCloudinary(result.url, "beer-images", `web_new_${safeSlug}`);
+      const cloudUrl = await rehostImageOnCloudinary(result.url, "beer-images", `web_new_${safeSlug}_${imageIdentityKey(beerName, resolvedBreweryName, breweryId ? Number(breweryId) : undefined)}`);
       res.json({
         imageUrl: cloudUrl ?? result.url,
         confidence: "high",

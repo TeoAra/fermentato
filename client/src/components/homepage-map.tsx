@@ -53,8 +53,9 @@ interface HomepageMapProps {
   pubs: MapPub[];
   breweries: MapBrewery[];
   userLocation?: { lat: number; lng: number } | null;
+  accuracy?: number | null;
+  recenterToken?: number;
   isLoading?: boolean;
-  onLocate?: (loc: { lat: number; lng: number }) => void;
   showPubs?: boolean;
   showBreweries?: boolean;
   distanceKm?: number;
@@ -77,6 +78,8 @@ export default function HomepageMap({
   pubs,
   breweries,
   userLocation,
+  accuracy,
+  recenterToken,
   isLoading,
   showPubs = true,
   showBreweries = true,
@@ -99,7 +102,19 @@ export default function HomepageMap({
   const displayZoom = externalZoom !== undefined ? externalZoom : zoom;
   const [selected, setSelected] = useState<Selected | null>(null);
   const hasFlewRef = useRef(false);
+  const userPannedRef = useRef(false);
+  const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const prevDistRef = useRef<number | undefined>(undefined);
+
+  const trackPanStart = (event: React.PointerEvent<HTMLDivElement>) => {
+    pointerStartRef.current = { x: event.clientX, y: event.clientY };
+  };
+  const trackPanMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const start = pointerStartRef.current;
+    if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 7) {
+      userPannedRef.current = true;
+    }
+  };
 
   useEffect(() => {
     if (fixedHeight) {
@@ -132,19 +147,32 @@ export default function HomepageMap({
   }, [fixedHeight]);
 
   useEffect(() => {
-    if (!userLocation || hasFlewRef.current) return;
+    if (!userLocation || hasFlewRef.current || userPannedRef.current) return;
     hasFlewRef.current = true;
     setCenter([userLocation.lat, userLocation.lng]);
     updateZoom(radiusToZoom(distanceKm ?? 10));
   }, [userLocation, distanceKm]);
 
   useEffect(() => {
-    if (!userLocation || !distanceKm) return;
+    if (!userLocation || !distanceKm || userPannedRef.current) return;
     if (prevDistRef.current === distanceKm) return;
     prevDistRef.current = distanceKm;
     setCenter([userLocation.lat, userLocation.lng]);
     updateZoom(radiusToZoom(distanceKm));
   }, [distanceKm, userLocation]);
+
+  useEffect(() => {
+    if (!userLocation || recenterToken === undefined || recenterToken === 0) return;
+    userPannedRef.current = false;
+    hasFlewRef.current = true;
+    setCenter([userLocation.lat, userLocation.lng]);
+    updateZoom(radiusToZoom(distanceKm ?? 10));
+  }, [recenterToken]);
+
+  useEffect(() => {
+    if (!userLocation || userPannedRef.current) return;
+    setCenter([userLocation.lat, userLocation.lng]);
+  }, [userLocation?.lat, userLocation?.lng]);
 
   const geoFilteredPubs = useMemo(() => {
     if (!showPubs) return [];
@@ -211,8 +239,15 @@ export default function HomepageMap({
   return (
     <div
       ref={containerRef}
+      data-map-center={center.join(",")}
+      data-map-zoom={displayZoom}
       className="relative w-full overflow-hidden"
-      style={{ touchAction: isNative ? "none" : "pan-y", height: fixedHeight ? `${fixedHeight}px` : '100%', maxHeight: fixedHeight ? `${fixedHeight}px` : undefined }}
+      onPointerDown={trackPanStart}
+      onPointerMove={trackPanMove}
+      onPointerUp={() => { pointerStartRef.current = null; }}
+      onPointerCancel={() => { pointerStartRef.current = null; }}
+      data-no-pull="true"
+      style={{ touchAction: "none", height: fixedHeight ? `${fixedHeight}px` : '100%', maxHeight: fixedHeight ? `${fixedHeight}px` : undefined }}
     >
       {isLoading && (
         <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-[#1A1D24]">
@@ -239,12 +274,24 @@ export default function HomepageMap({
         >
           {userLocation && (
             <Overlay anchor={[userLocation.lat, userLocation.lng]} offset={[8, 8]}>
-              <div style={{
+              <div style={{ position: "relative", width: 16, height: 16, zIndex: 2 }}>
+              {accuracy != null && accuracy > 0 && (() => {
+                const metersPerPixel = 156543.03392 * Math.max(0.08, Math.cos(userLocation.lat * Math.PI / 180)) / (2 ** displayZoom);
+                const diameter = Math.min(640, Math.max(8, (accuracy * 2) / metersPerPixel));
+                return <div aria-hidden="true" style={{
+                  position: "absolute", width: diameter, height: diameter, borderRadius: "50%",
+                  left: 8 - diameter / 2, top: 8 - diameter / 2,
+                  background: "rgba(56, 126, 190, 0.14)", border: "1px solid rgba(42, 111, 179, 0.38)",
+                  pointerEvents: "none",
+                }} />;
+              })()}
+              <div aria-label="La tua posizione" style={{
                 width: 16, height: 16, borderRadius: "50%",
-                background: "#3B82F6", border: "3px solid white",
+                background: "#397BB5", border: "3px solid white",
                 boxShadow: "0 0 0 3px rgba(59,130,246,0.35), 0 2px 8px rgba(0,0,0,0.2)",
                 pointerEvents: "none",
               }} />
+              </div>
             </Overlay>
           )}
 
@@ -255,7 +302,9 @@ export default function HomepageMap({
               const size = count < 10 ? 38 : count < 50 ? 46 : count < 200 ? 54 : 62;
               return (
                 <Overlay key={`cluster-${c.id}`} anchor={[lat, lng]} offset={[size / 2, size / 2]} style={{ zIndex: 10 }}>
-                  <div
+                  <button
+                    type="button"
+                    aria-label={`Ingrandisci mappa: ${count} luoghi`}
                     onClick={(e) => {
                       e.stopPropagation();
                       try {
@@ -271,11 +320,11 @@ export default function HomepageMap({
                       boxShadow: "0 4px 14px rgba(0,0,0,0.28)",
                       display: "flex", alignItems: "center", justifyContent: "center",
                       color: "white", fontWeight: 800, fontSize: 13,
-                      cursor: "pointer", userSelect: "none",
+                      cursor: "pointer", userSelect: "none", padding: 0,
                     }}
                   >
                     {count}
-                  </div>
+                  </button>
                 </Overlay>
               );
             }
@@ -284,11 +333,11 @@ export default function HomepageMap({
               const pub = data;
               const isSelected = selected?.type === "pub" && selected.id === pub.id;
               return (
-                <Overlay key={`pub-${pub.id}`} anchor={[lat, lng]} offset={[18, 18]} style={{ zIndex: isSelected ? 1000 : 5 }}>
+                <Overlay key={`pub-${pub.id}`} anchor={[lat, lng]} offset={[18, 32]} style={{ zIndex: isSelected ? 1000 : 5 }}>
                   <div style={{ position: "relative" }}>
                     <MarkerPin
                       type="pub"
-                      logoUrl={pub.logoUrl}
+                      name={pub.name}
                       isSelected={isSelected}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -302,9 +351,6 @@ export default function HomepageMap({
                         });
                       }}
                     />
-                    {isSelected && (
-                      <MapPopup selected={selected!} onClose={() => setSelected(null)} />
-                    )}
                   </div>
                 </Overlay>
               );
@@ -313,11 +359,11 @@ export default function HomepageMap({
             const isSelected = selected?.type === "brewery" && selected.id === brewery.id;
             const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
             return (
-              <Overlay key={`brewery-${brewery.id}`} anchor={[lat, lng]} offset={[18, 18]} style={{ zIndex: isSelected ? 1000 : 5 }}>
+              <Overlay key={`brewery-${brewery.id}`} anchor={[lat, lng]} offset={[18, 32]} style={{ zIndex: isSelected ? 1000 : 5 }}>
                 <div style={{ position: "relative" }}>
                   <MarkerPin
                     type="brewery"
-                    logoUrl={brewery.logoUrl}
+                    name={brewery.name}
                     isSelected={isSelected}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -330,19 +376,19 @@ export default function HomepageMap({
                       });
                     }}
                   />
-                  {isSelected && (
-                    <MapPopup selected={selected!} onClose={() => setSelected(null)} />
-                  )}
                 </div>
               </Overlay>
             );
           })}
         </Map>
       )}
+      {selected && <MapPopup selected={selected} onClose={() => setSelected(null)} />}
 
       {showControls && (
         <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
           <button
+            type="button"
+            aria-label="Ingrandisci mappa"
             onClick={() => updateZoom(Math.min(displayZoom + 1, 18))}
             className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
             style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
@@ -350,6 +396,8 @@ export default function HomepageMap({
             <Plus className="w-4 h-4" strokeWidth={2.5} />
           </button>
           <button
+            type="button"
+            aria-label="Riduci mappa"
             onClick={() => updateZoom(Math.max(displayZoom - 1, 2))}
             className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
             style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
@@ -390,52 +438,50 @@ export default function HomepageMap({
           </div>
         </div>
       )}
+      {!isLoading && pubCount + breweryCount === 0 && (
+        <div role="status" className="absolute left-1/2 top-1/2 z-20 w-[min(280px,calc(100%-36px))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#d9dfd2] bg-[#fffdf7]/95 px-4 py-3 text-center shadow-lg backdrop-blur-sm dark:border-[#485447] dark:bg-[#222b23]/95">
+          <p className="text-sm font-semibold text-[#354536] dark:text-[#e7eee3]">Nessun risultato con questi filtri</p>
+          <p className="mt-1 text-xs text-[#687565] dark:text-[#c0cbb9]">{userLocation ? `Prova ad ampliare il raggio oltre ${distanceKm} km o modifica le categorie.` : "Modifica le categorie o esplora un’altra area."}</p>
+        </div>
+      )}
     </div>
   );
 }
 
 function MarkerPin({
-  type, logoUrl, isSelected, onClick,
+  type, name, isSelected, onClick,
 }: {
   type: "pub" | "brewery";
-  logoUrl?: string | null;
+  name: string;
   isSelected: boolean;
   onClick: (e: React.MouseEvent) => void;
 }) {
-  const color = type === "pub" ? PUB_COLOR : BREWERY_COLOR;
-  const gradEnd = type === "pub" ? "#f5a623" : "#c46520";
-  const emoji = type === "pub" ? "🍻" : "🍺";
+  const pinColor = type === "pub" ? "#E86B32" : "#568A42";
 
   return (
-    <div
+    <button
+      type="button"
+      aria-label={`${type === "pub" ? "Pub" : "Birrificio"}: ${name}${isSelected ? ", selezionato" : ""}`}
       onClick={onClick}
       style={{
-        width: 36, height: 36, borderRadius: "50%",
-        background: `linear-gradient(135deg,${color},${gradEnd})`,
-        border: `2.5px solid ${isSelected ? "#F77104" : "white"}`,
+        width: 36, height: 42, borderRadius: "50% 50% 50% 4px",
+        background: pinColor,
+        border: `2.5px solid ${isSelected ? "#273D32" : "white"}`,
         boxShadow: isSelected
-          ? "0 0 0 3px rgba(247,113,4,0.4), 0 2px 10px rgba(0,0,0,0.25)"
-          : "0 2px 10px rgba(0,0,0,0.25)",
+          ? "0 0 0 3px rgba(39,61,50,0.3), 0 3px 9px rgba(0,0,0,0.25)"
+          : "0 2px 8px rgba(0,0,0,0.28)",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 16, overflow: "hidden", cursor: "pointer",
-        transform: isSelected ? "scale(1.2)" : "scale(1)",
-        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+        cursor: "pointer", transform: `${isSelected ? "scale(1.12)" : "scale(1)"} rotate(-45deg)`,
+        transition: "transform 0.15s ease, box-shadow 0.15s ease", padding: 0,
         position: "relative", zIndex: isSelected ? 100 : 1,
       }}
     >
-      {logoUrl ? (
-        <img
-          src={logoUrl}
-          alt=""
-          style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-          onError={e => {
-            const t = e.target as HTMLImageElement;
-            t.style.display = "none";
-            if (t.parentElement) t.parentElement.textContent = emoji;
-          }}
-        />
-      ) : emoji}
-    </div>
+      <span aria-hidden="true" style={{
+        width: 13, height: 13, borderRadius: "50%", background: "#FFF8EF",
+        border: `2px solid ${pinColor}`, transform: "rotate(45deg)",
+        boxShadow: "0 0 0 1px rgba(255,255,255,0.75)",
+      }} />
+    </button>
   );
 }
 
@@ -448,11 +494,10 @@ function MapPopup({ selected, onClose }: { selected: Selected; onClose: () => vo
     <div
       style={{
         position: "absolute",
-        bottom: "calc(100% + 10px)",
-        left: "50%",
-        transform: "translateX(-50%)",
-        minWidth: 180,
-        maxWidth: 230,
+        bottom: 56,
+        left: 12,
+        right: 68,
+        maxWidth: 340,
         background: "white",
         borderRadius: 14,
         boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
@@ -481,21 +526,23 @@ function MapPopup({ selected, onClose }: { selected: Selected; onClose: () => vo
             </div>
           </div>
           <button
+            type="button"
+            aria-label="Chiudi dettagli locale"
             onClick={onClose}
-            style={{ flexShrink: 0, background: "rgba(0,0,0,0.06)", border: "none", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}
+            style={{ flexShrink: 0, background: "rgba(0,0,0,0.06)", border: "none", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", padding: 0 }}
           >
             <X size={11} style={{ color: "#9B7B5A" }} />
           </button>
         </div>
         {selected.sub && (
           <div style={{ fontSize: 11, color: "#9B7B5A", marginBottom: 10, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-            📍 {selected.sub}
+            {selected.sub}
           </div>
         )}
         <a
           href={selected.href}
           style={{
-            display: "block", textAlign: "center", padding: "7px 12px",
+            display: "flex", alignItems: "center", justifyContent: "center", minHeight: 44, textAlign: "center", padding: "7px 12px",
             background: `linear-gradient(135deg,${color},${gradEnd})`,
             color: "white", borderRadius: 10, textDecoration: "none",
             fontSize: 12, fontWeight: 700,

@@ -10,9 +10,9 @@
 export function normalizeText(s: string): string {
   return (s ?? "")
     .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9\s]/g, " ")
+    .normalize("NFKD")
+    .replace(/\p{M}/gu, "")
+    .replace(/[^\p{L}\p{N}\s]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -23,6 +23,7 @@ const GENERIC_BREWERY_WORDS = new Set([
   "brewery's", "brasserie", "brauerei", "cerveceria", "cerveza", "beer",
   "beers", "birra", "birre", "craft", "co", "company", "srl", "snc", "spa",
   "sas", "the", "di", "del", "della", "dei", "delle", "and", "of",
+  "artigianale", "artigianali",
 ]);
 
 /**
@@ -32,15 +33,13 @@ const GENERIC_BREWERY_WORDS = new Set([
 export function breweryKeywords(breweryName: string): string[] {
   return normalizeText(breweryName)
     .split(" ")
-    .filter(w => w.length >= 3 && !GENERIC_BREWERY_WORDS.has(w));
+    .filter(w => w.length >= 2 && !GENERIC_BREWERY_WORDS.has(w));
 }
 
 /** Beer-name tokens (>= 3 chars; falls back to >= 2 for very short names). */
 export function beerNameTokens(beerName: string): string[] {
   const norm = normalizeText(beerName);
-  let toks = norm.split(" ").filter(w => w.length >= 3);
-  if (toks.length === 0) toks = norm.split(" ").filter(w => w.length >= 2);
-  return toks;
+  return norm.split(" ").filter(Boolean);
 }
 
 /**
@@ -60,13 +59,14 @@ export function webResultMatchesBeer(
   if (!hay) return false;
   const beerToks = beerNameTokens(beerName);
   if (beerToks.length === 0) return false;
-  const nameMatch = beerToks.filter(w => hay.includes(w)).length / beerToks.length;
+  const words = new Set(hay.split(" "));
+  const nameMatch = beerToks.every(w => words.has(w));
   const brewToks = breweryKeywords(breweryName);
   if (brewToks.length > 0) {
-    const brewHit = brewToks.some(w => hay.includes(w));
-    return nameMatch >= 0.6 && brewHit;
+    return nameMatch && brewToks.every(w => words.has(w));
   }
-  return nameMatch >= 0.9;
+  // No known brewery means the identity cannot be verified automatically.
+  return false;
 }
 
 /**
@@ -83,6 +83,19 @@ export function webResultMatchesBrewery(
   if (!hay) return false;
   const brewToks = breweryKeywords(breweryName);
   if (brewToks.length === 0) return false;
-  const hits = brewToks.filter(w => hay.includes(w)).length;
-  return hits / brewToks.length >= 0.5;
+  const words = new Set(hay.split(" "));
+  return brewToks.every(w => words.has(w));
+}
+
+/** Verified product identity is stricter than relevance of a search result. */
+export function sameBeerIdentity(expectedBeer: string, expectedBrewery: string, actualBeer: string, actualBrewery: string): boolean {
+  return !!normalizeText(expectedBeer) &&
+    normalizeText(expectedBeer) === normalizeText(actualBeer) &&
+    sameBreweryIdentity(expectedBrewery, actualBrewery);
+}
+
+export function sameBreweryIdentity(expected: string, actual: string): boolean {
+  const a = breweryKeywords(expected).sort();
+  const b = breweryKeywords(actual).sort();
+  return a.length > 0 && a.length === b.length && a.every((word, index) => word === b[index]);
 }

@@ -11,6 +11,7 @@
 import { v2 as cloudinary } from "cloudinary";
 import { searxngSearchImages, type SearchImage } from "./searxng";
 import { webResultMatchesBrewery } from "./image-match";
+import { untappdBreweryMatches, htmlText, pageHeading } from "./image-identity";
 
 const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
@@ -30,7 +31,7 @@ function scoreLogoImage(img: SearchImage): number {
 
 // ─── 1. Brewery website — favicon + og:image ─────────────────────────────────
 
-async function fetchBreweryWebsiteLogo(websiteUrl: string): Promise<string[]> {
+async function fetchBreweryWebsiteLogo(websiteUrl: string, breweryName: string): Promise<string[]> {
   if (!websiteUrl?.startsWith("http")) return [];
   const out: string[] = [];
   try {
@@ -43,12 +44,19 @@ async function fetchBreweryWebsiteLogo(websiteUrl: string): Promise<string[]> {
     });
     if (!res.ok) return [];
     const html = await res.text();
+    const title = htmlText(html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? "");
+    if (!webResultMatchesBrewery(`${title} ${pageHeading(html)}`, breweryName)) return [];
 
-    // og:image
+    // Prefer actual brand marks, never a generic homepage cover/team photo.
+    for (const match of html.matchAll(/<img\b[^>]*>/gi)) {
+      if (!/\b(?:class|id|alt)=["'][^"']*(?:logo|brand|marchio)[^"']*["']/i.test(match[0])) continue;
+      const src = match[0].match(/\bsrc=["']([^"']+)["']/i)?.[1];
+      if (src) out.push(new URL(src, websiteUrl).href);
+    }
     const og =
       html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
       html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
-    if (og) out.push(og.startsWith("http") ? og : `${origin}${og.startsWith("/") ? "" : "/"}${og}`);
+    if (og && /logo|brand|marchio/i.test(og)) out.push(new URL(og, websiteUrl).href);
 
     // Apple touch icons (usually big, square brand mark)
     const touchRe = /<link[^>]+rel=["']apple-touch-icon[^"']*["'][^>]+href=["']([^"']+)["']/gi;
@@ -109,6 +117,7 @@ async function fetchUntappdBreweryLogo(breweryName: string, location?: string | 
     });
     if (!pageRes.ok) return null;
     const html = await pageRes.text();
+    if (!untappdBreweryMatches(html, breweryName)) return null;
 
     const hd = html.match(/assets\.untappd\.com\/site\/brewery_logos_hd\/[^\s"'<>]+/);
     const sm = html.match(/assets\.untappd\.com\/site\/brewery_logos\/[^\s"'<>]+/);
@@ -146,7 +155,7 @@ export async function findBestBreweryLogo(
   };
 
   const [websiteImgs, untappdLogo, searxImgs] = await Promise.all([
-    fetchBreweryWebsiteLogo(websiteUrl ?? ""),
+    fetchBreweryWebsiteLogo(websiteUrl ?? "", breweryName),
     fetchUntappdBreweryLogo(breweryName, location),
     searxngSearchImages(`${breweryName} ${location ?? ""} birrificio logo`.trim(), 10),
   ]);

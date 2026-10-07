@@ -2,11 +2,12 @@ import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { useState, useEffect, useMemo, useCallback, useRef, lazy, Suspense } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
-import { Capacitor } from "@capacitor/core";
-import { Geolocation } from "@capacitor/geolocation";
-import { Beer, MapPin, Heart, Store, Navigation, Building2, ChevronRight, Users, Bell, Bookmark, ChevronDown, Star, TrendingUp, Zap, Flame, Search } from "lucide-react";
+import { useGeolocation } from "@/hooks/useGeolocation";
+import HomeMapPanel from "@/components/home-map-panel";
+import PullToRefreshIndicator from "@/components/pull-to-refresh-indicator";
+import { Beer, MapPin, Heart, Store, Building2, ChevronRight, Users, Bell, Bookmark, Star, TrendingUp, Zap, Flame, Search } from "lucide-react";
 import Footer from "@/components/footer";
 import PubCard from "@/components/pub-card";
 import BreweryCard from "@/components/brewery-card";
@@ -14,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import NewsStrip from "@/components/news-strip";
 import { PageContainer } from "@/components/layout/page-container";
 
-const HomepageMap = lazy(() => import("@/components/homepage-map"));
 
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -70,185 +70,16 @@ function SectionHeader({
 
 export default function Home() {
   const { user, isAuthenticated } = useAuth();
-  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
-    try {
-      const cached = localStorage.getItem("fermenta:userLocation");
-      return cached ? JSON.parse(cached) : null;
-    } catch { return null; }
-  });
-  const [locationStatus, setLocationStatus] = useState<'idle' | 'requesting' | 'granted' | 'denied'>('idle');
-  const [locationAccuracy, setLocationAccuracy] = useState<number | null>(null);
+  const geo = useGeolocation({ auto: true });
+  const userLocation = useMemo(() => geo.lat !== null && geo.lng !== null ? { lat: geo.lat, lng: geo.lng } : null, [geo.lat, geo.lng]);
+  const handleRequestLocation = geo.request;
   const [distanceKm, setDistanceKm] = useState(10);
-  const [showDistancePicker, setShowDistancePicker] = useState(false);
   const [showPubs, setShowPubs] = useState(true);
   const [showBreweries, setShowBreweries] = useState(true);
 
-  const ACCURACY_THRESHOLD = 3000;
-  const gotGoodPositionRef = useRef(false);
-  const lastAccuracyRef = useRef<number>(Infinity);
-  const autoWatchRef = useRef<number | null>(null);
-  const manualWatchRef = useRef<number | null>(null);
-
-  const applyPosition = useCallback((pos: GeolocationPosition) => {
-    const { latitude, longitude, accuracy } = pos.coords;
-    setLocationAccuracy(accuracy);
-    if (accuracy <= ACCURACY_THRESHOLD && accuracy < lastAccuracyRef.current * 1.5) {
-      lastAccuracyRef.current = accuracy;
-      gotGoodPositionRef.current = true;
-      const loc = { lat: latitude, lng: longitude };
-      setUserLocation(loc);
-      try { localStorage.setItem("fermenta:userLocation", JSON.stringify(loc)); } catch {}
-      setLocationStatus('granted');
-    }
-  }, []);
-
-  useEffect(() => {
-    const handleCapacitorLocationStart = async () => {
-      if (!Capacitor.isNativePlatform()) return;
-      setLocationStatus('requesting');
-      try {
-        const perm = await Geolocation.requestPermissions();
-        if (perm.location !== 'granted' && (perm.location as string) !== 'limited') {
-          setLocationStatus('denied');
-          return;
-        }
-        lastAccuracyRef.current = Infinity;
-        gotGoodPositionRef.current = false;
-        // Quick initial position (non-blocking)
-        Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 8000 })
-          .then(pos => {
-            const acc = pos.coords.accuracy ?? 9999;
-            applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: acc } } as any);
-          })
-          .catch(() => {});
-        let watchId: string | null = null;
-        const cleanup = () => { if (watchId !== null) { Geolocation.clearWatch({ id: watchId }); watchId = null; } };
-        const th = setTimeout(() => { cleanup(); if (!gotGoodPositionRef.current) setLocationStatus('denied'); }, 45000);
-        watchId = await Geolocation.watchPosition(
-          { enableHighAccuracy: true, timeout: 30000 },
-          (pos, err) => {
-            if (err || !pos) return;
-            const acc = pos.coords.accuracy ?? 9999;
-            applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: acc } } as any);
-            if (acc <= 100) { clearTimeout(th); cleanup(); }
-          }
-        );
-      } catch { setLocationStatus('denied'); }
-    };
-    window.addEventListener('capacitor-location-start', handleCapacitorLocationStart);
-    return () => window.removeEventListener('capacitor-location-start', handleCapacitorLocationStart);
-  }, [applyPosition]);
-
-  // Avvia automaticamente la geolocalizzazione nativa se il permesso è già stato concesso
-  useEffect(() => {
-    if (!Capacitor.isNativePlatform()) return;
-    Geolocation.checkPermissions().then(perm => {
-      if (perm.location === 'granted' || (perm.location as string) === 'limited') {
-        window.dispatchEvent(new Event('capacitor-location-start'));
-      }
-    }).catch(() => {});
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (Capacitor.isNativePlatform()) return;
-    if (!navigator.geolocation) return;
-    if (userLocation && lastAccuracyRef.current <= 200) return;
-
-    const alreadyHasCachedLocation = !!userLocation;
-    setLocationStatus('requesting');
-
-    const wid = navigator.geolocation.watchPosition(
-      (pos) => {
-        applyPosition(pos);
-        if (pos.coords.accuracy <= 100) {
-          navigator.geolocation.clearWatch(wid);
-          autoWatchRef.current = null;
-        }
-      },
-      () => { if (!gotGoodPositionRef.current) setLocationStatus(alreadyHasCachedLocation ? 'granted' : 'denied'); },
-      { enableHighAccuracy: false, maximumAge: 120000, timeout: 12000 }
-    );
-    autoWatchRef.current = wid;
-
-    const hiWid = setTimeout(() => {
-      if (gotGoodPositionRef.current) return;
-      const w2 = navigator.geolocation.watchPosition(
-        (pos) => { applyPosition(pos); if (pos.coords.accuracy <= 50) { navigator.geolocation.clearWatch(w2); } },
-        () => {},
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 }
-      );
-    }, 3000);
-
-    return () => {
-      if (autoWatchRef.current !== null) { navigator.geolocation.clearWatch(autoWatchRef.current); autoWatchRef.current = null; }
-      clearTimeout(hiWid);
-    };
-  }, []);
-
-  const handleRequestLocation = useCallback(async () => {
-    setLocationStatus('requesting');
-    // Su nativo (Android/iOS) usa il plugin Capacitor — mostra il dialog di sistema
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const perm = await Geolocation.requestPermissions();
-        if (perm.location !== 'granted' && (perm.location as string) !== 'limited') {
-          setLocationStatus('denied');
-          return;
-        }
-        lastAccuracyRef.current = Infinity;
-        gotGoodPositionRef.current = false;
-
-        // Prova subito getCurrentPosition per una posizione rapida (rete/cache).
-        // Non blocchiamo: se fallisce continuiamo con watchPosition.
-        Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 8000 })
-          .then(pos => {
-            const acc = pos.coords.accuracy ?? 9999;
-            applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: acc } } as any);
-          })
-          .catch(() => {});
-
-        // watchPosition con enableHighAccuracy:true attiva il GPS hardware —
-        // garantisce una posizione precisa anche quando il segnale di rete è debole.
-        let watchId: string | null = null;
-        const cleanup = () => {
-          if (watchId !== null) { Geolocation.clearWatch({ id: watchId }); watchId = null; }
-        };
-        const timeoutHandle = setTimeout(() => {
-          cleanup();
-          if (!gotGoodPositionRef.current) setLocationStatus('denied');
-        }, 45000);
-        watchId = await Geolocation.watchPosition(
-          { enableHighAccuracy: true, timeout: 30000 },
-          (pos, err) => {
-            if (err || !pos) return;
-            const acc = pos.coords.accuracy ?? 9999;
-            applyPosition({ coords: { latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: acc } } as any);
-            if (acc <= 100) { clearTimeout(timeoutHandle); cleanup(); }
-          }
-        );
-      } catch { setLocationStatus('denied'); }
-      return;
-    }
-    // PWA: browser API
-    if (!navigator.geolocation) return;
-    if (autoWatchRef.current !== null) { navigator.geolocation.clearWatch(autoWatchRef.current); autoWatchRef.current = null; }
-    if (manualWatchRef.current !== null) { navigator.geolocation.clearWatch(manualWatchRef.current); manualWatchRef.current = null; }
-    lastAccuracyRef.current = Infinity;
-    const wid = navigator.geolocation.watchPosition(
-      (pos) => {
-        applyPosition(pos);
-        if (pos.coords.accuracy <= 100) { navigator.geolocation.clearWatch(wid); manualWatchRef.current = null; }
-      },
-      () => { if (!gotGoodPositionRef.current) setLocationStatus('denied'); },
-      { enableHighAccuracy: true, maximumAge: 0, timeout: 25000 }
-    );
-    manualWatchRef.current = wid;
-  }, [applyPosition]);
-
   const queryClient = useQueryClient();
   const handleRefresh = useCallback(async () => { await queryClient.invalidateQueries(); }, [queryClient]);
-  const { isPulling, isRefreshing, pullProgress } = usePullToRefresh(handleRefresh);
+  const refresh = usePullToRefresh(handleRefresh);
 
   const { data: pubs, isLoading: pubsLoading } = useQuery({ queryKey: ["/api/pubs"], staleTime: 5 * 60 * 1000 });
   const { data: breweriesRaw } = useQuery({
@@ -315,30 +146,7 @@ export default function Home() {
       </Helmet>
 
       {/* Pull-to-refresh indicator */}
-      {(isPulling || isRefreshing) && (
-        <div className={`fixed top-[var(--mobile-top-offset)] lg:top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-background/95 border-b border-border backdrop-blur-sm ${!isRefreshing && pullProgress >= 1 ? "ptr-ready" : ""}`}>
-          {isRefreshing ? (
-            <div className="flex items-center gap-2.5 text-primary text-xs font-bold">
-              <span className="ptr-spinner inline-block h-5 w-5 rounded-full border-2 border-primary/25 border-t-primary" />
-              Aggiornamento…
-            </div>
-          ) : (
-            <div className="flex items-center gap-2.5 text-xs font-bold" style={{ opacity: Math.min(pullProgress * 1.3, 1) }}>
-              <span className="relative inline-flex h-6 w-6 items-center justify-center flex-shrink-0">
-                <svg className="absolute inset-0 -rotate-90" viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" fill="none" stroke="var(--border)" strokeWidth="2.5" />
-                  <circle cx="12" cy="12" r="10" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round"
-                    strokeDasharray={62.8} strokeDashoffset={62.8 * (1 - Math.min(pullProgress, 1))} />
-                </svg>
-                <ChevronDown className="ptr-arrow w-3.5 h-3.5 text-primary" />
-              </span>
-              <span className={pullProgress >= 1 ? "text-primary" : "text-muted-foreground"}>
-                {pullProgress >= 1 ? "Rilascia per aggiornare" : "Trascina per aggiornare"}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+      <PullToRefreshIndicator {...refresh} />
 
       {/* ═══════════════════════════════════════════════════════════════
           HERO — Value proposition + prominent search, then live map
@@ -385,143 +193,29 @@ export default function Home() {
           </Link>
         </div>
 
-        {/* Map card — live map of pub & birrifici near you */}
-        <div className="relative rounded-3xl overflow-hidden bg-stone-200 dark:bg-[#0B0D10] shadow-card h-[300px] lg:h-[240px]" style={{ maxHeight: 300 }}>
-          <div className="absolute inset-0 overflow-hidden" style={{ maxHeight: '100%' }}>
-            <Suspense fallback={<div className="w-full h-full bg-stone-200 dark:bg-[#1A1D24]" />}>
-              <HomepageMap
-                pubs={Array.isArray(pubs) ? pubs as any[] : []}
-                breweries={(() => {
-                  const src = Array.isArray(allBreweries) ? allBreweries : (Array.isArray(breweries) ? breweries : []);
-                  return (src as any[]).filter((b: any) => b.latitude && b.longitude);
-                })()}
-                userLocation={userLocation}
-                isLoading={pubsLoading}
-                showPubs={showPubs}
-                showBreweries={showBreweries}
-                distanceKm={userLocation ? distanceKm : undefined}
-                onLocate={(loc) => { setUserLocation(loc); setLocationStatus('granted'); }}
-                showControls={false}
-                fixedHeight={300}
-              />
-            </Suspense>
-          </div>
-
-          {/* Floating location chip — top-left, doesn't obscure the map center */}
-          <div className="absolute top-3 left-3 z-10 pointer-events-none">
-            {locationStatus === 'granted' && (
-              <span className="gps-fix-pop inline-flex items-center gap-1.5 text-[11px] font-extrabold bg-white/95 dark:bg-card/95 backdrop-blur-md text-primary rounded-full px-2.5 py-1.5 shadow-card-sm border border-primary/15">
-                <span
-                  className={`gps-dot-pulse inline-block w-2 h-2 rounded-full flex-shrink-0 ${
-                    locationAccuracy != null && locationAccuracy <= 50
-                      ? "bg-green-500"
-                      : locationAccuracy != null && locationAccuracy <= 200
-                        ? "bg-amber-500"
-                        : "bg-stone-400 dark:bg-stone-500"
-                  }`}
-                />
-                <MapPin className="w-3 h-3" />
-                {locationAccuracy != null && locationAccuracy < 1000 ? `Vicino a te · ±${Math.round(locationAccuracy)}m` : 'Vicino a te'}
-              </span>
-            )}
-            {locationStatus === 'requesting' && (
-              <span className="inline-flex items-center gap-2 text-[11px] font-extrabold bg-white/95 dark:bg-card/95 backdrop-blur-md text-amber-600 dark:text-amber-400 rounded-full px-2.5 py-1.5 shadow-card-sm border border-amber-500/25">
-                <span className="gps-radar relative inline-flex w-3 h-3 items-center justify-center flex-shrink-0">
-                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                </span>
-                <Navigation className="w-3 h-3" />
-                Ricerca GPS…
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Filter chips IMMEDIATELY below the map — km, Pub, Birrifici, Preferiti */}
-        <div className="flex items-center gap-2 mt-3 pb-0.5">
-          {/* Distance picker */}
-          <div className="relative flex-shrink-0">
-            <button
-              onClick={() => setShowDistancePicker(v => !v)}
-              className="tap-scale flex items-center gap-1.5 bg-card dark:bg-card border border-border rounded-full px-3.5 py-2 text-[13px] font-bold text-foreground shadow-card-sm whitespace-nowrap"
-            >
-              {distanceKm} km
-              <ChevronDown className="w-3.5 h-3.5 text-muted-foreground" />
-            </button>
-            {showDistancePicker && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShowDistancePicker(false)} />
-                <div className="absolute top-11 left-0 z-50 bg-card border border-border rounded-2xl shadow-card overflow-hidden min-w-[110px]">
-                  {[1, 5, 10, 15, 20, 30, 50, 100].map(d => (
-                    <button
-                      key={d}
-                      onClick={() => { setDistanceKm(d); setShowDistancePicker(false); }}
-                      className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-muted'}`}
-                    >
-                      {d} km
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Scrollable chips */}
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-0">
-            <button
-              onClick={() => setShowPubs(v => !v)}
-              className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
-                showPubs ? 'bg-primary border-primary text-white' : 'bg-card border-border text-foreground'
-              }`}
-            >
-              <Store className="w-3.5 h-3.5" />
-              Pub
-            </button>
-
-            <button
-              onClick={() => setShowBreweries(v => !v)}
-              className={`tap-scale flex-shrink-0 flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-bold border transition-colors whitespace-nowrap shadow-card-sm ${
-                showBreweries ? 'bg-amber-500 border-amber-500 text-white' : 'bg-card border-border text-foreground'
-              }`}
-            >
-              <Building2 className="w-3.5 h-3.5" />
-              Birrifici
-            </button>
-
-            <Link href="/dashboard?tab=favorites" className="tap-scale w-9 h-9 flex-shrink-0 items-center justify-center bg-card border border-border rounded-full shadow-card-sm text-foreground" aria-label="Apri preferiti">
-              <Bookmark className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-
-        {/* GPS opt-in (only when not granted) — sits right under the map/chips */}
-        {locationStatus !== 'granted' && (
-          <button
-            onClick={handleRequestLocation}
-            className="tap-scale w-full mt-3 flex items-center justify-center gap-1.5 text-primary text-[13px] font-bold px-4 py-2.5 rounded-2xl bg-orange-50 dark:bg-orange-900/20 border border-primary/15"
-          >
-            <Navigation className="w-3.5 h-3.5" />
-            Usa la mia posizione per risultati vicini
-          </button>
-        )}
+        <HomeMapPanel
+          pubs={Array.isArray(pubs) ? pubs as any[] : []}
+          breweries={Array.isArray(allBreweries) ? allBreweries as any[] : (Array.isArray(breweries) ? breweries : [])}
+          userLocation={userLocation}
+          accuracy={geo.accuracy}
+          isCached={geo.isCached}
+          locationStatus={geo.status}
+          locationError={geo.error}
+          recenterToken={geo.requestId}
+          onRequestLocation={handleRequestLocation}
+          isLoading={pubsLoading}
+          distanceKm={distanceKm}
+          onDistanceChange={setDistanceKm}
+          showPubs={showPubs}
+          onShowPubsChange={setShowPubs}
+          showBreweries={showBreweries}
+          onShowBreweriesChange={setShowBreweries}
+        />
 
         {/* News strip dentro l'Hero */}
         <div className="mt-6">
           <NewsStrip variant="hero" limit={6} />
         </div>
-
-        {/* GPS denied banner */}
-        {locationStatus === 'denied' && (
-          <div className="mb-5 p-4 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] flex items-center justify-between shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] transition-all duration-200">
-            <div className="flex items-center gap-3">
-              <Navigation className="w-5 h-5 text-primary flex-shrink-0" />
-              <p className="text-sm text-foreground/80">Concedi la posizione nelle impostazioni per vedere i locali più vicini</p>
-            </div>
-            <Button variant="outline" size="sm" onClick={handleRequestLocation} className="border-border text-primary hover:bg-muted rounded-xl flex-shrink-0 ml-3">
-              <Navigation className="w-4 h-4 mr-1" />
-              GPS
-            </Button>
-          </div>
-        )}
 
         {/* ═══════════════════════════════════════════════════════════════
             OWNER SECTIONS — Pub owner / Brewery owner

@@ -8,6 +8,7 @@ const PubMap = lazy(() => import("@/components/pub-map").then(m => ({ default: m
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
+import { readCachedLocation, cacheLocation } from "@/lib/location-cache";
 
 type ViewMode = "list" | "map";
 type QuickFilter = "all" | "nearby" | "top" | "open";
@@ -74,7 +75,7 @@ export default function ExplorePubs() {
   // the geolocation prompt / explanatory state.
   const [awaitingLocation, setAwaitingLocation] = useState(false);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
-    try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
+    return readCachedLocation();
   });
   // Toggle: distanza in linea d'aria (default) vs percorso reale via OSRM.
   const [useRealRoute, setUseRealRoute] = useState(false);
@@ -259,7 +260,7 @@ export default function ExplorePubs() {
     getCurrentPosition().then(pos => {
       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       setUserLocation(loc);
-      try { localStorage.setItem("fermenta:userLocation", JSON.stringify(loc)); } catch {}
+      cacheLocation(pos);
       setQuickFilter("nearby");
       setAwaitingLocation(false);
     }).catch(() => {

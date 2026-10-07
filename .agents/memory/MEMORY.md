@@ -23,3 +23,4 @@
 - [Owner mobile UX](owner-mobile-ux.md) — brewery dock has at most five fixed tabs; Info/Novità belong under Home; pub beer reorder must renumber positions from 1 to X.
 - [Development watcher limits](dev-watchers.md) — Vite plugins may watch the workspace despite a client root; exclude tool caches to prevent ENOSPC preview crashes.
 - [Android package identity](android-package-identity.md) — Android/Play uses to.fermenta.app while shared Capacitor/iOS uses to.fermentato.app; Firebase and CI must target the Android ID.
+- [Map and location UX](map-location-ux.md) — keep the current free map; refine coarse GPS fixes, display actual uncertainty and distinguish fresh from cached coordinates.

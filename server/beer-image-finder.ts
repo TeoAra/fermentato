@@ -15,7 +15,8 @@
 import { v2 as cloudinary } from "cloudinary";
 import { pool } from "./db";
 import { searxngSearchImages, type SearchImage } from "./searxng";
-import { normalizeText, webResultMatchesBeer } from "./image-match";
+import { webResultMatchesBeer, sameBeerIdentity } from "./image-match";
+import { officialProductMatches, untappdBeerMatches, htmlText } from "./image-identity";
 
 // ─── 1. Brewery website og:image ─────────────────────────────────────────────
 
@@ -28,6 +29,7 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
     .replace(/[òóô]/g, "o").replace(/[ùúû]/g, "u").replace(/[^a-z0-9]/g, "-")
     .replace(/-+/g, "-").replace(/^-|-$/g, "");
   const beerWords = slug.split("-").filter(w => w.length > 2);
+  const deadline = Date.now() + 20000;
 
   const urlsToTry = [
     base,
@@ -42,10 +44,11 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
   ];
 
   for (const url of urlsToTry) {
+    if (Date.now() >= deadline) break;
     try {
       const res = await fetch(url, {
         headers: { "User-Agent": "Mozilla/5.0 (compatible; Fermentato-Bot/1.0)" },
-        signal: AbortSignal.timeout(7000),
+        signal: AbortSignal.timeout(Math.min(7000, Math.max(1, deadline - Date.now()))),
       });
       if (!res.ok) continue;
       const html = await res.text();
@@ -60,10 +63,11 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
         html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
         html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
 
-      if (matchScore >= 0.5 && ogImage) return ogImage;
+      const isProductUrl = new URL(url).pathname.split("/").filter(Boolean).length >= 2;
+      if (isProductUrl && officialProductMatches(html, beerName) && ogImage) return new URL(ogImage, url).href;
 
       // Follow links to beer-specific product page
-      if (matchScore < 0.3) {
+      if (!isProductUrl || matchScore < 1) {
         const linkRe = /<a[^>]+href=["']([^"'#?]+)["'][^>]*>([^<]{1,80})<\/a>/gi;
         let m: RegExpExecArray | null;
         const links: Array<{ url: string; score: number }> = [];
@@ -77,17 +81,18 @@ async function fetchBreweryOgImage(websiteUrl: string, beerName: string): Promis
         }
         links.sort((a, b) => b.score - a.score);
         for (const link of links.slice(0, 2)) {
+          if (Date.now() >= deadline) break;
           try {
             const pg = await fetch(link.url, {
               headers: { "User-Agent": "Mozilla/5.0" },
-              signal: AbortSignal.timeout(6000),
+              signal: AbortSignal.timeout(Math.min(6000, Math.max(1, deadline - Date.now()))),
             });
             if (!pg.ok) continue;
             const pgHtml = await pg.text();
             const pgOg =
               pgHtml.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i)?.[1] ??
               pgHtml.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i)?.[1];
-            if (pgOg) return pgOg;
+            if (officialProductMatches(pgHtml, beerName) && pgOg) return new URL(pgOg, link.url).href;
           } catch { continue; }
         }
       }
@@ -114,33 +119,27 @@ async function fetchUntappdImage(beerName: string, breweryName: string): Promise
     if (!searchRes.ok) return null;
     const searchHtml = await searchRes.text();
 
-    // Find the first beer result link: /b/<slug>/<id>
-    const linkMatch = searchHtml.match(/href="(\/b\/[^"]+\/\d+)"/);
-    if (!linkMatch) return null;
-
-    const beerPageUrl = `https://untappd.com${linkMatch[1]}`;
-    console.log(`[beer-img] untappd page: ${beerPageUrl}`);
-
-    const pageRes = await fetch(beerPageUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml",
-        "Accept-Language": "en-US,en;q=0.9",
-      },
-      signal: AbortSignal.timeout(12000),
-    });
-    if (!pageRes.ok) return null;
-    const html = await pageRes.text();
-
-    // Prefer HD beer label (beer_logos_hd), fall back to standard (beer_logos)
-    // These are the actual medallion/label images, NOT the og:image composite
-    const hdMatch = html.match(/assets\.untappd\.com\/site\/beer_logos_hd\/[^\s"'<>]+/);
-    const smMatch = html.match(/assets\.untappd\.com\/site\/beer_logos\/[^\s"'<>]+/);
-    const labelUrl = hdMatch?.[0] ?? smMatch?.[0];
-    if (labelUrl) {
-      const url = `https://${labelUrl}`;
-      console.log(`[beer-img] untappd label found: ${url.substring(0, 80)}`);
-      return url;
+    // Search ranking is not identity proof. Examine a few actual product pages.
+    const paths = [...new Set([...searchHtml.matchAll(/href=["'](\/b\/[^"']+\/\d+)["']/g)].map(match => match[1]))].slice(0, 3);
+    const deadline = Date.now() + 15000;
+    for (const path of paths) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) break;
+      try {
+        const pageRes = await fetch(`https://untappd.com${path}`, {
+          headers: { "User-Agent": "Mozilla/5.0", Accept: "text/html" },
+          signal: AbortSignal.timeout(Math.min(7000, remaining)),
+        });
+        if (!pageRes.ok) continue;
+        const html = await pageRes.text();
+        if (!untappdBeerMatches(html, beerName, breweryName)) continue;
+        const id = path.match(/\/(\d+)$/)?.[1];
+        const labels = [...html.matchAll(/assets\.untappd\.com\/site\/beer_logos(?:_hd)?\/[^\s"'<>]+/g)]
+          .map(match => match[0])
+          .filter(url => new RegExp(`beer-${id}(?:[_\\-.])`).test(url))
+          .sort((a, b) => Number(b.includes("beer_logos_hd")) - Number(a.includes("beer_logos_hd")));
+        if (labels[0]) return `https://${labels[0]}`;
+      } catch { continue; }
     }
     return null;
   } catch (e: any) {
@@ -174,24 +173,11 @@ async function fetchOpenFoodFactsImage(beerName: string, breweryName: string): P
     const hits: any[] = Array.isArray(data?.hits) ? data.hits : [];
     if (hits.length === 0) return null;
 
-    const beerWords = normalizeText(beerName).split(" ").filter(w => w.length >= 3);
-    if (beerWords.length === 0) return null;
-    const breweryWords = normalizeText(breweryName).split(" ").filter(w => w.length >= 3);
-
     for (const p of hits) {
       const img: string | undefined = p.image_front_url || p.image_url;
       if (!img || !img.startsWith("http")) continue;
       const brands = Array.isArray(p.brands) ? p.brands.join(" ") : (p.brands ?? "");
-      const hay = normalizeText(`${p.product_name ?? ""} ${brands}`);
-      const nameMatch = beerWords.filter(w => hay.includes(w)).length / beerWords.length;
-      const brandMatch = breweryWords.length
-        ? breweryWords.filter(w => hay.includes(w)).length / breweryWords.length
-        : 0;
-      // With a brewery: need a name match AND a brewery match (the disambiguator).
-      // Without a brewery: require a very strong name match.
-      const ok = breweryWords.length
-        ? nameMatch >= 0.6 && brandMatch >= 0.5
-        : nameMatch >= 0.85;
+      const ok = sameBeerIdentity(beerName, breweryName, p.product_name ?? "", brands);
       if (ok) {
         console.log(`[beer-img] open food facts match for "${beerName}": ${img.substring(0, 80)}`);
         return img;
@@ -237,12 +223,10 @@ async function fetch1001BirreImage(beerName: string, breweryName: string): Promi
     if (!pageRes.ok) return null;
     const pageHtml = await pageRes.text();
 
-    // Verify the page is about this beer (title must contain beer name words)
-    const beerWords = normalizeText(beerName).split(" ").filter(w => w.length >= 3);
+    // Shop searches are not identity proof: require the complete beer + brewery.
     const titleMatch = pageHtml.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1] ?? "";
-    const titleNorm = normalizeText(titleMatch);
-    const matchScore = beerWords.filter(w => titleNorm.includes(w)).length / Math.max(beerWords.length, 1);
-    if (matchScore < 0.5) return null;
+    if (!officialProductMatches(pageHtml, beerName) ||
+        !webResultMatchesBeer(htmlText(titleMatch), beerName, breweryName)) return null;
 
     // Extract og:image
     const ogImage =
@@ -522,11 +506,8 @@ export async function findAndUpdateBeerImage(
     }
 
     const result = await findBestBeerImage(beerName, breweryName, breweryWebsite);
-    // Quando l'utente forza la ricerca (es. click su "Re-cerca img"), accettiamo
-    // anche risultati a bassa confidenza: l'utente preferisce QUALCOSA piuttosto
-    // che lasciare invariata l'immagine vecchia/errata. Senza force, solo "high".
-    const minConfidence = forceUpdate ? ["high", "low"] : ["high"];
-    if (!result.url || !minConfidence.includes(result.confidence)) {
+    // Force re-runs the search; it never lowers the identity requirement.
+    if (!result.url || result.confidence !== "high") {
       console.log(`[beer-img] no usable image for beer ${beerId} (confidence=${result.confidence}, force=${forceUpdate}) — leaving as-is`);
       return;
     }

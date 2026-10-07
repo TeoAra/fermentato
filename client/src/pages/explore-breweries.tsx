@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
+import { readCachedLocation, cacheLocation } from "@/lib/location-cache";
 
 const countryNameMap: Record<string, string> = {
   "Italy": "Italia", "Italia": "Italia",
@@ -129,7 +130,7 @@ export default function ExploreBreweries() {
   const skipNextPushRef = useRef(false);
   const [mapVisible, setMapVisible] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(() => {
-    try { const c = localStorage.getItem("fermenta:userLocation"); return c ? JSON.parse(c) : null; } catch { return null; }
+    return readCachedLocation();
   });
   const [distanceKm, setDistanceKm] = useState(10);
   const [showDistPicker, setShowDistPicker] = useState(false);
@@ -298,7 +299,7 @@ export default function ExploreBreweries() {
     getCurrentPosition().then(pos => {
       const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
       setUserLocation(loc);
-      try { localStorage.setItem("fermenta:userLocation", JSON.stringify(loc)); } catch {}
+      cacheLocation(pos);
     }).catch(() => {});
   };
 

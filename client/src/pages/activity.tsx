@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import PullToRefreshIndicator from "@/components/pull-to-refresh-indicator";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapPin, Loader2, Navigation, Clock, AlertCircle, Beer, Trash2, X, Calendar, CalendarDays, ChevronDown, Package, Star } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -122,7 +123,7 @@ export default function Activity() {
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
-  const { isPulling, isRefreshing, pullProgress } = usePullToRefresh(handleRefresh);
+  const { isPulling, isRefreshing, pullProgress, refreshError } = usePullToRefresh(handleRefresh);
 
   const requestLocation = () => {
     if (!isGeolocationAvailable()) {
@@ -285,18 +286,7 @@ export default function Activity() {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl pb-24 slide-up">
-      {(isPulling || isRefreshing) && (
-        <div className="fixed top-16 left-0 right-0 z-40 flex items-center justify-center py-2.5 bg-amber-50 dark:bg-amber-950/90 border-b border-amber-200 dark:border-amber-800 backdrop-blur-sm">
-          {isRefreshing ? (
-            <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300 text-xs font-medium">
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Aggiornamento in corso...
-            </div>
-          ) : (
-            <div className="text-amber-600 dark:text-amber-400 text-xs font-medium">↓ Rilascia per aggiornare</div>
-          )}
-        </div>
-      )}
+      <PullToRefreshIndicator isPulling={isPulling} isRefreshing={isRefreshing} pullProgress={pullProgress} refreshError={refreshError} />
 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
         <h1 className="text-2xl font-bold text-foreground dark:text-white">Attività in Zona</h1>

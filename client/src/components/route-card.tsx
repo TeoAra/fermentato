@@ -12,6 +12,7 @@ import {
 } from "@/lib/route";
 import { getMapNavigationUrl } from "@/lib/utils";
 import { getCurrentPosition, isGeolocationAvailable } from "@/lib/geolocation";
+import { readCachedLocation, cacheLocation } from "@/lib/location-cache";
 
 interface RouteCardProps {
   destination: LatLng;
@@ -33,13 +34,7 @@ const MODES: Array<{ value: RouteMode; label: string; icon: typeof Car; estimate
  */
 export default function RouteCard({ destination, destinationName, destinationAddress }: RouteCardProps) {
   const [origin, setOrigin] = useState<LatLng | null>(() => {
-    try {
-      const c = localStorage.getItem("fermenta:userLocation");
-      if (!c) return null;
-      const o = JSON.parse(c);
-      if (typeof o?.lat === "number" && typeof o?.lng === "number") return o;
-    } catch {}
-    return null;
+    return readCachedLocation();
   });
   const [mode, setMode] = useState<RouteMode>("driving");
   const [enabled, setEnabled] = useState(false);
@@ -59,7 +54,7 @@ export default function RouteCard({ destination, destinationName, destinationAdd
       .then((pos) => {
         const loc = { lat: pos.coords.latitude, lng: pos.coords.longitude };
         setOrigin(loc);
-        try { localStorage.setItem("fermenta:userLocation", JSON.stringify(loc)); } catch {}
+        cacheLocation(pos);
         setEnabled(true);
         setLocating(false);
       })
