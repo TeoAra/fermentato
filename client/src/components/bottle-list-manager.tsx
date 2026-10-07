@@ -1,3 +1,4 @@
+import { moveInventoryItem } from "@shared/inventory-order";
 import { useState, useEffect, useRef } from "react";
 import { useTouchReorder } from "@/hooks/useTouchReorder";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
@@ -123,18 +124,14 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
     setBottleDragOver(null);
     bottleDragFrom.current = null;
     if (from === null || from === dropIdx) return;
-    const next = [...localBottles];
-    const [moved] = next.splice(from, 1);
-    next.splice(dropIdx, 0, moved);
+    const next = moveInventoryItem(localBottles, from, dropIdx, "orderIndex");
     setLocalBottles(next);
     reorderBottlesMutation.mutate(next.map((b, i) => ({ id: b.id, orderIndex: i })));
   };
   const handleBottleDragEnd = () => { setBottleDragOver(null); bottleDragFrom.current = null; };
   const { startTouchDrag: startBottleTouchDrag } = useTouchReorder({
     onReorder: (from, to) => {
-      const next = [...localBottles];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
+      const next = moveInventoryItem(localBottles, from, to, "orderIndex");
       setLocalBottles(next);
       reorderBottlesMutation.mutate(next.map((b, i) => ({ id: b.id, orderIndex: i })));
     },
@@ -728,10 +725,11 @@ export function BottleListManager({ pubId, bottleList, tapList = [], isLoading }
                         aria-label={`Riordina ${safeBeer.name}`}
                         onDragStart={(e) => handleBottleDragStart(e, itemIdx)}
                         onTouchStart={(e) => startBottleTouchDrag(e, itemIdx)}
-                        className="flex h-11 w-11 min-w-11 items-center justify-center rounded-lg text-gray-400 cursor-grab"
+                        className="flex h-11 w-11 min-w-11 items-center justify-center gap-0.5 rounded-lg text-gray-400 cursor-grab"
                         style={{ touchAction: "none" }}
                       >
                         <GripVertical className="w-4 h-4" />
+                        <span className="text-[10px] tabular-nums">{itemIdx + 1}</span>
                       </div>
                       <ImageWithFallback
                         src={safeBeer.logoUrl}

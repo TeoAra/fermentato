@@ -106,6 +106,7 @@ import { registerFestivalRoutes, runFestivalMigrations } from "./routes-festival
 import { sql, eq, and, desc, asc, gte, count } from "drizzle-orm";
 import { upload, uploadImage, cloudinary } from "./cloudinary";
 import { db, pool } from "./db";
+import { isCompleteInventoryOrder } from "@shared/inventory-order";
 import { makeFeedCursor, parseFeedCursor } from "./feed-cursor";
 import { breweryActiveSql, beerVisibleSql, rawBreweryActive, rawBeerVisibleJoined, rawBeerVisibleExists } from "./visibility";
 import { normalizeBeerSearch, buildBeerSearchFragments } from "./search-normalize";
@@ -3064,13 +3065,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) return res.status(401).json({ message: "Unauthorized" });
       const canEdit = await isAdminOrPubOwner(userId, pubId);
       if (!canEdit) return res.status(403).json({ message: "Not authorized" });
-      const { order } = req.body; // [{ id, tapNumber }]
-      if (!Array.isArray(order)) return res.status(400).json({ message: "order must be an array" });
-      await Promise.all(
-        order.map(({ id, tapNumber }: { id: number; tapNumber: number }) =>
-          storage.updateTapListItem(id, { tapNumber })
-        )
-      );
+      const { order } = req.body;
+      const existing = await db.select({ id: tapList.id }).from(tapList).where(eq(tapList.pubId, pubId));
+      if (!isCompleteInventoryOrder(order, existing.map(item => item.id))) {
+        return res.status(400).json({ message: "Ordine non valido o lista cambiata. Ricarica e riprova." });
+      }
+      await db.transaction(async tx => {
+        for (const [index, item] of order.entries()) {
+          await tx.update(tapList).set({ tapNumber: index + 1, updatedAt: new Date() })
+            .where(and(eq(tapList.id, item.id), eq(tapList.pubId, pubId)));
+        }
+      });
       broadcastPubUpdate(pubId, "taplist");
       _memCache.delete(`stats-extended:${pubId}`);
       res.json({ ok: true });
@@ -4215,9 +4220,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userRoles.includes('admin') && !userPubs.some((p: any) => p.id === pubId)) {
         return res.status(403).json({ message: "Not authorized" });
       }
-      const { order } = req.body as { order: { id: number; orderIndex: number }[] };
-      if (!Array.isArray(order)) return res.status(400).json({ message: "order must be an array" });
-      await storage.reorderMenuItems(order);
+      const categoryId = Number(req.params.catId);
+      const [category] = await db.select({ id: menuCategories.id }).from(menuCategories)
+        .where(and(eq(menuCategories.id, categoryId), eq(menuCategories.pubId, pubId)));
+      if (!category) return res.status(404).json({ message: "Categoria non trovata" });
+      const { order } = req.body;
+      const existing = await db.select({ id: menuItems.id }).from(menuItems).where(eq(menuItems.categoryId, categoryId));
+      if (!isCompleteInventoryOrder(order, existing.map(item => item.id))) {
+        return res.status(400).json({ message: "Ordine non valido o lista cambiata. Ricarica e riprova." });
+      }
+      await db.transaction(async tx => {
+        for (const [index, item] of order.entries()) {
+          await tx.update(menuItems).set({ orderIndex: index })
+            .where(and(eq(menuItems.id, item.id), eq(menuItems.categoryId, categoryId)));
+        }
+      });
+      broadcastPubUpdate(pubId, "menu");
       res.json({ ok: true });
     } catch (error) {
       console.error("Error reordering menu items:", error);

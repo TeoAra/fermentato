@@ -1118,27 +1118,50 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             )}
 
             <section>
-              <h3 className="text-sm font-bold text-foreground tracking-tight mb-2">Gestisci</h3>
+              <div className="mb-3">
+                <h3 className="text-sm font-bold text-foreground tracking-tight">Gestisci</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">Le sezioni che ti servono durante il servizio.</p>
+              </div>
+              <div className="mb-3 grid grid-cols-2 gap-2">
+                {[
+                  { label: 'Info Birrificio', sub: 'Profilo e contatti', icon: InfoIcon, tab: 'info' },
+                  { label: 'Novità & Uscite', sub: 'Annunci e collaborazioni', icon: Megaphone, tab: 'annunci' },
+                ].map(({ label, sub, icon: Icon, tab }) => (
+                  <button
+                    key={tab}
+                    type="button"
+                    onClick={() => setActiveTab(tab)}
+                    className="flex min-h-[76px] min-w-0 items-center gap-2.5 rounded-2xl border border-primary/15 bg-primary/[0.045] p-3 text-left shadow-sm transition-colors active:scale-[0.98] hover:bg-primary/[0.08]"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                      <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-[13px] font-bold leading-tight text-foreground">{label}</span>
+                      <span className="mt-1 block text-[11px] leading-tight text-muted-foreground">{sub}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
               <div className="space-y-2">
                 {[
                   { label: 'Catalogo Birre', sub: `${beers.length} birre in catalogo`, icon: BeerIcon, tab: 'birre' },
                   { label: 'Analytics', sub: 'Visite e birre più popolari', icon: TrendingUp, tab: 'analytics' },
                   { label: 'Eventi', sub: 'Gestisci gli eventi del birrificio', icon: CalendarIcon, tab: 'eventi' },
                   { label: 'Distribuzione', sub: 'Dove siamo in spina', icon: Store, tab: 'distribuzione' },
-                  { label: 'Annunci & Uscite', sub: 'Novità, release, collaborazioni', icon: Megaphone, tab: 'annunci' },
-                  { label: 'Info Birrificio', sub: 'Profilo, contatti, sito web', icon: InfoIcon, tab: 'info' },
                 ].map(({ label, sub, icon: Icon, tab }) => (
                   <button
                     key={tab}
+                    type="button"
                     onClick={() => setActiveTab(tab)}
-                    className="w-full flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.99] transition-all text-left"
+                    className="w-full min-h-16 flex items-center gap-3 p-3 rounded-2xl bg-white/70 dark:bg-white/[0.04] backdrop-blur-xl border border-white/40 dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] tap-scale active:scale-[0.99] transition-all text-left"
                   >
                     <div className="w-10 h-10 rounded-xl bg-primary/10 dark:bg-primary/15 flex items-center justify-center flex-shrink-0">
                       <Icon className="h-5 w-5 text-primary" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-bold text-foreground leading-tight">{label}</div>
-                      <div className="text-[11px] text-muted-foreground truncate mt-0.5">{sub}</div>
+                      <div className="text-xs text-muted-foreground leading-snug mt-0.5">{sub}</div>
                     </div>
                     <ChevronRight className="h-4 w-4 text-stone-400 flex-shrink-0" />
                   </button>
@@ -1512,18 +1535,18 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         aria-label="Navigazione dashboard birrificio"
         role="tablist"
       >
-        <div className="overflow-x-auto scrollbar-hide px-2">
-          <div className="flex min-h-[52px] min-w-max items-center px-1 gap-1">
+        <div className="w-full px-1">
+          <div className="flex min-h-[52px] w-full items-center">
               {[
                 { id: 'overview',      label: 'Home',    Icon: HomeIcon },
                 { id: 'birre',         label: 'Birre',   Icon: BeerIcon },
-              { id: 'analytics',     label: 'Stats',   Icon: TrendingUp },
+                { id: 'analytics',     label: 'Stats',   Icon: TrendingUp },
                 { id: 'eventi',        label: 'Eventi',  Icon: CalendarIcon },
-                { id: 'distribuzione', label: 'Distrib.',Icon: Store },
-              { id: 'annunci',       label: 'Novità',  Icon: Megaphone },
-                { id: 'info',          label: 'Info',    Icon: InfoIcon },
+                { id: 'distribuzione', label: 'Distribuzione', Icon: Store },
               ].map(({ id, label, Icon }) => {
-                const active = activeTab === id;
+                const active = id === 'overview'
+                  ? activeTab === 'overview' || activeTab === 'info' || activeTab === 'annunci'
+                  : activeTab === id;
                 return (
                   <button
                     key={id}
@@ -1533,7 +1556,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     aria-current={active ? 'page' : undefined}
                     aria-label={label}
                     data-testid={`brewerydash-dock-${id}`}
-                    className={`min-h-12 min-w-[64px] flex flex-col items-center justify-center gap-0.5 px-2 rounded-[18px] transition-all duration-200 active:scale-95 ${
+                    className={`min-h-12 min-w-0 flex-1 flex flex-col items-center justify-center gap-0.5 px-0.5 rounded-[18px] transition-all duration-200 active:scale-95 ${
                       active
                         ? 'bg-primary/10 dark:bg-primary/15 text-primary'
                         : 'text-stone-500 dark:text-stone-400 hover:text-foreground'
@@ -1545,7 +1568,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                       fill={active ? 'currentColor' : 'none'}
                       style={active ? { fillOpacity: 0.18 } : {}}
                     />
-                    <span className={`text-[10px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
+                    <span className={`max-w-full truncate text-[9px] leading-none tracking-tight ${active ? 'font-bold' : 'font-semibold'}`}>
                       {label}
                     </span>
                   </button>

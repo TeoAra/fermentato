@@ -20,4 +20,6 @@
 - [Deep links / apri app](deep-links-app-open.md) — Android usa to.fermenta.app (diverso da iOS); assetlinks richiede il fingerprint Play App Signing e build post-cap-sync verificata.
 - [Security hardening baseline](security-hardening.md) — helmet (CSP off, COEP off), body 1mb global (10mb only /api/scan), generalApiRateLimit 300/5min in rate-limit.ts, query maxLen 200. Actual SQL injection risk was low (parameterized queries throughout); main gaps were DoS vectors.
 - [Cantina and taplist independence](inventory-list-independence.md) — visibility and deletion in one inventory list must never silently mutate the other, even when both rows reference the same beer.
+- [Owner mobile UX](owner-mobile-ux.md) — brewery dock has at most five fixed tabs; Info/Novità belong under Home; pub beer reorder must renumber positions from 1 to X.
+- [Development watcher limits](dev-watchers.md) — Vite plugins may watch the workspace despite a client root; exclude tool caches to prevent ENOSPC preview crashes.
 - [Android package identity](android-package-identity.md) — Android/Play uses to.fermenta.app while shared Capacitor/iOS uses to.fermentato.app; Firebase and CI must target the Android ID.

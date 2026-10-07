@@ -24,6 +24,11 @@ export async function setupVite(app: Express, server: Server) {
     middlewareMode: true,
     hmr: { server },
     allowedHosts: true as const,
+    // Plugins can add the workspace root to Vite's watcher, including large
+    // Nix/tool caches. Those files never require a frontend reload.
+    watch: {
+      ignored: ["**/.cache/**", "**/.local/**", "**/.agents/**"],
+    },
   };
 
   const vite = await createViteServer({

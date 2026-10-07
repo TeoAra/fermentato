@@ -275,7 +275,6 @@ export interface IStorage {
   createMenuItem(item: InsertMenuItem): Promise<MenuItem>;
   updateMenuItem(id: number, updates: Partial<InsertMenuItem>): Promise<MenuItem>;
   deleteMenuItem(id: number): Promise<void>;
-  reorderMenuItems(order: { id: number; orderIndex: number }[]): Promise<void>;
 
   // Drink items operations
   getDrinkItems(pubId: number, includeHidden?: boolean): Promise<DrinkItem[]>;
@@ -1252,14 +1251,6 @@ export class DatabaseStorage implements IStorage {
 
   async deleteMenuItem(id: number): Promise<void> {
     await db.delete(menuItems).where(eq(menuItems.id, id));
-  }
-
-  async reorderMenuItems(order: { id: number; orderIndex: number }[]): Promise<void> {
-    await Promise.all(
-      order.map(({ id, orderIndex }) =>
-        db.update(menuItems).set({ orderIndex }).where(eq(menuItems.id, id))
-      )
-    );
   }
 
   // Allergen operations
@@ -2710,9 +2701,6 @@ class StorageWrapper implements IStorage {
     );
   }
 
-  async reorderMenuItems(order: { id: number; orderIndex: number }[]): Promise<void> {
-    return this.dbCall(() => this.databaseStorage.reorderMenuItems(order), async () => {});
-  }
 
   // Allergen operations
   async getAllergens(): Promise<Allergen[]> {

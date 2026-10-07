@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTouchReorder } from "@/hooks/useTouchReorder";
+import { moveInventoryItem } from "@shared/inventory-order";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -394,6 +395,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   });
 
   const handleDragStart = (e: React.DragEvent, idx: number) => {
+    if (reorderMutation.isPending) { e.preventDefault(); return; }
     dragFromIdx.current = idx;
     e.dataTransfer.effectAllowed = "move";
     e.dataTransfer.setData("text/plain", String(idx));
@@ -408,10 +410,8 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     const from = dragFromIdx.current;
     setDragOverIdx(null);
     dragFromIdx.current = null;
-    if (from === null || from === dropIdx) return;
-    const next = [...localTapList];
-    const [moved] = next.splice(from, 1);
-    next.splice(dropIdx, 0, moved);
+    if (reorderMutation.isPending || from === null || from === dropIdx) return;
+    const next = moveInventoryItem(localTapList, from, dropIdx, "tapNumber");
     setLocalTapList(next);
     reorderMutation.mutate(next.map((item, i) => ({ id: item.id, tapNumber: i + 1 })));
   };
@@ -420,9 +420,8 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   // ── Touch drag (iOS / Capacitor) ──────────────────────────────────────────
   const { startTouchDrag } = useTouchReorder({
     onReorder: (from, to) => {
-      const next = [...localTapList];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
+      if (reorderMutation.isPending) return;
+      const next = moveInventoryItem(localTapList, from, to, "tapNumber");
       setLocalTapList(next);
       reorderMutation.mutate(next.map((item, i) => ({ id: item.id, tapNumber: i + 1 })));
     },

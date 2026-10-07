@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useTouchReorder, useTouchReorderInGroup } from "@/hooks/useTouchReorder";
+import { moveInventoryItem } from "@shared/inventory-order";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -299,7 +301,10 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
 
   useEffect(() => {
     setLocalCategories(
-      [...categories].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0))
+      [...categories].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)).map(category => ({
+        ...category,
+        items: [...(category.items || [])].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)),
+      }))
     );
   }, [categories]);
 
@@ -346,6 +351,82 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
     setDragOverIndex(null);
     dragIndexRef.current = null;
   };
+  const { startTouchDrag } = useTouchReorder({
+    onReorder: (from, to) => {
+      const next = [...localCategories];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      setLocalCategories(next);
+      reorderMutation.mutate(next.map((category, orderIndex) => ({ id: category.id, orderIndex })));
+    },
+    setDragOver: setDragOverIndex,
+  });
+
+  const itemDragFrom = useRef<{ categoryId: number; index: number } | null>(null);
+  const [itemDragOver, setItemDragOver] = useState<{ group: string; idx: number } | null>(null);
+  const reorderItemsMutation = useMutation({
+    mutationFn: ({ categoryId, order }: { categoryId: number; order: { id: number; orderIndex: number }[] }) =>
+      apiRequest(`/api/pubs/${pubId}/menu-categories/${categoryId}/items/reorder`, { method: "POST" }, { order }),
+    onError: () => {
+      toast({ title: "Ordine non salvato", description: "Riprova a spostare il prodotto.", variant: "destructive" });
+      setLocalCategories([...categories].sort((a, b) => (a.orderIndex ?? 0) - (b.orderIndex ?? 0)));
+      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "menu"] }),
+  });
+  const moveProduct = (categoryId: number, from: number, to: number) => {
+    if (reorderItemsMutation.isPending || from === to) return;
+    const category = localCategories.find(category => category.id === categoryId);
+    if (!category?.items?.[from] || !category.items[to]) return;
+    const orderedItems = moveInventoryItem<any>(category.items, from, to, "orderIndex");
+    setLocalCategories(localCategories.map(category => category.id === categoryId ? { ...category, items: orderedItems } : category));
+    reorderItemsMutation.mutate({ categoryId, order: orderedItems.map(({ id, orderIndex }) => ({ id, orderIndex })) });
+  };
+  const { startTouchDragInGroup } = useTouchReorderInGroup({
+    onReorder: (group, from, to) => moveProduct(Number(group), from, to),
+    setDragOver: setItemDragOver,
+  });
+  const productSortProps = (categoryId: number, index: number) => ({
+    "data-touch-sort-idx": index,
+    "data-touch-sort-group": String(categoryId),
+    onDragOver: (e: React.DragEvent) => {
+      if (!itemDragFrom.current) return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (itemDragFrom.current.categoryId === categoryId) setItemDragOver({ group: String(categoryId), idx: index });
+    },
+    onDrop: (e: React.DragEvent) => {
+      if (!itemDragFrom.current) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const from = itemDragFrom.current;
+      itemDragFrom.current = null;
+      setItemDragOver(null);
+      if (from.categoryId === categoryId) moveProduct(categoryId, from.index, index);
+    },
+    onDragEnd: () => { itemDragFrom.current = null; setItemDragOver(null); },
+  });
+  const productHandle = (categoryId: number, index: number, name: string) => (
+    <button
+      type="button"
+      draggable={!reorderItemsMutation.isPending}
+      disabled={reorderItemsMutation.isPending}
+      aria-label={`Riordina ${name}`}
+      title="Trascina per riordinare"
+      className="flex h-11 min-w-11 items-center justify-center gap-1 self-start rounded-lg text-muted-foreground cursor-grab active:cursor-grabbing hover:bg-stone-100 dark:hover:bg-white/5 disabled:opacity-40"
+      style={{ touchAction: "none" }}
+      onDragStart={e => {
+        e.stopPropagation();
+        itemDragFrom.current = { categoryId, index };
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", `product-${categoryId}-${index}`);
+      }}
+      onTouchStart={e => { if (!reorderItemsMutation.isPending) startTouchDragInGroup(e, String(categoryId), index); }}
+    >
+      <GripVertical className="h-4 w-4" />
+      <span className="text-[10px] tabular-nums">{index + 1}</span>
+    </button>
+  );
   // ─────────────────────────────────────────────────────────────────────────
 
   const effectiveProductIsVisible = (product: any) =>
@@ -991,7 +1072,8 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                   transition={{ duration: 0.4, delay: index * 0.1 }}
                   className="group"
                   draggable
-                  onDragStart={(e) => handleDragStart(e as unknown as React.DragEvent, index)}
+                  data-touch-sort-idx={index}
+                  onDragStart={e => handleDragStart(e as unknown as React.DragEvent, index)}
                   onDragOver={(e) => handleDragOver(e, index)}
                   onDragLeave={handleDragLeave}
                   onDrop={(e) => handleDrop(e, index)}
@@ -1002,20 +1084,26 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                       ? "border-primary/60 shadow-md ring-2 ring-primary/20 scale-[1.01]"
                       : "border-stone-100 dark:border-border"
                   }`}>
-                    <CardContent className="p-6">
+                    <CardContent className="p-3 sm:p-5">
                       <div className="flex items-start justify-between mb-4">
-                        <div className="flex items-center space-x-4 flex-1">
-                          <div
-                            className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded-lg text-stone-300 hover:text-stone-500 dark:text-stone-600 dark:hover:text-stone-400 hover:bg-stone-50 dark:hover:bg-white/[0.04] transition-colors flex-shrink-0"
+                        <div className="flex min-w-0 items-center gap-2 flex-1">
+                          <button
+                            type="button"
+                            draggable
+                            aria-label={`Riordina categoria ${category.name}`}
+                            onDragStart={e => handleDragStart(e, index)}
+                            onTouchStart={e => startTouchDrag(e, index)}
+                            style={{ touchAction: "none" }}
+                            className="flex h-11 w-11 min-w-11 items-center justify-center cursor-grab active:cursor-grabbing rounded-lg text-stone-400 hover:text-stone-500 dark:text-stone-500 dark:hover:text-stone-400 hover:bg-stone-50 dark:hover:bg-white/[0.04] transition-colors"
                             title="Trascina per riordinare"
                           >
                             <GripVertical className="h-5 w-5" />
-                          </div>
+                          </button>
                           <div className="p-2.5 bg-primary/10 rounded-xl flex-shrink-0">
                             <IconComponent className="h-5 w-5 text-primary" />
                           </div>
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-base font-bold text-foreground mb-1 truncate">
+                            <h3 className="text-base font-bold text-foreground mb-1 break-words">
                               {category.name}
                             </h3>
                             {category.description && (
@@ -1032,7 +1120,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                         </div>
                       </div>
 
-                      <div className="flex items-center justify-between mb-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
                         <div className="flex items-center gap-2">
                           <Badge
                             className={`text-xs ${effectiveCategoryIsVisible(category)
@@ -1110,13 +1198,16 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                             <div className="mt-4 pt-4 border-t border-stone-100 dark:border-border">
                               {category.items && category.items.length > 0 ? (
                                 <div className="space-y-2">
-                                  {category.items.map((product: any) => (
+                                  <p className="text-xs text-muted-foreground">Trascina la maniglia per ordinare i prodotti.</p>
+                                  {category.items.map((product: any, productIndex: number) => (
                                     product.isInfoBox ? (
                                       <div
                                         key={product.id}
-                                        className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg"
+                                        {...productSortProps(category.id, productIndex)}
+                                        className={`flex flex-wrap items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg ${itemDragOver?.group === String(category.id) && itemDragOver.idx === productIndex ? "ring-2 ring-primary" : ""}`}
                                       >
-                                        <div className="flex-1 flex items-start gap-2">
+                                        <div className="flex-1 basis-full min-w-0 flex items-start gap-2">
+                                          {productHandle(category.id, productIndex, product.name)}
                                           <Info className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
                                           <div>
                                             <div className="flex items-center gap-2">
@@ -1131,7 +1222,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                             <p className="text-sm text-amber-900 dark:text-amber-100 mt-1 italic">{product.description || product.name}</p>
                                           </div>
                                         </div>
-                                        <div className="flex items-center space-x-1 ml-4">
+                                        <div className="flex w-full justify-end items-center gap-1 border-t border-amber-200/60 pt-2 dark:border-amber-700/40">
                                           <Button
                                             size="sm"
                                             variant="ghost"
@@ -1171,9 +1262,11 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                     ) : (
                                     <div
                                       key={product.id}
-                                      className="flex items-center justify-between p-3 bg-stone-50/50 dark:bg-[#0B0D10]/20 rounded-xl hover:bg-stone-100/60 dark:hover:bg-stone-900/40 transition-colors"
+                                      {...productSortProps(category.id, productIndex)}
+                                      className={`flex flex-wrap items-start gap-2 p-3 bg-stone-50/50 dark:bg-[#0B0D10]/20 rounded-xl hover:bg-stone-100/60 dark:hover:bg-stone-900/40 transition-colors ${itemDragOver?.group === String(category.id) && itemDragOver.idx === productIndex ? "ring-2 ring-primary" : ""}`}
                                     >
-                                      <div className="flex gap-2.5 flex-1 min-w-0">
+                                      <div className="flex basis-full gap-2 flex-1 min-w-0">
+                                        {productHandle(category.id, productIndex, product.name)}
                                         {product.imageUrl && (
                                           <img
                                             src={product.imageUrl}
@@ -1240,13 +1333,14 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                         })()}
                                       </div>
                                       </div>
-                                      <div data-testid={`product-actions-${product.id}`} className="flex items-center space-x-1 ml-2 flex-shrink-0">
+                                      <div data-testid={`product-actions-${product.id}`} className="flex w-full justify-end items-center gap-1 border-t border-stone-200/60 pt-2 dark:border-white/[0.06]">
                                         <Button
                                           size="sm"
                                           variant="ghost"
                                           onClick={() => handleToggleProductVisibility(product)}
                                           className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-foreground hover:bg-stone-50"
                                           data-testid={`button-toggle-product-visibility-${product.id}`}
+                                          aria-label={`${effectiveProductIsVisible(product) ? "Nascondi" : "Mostra"} ${product.name}`}
                                         >
                                           {effectiveProductIsVisible(product) ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                         </Button>
@@ -1266,6 +1360,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                           }}
                                           className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-primary hover:bg-stone-50"
                                           data-testid={`button-edit-product-${product.id}`}
+                                          aria-label={`Modifica ${product.name}`}
                                         >
                                           <Edit3 className="h-4 w-4" />
                                         </Button>
@@ -1275,6 +1370,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
                                           onClick={() => handleDeleteProduct(product)}
                                           className="min-h-11 min-w-11 p-2 text-muted-foreground hover:text-destructive hover:bg-red-50"
                                           data-testid={`button-delete-product-${product.id}`}
+                                          aria-label={`Elimina ${product.name}`}
                                         >
                                           <Trash2 className="h-4 w-4" />
                                         </Button>
