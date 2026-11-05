@@ -274,11 +274,9 @@ export function BottomNavigation() {
     location.startsWith("/user/") ||
     location === "/dashboard" ||
     location.startsWith("/dashboard/") ||
-    location.startsWith("/pub-dashboard") ||
     location.startsWith("/brewery-dashboard") ||
     location === "/profile" ||
-    location.startsWith("/profile/") ||
-    location.startsWith("/user-dashboard")
+    location.startsWith("/profile/")
   ) return null;
 
   const typedUser = user as any;

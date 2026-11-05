@@ -20,7 +20,7 @@ di acquisto:
   `/registra-pub`, `/pub-registration` su iOS vengono sostituite con
   `IosWebOnlyPage` (pagina che spiega di completare l'operazione dal
   browser su fermenta.to).
-- I banner di attivazione/rinnovo in `pub-dashboard.tsx` e
+- I banner di attivazione/rinnovo nella dashboard pub attuale (`smart-pub-dashboard.tsx`) e
   `festival-dashboard.tsx` su iOS mostrano solo testo informativo, niente
   prezzi, niente CTA di pagamento.
 - Footer, header, sidebar, mobile-header, landing e onboarding nascondono
