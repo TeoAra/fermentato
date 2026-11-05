@@ -476,7 +476,7 @@ async function executeResolved(
         };
       }
       const newBeer = candidates[0];
-      await db.update(tapList).set({ beerId: newBeer.id, updatedAt: new Date() }).where(eq(tapList.id, fromItem.id));
+      await db.update(tapList).set({ beerId: newBeer.id, ...(newBeer.id !== fromItem.beerId ? { updatedAt: new Date() } : {}) }).where(eq(tapList.id, fromItem.id));
       bustHomeCaches();
       bustPubStats(pubId);
       const brewInfo = newBeer.breweryName ? ` di *${newBeer.breweryName}*` : "";
@@ -656,7 +656,7 @@ async function resolveConfirmation(
   if (action.type === "swap") {
     const fromItem = fuzzyFind(action.from, tap);
     if (!fromItem) return { ok: false, message: `❌ Birra da sostituire non trovata: "${action.from}"` };
-    await db.update(tapList).set({ beerId: chosen.id, updatedAt: new Date() }).where(eq(tapList.id, fromItem.id));
+    await db.update(tapList).set({ beerId: chosen.id, ...(chosen.id !== fromItem.beerId ? { updatedAt: new Date() } : {}) }).where(eq(tapList.id, fromItem.id));
     bustHomeCaches();
     bustPubStats(pubId);
     const brewInfo = chosen.breweryName ? ` di *${chosen.breweryName}*` : "";

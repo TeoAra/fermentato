@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { formatTapAttachmentMessage } from "@shared/tap-activity";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -611,8 +612,7 @@ export default function Home() {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-[12px] font-medium text-foreground leading-snug">
-                        <span className="font-bold">{item.pub_name}</span> ha aggiunto{' '}
-                        <span className="font-bold">{item.beer_name}</span>
+                        {formatTapAttachmentMessage(item.pub_name, item.beer_name, item.brewery_name)}
                       </p>
                       <p className="text-[10px] text-muted-foreground mt-0.5">
                         {item.beer_style}{item.beer_abv ? ` · ${item.beer_abv}%` : ''}

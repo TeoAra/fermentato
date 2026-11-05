@@ -1,4 +1,5 @@
 import type { Express } from "express";
+import { isTapAttachment, formatTapAttachmentMessage } from "../shared/tap-activity";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { searchRateLimit, generalApiRateLimit, checkinRateLimit } from "./middleware/rate-limit";
 import { createServer, type Server } from "http";
@@ -3073,7 +3074,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       await db.transaction(async tx => {
         for (const [index, item] of order.entries()) {
-          await tx.update(tapList).set({ tapNumber: index + 1, updatedAt: new Date() })
+          await tx.update(tapList).set({ tapNumber: index + 1 })
             .where(and(eq(tapList.id, item.id), eq(tapList.pubId, pubId)));
         }
       });
@@ -3099,6 +3100,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const existingItems = await storage.getTapListByPubForOwner(parseInt(pubId));
       const existingItem = existingItems.find((t: any) => t.id === parseInt(id));
+      if (!existingItem) return res.status(404).json({ message: "Tap item not found" });
       const oldBeerId = existingItem?.beerId;
       
       const item = await storage.updateTapListItem(parseInt(id), data);
@@ -3106,7 +3108,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (data.beerId && oldBeerId && data.beerId !== oldBeerId) {
         const newBeer = await storage.getBeer(data.beerId);
         if (newBeer) {
-          notifyTapListChange(parseInt(pubId), 'tap_change', newBeer.name, newBeer.id);
+          if (isTapAttachment(existingItem, item)) {
+            notifyTapListChange(parseInt(pubId), 'tap_change', newBeer.name, newBeer.id);
+          }
           // Use POST-update active state: explicit data.isActive wins; otherwise carry forward existing
           const tapPostActive = data.isActive !== undefined
             ? data.isActive === true
@@ -3140,6 +3144,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const activatedBeer = await storage.getBeer(activatedBeerId);
           const pub = await storage.getPub(parseInt(pubId));
           if (activatedBeer && pub) {
+            if (activatedBeerId === oldBeerId) {
+              notifyTapListChange(parseInt(pubId), 'new_beer', activatedBeer.name, activatedBeerId);
+            }
             notifyWishlistBeerAvailable(parseInt(pubId), activatedBeerId, activatedBeer.name, pub, new Set(), 'tap');
           }
         }
@@ -4558,13 +4565,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const pub = await storage.getPub(pubId);
       if (!pub) return;
 
+      const beer = beerId ? await storage.getBeer(beerId) : undefined;
+      const brewery = beer?.breweryId ? await storage.getBrewery(beer.breweryId) : undefined;
+      const message = formatTapAttachmentMessage(pub.name, beerName, brewery?.name);
       const titleMap = {
         new_beer: `Nuova birra alla spina!`,
         tap_change: `Cambio alla spina!`,
       };
       const messageMap = {
-        new_beer: `${pub.name} ha aggiunto "${beerName}" alle spine.`,
-        tap_change: `${pub.name} ha messo "${beerName}" alla spina.`,
+        new_beer: message,
+        tap_change: message,
       };
 
       const pubFavUserIds = await storage.getUsersWhoFavoritedPub(pubId);
@@ -4607,7 +4617,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId,
             type: 'new_beer',
             title: `La tua birra preferita disponibile!`,
-            message: `"${beerName}" è ora alla spina da ${pub.name}.`,
+            message,
             pubId,
             beerId,
             isRead: false,
@@ -4615,7 +4625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           sendPushToUser(userId, {
             title: `La tua birra preferita disponibile!`,
-            body: `"${beerName}" è ora alla spina da ${pub.name}.`,
+            body: message,
             url: `/pub/${pubId}`,
             type: 'new_beer',
             icon: pub.logoUrl || undefined,
@@ -4623,11 +4633,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
         }
 
-        const beer = await storage.getBeer(beerId);
         if (beer?.breweryId) {
           const breweryFavUserIds = await storage.getUsersWhoFavoritedBrewery(beer.breweryId);
-          const brewery = await storage.getBrewery(beer.breweryId);
-          const breweryName = brewery?.name || 'il tuo birrificio preferito';
 
           for (const userId of breweryFavUserIds) {
             if (notifiedSet.has(userId)) continue;
@@ -4640,7 +4647,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               userId,
               type: 'new_beer',
               title: `Novità dal tuo birrificio preferito!`,
-              message: `${pub.name} ha "${beerName}" di ${breweryName} alla spina.`,
+              message,
               pubId,
               beerId,
               isRead: false,
@@ -4648,7 +4655,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
             sendPushToUser(userId, {
               title: `Novità dal tuo birrificio preferito!`,
-              body: `${pub.name} ha "${beerName}" di ${breweryName} alla spina.`,
+              body: message,
               url: `/pub/${pubId}`,
               type: 'new_beer',
               icon: brewery?.logoUrl || undefined,
@@ -4758,6 +4765,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const nearbyUsers = await filterUsersByCity(candidates, pub.city);
       if (nearbyUsers.size === 0) return;
 
+      const tapBeer = source === 'tap' ? await storage.getBeer(beerId) : undefined;
+      const tapBrewery = tapBeer?.breweryId ? await storage.getBrewery(tapBeer.breweryId) : undefined;
+      const tapMessage = source === 'tap'
+        ? formatTapAttachmentMessage(pub.name, beerName, tapBrewery?.name)
+        : undefined;
+
       for (const userId of nearbyUsers) {
         // Check notification preferences BEFORE claiming the dedup slot so that
         // a user who opts back in after being opted out can still be notified.
@@ -4771,7 +4784,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
         const sourceLabel = source === 'tap' ? 'alla spina' : 'in bottiglia';
         const title = `Birra dalla tua wishlist disponibile!`;
-        const message = `"${beerName}" è ora disponibile ${sourceLabel} da ${pub.name} (${pub.city}).`;
+        const message = tapMessage ?? `"${beerName}" è ora disponibile ${sourceLabel} da ${pub.name} (${pub.city}).`;
 
         await storage.createNotification({
           userId,
@@ -6200,12 +6213,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const itemId = parseInt(String(req.params.itemId));
       const { newBeerId } = req.body;
-      
+      const tapItem = (await storage.getTapListByPubForOwner(pubId)).find(item => item.id === itemId);
+      if (!tapItem) return res.status(404).json({ message: "Tap item not found" });
+
       const updatedItem = await storage.updateTapListItem(itemId, { beerId: newBeerId });
 
       const newBeer = await storage.getBeer(newBeerId);
       if (newBeer) {
-        notifyTapListChange(pubId, 'tap_change', newBeer.name, newBeer.id);
+        if (isTapAttachment(tapItem, updatedItem)) {
+          notifyTapListChange(pubId, 'tap_change', newBeer.name, newBeer.id);
+        }
         // Wishlist: gate on the POST-update active state so a simultaneous deactivation doesn't alert
         const tapPostActive = (updatedItem as any)?.isActive !== false;
         if (tapPostActive) {
@@ -9956,6 +9973,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
             p.city AS pub_city,
             b.id   AS beer_id,
             b.name AS beer_name,
+            br.name AS brewery_name,
             b.style AS beer_style,
             b.abv,
             b.image_url AS beer_image,
@@ -9963,6 +9981,7 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
           FROM tap_list tl
           JOIN pubs  p ON p.id = tl.pub_id  AND p.is_active = true
           JOIN beers b ON b.id = tl.beer_id
+          LEFT JOIN breweries br ON br.id = b.brewery_id
           WHERE tl.is_active = true
           ORDER BY COALESCE(tl.updated_at, tl.added_at) DESC NULLS LAST, tl.id DESC
           LIMIT 20

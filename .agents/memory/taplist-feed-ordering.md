@@ -1,6 +1,6 @@
 ---
 name: Taplist feed ordering & cache
-description: Why the home "taplist-activity" feed must order by updated_at (not id) and how every tap mutation must keep it fresh.
+description: Attachment recency, removal semantics and notification wording for taplist activity.
 ---
 
 # Home taplist feed: order by recency, not id
@@ -15,10 +15,10 @@ buries the replaced beer and it never resurfaces. New beers (INSERT) get a fresh
 they looked fine, masking the bug for replaces only.
 
 **How to apply:**
-- Every tap mutation that should count as feed activity must bump `updated_at`.
-  - Web path goes through `storage.updateTapListItem`, which already sets `updatedAt`.
-  - Bot path (`server/bot-commands.ts`) uses **raw `db.update`/`db.insert`**, NOT storage,
-    so it must set `updatedAt: new Date()` on swaps explicitly (inserts get the DB default).
+- Only an actual attachment (new beer, different beer, or inactive-to-active serving)
+  counts as new activity. Removal, deactivation, reordering, prices, visibility and
+  same-beer edits must preserve attachment recency.
+  - Apply this distinction to raw bot writes as well as web updates.
 - The feed is memory-cached ~2 min inside `server/routes.ts` (`_memCache`). Any mutation
   must invalidate it. Web routes call `_memCache.delete("home:taplist-activity")` directly;
   other modules can't reach `_memCache` (import cycle), so use the **home-feed channel** in
@@ -26,3 +26,16 @@ they looked fine, masking the bug for replaces only.
   from `bustCatalogCaches` so tap edits don't needlessly flush the heavier search caches.
 - The feed does NOT filter `is_visible`; bot hide/show therefore don't affect it (intentional
   for the new/replaced-beer scope).
+
+## Removal and notification wording
+
+**Rule:** Removing a beer must not appear as adding one. Attachment notifications
+should say: `Pub X ha attaccato "Nome birra" di "Nome birrificio"`.
+Omit the brewery clause only when the brewery is genuinely unknown.
+
+**Why:** The user explicitly requested this distinction and wording. Reordering
+remaining taps after a removal must not resurface those beers as new attachments.
+
+**How to apply:** Keep the meaning consistent in the activity feed, in-app alerts
+and push notifications, including tap-specific wishlist alerts. An explicit
+replacement may announce the newly attached beer, never the removed beer.

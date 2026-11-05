@@ -2,7 +2,9 @@ const CACHE_VERSION = 'v10';
 const STATIC_CACHE = `fermenta-static-${CACHE_VERSION}`;
 const PAGE_CACHE = `fermenta-pages-${CACHE_VERSION}`;
 const IMAGE_CACHE = `fermenta-images-${CACHE_VERSION}`;
-const TILE_CACHE = `fermenta-tiles-${CACHE_VERSION}`;
+// Separate namespace after the referrer-policy fix: discard previously blocked
+// tile images without resetting page/assets/API caches or user preferences.
+const TILE_CACHE = `fermenta-tiles-${CACHE_VERSION}-origin-policy`;
 const API_SAFE_CACHE = `fermenta-api-safe-${CACHE_VERSION}`;
 // Whitelist STRETTA di endpoint API "safe" che possono usare stale-while-revalidate:
 // solo dati pubblici raramente modificati (stili, popular styles, mappa birrifici).

@@ -41,6 +41,9 @@ app.use(compression());
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
+  // OSM requires a Referer identifying the website. Send only the origin to
+  // other HTTPS sites, never search terms, location parameters or private paths.
+  referrerPolicy: { policy: "strict-origin-when-cross-origin" },
 }));
 
 // CORS per Capacitor (app nativa) — deve stare PRIMA di qualsiasi route

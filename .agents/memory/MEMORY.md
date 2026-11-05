@@ -26,4 +26,5 @@
 - [Development watcher limits](dev-watchers.md) — Vite plugins may watch the workspace despite a client root; exclude tool caches to prevent ENOSPC preview crashes.
 - [Android package identity](android-package-identity.md) — Android/Play uses to.fermenta.app while shared Capacitor/iOS uses to.fermentato.app; Firebase and CI must target the Android ID.
 - [Map and location UX](map-location-ux.md) — keep the current free map; refine coarse GPS fixes, display actual uncertainty and distinguish fresh from cached coordinates.
+- [Map tile referrer policy](map-tile-referrer.md) — OSM blocks unidentified web tile requests; keep an origin-only cross-site Referer and invalidate only affected tile caches.
 - [Venue covers and simplicity](venue-cover-presentation.md) — full, proportionate covers without zoom/crop; reduce clutter without removing actions or information.

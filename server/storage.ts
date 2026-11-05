@@ -1,3 +1,4 @@
+import { isTapAttachment } from "../shared/tap-activity";
 import {
   users,
   pubs,
@@ -960,21 +961,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateTapListItem(id: number, updates: Partial<InsertTapList>): Promise<TapList> {
+    const [previous] = await db.select().from(tapList).where(eq(tapList.id, id)).limit(1);
+    if (!previous) throw new Error("Tap item not found");
     const [tapItem] = await db
       .update(tapList)
-      .set({ ...updates, updatedAt: new Date() })
+      .set({
+        ...updates,
+        updatedAt: isTapAttachment(previous, { ...previous, ...updates })
+          ? new Date()
+          : previous.updatedAt,
+      })
       .where(eq(tapList.id, id))
       .returning();
     return tapItem;
   }
 
   async updateTapItem(id: number, updates: Partial<InsertTapList>): Promise<TapList> {
-    const [tapItem] = await db
-      .update(tapList)
-      .set({ ...updates, updatedAt: new Date() })
-      .where(eq(tapList.id, id))
-      .returning();
-    return tapItem;
+    return this.updateTapListItem(id, updates);
   }
 
   async removeFromTapList(id: number): Promise<void> {
