@@ -27,4 +27,5 @@
 - [Android package identity](android-package-identity.md) — Android/Play uses to.fermenta.app while shared Capacitor/iOS uses to.fermentato.app; Firebase and CI must target the Android ID.
 - [Map and location UX](map-location-ux.md) — keep the current free map; refine coarse GPS fixes, display actual uncertainty and distinguish fresh from cached coordinates.
 - [Map tile referrer policy](map-tile-referrer.md) — OSM blocks unidentified web tile requests; keep an origin-only cross-site Referer and invalidate only affected tile caches.
+- [VPS package portability](vps-package-portability.md) — private package-firewall URLs in lock files break VPS installs; keep public URLs and verify unchanged integrity.
 - [Venue covers and simplicity](venue-cover-presentation.md) — full, proportionate covers without zoom/crop; reduce clutter without removing actions or information.
