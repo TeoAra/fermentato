@@ -354,6 +354,11 @@ export default function BottlesSection({
                 testId={`bottle-${b.id}`}
                 isFavorite={isFav}
                 detailLabel={formatLabel}
+                detailPrices={
+                  b.price && Number.isFinite(parseFloat(b.price))
+                    ? [{ label: formatLabel || null, amount: parseFloat(b.price).toFixed(2) }]
+                    : []
+                }
                 onToggleFavorite={onToggleFavorite}
                 onCheckin={onCheckin}
                 currentUserCanCheckin={currentUserCanCheckin}

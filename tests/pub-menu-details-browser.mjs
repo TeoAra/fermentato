@@ -21,7 +21,9 @@ const bundle = await build({
       return {id:101,name:"Birra prova",description,ibu:44,brewery:{name:"Birrificio prova"}};
     }}}});
     const wine={id:1,name:"Vino prova",producer:"Cantina prova",vintage:"2024",description,priceByGlass:"5.50",priceByBottle:"25",volumeCl:75,alcoholDegree:"13.5"};
-    const beer={id:101,name:"Birra prova",style:"IPA",abv:"6",brewery:{name:"Birrificio prova"}};
+    const logoMode=new URL(location.href).searchParams.get("logo");
+    const beer={id:101,name:"Birra prova",style:"IPA",abv:"6",brewery:{name:"Birrificio prova"},
+      imageUrl:logoMode==="none"?null:logoMode==="broken"?"/broken-logo.svg":"/beer-logo.svg"};
     const embedded={...beer,id:102,name:"Birra in cantina",description};
     const legacy=new URL(location.href).searchParams.has("legacy");
     createRoot(document.getElementById("root")).render(<QueryClientProvider client={client}><main style={{padding:16,maxWidth:760,margin:"auto"}}>
@@ -50,10 +52,17 @@ try {
   const errors = [];
   page.on("pageerror", error => { errors.push(error.message); console.error(error.stack); });
   await page.setRequestInterception(true);
-  page.on("request", request => request.respond({
-    status: 200, contentType: request.isNavigationRequest() ? "text/html" : "application/json",
-    body: request.isNavigationRequest() ? '<html><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div></html>' : "{}",
-  }));
+  page.on("request", request => {
+    if (request.url().endsWith("/broken-logo.svg")) return request.respond({ status: 404, body: "Not found" });
+    if (request.url().endsWith("/beer-logo.svg")) return request.respond({
+      status: 200, contentType: "image/svg+xml",
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="180" height="260"><rect width="180" height="260" fill="#9b2242"/><circle cx="90" cy="130" r="65" fill="#e9b94f"/><text x="42" y="136" font-size="28">BIRRA</text></svg>',
+    });
+    return request.respond({
+      status: 200, contentType: request.isNavigationRequest() ? "text/html" : "application/json",
+      body: request.isNavigationRequest() ? '<html><meta name="viewport" content="width=device-width,initial-scale=1"><div id="root"></div></html>' : "{}",
+    });
+  });
   async function load(width, query = "") {
     await page.setViewport({ width, height: 844, isMobile: width < 768, hasTouch: width < 768 });
     await page.goto(`http://menu.test/${query}`);
@@ -97,6 +106,22 @@ try {
     });
     assert.ok(closeVisible, "close stays reachable after reading long descriptions");
   }
+  async function verifyLogo(hasImage = true) {
+    const logo = await page.$eval('[data-testid="beer-detail-logo"]', node => {
+      const rect = node.getBoundingClientRect(), style = getComputedStyle(node), image = node.querySelector("img");
+      return { width: rect.width, height: rect.height, radius: style.borderRadius, overflow: style.overflow,
+        image: image ? { fit: getComputedStyle(image).objectFit, position: getComputedStyle(image).objectPosition,
+          padding: getComputedStyle(image).padding } : null };
+    });
+    assert.ok(logo.width > 0 && Math.abs(logo.width - logo.height) < 1);
+    assert.ok(logo.radius === "50%" || parseFloat(logo.radius) >= logo.width / 2, "logo stays circular");
+    assert.equal(logo.overflow, "hidden");
+    if (hasImage) {
+      assert.equal(logo.image.fit, "cover", "logo fills circle without distortion");
+      assert.equal(logo.image.position, "50% 50%", "logo crop is centered");
+      assert.equal(logo.image.padding, "0px", "no square inset or white frame");
+    }
+  }
   for (const width of [320, 390, 1280]) {
     await load(width);
     assert.equal(await page.evaluate(() => window.detailRequests), 0);
@@ -114,6 +139,11 @@ try {
     await close();
     await click("beer-detail-trigger-101");
     await verifyDialog("beer");
+    await verifyLogo();
+    if (width === 390) {
+      await page.$eval('[data-testid="menu-detail-scroll"]', node => { node.scrollTop = 0; });
+      await page.screenshot({ path: "/tmp/beer-detail-redesign.png" });
+    }
     assert.equal(await page.evaluate(() => window.detailRequests), 1);
     assert.ok(await page.$eval('[role="dialog"]', node => node.textContent.includes("44") && node.textContent.includes("5,00")));
     await close();
@@ -143,6 +173,13 @@ try {
   await click("beer-detail-trigger-101");
   await page.waitForFunction(() => document.querySelector('[role="dialog"]')?.textContent.includes("Non è stato possibile"));
   await close();
+  for (const logo of ["none", "broken"]) {
+    await load(390, "?logo=" + logo);
+    await click("beer-detail-trigger-101");
+    await verifyDialog("beer");
+    await verifyLogo(false);
+    await close();
+  }
   assert.deepEqual(errors, []);
   console.log("PASS legacy products and explicit API error state");
 } finally {

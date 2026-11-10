@@ -84,6 +84,7 @@ export default function TaplistSection({
                 onCheckin={onCheckin}
                 currentUserCanCheckin={currentUserCanCheckin}
                 itemDescription={tap.description}
+                detailPrices={prices.map((price) => ({ label: price.size, amount: price.price }))}
                 priceContent={
                   prices.length > 0 ? (
                     prices.map((p, i) => (

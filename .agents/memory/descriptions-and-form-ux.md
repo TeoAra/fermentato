@@ -38,3 +38,13 @@ descriptions and a scrolled popup with its title and close control out of view.
 **How to apply:** verify actual rendered preview height, not just the presence
 of a truncation class. Keep a non-scrolling popup heading above the sole
 scrollable content area; apply the same treatment to wine and beer details.
+
+Nei popup delle birre il logo deve essere sempre circolare, riempito e centrato,
+senza un riquadro quadrato o margini interni attorno all'immagine.
+
+**Why:** the user explicitly requested this presentation after seeing the beer
+detail popup with a square inset around its logo.
+
+**How to apply:** use centered, proportional cover cropping inside a circular
+mask, including for missing-image fallbacks. This applies to beer popup logos,
+not venue cover artwork, which must still be displayed uncropped.
