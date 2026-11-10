@@ -14,3 +14,16 @@ I moduli aggiungi/modifica birra devono essere coerenti tra i percorsi, senza do
 **Why:** the user explicitly requested matching forms and a simpler mobile editing experience.
 
 **How to apply:** share the common beer fields while preserving role-specific permissions and validation. Long text fields grow with their content; the dialog owns scrolling. Check quick-edit fields as well as the main form, not just the outer dialog. Autonomous popup pickers may have their own scroll, but inline form bodies/lists should not.
+
+## Public menu descriptions
+
+I vini vanno separati dalle altre bevande. Le descrizioni dei prodotti devono
+essere leggibili per intero in una scheda popup; anche toccando l'immagine di una
+birra in taplist o cantina deve aprirsi una scheda con tutti i dettagli disponibili.
+
+**Why:** the user reported truncated wine descriptions and asked to read product
+and beer details without leaving the venue menu.
+
+**How to apply:** preserve wine subcategories, expose the full plain multiline
+description and current venue prices, and keep popup scrolling to one container.
+Keep favorite/check-in actions independent of opening details.

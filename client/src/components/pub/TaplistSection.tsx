@@ -83,6 +83,7 @@ export default function TaplistSection({
                 onToggleFavorite={onToggleFavorite}
                 onCheckin={onCheckin}
                 currentUserCanCheckin={currentUserCanCheckin}
+                itemDescription={tap.description}
                 priceContent={
                   prices.length > 0 ? (
                     prices.map((p, i) => (

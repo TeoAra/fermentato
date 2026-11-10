@@ -3,6 +3,7 @@ export { default as StickyPubTabs } from "./StickyPubTabs";
 export { default as OverviewSection } from "./OverviewSection";
 export { default as TaplistSection } from "./TaplistSection";
 export { default as BottlesSection } from "./BottlesSection";
+export { default as DrinksPublicSection } from "./DrinksPublicSection";
 export { default as FoodMenuSection } from "./FoodMenuSection";
 export { default as InfoCards } from "./InfoCards";
 export * from "./types";
