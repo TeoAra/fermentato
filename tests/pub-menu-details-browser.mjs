@@ -67,30 +67,35 @@ try {
     await page.click(`[data-testid="${testId}"]`);
   }
   async function close() {
-    await page.$eval('[role="dialog"] button', button => {
-      const close = [...document.querySelectorAll('[role="dialog"] button')].find(node => node.textContent.includes("Close"));
-      (close || button).click();
-    });
+    await page.click('[role="dialog"] button[aria-label="Chiudi finestra di dialogo"]');
     await page.waitForFunction(() => !document.querySelector('[role="dialog"]'));
     await new Promise(resolve => setTimeout(resolve, 300));
   }
   async function verifyDialog(kind) {
     await page.waitForSelector(`[data-testid="${kind}-detail-dialog"]`);
     await page.waitForFunction(kind => document.querySelector(`[data-testid="${kind}-detail-description"]`)?.textContent.includes("FINE DESCRIZIONE"), {}, kind);
+    await new Promise(resolve => setTimeout(resolve, 250));
     const metrics = await page.$eval('[role="dialog"]', node => {
       const box = node.getBoundingClientRect();
       return { width: box.width, x: box.x, right: box.right, text: node.textContent,
         overflow: node.scrollWidth > node.clientWidth + 1,
-        scrollable: node.scrollHeight > node.clientHeight,
         innerScrollers: [...node.querySelectorAll("*")].filter(child =>
           /auto|scroll/.test(getComputedStyle(child).overflowY) && child.scrollHeight > child.clientHeight).length };
     });
     assert.ok(metrics.x >= 0 && metrics.right <= (await page.viewport()).width + 1);
     assert.equal(metrics.overflow, false);
-    assert.ok(metrics.scrollable, "long content should scroll in dialog");
-    assert.equal(metrics.innerScrollers, 0, "dialog owns the only scroll");
+    assert.equal(metrics.innerScrollers, 1, "only the dialog body scrolls");
     assert.doesNotMatch(metrics.text, /<p>/);
-    await page.$eval('[role="dialog"]', node => { node.scrollTop = node.scrollHeight; });
+    const headerBefore = await page.$eval('[data-testid="menu-detail-header"]', node => node.getBoundingClientRect().top);
+    await page.$eval('[data-testid="menu-detail-scroll"]', node => { node.scrollTop = node.scrollHeight; });
+    const headerAfter = await page.$eval('[data-testid="menu-detail-header"]', node => node.getBoundingClientRect().top);
+    assert.ok(Math.abs(headerBefore - headerAfter) < 1, "title stays visible after scrolling");
+    const closeVisible = await page.$eval('[role="dialog"] button[aria-label="Chiudi finestra di dialogo"]', node => {
+      const box = node.getBoundingClientRect();
+      const top = document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2);
+      return node.contains(top);
+    });
+    assert.ok(closeVisible, "close stays reachable after reading long descriptions");
   }
   for (const width of [320, 390, 1280]) {
     await load(width);
@@ -99,8 +104,12 @@ try {
     assert.deepEqual(await page.$$eval("h2", nodes => nodes.slice(0, 2).map(n => n.textContent)), ["Vini", "Bevande"]);
     assert.equal(await page.$('[data-testid="drink-detail-trigger-8"]'), null);
     assert.equal(await page.$('[data-testid="beer-detail-trigger-103"]'), null);
+    const rowHeight = await page.$eval('[data-testid="drink-detail-trigger-1"]', node => node.getBoundingClientRect().height);
+    assert.ok(rowHeight < 220, `long description must not stretch menu row: ${rowHeight}px`);
+    if (width === 390) await page.screenshot({ path: "/tmp/menu-redesign-list.png" });
     await click("drink-detail-trigger-1");
     await verifyDialog("drink");
+    if (width === 390) await page.screenshot({ path: "/tmp/menu-redesign-dialog.png" });
     assert.ok(await page.$eval('[role="dialog"]', node => node.textContent.includes("€5.50") && node.textContent.includes("Cantina prova")));
     await close();
     await click("beer-detail-trigger-101");
@@ -122,6 +131,13 @@ try {
   await load(390, "?legacy");
   await click("drink-detail-trigger-1");
   await verifyDialog("drink");
+  await close();
+  await load(390);
+  await page.evaluate(() => document.documentElement.classList.add("dark"));
+  await click("drink-detail-trigger-1");
+  await verifyDialog("drink");
+  const darkBackground = await page.$eval('[role="dialog"]', node => getComputedStyle(node).backgroundColor);
+  assert.notEqual(darkBackground, "rgb(252, 250, 246)", "dialog must respect dark mode");
   await close();
   await load(390, "?error");
   await click("beer-detail-trigger-101");

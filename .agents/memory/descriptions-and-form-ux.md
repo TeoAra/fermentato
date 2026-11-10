@@ -27,3 +27,14 @@ and beer details without leaving the venue menu.
 **How to apply:** preserve wine subcategories, expose the full plain multiline
 description and current venue prices, and keep popup scrolling to one container.
 Keep favorite/check-in actions independent of opening details.
+
+Le anteprime nell'elenco devono rimanere compatte anche con descrizioni molto
+lunghe; nei popup nome del prodotto e chiusura devono restare visibili durante
+la lettura.
+
+**Why:** screenshots from the user's iPhone showed wine rows stretched by full
+descriptions and a scrolled popup with its title and close control out of view.
+
+**How to apply:** verify actual rendered preview height, not just the presence
+of a truncation class. Keep a non-scrolling popup heading above the sole
+scrollable content area; apply the same treatment to wine and beer details.

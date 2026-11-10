@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ChevronDown, GlassWater, Wine } from "lucide-react";
+import { ChevronDown, ChevronRight, GlassWater, Wine } from "lucide-react";
 import { descriptionToText } from "@shared/description-text";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
@@ -55,27 +55,31 @@ function DrinkDetailDialog({
   return (
     <Dialog open={!!item} onOpenChange={onOpenChange}>
       <DialogContent
-        className="max-h-[min(88dvh,760px)] overflow-y-auto overscroll-contain rounded-2xl p-0 sm:max-w-lg"
+        className="flex max-h-full min-h-0 flex-col gap-0 overflow-hidden overscroll-none rounded-2xl border-[#E8DED1] bg-[#FCFAF6] p-0 shadow-[0_24px_80px_rgba(35,25,15,0.24)] dark:border-white/[0.08] dark:bg-[#1A1D24] sm:max-w-lg"
         data-testid="drink-detail-dialog"
         aria-describedby={undefined}
       >
         {item && (
           <>
-            {item.imageUrl && (
-              <div className="h-48 overflow-hidden bg-muted sm:h-56">
-                <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain" />
-              </div>
-            )}
-            <div className="space-y-5 p-5 sm:p-6">
-              <DialogHeader className="space-y-1 text-left">
+            <DialogHeader
+              className="shrink-0 border-b border-[#E8DED1] bg-[#FCFAF6] px-5 pb-4 pt-5 pr-16 text-left dark:border-white/[0.08] dark:bg-[#1A1D24] sm:px-6 sm:pr-16"
+              data-testid="menu-detail-header"
+            >
                 <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
-                  Dettaglio prodotto
+                  {item.category === "vino" ? "Vino" : "Dettaglio prodotto"}
                 </p>
-                <DialogTitle className="pr-7 text-xl font-black leading-tight">{item.name}</DialogTitle>
+                <DialogTitle className="text-xl font-black leading-tight tracking-[-0.025em] text-[#302820] dark:text-[#F5F5F5]">{item.name}</DialogTitle>
                 {meta.length > 0 && (
-                  <p className="text-sm text-muted-foreground">{meta.join(" · ")}</p>
+                  <p className="text-sm text-[#746A5E] dark:text-[#B7BDC7]">{meta.join(" · ")}</p>
                 )}
-              </DialogHeader>
+            </DialogHeader>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="menu-detail-scroll">
+              {item.imageUrl && (
+                <div className="mx-5 mt-4 h-36 overflow-hidden rounded-xl bg-[#F1ECE3] dark:bg-[#12151A] sm:mx-6 sm:h-44">
+                  <img src={item.imageUrl} alt={item.name} className="h-full w-full object-contain" />
+                </div>
+              )}
+              <div className="space-y-5 p-5 sm:p-6">
               {(item.priceByGlass || item.priceByBottle || item.price) && (
                 <div className="flex flex-wrap gap-2">
                   {price(item.priceByGlass) && <PriceTag label="Calice" value={price(item.priceByGlass)!} />}
@@ -92,7 +96,7 @@ function DrinkDetailDialog({
                 </div>
               )}
               {description ? (
-                <p className="whitespace-pre-wrap break-words text-sm leading-7 text-foreground/85" data-testid="drink-detail-description">
+                <p className="whitespace-pre-wrap break-words text-[15px] leading-7 text-[#433B32] dark:text-[#E3E6EA]" data-testid="drink-detail-description">
                   {description}
                 </p>
               ) : (
@@ -100,6 +104,7 @@ function DrinkDetailDialog({
                   Non è disponibile una descrizione per questo prodotto.
                 </p>
               )}
+            </div>
             </div>
           </>
         )}
@@ -119,9 +124,11 @@ function PriceTag({ label, value }: { label: string; value: string }) {
 
 function DrinkRow({
   item,
+  categoryType,
   onSelect,
 }: {
   item: Drink;
+  categoryType?: string | null;
   onSelect: (item: Drink) => void;
 }) {
   const hasDescription = Boolean(text(item.description));
@@ -129,52 +136,63 @@ function DrinkRow({
   return (
     <button
       type="button"
-      onClick={() => onSelect(item)}
-      className="flex min-h-[76px] w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-colors hover:bg-muted/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring active:bg-muted"
+      onClick={() => onSelect(item.category ? item : { ...item, category: categoryType || undefined })}
+      className="group flex min-h-[72px] w-full items-center gap-2.5 rounded-xl border border-[#E8DED1] bg-[#FCFAF6] px-2.5 py-2 text-left transition-[background-color,border-color,transform] duration-150 hover:border-[#D8C5AA] hover:bg-[#F8F2E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D08409] active:scale-[0.995] active:bg-[#F3EBDD] dark:border-white/[0.08] dark:bg-[#1A1D24] dark:hover:border-white/[0.14] dark:hover:bg-[#22262E] dark:active:bg-[#252A33] sm:gap-3 sm:px-3"
       aria-label={`Apri i dettagli di ${item.name}`}
       data-testid={`drink-detail-trigger-${item.id}`}
     >
       {item.imageUrl ? (
-        <img src={item.imageUrl} alt="" className="h-12 w-12 shrink-0 rounded-xl object-cover" />
+        <img src={item.imageUrl} alt="" className="h-10 w-10 shrink-0 rounded-lg bg-[#F1ECE3] object-cover dark:bg-[#12151A] sm:h-11 sm:w-11" />
       ) : (
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-accent text-primary">
-          {item.category === "vino" ? <Wine className="h-5 w-5" /> : <GlassWater className="h-5 w-5" />}
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#F5EAD6] text-[#C77800] dark:bg-[#33291C] dark:text-[#FFB74D] sm:h-11 sm:w-11">
+          {item.category === "vino" || categoryType === "vino" ? <Wine className="h-[18px] w-[18px]" /> : <GlassWater className="h-[18px] w-[18px]" />}
         </span>
       )}
       <span className="min-w-0 flex-1">
-        <span className="block break-words text-sm font-bold leading-snug text-foreground">{item.name}</span>
-        {producer && <span className="mt-0.5 block text-xs text-muted-foreground">{producer}</span>}
+        <span className="flex min-w-0 items-start gap-1">
+          <span className="min-w-0 flex-1 break-words text-[13px] font-extrabold leading-snug tracking-[-0.01em] text-[#302820] dark:text-[#F5F5F5] sm:text-sm">{item.name}</span>
+          <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#C77800] dark:text-[#FFB74D]" aria-hidden="true" />
+        </span>
+        {producer && <span className="mt-0.5 block truncate text-[11px] leading-tight text-[#746A5E] dark:text-[#B7BDC7]">{producer}</span>}
         {hasDescription ? (
-          <span className="mt-1 block whitespace-pre-wrap text-xs leading-relaxed text-muted-foreground line-clamp-2">
+          <span
+            className="mt-1 block overflow-hidden break-words text-[11px] leading-[1.35rem] text-[#746A5E] dark:text-[#B7BDC7]"
+            style={{
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 2,
+              maxHeight: "2.7rem",
+            }}
+          >
             {text(item.description)}
           </span>
         ) : (
-          <span className="mt-1 block text-xs font-medium text-primary">Dettagli prodotto</span>
+          <span className="mt-1 block text-[11px] font-semibold text-[#C77800] dark:text-[#FFB74D]">Apri i dettagli</span>
         )}
-        {hasDescription && <span className="mt-1 block text-[11px] font-semibold text-primary">Leggi tutto</span>}
       </span>
-      <span className="flex shrink-0 flex-col items-end gap-1">
+      <span className="flex shrink-0 flex-col items-end gap-1.5 pl-1">
         {price(item.priceByGlass) && (
-          <span className="rounded-lg border border-border bg-background px-2 py-1 text-right">
-            <span className="block text-[9px] font-bold uppercase tracking-wide text-muted-foreground">Calice</span>
-            <span className="block text-xs font-black text-primary">{price(item.priceByGlass)}</span>
+          <span className="min-w-[53px] rounded-md bg-[#F2EBDD] px-1.5 py-1 text-right leading-none dark:bg-[#2A2E35]">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.04em] text-[#746A5E] dark:text-[#B7BDC7]">Calice</span>
+            <span className="mt-0.5 block text-[13px] font-black tabular-nums text-[#C77800] dark:text-[#FFB74D]">{price(item.priceByGlass)}</span>
           </span>
         )}
         {price(item.priceByBottle) && (
-          <span className="rounded-lg border border-border bg-background px-2 py-1 text-right">
-            <span className="block text-[9px] font-bold uppercase tracking-wide text-muted-foreground">Bottiglia</span>
-            <span className="block text-xs font-black text-primary">{price(item.priceByBottle)}</span>
+          <span className="min-w-[53px] rounded-md bg-[#F2EBDD] px-1.5 py-1 text-right leading-none dark:bg-[#2A2E35]">
+            <span className="block text-[10px] font-bold uppercase tracking-[0.04em] text-[#746A5E] dark:text-[#B7BDC7]">Bottiglia</span>
+            <span className="mt-0.5 block text-[13px] font-black tabular-nums text-[#C77800] dark:text-[#FFB74D]">{price(item.priceByBottle)}</span>
           </span>
         )}
         {price(item.price) && !item.priceByGlass && !item.priceByBottle && (
-          <span className="text-sm font-black text-primary">{price(item.price)}</span>
+          <span className="text-sm font-black tabular-nums text-[#C77800] dark:text-[#FFB74D]">{price(item.price)}</span>
         )}
-        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
+        <span className="inline-flex items-center gap-1 text-[10px] font-semibold tabular-nums text-[#746A5E] dark:text-[#B7BDC7]">
           {item.volumeCl ? `${item.volumeCl} cl` : ""}
           {item.volumeCl && item.alcoholDegree ? " · " : ""}
           {item.alcoholDegree ? `${item.alcoholDegree}%` : ""}
         </span>
       </span>
+      <span className="sr-only">Apri dettagli</span>
     </button>
   );
 }
@@ -258,7 +276,7 @@ export default function DrinksPublicSection({
           <div key={category} className="space-y-2">
             <h3 className="px-1 text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">{meta[category] || category}</h3>
             {visible.filter((item) => (item.category || "vino") === category).map((item) => (
-              <DrinkRow key={item.id} item={item} onSelect={setSelected} />
+              <DrinkRow key={item.id} item={item} categoryType={category} onSelect={setSelected} />
             ))}
           </div>
         ))}
@@ -299,13 +317,13 @@ function CategoryGroup({
       {categories.map((category) => {
         const isOpen = expanded.has(category.id);
         return (
-          <section key={category.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-card-sm">
+          <section key={category.id} className="overflow-hidden rounded-xl border border-[#E8DED1] bg-[#FCFAF6] shadow-[0_2px_10px_rgba(45,30,10,0.035)] dark:border-white/[0.08] dark:bg-[#1A1D24] dark:shadow-none">
             <button
               type="button"
               onClick={() => onToggle(category.id)}
               aria-expanded={isOpen}
               aria-controls={`drink-category-${category.id}`}
-              className="flex min-h-12 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+              className="flex min-h-12 w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors hover:bg-[#F8F2E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#D08409] dark:hover:bg-[#22262E] dark:focus-visible:ring-[#FFB74D]"
               data-testid={`drink-category-toggle-${category.id}`}
             >
               <span className="min-w-0 flex-1">
@@ -340,7 +358,7 @@ function CategoryGroup({
                       </p>
                     )}
                     <div className="space-y-2 p-3">
-                      {category.items?.map((item) => <DrinkRow key={item.id} item={item} onSelect={onSelect} />)}
+                      {category.items?.map((item) => <DrinkRow key={item.id} item={item} categoryType={category.type} onSelect={onSelect} />)}
                     </div>
                   </div>
                 </motion.div>

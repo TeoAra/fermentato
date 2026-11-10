@@ -133,21 +133,25 @@ export default function BeerResultCard<T>({
       )}
       <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
         <DialogContent
-          className="max-h-[min(88dvh,760px)] overflow-y-auto overscroll-contain rounded-2xl p-0 sm:max-w-lg"
+          className="flex max-h-full min-h-0 flex-col gap-0 overflow-hidden overscroll-none rounded-2xl border-[#E8DED1] bg-[#FCFAF6] p-0 shadow-[0_24px_80px_rgba(35,25,15,0.24)] dark:border-white/[0.08] dark:bg-[#1A1D24] dark:shadow-[0_24px_80px_rgba(0,0,0,0.5)] sm:max-w-lg"
           data-testid="beer-detail-dialog"
           aria-describedby={undefined}
         >
+          <DialogHeader
+            className="shrink-0 border-b border-[#E8DED1] bg-[#FCFAF6] px-5 pb-4 pt-5 pr-16 text-left dark:border-white/[0.08] dark:bg-[#1A1D24] sm:px-6 sm:pr-16"
+            data-testid="menu-detail-header"
+          >
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#C77800]">Birra disponibile qui</p>
+              <DialogTitle className="text-xl font-black leading-tight tracking-[-0.025em] text-[#302820] dark:text-[#F5F5F5]">{beer.name}</DialogTitle>
+              {fullBrewery && <p className="text-sm font-semibold text-[#746A5E] dark:text-[#B7BDC7]">{fullBrewery}</p>}
+          </DialogHeader>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain" data-testid="menu-detail-scroll">
           <div className="space-y-5 p-5 sm:p-6">
-            <div className="mx-auto h-36 w-36 overflow-hidden rounded-2xl bg-muted">
+            <div className="mx-auto h-32 w-32 overflow-hidden rounded-xl bg-[#F1ECE3] dark:bg-[#12151A] sm:h-36 sm:w-36">
               <ImageWithFallback src={imageSrc || beerDetails.data?.imageUrl || beer.imageUrl || beer.logoUrl || beer.brewery?.logoUrl}
                 alt={beer.name} imageType={imageType} containerClassName="h-full w-full"
                 className="h-full w-full object-contain p-2" />
             </div>
-            <DialogHeader className="space-y-1 text-left">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[#C77800]">Birra disponibile qui</p>
-              <DialogTitle className="pr-7 text-xl font-black leading-tight">{beer.name}</DialogTitle>
-              {fullBrewery && <p className="text-sm font-semibold text-[#D08409]">{fullBrewery}</p>}
-            </DialogHeader>
             <div className="flex flex-wrap gap-2">
               {fullStyle && <DetailPill label="Stile" value={fullStyle} />}
               {fullAbv && <DetailPill label="Alcol" value={fullAbv} />}
@@ -185,9 +189,10 @@ export default function BeerResultCard<T>({
             {servingDescription && servingDescription !== fullDescription && (
               <div className="space-y-1">
                 <p className="text-xs font-bold text-muted-foreground">Note del locale</p>
-                <p className="whitespace-pre-wrap break-words text-sm leading-7">{servingDescription}</p>
+                <p className="whitespace-pre-wrap break-words text-sm leading-7 text-[#3D362F] dark:text-[#E3E6EA]">{servingDescription}</p>
               </div>
             )}
+          </div>
           </div>
         </DialogContent>
       </Dialog>
