@@ -27,7 +27,8 @@ interface ScanLog {
 
 function engineLabel(engine: string | null): { label: string; color: string } {
   switch (engine) {
-    case "gemini": return { label: "Gemini AI", color: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300" };
+    case "gemini":
+    case "gemini-2.0-flash": return { label: "Scanner precedente", color: "bg-stone-100 text-muted-foreground" };
     case "paddleocr": return { label: "PaddleOCR", color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300" };
     case "tesseract": return { label: "Tesseract", color: "bg-stone-100 text-muted-foreground dark:bg-[#1A1D24] dark:text-stone-300" };
     case "ocrspace": return { label: "OCR.space", color: "bg-stone-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300" };

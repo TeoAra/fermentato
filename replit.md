@@ -95,11 +95,11 @@ Backup config corretto: `/root/proxy-fermenta-backup.conf` sul VPS.
 - **Event Management**: Public event hub, pub/brewery owner event creation, and push notifications for event starts.
 - **Festival Mode**: Dedicated digital taplist system for beer festivals with Stripe integration for payment, user ratings, and owner replies.
 - **Image & Data Enrichment**: Automated scripts for finding brewery websites and crawling images, CLIP visual fingerprinting for image search, and barcode scanning with Open Food Facts integration.
-- **AI-Powered Scan & Recognition**: Camera-based beer label/barcode scanner leveraging BarcodeDetector API, Gemini 2.0 Flash, PaddleOCR, Tesseract, and OCR.space for text recognition, combined with CLIP for visual similarity and pgvector for semantic search.
+- **Scan & Recognition**: Camera-based beer label/barcode scanner leveraging BarcodeDetector API, local PaddleOCR and Tesseract (native + Tesseract.js WASM fallback). No cloud recognition API. PostgreSQL pg_trgm/text matching handles recognized text and confirmed scan memory; optional self-hosted CLIP handles visual similarity. Historical text vectors are not reused.
 - **Admin Tools**: Duplicate brewery finder with fuzzy matching, mass content editing, and real-time activity monitoring.
 - **Push Notifications**: Throttled and batched push notifications for various events (suggestions, event starts, broadcasts).
 - **Internationalization**: Support for multiple countries in data processing and content.
-- **Bot Manager (Telegram + WhatsApp)**: Titolari collegano il bot dal dashboard (token monouso 15 min). Comandi in italiano parsati da Gemini: cambia/nascondi/mostra/rimuovi/aggiungi birra, aggiorna prezzi, lista menu. Schema: `bot_connections`, `bot_link_tokens`. Route: `server/bot-routes.ts`. Handler: `server/telegram-bot.ts`, `server/whatsapp-bot.ts`. Env: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`.
+- **Bot Manager (Telegram + WhatsApp)**: Titolari collegano il bot dal dashboard (token monouso 15 min). Comandi in italiano parsati localmente con regex, senza LLM: cambia/nascondi/mostra/rimuovi/aggiungi birra, aggiorna prezzi, lista menu. Schema: `bot_connections`, `bot_link_tokens`. Route: `server/bot-routes.ts`. Handler: `server/telegram-bot.ts`, `server/whatsapp-bot.ts`. Env: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`, `WHATSAPP_VERIFY_TOKEN`.
 - **Pulizia dati ricerca (soft-archive birrifici/birre)**: archiviazione reversibile (mai delete) di birrifici chiusi e birre fuori produzione, escluse da ricerca, liste, suggerimenti **e contatori/statistiche**. Nessun LLM/GPU.
   - Schema: `breweries.isClosed` / `closedSource` / `closedAt`, `beers.isDiscontinued` / `discontinuedSource`. Default attivo (additivo, non distruttivo).
   - Helper SQL riutilizzabile: `server/visibility.ts` (`breweryActiveSql`, `beerVisibleSql` + varianti raw `rawBreweryActive`, `rawBeerVisibleJoined`, `rawBeerVisibleExists`). Usati in `server/storage.ts` (getBreweries, search*, getBeers, trending, ecc.) e in `server/routes.ts` (popular-styles, by-style, suggestions, beers/search, random, popular-nearby, breweries/nearby, /api/stats, /api/stats/global, /api/search).
@@ -125,6 +125,7 @@ Backup config corretto: `/root/proxy-fermenta-backup.conf` sul VPS.
 - **QR Code Generation**: qrcode.react.
 - **CAPTCHA**: Google reCAPTCHA.
 - **RSS Parsing**: `rss-parser`.
-- **OCR**: Google Gemini 2.0 Flash, PaddleOCR, Tesseract, OCR.space.
+- **OCR**: Local PaddleOCR, Tesseract, Tesseract.js (open source, no recognition API fees).
+- **Translations**: Optional self-hosted LibreTranslate via `LIBRETRANSLATE_URL`; see `docs/open-source-services.md`. Without it, original text is preserved and translation endpoints explicitly report unavailability.
 - **Image Embedding**: CLIP ViT-B/32.
 - **Payment Processing**: Stripe.

@@ -26,7 +26,6 @@
     "@capacitor/status-bar": "^8.0.2",
     "@capacitor/toast": "^8.0.1",
     "@capgo/capacitor-social-login": "^8.3.22",
-    "@google/generative-ai": "^0.24.1",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@hookform/resolvers": "^5.2.2",
     "@jridgewell/trace-mapping": "^0.3.25",

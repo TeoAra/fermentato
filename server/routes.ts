@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import { isTapAttachment, formatTapAttachmentMessage } from "../shared/tap-activity";
-import { GoogleGenerativeAI } from "@google/generative-ai";
-import { searchRateLimit, generalApiRateLimit, checkinRateLimit } from "./middleware/rate-limit";
+import { searchRateLimit, generalApiRateLimit, checkinRateLimit, translationRateLimit } from "./middleware/rate-limit";
 import { createServer, type Server } from "http";
 import { existsSync, readFileSync } from "fs";
 import { join } from "path";
@@ -121,8 +120,8 @@ import webpush from "web-push";
 import { initVapid, sendPushToUser, sendPushToUserImmediate, sendPushToAdmins } from "./push-utils";
 import { testSmtpConnection, sendWishlistBeerAvailableEmail } from "./email";
 import { shouldSendEmailNotification } from "./push-utils";
-import { translateToItalian, looksItalian } from "./translate";
-import { generateEmbedding, pgVector, beerEmbedText } from "./embeddings";
+import { translateToItalian, looksItalian, translationAvailable } from "./translate";
+import { isLabelImage, recognizeLabel, OcrBusyError } from "./label-ocr";
 import { findAndUpdateBeerImage, isPlaceholderImage, findBestBeerImage, rehostImageOnCloudinary } from "./beer-image-finder";
 import { findBestBreweryLogo, uploadBreweryLogo } from "./brewery-image-finder";
 
@@ -4884,12 +4883,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // On-demand translate for frontend (device language)
-  app.post('/api/translate', async (req: any, res) => {
+  app.post('/api/translate', translationRateLimit, async (req: any, res) => {
     const { text, targetLang } = req.body;
-    if (!text || !targetLang) return res.status(400).json({ message: "text e targetLang richiesti" });
+    if (typeof text !== "string" || !text.trim() || text.length > 5000
+      || typeof targetLang !== "string" || !/^[a-z]{2,3}(?:-[A-Za-z]{2,4})?$/.test(targetLang)) {
+      return res.status(400).json({ message: "Testo (massimo 5000 caratteri) e lingua validi richiesti" });
+    }
+    if (!translationAvailable()) return res.status(503).json({ message: "Traduzioni non configurate: avviare LibreTranslate sul server." });
     try {
       const { translateText } = await import("./translate");
       const result = await translateText(text, targetLang);
+      if (!result) return res.status(503).json({ message: "Servizio di traduzione temporaneamente non disponibile" });
       res.json({ translated: result });
     } catch (err) {
       res.status(500).json({ message: "Errore traduzione" });
@@ -4898,6 +4902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Batch translate beer descriptions to Italian
   app.post('/api/admin/translate-beers', isAuthenticated, isAdmin, async (req: any, res) => {
+    if (!translationAvailable()) return res.status(503).json({ message: "Traduzioni non configurate: avviare LibreTranslate sul server." });
     const batchSize = Math.min(parseInt(req.query.batch as string) || 10, 30);
     const offsetVal = parseInt(req.query.offset as string) || 0;
     try {
@@ -8616,76 +8621,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       } catch { /* pg_trgm may not be installed — fall through to regular search */ }
 
-      // ── Vector Memory: semantic similarity via pgvector (fallback to pg_trgm) ──
-      // Only runs if pg_trgm didn't find anything above. Generates an embedding
-      // for the current OCR text and finds the closest confirmed scan (pgvector).
-      try {
-        const vec = await generateEmbedding(text.trim());
-        if (vec) {
-          const vecMem = await pool.query(`
-            SELECT sl.chosen_beer_id,
-                   1 - (sl.ocr_embedding <=> $1::vector) AS similarity
-            FROM scan_logs sl
-            WHERE sl.chosen_beer_id IS NOT NULL
-              AND sl.was_correct IS NOT FALSE
-              AND sl.ocr_embedding IS NOT NULL
-              AND 1 - (sl.ocr_embedding <=> $1::vector) > 0.88
-            ORDER BY similarity DESC
-            LIMIT 1
-          `, [pgVector(vec)]);
-
-          if (vecMem.rows.length > 0) {
-            const { chosen_beer_id, similarity } = vecMem.rows[0];
-            const beerRes = await pool.query(`
-              SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl",
-                     b.brewery_id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl"
-              FROM beers b
-              LEFT JOIN breweries br ON b.brewery_id = br.id
-              WHERE b.id = $1
-            `, [chosen_beer_id]);
-
-            if (beerRes.rows.length > 0) {
-              return res.json({
-                beers: [{ ...beerRes.rows[0], memoryMatch: true, memorySimilarity: parseFloat(similarity), memorySource: "vector" }],
-                breweries: [],
-                words: [],
-                memoryMatch: true,
-              });
-            }
-          }
-
-          // ── Beer-name vector search (if beer_embeddings table is populated) ──
-          // Finds the closest beer by name embedding, even when text differs.
-          const beerVec = await pool.query(`
-            SELECT be.beer_id,
-                   1 - (be.embedding <=> $1::vector) AS similarity
-            FROM beer_embeddings be
-            WHERE 1 - (be.embedding <=> $1::vector) > 0.91
-            ORDER BY similarity DESC
-            LIMIT 5
-          `, [pgVector(vec)]);
-
-          if (beerVec.rows.length > 0) {
-            const ids = beerVec.rows.map((r: any) => r.beer_id);
-            const simMap = Object.fromEntries(beerVec.rows.map((r: any) => [r.beer_id, parseFloat(r.similarity)]));
-            const beerRows = await pool.query(`
-              SELECT b.id, b.name, b.style, b.abv, b.image_url as "imageUrl",
-                     b.brewery_id as "breweryId", br.name as "breweryName", br.logo_url as "breweryLogoUrl"
-              FROM beers b
-              LEFT JOIN breweries br ON b.brewery_id = br.id
-              WHERE b.id = ANY($1::int[])
-            `, [ids]);
-
-            if (beerRows.rows.length > 0) {
-              const sorted = beerRows.rows
-                .map((b: any) => ({ ...b, vectorSimilarity: simMap[b.id] }))
-                .sort((a: any, b: any) => b.vectorSimilarity - a.vectorSimilarity);
-              return res.json({ beers: sorted, breweries: [], words: [], vectorMatch: true });
-            }
-          }
-        }
-      } catch { /* pgvector not yet installed — fall through */ }
-
+      // Recognition uses local pg_trgm memory above and text matching below.
+      // Historical provider-specific vectors are deliberately not compared.
       const SCAN_STOP = new Set([
         "birra","beer","bianca","rossa","scura","chiara","artigianale","craft",
         "italiana","birrificio","brewery","brewing","birreria","brasserie",
@@ -8867,95 +8804,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // OCR endpoint — PaddleOCR primary, Tesseract + OCR.space as fallback.
+  // Local open-source OCR only: PaddleOCR → native Tesseract → Tesseract.js.
   app.post("/api/scan/ocr", isAuthenticated, async (req, res) => {
     try {
       const { image } = req.body as { image?: string };
-      if (!image || !image.startsWith("data:image")) {
+      if (!isLabelImage(image)) {
         return res.status(400).json({ error: "Missing image data" });
       }
-
-      // ── 1. Gemini 2.0 Flash Vision (primary — context-aware beer label reader) ──
-      const geminiKey = process.env.GEMINI_API_KEY;
-      if (geminiKey) {
-        try {
-          const genAI = new GoogleGenerativeAI(geminiKey);
-          const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-          const mimeType = (image.match(/^data:(image\/[^;]+);base64/) ?? [])[1] ?? "image/jpeg";
-          const base64Data = image.replace(/^data:image\/[^;]+;base64,/, "");
-
-          const prompt = `Sei uno scanner specializzato in etichette di birra artigianale (craft beer).
-Analizza questa immagine di un'etichetta, fusto, lattina o bottiglia di birra.
-Estrai SOLO le seguenti informazioni se presenti:
-- Nome della birra
-- Nome del birrificio o produttore
-- Stile birrario (es. IPA, Stout, Pilsner, Weizen, ecc.)
-- Gradazione alcolica (ABV)
-
-Rispondi con UNA SOLA RIGA di testo contenente solo le parole chiave estratte, separate da spazi.
-Non aggiungere spiegazioni, punteggiatura decorativa né formattazione.
-Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispondi con stringa vuota.`;
-
-          const result = await model.generateContent([
-            { inlineData: { data: base64Data, mimeType } },
-            prompt,
-          ]);
-
-          const geminiText = result.response.text().trim();
-          if (geminiText.length >= 3) {
-            return res.json({ text: geminiText, exitCode: 1, engine: "gemini-2.0-flash" });
-          }
-        } catch (geminiErr: any) {
-          // Quota esaurita o errore temporaneo → fallback a PaddleOCR
-          console.warn("[scan/ocr] Gemini error, falling back:", geminiErr?.message ?? geminiErr);
-        }
-      }
-
-      // ── 2. PaddleOCR (fallback — neural OCR locale) ───────────────────────
-      const paddle = await runPaddleOCR(image);
-      if (paddle.available && paddle.text.trim().length >= 3) {
-        return res.json({ text: paddle.text, exitCode: 1, engine: "paddleocr" });
-      }
-
-      // ── 3. Tesseract (sempre disponibile) ────────────────────────────────
-      const tesseractText = await runLocalTesseract(image);
-      if (tesseractText && tesseractText.trim().length >= 3) {
-        return res.json({ text: tesseractText, exitCode: 1, engine: "tesseract" });
-      }
-
-      // ── 4. OCR.space cloud (solo se key configurata) ──────────────────────
-      const ocrSpaceKey = process.env.OCR_SPACE_KEY;
-      if (!ocrSpaceKey) {
-        return res.json({ text: tesseractText || "", exitCode: 0, engine: paddle.available ? "paddleocr" : "tesseract" });
-      }
-
-      const params = new URLSearchParams();
-      params.append("apikey", ocrSpaceKey);
-      params.append("base64Image", image);
-      params.append("language", "ita");
-      params.append("OCREngine", "2");
-      params.append("scale", "true");
-      params.append("detectOrientation", "true");
-      params.append("isTable", "false");
-      params.append("isOverlayRequired", "false");
-
-      const ocrRes = await fetch("https://api.ocr.space/parse/image", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: params.toString(),
-        signal: AbortSignal.timeout(15000),
-      });
-
-      if (!ocrRes.ok) return res.json({ text: "", exitCode: -1, engine: "ocrspace_fail" });
-      const ocrData = await ocrRes.json() as any;
-      if (ocrData.IsErroredOnProcessing) return res.json({ text: "", exitCode: -1 });
-
-      const parsed = ocrData.ParsedResults?.[0];
-      return res.json({ text: parsed?.ParsedText || "", exitCode: parsed?.FileParseExitCode ?? -1, engine: "ocrspace" });
+      return res.json(await recognizeLabel(image, { paddle: runPaddleOCR, tesseract: runLocalTesseract }));
     } catch (err) {
+      if (err instanceof OcrBusyError) {
+        res.setHeader("Retry-After", "5");
+        return res.status(429).json({ error: err.message });
+      }
       console.error("OCR error:", err);
-      return res.status(500).json({ error: "OCR failed" });
+      return res.status(503).json({ error: "Scanner temporaneamente non disponibile. Riprova o cerca la birra per nome." });
     }
   });
 
@@ -9363,34 +9226,6 @@ Se l'immagine non è un'etichetta di birra o non riesci a leggere nulla, rispond
         wasCorrect: wasCorrect ?? null,
         correctedBeerId: correctedBeerId || null,
       }).where(eq(scanLogs.id, logId));
-
-      // ── Store OCR embedding in background when confirmed correct ────────────
-      // wasCorrect=true OR correctedBeerId set (manual correction) both count.
-      if (wasCorrect !== false) {
-        const targetBeer = chosenBeerId || correctedBeerId;
-        if (targetBeer) {
-          setImmediate(async () => {
-            try {
-              const [logRow] = await db.select({ ocrText: scanLogs.ocrText })
-                .from(scanLogs).where(eq(scanLogs.id, logId)).limit(1);
-              if (!logRow?.ocrText) return;
-
-              const vec = await generateEmbedding(logRow.ocrText);
-              if (!vec) return;
-
-              await pool.query(
-                `UPDATE scan_logs SET ocr_embedding = $1::vector WHERE id = $2`,
-                [pgVector(vec), logId]
-              );
-            } catch (e: any) {
-              // pgvector not yet installed — silent, no crash
-              if (!e?.message?.includes("column") && !e?.message?.includes("vector")) {
-                console.error("embedding store error:", e?.message?.substring(0, 80));
-              }
-            }
-          });
-        }
-      }
 
       // ── Index confirmed scan photo in CLIP service (visual fingerprint) ─────
       // Grows the CLIP index organically: each confirmed label photo is stored

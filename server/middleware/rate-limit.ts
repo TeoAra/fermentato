@@ -142,6 +142,15 @@ export const searchRateLimit = rateLimit({
   },
 });
 
+/** Bound access to the optional CPU-based, self-hosted translator. */
+export const translationRateLimit = rateLimit({
+  windowMs: 60 * 1000,
+  max: isDev ? 100 : 20,
+  message: { message: "Troppe traduzioni. Riprova tra un minuto." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 /**
  * Limite generale su tutte le API: 300 richieste ogni 5 minuti per IP.
  * Blocca flooding e brute-force su endpoint non altrimenti protetti.

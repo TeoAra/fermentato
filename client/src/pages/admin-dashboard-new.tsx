@@ -298,8 +298,8 @@ export default function AdminDashboardNew() {
           <CardContent>
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Traduci le descrizioni delle birre in italiano in lotti da 10 alla volta (via Gemini AI).
-                Supporta qualsiasi lingua (inglese, danese, tedesco, ecc.). Le descrizioni già in italiano vengono saltate automaticamente.
+                Traduci le descrizioni delle birre in italiano in lotti da 10 alla volta con LibreTranslate, se configurato sul server.
+                Le lingue disponibili dipendono dai modelli installati. Le descrizioni già in italiano vengono saltate automaticamente.
               </p>
               <div className="flex items-center gap-3 flex-wrap">
                 <Button
@@ -337,6 +337,11 @@ export default function AdminDashboardNew() {
                 )}
               </div>
             </div>
+            {translateMutation.isError && (
+              <p role="alert" className="mt-3 text-sm text-destructive">
+                {translateMutation.error instanceof Error ? translateMutation.error.message : "Servizio di traduzione non disponibile"}
+              </p>
+            )}
           </CardContent>
         </Card>
 

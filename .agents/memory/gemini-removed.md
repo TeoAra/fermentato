@@ -1,11 +1,22 @@
 ---
-name: Gemini removed + free image-search stack
-description: Beer-card image/logo search is intentionally free (no Gemini/paid API); Gemini survives only in the camera OCR path. Plus the durable gotchas of the free stack.
+name: Servizi gratuiti e ricerca immagini
+description: Regola di prodotto contro Gemini e API AI a pagamento; vincoli di fedeltà e particolarità delle fonti gratuite.
 ---
 
-## Gemini scope (as of this codebase)
-- All Google Generative Language usage was removed EXCEPT the camera scanner `/api/scan/ocr` (still `gemini-2.0-flash`, needs `GEMINI_API_KEY`, with free fallbacks PaddleOCR/Tesseract/OCR.space). Translate/embeddings/bot-parser are stubs or regex.
-- **The beer-card "Cerca sul web" image/logo search must stay free.** It uses NO Gemini and NO paid API.
+## Regola sui servizi AI
+L'utente ha chiesto: «rimuovi tutti i servizi di gemini collegati e mi metti alternative gratuite e open source».
+Vale anche per scanner, traduzioni e script fuori dal percorso principale: non
+reintrodurre API AI a pagamento o con quote gratuite seguite da fatturazione.
+I servizi Google estranei a Gemini non rientrano automaticamente nella richiesta.
+
+**Why:** richiesta esplicita dell'utente, dopo precedenti costi imprevisti della ricerca immagini.
+
+**How to apply:** preferire elaborazione locale e servizi open source self-hosted.
+Distinguere sempre assenza di tariffe API dal costo delle risorse del server.
+Non dichiarare un servizio attivo se richiede ancora installazione/configurazione sul VPS.
+Non mescolare vecchi vettori con embedding di modelli diversi, anche a dimensione uguale.
+
+**The beer-card "Cerca sul web" image/logo search must stay free.** It uses NO Gemini and NO paid API.
 
 **Why:** unexpected billing (a ~€260 spike) came from an earlier version of the *image finder* that used Gemini grounding + image-picking. That was removed. If prod is still charged, it's the manual-deploy VPS running old code — the fix is deploying current code, not editing code again.
 
