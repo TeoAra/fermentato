@@ -845,9 +845,10 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
     });
   };
 
-  // Category Form Component
-  const CategoryForm = ({ isEdit = false }: { isEdit?: boolean }) => (
-    <div className="space-y-5">
+  // Render as ordinary JSX, not a component defined inside this component:
+  // a new component type on every keystroke remounts inputs and closes iOS's keyboard.
+  const renderCategoryForm = (isEdit = false) => (
+    <div className="min-w-0 w-full space-y-5">
       <div className="space-y-4">
         <div className="space-y-2 text-left">
           <Label htmlFor="category-name" className="text-sm font-bold text-foreground">
@@ -894,11 +895,12 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
             onChange={(infoBox) => setFormData((current: any) => ({ ...current, infoBox }))}
             maxChars={5000}
             className="border-stone-200 rounded-xl focus-visible:ring-primary/20"
+            data-testid={isEdit ? "textarea-edit-category-infobox" : "textarea-create-category-infobox"}
           />
         </div>
         
-        <div className="flex items-center justify-between p-4 bg-stone-50 dark:bg-[#0B0D10]/20 rounded-xl border border-stone-200 dark:border-[#23262E]/30">
-          <div className="text-left">
+        <div className="flex items-center justify-between gap-3 p-4 bg-stone-50 dark:bg-[#0B0D10]/20 rounded-xl border border-stone-200 dark:border-[#23262E]/30">
+          <div className="min-w-0 text-left">
             <Label htmlFor="category-visible" className="text-sm font-bold text-foreground">
               Visibile nel menu pubblico
             </Label>
@@ -918,7 +920,7 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
         </div>
       </div>
       
-      <div className="flex gap-3 pt-4 border-t border-stone-100">
+      <div className="flex flex-col gap-3 pt-4 border-t border-stone-100 sm:flex-row">
         <Button
           onClick={isEdit ? handleEditSubmit : handleCreateSubmit}
           disabled={isEdit ? updateCategoryMutation.isPending : createCategoryMutation.isPending}
@@ -988,14 +990,14 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
             </DialogTrigger>
           <DialogContent formLayout data-testid="menu-category-dialog" className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
-              <DialogTitle className="flex items-center text-xl">
-                <div className="p-2 bg-primary rounded-lg mr-3">
+              <DialogTitle className="flex items-center pr-10 text-xl">
+                <div className="shrink-0 p-2 bg-primary rounded-lg mr-3">
                   <Plus className="h-5 w-5 text-white" />
                 </div>
                 Crea Nuova Categoria
               </DialogTitle>
             </DialogHeader>
-            <CategoryForm />
+            {renderCategoryForm()}
           </DialogContent>
         </Dialog>
           <Button
@@ -1040,28 +1042,10 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
             <p className="text-muted-foreground mb-6 max-w-md mx-auto">
               Inizia creando le categorie per organizzare il tuo menu. Potrai poi aggiungere i prodotti a ciascuna categoria.
             </p>
-            <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
-              setIsCreateDialogOpen(open);
-              if (!open) resetForm();
-            }}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Crea Prima Categoria
-                </Button>
-              </DialogTrigger>
-              <DialogContent formLayout data-testid="menu-first-category-dialog" className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
-                <DialogHeader>
-                  <DialogTitle className="flex items-center text-xl">
-                    <div className="p-2 bg-primary rounded-lg mr-3">
-                      <Plus className="h-5 w-5 text-white" />
-                    </div>
-                    Crea Prima Categoria
-                  </DialogTitle>
-                </DialogHeader>
-                <CategoryForm />
-              </DialogContent>
-            </Dialog>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Crea Prima Categoria
+            </Button>
           </motion.div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1435,14 +1419,14 @@ export default function MenuCategoryManager({ pubId, categories, isLoading }: Me
       }}>
         <DialogContent formLayout className="sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
           <DialogHeader>
-            <DialogTitle className="flex items-center text-xl">
-              <div className="p-2 bg-primary rounded-lg mr-3">
+            <DialogTitle className="flex items-center pr-10 text-xl">
+              <div className="shrink-0 p-2 bg-primary rounded-lg mr-3">
                 <Edit3 className="h-5 w-5 text-white" />
               </div>
               Modifica Categoria
             </DialogTitle>
           </DialogHeader>
-          <CategoryForm isEdit />
+          {renderCategoryForm(true)}
         </DialogContent>
       </Dialog>
 

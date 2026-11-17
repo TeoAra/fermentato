@@ -48,3 +48,18 @@ detail popup with a square inset around its logo.
 **How to apply:** use centered, proportional cover cropping inside a circular
 mask, including for missing-image fallbacks. This applies to beer popup logos,
 not venue cover artwork, which must still be displayed uncropped.
+
+## Verifica dei moduli su mobile
+
+L'emulazione mobile Chromium può espandere il layout viewport quando il contenuto
+dietro un dialog deborda orizzontalmente: lo screenshot viene scalato e i click
+CDP possono colpire un pulsante diverso dalle coordinate CSS osservate.
+
+**Why:** durante una regressione del modulo categorie il layout viewport era più
+largo del viewport visibile; un click sintetico su Salva finiva su Annulla,
+pur essendo corretti il DOM e la gestione dei dati.
+
+**How to apply:** confrontare layout e visual viewport prima di attribuire un
+click fallito al salvataggio. Verificare separatamente identità del nodo,
+focus e payload; l'attivazione da tastiera può isolare il test del submit.
+Non dichiarare verificata la tastiera nativa iOS sulla sola base di Chromium.

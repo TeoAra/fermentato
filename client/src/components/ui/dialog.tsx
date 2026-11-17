@@ -51,6 +51,9 @@ const DialogContent = React.forwardRef<
     <div
       className="fixed left-0 right-0 z-[60] flex items-center justify-center px-4 pointer-events-none [&>*]:!max-h-full"
       style={{
+        // Mobile layout viewports can expand when background content overflows.
+        // Keep the overlay bounded by the actual device viewport nonetheless.
+        maxWidth: '100dvw',
         top: 'calc(var(--frozen-sat) + 16px)',
         bottom: 'calc(var(--frozen-sab) + 80px)',
         height: 'calc(100dvh - var(--frozen-sat) - var(--frozen-sab) - 96px)',
@@ -73,7 +76,7 @@ const DialogContent = React.forwardRef<
         className={cn(
           cn(
             "ui-dialog-motion pointer-events-auto relative z-[60] grid w-full max-w-lg gap-4 border bg-background p-6 shadow-lg rounded-2xl duration-200 max-h-full overflow-y-auto overscroll-contain data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
-            formLayout && "form-dialog-scroll-owner w-[calc(100%-1rem)] max-h-full overflow-x-hidden overflow-y-auto overscroll-contain !pb-[calc(1.5rem+var(--frozen-sab))]"
+            formLayout && "form-dialog-scroll-owner min-w-0 grid-cols-[minmax(0,1fr)] w-[calc(100%-1rem)] max-h-full overflow-x-hidden overflow-y-auto overscroll-contain !pb-[calc(1.5rem+var(--frozen-sab))]"
           ),
           className
         )}
