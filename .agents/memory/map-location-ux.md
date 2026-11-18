@@ -15,6 +15,24 @@ L'utente giudica la cartografia precedente e gli indicatori troppo pesanti all'o
 
 **How to apply:** mantenere una soluzione gratuita/open source; una base vettoriale personalizzabile è appropriata. Non presentare la semplificazione grafica come un miglioramento della precisione fisica del GPS.
 
+Tutte le mappe devono essere uguali nello stile, non soltanto la Home: la richiesta comprende pub, birrifici e le altre mappe del sito.
+
+**Why:** l'utente ha esplicitamente chiesto di estendere lo stesso trattamento a tutte le mappe.
+
+**How to apply:** riutilizzare cartografia, tavolozza, simboli e controlli condivisi anche nei dettagli, negli eventi e nelle anteprime dei percorsi; preservare le funzioni specifiche senza introdurre un altro stile locale.
+
+I segnaposto devono essere piccoli, tutti della stessa forma e senza icone interne, distinguendo pub e birrifici con colori diversi. Le informazioni del luogo selezionato e i filtri devono stare in basso.
+
+**Why:** l'utente ha segnalato che in modalità espansa le schede finivano sotto l'header e ha chiesto esplicitamente segnalibri uguali senza icone.
+
+**How to apply:** usare il disegno condiviso anche nei marker nativi delle mappe e nei dettagli. La mappa espansa deve uscire dagli antenati trasformati della pagina, rispettare gli inset congelati una sola volta e non lasciare header/dock sopra schede e filtri. Verificare l'apertura con una posizione GPS già disponibile, non soltanto con GPS inizialmente assente.
+
+Le prove delle mappe con eventi simulati devono rispettare il livello cartografico interrogato: una singola feature restituita indistintamente per tutti i livelli può produrre errori artificiali della fotocamera.
+
+**Why:** un'interazione simulata con un locale attivava anche l'espansione di un cluster inesistente, generando coordinate non valide e facendo sembrare guasta la mappa.
+
+**How to apply:** separare le feature dei cluster da quelle dei singoli punti nelle fixture; non diagnosticare un problema di rendering dalle sole eccezioni della fotocamera prima di verificare l'evento simulato.
+
 A coarse first GPS fix must not suppress later precise fixes. Cached coordinates need a limited lifetime and an accuracy estimate; permission denial and acquisition failure are different conditions.
 
 **Why:** the user reported worse accuracy than comparable apps. Switching map tiles cannot improve the device's GPS fix, and treating old or coarse coordinates as current hides the actual problem.

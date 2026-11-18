@@ -13,8 +13,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { SiFacebook, SiInstagram } from "react-icons/si";
-import { Map as PigeonMap, Overlay as PigeonOverlay } from "pigeon-maps";
-import { osmTileProvider } from "@/lib/map-tiles";
+import LocationPreviewMap from "@/components/location-preview-map";
 import { RichTextDisplay, isRichContentEmpty, richTextToPlain } from "@/components/rich-text-editor";
 import type { PubLike } from "./types";
 import { useQuery } from "@tanstack/react-query";
@@ -173,20 +172,7 @@ export default function OverviewSection({
           className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] overflow-hidden"
         >
           <div className="h-[180px] relative">
-            <PigeonMap
-              defaultCenter={[lat as number, lng as number]}
-              defaultZoom={15}
-              provider={osmTileProvider}
-              attribution={false}
-              mouseEvents={false}
-              touchEvents={false}
-            >
-              <PigeonOverlay anchor={[lat as number, lng as number]}>
-                <div className="w-7 h-7 rounded-full bg-[#F59E0B] border-2 border-white shadow-md flex items-center justify-center">
-                  <MapPin className="w-3.5 h-3.5 text-white" />
-                </div>
-              </PigeonOverlay>
-            </PigeonMap>
+            <LocationPreviewMap latitude={lat as number} longitude={lng as number} label={`Posizione di ${pub.name}`} kind="pub" />
           </div>
           <button
             type="button"

@@ -4,9 +4,10 @@ import { X, Plus, Minus, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import Supercluster from "supercluster";
 import HomeVectorMap, { type HomeMapProject } from "@/components/home-vector-map";
+import { MAP_MARKER_COLORS, MAP_MARKER_PATH, MAP_MARKER_SIZE } from "@/lib/map-theme";
 
-const PUB_COLOR = "#F77104";
-const BREWERY_COLOR = "#9B4E10";
+const PUB_COLOR = MAP_MARKER_COLORS.pub;
+const BREWERY_COLOR = MAP_MARKER_COLORS.brewery;
 
 function haversineDist(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -95,7 +96,7 @@ export default function HomepageMap({
 }: HomepageMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapHeight, setMapHeight] = useState(fixedHeight ?? 300);
-  const [center, setCenter] = useState<[number, number]>([42.0, 12.5]);
+  const [center, setCenter] = useState<[number, number]>(() => userLocation ? [userLocation.lat, userLocation.lng] : [42.0, 12.5]);
   const [zoom, setZoom] = useState(externalZoom ?? 5.4);
 
   const updateZoom = (z: number) => {
@@ -128,7 +129,6 @@ export default function HomepageMap({
     }
     const el = containerRef.current;
     if (!el) return;
-    const MAX_H = 800;
     let raf = 0;
     let lastH = 0;
     const update = () => {
@@ -137,7 +137,7 @@ export default function HomepageMap({
         const parent = el.parentElement;
         const parentH = parent?.clientHeight ?? 0;
         const candidate = parentH > 0 ? parentH : el.offsetHeight;
-        const h = Math.min(Math.max(candidate, 0), MAX_H);
+        const h = Math.max(candidate, 0);
         if (h > 0 && Math.abs(h - lastH) > 2) {
           lastH = h;
           setMapHeight(h);
@@ -447,7 +447,7 @@ function MarkerPin({
   onClick: (e: MouseEvent<HTMLButtonElement>) => void;
   style: CSSProperties;
 }) {
-  const pinColor = type === "pub" ? "#e87924" : "#705b82";
+  const pinColor = MAP_MARKER_COLORS[type];
 
   return (
     <button
@@ -462,23 +462,13 @@ function MarkerPin({
       }}
     >
       <span style={{
-        width: 32, height: 32, borderRadius: type === "pub" ? 11 : "50%",
-        background: "#fff7ea",
-        border: `2px solid ${isSelected ? "#7b4a0a" : "#fff7ea"}`,
-        boxShadow: isSelected
-          ? "0 0 0 2px rgba(123,74,10,.28), 0 2px 7px rgba(83,62,28,.22)"
-          : "0 1px 5px rgba(83,62,28,.2)",
-        display: "flex", alignItems: "center", justifyContent: "center",
+        width: MAP_MARKER_SIZE, height: MAP_MARKER_SIZE,
+        display: "block",
+        filter: "drop-shadow(0 1px 2px rgba(54,44,28,.26))",
       }}>
-      {type === "pub" ? (
-        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pinColor} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M5 21V5h11v16M5 9h11M8 5V3h5v2M16 10h2.2a2.8 2.8 0 0 1 0 5.6H16M8 13h5M8 17h5M3 21h15" />
+        <svg aria-hidden="true" width={MAP_MARKER_SIZE} height={MAP_MARKER_SIZE} viewBox="0 0 24 24" fill={pinColor}>
+          <path d={MAP_MARKER_PATH} stroke={isSelected ? "#fff7ea" : "none"} strokeWidth={isSelected ? 2.4 : 0} strokeLinejoin="round" />
         </svg>
-      ) : (
-        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pinColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M8 3h8M9 3v6l-3.5 8.2A2.7 2.7 0 0 0 8 21h8a2.7 2.7 0 0 0 2.5-3.8L15 9V3M8 14h8" />
-        </svg>
-      )}
       </span>
     </button>
   );
@@ -510,15 +500,16 @@ function MapPopup({ selected, placement, onClose }: { selected: SelectedMapVenue
       style={{
         position: "absolute",
         top: placement === "top-left" ? 12 : undefined,
-        bottom: placement === "bottom" ? 56 : undefined,
+        bottom: placement === "bottom" ? "var(--map-popup-bottom, 76px)" : undefined,
         left: 12,
-        right: 68,
-        maxWidth: 340,
+        right: 12,
+        maxWidth: 420,
+        maxHeight: "calc(100% - var(--map-popup-bottom, 76px) - 12px)",
         borderRadius: 16,
-        overflow: "visible",
+        overflowY: "auto",
         zIndex: 30,
       }}
-      className="border border-border bg-card text-card-foreground shadow-md"
+      className="border border-[#ead7b7] bg-[#fff7ea] text-[#493a20] shadow-md"
       data-testid="home-map-selected-venue"
       data-venue-type={selected.type}
       aria-label={`${label} selezionato`}
@@ -544,7 +535,7 @@ function MapPopup({ selected, placement, onClose }: { selected: SelectedMapVenue
             type="button"
             aria-label="Chiudi dettagli locale"
             onClick={onClose}
-            className="-mr-1 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            className="-mr-1 -mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-[#827761] hover:bg-[#f8ead3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#f59e0b]"
           >
             <X size={16} />
           </button>
@@ -556,7 +547,7 @@ function MapPopup({ selected, placement, onClose }: { selected: SelectedMapVenue
         )}
         <Link
           href={selected.href}
-          className="mt-1 flex min-h-11 items-center justify-between rounded-lg px-1 text-xs font-semibold text-amber-700 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary dark:text-amber-400"
+          className="mt-1 flex min-h-11 items-center justify-between rounded-lg px-1 text-xs font-semibold text-[#9a5b08] hover:bg-[#f8ead3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#f59e0b]"
         >
           Apri scheda <ChevronRight className="h-4 w-4" aria-hidden="true" />
         </Link>

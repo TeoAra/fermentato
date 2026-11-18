@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef, lazy, Suspense, type CSSProperties } from "react";
 import { Link } from "wouter";
 import { EmptyState } from "@/components/empty-state";
 import { PageContainer } from "@/components/layout/page-container";
@@ -328,7 +328,7 @@ export default function ExploreBreweries() {
       logoUrl: b.logoUrl, type: "brewery" as const,
     }));
     return (
-      <div className="fixed inset-x-0 bottom-0 top-14 z-40 bg-background">
+      <div className="fixed inset-x-0 bottom-0 top-14 z-40 bg-background" style={{ "--map-controls-bottom": "calc(var(--frozen-sab, 0px) + 84px)", "--map-popup-bottom": "calc(var(--frozen-sab, 0px) + 256px)" } as CSSProperties}>
         {/* Row 1: back + count */}
         <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
           <button
@@ -345,7 +345,7 @@ export default function ExploreBreweries() {
           </div>
         </div>
         {/* Row 2: filter chips */}
-        <div className="absolute top-[3.5rem] left-3 right-3 z-50 flex items-center gap-2 overflow-x-auto scrollbar-hide pointer-events-none">
+        <div style={{ bottom: "calc(var(--frozen-sab, 0px) + 140px)" }} className="absolute left-3 right-3 z-50 flex flex-wrap items-center gap-2 rounded-2xl border border-[#ead7b7] bg-[#fff7ea] p-2 shadow-sm pointer-events-none [&_button]:min-h-11">
           {quickFilter === "nearby" && (
             <div className="relative flex-shrink-0 pointer-events-auto">
               <button
@@ -357,7 +357,7 @@ export default function ExploreBreweries() {
               {showDistPicker && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
-                  <div className="absolute top-9 left-0 z-50 bg-white dark:bg-[#1A1D24] border border-stone-100 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
+                  <div className="absolute bottom-full mb-2 left-0 z-50 bg-[#fff7ea] border border-[#ead7b7] rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
                     {[1, 5, 10, 15, 20, 30, 50].map(d => (
                       <button key={d} onClick={() => { setDistanceKm(d); setShowDistPicker(false); }}
                         className={`w-full text-left px-4 py-2.5 text-sm font-semibold transition-colors ${distanceKm === d ? 'text-primary bg-orange-50 dark:bg-orange-900/20' : 'text-foreground hover:bg-stone-50 dark:hover:bg-white/5'}`}>

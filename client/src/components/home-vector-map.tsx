@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "./map-theme.css";
+import { applyMapTheme, MAP_STYLE_URL } from "@/lib/map-theme";
 
 export type HomeMapBounds = { ne: [number, number]; sw: [number, number] };
 export type HomeMapProject = (lat: number, lng: number) => { x: number; y: number };
@@ -16,19 +18,19 @@ interface HomeVectorMapProps {
   children: (view: { project: HomeMapProject; width: number; height: number; mounted: boolean }) => ReactNode;
 }
 
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
-
 export default function HomeVectorMap({
   center, zoom, onBoundsChanged, onMapClick, onError, retryToken, children,
 }: HomeVectorMapProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const callbacksRef = useRef({ onBoundsChanged, onMapClick, onError });
+  const cameraRef = useRef({ center, zoom });
   const [view, setView] = useState({ width: 0, height: 0, mounted: false, revision: 0 });
   const [mapState, setMapState] = useState<"loading" | "ready" | "error">("loading");
   const failedRef = useRef(false);
 
   callbacksRef.current = { onBoundsChanged, onMapClick, onError };
+  cameraRef.current = { center, zoom };
 
   useEffect(() => {
     const host = hostRef.current;
@@ -40,7 +42,7 @@ export default function HomeVectorMap({
     try {
       map = new maplibregl.Map({
         container: host,
-        style: MAP_STYLE,
+        style: MAP_STYLE_URL,
         center: [center[1], center[0]],
         // Preserve the app's 256px zoom scale; MapLibre uses 512px tiles.
         zoom: zoom - 1,
@@ -59,10 +61,11 @@ export default function HomeVectorMap({
       return;
     }
     mapRef.current = map;
+    let loaded = false;
     map.addControl(new maplibregl.AttributionControl({ compact: false }), "bottom-right");
 
     const reportView = () => {
-      if (mapRef.current !== map || map.getContainer().clientWidth === 0) return;
+      if (!loaded || mapRef.current !== map || map.getContainer().clientWidth === 0) return;
       const bounds = map.getBounds();
       const mapCenter = map.getCenter();
       callbacksRef.current.onBoundsChanged({
@@ -83,23 +86,16 @@ export default function HomeVectorMap({
       });
     };
     map.on("load", () => {
+      applyMapTheme(map);
+      // Do not let initialization/resize overwrite a GPS camera update that
+      // arrived while the style was loading (especially on fullscreen mount).
+      const latest = cameraRef.current;
+      map.jumpTo({ center: [latest.center[1], latest.center[0]], zoom: latest.zoom - 1 });
+      loaded = true;
       setView(v => ({ ...v, mounted: true }));
       if (!failedRef.current) setMapState("ready");
       reportView();
       repaintOverlay();
-      // Keep the quiet Positron base, while giving land and water a warmer
-      // paper tint. Labels and road hierarchy remain authored by the provider.
-      try {
-        for (const layer of map.getStyle().layers ?? []) {
-          if (layer.type === "background") map.setPaintProperty(layer.id, "background-color", "#fff7ea");
-          if (layer.type === "fill" && /park|landcover|wood|grass/i.test(layer.id)) {
-            map.setPaintProperty(layer.id, "fill-color", "#e9efdf");
-          }
-          if (layer.type === "fill" && /water/i.test(layer.id)) {
-            map.setPaintProperty(layer.id, "fill-color", "#e3edf0");
-          }
-        }
-      } catch { /* Provider style changes should never prevent map use. */ }
     });
     map.on("move", repaintOverlay);
     map.on("moveend", reportView);
@@ -158,16 +154,6 @@ export default function HomeVectorMap({
       <div className="home-vector-map__overlay" aria-hidden="false">
         {children({ project, width: view.width, height: view.height, mounted: view.mounted })}
       </div>
-      <style>{`
-        .home-vector-map,.home-vector-map__canvas,.home-vector-map__overlay{position:absolute;inset:0}
-        .home-vector-map__canvas{background:#f3f0e8}
-        .home-vector-map__overlay{pointer-events:none;overflow:hidden}
-        .home-vector-map__overlay>*{pointer-events:auto}
-        .maplibregl-ctrl-attrib{font:10px/1.3 ui-sans-serif,system-ui,sans-serif!important;color:#625d52!important;background:rgba(255,247,234,.94)!important;border-radius:8px 0 0 0!important;box-shadow:none!important}
-        .maplibregl-ctrl-attrib a{color:#625d52!important}
-        .maplibregl-ctrl-bottom-right{right:0;bottom:0}
-        @media (max-width:480px){.maplibregl-ctrl-attrib{font-size:9px!important}}
-      `}</style>
     </div>
   );
 }

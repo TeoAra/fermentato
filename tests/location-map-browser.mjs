@@ -5,7 +5,7 @@ import { readFile, readdir } from "node:fs/promises";
 import assert from "node:assert/strict";
 
 const assets = await readdir("dist/public/assets");
-const css = await readFile(`dist/public/assets/${assets.find(name => name.endsWith(".css"))}`, "utf8");
+const css = (await Promise.all(assets.filter(name => name.endsWith(".css")).map(name => readFile(`dist/public/assets/${name}`, "utf8")))).join("\n");
 const bundle = await build({
   stdin: { resolveDir: process.cwd(), loader:"tsx", contents:`
     import React, {useState, useMemo} from "react";
@@ -26,12 +26,13 @@ const bundle = await build({
       const refresh = usePullToRefresh(()=>{window.refreshCalls++;return new Promise((resolve,reject)=>{window.resolveRefresh=resolve;window.rejectRefresh=reject})});
       return <><div id="pull-surface" style={{height:70}}>Trascina qui per aggiornare</div><Indicator {...refresh}/>
       <pre id="geo-state" style={{display:"none"}}>{JSON.stringify(geo)}</pre>
-      <HomeMapPanel pubs={[{id:1,name:"Pub prova",latitude:"45.401",longitude:"11.901",slug:"prova"}]}
+      <div style={{position:"fixed",top:0,left:0,right:0,height:50,zIndex:9999}}>Header di prova</div>
+      <div style={{transform:"translateZ(0)"}}><HomeMapPanel pubs={[{id:1,name:"Pub prova",latitude:"45.401",longitude:"11.901",slug:"prova"}]}
         breweries={[{id:2,name:"Birrificio prova",latitude:"45.43",longitude:"11.93"}]}
         userLocation={location} accuracy={geo.accuracy} isCached={geo.isCached} locationStatus={geo.status}
         locationError={geo.error} recenterToken={geo.requestId} onRequestLocation={geo.request}
         distanceKm={distance} onDistanceChange={setDistance} showPubs={pubs} onShowPubsChange={setPubs}
-        showBreweries={breweries} onShowBreweriesChange={setBreweries}/><div style={{height:1000}} /></>;
+        showBreweries={breweries} onShowBreweriesChange={setBreweries}/></div><div style={{height:1000}} /></>;
     }
     createRoot(document.getElementById("root")).render(<App/>);
   `},
@@ -81,6 +82,10 @@ try {
     await page.setViewport({width,height:844,isMobile:true,hasTouch:true});
     await page.goto("http://fixture.test/");
     await page.addStyleTag({content:css});
+    await page.evaluate(()=>{
+      document.documentElement.style.setProperty("--frozen-sat","47px");
+      document.documentElement.style.setProperty("--frozen-sab","34px");
+    });
     await page.addScriptTag({content:bundle.outputFiles[0].text});
     await page.waitForSelector("[data-map-center]");
     await page.waitForSelector(`[data-vector-map-state="${expectedState}"]`);
@@ -110,6 +115,15 @@ try {
     await page.click('[aria-label="Espandi mappa a schermo intero"]');
     assert.equal(await page.$eval("body",node=>node.style.overflow),"hidden");
     assert.ok(await page.$('[role="dialog"][aria-modal="true"]'));
+    const fullscreen=await page.$eval('[data-testid="home-map-panel"]',node=>{
+      const r=node.getBoundingClientRect();
+      return {inRoot:Boolean(node.closest("#root")),top:r.top,left:r.left,width:r.width,height:r.height};
+    });
+    assert.equal(fullscreen.inRoot,false,"Fullscreen escapes transformed page ancestors");
+    assert.equal(fullscreen.top,0);
+    assert.equal(fullscreen.left,0);
+    assert.equal(fullscreen.width,width);
+    assert.equal(fullscreen.height,844);
     await page.keyboard.press("Escape");
     assert.equal(await page.$('[role="dialog"][aria-modal="true"]'),null);
     assert.equal(await page.$eval("body",node=>node.style.overflow),"");
@@ -140,7 +154,7 @@ try {
     const popup=node.getBoundingClientRect();
     return {top:popup.top-panel.top,left:popup.left-panel.left,bottom:popup.bottom-panel.bottom};
   });
-  assert.ok(popupGeometry.top>=10&&popupGeometry.top<=14);
+  assert.ok(popupGeometry.top>=10);
   assert.ok(popupGeometry.left>=10&&popupGeometry.left<=14);
   assert.ok(popupGeometry.bottom<=0);
   assert.equal(await page.$eval('[data-testid="home-map-selected-venue"]',node=>node.dataset.venueType),"pub");
@@ -161,7 +175,39 @@ try {
   await page.click('[aria-label="Filtri mappa"] label:nth-of-type(2) input');
   await page.waitForFunction(()=>!document.querySelector('[data-testid="home-map-selected-venue"]'));
   await page.click('[aria-label="Chiudi filtri"]');
-  console.log("PASS compact map: no static information panel, pub/brewery details top-left, working links/close/filter clearing");
+  console.log("PASS compact map: bottom venue details, working links/close/filter clearing");
+
+  await page.click('[aria-label="Espandi mappa a schermo intero"]');
+  await page.waitForSelector('[data-vector-map-state="ready"]');
+  await page.waitForSelector('[aria-label="Pub: Pub prova"]',{timeout:5000}).catch(async error=>{
+    console.log("Fullscreen diagnostics",await page.evaluate(()=>({
+      center:document.querySelector("[data-map-center]")?.dataset.mapCenter,
+      zoom:document.querySelector("[data-map-center]")?.dataset.mapZoom,
+      labels:[...document.querySelectorAll("button")].map(node=>node.getAttribute("aria-label")),
+      geo:document.querySelector("#geo-state")?.textContent
+    })));
+    throw error;
+  });
+  await page.click('[aria-label="Pub: Pub prova"]');
+  const bottomCard=await page.$eval('[data-testid="home-map-selected-venue"]',node=>{
+    const r=node.getBoundingClientRect();
+    const controls=document.querySelector('[aria-label="Apri filtri mappa"]').getBoundingClientRect();
+    return {top:r.top,bottom:r.bottom,controlsTop:controls.top,visible:document.elementFromPoint(r.left+20,r.top+20)?.closest('[data-testid="home-map-selected-venue"]')===node};
+  });
+  assert.ok(bottomCard.top>422&&bottomCard.bottom<bottomCard.controlsTop);
+  assert.equal(bottomCard.visible,true,"Card is above app header/dock and actually hit-testable");
+  await page.click('[aria-label="Apri filtri mappa"]');
+  const filtersBottom=await page.$eval('[aria-label="Filtri mappa"]',node=>{
+    const r=node.getBoundingClientRect();
+    return {bottom:r.bottom,visible:document.elementFromPoint(r.left+20,r.top+20)?.closest('[aria-label="Filtri mappa"]')===node};
+  });
+  assert.ok(Math.abs(filtersBottom.bottom-734)<=1);
+  assert.equal(filtersBottom.visible,true);
+  assert.equal(await page.$eval('[data-testid="home-map-selected-venue"]',node=>getComputedStyle(node).display),"none");
+  await page.click('[aria-label="Chiudi filtri"]');
+  assert.equal(await page.$eval('[data-testid="home-map-selected-venue"]',node=>getComputedStyle(node).display)!=="none",true);
+  await page.keyboard.press("Escape");
+  console.log("PASS fullscreen: viewport portal, bottom card and filters, safe area once, no overlap");
 
   await touch("#pull-surface",70,10);
   await touch("#pull-surface",0,90,true);

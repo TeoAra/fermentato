@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import "./map-theme.css";
+import { addMapMarkerImages, applyMapTheme, MAP_STYLE_URL } from "@/lib/map-theme";
 
 export interface MapPin {
   id: number;
@@ -24,8 +26,6 @@ interface PubMapProps {
 }
 
 const ITALY_CENTER: [number, number] = [12.4964, 41.9028];
-const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
-
 function makeCirclePolygon(lat: number, lng: number, radiusKm: number, steps = 64): GeoJSON.FeatureCollection {
   const coords: [number, number][] = [];
   for (let i = 0; i <= steps; i++) {
@@ -41,9 +41,10 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const [ready, setReady] = useState(false);
-  const [locating, setLocating] = useState(false);
   const [mapError, setMapError] = useState(false);
-  const geoCtrlRef = useRef<maplibregl.GeolocateControl | null>(null);
+  const [retryToken, setRetryToken] = useState(0);
+  const callbacksRef = useRef({ onError });
+  callbacksRef.current = { onError };
 
   const validPins = pins.filter(
     (p) => p.latitude && p.longitude &&
@@ -55,17 +56,20 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
     if (!containerRef.current || mapRef.current) return;
 
     let map: maplibregl.Map;
+    let failed = false;
+    setMapError(false);
+    setReady(false);
     try {
       map = new maplibregl.Map({
         container: containerRef.current,
-        style: MAP_STYLE,
+        style: MAP_STYLE_URL,
         center: ITALY_CENTER,
         zoom: 5.5,
         attributionControl: false,
       });
     } catch {
       setMapError(true);
-      onError?.();
+      callbacksRef.current.onError?.();
       return;
     }
 
@@ -78,7 +82,6 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
       showAccuracyCircle: false,
     });
     map.addControl(geoCtrl, "top-right");
-    geoCtrlRef.current = geoCtrl;
 
     const geojson: GeoJSON.FeatureCollection = {
       type: "FeatureCollection",
@@ -99,6 +102,8 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
     };
 
     map.on("load", () => {
+      applyMapTheme(map);
+      addMapMarkerImages(map);
       map.addSource("pins", {
         type: "geojson",
         data: geojson,
@@ -115,19 +120,19 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
         paint: {
           "circle-color": [
             "step", ["get", "point_count"],
-            "#F77104", 10,
-            "#e8650a", 30,
-            "#c94f00",
+            "#F59E0B", 10,
+            "#E89916", 30,
+            "#D47B08",
           ],
           "circle-radius": [
             "step", ["get", "point_count"],
-            22, 10,
-            30, 30,
-            38,
+            15, 10,
+            18, 30,
+            21,
           ],
           "circle-opacity": 0.92,
           "circle-stroke-width": 2,
-          "circle-stroke-color": "#fff",
+          "circle-stroke-color": "#FFF7EA",
         },
       });
 
@@ -138,9 +143,10 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
         filter: ["has", "point_count"],
         layout: {
           "text-field": "{point_count_abbreviated}",
-          "text-size": 13,
+          "text-font": ["Noto Sans Bold"],
+          "text-size": 11,
         },
-        paint: { "text-color": "#fff" },
+        paint: { "text-color": "#493A20" },
       });
 
       map.addLayer({
@@ -149,10 +155,26 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
         source: "pins",
         filter: ["!", ["has", "point_count"]],
         paint: {
-          "circle-color": "#F77104",
-          "circle-radius": 9,
-          "circle-stroke-width": 2.5,
-          "circle-stroke-color": "#fff",
+          "circle-color": "#FFF7EA",
+          "circle-opacity": 0,
+          "circle-radius": 22,
+          "circle-stroke-width": 0,
+          "circle-stroke-color": "#F59E0B",
+        },
+      });
+      map.addLayer({
+        id: "pin-kind-symbol",
+        type: "symbol",
+        source: "pins",
+        filter: ["!", ["has", "point_count"]],
+        layout: {
+          "icon-image": ["match", ["get", "type"], "brewery", "fermenta-brewery", "fermenta-pub"],
+          "icon-allow-overlap": true,
+        },
+        paint: {
+          "text-color": "#B96D08",
+          "text-halo-color": "#FFF7EA",
+          "text-halo-width": 1,
         },
       });
 
@@ -171,25 +193,36 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
           .catch(() => {});
       });
 
-      map.on("click", "unclustered", (e) => {
-        const features = map.queryRenderedFeatures(e.point, { layers: ["unclustered"] });
+      map.on("click", ["unclustered", "pin-kind-symbol"], (e) => {
+        const features = map.queryRenderedFeatures(e.point, { layers: ["unclustered", "pin-kind-symbol"] });
         if (!features.length) return;
         const { name, slug, address, type } = features[0].properties ?? {};
         const coords = (features[0].geometry as GeoJSON.Point).coordinates as [number, number];
-        const href = type === "brewery" ? `/brewery/${slug}` : `/pub/${slug}`;
+        const safeSlug = encodeURIComponent(String(slug ?? ""));
+        const href = type === "brewery" ? `/brewery/${safeSlug}` : `/pub/${safeSlug}`;
         const label = type === "brewery" ? "Vai al birrificio" : "Vai al pub";
+
+        const content = document.createElement("div");
+        content.className = "fermenta-map-popup";
+        const title = document.createElement("div");
+        title.className = "fermenta-map-popup__title";
+        title.textContent = String(name ?? "");
+        content.appendChild(title);
+        if (address) {
+          const detail = document.createElement("div");
+          detail.className = "fermenta-map-popup__detail";
+          detail.textContent = String(address);
+          content.appendChild(detail);
+        }
+        const link = document.createElement("a");
+        link.className = "fermenta-map-popup__link";
+        link.href = href;
+        link.textContent = `${label} →`;
+        content.appendChild(link);
 
         new maplibregl.Popup({ maxWidth: "240px", className: "fermenta-popup" })
           .setLngLat(coords)
-          .setHTML(`
-            <div style="font-family:system-ui,sans-serif;padding:2px 0 4px">
-              <div style="font-weight:800;font-size:14px;margin-bottom:${address ? "4px" : "8px"};color:#1a1a1a">${name}</div>
-              ${address ? `<div style="font-size:12px;color:#777;margin-bottom:8px;line-height:1.4">${address}</div>` : ""}
-              <a href="${href}" style="display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#F77104,#f5a623);color:#fff;font-weight:700;font-size:12px;padding:7px 14px;border-radius:12px;text-decoration:none">
-                ${label} →
-              </a>
-            </div>
-          `)
+          .setDOMContent(content)
           .addTo(map);
       });
 
@@ -208,8 +241,22 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
     });
 
     mapRef.current = map;
-    return () => { map.remove(); mapRef.current = null; };
-  }, []);
+    map.on("error", () => {
+      if (mapRef.current !== map || failed) return;
+      failed = true;
+      setMapError(true);
+      setReady(false);
+      callbacksRef.current.onError?.();
+    });
+    const resizeObserver = new ResizeObserver(() => map.resize());
+    resizeObserver.observe(containerRef.current);
+    if (containerRef.current.parentElement) resizeObserver.observe(containerRef.current.parentElement);
+    return () => {
+      resizeObserver.disconnect();
+      map.remove();
+      mapRef.current = null;
+    };
+  }, [retryToken]);
 
   // Draw / update user-location dot + radius circle whenever location or radius changes
   useEffect(() => {
@@ -226,8 +273,8 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
         (map.getSource("user-location") as maplibregl.GeoJSONSource).setData(userPoint);
       } else {
         map.addSource("user-location", { type: "geojson", data: userPoint });
-        map.addLayer({ id: "user-dot-halo", type: "circle", source: "user-location", paint: { "circle-radius": 12, "circle-color": "#3b82f6", "circle-opacity": 0.18 } });
-        map.addLayer({ id: "user-dot", type: "circle", source: "user-location", paint: { "circle-radius": 6, "circle-color": "#3b82f6", "circle-stroke-width": 2.5, "circle-stroke-color": "#fff" } });
+        map.addLayer({ id: "user-dot-halo", type: "circle", source: "user-location", paint: { "circle-radius": 12, "circle-color": "#F59E0B", "circle-opacity": 0.18 } });
+        map.addLayer({ id: "user-dot", type: "circle", source: "user-location", paint: { "circle-radius": 6, "circle-color": "#F59E0B", "circle-stroke-width": 2.5, "circle-stroke-color": "#FFF7EA" } });
       }
 
       if (radiusKm && radiusKm > 0) {
@@ -236,8 +283,8 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
           (map.getSource("radius-circle") as maplibregl.GeoJSONSource).setData(circleData as any);
         } else {
           map.addSource("radius-circle", { type: "geojson", data: circleData as any });
-          map.addLayer({ id: "radius-fill", type: "fill", source: "radius-circle", paint: { "fill-color": "#3b82f6", "fill-opacity": 0.06 } }, "clusters");
-          map.addLayer({ id: "radius-border", type: "line", source: "radius-circle", paint: { "line-color": "#3b82f6", "line-width": 1.5, "line-dasharray": [4, 3], "line-opacity": 0.45 } }, "clusters");
+          map.addLayer({ id: "radius-fill", type: "fill", source: "radius-circle", paint: { "fill-color": "#F59E0B", "fill-opacity": 0.08 } }, "clusters");
+          map.addLayer({ id: "radius-border", type: "line", source: "radius-circle", paint: { "line-color": "#E89916", "line-width": 1.5, "line-dasharray": [4, 3], "line-opacity": 0.55 } }, "clusters");
         }
       } else if (map.getSource("radius-circle")) {
         (map.getSource("radius-circle") as maplibregl.GeoJSONSource).setData({ type: "FeatureCollection", features: [] });
@@ -269,57 +316,40 @@ export function PubMap({ pins, height = "100%", onError, label, userLocation, ra
     });
   }, [pins, ready]);
 
-  const handleLocate = () => {
-    setLocating(true);
-    geoCtrlRef.current?.trigger();
-    setTimeout(() => setLocating(false), 3000);
-  };
-
   const pinsWithCoords = validPins.length;
   const pinsTotal = pins.length;
 
   if (mapError) {
     return (
-      <div className={fullscreen ? "relative w-full h-full bg-stone-50 dark:bg-[#0B0D10]/30 flex flex-col items-center justify-center gap-3 text-center px-6" : "relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border bg-stone-50 dark:bg-[#0B0D10]/30 flex flex-col items-center justify-center gap-3 text-center px-6"} style={fullscreen ? undefined : { height }}>
+      <div className={fullscreen ? "fermenta-map-shell relative w-full h-full flex flex-col items-center justify-center gap-3 text-center px-6" : "fermenta-map-shell relative w-full rounded-2xl overflow-hidden border border-[#ead7b7] flex flex-col items-center justify-center gap-3 text-center px-6"} style={fullscreen ? undefined : { height }}>
         <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-stone-300 dark:text-stone-600">
           <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
         </svg>
         <div>
           <p className="text-sm font-semibold text-stone-500 dark:text-stone-400">Mappa non disponibile</p>
-          <p className="text-xs text-stone-400 dark:text-stone-500 mt-0.5">Il tuo browser non supporta la visualizzazione 3D richiesta dalla mappa</p>
+          <p className="text-xs text-stone-500 mt-0.5">La mappa non è riuscita a caricare i dati cartografici.</p>
         </div>
         <p className="text-xs text-stone-400 dark:text-stone-600">
           {validPins.length} {label ?? (validPins.length === 1 ? "locale" : "locali")} disponibili
         </p>
+        <button type="button" className="fermenta-map-retry" onClick={() => { setMapError(false); setRetryToken(v => v + 1); }}>Riprova</button>
       </div>
     );
   }
 
   return (
-    <div data-no-pull="true" className={fullscreen ? "relative w-full h-full" : "relative w-full rounded-2xl overflow-hidden border border-stone-100 dark:border-border"} style={fullscreen ? undefined : { height }}>
+    <div data-no-pull="true" data-map-state={ready ? "ready" : "loading"} aria-busy={!ready} className={`fermenta-map-shell ${fullscreen ? "relative w-full h-full" : "relative w-full rounded-2xl overflow-hidden border border-[#ead7b7]"}`} style={fullscreen ? undefined : { height }}>
       <div ref={containerRef} className="w-full h-full" />
 
       {/* Info badge */}
-      <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-white/90 dark:bg-black/70 backdrop-blur-sm shadow text-foreground">
-        <span className="w-2 h-2 rounded-full bg-primary inline-block" />
+        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-[#fff7ea]/95 border border-[#ead7b7] shadow text-[#675239]">
+        <span className="w-2 h-2 rounded-full bg-[#f59e0b] inline-block" />
         {pinsWithCoords} {label ?? (pinsWithCoords === 1 ? "locale" : "locali")} su mappa
         {pinsWithCoords < pinsTotal && (
           <span className="text-muted-foreground font-normal">/ {pinsTotal} totali</span>
         )}
       </div>
 
-      {/* Geolocation button */}
-      <button
-        onClick={handleLocate}
-        disabled={locating}
-        className="absolute bottom-10 right-3 z-10 w-9 h-9 rounded-xl bg-white dark:bg-[#1A1D24] shadow-md flex items-center justify-center text-primary hover:bg-stone-50 transition-colors border border-stone-100"
-        title="Vicino a me"
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>
-        </svg>
-      </button>
     </div>
   );
 }

@@ -42,11 +42,11 @@ const bundle = await build({
     }
     createRoot(document.getElementById("root")).render(<App/>);
   `},
-  bundle: true, write: false, jsx: "automatic", format: "iife",
+  bundle: true, write: false, jsx: "automatic", format: "iife", loader: {".css":"empty"},
   define: {"process.env.NODE_ENV": '"production"', "import.meta.env": "{}"},
 });
 const assets = await readdir("dist/public/assets");
-const css = await readFile(`dist/public/assets/${assets.find(name => name.endsWith(".css"))}`, "utf8");
+const css = (await Promise.all(assets.filter(name => name.endsWith(".css")).map(name => readFile(`dist/public/assets/${name}`, "utf8")))).join("\n");
 const browser = await puppeteer.launch({
   headless: true, executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || execFileSync("which", ["chromium"], {encoding:"utf8"}).trim(),
   args: ["--no-sandbox"],

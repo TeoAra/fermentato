@@ -1,0 +1,200 @@
+.home-vector-map,
+.home-vector-map__canvas,
+.home-vector-map__overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.home-vector-map__canvas {
+  background: #fff7ea;
+}
+
+.home-vector-map__overlay {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.home-vector-map__overlay > * {
+  pointer-events: auto;
+}
+
+.maplibregl-ctrl-bottom-right {
+  right: 0;
+  bottom: 0;
+}
+
+/* Keep actions and selection cards reachable at the bottom on every map. */
+.fermenta-map-shell .maplibregl-ctrl-top-right {
+  top: auto;
+  right: 12px;
+  bottom: var(--map-controls-bottom, 24px);
+  display: flex;
+  gap: 8px;
+}
+
+.fermenta-map-shell .maplibregl-ctrl-top-right .maplibregl-ctrl {
+  margin: 0;
+}
+
+.fermenta-map-shell .maplibregl-ctrl-group {
+  display: flex;
+}
+
+.fermenta-map-shell .maplibregl-ctrl-group button + button {
+  border-top: 0 !important;
+  border-left: 1px solid #ead7b7 !important;
+}
+
+.maplibregl-popup.fermenta-popup {
+  top: auto !important;
+  right: 12px !important;
+  bottom: var(--map-popup-bottom, 84px) !important;
+  left: 12px !important;
+  width: auto;
+  max-width: 420px !important;
+  max-height: calc(100% - var(--map-popup-bottom, 84px) - 12px);
+  overflow-y: auto;
+  border-radius: 14px;
+  transform: none !important;
+}
+
+.maplibregl-popup.fermenta-popup .maplibregl-popup-tip {
+  display: none;
+}
+
+.maplibregl-popup.fermenta-popup .maplibregl-popup-content {
+  padding-right: 28px;
+}
+
+.maplibregl-popup.fermenta-popup .maplibregl-popup-close-button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.fermenta-map-popup {
+  padding-right: 24px;
+}
+
+.fermenta-map-shell {
+  background: #fff7ea;
+}
+
+.maplibregl-ctrl-group {
+  overflow: hidden;
+  border: 1px solid #ead7b7 !important;
+  border-radius: 12px !important;
+  background: rgba(255, 247, 234, .97) !important;
+  box-shadow: 0 2px 8px rgba(83, 62, 28, .14) !important;
+}
+
+.maplibregl-ctrl-group button {
+  width: 44px !important;
+  height: 44px !important;
+  background-color: #fff7ea !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: #fff0d5 !important;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid #ead7b7 !important;
+}
+
+.maplibregl-ctrl button .maplibregl-ctrl-icon {
+  filter: sepia(.45) saturate(1.25);
+}
+
+.maplibregl-ctrl-attrib {
+  font: 10px/1.3 ui-sans-serif, system-ui, sans-serif !important;
+  color: #625d52 !important;
+  background: rgba(255, 247, 234, .94) !important;
+  border-radius: 8px 0 0 0 !important;
+  box-shadow: none !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: #8c5b14 !important;
+}
+
+.maplibregl-popup.fermenta-popup .maplibregl-popup-content {
+  padding: 12px;
+  border: 1px solid #ead7b7;
+  border-radius: 14px;
+  background: #fff7ea;
+  color: #493a20;
+  box-shadow: 0 5px 18px rgba(83, 62, 28, .18);
+}
+
+.maplibregl-popup.fermenta-popup .maplibregl-popup-tip {
+  border-top-color: #fff7ea;
+  border-bottom-color: #fff7ea;
+}
+
+.fermenta-map-popup {
+  font: 13px/1.4 ui-sans-serif, system-ui, sans-serif;
+  color: #493a20;
+}
+
+.fermenta-map-popup__badge {
+  margin-bottom: 4px;
+  color: #9a5b08;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.fermenta-map-popup__title {
+  margin-bottom: 4px;
+  color: #493a20;
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.fermenta-map-popup__detail {
+  margin-bottom: 9px;
+  color: #776c59;
+  font-size: 12px;
+}
+
+.fermenta-map-popup__link {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 13px;
+  border: 1px solid #e8a32a;
+  border-radius: 10px;
+  background: #f59e0b;
+  color: #493a20;
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.fermenta-map-popup__link:hover {
+  background: #f8b333;
+}
+
+.fermenta-map-retry {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid #e6c890;
+  border-radius: 11px;
+  background: #f59e0b;
+  color: #493a20;
+  font: 700 13px/1 ui-sans-serif, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.fermenta-map-retry:hover {
+  background: #f8b333;
+}
+
+@media (max-width: 480px) {
+  .maplibregl-ctrl-attrib {
+    font-size: 9px !important;
+  }
+}

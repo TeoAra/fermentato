@@ -1,6 +1,5 @@
 import { useState } from "react";
-import { Map as PigeonMap, GeoJson, Marker } from "pigeon-maps";
-import { osmTileProvider } from "@/lib/map-tiles";
+import LocationPreviewMap from "@/components/location-preview-map";
 import { Navigation, Footprints, Bike, Car, Loader2, AlertTriangle, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,24 +71,6 @@ export default function RouteCard({ destination, destinationName, destinationAdd
     setEnabled(true);
     refetch();
   };
-
-  // Bounds per la mini mappa
-  const polyline: [number, number][] = data?.geometry?.coordinates
-    ? data.geometry.coordinates.map(([lng, lat]) => [lat, lng])
-    : origin
-      ? [[origin.lat, origin.lng], [destination.lat, destination.lng]]
-      : [];
-
-  const center: [number, number] = polyline.length > 0
-    ? [
-      (polyline.reduce((s, p) => s + p[0], 0) / polyline.length),
-      (polyline.reduce((s, p) => s + p[1], 0) / polyline.length),
-    ]
-    : [destination.lat, destination.lng];
-
-  const zoom = polyline.length > 1
-    ? Math.max(8, Math.min(14, 14 - Math.round(Math.log2(Math.max(1, distanceBetween(polyline[0], polyline[polyline.length - 1]))))))
-    : 13;
 
   return (
     <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
@@ -184,37 +165,7 @@ export default function RouteCard({ destination, destinationName, destinationAdd
             {/* Mini mappa con polyline */}
             {data.geometry && data.geometry.coordinates.length > 1 && origin && (
               <div className="rounded-xl overflow-hidden border border-border h-44 relative">
-                <PigeonMap
-                  defaultCenter={center}
-                  defaultZoom={zoom}
-                  provider={osmTileProvider}
-                  attribution={false}
-                  mouseEvents={false}
-                  touchEvents={false}
-                >
-                  <GeoJson
-                    data={{
-                      type: "FeatureCollection",
-                      features: [
-                        {
-                          type: "Feature",
-                          geometry: data.geometry,
-                          properties: {},
-                        },
-                      ],
-                    }}
-                    styleCallback={() => ({
-                      stroke: "#F77104",
-                      strokeWidth: "4",
-                      fill: "none",
-                      strokeLinecap: "round",
-                      strokeLinejoin: "round",
-                      opacity: 0.85,
-                    })}
-                  />
-                  <Marker anchor={[origin.lat, origin.lng]} color="#0ea5e9" />
-                  <Marker anchor={[destination.lat, destination.lng]} color="#F77104" />
-                </PigeonMap>
+                <LocationPreviewMap latitude={destination.lat} longitude={destination.lng} label={`Percorso verso ${destinationName}`} route={data.geometry} origin={origin} />
               </div>
             )}
           </div>
@@ -233,17 +184,5 @@ export default function RouteCard({ destination, destinationName, destinationAdd
       </div>
     </div>
   );
-}
-
-function distanceBetween(a: [number, number], b: [number, number]): number {
-  // Distanza approssimativa in km tra due punti per stimare lo zoom della mappa.
-  const R = 6371;
-  const toRad = (x: number) => (x * Math.PI) / 180;
-  const dLat = toRad(b[0] - a[0]);
-  const dLng = toRad(b[1] - a[1]);
-  const lat1 = toRad(a[0]);
-  const lat2 = toRad(b[0]);
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
-  return 2 * R * Math.asin(Math.sqrt(h));
 }
 

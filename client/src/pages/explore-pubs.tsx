@@ -1,6 +1,6 @@
 import { Helmet } from "react-helmet-async";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, type CSSProperties } from "react";
 import { Link } from "wouter";
 import { MapPin, Store, Map, Search, X, Star, ChevronRight, SlidersHorizontal, Navigation, Bookmark } from "lucide-react";
 import { lazy, Suspense } from "react";
@@ -289,7 +289,7 @@ export default function ExplorePubs() {
       logoUrl: p.logoUrl, type: "pub" as const,
     }));
     return (
-      <div className="fixed inset-x-0 bottom-0 top-14 z-40 bg-background">
+      <div className="fixed inset-x-0 bottom-0 top-14 z-40 bg-background" style={{ "--map-controls-bottom": "calc(var(--frozen-sab, 0px) + 84px)", "--map-popup-bottom": "calc(var(--frozen-sab, 0px) + 256px)" } as CSSProperties}>
         {/* Row 1: back + count */}
         <div className="absolute top-3 left-3 right-3 z-50 flex items-center gap-2 pointer-events-none">
           <button
@@ -308,7 +308,7 @@ export default function ExplorePubs() {
           </div>
         </div>
         {/* Row 2: filter chips */}
-        <div className="absolute top-[3.5rem] left-3 right-3 z-50 flex items-center gap-2 overflow-x-auto scrollbar-hide pointer-events-none">
+        <div style={{ bottom: "calc(var(--frozen-sab, 0px) + 140px)" }} className="absolute left-3 right-3 z-50 flex flex-wrap items-center gap-2 rounded-2xl border border-[#ead7b7] bg-[#fff7ea] p-2 shadow-sm pointer-events-none [&_button]:min-h-11">
           {/* Distance */}
           <div className="relative flex-shrink-0 pointer-events-auto">
             <button
@@ -324,7 +324,7 @@ export default function ExplorePubs() {
             {showDistPicker && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShowDistPicker(false)} />
-                <div className="absolute top-9 left-0 z-50 bg-white/95 dark:bg-[#1A1D24]/95 backdrop-blur-xl border border-stone-100 dark:border-[#23262E] rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
+                <div className="absolute bottom-full mb-2 left-0 z-50 bg-[#fff7ea] border border-[#ead7b7] rounded-2xl shadow-xl overflow-hidden min-w-[110px]">
                   {[1, 5, 10, 15, 20, 30, 50].map(d => (
                     <button
                       key={d}
