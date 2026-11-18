@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { Map, Overlay } from "pigeon-maps";
-import { Capacitor } from "@capacitor/core";
+import type { CSSProperties, MouseEvent, PointerEvent } from "react";
 import { X, Plus, Minus, ChevronRight } from "lucide-react";
 import { Link } from "wouter";
 import Supercluster from "supercluster";
-import { osmTileProvider } from "@/lib/map-tiles";
+import HomeVectorMap, { type HomeMapProject } from "@/components/home-vector-map";
 
 const PUB_COLOR = "#F77104";
 const BREWERY_COLOR = "#9B4E10";
@@ -27,8 +26,6 @@ function radiusToZoom(km: number): number {
   if (km <= 50) return 9;
   return 8;
 }
-
-const mapTileProvider = osmTileProvider;
 
 interface MapPub {
   id: number;
@@ -114,10 +111,10 @@ export default function HomepageMap({
   const pointerStartRef = useRef<{ x: number; y: number } | null>(null);
   const prevDistRef = useRef<number | undefined>(undefined);
 
-  const trackPanStart = (event: React.PointerEvent<HTMLDivElement>) => {
+  const trackPanStart = (event: PointerEvent<HTMLDivElement>) => {
     pointerStartRef.current = { x: event.clientX, y: event.clientY };
   };
-  const trackPanMove = (event: React.PointerEvent<HTMLDivElement>) => {
+  const trackPanMove = (event: PointerEvent<HTMLDivElement>) => {
     const start = pointerStartRef.current;
     if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 7) {
       userPannedRef.current = true;
@@ -214,10 +211,10 @@ export default function HomepageMap({
 
   const pubCount = geoFilteredPubs.length;
   const breweryCount = geoFilteredBreweries.length;
-  const isNative = Capacitor.isNativePlatform();
-
   // ── Clustering with Supercluster ─────────────────────────────────────
   const [bounds, setBounds] = useState<{ ne: [number, number]; sw: [number, number] } | null>(null);
+  const [mapError, setMapError] = useState(false);
+  const [retryToken, setRetryToken] = useState(0);
 
   const clusterIndex = useMemo(() => {
     const idx = new Supercluster<{
@@ -264,190 +261,167 @@ export default function HomepageMap({
       style={{ touchAction: "none", height: fixedHeight ? `${fixedHeight}px` : '100%', maxHeight: fixedHeight ? `${fixedHeight}px` : undefined }}
     >
       {isLoading && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-stone-100 dark:bg-[#1A1D24]">
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#fff7ea]/90">
           <div className="flex flex-col items-center gap-3">
-            <div className="w-8 h-8 rounded-full border-4 border-t-transparent animate-spin border-primary" />
-            <span className="text-sm font-medium text-muted-foreground">Caricamento mappa...</span>
+            <div className="h-8 w-8 animate-spin motion-reduce:animate-none rounded-full border-[3px] border-[#e8d8bd] border-t-[#f59e0b]" />
+            <span className="text-sm font-medium text-[#6b6254]">Caricamento mappa…</span>
           </div>
         </div>
       )}
 
       {mapHeight > 0 && (
-        <div style={{ position: "relative", zIndex: 0 }}>
-        <Map
+        <div style={{ position: "relative", zIndex: 0, height: mapHeight }}>
+        <HomeVectorMap
           center={center}
           zoom={displayZoom}
-          height={mapHeight}
-          onBoundsChanged={({ center: c, zoom: z, bounds: b }) => { setCenter(c); updateZoom(z); if (b) setBounds({ ne: b.ne as [number, number], sw: b.sw as [number, number] }); }}
-          provider={mapTileProvider}
-          dprs={[1, 2]}
-          attribution={false}
-          metaWheelZoom={true}
-          metaWheelZoomWarning=""
-          animate={!isNative}
-          onClick={() => setSelected(null)}
+          retryToken={retryToken}
+          onBoundsChanged={({ center: c, zoom: z, bounds: b }) => {
+            setCenter(c);
+            updateZoom(z);
+            setBounds(b);
+          }}
+          onMapClick={() => setSelected(null)}
+          onError={() => setMapError(true)}
         >
-          {userLocation && (
-            <Overlay anchor={[userLocation.lat, userLocation.lng]} offset={[8, 8]}>
-              <div style={{ position: "relative", width: 16, height: 16, zIndex: 2 }}>
-              {accuracy != null && accuracy > 0 && (() => {
-                const metersPerPixel = 156543.03392 * Math.max(0.08, Math.cos(userLocation.lat * Math.PI / 180)) / (2 ** displayZoom);
-                const diameter = Math.min(640, Math.max(8, (accuracy * 2) / metersPerPixel));
-                return <div aria-hidden="true" style={{
-                  position: "absolute", width: diameter, height: diameter, borderRadius: "50%",
-                  left: 8 - diameter / 2, top: 8 - diameter / 2,
-                  background: "rgba(56, 126, 190, 0.14)", border: "1px solid rgba(42, 111, 179, 0.38)",
-                  pointerEvents: "none",
-                }} />;
-              })()}
-              <div aria-label="La tua posizione" style={{
-                width: 16, height: 16, borderRadius: "50%",
-                background: "#397BB5", border: "3px solid white",
-                boxShadow: "0 0 0 3px rgba(59,130,246,0.35), 0 2px 8px rgba(0,0,0,0.2)",
-                pointerEvents: "none",
-              }} />
-              </div>
-            </Overlay>
-          )}
-
-          {clusters.map((c: any) => {
-            const [lng, lat] = c.geometry.coordinates;
-            if (c.properties.cluster) {
-              const count = c.properties.point_count as number;
-              const size = count < 10 ? 38 : count < 50 ? 46 : count < 200 ? 54 : 62;
-              return (
-                <Overlay key={`cluster-${c.id}`} anchor={[lat, lng]} offset={[size / 2, size / 2]} style={{ zIndex: 10 }}>
-                  <button
-                    type="button"
-                    aria-label={`Ingrandisci mappa: ${count} luoghi`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      try {
-                        const expansion = clusterIndex.getClusterExpansionZoom(c.id as number);
-                        updateZoom(Math.min(expansion + 0.001, 18));
-                        setCenter([lat, lng]);
-                      } catch { /* noop */ }
-                    }}
-                    style={{
-                      width: size, height: size, borderRadius: "50%",
-                      background: "linear-gradient(135deg,#F77104,#9B4E10)",
-                      border: "3px solid white",
-                      boxShadow: "0 4px 14px rgba(0,0,0,0.28)",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      color: "white", fontWeight: 800, fontSize: 13,
-                      cursor: "pointer", userSelect: "none", padding: 0,
-                    }}
-                  >
-                    {count}
-                  </button>
-                </Overlay>
-              );
-            }
-            const { kind, data } = c.properties;
-            if (kind === "pub") {
-              const pub = data;
-              const isSelected = selected?.type === "pub" && selected.id === pub.id;
-              return (
-                <Overlay key={`pub-${pub.id}`} anchor={[lat, lng]} offset={[18, 32]} style={{ zIndex: isSelected ? 1000 : 5 }}>
-                  <div style={{ position: "relative" }}>
+          {({ project, width, height, mounted }) => {
+            if (!mounted) return null;
+            const locate = (lat: number, lng: number) => project(lat, lng);
+            const accuracyRing = userLocation && accuracy != null && accuracy > 0
+              ? createAccuracyPath(project, userLocation.lat, userLocation.lng, accuracy)
+              : "";
+            return (
+              <>
+                {accuracyRing && (
+                  <svg aria-hidden="true" width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={{ position: "absolute", inset: 0, overflow: "visible", pointerEvents: "none" }}>
+                    <path d={accuracyRing} fill="rgba(245,158,11,.12)" stroke="rgba(217,119,6,.48)" strokeWidth="1.25" />
+                  </svg>
+                )}
+                {userLocation && (() => {
+                  const point = locate(userLocation.lat, userLocation.lng);
+                  return (
+                    <div aria-label="La tua posizione" role="img" style={{ position: "absolute", left: point.x, top: point.y, zIndex: 6, transform: "translate(-50%,-50%)", width: 18, height: 18, borderRadius: "50%", background: "#f59e0b", border: "3px solid #fff7ea", boxShadow: "0 1px 5px rgba(86,63,27,.32)", pointerEvents: "none" }} />
+                  );
+                })()}
+                {clusters.map((c: any) => {
+                  const [lng, lat] = c.geometry.coordinates;
+                  const point = locate(lat, lng);
+                  const anchored = (zIndex: number): CSSProperties => ({
+                    position: "absolute", left: point.x, top: point.y, zIndex,
+                    transform: "translate(-50%,-50%)", pointerEvents: "auto",
+                  });
+                  if (c.properties.cluster) {
+                    const count = c.properties.point_count as number;
+                    return (
+                      <button
+                        key={`cluster-${c.id}`}
+                        type="button"
+                        aria-label={`Ingrandisci mappa: ${count} luoghi`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          try {
+                            const expansion = clusterIndex.getClusterExpansionZoom(c.id as number);
+                            updateZoom(Math.min(expansion + 0.001, 18));
+                            setCenter([lat, lng]);
+                          } catch { /* Cluster may have changed between frames. */ }
+                        }}
+                        style={{ ...anchored(10), minWidth: 44, height: 44, padding: 0, border: 0, background: "transparent", display: "grid", placeItems: "center", cursor: "pointer" }}
+                      >
+                        <span style={{ minWidth: 30, height: 30, padding: "0 6px", display: "grid", placeItems: "center", borderRadius: 10, background: "#f59e0b", border: "1px solid #fff7ea", boxShadow: "0 1px 4px rgba(91,65,22,.18)", color: "#493a20", fontWeight: 800, fontSize: 11 }}>{count}</span>
+                      </button>
+                    );
+                  }
+                  const { kind, data } = c.properties;
+                  if (kind === "pub") {
+                    const pub = data;
+                    const isSelected = selected?.type === "pub" && selected.id === pub.id;
+                    return (
+                      <MarkerPin
+                        key={`pub-${pub.id}`}
+                        type="pub"
+                        name={pub.name}
+                        isSelected={isSelected}
+                        style={anchored(isSelected ? 1000 : 5)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isSelected) { setSelected(null); return; }
+                          setSelected({ type: "pub", id: pub.id, name: pub.name, sub: pub.city || "", href: pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`, logoUrl: pub.logoUrl });
+                        }}
+                      />
+                    );
+                  }
+                  const brewery = data;
+                  const isSelected = selected?.type === "brewery" && selected.id === brewery.id;
+                  const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
+                  return (
                     <MarkerPin
-                      type="pub"
-                      name={pub.name}
+                      key={`brewery-${brewery.id}`}
+                      type="brewery"
+                      name={brewery.name}
                       isSelected={isSelected}
+                      style={anchored(isSelected ? 1000 : 5)}
                       onClick={(e) => {
                         e.stopPropagation();
                         if (isSelected) { setSelected(null); return; }
-                        setSelected({
-                          type: "pub", id: pub.id,
-                          name: pub.name,
-                          sub: pub.city || "",
-                          href: pub.slug ? `/pub/${pub.slug}` : `/pub/${pub.id}`,
-                          logoUrl: pub.logoUrl,
-                        });
+                        setSelected({ type: "brewery", id: brewery.id, name: brewery.name, sub, href: `/brewery/${brewery.id}`, logoUrl: brewery.logoUrl });
                       }}
                     />
-                  </div>
-                </Overlay>
-              );
-            }
-            const brewery = data;
-            const isSelected = selected?.type === "brewery" && selected.id === brewery.id;
-            const sub = [brewery.location, brewery.country].filter(Boolean).join(", ");
-            return (
-              <Overlay key={`brewery-${brewery.id}`} anchor={[lat, lng]} offset={[18, 32]} style={{ zIndex: isSelected ? 1000 : 5 }}>
-                <div style={{ position: "relative" }}>
-                  <MarkerPin
-                    type="brewery"
-                    name={brewery.name}
-                    isSelected={isSelected}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (isSelected) { setSelected(null); return; }
-                      setSelected({
-                        type: "brewery", id: brewery.id,
-                        name: brewery.name, sub,
-                        href: `/brewery/${brewery.id}`,
-                        logoUrl: brewery.logoUrl,
-                      });
-                    }}
-                  />
-                </div>
-              </Overlay>
+                  );
+                })}
+              </>
             );
-          })}
-        </Map>
+          }}
+        </HomeVectorMap>
         </div>
       )}
       {selected && <MapPopup selected={selected} placement={popupPlacement} onClose={() => setSelected(null)} />}
+      {mapError && (
+        <div role="alert" className="absolute left-3 top-3 z-30 flex max-w-[min(300px,calc(100%-24px))] items-center gap-3 rounded-xl border border-[#ead7b7] bg-[#fff7ea] px-3 py-2 text-xs text-[#635640] shadow-sm">
+          <span>Mappa non disponibile. Controlla la connessione.</span>
+          <button type="button" onClick={() => { setMapError(false); setRetryToken(v => v + 1); }} className="min-h-11 shrink-0 rounded-lg px-2 font-semibold text-[#9a5b08] hover:bg-[#f8ead3] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#f59e0b]">Riprova</button>
+        </div>
+      )}
 
       {showControls && (
-        <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
+        <div className="absolute top-3 right-3 z-20 flex flex-col gap-1">
           <button
             type="button"
             aria-label="Ingrandisci mappa"
             onClick={() => updateZoom(Math.min(displayZoom + 1, 18))}
-            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
-            style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#ead7b7] bg-[#fff7ea] text-[#675239] shadow-sm transition-colors hover:bg-[#fff0d5]"
           >
-            <Plus className="w-4 h-4" strokeWidth={2.5} />
+            <Plus className="h-4 w-4" strokeWidth={2.5} />
           </button>
           <button
             type="button"
             aria-label="Riduci mappa"
             onClick={() => updateZoom(Math.max(displayZoom - 1, 2))}
-            className="w-9 h-9 rounded-xl flex items-center justify-center shadow-md transition-colors active:scale-95"
-            style={{ background: "rgba(255,248,242,0.95)", border: "1px solid rgba(247,113,4,0.15)", color: "#5C3D1A" }}
+            className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#ead7b7] bg-[#fff7ea] text-[#675239] shadow-sm transition-colors hover:bg-[#fff0d5]"
           >
-            <Minus className="w-4 h-4" strokeWidth={2.5} />
+            <Minus className="h-4 w-4" strokeWidth={2.5} />
           </button>
         </div>
       )}
 
-      <div className="absolute bottom-5 right-2 z-10 text-[9px] opacity-50 select-none" style={{ color: "#5C3D1A" }}>
-        ©{" "}
-        <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener" style={{ color: "inherit", textDecoration: "none" }}>OpenStreetMap</a>
-      </div>
-
       {showSummary && !isLoading && (pubCount + breweryCount > 0) && (
         <div className="absolute bottom-5 left-3 z-20">
           <div
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold backdrop-blur-sm shadow-sm"
+            className="flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold shadow-sm"
             style={{
-              background: "rgba(255,248,242,0.92)",
-              border: "1px solid rgba(247,113,4,0.15)",
-              color: "#5C3D1A",
+              background: "rgba(255,247,234,.96)",
+              borderColor: "#ead7b7",
+              color: "#675239",
             }}
           >
             {showPubs && (
               <>
-                <span className="w-2 h-2 rounded-full inline-block" style={{ background: PUB_COLOR }} />
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: PUB_COLOR }} />
                 <span>{pubCount} pub</span>
               </>
             )}
-            {showPubs && showBreweries && <span style={{ color: "#D4A882" }}>·</span>}
+            {showPubs && showBreweries && <span style={{ color: "#cdbb9b" }}>·</span>}
             {showBreweries && (
               <>
-                <span className="w-2 h-2 rounded-full inline-block" style={{ background: BREWERY_COLOR }} />
+                <span className="inline-block h-2 w-2 rounded-full" style={{ background: BREWERY_COLOR }} />
                 <span>{breweryCount} birrifici</span>
               </>
             )}
@@ -455,9 +429,9 @@ export default function HomepageMap({
         </div>
       )}
       {!isLoading && pubCount + breweryCount === 0 && (
-        <div role="status" className="absolute left-1/2 top-1/2 z-20 w-[min(280px,calc(100%-36px))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#d9dfd2] bg-[#fffdf7]/95 px-4 py-3 text-center shadow-lg backdrop-blur-sm dark:border-[#485447] dark:bg-[#222b23]/95">
-          <p className="text-sm font-semibold text-[#354536] dark:text-[#e7eee3]">Nessun risultato con questi filtri</p>
-          <p className="mt-1 text-xs text-[#687565] dark:text-[#c0cbb9]">{userLocation ? `Prova ad ampliare il raggio oltre ${distanceKm} km o modifica le categorie.` : "Modifica le categorie o esplora un’altra area."}</p>
+        <div role="status" className="absolute left-1/2 top-1/2 z-20 w-[min(280px,calc(100%-36px))] -translate-x-1/2 -translate-y-1/2 rounded-2xl border border-[#ead7b7] bg-[#fff7ea]/95 px-4 py-3 text-center shadow-md">
+          <p className="text-sm font-semibold text-[#635640]">Nessun risultato con questi filtri</p>
+          <p className="mt-1 text-xs text-[#827761]">{userLocation ? `Prova ad ampliare il raggio oltre ${distanceKm} km o modifica le categorie.` : "Modifica le categorie o esplora un’altra area."}</p>
         </div>
       )}
     </div>
@@ -465,14 +439,15 @@ export default function HomepageMap({
 }
 
 function MarkerPin({
-  type, name, isSelected, onClick,
+  type, name, isSelected, onClick, style,
 }: {
   type: "pub" | "brewery";
   name: string;
   isSelected: boolean;
-  onClick: (e: React.MouseEvent) => void;
+  onClick: (e: MouseEvent<HTMLButtonElement>) => void;
+  style: CSSProperties;
 }) {
-  const pinColor = type === "pub" ? "#E86B32" : "#568A42";
+  const pinColor = type === "pub" ? "#e87924" : "#705b82";
 
   return (
     <button
@@ -480,25 +455,51 @@ function MarkerPin({
       aria-label={`${type === "pub" ? "Pub" : "Birrificio"}: ${name}${isSelected ? ", selezionato" : ""}`}
       onClick={onClick}
       style={{
-        width: 36, height: 42, borderRadius: "50% 50% 50% 4px",
-        background: pinColor,
-        border: `2.5px solid ${isSelected ? "#273D32" : "white"}`,
-        boxShadow: isSelected
-          ? "0 0 0 3px rgba(39,61,50,0.3), 0 3px 9px rgba(0,0,0,0.25)"
-          : "0 2px 8px rgba(0,0,0,0.28)",
+        ...style,
+        width: 44, height: 44, background: "transparent", border: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
-        cursor: "pointer", transform: `${isSelected ? "scale(1.12)" : "scale(1)"} rotate(-45deg)`,
-        transition: "transform 0.15s ease, box-shadow 0.15s ease", padding: 0,
-        position: "relative", zIndex: isSelected ? 100 : 1,
+        cursor: "pointer", padding: 0,
       }}
     >
-      <span aria-hidden="true" style={{
-        width: 13, height: 13, borderRadius: "50%", background: "#FFF8EF",
-        border: `2px solid ${pinColor}`, transform: "rotate(45deg)",
-        boxShadow: "0 0 0 1px rgba(255,255,255,0.75)",
-      }} />
+      <span style={{
+        width: 32, height: 32, borderRadius: type === "pub" ? 11 : "50%",
+        background: "#fff7ea",
+        border: `2px solid ${isSelected ? "#7b4a0a" : "#fff7ea"}`,
+        boxShadow: isSelected
+          ? "0 0 0 2px rgba(123,74,10,.28), 0 2px 7px rgba(83,62,28,.22)"
+          : "0 1px 5px rgba(83,62,28,.2)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+      {type === "pub" ? (
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pinColor} strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M5 21V5h11v16M5 9h11M8 5V3h5v2M16 10h2.2a2.8 2.8 0 0 1 0 5.6H16M8 13h5M8 17h5M3 21h15" />
+        </svg>
+      ) : (
+        <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={pinColor} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M8 3h8M9 3v6l-3.5 8.2A2.7 2.7 0 0 0 8 21h8a2.7 2.7 0 0 0 2.5-3.8L15 9V3M8 14h8" />
+        </svg>
+      )}
+      </span>
     </button>
   );
+}
+
+function createAccuracyPath(project: HomeMapProject, lat: number, lng: number, radiusMeters: number): string {
+  const points: string[] = [];
+  const angularDistance = radiusMeters / 6371008.8;
+  const lat1 = lat * Math.PI / 180;
+  const lng1 = lng * Math.PI / 180;
+  for (let step = 0; step <= 64; step += 1) {
+    const bearing = step / 64 * Math.PI * 2;
+    const lat2 = Math.asin(Math.sin(lat1) * Math.cos(angularDistance) + Math.cos(lat1) * Math.sin(angularDistance) * Math.cos(bearing));
+    const lng2 = lng1 + Math.atan2(
+      Math.sin(bearing) * Math.sin(angularDistance) * Math.cos(lat1),
+      Math.cos(angularDistance) - Math.sin(lat1) * Math.sin(lat2),
+    );
+    const point = project(lat2 * 180 / Math.PI, lng2 * 180 / Math.PI);
+    points.push(`${step === 0 ? "M" : "L"}${point.x.toFixed(1)},${point.y.toFixed(1)}`);
+  }
+  return `${points.join(" ")} Z`;
 }
 
 function MapPopup({ selected, placement, onClose }: { selected: SelectedMapVenue; placement: "bottom" | "top-left"; onClose: () => void }) {

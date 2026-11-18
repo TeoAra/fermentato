@@ -35,7 +35,7 @@ const bundle = await build({
     }
     createRoot(document.getElementById("root")).render(<App/>);
   `},
-  bundle:true,write:false,format:"iife",jsx:"automatic",define:{"process.env.NODE_ENV":'"production"',"import.meta.env":"{}"},
+  bundle:true,write:false,format:"iife",jsx:"automatic",loader:{".css":"empty"},define:{"process.env.NODE_ENV":'"production"',"import.meta.env":"{}"},
   plugins:[{
     name:"capacitor-fixtures",
     setup(build){
@@ -56,13 +56,18 @@ const bundle = await build({
     }
   }]
 });
-const browser = await puppeteer.launch({headless:true,executablePath:process.env.PUPPETEER_EXECUTABLE_PATH || execFileSync("which",["chromium"],{encoding:"utf8"}).trim(),args:["--no-sandbox"]});
+const browser = await puppeteer.launch({headless:true,executablePath:process.env.PUPPETEER_EXECUTABLE_PATH || execFileSync("which",["chromium"],{encoding:"utf8"}).trim(),args:["--no-sandbox","--enable-unsafe-swiftshader"]});
 const errors=[];
+let failMapStyle=false;
 try {
   const page=await browser.newPage();
   page.on("pageerror",error=>{errors.push(error.message);console.error(error.stack)});
   await page.setRequestInterception(true);
-  page.on("request",request=>request.isNavigationRequest()
+  page.on("request",request=>request.url()==="https://tiles.openfreemap.org/styles/positron"
+    ? request.respond({status:failMapStyle?503:200,contentType:"application/json",headers:{"access-control-allow-origin":"*"},body:JSON.stringify({
+      version:8,sources:{},layers:[{id:"background",type:"background",paint:{"background-color":"#fff7ea"}}]
+    })})
+    : request.isNavigationRequest()
     ? request.respond({status:200,contentType:"text/html",body:'<html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div></body></html>'})
     : request.abort());
   await page.evaluateOnNewDocument(()=>{
@@ -72,12 +77,13 @@ try {
       clearWatch(id){window.browserCleared.push(id)}
     }});
   });
-  async function load(width) {
+  async function load(width, expectedState="ready") {
     await page.setViewport({width,height:844,isMobile:true,hasTouch:true});
     await page.goto("http://fixture.test/");
     await page.addStyleTag({content:css});
     await page.addScriptTag({content:bundle.outputFiles[0].text});
     await page.waitForSelector("[data-map-center]");
+    await page.waitForSelector(`[data-vector-map-state="${expectedState}"]`);
   }
   const state=()=>page.$eval("#geo-state",node=>JSON.parse(node.textContent));
   async function touch(selector,dx=0,dy=90,cancel=false) {
@@ -202,5 +208,13 @@ try {
   await page.waitForFunction(()=>JSON.parse(document.querySelector("#geo-state").textContent).status==="denied");
   console.log("PASS native GPS: synchronous first-fix cleanup race and abort");
   console.log("PASS location errors: timeout is not permission denial; coarse permission remains usable");
+  failMapStyle=true;
+  await load(390,"error");
+  assert.ok(await page.$('[role="alert"]'));
+  failMapStyle=false;
+  await page.click('[role="alert"] button');
+  await page.waitForSelector('[data-vector-map-state="ready"]');
+  assert.equal(await page.$('[role="alert"]'),null);
+  console.log("PASS vector map: failed style is explicit, retry recreates a working map");
   assert.deepEqual(errors,[]);
 } finally {await browser.close()}

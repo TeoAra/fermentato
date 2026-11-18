@@ -71,7 +71,7 @@ export default function HomeMapPanel(props: HomeMapPanelProps) {
   }, [expanded]);
 
   const map = () => (
-    <Suspense fallback={<div className="h-full animate-pulse bg-[#e5ebdf] dark:bg-[#26312a]" aria-label="Caricamento mappa" />}>
+    <Suspense fallback={<div className="h-full bg-[#f3f0e8]" aria-label="Caricamento mappa" />}>
       <HomepageMap
         pubs={props.pubs}
         breweries={props.breweries}
@@ -98,16 +98,16 @@ export default function HomeMapPanel(props: HomeMapPanelProps) {
       <div style={{ paddingTop: topInset }} className="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start justify-between p-3">
         <p id="home-map-location-status" role="status" className="sr-only">{locationText}</p>
         <div className="pointer-events-auto ml-auto flex flex-col gap-2">
-          <button type="button" aria-label="Centra sulla tua posizione" aria-describedby="home-map-location-status" title={locationText} onClick={() => { props.onRequestLocation(); setLocalRecenter(v => v + 1); }} className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm">
-            <LocateFixed className={`h-5 w-5 ${props.locationStatus === "requesting" ? "animate-pulse" : ""}`} />
+          <button type="button" aria-label="Centra sulla tua posizione" aria-describedby="home-map-location-status" title={locationText} onClick={() => { props.onRequestLocation(); setLocalRecenter(v => v + 1); }} className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#ead7b7] bg-[#fff7ea] text-[#b36b0b] shadow-sm">
+            <LocateFixed className="h-5 w-5" />
           </button>
-          <button type="button" aria-label={filtersOpen ? "Chiudi filtri mappa" : "Apri filtri mappa"} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(v => !v)} className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm">
+          <button type="button" aria-label={filtersOpen ? "Chiudi filtri mappa" : "Apri filtri mappa"} aria-expanded={filtersOpen} onClick={() => setFiltersOpen(v => !v)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#ead7b7] bg-[#fff7ea] text-[#675239] shadow-sm">
             <SlidersHorizontal className="h-5 w-5" />
           </button>
-          {expanded && <button type="button" aria-label="Chiudi mappa a schermo intero" onClick={() => setExpanded(false)} className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm"><X className="h-5 w-5" /></button>}
+          {expanded && <button type="button" aria-label="Chiudi mappa a schermo intero" onClick={() => setExpanded(false)} className="flex h-11 w-11 items-center justify-center rounded-xl border border-[#ead7b7] bg-[#fff7ea] text-[#675239] shadow-sm"><X className="h-5 w-5" /></button>}
         </div>
       </div>
-      {!expanded && <button type="button" aria-label="Espandi mappa a schermo intero" onClick={() => setExpanded(true)} className="absolute bottom-6 right-3 z-20 flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card text-foreground shadow-sm"><Map className="h-5 w-5" /></button>}
+      {!expanded && <button type="button" aria-label="Espandi mappa a schermo intero" onClick={() => setExpanded(true)} className="absolute bottom-6 right-3 z-20 flex h-11 w-11 items-center justify-center rounded-xl border border-[#ead7b7] bg-[#fff7ea] text-[#675239] shadow-sm"><Map className="h-5 w-5" /></button>}
       {!selectedVenue && !props.locationError && <div className="absolute bottom-6 left-3 z-20 flex overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <button type="button" aria-label="Ingrandisci mappa" onClick={() => setZoom(z => Math.min(18, z + 1))} className="flex h-11 w-11 items-center justify-center text-[#34483a] dark:text-[#e8efe3]"><Plus className="h-4 w-4" /></button>
         <span className="mx-2 border-t border-[#d8e0d2] dark:border-[#38463a]" />

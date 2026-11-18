@@ -9,6 +9,12 @@ Improve the existing free map rather than replacing it with Google Maps.
 
 **How to apply:** use the references for clear pins, locate/filter controls and expanded viewing; do not infer the provider used by YHOP or introduce paid map services.
 
+L'utente giudica la cartografia precedente e gli indicatori troppo pesanti all'occhio e vuole una mappa coerente con il sito: fondo crema, arancione esistente, dettagli meno invadenti e segnaposto piccoli ma facili da toccare.
+
+**Why:** ha chiarito che non cercava soltanto la disposizione dello screenshot, ma una cartografia e indicatori visivamente più curati.
+
+**How to apply:** mantenere una soluzione gratuita/open source; una base vettoriale personalizzabile è appropriata. Non presentare la semplificazione grafica come un miglioramento della precisione fisica del GPS.
+
 A coarse first GPS fix must not suppress later precise fixes. Cached coordinates need a limited lifetime and an accuracy estimate; permission denial and acquisition failure are different conditions.
 
 **Why:** the user reported worse accuracy than comparable apps. Switching map tiles cannot improve the device's GPS fix, and treating old or coarse coordinates as current hides the actual problem.
