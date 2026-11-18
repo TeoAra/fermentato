@@ -118,7 +118,7 @@ try {
       assert.ok(state.height>=52&&state.height<=60,`Compact bar ${mode}: ${state.height}`);
       assert.equal(state.gap,46,"Frozen inset applied once plus 12px gap");
       for(const key of ["fits","labels","iconOnly","touch","activeVisible","activeMarker"]) assert.equal(state[key],true,`${mode}: ${key}`);
-      assert.equal(state.surface,dark?"rgb(25, 23, 19)":"rgb(255, 227, 170)");
+      assert.equal(state.surface,dark?"rgb(25, 23, 19)":"rgb(255, 247, 234)");
       assert.equal(state.transform,"none"); assert.equal(state.blur,"none");
       if(mode==="pub"&&width===390&&!dark) {
         await page.screenshot({path:"/tmp/fermenta-bottom-bar.png"});

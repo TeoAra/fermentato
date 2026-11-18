@@ -21,7 +21,7 @@ Keep iOS fixed chrome untransformed and unblurred; floating placement must use f
 
 **How to apply:** coordinate with the existing iOS safe-area rules when adjusting spacing or presentation; a browser inset simulation is not proof of native-device stability.
 
-Le barre devono distinguersi chiaramente dai contenuti: l'utente riferisce che i clienti faticavano a trovarle. Usare colore ambrato in tema, icone contrastate e selezione evidente; per «Bottiglie e lattine» usare una bottiglia o lattina, non un calice.
+Le barre devono distinguersi chiaramente dai contenuti: l'utente riferisce che i clienti faticavano a trovarle. Il fondo deve usare il giallo crema già presente nel sito e la selezione l'arancione già utilizzato, non un ambrato scuro. Mantenere icone contrastate; per «Bottiglie e lattine» usare una bottiglia o lattina, non un calice.
 
 **Why:** feedback diretto dei clienti riportato dall'utente sulla scarsa visibilità e richiesta esplicita di un simbolo coerente.
 
