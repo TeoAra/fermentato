@@ -20,3 +20,9 @@ Keep iOS fixed chrome untransformed and unblurred; floating placement must use f
 **Why:** fixed-layer compositing has previously caused native iOS navigation to jump or remain stranded when overlays appear.
 
 **How to apply:** coordinate with the existing iOS safe-area rules when adjusting spacing or presentation; a browser inset simulation is not proof of native-device stability.
+
+Le barre devono distinguersi chiaramente dai contenuti: l'utente riferisce che i clienti faticavano a trovarle. Usare colore ambrato in tema, icone contrastate e selezione evidente; per «Bottiglie e lattine» usare una bottiglia o lattina, non un calice.
+
+**Why:** feedback diretto dei clienti riportato dall'utente sulla scarsa visibilità e richiesta esplicita di un simbolo coerente.
+
+**How to apply:** mantenere la compattezza e l'assenza di etichette visibili, senza tornare a superfici quasi indistinguibili dallo sfondo.

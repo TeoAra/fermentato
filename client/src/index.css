@@ -56,11 +56,11 @@
   --app-chrome-light: #FFFFFF;
   --app-chrome-dark: #15202B;
   --floating-nav-height: 48px;
-  --floating-nav-active: #B45309;
+  --floating-nav-active: #A74708;
   --floating-nav-gap: 12px;
-  --floating-nav-surface: hsl(0 0% 100% / 0.97);
-  --floating-nav-border: hsl(35 28% 86% / 0.82);
-  --floating-nav-shadow: 0 8px 28px hsl(28 30% 12% / 0.14), 0 2px 6px hsl(28 30% 12% / 0.06);
+  --floating-nav-surface: #FFE3AA;
+  --floating-nav-border: #D39A3E;
+  --floating-nav-shadow: 0 10px 30px hsl(28 34% 13% / 0.20), 0 2px 7px hsl(28 34% 13% / 0.12);
 }
 
 /* Native iOS WebKit can visibly jump fixed layers when transform-based Radix
@@ -350,10 +350,10 @@ html.dark {
 }
 
 .dark .floating-bottom-bar {
-  --floating-nav-active: #FBBF24;
-  --floating-nav-surface: hsl(220 16% 12% / 0.98);
-  --floating-nav-border: hsl(220 12% 25% / 0.8);
-  --floating-nav-shadow: 0 10px 30px hsl(220 30% 2% / 0.42), 0 2px 8px hsl(220 30% 2% / 0.24);
+  --floating-nav-active: #F4A62A;
+  --floating-nav-surface: #191713;
+  --floating-nav-border: #65533B;
+  --floating-nav-shadow: 0 10px 30px hsl(28 36% 2% / 0.58), 0 2px 8px hsl(28 36% 2% / 0.34);
 }
 
 .floating-bottom-bar.is-hidden {
@@ -380,25 +380,78 @@ html.dark {
   border: 0;
   border-radius: 16px;
   background: transparent;
-  color: var(--muted-foreground);
+  color: #584B3D;
   cursor: pointer;
   outline: none;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
+  transition: color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
 }
 
 .floating-bottom-bar__item:hover {
-  background: var(--muted);
-  color: var(--foreground);
+  background: #F1E7D7;
+  color: #35291E;
 }
 
 .floating-bottom-bar__item.is-active {
-  background: rgba(245, 158, 11, 0.12);
-  color: var(--floating-nav-active);
+  background: var(--floating-nav-active);
+  color: #FFF9EE;
+  box-shadow: inset 0 0 0 1px hsl(0 0% 100% / 0.24);
+}
+
+.floating-bottom-bar__item:active {
+  background: #E8D7BE;
+  color: #35291E;
+}
+
+.floating-bottom-bar__item.is-active:active {
+  background: #873B08;
+  color: #FFF9EE;
+}
+
+.dark .floating-bottom-bar__item {
+  color: #D2C5B4;
+}
+
+.dark .floating-bottom-bar__item:hover {
+  background: #30281D;
+  color: #FFF3DE;
+}
+
+.dark .floating-bottom-bar__item.is-active {
+  color: #24170A;
+  box-shadow: inset 0 0 0 1px hsl(0 0% 100% / 0.34);
+}
+
+.dark .floating-bottom-bar__item:active {
+  background: #3B3022;
+  color: #FFF3DE;
+}
+
+.dark .floating-bottom-bar__item.is-active:active {
+  background: #D98916;
+  color: #24170A;
 }
 
 .floating-bottom-bar__item:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--floating-nav-active);
+  box-shadow: inset 0 0 0 2px #6D350D, 0 0 0 2px var(--floating-nav-surface);
+}
+
+.dark .floating-bottom-bar__item:focus-visible {
+  box-shadow: inset 0 0 0 2px #FFD184, 0 0 0 2px var(--floating-nav-surface);
+}
+
+.floating-bottom-bar__item.is-active::after {
+  position: absolute;
+  right: 0;
+  bottom: 3px;
+  left: 0;
+  width: 4px;
+  height: 4px;
+  margin-inline: auto;
+  border-radius: 50%;
+  background: currentColor;
+  content: "";
 }
 
 .floating-bottom-bar__icon {
@@ -437,7 +490,7 @@ html.dark {
   .floating-bottom-bar *::before,
   .floating-bottom-bar *::after {
     scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
+    transition: none !important;
   }
 }
 

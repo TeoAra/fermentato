@@ -58,7 +58,7 @@ const bundle = await build({
       const tabs=[
         {value:"overview",label:"Panoramica",icon:<Icons.Home/>},
         {value:"taplist",label:"Spine",icon:<Icons.Beer/>},
-        {value:"bottles",label:"Cantina",icon:<Icons.Wine/>},
+        {value:"bottles",label:"Bottiglie e lattine",icon:<Icons.BottleWine/>},
         {value:"drinks",label:"Bevande",icon:<Icons.CupSoda/>},
         {value:"menu",label:"Menu",icon:<Icons.Utensils/>}
       ];
@@ -110,13 +110,19 @@ try {
           }),
           touch:buttons.every(button=>button.getBoundingClientRect().height>=44&&button.getBoundingClientRect().width>=44),
           activeVisible:active&&getComputedStyle(active).color!==getComputedStyle(inactive).color&&getComputedStyle(active).backgroundColor!=="rgba(0, 0, 0, 0)",
+          activeMarker:active&&getComputedStyle(active,"::after").content!=="none",
+          surface:css.backgroundColor,
         };
       });
       assert.ok(state.count>=4&&state.count<=5);
       assert.ok(state.height>=52&&state.height<=60,`Compact bar ${mode}: ${state.height}`);
       assert.equal(state.gap,46,"Frozen inset applied once plus 12px gap");
-      for(const key of ["fits","labels","iconOnly","touch","activeVisible"]) assert.equal(state[key],true,`${mode}: ${key}`);
+      for(const key of ["fits","labels","iconOnly","touch","activeVisible","activeMarker"]) assert.equal(state[key],true,`${mode}: ${key}`);
+      assert.equal(state.surface,dark?"rgb(25, 23, 19)":"rgb(255, 227, 170)");
       assert.equal(state.transform,"none"); assert.equal(state.blur,"none");
+      if(mode==="pub"&&width===390&&!dark) {
+        await page.screenshot({path:"/tmp/fermenta-bottom-bar.png"});
+      }
       if(mode==="global"){
         assert.equal(await page.$eval('[data-nav-item="search"]',node=>node.getAttribute("href")),"/search");
         assert.equal(await page.$eval('[data-nav-item="account"]',node=>node.getAttribute("href")),"/login");
@@ -142,5 +148,7 @@ try {
       console.log(`PASS ${mode}: ${width}px ${dark?"dark":"light"}, floating56px, icon-only, routes/tabs, keyboard and native inset`);
     }
   }
+  const pubSource=await readFile("client/src/pages/pub-detail.tsx","utf8");
+  assert.match(pubSource,/value: "bottles", label: "Bottiglie e lattine", icon: <BottleWine/);
   assert.deepEqual(errors,[]);
 } finally { await browser.close(); }

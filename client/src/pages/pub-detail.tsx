@@ -7,7 +7,7 @@ import { it as itLocale } from "date-fns/locale";
 import {
   Home as HomeIcon,
   Beer as BeerIcon,
-  Wine,
+  BottleWine,
   GlassWater,
   Utensils,
   XCircle,
@@ -107,7 +107,7 @@ function getOpenStatusInfo(openingHours: any): OpenStatusInfo | null {
 const TABS: StickyTabDef[] = [
   { value: "overview", label: "Panoramica", icon: <HomeIcon className="w-4 h-4" /> },
   { value: "taplist", label: "Spine", icon: <BeerIcon className="w-4 h-4" /> },
-  { value: "bottles", label: "Cantina", icon: <Wine className="w-4 h-4" /> },
+  { value: "bottles", label: "Bottiglie e lattine", icon: <BottleWine className="w-4 h-4" /> },
   { value: "drinks", label: "Bevande", icon: <GlassWater className="w-4 h-4" /> },
   { value: "menu", label: "Menù", icon: <Utensils className="w-4 h-4" /> },
 ];

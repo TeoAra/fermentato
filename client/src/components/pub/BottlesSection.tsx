@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Beer as BeerIcon, Wine, Search, X } from "lucide-react";
+import { Beer as BeerIcon, BottleWine, Search, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { format as formatDate } from "date-fns";
 import { it as itLocale } from "date-fns/locale";
@@ -147,7 +147,7 @@ export default function BottlesSection({
           data-testid="bottles-empty"
         >
           <div className="w-14 h-14 rounded-full bg-[#FFF7EA] dark:bg-[#F59E0B]/15 flex items-center justify-center">
-            <Wine className="w-7 h-7 text-[#F59E0B]" />
+            <BottleWine className="w-7 h-7 text-[#F59E0B]" />
           </div>
           <div>
             <p className="font-bold text-[#151515] dark:text-[#F5F5F5]">Cantina in aggiornamento</p>
