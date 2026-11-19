@@ -39,6 +39,12 @@ A coarse first GPS fix must not suppress later precise fixes. Cached coordinates
 
 **How to apply:** show the reported uncertainty honestly, refine with bounded high-accuracy acquisition, preserve map position after deliberate user panning, and never promise a fixed physical accuracy.
 
+Quando un utente è dentro un locale ma vede centinaia di metri di distanza, verificare anche le coordinate del locale prima di attribuire il problema al GPS.
+
+**Why:** una segnalazione di distanza errata coincideva quasi esattamente con lo scarto tra il punto del locale salvato sul sito e quello cartografico dello stesso nome e indirizzo.
+
+**How to apply:** confrontare il punto pubblico salvato con una fonte cartografica indipendente, distinguere il difetto dei dati dalla precisione del dispositivo e correggere il punto reale anziché azzerare artificialmente le distanze.
+
 La mappa Home deve essere compatta, lasciando spazio agli altri elementi principali nel primo schermo. Il riquadro generico «Esplora sulla mappa» va tolto: quello spazio deve mostrare le informazioni del pub o birrificio cliccato.
 
 **Why:** the user explicitly asked to reduce the map's dominance and replace static information with useful selected-place details.
