@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
-import { Globe, MapPin, Navigation as NavIcon, Building2, Factory, Megaphone } from "lucide-react";
+import { Globe, Phone, Mail, Navigation as NavIcon, Building2, Factory, Megaphone } from "lucide-react";
 import { SiInstagram, SiFacebook, SiTiktok } from "react-icons/si";
 import LocationPreviewMap from "@/components/location-preview-map";
-import { RichTextDisplay, isRichContentEmpty } from "@/components/rich-text-editor";
+import { RichTextDisplay } from "@/components/rich-text-editor";
+import { getBreweryDescription } from "@shared/brewery-profile";
 import { useQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { it } from "date-fns/locale";
@@ -27,13 +28,13 @@ export default function BreweryOverviewSection({
   brewery,
   onDirections,
 }: BreweryOverviewSectionProps) {
-  const lat = brewery?.latitude ? Number(brewery.latitude) : null;
-  const lng = brewery?.longitude ? Number(brewery.longitude) : null;
+  const lat = brewery?.latitude != null && brewery.latitude !== "" ? Number(brewery.latitude) : null;
+  const lng = brewery?.longitude != null && brewery.longitude !== "" ? Number(brewery.longitude) : null;
   const hasMap = lat !== null && lng !== null && !isNaN(lat) && !isNaN(lng);
-  const hasDescription =
-    brewery?.description || !isRichContentEmpty(brewery?.richContent);
+  const description = getBreweryDescription(brewery);
+  const hasDescription = Boolean(description);
   const hasContacts =
-    brewery?.websiteUrl ||
+    brewery?.websiteUrl || brewery?.phone || brewery?.email ||
     brewery?.instagramUrl ||
     brewery?.facebookUrl ||
     brewery?.tiktokUrl;
@@ -68,11 +69,7 @@ export default function BreweryOverviewSection({
             Chi siamo
           </h3>
           <RichTextDisplay
-            html={
-              (!isRichContentEmpty(brewery?.richContent) && typeof brewery?.richContent === "string")
-                ? brewery.richContent
-                : (brewery?.description ?? "")
-            }
+            html={description}
             className="text-sm text-[#6B6357] dark:text-[#B7BDC7] leading-relaxed"
           />
         </motion.div>
@@ -131,6 +128,18 @@ export default function BreweryOverviewSection({
             Contatti
           </h3>
           <div className="space-y-2">
+            {brewery.phone && (
+              <a href={`tel:${brewery.phone.replace(/[^\d+]/g, "")}`} className="flex min-h-11 items-center gap-3 py-2 text-sm break-all" data-testid="brewery-public-phone">
+                <Phone className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                {brewery.phone}
+              </a>
+            )}
+            {brewery.email && (
+              <a href={`mailto:${brewery.email}`} className="flex min-h-11 items-center gap-3 py-2 text-sm break-all" data-testid="brewery-public-email">
+                <Mail className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
+                {brewery.email}
+              </a>
+            )}
             {brewery.websiteUrl && (
               <a
                 href={brewery.websiteUrl}
@@ -186,16 +195,16 @@ export default function BreweryOverviewSection({
       )}
 
       {/* Indirizzo */}
-      {brewery?.address && (
+      {(brewery?.address || brewery?.location) && (
         <motion.div
           variants={item}
           className="bg-white dark:bg-[#1A1D24] rounded-[20px] border border-[#E8DED1] dark:border-white/[0.06] shadow-[0_4px_20px_rgba(0,0,0,0.04)] p-5 flex items-start gap-3"
         >
           <Building2 className="w-4 h-4 text-[#F59E0B] flex-shrink-0 mt-0.5" />
           <div className="text-sm text-[#151515] dark:text-[#F5F5F5]">
-            <p className="font-semibold">{brewery.address}</p>
+            <p className="font-semibold break-words">{brewery.address || brewery.location}</p>
             <p className="text-xs text-[#6B6357] dark:text-[#B7BDC7] mt-0.5">
-              {[brewery.location, brewery.region, brewery.country]
+              {[brewery.address ? brewery.location : null, brewery.region, brewery.country]
                 .filter(Boolean)
                 .join(", ")}
             </p>

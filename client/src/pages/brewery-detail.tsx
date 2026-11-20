@@ -45,6 +45,7 @@ import {
 } from "@/components/brewery";
 import DesktopAnchorNav from "@/components/DesktopAnchorNav";
 import { CommunityPostsSection } from "@/components/social/CommunityPostsSection";
+import { getBreweryDescription } from "@shared/brewery-profile";
 
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
@@ -100,7 +101,7 @@ export default function BreweryDetail() {
   const isAdmin =
     (user as any)?.activeRole === "admin" ||
     (!((user as any)?.activeRole) && (user as any)?.userType === "admin");
-  const canEditBeers = isAdmin || !!(user as any)?.breweryId;
+  const canEditBeers = isAdmin || (!!id && Number((user as any)?.breweryId) === Number(id));
 
   // ── Queries ──────────────────────────────────────────────────────────
   const { data: brewery, isLoading: breweryLoading } = useQuery<Brewery>({
@@ -266,20 +267,28 @@ export default function BreweryDetail() {
     tiktokUrl: "",
   });
 
-  const openEditDialog = () => {
+  const openEditDialog = async () => {
     if (!brewery) return;
+    // Reserved fields are never read from the visitor API.
+    let fullBrewery: any;
+    try {
+      fullBrewery = await apiRequest(`/api/admin/breweries/${brewery.id}/profile`);
+    } catch {
+      toast({ title: "Impossibile caricare il profilo", variant: "destructive" });
+      return;
+    }
     setEditForm({
       name: brewery.name || "",
       location: brewery.location || "",
       region: brewery.region || "",
-      description: brewery.description || "",
-      descriptionHtml: (brewery as any).descriptionHtml || "",
+      description: getBreweryDescription(fullBrewery),
+      descriptionHtml: getBreweryDescription(fullBrewery),
       logoUrl: brewery.logoUrl || "",
       coverImageUrl: brewery.coverImageUrl || "",
       websiteUrl: brewery.websiteUrl || "",
       email: (brewery as any).email || "",
       phone: (brewery as any).phone || "",
-      vatNumber: (brewery as any).vatNumber || "",
+      vatNumber: fullBrewery.vatNumber || "",
       instagramUrl: (brewery as any).instagramUrl || "",
       facebookUrl: (brewery as any).facebookUrl || "",
       tiktokUrl: (brewery as any).tiktokUrl || "",
@@ -291,9 +300,8 @@ export default function BreweryDetail() {
     updateBreweryMutation.mutate({
       name: editForm.name,
       location: editForm.location,
-      region: editForm.region || null,
-      description: editForm.description || null,
-      descriptionHtml: editForm.descriptionHtml || null,
+      region: editForm.region,
+      description: editForm.descriptionHtml || null,
       logoUrl: editForm.logoUrl || null,
       coverImageUrl: editForm.coverImageUrl || null,
       websiteUrl: editForm.websiteUrl || null,

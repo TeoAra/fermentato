@@ -9,6 +9,16 @@ description: User requirements for description text and beer/product/category fo
 
 **How to apply:** use plain multiline text for descriptions, including legacy HTML and escaped HTML when displaying/editing them. Preserve line breaks and remove embedded formatting, not ordinary punctuation. Do not bulk rewrite stored descriptions just to fix their display. Editorial/legal pages are separate content and should retain their deliberate rich formatting.
 
+Per i profili birrificio, il passaggio al testo semplice deve conservare la
+descrizione estesa del vecchio editor, non sostituirla con un riassunto legacy.
+Un salvataggio esplicito, anche vuoto, rende definitivo il nuovo testo.
+
+**Why:** mantenere entrambe le versioni senza una precedenza precisa può
+accorciare la storia oppure far ricomparire una descrizione cancellata.
+
+**How to apply:** mostrare ed editare la stessa versione completa; dopo un
+salvataggio non recuperare più il vecchio contenuto come ripiego.
+
 I moduli aggiungi/modifica birra devono essere coerenti tra i percorsi, senza doppio scroll interno; la stessa regola vale per prodotti e categorie.
 
 **Why:** the user explicitly requested matching forms and a simpler mobile editing experience.

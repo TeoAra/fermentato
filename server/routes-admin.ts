@@ -8,6 +8,8 @@ import { storage } from "./storage";
 import { sendWelcomeEmail } from "./email";
 import { nanoid } from "nanoid";
 import { bustCatalogCaches } from "./catalog-cache";
+import { parseBreweryProfilePatch } from "../shared/brewery-profile";
+import { z } from "zod";
 
 // In-memory TTL cache for read-heavy admin endpoints
 const _adminMemCache = new Map<string, { data: any; expires: number }>();
@@ -539,15 +541,26 @@ export function registerAdminRoutes(app: Express) {
     }
   });
 
+  app.get("/api/admin/breweries/:id/profile", isAuthenticated, isAdmin, async (req: any, res) => {
+    try {
+      const id = Number(req.params.id);
+      if (!Number.isSafeInteger(id) || id < 1) return res.status(400).json({ message: "Birrificio non valido" });
+      const brewery = await storage.getBrewery(id);
+      if (!brewery) return res.status(404).json({ message: "Birrificio non trovato" });
+      res.setHeader("Cache-Control", "private, no-store");
+      res.json(brewery);
+    } catch (error) {
+      console.error("Error fetching brewery profile:", error);
+      res.status(500).json({ message: "Impossibile caricare il profilo" });
+    }
+  });
+
   app.patch("/api/admin/breweries/:id", isAuthenticated, isAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const updateData = req.body;
-
-      // Remove undefined/null values
-      const cleanData = Object.fromEntries(
-        Object.entries(updateData).filter(([_, value]) => value !== undefined && value !== null)
-      );
+      if (!Number.isSafeInteger(Number(id)) || Number(id) < 1) return res.status(400).json({ message: "Birrificio non valido" });
+      const cleanData = parseBreweryProfilePatch(req.body);
+      if (!Object.keys(cleanData).length) return res.status(400).json({ message: "Nessun campo del profilo da aggiornare" });
 
       const [updatedBrewery] = await db
         .update(breweries)
@@ -562,6 +575,7 @@ export function registerAdminRoutes(app: Express) {
       bustCatalogCaches();
       res.json(updatedBrewery);
     } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json({ message: error.issues[0]?.message || "Profilo non valido" });
       console.error("Error updating brewery:", error);
       res.status(500).json({ message: "Failed to update brewery" });
     }

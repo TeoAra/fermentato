@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { isTapAttachment, formatTapAttachmentMessage } from "../shared/tap-activity";
+import { parseBreweryProfilePatch, publicBreweryProfile } from "../shared/brewery-profile";
 import { searchRateLimit, generalApiRateLimit, checkinRateLimit, translationRateLimit } from "./middleware/rate-limit";
 import { createServer, type Server } from "http";
 import { existsSync, readFileSync } from "fs";
@@ -2123,7 +2124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       // Check if brewery has a verified owner
       const [ownerRow] = await db.select({ id: users.id }).from(users).where(eq(users.breweryId, breweryId)).limit(1);
-      res.json({ ...brewery, hasOwner: !!ownerRow });
+      res.json({ ...publicBreweryProfile(brewery), hasOwner: !!ownerRow });
     } catch (error) {
       console.error("Error fetching brewery:", error);
       res.status(500).json({ message: "Failed to fetch brewery" });
@@ -5792,13 +5793,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.patch('/api/admin/breweries/:id', isAuthenticated, isAdmin, async (req: any, res) => {
     try {
-      const breweryId = parseInt(req.params.id);
-      const updates = { ...req.body };
-      if (updates.latitude === '' || updates.latitude === undefined) updates.latitude = null;
-      if (updates.longitude === '' || updates.longitude === undefined) updates.longitude = null;
+      const breweryId = Number(req.params.id);
+      if (!Number.isSafeInteger(breweryId) || breweryId < 1) return res.status(400).json({ message: "Birrificio non valido" });
+      const updates = parseBreweryProfilePatch(req.body);
+      if (!Object.keys(updates).length) return res.status(400).json({ message: "Nessun campo del profilo da aggiornare" });
       const brewery = await storage.updateBrewery(breweryId, updates);
+      if (!brewery) return res.status(404).json({ message: "Birrificio non trovato" });
+      clearCatalogCaches();
       res.json(brewery);
     } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json({ message: error.issues[0]?.message || "Profilo non valido" });
       console.error("Error updating brewery:", error);
       res.status(500).json({ message: "Failed to update brewery" });
     }
@@ -7587,13 +7591,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user?.breweryId) {
         return res.status(403).json({ message: "Non sei associato a nessun birrificio" });
       }
-      const body = { ...req.body };
-      // Converti stringa vuota → null per campi decimal (latitude/longitude)
-      if (body.latitude === '' || body.latitude === undefined) body.latitude = null;
-      if (body.longitude === '' || body.longitude === undefined) body.longitude = null;
+      const body = parseBreweryProfilePatch(req.body);
+      if (!Object.keys(body).length) return res.status(400).json({ message: "Nessun campo del profilo da aggiornare" });
       const updated = await storage.updateBrewery(user.breweryId, body);
+      if (!updated) return res.status(404).json({ message: "Birrificio non trovato" });
+      clearCatalogCaches();
       res.json(updated);
     } catch (error) {
+      if (error instanceof z.ZodError) return res.status(400).json({ message: error.issues[0]?.message || "Profilo non valido" });
       console.error("Error updating brewery:", error);
       res.status(500).json({ message: "Failed to update brewery" });
     }

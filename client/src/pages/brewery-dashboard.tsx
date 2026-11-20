@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import type { Beer } from "@shared/schema";
@@ -25,8 +25,8 @@ import RichTextEditor, { RichTextDisplay, richTextToPlain, isRichContentEmpty } 
 import ImageWithFallback from "@/components/image-with-fallback";
 import {
   Beer as BeerIcon, Plus, Pencil, Trash2, Factory, MapPin, Loader2,
-  Globe, Phone, FileText, Camera, Clock, AlertTriangle, Building,
-  Target, Sparkles, Save, X, Share2, ExternalLink, Mail,
+  Globe, Phone, Camera, Clock, AlertTriangle, Building,
+  Save, X, Share2, ExternalLink, Mail,
   Megaphone, Store, Newspaper, Rocket, Users, QrCode,
   Star, Eye, Heart, MessageSquare, TrendingUp, Send,
   Home as HomeIcon, Info as InfoIcon, Calendar as CalendarIcon, ArrowLeft, ChevronRight
@@ -42,6 +42,7 @@ import BreweryQuickStats from "@/components/brewery-quick-stats";
 import BreweryAnalyticsTab from "@/components/brewery-analytics-tab";
 import { BeerDetailsFields, type BeerDetailsValues } from "@/components/beer-details-fields";
 import { FloatingBottomBar } from "@/components/floating-bottom-bar";
+import { getBreweryDescription } from "@shared/brewery-profile";
 
 const beerFormSchema = z.object({
   name: z.string().min(1, "Il nome è obbligatorio"),
@@ -393,25 +394,11 @@ interface BreweryDashboardProps {
 
 export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardProps = {}) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { user, isLoading: authLoading } = useAuth();
   const isAdminMode = !!adminBreweryId;
   const [dialogOpen, setDialogOpen] = useState(false);
-  // SSR-safe: parte da "birre" (tab principale desktop). In effetto client,
-  // se siamo su mobile passiamo a "overview" e gestiamo i resize.
-  const [activeTab, setActiveTab] = useState<string>("birre");
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 1024px)");
-    setActiveTab((prev) => (!mq.matches && prev === "birre" ? "overview" : prev));
-    const handler = (e: MediaQueryListEvent) => {
-      setActiveTab((prev) => {
-        if (e.matches && prev === "overview") return "birre";
-        return prev;
-      });
-    };
-    mq.addEventListener?.("change", handler);
-    return () => mq.removeEventListener?.("change", handler);
-  }, []);
+  const [activeTab, setActiveTab] = useState<string>("overview");
   const isAnyModalOpen = useAnyModalOpen();
   useHideGlobalBottomNav();
 
@@ -434,8 +421,11 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   const [showAllBeers, setShowAllBeers] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingImages, setIsEditingImages] = useState(false);
+  const [profileFormError, setProfileFormError] = useState("");
+  const profileFocusTarget = useRef<string | null>(null);
+  const profileDialogRef = useRef<HTMLDivElement | null>(null);
   const [editForm, setEditForm] = useState({
-    name: '', description: '', descriptionHtml: '', location: '', region: '', country: '',
+    name: '', description: '', location: '', region: '', country: '',
     websiteUrl: '', email: '', phone: '', vatNumber: '',
     instagramUrl: '', facebookUrl: '', tiktokUrl: '',
     latitude: '', longitude: '',
@@ -458,9 +448,11 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
     enabled: !isAdminMode && !!user && (user as any)?.breweryId != null,
   });
 
-  // Admin mode: fetch brewery and beers separately
+  // Admin profile is fetched from its protected endpoint so reserved contact
+  // fields remain editable without relying on the public profile response.
   const { data: adminBrewery, isLoading: adminBreweryLoading } = useQuery<any>({
-    queryKey: ["/api/breweries", String(adminBreweryId)],
+    queryKey: ["/api/admin/breweries", String(adminBreweryId), "profile"],
+    queryFn: () => apiRequest(`/api/admin/breweries/${adminBreweryId}/profile`),
     enabled: isAdminMode && !!adminBreweryId,
   });
   const { data: adminBeers = [], isLoading: adminBeersLoading } = useQuery<Beer[]>({
@@ -523,7 +515,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   });
 
   const breweryQueryKey = isAdminMode
-    ? ["/api/breweries", String(adminBreweryId)]
+    ? ["/api/admin/breweries", String(adminBreweryId), "profile"]
     : ["/api/brewery/my"];
 
   const updateProfileMutation = useMutation({
@@ -533,31 +525,44 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         : "/api/brewery/profile";
       return apiRequest(url, { method: "PATCH" }, values);
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast({ title: "Successo", description: "Profilo birrificio aggiornato" });
-      queryClient.invalidateQueries({ queryKey: breweryQueryKey });
+      const id = Number(brewery?.id ?? adminBreweryId);
+      const invalidations = [
+        queryClient.invalidateQueries({ queryKey: ["/api/brewery/my"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/breweries", String(id), "profile"] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries", String(id)] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries", id] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries"] }),
+      ];
+      await Promise.all(invalidations);
+      setProfileFormError("");
       setIsEditingProfile(false);
     },
-    onError: () => {
+    onError: (error: any) => {
+      setProfileFormError(error?.message || "Impossibile salvare il profilo. Riprova.");
       toast({ title: "Errore", description: "Impossibile aggiornare il profilo", variant: "destructive" });
     },
   });
 
   const handleImageUpload = useCallback(async (url: string | null, type: 'logo' | 'cover') => {
-    if (url) {
-      try {
-        const updateData = type === 'cover' ? { coverImageUrl: url } : { logoUrl: url };
-        const patchUrl = isAdminMode
-          ? `/api/admin/breweries/${adminBreweryId}`
-          : "/api/brewery/profile";
-        await apiRequest(patchUrl, { method: "PATCH" }, updateData);
-        queryClient.invalidateQueries({ queryKey: breweryQueryKey });
-        toast({ title: "Successo", description: `${type === 'cover' ? 'Copertina' : 'Logo'} aggiornato` });
-      } catch {
-        toast({ title: "Errore", description: "Impossibile aggiornare l'immagine", variant: "destructive" });
-      }
+    try {
+      const updateData = type === 'cover' ? { coverImageUrl: url } : { logoUrl: url };
+      const patchUrl = isAdminMode
+        ? `/api/admin/breweries/${adminBreweryId}`
+        : "/api/brewery/profile";
+      await apiRequest(patchUrl, { method: "PATCH" }, updateData);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: breweryQueryKey }),
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries", String(brewery?.id ?? adminBreweryId)] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries", Number(brewery?.id ?? adminBreweryId)] }),
+        queryClient.invalidateQueries({ queryKey: ["/api/breweries"] }),
+      ]);
+      toast({ title: "Successo", description: `${type === 'cover' ? 'Copertina' : 'Logo'} ${url ? 'aggiornato' : 'rimosso'}` });
+    } catch {
+      toast({ title: "Errore", description: "Impossibile aggiornare l'immagine", variant: "destructive" });
     }
-  }, [breweryQueryKey, adminBreweryId, isAdminMode, toast]);
+  }, [breweryQueryKey, brewery?.id, adminBreweryId, isAdminMode, toast]);
 
   const createBeerMutation = useMutation({
     mutationFn: (values: BeerFormValues) => {
@@ -652,12 +657,11 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
     }
   };
 
-  const openProfileEdit = () => {
+  const openProfileEdit = (focusField?: string) => {
     if (brewery) {
       setEditForm({
         name: brewery.name || '',
-        description: brewery.description || '',
-        descriptionHtml: (brewery as any).descriptionHtml || brewery.description || '',
+        description: getBreweryDescription(brewery),
         location: brewery.location || '', region: brewery.region || '',
         country: brewery.country || '', websiteUrl: brewery.websiteUrl || '',
         email: (brewery as any).email || '',
@@ -667,13 +671,57 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         tiktokUrl: (brewery as any).tiktokUrl || '',
         latitude: brewery.latitude || '', longitude: brewery.longitude || '',
       });
+      setProfileFormError("");
+      profileFocusTarget.current = focusField ?? null;
       setIsEditingProfile(true);
     }
   };
 
   const handleSaveProfile = () => {
-    updateProfileMutation.mutate(editForm);
+    if (!editForm.name.trim() || !editForm.location.trim()) {
+      setProfileFormError(!editForm.name.trim()
+        ? "Inserisci il nome del birrificio."
+        : "Inserisci la posizione del birrificio.");
+      return;
+    }
+    setProfileFormError("");
+    const { latitude, longitude, ...profile } = editForm;
+    const payload: Record<string, unknown> = {
+      ...profile,
+      name: editForm.name.trim(),
+      location: editForm.location.trim(),
+      description: editForm.description,
+      ...(latitude.trim() ? { latitude } : {}),
+      ...(longitude.trim() ? { longitude } : {}),
+    };
+    updateProfileMutation.mutate(payload);
   };
+
+  useEffect(() => {
+    if (!isEditingProfile) return;
+    const targetId = profileFocusTarget.current;
+    const frame = window.requestAnimationFrame(() => {
+      const dialog = profileDialogRef.current;
+      const locationInput = dialog?.querySelector<HTMLInputElement>(".brewery-profile-location-field input");
+      if (locationInput) {
+        locationInput.id = "brewery-profile-location";
+        locationInput.setAttribute("aria-labelledby", "brewery-profile-location-label");
+        locationInput.required = true;
+        if (profileFormError === "Inserisci la posizione del birrificio.") {
+          locationInput.setAttribute("aria-invalid", "true");
+        } else {
+          locationInput.removeAttribute("aria-invalid");
+        }
+      }
+      const field = dialog?.querySelector<HTMLElement>(`#${targetId}`);
+      if (targetId && field) {
+        field.scrollIntoView({ block: "center", behavior: "smooth" });
+        field.focus({ preventScroll: true });
+      }
+      profileFocusTarget.current = null;
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isEditingProfile, profileFormError]);
 
   if (authLoading || requestLoading) {
     return (
@@ -727,6 +775,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
   }
 
   const displayedBeers = showAllBeers ? beers : beers.slice(0, 6);
+  const breweryDescription = getBreweryDescription(brewery);
 
   return (
     <div
@@ -760,19 +809,17 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           </div>
 
           <div className="flex items-center gap-2">
-            {!isAdminMode && (
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="hidden sm:flex border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl h-9"
-              >
-                <Link href={`/brewery/${brewery.slug || brewery.id}`}>
-                  <Eye className="w-4 h-4 mr-2" />
-                  Vedi Pubblico
-                </Link>
-              </Button>
-            )}
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex border-stone-200 dark:border-border hover:bg-stone-50 rounded-xl h-9"
+            >
+              <Link href={`/brewery/${brewery.slug || brewery.id}`} target="_blank" rel="noopener noreferrer">
+                <Eye className="w-4 h-4 mr-2" />
+                Vedi pagina pubblica
+              </Link>
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -823,24 +870,6 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               </div>
             </div>
             
-            <div className="flex gap-2 mb-1">
-              <Button 
-                size="sm" 
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-white/20 rounded-xl h-9"
-                onClick={() => setIsEditingImages(true)}
-              >
-                <Camera className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Foto</span>
-              </Button>
-              <Button 
-                size="sm" 
-                className="bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border-white/20 rounded-xl h-9"
-                onClick={openProfileEdit}
-              >
-                <Pencil className="w-4 h-4 sm:mr-2" />
-                <span className="hidden sm:inline">Profilo</span>
-              </Button>
-            </div>
           </div>
         </div>
 
@@ -866,7 +895,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         )}
 
         {/* Info section with contact details */}
-        <div className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8 ${activeTab !== 'overview' ? 'hidden lg:block' : ''}`}>
+        <div className={`bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8 ${activeTab === 'info' ? '' : 'hidden'}`}>
           <div className="flex items-center gap-2 mb-4">
             <Building className="h-5 w-5 text-primary" />
             <h3 className="text-lg font-bold text-foreground">Il Birrificio</h3>
@@ -875,10 +904,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 text-left">
               <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Descrizione</p>
-              {brewery.descriptionHtml ? (
-                <RichTextDisplay html={brewery.descriptionHtml} className="text-sm" />
-              ) : !isRichContentEmpty(brewery.description) ? (
-                <RichTextDisplay html={brewery.description} className="text-sm" />
+              {breweryDescription ? (
+                <p className="text-sm whitespace-pre-wrap break-words">{breweryDescription}</p>
               ) : (
                 <p className="text-sm text-muted-foreground italic">Nessuna descrizione impostata.</p>
               )}
@@ -913,12 +940,12 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     <span className="truncate">{brewery.websiteUrl.replace(/^https?:\/\//, '')}</span>
                   </a>
                 )}
-                {(brewery as any).email && (
-                  <a href={`mailto:${(brewery as any).email}`} className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
+                {brewery.email && (
+                  <a href={`mailto:${brewery.email}`} className="flex items-center gap-3 text-sm text-foreground hover:text-primary transition-colors group">
                     <div className="p-2 bg-stone-50 dark:bg-[#0B0D10]/30 rounded-lg group-hover:bg-primary/10">
                       <Mail className="h-4 w-4 text-primary" />
                     </div>
-                    <span className="truncate">{(brewery as any).email}</span>
+                    <span className="truncate">{brewery.email}</span>
                   </a>
                 )}
                 {brewery.phone && (
@@ -928,14 +955,6 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     </div>
                     <span>{brewery.phone}</span>
                   </a>
-                )}
-                {brewery.vatNumber && (
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <div className="p-2 bg-stone-50 dark:bg-[#0B0D10]/30 rounded-lg">
-                      <FileText className="h-4 w-4 text-primary" />
-                    </div>
-                    <span>P.IVA: {brewery.vatNumber}</span>
-                  </div>
                 )}
               </div>
             </div>
@@ -975,7 +994,11 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
         </Link>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="hidden lg:grid w-full grid-cols-6 h-auto gap-1">
+          <TabsList className="hidden lg:grid w-full grid-cols-7 h-auto gap-1">
+            <TabsTrigger value="overview" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
+              <HomeIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span>Home</span>
+            </TabsTrigger>
             <TabsTrigger value="birre" className="flex items-center gap-1 text-xs sm:text-sm px-1 sm:px-3 py-2">
               <BeerIcon className="w-3 h-3 sm:w-4 sm:h-4" />
               <span>Birre ({beers.length})</span>
@@ -1002,26 +1025,43 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             </TabsTrigger>
           </TabsList>
 
-          {/* Overview Tab (solo mobile) — quick stats + shortcut */}
-          <TabsContent value="overview" className="lg:hidden space-y-6">
-            <section className="grid grid-cols-2 gap-2">
-              {!isAdminMode && (
-                <Link href={`/brewery/${brewery.slug || brewery.id}`}>
-                  <div className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-card px-3 text-sm font-bold text-foreground shadow-sm active:scale-[0.98]">
-                    <Eye className="h-4 w-4 text-primary" aria-hidden="true" />
-                    Vedi pagina
+          {/* Home gives owners and admins the essential profile actions first. */}
+          <TabsContent value="overview" className="space-y-6" data-testid="brewery-profile-home">
+            <section className="overflow-hidden rounded-2xl border border-stone-200 bg-card shadow-sm">
+              <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,.8fr)]">
+                <div className="flex min-w-0 gap-4 p-4 sm:p-6">
+                  <Avatar className="h-14 w-14 shrink-0 rounded-2xl border border-stone-200 sm:h-16 sm:w-16">
+                    <AvatarImage src={brewery.logoUrl} className="object-cover" />
+                    <AvatarFallback className="rounded-2xl bg-primary text-lg font-bold text-white">
+                      {brewery.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <h2 className="min-w-0 break-words text-lg font-extrabold leading-tight text-foreground sm:text-xl">{brewery.name}</h2>
+                      <span className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                        <MapPin className="h-3.5 w-3.5 shrink-0 text-primary" />
+                        <span className="break-words">{brewery.city || brewery.location || "Posizione non impostata"}</span>
+                      </span>
+                    </div>
+                    <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-muted-foreground line-clamp-3">
+                      {breweryDescription || "Aggiungi una breve presentazione del birrificio per raccontare chi siete."}
+                    </p>
                   </div>
-                </Link>
-              )}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={openProfileEdit}
-                className="min-h-12 rounded-xl font-bold"
-              >
-                <Pencil className="mr-2 h-4 w-4 text-primary" aria-hidden="true" />
-                Modifica profilo
-              </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2 border-t border-stone-200 bg-primary/[0.035] p-3 sm:p-4 lg:grid-cols-2 lg:border-l lg:border-t-0">
+                  <Button type="button" variant="outline" onClick={() => openProfileEdit("brewery-profile-name")} className="min-h-12 min-w-0 whitespace-normal rounded-xl px-2 text-center text-xs font-bold leading-tight sm:text-sm">Modifica profilo</Button>
+                  <Button type="button" variant="outline" onClick={() => openProfileEdit("brewery-profile-description")} className="min-h-12 min-w-0 whitespace-normal rounded-xl px-2 text-center text-xs font-bold leading-tight sm:text-sm">Chi siamo</Button>
+                  <Button type="button" variant="outline" onClick={() => openProfileEdit("brewery-profile-website")} className="min-h-12 min-w-0 whitespace-normal rounded-xl px-2 text-center text-xs font-bold leading-tight sm:text-sm">Contatti</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsEditingImages(true)} className="min-h-12 min-w-0 whitespace-normal rounded-xl px-2 text-center text-xs font-bold leading-tight sm:text-sm">Logo e copertina</Button>
+                  <Button asChild variant="outline" className="col-span-2 min-h-12 rounded-xl border-primary/30 font-bold text-primary hover:bg-primary/5">
+                    <Link href={`/brewery/${brewery.slug || brewery.id}`} target="_blank" rel="noopener noreferrer">
+                      <Eye className="mr-2 h-4 w-4 shrink-0" aria-hidden="true" />
+                      Vedi pagina pubblica
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             </section>
             <section>
               <h2 className="text-lg font-extrabold text-foreground tracking-tight mb-3">Panoramica</h2>
@@ -1360,47 +1400,7 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             <AnnouncementsManager breweryId={brewery.id} />
           </TabsContent>
 
-          <TabsContent value="info">
-            <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 mb-8 lg:hidden">
-              <div className="flex items-center gap-2 mb-4">
-                <Building className="h-5 w-5 text-primary" />
-                <h3 className="text-lg font-bold text-foreground">Il Birrificio</h3>
-              </div>
-              <div className="space-y-4 text-left">
-                {brewery.descriptionHtml ? (
-                  <RichTextDisplay html={brewery.descriptionHtml} className="text-sm" />
-                ) : !isRichContentEmpty(brewery.description) ? (
-                  <RichTextDisplay html={brewery.description} className="text-sm" />
-                ) : (
-                  <p className="text-sm text-muted-foreground italic">Nessuna descrizione impostata.</p>
-                )}
-                <div className="flex flex-col gap-3 pt-4 border-t border-stone-100 dark:border-border">
-                  <Button onClick={openProfileEdit} className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl">
-                    <Pencil className="w-4 h-4 mr-2" />
-                    Modifica Profilo
-                  </Button>
-                  <Button onClick={() => setIsEditingImages(true)} variant="outline" className="w-full border-stone-200 dark:border-border rounded-xl">
-                    <Camera className="w-4 h-4 mr-2" />
-                    Modifica Immagini
-                  </Button>
-                </div>
-              </div>
-            </div>
-
-            {brewery.websiteUrl && (
-              <div className="bg-white dark:bg-card border border-stone-100 dark:border-border rounded-2xl shadow-sm p-6 text-center">
-                <a
-                  href={brewery.websiteUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center px-8 py-3 bg-primary text-white rounded-xl hover:bg-primary/90 transition-all duration-300 font-bold shadow-md hover:shadow-lg active:scale-95"
-                >
-                  <Globe className="h-5 w-5 mr-2" />
-                  Visita il Sito Web Ufficiale
-                </a>
-              </div>
-            )}
-          </TabsContent>
+          <TabsContent value="info" />
         </Tabs>
       </main>
 
@@ -1477,10 +1477,18 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
       </DockPortal>
 
       {/* Profile Edit Dialog */}
-      <Dialog open={isEditingProfile} onOpenChange={setIsEditingProfile} modal={false}>
+      <Dialog
+        open={isEditingProfile}
+        onOpenChange={(open) => {
+          if (!updateProfileMutation.isPending) setIsEditingProfile(open);
+        }}
+        modal={false}
+      >
         <DialogContent
           formLayout
-          className="max-w-2xl rounded-3xl border-stone-200 shadow-2xl"
+          ref={profileDialogRef}
+          data-testid="brewery-profile-dialog"
+          className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-2xl overflow-y-auto rounded-3xl border-stone-200 shadow-2xl sm:w-full"
           onPointerDownOutside={(e) => {
             const target = e.target as HTMLElement;
             if (target.closest('.pac-container')) e.preventDefault();
@@ -1501,49 +1509,61 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
           <div className="space-y-6 py-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 text-left">
-                <label className="text-sm font-bold text-foreground">Nome Birrificio</label>
+                <label htmlFor="brewery-profile-name" className="text-sm font-bold text-foreground">Nome Birrificio *</label>
                 <Input
+                  id="brewery-profile-name"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  aria-invalid={!!profileFormError && !editForm.name.trim()}
+                  required
                   className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
               </div>
               <div className="space-y-2 text-left">
-                <label className="text-sm font-bold text-foreground">Posizione</label>
-                <AddressAutocomplete
-                  value={editForm.location}
-                  countryRestriction={null}
-                  placeholder="Indirizzo del birrificio..."
-                  onAddressSelect={(details) => {
-                    setEditForm({
-                      ...editForm,
-                      location: details.formattedAddress,
-                      region: details.region,
-                      country: details.country,
-                      ...(details.lat !== undefined ? { latitude: String(details.lat) } : {}),
-                      ...(details.lng !== undefined ? { longitude: String(details.lng) } : {}),
-                    });
+                <label id="brewery-profile-location-label" htmlFor="brewery-profile-location" className="text-sm font-bold text-foreground">Posizione *</label>
+                <div
+                  className="brewery-profile-location-field"
+                  onInput={(event) => {
+                    const input = event.target as HTMLInputElement;
+                    if (input.tagName === "INPUT") setEditForm(current => ({ ...current, location: input.value }));
                   }}
-                  className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
-                />
+                >
+                  <AddressAutocomplete
+                    value={editForm.location}
+                    countryRestriction={null}
+                    placeholder="Indirizzo del birrificio..."
+                    onAddressSelect={(details) => {
+                      setEditForm(current => ({
+                        ...current,
+                        location: details.formattedAddress,
+                        region: details.region,
+                        country: details.country,
+                        ...(details.lat !== undefined ? { latitude: String(details.lat) } : {}),
+                        ...(details.lng !== undefined ? { longitude: String(details.lng) } : {}),
+                      }));
+                    }}
+                    className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
+                  />
+                </div>
               </div>
             </div>
             <div className="space-y-2 text-left">
-              <label className="text-sm font-bold text-foreground flex items-center justify-between">
-                <span>Storia e Filosofia</span>
-                <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tighter bg-stone-50 px-2 py-0.5 rounded-full border border-stone-200">Editor Avanzato</span>
-              </label>
+              <label htmlFor="brewery-profile-description" className="text-sm font-bold text-foreground">Chi siamo</label>
               <RichTextEditor
-                content={editForm.descriptionHtml}
-                onChange={(html) => setEditForm({ ...editForm, descriptionHtml: html })}
+                id="brewery-profile-description"
+                data-testid="brewery-profile-description"
+                aria-label="Chi siamo"
+                content={editForm.description}
+                onChange={(description) => setEditForm({ ...editForm, description })}
                 placeholder="Racconta la storia del tuo birrificio, la filosofia, i premi, le collaborazioni…"
                 maxChars={5000}
               />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 text-left">
-                <label className="text-sm font-bold text-foreground">Sito Web</label>
+                <label htmlFor="brewery-profile-website" className="text-sm font-bold text-foreground">Sito Web</label>
                 <Input
+                  id="brewery-profile-website"
                   value={editForm.websiteUrl}
                   onChange={(e) => setEditForm({ ...editForm, websiteUrl: e.target.value })}
                   placeholder="https://www.esempio.it"
@@ -1551,8 +1571,9 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 />
               </div>
               <div className="space-y-2 text-left">
-                <label className="text-sm font-bold text-foreground">Telefono</label>
+                <label htmlFor="brewery-profile-phone" className="text-sm font-bold text-foreground">Telefono</label>
                 <Input
+                  id="brewery-profile-phone"
                   value={editForm.phone}
                   onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
                   placeholder="+39 012 3456789"
@@ -1562,8 +1583,9 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2 text-left">
-                <label className="text-sm font-bold text-foreground">Email Pubblica</label>
+                <label htmlFor="brewery-profile-email" className="text-sm font-bold text-foreground">Email pubblica</label>
                 <Input
+                  id="brewery-profile-email"
                   value={editForm.email}
                   onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
                   placeholder="info@birrificio.it"
@@ -1572,13 +1594,16 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 />
               </div>
               <div className="space-y-2 text-left">
-                <label className="text-sm font-bold text-foreground">Partita IVA</label>
+                <label htmlFor="brewery-profile-vat" className="text-sm font-bold text-foreground">Partita IVA <span className="font-normal text-muted-foreground">(riservata, non pubblica)</span></label>
                 <Input
+                  id="brewery-profile-vat"
                   value={editForm.vatNumber}
                   onChange={(e) => setEditForm({ ...editForm, vatNumber: e.target.value })}
                   placeholder="IT01234567890"
+                  aria-describedby="brewery-profile-vat-note"
                   className="border-stone-200 rounded-xl focus-visible:ring-primary/20 h-11"
                 />
+                <p id="brewery-profile-vat-note" className="text-xs text-muted-foreground">Visibile solo nella gestione amministrativa, mai nella pagina pubblica.</p>
               </div>
             </div>
             <div className="bg-stone-50/50 dark:bg-[#0B0D10]/10 p-5 rounded-3xl border border-stone-200 dark:border-[#23262E]/30">
@@ -1592,6 +1617,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     <SiInstagram className="h-5 w-5 text-pink-600" />
                   </div>
                   <Input
+                    id="brewery-profile-instagram"
+                    aria-label="Instagram"
                     value={editForm.instagramUrl}
                     onChange={(e) => setEditForm({ ...editForm, instagramUrl: e.target.value })}
                     placeholder="URL Instagram"
@@ -1603,6 +1630,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     <SiFacebook className="h-5 w-5 text-blue-700" />
                   </div>
                   <Input
+                    id="brewery-profile-facebook"
+                    aria-label="Facebook"
                     value={editForm.facebookUrl}
                     onChange={(e) => setEditForm({ ...editForm, facebookUrl: e.target.value })}
                     placeholder="URL Facebook"
@@ -1614,6 +1643,8 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                     <SiTiktok className="h-5 w-5 text-foreground" />
                   </div>
                   <Input
+                    id="brewery-profile-tiktok"
+                    aria-label="TikTok"
                     value={editForm.tiktokUrl}
                     onChange={(e) => setEditForm({ ...editForm, tiktokUrl: e.target.value })}
                     placeholder="URL TikTok"
@@ -1623,9 +1654,16 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
               </div>
             </div>
           </div>
+          {profileFormError && (
+            <p role="alert" className="mb-3 rounded-xl border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm font-medium text-destructive">
+              {profileFormError}
+            </p>
+          )}
           <DialogFooter sticky className="gap-3 sm:space-x-0">
               <Button
+                type="button"
                 onClick={handleSaveProfile}
+                data-testid="brewery-profile-save"
                 className="flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold h-12 shadow-md"
                 disabled={updateProfileMutation.isPending}
               >
@@ -1634,8 +1672,10 @@ export default function BreweryDashboard({ adminBreweryId }: BreweryDashboardPro
                 Salva Profilo
               </Button>
               <Button 
+                type="button"
                 variant="outline" 
                 onClick={() => setIsEditingProfile(false)}
+                disabled={updateProfileMutation.isPending}
                 className="px-6 border-stone-200 hover:bg-stone-50 rounded-xl h-12"
               >
                 Annulla
