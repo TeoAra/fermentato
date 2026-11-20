@@ -347,6 +347,7 @@ html.dark {
   -webkit-backface-visibility: visible !important;
   backface-visibility: visible !important;
   will-change: auto !important;
+  transition: opacity 180ms ease;
 }
 
 .dark .floating-bottom-bar {
@@ -356,9 +357,19 @@ html.dark {
   --floating-nav-shadow: 0 10px 30px hsl(28 36% 2% / 0.58), 0 2px 8px hsl(28 36% 2% / 0.34);
 }
 
+.floating-bottom-bar[data-idle-hidden="true"] {
+  opacity: 0;
+  pointer-events: none;
+}
+
 .floating-bottom-bar.is-hidden {
   visibility: hidden;
   pointer-events: none;
+}
+
+.floating-bottom-bar[data-idle-hidden="true"]:not(.is-hidden):has(:focus-visible) {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 .floating-bottom-bar__items {
@@ -486,6 +497,7 @@ html.dark {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .floating-bottom-bar,
   .floating-bottom-bar *,
   .floating-bottom-bar *::before,
   .floating-bottom-bar *::after {

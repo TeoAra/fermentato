@@ -26,3 +26,9 @@ Le barre devono distinguersi chiaramente dai contenuti: l'utente riferisce che i
 **Why:** feedback diretto dei clienti riportato dall'utente sulla scarsa visibilità e richiesta esplicita di un simbolo coerente.
 
 **How to apply:** mantenere la compattezza e l'assenza di etichette visibili, senza tornare a superfici quasi indistinguibili dallo sfondo.
+
+Le barre inferiori devono scomparire quando la schermata rimane ferma e ricomparire appena si scorre o si interagisce, con un effetto leggero. L'utente vuole anche poter lasciare la schermata pulita per gli screenshot.
+
+**Why:** richiesta esplicita dell'utente; la comparsa su interazione mantiene raggiungibile la navigazione senza coprire i contenuti durante la lettura.
+
+**How to apply:** usare lo stesso comportamento per tutte le barre, mantenere l'accesso da tastiera e lettore di schermo e non reintrodurre trasformazioni del chrome fisso su iOS.

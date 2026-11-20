@@ -124,7 +124,7 @@ try {
     const order = await page.evaluate(() => window.requests.find(request => request.url.endsWith("/reorder")).body.order);
     assert.deepEqual(order.map(item => item.id), [2,1,3]);
     assert.deepEqual(order.map(item => mode === "tap" ? item.tapNumber : item.orderIndex), mode === "tap" ? [1,2,3] : [0,1,2]);
-    if (mode === "tap") assert.match(await page.$eval('[data-touch-sort-idx="0"]', el => el.textContent), /Spina 1/);
+    if (mode === "tap") assert.match(await page.$eval('[data-touch-sort-idx="0"]', el => el.textContent), /Alla spina\s*·\s*1/);
     console.log(`PASS ${mode}: touch reorder and immediate order`);
   }
   await load("menu",390);

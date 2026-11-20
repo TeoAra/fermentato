@@ -84,8 +84,8 @@ function RatingSlider({ value, onChange }: { value: number; onChange: (v: number
 // ─── Format options ──────────────────────────────────────────────────────────
 const FORMAT_OPTIONS = [
   { label: "Alla spina", icon: "🍺", tapTypes: ["spina"] },
-  { label: "Pompa",      icon: "🔧", tapTypes: ["pompa"] },
-  { label: "Botte",      icon: "🛢️",  tapTypes: ["botte"] },
+  { label: "Hand pump",  icon: "🔧", tapTypes: ["pompa"] },
+  { label: "Alla botte", icon: "🛢️",  tapTypes: ["botte"] },
   { label: "Bottiglia",  icon: "🍾", tapTypes: [] },
   { label: "Lattina",    icon: "🥫", tapTypes: [] },
   { label: "Growler",    icon: "🫙", tapTypes: [] },

@@ -825,7 +825,7 @@ export default function SmartPubDashboard({ adminPubId }: SmartPubDashboardProps
       <StatsGrid
         cols={4}
         items={[
-          { icon: Beer,     label: "Alla spina",    value: typedTapList.length,    accent: "primary" },
+          { icon: Beer,     label: "In taplist",    value: typedTapList.length,    accent: "primary" },
           { icon: Wine,     label: "Bottiglie",     value: typedBottleList.length, accent: "purple" },
           { icon: Utensils, label: "Prodotti menu", value: totalMenuItems,         accent: "stone" },
           { icon: Star,     label: "Preferiti",     value: favoritesCount,         accent: "red" },

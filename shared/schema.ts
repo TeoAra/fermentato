@@ -16,6 +16,7 @@ import {
 import { relations, sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import { TAP_TYPES } from "./tap-types";
 
 // Session storage table (mandatory for Replit Auth)
 export const sessions = pgTable(
@@ -216,7 +217,7 @@ export const tapList = pgTable("tap_list", {
   priceMedium: decimal("price_medium", { precision: 5, scale: 2 }), // 0.4L
   priceLarge: decimal("price_large", { precision: 5, scale: 2 }), // 0.5L
   tapNumber: integer("tap_number"),
-  tapType: varchar("tap_type", { length: 20 }).default("spina"), // "spina" | "pompa"
+  tapType: varchar("tap_type", { length: 20 }).default("spina"), // "spina" | "pompa" (hand pump) | "botte"
   description: text("description"), // Note personalizzate del pub
   addedAt: timestamp("added_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -668,6 +669,8 @@ export const insertTapListSchema = createInsertSchema(tapList).omit({
   id: true,
   addedAt: true,
   updatedAt: true,
+}).extend({
+  tapType: z.enum(TAP_TYPES).nullable().optional(),
 });
 
 export const insertBottleListSchema = createInsertSchema(bottleList).omit({

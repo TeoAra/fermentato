@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import ts from "typescript";
 import { isTapAttachment, formatTapAttachmentMessage } from "../shared/tap-activity";
+import { insertTapListSchema } from "../shared/schema";
 
 const routesSource = readFileSync("server/routes.ts", "utf8");
 const routes = ts.createSourceFile("routes.ts", routesSource, ts.ScriptTarget.Latest, true);
@@ -90,6 +91,7 @@ test("edit endpoint notifies only on a real attachment, not deactivation or meta
     { previousActive: true, changes: { isActive: false }, expected: 0 },
     { previousActive: true, changes: { tapNumber: 3 }, expected: 0 },
     { previousActive: true, changes: { prices: { "30cl": 5 } }, expected: 0 },
+    { previousActive: true, changes: { tapType: "botte" }, expected: 0 },
     { previousActive: true, changes: { beerId: 11, isActive: false }, expected: 0 },
     { previousActive: true, changes: { beerId: 11 }, expected: 1 },
     { previousActive: false, changes: { isActive: true }, expected: 1 },
@@ -107,6 +109,7 @@ test("edit endpoint notifies only on a real attachment, not deactivation or meta
       },
       isAdminOrPubOwner: async () => true,
       isTapAttachment,
+      insertTapListSchema,
       notifyTapListChange: (...args: any[]) => { notices.push(args); },
       notifyWishlistBeerAvailable: () => {},
       pool: { query: async () => ({ rows: [] }) },

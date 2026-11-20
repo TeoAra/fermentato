@@ -86,6 +86,17 @@ try {
     for(const mode of ["global","pub","brewery","pub-owner","profile"]){
       await page.setViewport({width,height:874,isMobile:true,hasTouch:true,deviceScaleFactor:1});
       await page.goto(`http://navigation.test/?mode=${mode}`);
+      // Advance only the idle timer; leave React, query and CSS motion clocks real.
+      await page.evaluate(()=>{
+        const schedule=window.setTimeout.bind(window),cancel=window.clearTimeout.bind(window);
+        const timers=new Map();let id=0;
+        window.setTimeout=(fn,delay,...args)=>{
+          if(delay!==3000)return schedule(fn,delay,...args);
+          const key=--id;timers.set(key,()=>fn(...args));return key;
+        };
+        window.clearTimeout=key=>{timers.delete(key);cancel(key)};
+        window.expireIdle=()=>{const pending=[...timers.values()];timers.clear();pending.forEach(fn=>fn())};
+      });
       await page.addStyleTag({content:styles});
       await page.evaluate(dark=>{
         document.documentElement.classList.toggle("dark",dark);
@@ -123,6 +134,42 @@ try {
       if(mode==="pub"&&width===390&&!dark) {
         await page.screenshot({path:"/tmp/fermenta-bottom-bar.png"});
       }
+      await page.mouse.move(0,0);
+      await page.evaluate(()=>window.expireIdle());
+      await page.waitForFunction(()=>getComputedStyle(document.querySelector("[data-floating-bottom-bar]")).opacity==="0");
+      const idle=await page.$eval("[data-floating-bottom-bar]",nav=>({
+        hidden:nav.getAttribute("aria-hidden"),events:getComputedStyle(nav).pointerEvents,
+        bottom:nav.getBoundingClientRect().bottom,transform:getComputedStyle(nav).transform,
+      }));
+      assert.notEqual(idle.hidden,"true","Idle nav remains available to screen readers");
+      assert.equal(idle.events,"none");
+      assert.equal(idle.bottom,874-46,"Idle fade never moves fixed chrome");
+      assert.equal(idle.transform,"none");
+      // Real Tab reaches the visually hidden nav and reveals it without a mouse.
+      await page.keyboard.press("Tab");
+      await page.waitForFunction(()=>document.querySelector("[data-floating-bottom-bar]").contains(document.activeElement));
+      await page.evaluate(()=>window.expireIdle());
+      assert.equal(await page.$eval("[data-floating-bottom-bar]",nav=>nav.dataset.idleHidden),"false","Keyboard focus pins the navigation");
+      await page.evaluate(()=>document.activeElement.blur());
+      await page.evaluate(()=>window.expireIdle());
+      await page.waitForFunction(()=>document.querySelector("[data-floating-bottom-bar]").dataset.idleHidden==="true");
+      // Capture listeners must catch nested, non-bubbling scrolls.
+      await page.evaluate(()=>{
+        const scroller=document.createElement("div");document.body.append(scroller);
+        scroller.dispatchEvent(new Event("scroll",{bubbles:false}));scroller.remove();
+      });
+      await page.waitForFunction(()=>document.querySelector("[data-floating-bottom-bar]").dataset.idleHidden==="false");
+      if(mode==="pub"&&width===390&&!dark){
+        for(const name of ["touchstart","touchmove","pointerdown","pointermove","wheel","keydown"]){
+          await page.evaluate(()=>window.expireIdle());
+          await page.waitForFunction(()=>document.querySelector("[data-floating-bottom-bar]").dataset.idleHidden==="true");
+          await page.evaluate(name=>document.dispatchEvent(new Event(name,{bubbles:true})),name);
+          await page.waitForFunction(()=>document.querySelector("[data-floating-bottom-bar]").dataset.idleHidden==="false");
+        }
+        await page.emulateMediaFeatures([{name:"prefers-reduced-motion",value:"reduce"}]);
+        assert.equal(await page.$eval("[data-floating-bottom-bar]",nav=>getComputedStyle(nav).transitionDuration),"0s");
+        await page.emulateMediaFeatures([]);
+      }
       if(mode==="global"){
         assert.equal(await page.$eval('[data-nav-item="search"]',node=>node.getAttribute("href")),"/search");
         assert.equal(await page.$eval('[data-nav-item="account"]',node=>node.getAttribute("href")),"/login");
@@ -145,7 +192,7 @@ try {
           await page.waitForFunction(()=>getComputedStyle(document.querySelector("[data-floating-bottom-bar]")).visibility!=="hidden");
         }
       }
-      console.log(`PASS ${mode}: ${width}px ${dark?"dark":"light"}, floating56px, icon-only, routes/tabs, keyboard and native inset`);
+      console.log(`PASS ${mode}: ${width}px ${dark?"dark":"light"}, idle fade/wake, keyboard access, fixed inset and routes/tabs`);
     }
   }
   const pubSource=await readFile("client/src/pages/pub-detail.tsx","utf8");

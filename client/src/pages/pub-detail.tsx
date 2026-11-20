@@ -106,7 +106,7 @@ function getOpenStatusInfo(openingHours: any): OpenStatusInfo | null {
 // ── Tabs definition ────────────────────────────────────────────────────────
 const TABS: StickyTabDef[] = [
   { value: "overview", label: "Panoramica", icon: <HomeIcon className="w-4 h-4" /> },
-  { value: "taplist", label: "Spine", icon: <BeerIcon className="w-4 h-4" /> },
+  { value: "taplist", label: "Taplist", icon: <BeerIcon className="w-4 h-4" /> },
   { value: "bottles", label: "Bottiglie e lattine", icon: <BottleWine className="w-4 h-4" /> },
   { value: "drinks", label: "Bevande", icon: <GlassWater className="w-4 h-4" /> },
   { value: "menu", label: "Menù", icon: <Utensils className="w-4 h-4" /> },

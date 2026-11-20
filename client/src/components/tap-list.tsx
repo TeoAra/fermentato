@@ -4,6 +4,7 @@ import { Wine, Beer } from "lucide-react";
 import ImageWithFallback from "@/components/image-with-fallback";
 import { GlutenFreeSmallBadge, AlcoholFreeBadge } from "@/components/beer-badges";
 import { useAuth } from "@/hooks/useAuth";
+import { groupTapItems, getTapTypeInfo } from "@shared/tap-types";
 
 const CheckinModal = lazy(() => import("@/components/checkin-modal"));
 
@@ -59,6 +60,7 @@ type TapListItem = {
   tapType?: string | null;
   description?: string | null;
   isVisible?: boolean | null;
+  isActive?: boolean | null;
 };
 
 interface TapListProps {
@@ -89,16 +91,8 @@ function getAllPrices(tap: TapListItem): string[] {
 export default function TapList({ tapList, pub }: TapListProps) {
   const { isAuthenticated } = useAuth();
   const [checkinTap, setCheckinTap] = useState<TapListItem | null>(null);
-  const sorted = useMemo(() => {
-    if (!tapList) return [];
-    const ORDER: Record<string, number> = { spina: 0, pompa: 1, botte: 2 };
-    return [...tapList].sort((a, b) => {
-      const aOrd = ORDER[a.tapType ?? "spina"] ?? 0;
-      const bOrd = ORDER[b.tapType ?? "spina"] ?? 0;
-      if (aOrd !== bOrd) return aOrd - bOrd;
-      return (a.tapNumber ?? 999) - (b.tapNumber ?? 999);
-    });
-  }, [tapList]);
+  const groups = useMemo(() => groupTapItems(Array.isArray(tapList) ? tapList : []), [tapList]);
+  const sorted = groups.flatMap(group => group.items);
 
   if (!sorted || sorted.length === 0) {
     return (
@@ -107,7 +101,7 @@ export default function TapList({ tapList, pub }: TapListProps) {
           <Wine className="h-10 w-10 text-stone-400" />
         </div>
         <h4 className="text-base font-semibold text-stone-700 dark:text-stone-300 mb-1">
-          Nessuna birra alla spina
+          Nessuna birra in taplist
         </h4>
         <p className="text-sm text-stone-400 dark:text-stone-500">
           Controlla più tardi per le novità in taplist
@@ -115,10 +109,6 @@ export default function TapList({ tapList, pub }: TapListProps) {
       </div>
     );
   }
-
-  const spinaItems = sorted.filter(t => !t.tapType || t.tapType === "spina");
-  const pompaItems = sorted.filter(t => t.tapType === "pompa");
-  const botteItems = sorted.filter(t => t.tapType === "botte");
 
   const renderRow = (tap: TapListItem, index: number, arr: TapListItem[]) => {
     const styleColor = getBeerStyleColor(tap.beer.style);
@@ -160,6 +150,9 @@ export default function TapList({ tapList, pub }: TapListProps) {
                 </p>
                 {tap.beer.isGlutenFree && <GlutenFreeSmallBadge size={10} />}
                 {tap.beer.isAlcoholFree && <AlcoholFreeBadge size={10} />}
+                <span className="text-[10px] font-semibold text-amber-800 dark:text-amber-300">
+                  {getTapTypeInfo(tap.tapType).label}
+                </span>
               </div>
               {tap.beer.style && (
                 <span
@@ -239,29 +232,10 @@ export default function TapList({ tapList, pub }: TapListProps) {
     </Suspense>
   ) : null;
 
-  const hasMultipleSections = (spinaItems.length > 0 ? 1 : 0) + (pompaItems.length > 0 ? 1 : 0) + (botteItems.length > 0 ? 1 : 0) > 1;
-
-  if (!hasMultipleSections) {
-    return (
-      <>
-        <Section items={spinaItems.length ? spinaItems : pompaItems.length ? pompaItems : botteItems} />
-        {modal}
-      </>
-    );
-  }
-
   return (
     <>
       <div className="space-y-4">
-        {spinaItems.length > 0 && (
-          <Section items={spinaItems} label="In Spina" accent="text-primary dark:text-orange-400" />
-        )}
-        {pompaItems.length > 0 && (
-          <Section items={pompaItems} label="In Pompa" accent="text-violet-600 dark:text-violet-400" />
-        )}
-        {botteItems.length > 0 && (
-          <Section items={botteItems} label="Alla Botte" accent="text-amber-700 dark:text-amber-400" />
-        )}
+        {groups.map(group => <Section key={group.type} items={group.items} label={group.label} accent="text-primary dark:text-orange-400" />)}
       </div>
       {modal}
     </>

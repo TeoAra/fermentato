@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "wouter";
 import { cn } from "@/lib/utils";
+import { useIdleBottomBar } from "@/hooks/use-idle-bottom-bar";
 
 export interface FloatingBottomBarItem {
   id: string;
@@ -43,15 +44,18 @@ export function FloatingBottomBar({
   testId,
   className,
 }: FloatingBottomBarProps) {
+  const { barRef, idleHidden } = useIdleBottomBar(hidden, items.find(item => item.active)?.id);
   const selectedTabId = items.find(item => item.role === "tab" && item.active)?.id
     ?? items.find(item => item.role === "tab")?.id;
   return (
     <nav
+      ref={barRef}
       aria-label={label}
       aria-hidden={hidden || undefined}
       role={role}
       className={cn("floating-bottom-bar bottom-nav-fixed lg:hidden", hidden && "is-hidden", className)}
       data-floating-bottom-bar
+      data-idle-hidden={idleHidden ? "true" : "false"}
       data-hidden={hidden ? "true" : "false"}
       data-testid={testId}
       onKeyDown={role === "tablist" ? event => {

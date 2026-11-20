@@ -1,33 +1,24 @@
 import assert from "node:assert/strict";
-import { spawn, spawnSync } from "node:child_process";
+import { spawnSync } from "node:child_process";
+import { readFile, readdir } from "node:fs/promises";
+import { build } from "esbuild";
 import test, { after, before } from "node:test";
 import puppeteer from "puppeteer";
 
-const PORT = 41731;
-const BASE_URL = `http://127.0.0.1:${PORT}`;
 const VIEWPORT_WIDTHS = [320, 360, 375, 390, 412];
-let server;
 let browser;
-
-async function waitForServer(timeoutMs = 30_000) {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    try {
-      const response = await fetch(`${BASE_URL}/test-fixtures/beer-card-responsive.html`);
-      if (response.ok) return;
-    } catch {}
-    await new Promise((resolve) => setTimeout(resolve, 150));
-  }
-  throw new Error("Vite non è diventato disponibile entro 30 secondi");
-}
+let script, css;
 
 before(async () => {
-  server = spawn(
-    process.execPath,
-    ["node_modules/vite/bin/vite.js", "--host", "127.0.0.1", "--port", String(PORT), "--strictPort"],
-    { stdio: ["ignore", "pipe", "pipe"] },
-  );
-  await waitForServer();
+  // Isolate layout checks from the live dev server, auth and external requests.
+  const bundle = await build({
+    entryPoints: ["client/test-fixtures/beer-card-responsive.tsx"],
+    bundle: true, write: false, jsx: "automatic", format: "iife", loader: { ".css": "empty" },
+    define: { "process.env.NODE_ENV": '"production"', "import.meta.env": "{}" },
+  });
+  script = bundle.outputFiles[0].text;
+  const files = await readdir("dist/public/assets");
+  css = (await Promise.all(files.filter(f=>f.endsWith(".css")).map(f=>readFile(`dist/public/assets/${f}`,"utf8")))).join("\n");
   const systemChromium = spawnSync("which", ["chromium"], { encoding: "utf8" }).stdout.trim();
   browser = await puppeteer.launch({
     headless: true,
@@ -38,16 +29,18 @@ before(async () => {
 
 after(async () => {
   await browser?.close();
-  server?.kill("SIGTERM");
 });
 
 for (const width of VIEWPORT_WIDTHS) {
   test(`${width}px: Taplist e Cantina non hanno overflow o sovrapposizioni`, async () => {
     const page = await browser.newPage();
+    await page.setRequestInterception(true);
+    page.on("request", request => request.abort());
     await page.setViewport({ width, height: 1200, deviceScaleFactor: 1 });
-    await page.goto(`${BASE_URL}/test-fixtures/beer-card-responsive.html`, {
-      waitUntil: "networkidle0",
-    });
+    await page.setContent('<html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div></body></html>');
+    await page.addStyleTag({content:css});
+    await page.addScriptTag({content:script});
+    await page.waitForSelector('[data-testid="bottle-72"]');
 
     const result = await page.evaluate(() => {
       const rect = (element) => {

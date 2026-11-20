@@ -3100,6 +3100,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existingItems = await storage.getTapListByPubForOwner(parseInt(pubId));
       const existingItem = existingItems.find((t: any) => t.id === parseInt(id));
       if (!existingItem) return res.status(404).json({ message: "Tap item not found" });
+      if (!insertTapListSchema.shape.tapType.safeParse(data.tapType).success) {
+        return res.status(400).json({ message: "Tipo di servizio non valido. Scegli spina, pompa o botte." });
+      }
       const oldBeerId = existingItem?.beerId;
       
       const item = await storage.updateTapListItem(parseInt(id), data);

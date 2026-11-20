@@ -6,6 +6,7 @@ import ImageWithFallback from "@/components/image-with-fallback";
 import { AlcoholFreeBadge, GlutenFreeSmallBadge } from "@/components/beer-badges";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { descriptionToText } from "@shared/description-text";
+import { getTapTypeInfo } from "@shared/tap-types";
 import type { PubBeer } from "./types";
 
 interface BeerResultCardProps<T> {
@@ -23,18 +24,20 @@ interface BeerResultCardProps<T> {
   onCheckin?: (item: T) => void;
   currentUserCanCheckin?: boolean;
   itemDescription?: string | null;
+  tapType?: string | null;
 }
 
 export default function BeerResultCard<T>({
   beer, imageSrc, imageType = "beer", priceContent, detailLabel,
   detailPrices, variant = "taplist", item, testId, isFavorite, onToggleFavorite, onCheckin, currentUserCanCheckin,
-  itemDescription,
+  itemDescription, tapType,
 }: BeerResultCardProps<T>) {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const brewery = beer.brewery?.name || beer.breweryName;
   const abv = beer.isAlcoholFree ? "0,0%" : beer.abv != null && String(beer.abv).trim() !== "" ? `${beer.abv}%` : null;
   const hasActions = Boolean(onToggleFavorite || (currentUserCanCheckin && onCheckin));
   const isCantina = variant === "cantina";
+  const tapTypeInfo = getTapTypeInfo(tapType);
   const metadata = [beer.style, detailLabel].filter(Boolean) as string[];
   const embeddedDescription = descriptionToText(beer.description || "").trim();
   const beerDetails = useQuery<PubBeer>({
@@ -124,6 +127,11 @@ export default function BeerResultCard<T>({
           {beer.isGlutenFree && <GlutenFreeSmallBadge size={11} />}
           {beer.isAlcoholFree && <AlcoholFreeBadge size={10} />}
         </div>
+        {!isCantina && (
+          <span className="mt-1.5 inline-flex min-h-5 max-w-full items-center rounded-full border border-[#E7D3B4] bg-[#FBF3E5] px-2 py-0.5 text-[10px] font-bold leading-tight text-[#82520F] dark:border-[#76552C] dark:bg-[#33291D] dark:text-[#E8B96F]">
+            {tapTypeInfo.label}
+          </span>
+        )}
       </div>
 
       {isCantina ? (
@@ -153,7 +161,7 @@ export default function BeerResultCard<T>({
             data-testid="menu-detail-header"
           >
               <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-[#C77800] dark:text-[#FFB74D]">
-                {isCantina ? "Selezione cantina" : "Birra alla spina"}
+                {isCantina ? "Selezione cantina" : tapTypeInfo.beerLabel}
               </p>
               <DialogTitle className="mt-1 text-[22px] font-black leading-tight tracking-[-0.035em] text-[#302820] dark:text-[#F5F5F5]">{beer.name}</DialogTitle>
               {fullBrewery && <p className="mt-1 text-sm font-semibold text-[#746A5E] dark:text-[#B7BDC7]">{fullBrewery}</p>}
@@ -209,10 +217,10 @@ export default function BeerResultCard<T>({
                 </div>
               </section>
             )}
-            <section aria-label={isCantina ? "Prezzi in cantina" : "Prezzi alla spina"} className="space-y-2.5">
+            <section aria-label={isCantina ? "Prezzi in cantina" : tapTypeInfo.priceLabel} className="space-y-2.5">
               <div>
                 <h3 className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-[#9B6A24] dark:text-[#D8A85A]">
-                  {isCantina ? "Prezzo in cantina" : "Prezzi alla spina"}
+                  {isCantina ? "Prezzo in cantina" : tapTypeInfo.priceLabel}
                 </h3>
               </div>
               {detailPrices && detailPrices.length > 0 ? (

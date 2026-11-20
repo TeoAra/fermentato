@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "../src/index.css";
 import TaplistSection from "../src/components/pub/TaplistSection";
 import BottlesSection from "../src/components/pub/BottlesSection";
@@ -54,4 +55,5 @@ function Fixture() {
   );
 }
 
-createRoot(document.getElementById("root")!).render(<Fixture />);
+const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+createRoot(document.getElementById("root")!).render(<QueryClientProvider client={queryClient}><Fixture /></QueryClientProvider>);

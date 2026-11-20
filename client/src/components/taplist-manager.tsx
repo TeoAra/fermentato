@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useTouchReorder } from "@/hooks/useTouchReorder";
 import { moveInventoryItem } from "@shared/inventory-order";
+import { getTapTypeInfo, normalizeTapType, type TapType } from "@shared/tap-types";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -357,9 +358,9 @@ interface TapItem {
   priceMedium?: string;
   priceLarge?: string;
   tapNumber?: number;
-  tapType?: string;
+  tapType?: string | null;
   description?: string;
-  isVisible: boolean;
+  isVisible?: boolean | null;
 }
 
 interface TapListManagerProps {
@@ -441,7 +442,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     beerId: "",
     prices: [] as PriceItem[],
     tapNumber: "",
-    tapType: "spina" as "spina" | "pompa" | "botte",
+    tapType: "spina" as TapType,
     description: "",
     isVisible: true,
   });
@@ -497,6 +498,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     onSuccess: () => {
       toast({ title: "Birra aggiornata!" });
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
+      setIsAddDialogOpen(false);
       setEditingItem(null);
       setIsChangingBeer(false);
       setSelectedNewBeer(null);
@@ -534,7 +536,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     },
   });
 
-  // Cross-list helpers: sync with bottle list when same beer exists there
+  // Read-only indicator: a matching beer in cantina is still independent stock.
   const findBottleItem = (beerId: number) =>
     bottleList.find((b: any) => b.beer?.id === beerId || b.beerId === beerId);
 
@@ -573,30 +575,23 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   });
 
   const confirmDeleteTapItem = async (item: TapItem, addNextBeerId?: number) => {
-    const bottleItem = findBottleItem(item.beer.id);
     try {
-      await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "DELETE" });
-      queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
-      // If a "next beer" was chosen from proposals, add it to taplist on the same tap position
+      // Replace the beer in the same row: retain service, position and prices,
+      // and don't lose the current beer if saving its replacement fails.
       if (addNextBeerId) {
         const proposal = (nextTapProposals as any[]).find((p: any) => p.beer_id === addNextBeerId || p.id === addNextBeerId);
-        const tapData: any = { beerId: addNextBeerId, tapNumber: item.tapNumber, tapType: item.tapType, isVisible: true };
-        await apiRequest(`/api/pubs/${pubId}/taplist`, { method: "POST" }, tapData);
+        await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "PATCH" }, { beerId: addNextBeerId });
         queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
         // Remove from proposals if it was a proposal
         if (proposal) {
           apiRequest(`/api/next-tap/${proposal.id}`, { method: "DELETE" }).catch(() => {});
           queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "next-tap"] });
         }
-        toast({ title: "Birra cambiata!", description: "La nuova birra è ora in spina." });
+        toast({ title: "Birra cambiata!", description: `La nuova birra è disponibile: ${getTapTypeInfo(item.tapType).label.toLowerCase()}.` });
       } else {
-        if (bottleItem) {
-          await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "DELETE" });
-          queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
-          toast({ title: "Birra rimossa", description: "Rimossa anche dalla cantina" });
-        } else {
-          toast({ title: "Birra rimossa dalla tap list!" });
-        }
+        await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "DELETE" });
+        queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
+        toast({ title: "Birra rimossa dalla taplist" });
       }
     } catch {
       toast({ title: "Errore", description: "Impossibile rimuovere la birra. Riprova.", variant: "destructive" });
@@ -609,37 +604,22 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
   };
 
   const handleToggleTapVisibility = async (item: TapItem) => {
-    const newVisible = !item.isVisible;
-    const bottleItem = findBottleItem(item.beer.id);
+    const newVisible = item.isVisible === false;
 
-    const applyTap = (v: boolean) =>
+    const applyTap = (v: TapItem["isVisible"]) =>
       queryClient.setQueryData(["/api/pubs", String(pubId), "taplist"], (old: any) =>
         Array.isArray(old) ? old.map((t: any) => t.id === item.id ? { ...t, isVisible: v } : t) : old
       );
-    const applyBottle = (id: number, v: boolean) =>
-      queryClient.setQueryData(["/api/pubs", String(pubId), "bottles"], (old: any) =>
-        Array.isArray(old) ? old.map((b: any) => b.id === id ? { ...b, isVisible: v } : b) : old
-      );
-
     applyTap(newVisible);
-    if (bottleItem) applyBottle(bottleItem.id, newVisible);
 
     try {
       const updatedTap = await apiRequest(`/api/pubs/${pubId}/taplist/${item.id}`, { method: "PATCH" }, { isVisible: newVisible });
       if (updatedTap?.isVisible !== undefined) applyTap(updatedTap.isVisible);
       queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "taplist"] });
 
-      if (bottleItem) {
-        const updatedBottle = await apiRequest(`/api/pubs/${pubId}/bottles/${bottleItem.id}`, { method: "PATCH" }, { isVisible: newVisible });
-        if (updatedBottle?.isVisible !== undefined) applyBottle(bottleItem.id, updatedBottle.isVisible);
-        queryClient.invalidateQueries({ queryKey: ["/api/pubs", String(pubId), "bottles"] });
-        toast({ title: newVisible ? "Birra visibile" : "Birra nascosta", description: "Applicato anche alla cantina" });
-      } else {
-        toast({ title: newVisible ? "Birra visibile" : "Birra nascosta" });
-      }
+      toast({ title: newVisible ? "Birra visibile" : "Birra nascosta" });
     } catch {
       applyTap(item.isVisible);
-      if (bottleItem) applyBottle(bottleItem.id, item.isVisible);
       toast({ title: "Errore", description: "Impossibile aggiornare la visibilità", variant: "destructive" });
     }
   };
@@ -697,9 +677,9 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
       beerId: item.beer.id.toString(),
       prices: prices,
       tapNumber: item.tapNumber?.toString() || "",
-      tapType: (item.tapType === "pompa" ? "pompa" : item.tapType === "botte" ? "botte" : "spina") as "spina" | "pompa" | "botte",
+      tapType: normalizeTapType(item.tapType),
       description: item.description || "",
-      isVisible: item.isVisible,
+      isVisible: item.isVisible !== false,
     });
   };
 
@@ -747,11 +727,11 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
     <Dialog open={!!removingItem} onOpenChange={(o) => { if (!o) setRemovingItem(null); }}>
       <DialogContent className="max-w-lg rounded-3xl border-stone-200">
         <DialogHeader>
-          <DialogTitle className="text-lg font-bold">Cambia fusto</DialogTitle>
+          <DialogTitle className="text-lg font-bold">Cambia birra in taplist</DialogTitle>
           <DialogDescription className="text-muted-foreground">
             Stai rimuovendo <strong>{removingItem?.beer?.name}</strong>
-            {removingItem?.tapNumber ? ` dalla Spina ${removingItem.tapNumber}` : " dalla taplist"}.
-            {nextTapProposals.length > 0 && " Vuoi mettere in spina una delle prossime birre?"}
+            {removingItem ? ` dalla taplist (${getTapTypeInfo(removingItem.tapType).label.toLowerCase()}${removingItem.tapNumber ? `, posizione ${removingItem.tapNumber}` : ""})` : " dalla taplist"}.
+            {nextTapProposals.length > 0 && " Vuoi sostituirla con una delle prossime birre mantenendo lo stesso tipo di servizio?"}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3">
@@ -1024,7 +1004,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 {/* Birra Selezionata (per editing) */}
                 {editingItem && !isChangingBeer && (
                   <div className="space-y-2">
-                    <Label className="text-sm font-medium">Birra in spina</Label>
+                    <Label className="text-sm font-medium">Birra in taplist</Label>
                     {selectedNewBeer ? (
                       <BeerProfilePanel
                         beer={{ ...selectedNewBeer, imageUrl: selectedBeerFull?.imageUrl || "" }}
@@ -1313,39 +1293,42 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 {/* Tipo di erogazione */}
                 <div className={creatingBeer ? "hidden" : ""}>
                   <Label className="text-sm font-medium mb-2 block">Tipo di erogazione</Label>
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-2" role="group" aria-label="Tipo di erogazione">
                     <button
                       type="button"
+                      aria-pressed={formData.tapType === "spina"}
                       onClick={() => setFormData({ ...formData, tapType: "spina" })}
-                      className={`flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
+                      className={`flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-2.5 text-xs font-semibold transition-colors sm:flex-row ${
                         formData.tapType === "spina"
                           ? "bg-amber-50 border-amber-400 text-amber-800 dark:bg-amber-900/30 dark:border-amber-500 dark:text-amber-300"
                           : "border-stone-200 dark:border-border text-muted-foreground hover:border-amber-400 dark:hover:border-amber-700"
                       }`}
                     >
-                       <Beer className="h-4 w-4" /> Spina
+                       <Beer className="h-4 w-4 shrink-0" /> Alla spina
                     </button>
                     <button
                       type="button"
+                      aria-pressed={formData.tapType === "pompa"}
                       onClick={() => setFormData({ ...formData, tapType: "pompa" })}
-                      className={`flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
+                      className={`flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-2.5 text-xs font-semibold transition-colors sm:flex-row ${
                         formData.tapType === "pompa"
                           ? "bg-stone-50 border-primary/60 text-primary dark:bg-[#0B0D10]/20 dark:border-primary/40"
                           : "border-stone-200 dark:border-border text-muted-foreground hover:border-primary/40 dark:hover:border-primary/30"
                       }`}
                     >
-                       <Wrench className="h-4 w-4" /> Pompa
+                       <Wrench className="h-4 w-4 shrink-0" /> Hand pump
                     </button>
                     <button
                       type="button"
+                      aria-pressed={formData.tapType === "botte"}
                       onClick={() => setFormData({ ...formData, tapType: "botte" })}
-                      className={`flex items-center justify-center gap-1.5 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors ${
+                      className={`flex min-h-14 flex-col items-center justify-center gap-1.5 rounded-xl border px-1 py-2.5 text-xs font-semibold transition-colors sm:flex-row ${
                         formData.tapType === "botte"
                           ? "bg-amber-50 border-amber-700 text-amber-900 dark:bg-amber-900/30 dark:border-amber-600 dark:text-amber-300"
                           : "border-stone-200 dark:border-border text-muted-foreground hover:border-amber-600 dark:hover:border-amber-700"
                       }`}
                     >
-                       <PackageOpen className="h-4 w-4" /> Botte
+                       <PackageOpen className="h-4 w-4 shrink-0" /> Alla botte
                     </button>
                   </div>
                 </div>
@@ -1353,7 +1336,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 {/* Dettagli Aggiuntivi */}
                 <div className={creatingBeer ? "hidden" : "grid grid-cols-2 gap-4"}>
                   <div>
-                    <Label className="text-sm font-medium">Numero Spina</Label>
+                    <Label className="text-sm font-medium">Posizione in taplist</Label>
                     <Input
                       type="number"
                       min="1"
@@ -1453,7 +1436,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
           )}
         </CardTitle>
         <CardDescription>
-          Gestisci le birre disponibili alla spina
+          Gestisci le birre alla spina, alla botte e in hand pump
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -1473,7 +1456,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
         ) : localTapList.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Beer className="w-12 h-12 mx-auto mb-4 text-stone-300" />
-            <p>Nessuna birra alla spina.</p>
+            <p>Nessuna birra in taplist.</p>
             <p className="text-sm">Clicca "Aggiungi Birra" per iniziare.</p>
           </div>
         ) : (
@@ -1481,6 +1464,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
             {localTapList.map((item, idx) => (
               <div
                 key={item.id}
+                data-testid={`tap-manager-item-${item.id}`}
                 draggable
                 data-touch-sort-idx={idx}
                 onDragOver={e => handleDragOver(e, idx)}
@@ -1490,7 +1474,7 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                 className={`border rounded-2xl p-3 sm:p-4 transition-colors ${
                   dragOverIdx === idx
                     ? 'border-primary border-dashed bg-primary/5'
-                    : !item.isVisible
+                    : item.isVisible === false
                     ? 'border-stone-100 dark:border-border opacity-60 bg-stone-50/30 dark:bg-[#0B0D10]/10'
                     : 'border-stone-100 dark:border-border bg-white dark:bg-card'
                 }`}
@@ -1529,22 +1513,10 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
 
                 {/* Row 2: badges (spina, tipo, visibilità, cantina) */}
                 <div className="flex flex-wrap gap-1.5 mt-1.5 ml-14">
-                  {item.tapNumber && (
-                    <Badge variant="outline" className="text-xs border-amber-300 text-amber-700 dark:text-amber-400">
-                      Spina {item.tapNumber}
-                    </Badge>
-                  )}
-                  {item.tapType === "pompa" && (
-                    <Badge variant="outline" className="text-xs border-stone-300 text-primary dark:border-[#23262E]">
-                      In Pompa
-                    </Badge>
-                  )}
-                  {item.tapType === "botte" && (
-                    <Badge variant="outline" className="text-xs border-amber-400 text-amber-700 dark:border-amber-600 dark:text-amber-400">
-                      Botte
-                    </Badge>
-                  )}
-                  {!item.isVisible && (
+                  <Badge variant="outline" className="text-xs border-amber-300 bg-[#FFF7EA] text-amber-800 dark:bg-amber-950/20 dark:text-amber-300">
+                    {getTapTypeInfo(item.tapType).label}{item.tapNumber ? ` · ${item.tapNumber}` : ""}
+                  </Badge>
+                  {item.isVisible === false && (
                     <Badge variant="secondary" className="text-xs">
                       <EyeOff className="w-3 h-3 mr-1" />
                       Nascosta
@@ -1597,10 +1569,10 @@ export function TapListManager({ pubId, tapList, bottleList = [], isLoading }: T
                     variant="ghost"
                     size="sm"
                     onClick={() => handleToggleTapVisibility(item)}
-                    aria-label={item.isVisible ? `Nascondi ${item.beer.name} dalla tap list` : `Mostra ${item.beer.name} nella tap list`}
+                    aria-label={item.isVisible !== false ? `Nascondi ${item.beer.name} dalla tap list` : `Mostra ${item.beer.name} nella tap list`}
                     className="h-11 w-11 min-w-11 p-0 text-muted-foreground hover:text-primary rounded-lg"
                   >
-                    {item.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {item.isVisible !== false ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </Button>
                   <Button
                     variant="ghost"
